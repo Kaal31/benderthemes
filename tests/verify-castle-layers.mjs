@@ -1,0 +1,11 @@
+import {chromium} from 'playwright';import assert from 'node:assert/strict';
+const b=await chromium.launch();const p=await b.newPage({viewport:{width:1304,height:820}});await p.goto('http://127.0.0.1:8766/preview/castle-preview.html?h=720');await p.locator('.castle').waitFor();await p.waitForTimeout(300);
+await p.locator('.cinema-nav').getByRole('button',{name:'Library',exact:true}).click();await p.waitForTimeout(600);
+assert.equal(await p.locator('.castle-quick').evaluate(e=>getComputedStyle(e).opacity),'0');
+await p.keyboard.press('Escape');await p.locator('.dht-destination').waitFor({state:'detached'});await p.waitForTimeout(300);assert.equal(await p.locator('.castle-quick').evaluate(e=>getComputedStyle(e).opacity),'1');
+await p.keyboard.press('y');await p.getByText('Window presentation',{exact:true}).click();await p.getByText('Layered glass windows',{exact:true}).click();await p.waitForTimeout(300);
+assert.equal(await p.locator('.castle').getAttribute('data-window-mode'),'layered');
+await p.locator('.cinema-nav').getByRole('button',{name:'Store',exact:true}).click();await p.waitForTimeout(600);
+assert.ok(Number(await p.locator('.castle-quick').evaluate(e=>getComputedStyle(e).opacity))>.5);
+assert.notEqual(await p.locator('.dht-store').evaluate(e=>getComputedStyle(e).transform),'none');await p.locator('[data-dht-root]').screenshot({path:'preview/castle-layered.png'});
+await p.keyboard.press('Escape');await p.locator('.dht-store').waitFor({state:'detached'});await b.close();console.log('PASS replace home exit/return, options mode selection, layered home visibility and foreground depth.');

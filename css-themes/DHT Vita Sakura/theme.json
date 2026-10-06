@@ -1,0 +1,25 @@
+{
+  "name": "DHT Vita Sakura",
+  "version": "v1.0",
+  "author": "Deck Home Themes",
+  "target": "Home",
+  "manifest_version": 8,
+  "description": "Pink cherry-blossom look for the Deck Home Themes PS Vita home. Example of styling the plugin with CSS Loader.",
+  "inject": { "shared.css": ["SP"] },
+  "patches": {
+    "Colours": {
+      "default": "On",
+      "type": "none",
+      "values": { "On": {} },
+      "components": [
+        { "name": "Focus glow", "type": "color-picker", "on": "On", "default": "#ff7fbf", "css_variable": "dht-vita-halo", "tabs": ["SP"] },
+        { "name": "Bubble labels", "type": "color-picker", "on": "On", "default": "#ffffff", "css_variable": "dht-vita-label", "tabs": ["SP"] }
+      ]
+    },
+    "Bubble labels": {
+      "default": "Show",
+      "type": "dropdown",
+      "values": { "Show": {}, "Hide": { "hide-labels.css": ["SP"] } }
+    }
+  }
+}

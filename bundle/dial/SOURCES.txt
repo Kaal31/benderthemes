@@ -1,0 +1,2 @@
+Dial artwork: scalable code artwork based on the user's visual reference. No cropped reference bitmap or alternate 3D models are shipped.
+Audio: short cues extracted from the user-supplied 12d6820129be900ab5c4bf0f7757a3c5_720w.mp4. Timings (seconds): wake 0.72-1.47; switch 3.00-3.28; launch 23.00-24.35; back 24.00-24.48. Fades and peak limiting applied.

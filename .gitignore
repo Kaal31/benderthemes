@@ -1,0 +1,9 @@
+node_modules/
+dist/
+out/
+work/
+__pycache__/
+*.pyc
+preview/*.html
+preview/*.png
+preview/*.webm

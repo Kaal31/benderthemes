@@ -1,0 +1,23 @@
+/* Deck Home Themes – PS Vita "Sakura" example.
+   Variables need no !important; properties the plugin sets inline do. */
+:root {
+  --dht-vita-bg: radial-gradient(ellipse 80% 30% at 30% 70%, rgba(255, 230, 240, 0.7), transparent 70%),
+    linear-gradient(170deg, #4a0f2e 0%, #a3315f 40%, #e77fa8 70%, #ffd0e2 100%);
+  --dht-vita-bar: rgba(60, 0, 25, 0.85);
+  --dht-vita-halo-ring: rgba(255, 220, 235, 0.95);
+}
+/* little petals drift over the page */
+.dht-theme-vita .dht-vita-bg::after {
+  content: "";
+  position: absolute;
+  inset: 0;
+  background-image: radial-gradient(circle, rgba(255, 255, 255, 0.55) 0 3px, transparent 4px),
+    radial-gradient(circle, rgba(255, 200, 225, 0.5) 0 2px, transparent 3px);
+  background-size: 140px 160px, 90px 110px;
+  background-position: 0 0, 40px 60px;
+  animation: dhtSakura 24s linear infinite;
+  pointer-events: none;
+}
+@keyframes dhtSakura { to { background-position: 140px 640px, 220px 500px; } }
+.dht-theme-vita .dht-bubble-label { text-shadow: 0 1px 3px rgba(90, 0, 40, 0.9) !important; }
+.dht-theme-vita .dht-folder-title { background: rgba(120, 10, 60, 0.55) !important; }

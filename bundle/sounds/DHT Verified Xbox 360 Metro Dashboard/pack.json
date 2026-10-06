@@ -1,0 +1,47 @@
+{
+  "name": "DHT Verified Xbox 360 Metro Dashboard",
+  "version": "v1.7",
+  "author": "Microsoft (extracted for a personal test build)",
+  "manifest_version": 2,
+  "music": false,
+  "ignore": [],
+  "mappings": {
+    "deck_ui_navigation.wav": [
+      "btn_Focus.ogg"
+    ],
+    "deck_ui_tile_scroll.wav": [
+      "btn_Focus.ogg"
+    ],
+    "deck_ui_default_activation.wav": [
+      "btn_Select.ogg"
+    ],
+    "deck_ui_launch_game.wav": [
+      "btn_Select.ogg"
+    ],
+    "deck_ui_into_game_detail.wav": [
+      "btn_Select.ogg"
+    ],
+    "deck_ui_out_of_game_detail.wav": [
+      "btn_Back.wav"
+    ],
+    "deck_ui_show_modal.wav": [
+      "btn_Select.ogg"
+    ],
+    "deck_ui_hide_modal.wav": [
+      "btn_Back.wav"
+    ],
+    "deck_ui_tab_transition_01.wav": [
+      "tab_Switch.ogg"
+    ],
+    "deck_ui_bumper_end_02.wav": [
+      "btn_InactiveFocus.wav"
+    ],
+    "deck_ui_switch_toggle_on.wav": [
+      "btn_InactiveSelect.ogg"
+    ],
+    "deck_ui_switch_toggle_off.wav": [
+      "btn_InactiveSelect.ogg"
+    ]
+  },
+  "description": "Purpose mappings audited against supplied pack manifest; original author credits preserved."
+}

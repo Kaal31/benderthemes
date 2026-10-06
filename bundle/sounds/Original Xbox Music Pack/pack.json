@@ -1,0 +1,9 @@
+{
+  "name": "Original Xbox Music Pack",
+  "author": "Ollum",
+  "version": "v1.0",
+  "manifest_version": 1,
+  "music": true,
+  "ignore": [],
+  "id": "cc6114e1-119d-4779-bf7b-224c5f97652f"
+}

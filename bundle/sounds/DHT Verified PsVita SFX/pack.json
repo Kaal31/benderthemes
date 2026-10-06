@@ -1,0 +1,22 @@
+{
+  "name": "DHT Verified PsVita SFX",
+  "author": "trollfacegaming420",
+  "version": "v1.7",
+  "manifest_version": 2,
+  "music": false,
+  "mappings": {},
+  "ignore": [
+    "bumper_end.wav",
+    "confirmation_negative.wav",
+    "confirmation_positive.wav",
+    "deck_ui_message_toast.wav",
+    "deck_ui_misc_01.wav",
+    "deck_ui_misc_08.wav",
+    "deck_ui_slider_down.wav",
+    "deck_ui_slider_up.wav",
+    "deck_ui_tile_scroll.wav",
+    "pop_sound.wav"
+  ],
+  "id": "9dab732c-e05c-4f4b-a6b4-c648a8c144d3",
+  "description": "Purpose mappings audited against supplied pack manifest; original author credits preserved."
+}

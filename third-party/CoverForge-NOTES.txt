@@ -1,0 +1,4 @@
+CoverForge: https://github.com/kmturley/cover-forge
+License: CC0-1.0, attached.
+References consulted: src/three/PreviewGeometry.ts, PreviewMaterials.ts, src/templates/definitions.ts.
+Adapted concepts: distinct printed sleeve/plastic body, rounded edges, generated title spine and glossy clearcoat. This plugin uses a lightweight CSS 3D renderer, not CoverForge Three.js or its full physically based lighting renderer. No third-party logos or artwork copied. Vita clearcoat is an original CSS approximation of glossy film with restrained lower-rim specular light.

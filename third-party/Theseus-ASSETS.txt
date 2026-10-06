@@ -1,0 +1,6 @@
+Theseus dashboard asset references: https://github.com/MrMilenko/Theseus
+Imported stock xbox4.xbx orb art and cellwall.xbx texture, decoded losslessly to PNG. ASCII outlines from xbox.xtf and xbox book.xtf converted into embedded TrueType fonts. All retain their original designs.
+Sources: Data/Skins/Stock/xbox4.xbx; xips-source/default-xbox/cellwall.xbx; Data/Fonts/xbox.xtf; Data/Fonts/xbox book.xtf.
+Theseus license and asset provenance are included in Theseus-LICENSE.txt and Theseus-THIRD-PARTY.md. Microsoft retains rights to original dashboard assets; TeamUIX modifications carry their upstream terms. No Theseus executable is incorporated.
+
+1.7.3 reconstruction: native Stock cellwall.xm and Main_memory_podshell_09/10/11 meshes, plus settings3 ClockIcon, GlobeIcon, StereoIcon, FullscreenIcon, network_icon, AutoOffIcon, ConsoleIcon, LockIcon and Icon_live geometry. Source XAP transforms are baked into the converted mesh data. Browser WebGL renderer reproduces source Waver and Spinner timing and stock falloff/chrome material colors, with lighting adapted for the browser. Clock hand offset and angles follow default-desktop/settings3.xap. GameHilite_01 and settings_home_bgpanel decoded from XBX. Source formulas referenced from scene_groups.cpp, camera.cpp and materials_desktop.cpp; upstream licenses remain included.

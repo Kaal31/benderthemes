@@ -1,0 +1,46 @@
+{
+  "name": "DHT Verified MC360 Blades 1.7.2",
+  "version": "1.7.2",
+  "author": "Team Blackbolt / supplied MC360 2.1 archive",
+  "manifest_version": 2,
+  "music": false,
+  "ignore": [],
+  "mappings": {
+    "deck_ui_navigation.wav": [
+      "cursor.wav"
+    ],
+    "deck_ui_tile_scroll.wav": [
+      "cursor.wav"
+    ],
+    "deck_ui_default_activation.wav": [
+      "select.wav"
+    ],
+    "deck_ui_into_game_detail.wav": [
+      "tier2_enter.wav"
+    ],
+    "deck_ui_out_of_game_detail.wav": [
+      "back.wav"
+    ],
+    "deck_ui_launch_game.wav": [
+      "select.wav"
+    ],
+    "deck_ui_show_modal.wav": [
+      "guide_open.wav"
+    ],
+    "deck_ui_hide_modal.wav": [
+      "guide_close.wav"
+    ],
+    "deck_ui_switch_toggle_on.wav": [
+      "select.wav"
+    ],
+    "deck_ui_bumper_end_02.wav": [
+      "silence.wav"
+    ],
+    "deck_ui_tab_transition_01.wav": [
+      "bladeslide_1.wav",
+      "bladeslide_2.wav",
+      "bladeslide_3.wav",
+      "bladeslide_4.wav"
+    ]
+  }
+}

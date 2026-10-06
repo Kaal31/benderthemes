@@ -1,0 +1,25 @@
+{
+  "name": "DHT Verified Original Xbox Sound Pack",
+  "author": "Ollum",
+  "version": "v1.7",
+  "manifest_version": 1,
+  "music": false,
+  "ignore": [
+    "bumper_end.wav",
+    "confirmation_negative.wav",
+    "confirmation_positive.wav",
+    "deck_ui_message_toast.wav",
+    "deck_ui_misc_01.wav",
+    "deck_ui_misc_08.wav",
+    "deck_ui_tile_scroll.wav",
+    "deck_ui_toast.wav",
+    "pop_sound.wav",
+    "steam_at_mention.m4a",
+    "steam_chatroom_notification.m4a",
+    "ui_steam_message_old_smooth.m4a",
+    "ui_steam_smoother_friend_join.m4a",
+    "ui_steam_smoother_friend_online.m4a"
+  ],
+  "id": "ac9179c2-f0b0-4ee5-b5a1-d6b569a94fe6",
+  "description": "Purpose mappings audited against supplied pack manifest; original author credits preserved."
+}

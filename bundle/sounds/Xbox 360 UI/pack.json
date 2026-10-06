@@ -1,0 +1,87 @@
+{
+  "name": "Xbox 360 UI",
+  "author": "calencyr",
+  "version": "v1.0",
+  "manifest_version": 2,
+  "music": false,
+  "mappings": {
+    "deck_ui_achievement_toast.wav": [
+      "Achievement.wav"
+    ],
+    "deck_ui_into_game_detail.wav": [
+      "Select.wav"
+    ],
+    "deck_ui_misc_10.wav": [
+      "Select2.wav"
+    ],
+    "deck_ui_side_menu_fly_in.wav": [
+      "PageLeft.wav"
+    ],
+    "deck_ui_side_menu_fly_out.wav": [
+      "PageRight.wav"
+    ],
+    "deck_ui_bumper_end_02.wav": [
+      "SelectB.wav"
+    ],
+    "deck_ui_launch_game.wav": [
+      "Select.wav"
+    ],
+    "deck_ui_toast.wav": [
+      "Achievement.wav"
+    ],
+    "deck_ui_tab_transition_01.wav": [
+      "PageLeft.wav"
+    ],
+    "deck_ui_message_toast.wav": [
+      "Achievement.wav"
+    ],
+    "deck_ui_out_of_game_detail.wav": [
+      "Back.wav"
+    ],
+    "deck_ui_switch_toggle_on.wav": [
+      "SelectA.wav"
+    ],
+    "deck_ui_switch_toggle_off.wav": [
+      "SelectB.wav"
+    ],
+    "deck_ui_navigation.wav": [
+      "Select2.wav"
+    ],
+    "deck_ui_show_modal.wav": [
+      "SelectA2.wav"
+    ],
+    "deck_ui_hide_modal.wav": [
+      "Back.wav"
+    ],
+    "ui_steam_smoother_friend_online.m4a": [
+      "Achievement.wav"
+    ],
+    "ui_steam_smoother_friend_join.m4a": [
+      "Achievement.wav"
+    ],
+    "deck_ui_default_activation.wav": [
+      "Select.wav"
+    ],
+    "deck_ui_typing.wav": [
+      "SelectB.wav"
+    ],
+    "steam_at_mention.m4a": [
+      "Unknown3.wav"
+    ]
+  },
+  "ignore": [
+    "bumper_end.wav",
+    "confirmation_negative.wav",
+    "confirmation_positive.wav",
+    "deck_ui_misc_01.wav",
+    "deck_ui_misc_08.wav",
+    "deck_ui_slider_down.wav",
+    "deck_ui_slider_up.wav",
+    "deck_ui_tile_scroll.wav",
+    "deck_ui_volume.wav",
+    "pop_sound.wav",
+    "steam_chatroom_notification.m4a",
+    "ui_steam_message_old_smooth.m4a"
+  ],
+  "id": "a8a38b38-2e81-4cd2-8b43-259a32bfd766"
+}

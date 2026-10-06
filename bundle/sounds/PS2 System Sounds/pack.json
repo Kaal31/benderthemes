@@ -1,0 +1,27 @@
+{
+  "name": "PS2 System Sounds",
+  "author": "Junomede",
+  "version": "v1.0",
+  "manifest_version": 2,
+  "music": false,
+  "mappings": {},
+  "ignore": [
+    "bumper_end.wav",
+    "confirmation_negative.wav",
+    "confirmation_positive.wav",
+    "deck_ui_message_toast.wav",
+    "deck_ui_misc_01.wav",
+    "deck_ui_misc_08.wav",
+    "deck_ui_slider_down.wav",
+    "deck_ui_slider_up.wav",
+    "deck_ui_tile_scroll.wav",
+    "deck_ui_typing.wav",
+    "pop_sound.wav",
+    "steam_at_mention.m4a",
+    "steam_chatroom_notification.m4a",
+    "ui_steam_message_old_smooth.m4a",
+    "ui_steam_smoother_friend_join.m4a",
+    "ui_steam_smoother_friend_online.m4a"
+  ],
+  "id": "e530e13b-aca0-42b4-8946-7d54accf17fa"
+}

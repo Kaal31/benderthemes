@@ -1,0 +1,1 @@
+Source: user-supplied XBMC360.7z, MC360 2.1 sounds. Purpose mappings from sounds.xml: cursor=directional navigation, select=activation, back=parent, guide_open/close=menu, tier2_enter=detail. Four bladeslide cues selected by destination. Files preserved byte-for-byte. New versioned folder avoids replacing user-installed packs.

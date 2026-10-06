@@ -1,0 +1,11 @@
+{
+  "name": "Deck Home Themes",
+  "author": "DeckHomeThemes",
+  "flags": [],
+  "api_version": 1,
+  "publish": {
+    "tags": ["home", "theme", "ui", "launcher"],
+    "description": "Console-style home screens: PS Vita bubbles with folders and LiveArea, PS2 browser, PS3 and PSP XMB, PS4, PS5 and Xbox 360 Metro.",
+    "image": ""
+  }
+}

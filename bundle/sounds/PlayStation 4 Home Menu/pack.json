@@ -1,0 +1,9 @@
+{
+  "name": "PlayStation 4 Home Menu",
+  "author": "kobacat",
+  "version": "v1.0",
+  "manifest_version": 1,
+  "music": true,
+  "ignore": [],
+  "id": "ff13ca01-5b3a-4630-aafe-ac11524b3489"
+}

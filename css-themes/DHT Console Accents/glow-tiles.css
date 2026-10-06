@@ -1,0 +1,3 @@
+.dht-root .dht-tile[data-selected="true"] {
+  box-shadow: 0 0 0 3px var(--dht-x360-accent, #107c10), 0 0 24px 6px var(--dht-x360-accent, #107c10) !important;
+}

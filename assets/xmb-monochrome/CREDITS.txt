@@ -1,0 +1,2 @@
+Icons from the RetroArch 'monochrome' XMB icon set, libretro/retroarch-assets
+https://github.com/libretro/retroarch-assets - licensed CC BY 4.0. Resized to 128 px.

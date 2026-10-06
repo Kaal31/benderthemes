@@ -1,0 +1,13 @@
+import {chromium} from 'playwright';
+import assert from 'node:assert/strict';
+const b=await chromium.launch();const p=await b.newPage({viewport:{width:1304,height:900}});
+await p.goto('http://127.0.0.1:8766/preview/castle-preview.html');await p.locator('.castle').waitFor();await p.waitForTimeout(300);
+await p.keyboard.press('ArrowLeft');await p.keyboard.press('ArrowUp');await p.waitForTimeout(250);
+assert.equal(await p.locator('.cinema-nav').getAttribute('aria-hidden'),'true');
+await p.keyboard.press('ArrowDown');await p.waitForTimeout(250);assert.equal(await p.locator('.cinema-nav').getAttribute('aria-hidden'),'false');
+await p.keyboard.press('y');await p.waitForTimeout(280);assert.equal(await p.locator('.dht-menu--castle').count(),1);
+await p.keyboard.press('y');assert.equal(await p.locator('.dht-menu--castle').count(),1);await p.waitForTimeout(300);assert.equal(await p.locator('.dht-menu--castle').count(),0);
+await p.getByRole('button',{name:'Library',exact:true}).first().click();await p.waitForTimeout(300);await p.keyboard.press('Escape');await p.locator('.dht-destination').waitFor({state:'detached',timeout:3000});
+await p.emulateMedia({reducedMotion:'reduce'});await p.keyboard.press('y');await p.waitForTimeout(50);await p.keyboard.press('y');await p.waitForTimeout(50);assert.equal(await p.locator('.dht-menu--castle').count(),0);
+await p.locator('[data-dht-root]').screenshot({path:'preview/castle-preview.png'});
+await b.close();console.log('PASS: sidebar reveal/hide, window intro/outro retention, destination close, reduced motion');

@@ -1,0 +1,4 @@
+Steam vector mark from Simple Icons (CC0-1.0).
+https://github.com/simple-icons/simple-icons/blob/develop/icons/steam.svg
+https://github.com/simple-icons/simple-icons/blob/develop/LICENSE.md
+Steam is a trademark of Valve.

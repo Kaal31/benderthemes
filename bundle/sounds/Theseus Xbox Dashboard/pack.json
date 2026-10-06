@@ -1,0 +1,53 @@
+{
+  "name": "Theseus Xbox Dashboard",
+  "version": "v1.0",
+  "author": "Team UIX (Theseus) - converted for Deck Home Themes",
+  "description": "Original Xbox dashboard sounds and ambient loop from Theseus (GPL-3.0-or-later, https://github.com/MrMilenko/Theseus).",
+  "manifest_version": 2,
+  "music": true,
+  "ignore": [],
+  "mappings": {
+    "deck_ui_navigation.wav": [
+      "scroll.wav"
+    ],
+    "deck_ui_tile_scroll.wav": [
+      "scroll.wav"
+    ],
+    "deck_ui_default_activation.wav": [
+      "select_a.ogg"
+    ],
+    "deck_ui_out_of_game_detail.wav": [
+      "back_b.ogg"
+    ],
+    "deck_ui_into_game_detail.wav": [
+      "games_in.ogg"
+    ],
+    "deck_ui_launch_game.wav": [
+      "games_select.ogg"
+    ],
+    "deck_ui_tab_transition_01.wav": [
+      "menu_fwd.ogg"
+    ],
+    "deck_ui_bumper_end_02.wav": [
+      "error.ogg"
+    ],
+    "deck_ui_show_modal.wav": [
+      "sub_in.ogg"
+    ],
+    "deck_ui_hide_modal.wav": [
+      "sub_out.ogg"
+    ],
+    "deck_ui_switch_toggle_on.wav": [
+      "toggle.ogg"
+    ],
+    "deck_ui_switch_toggle_off.wav": [
+      "toggle.ogg"
+    ],
+    "deck_ui_side_menu_fly_in.wav": [
+      "games_in.ogg"
+    ],
+    "deck_ui_side_menu_fly_out.wav": [
+      "games_out.ogg"
+    ]
+  }
+}

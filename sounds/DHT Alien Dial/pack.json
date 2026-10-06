@@ -1,0 +1,48 @@
+{
+  "name": "DHT Alien Dial",
+  "version": "v1.0",
+  "author": "Deck Home Themes (synthesised, original)",
+  "description": "Dial clicks, a power-up activation and a sci-fi hum for the Alien Dial theme.",
+  "manifest_version": 2,
+  "music": true,
+  "ignore": [],
+  "mappings": {
+    "deck_ui_navigation.wav": [
+      "dial_click_1.wav",
+      "dial_click_2.wav",
+      "dial_click_3.wav"
+    ],
+    "deck_ui_tile_scroll.wav": [
+      "dial_click_1.wav",
+      "dial_click_2.wav",
+      "dial_click_3.wav"
+    ],
+    "deck_ui_default_activation.wav": [
+      "select.wav"
+    ],
+    "deck_ui_launch_game.wav": [
+      "activate.wav"
+    ],
+    "deck_ui_into_game_detail.wav": [
+      "open.wav"
+    ],
+    "deck_ui_out_of_game_detail.wav": [
+      "back.wav"
+    ],
+    "deck_ui_show_modal.wav": [
+      "open.wav"
+    ],
+    "deck_ui_hide_modal.wav": [
+      "close.wav"
+    ],
+    "deck_ui_tab_transition_01.wav": [
+      "tab.wav"
+    ],
+    "deck_ui_bumper_end_02.wav": [
+      "bump.wav"
+    ],
+    "deck_ui_switch_toggle_on.wav": [
+      "select.wav"
+    ]
+  }
+}

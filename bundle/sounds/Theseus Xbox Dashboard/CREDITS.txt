@@ -1,0 +1,2 @@
+Sounds and ambient loop from Theseus by Team UIX (https://github.com/MrMilenko/Theseus),
+GPL-3.0-or-later. Converted to PCM WAV / MP3 and mapped to Steam Deck UI sounds for AudioLoader.

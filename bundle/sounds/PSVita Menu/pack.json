@@ -1,0 +1,9 @@
+{
+  "name": "PSVita Menu",
+  "author": "Starlogical",
+  "version": "v1.0",
+  "manifest_version": 1,
+  "music": true,
+  "ignore": [],
+  "id": "3ac02fe0-0b1a-4653-83a1-fd1a8668210a"
+}

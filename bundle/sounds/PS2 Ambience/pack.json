@@ -1,0 +1,9 @@
+{
+  "name": "PS2 Ambience",
+  "author": "superfluid-cs",
+  "version": "v1.1",
+  "manifest_version": 1,
+  "music": true,
+  "ignore": [],
+  "id": "5fd67a22-fba5-450b-ba61-0882368ed6e6"
+}

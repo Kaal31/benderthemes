@@ -1,0 +1,5 @@
+MC360 2.1 skin by Team Blackbolt, supplied by the user in XBMC360.7z. Native blade runners, blade edges, background gradients, gamer-card and button textures decoded from media/textures.xpr; MC360.ttf embedded without modification. The original skin XML credits Team Blackbolt 2006. These are artwork/font assets, not the application executable or its scripts.
+
+1.7.2: sound WAV files also taken unchanged from supplied archive; sounds.xml action/window mappings used. Horizontal 100ms blade/content transitions adapted from PAL/Includes.xml. See DHT Verified MC360 Blades 1.7.2/SOURCES.txt.
+
+1.7.3: additional native glass trims, button states, icons, guide shell, disc-tray art and 61 BKGD_Frames decoded from the XPR texture archive. Background-animation-commons supplies the 70 ms fade interval.

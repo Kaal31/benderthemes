@@ -1,0 +1,47 @@
+{
+  "name": "DHT Verified Republic",
+  "author": "EldeBH / Florisvdwetering; supplied Palpatine Suite by Jorah the Andal",
+  "version": "1.0",
+  "manifest_version": 2,
+  "music": true,
+  "mappings": {
+    "deck_ui_navigation.wav": [
+      "move.wav"
+    ],
+    "deck_ui_tile_scroll.wav": [
+      "move.wav"
+    ],
+    "deck_ui_default_activation.wav": [
+      "confirm.wav"
+    ],
+    "deck_ui_into_game_detail.wav": [
+      "confirm.wav"
+    ],
+    "deck_ui_out_of_game_detail.wav": [
+      "back.wav"
+    ],
+    "deck_ui_launch_game.wav": [
+      "confirm.wav"
+    ],
+    "deck_ui_tab_transition_01.wav": [
+      "tab.wav",
+      "tab_alt.wav"
+    ],
+    "deck_ui_bumper_end_02.wav": [
+      "error.wav"
+    ],
+    "deck_ui_show_modal.wav": [
+      "confirm.wav"
+    ],
+    "deck_ui_hide_modal.wav": [
+      "back.wav"
+    ],
+    "deck_ui_switch_toggle_on.wav": [
+      "slider.wav"
+    ],
+    "menu_music.mp3": [
+      "menu_music.mp3"
+    ]
+  },
+  "ignore": []
+}
