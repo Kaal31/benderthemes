@@ -67,12 +67,20 @@ Castle weather is opt-in and uses IP-based approximate location through ipwho.is
 
 ## Credits
 
-Bundled resources include third-party theme materials, fonts, sounds and reconstruction references. Their existing notices are retained in `third-party/` and resource-level `SOURCES.txt` files. Original Deck Home Themes attribution is preserved in `third-party/Original-Deck-Home-Themes-BSD.txt`. No project-wide license is added by this repository. Big credit to https://github.com/justinca92/spindeck for inspiring this plugin, without his implementation this wouldn't be ever possible, since ai probably used his code for this (it was fed his plugin amongst many other things). 
-People whose stuff was fed into ai: 
-audio assets from https://deckthemes.com/
-xbox theme from https://github.com/MrMilenko/Theseus
-blades theme from here https://github.com/Fabxx/XBMC360
-psp theme based on a bunch of icons from devianart and more stuff
-a bunch of assets from https://github.com/libretro/retroarch
-https://www.imsaud.me/browser for ps2 interface
-https://warrenuhrich.github.io/SAO-UI/ for sao animations
+Special thanks to **[justinca92 — SpinDeck](https://github.com/justinca92/spindeck)** for inspiring this plugin. SpinDeck's implementation was one of the reference projects supplied during AI-assisted development and helped make this project possible.
+
+The following projects, creators and resources were also supplied as references or asset sources during AI-assisted development:
+
+| Project or resource | Contribution |
+| --- | --- |
+| [DeckThemes](https://deckthemes.com/) | Audio assets and sound packs |
+| [MrMilenko — Theseus](https://github.com/MrMilenko/Theseus) | Original Xbox dashboard reference and assets |
+| [Fabxx — XBMC360](https://github.com/Fabxx/XBMC360) | Xbox 360 Blades reference and assets |
+| DeviantArt creators and other PSP references | Icons and visual references for the PSP theme |
+| [Libretro — RetroArch](https://github.com/libretro/retroarch) | Interface assets and icons |
+| [Saud's PS2-inspired browser](https://www.imsaud.me/browser) | Visual reference for the PS2 interface |
+| [Warren Uhrich — SAO UI](https://warrenuhrich.github.io/SAO-UI/) | Animation reference for the Floating Castle / SAO interface |
+
+Bundled resources include third-party theme materials, fonts, sounds and reconstruction references. Their existing notices are retained in [third-party/](third-party/) and resource-level `SOURCES.txt` files. Original Deck Home Themes attribution is preserved in [Original-Deck-Home-Themes-BSD.txt](third-party/Original-Deck-Home-Themes-BSD.txt).
+
+No project-wide license is added by this repository.
