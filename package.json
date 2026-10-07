@@ -1,6 +1,6 @@
 {
   "name": "deck-home-themes",
-  "version": "1.9.3",
+  "version": "1.9.4",
   "description": "Console-style home screens for the Steam Deck: PS Vita, PS2, PS3, PSP, PS4, PS5, Xbox and Xbox 360.",
   "type": "module",
   "scripts": {

@@ -6,7 +6,7 @@ import { AnimCanvas } from "../canvas";
 import { GameArt, Icon, IconName, MenuItem, MenuView, themeMenu, useHome, useMenu, useRemembered } from "../common";
 import { clamp, Press, Stage, ThemeRoot, useStage } from "../input";
 import { fmtLastPlayed, fmtPlaytime, Game, openSteam, SteamPlace } from "../library";
-import { showTitle, THEMES } from "../settings";
+import { showTitle, THEMES, updateSettings } from "../settings";
 import { BatteryGlyph } from "../common";
 import { Badges } from "../badges";
 import { fmtTime, playSound, useBattery, useClock, useWallpaper } from "../steam";
@@ -76,9 +76,10 @@ export function Ps4Home() {
   // Background art follows the focused game after a short settle.
   const [bgGame, setBgGame] = useState<Game | undefined>(g);
   useEffect(() => {
+    if (!s.ps4GameBackgrounds) { setBgGame(undefined); return; }
     const t = setTimeout(() => setBgGame(g), 350);
     return () => clearTimeout(t);
-  }, [g?.appid]);
+  }, [g?.appid, s.ps4GameBackgrounds]);
 
   const infoBtns: { label: string; run: () => void }[] = g
     ? [
@@ -99,6 +100,10 @@ export function Ps4Home() {
 
   const options = () => {
     const extra: MenuItem[] = [
+      { label: "Game backgrounds", sub: () => [
+        {label:"On",checked:s.ps4GameBackgrounds,action:()=>updateSettings({ps4GameBackgrounds:true})},
+        {label:"Off · Library background",checked:!s.ps4GameBackgrounds,action:()=>updateSettings({ps4GameBackgrounds:false})},
+      ] },
       { label: "Presets", sub: () => themeMenu(s.theme, api.switchTheme, THEMES) },
       { label: "Home Screen Settings", action: api.openSettings },
       { label: "Home", action: api.showSteamHome },
@@ -191,8 +196,8 @@ export function Ps4Home() {
         <div className="dht-ps4-bg" style={{ position: "absolute", inset: 0, background: "var(--dht-ps4-bg, radial-gradient(ellipse at 70% 20%, #2f8be0 0%, transparent 55%), linear-gradient(170deg, #0a3a86 0%, #0b2a63 45%, #061637 100%))" }} />
         {wall && <img src={wall} style={{ position: "absolute", inset: 0, width: W, height: H, objectFit: "cover" }} />}
         {!wall && <AnimCanvas width={W} height={H} animate={s.animations} draw={drawPs4Bg} fps={24} />}
-        {bgGame && (
-          <div key={bgGame.appid} style={{ position: "absolute", inset: 0, animation: "dhtFade 500ms ease-out" }}>
+        {s.ps4GameBackgrounds && bgGame && (
+          <div className="dht-ps4-game-background" key={bgGame.appid} style={{ position: "absolute", inset: 0, animation: "dhtFade 500ms ease-out" }}>
             <GameArt g={bgGame} kind="hero" style={{ width: W, height: H }} />
             <div style={{ position: "absolute", inset: 0, background: "linear-gradient(180deg, rgba(5,15,40,0.55) 0%, rgba(5,15,40,0.25) 40%, rgba(5,15,40,0.85) 100%)" }} />
           </div>

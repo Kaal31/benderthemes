@@ -64,6 +64,7 @@ export interface DialSettings {
 }
 export interface Settings {
   backgroundMusic: boolean;
+  ps4GameBackgrounds: boolean;
   castleWeather: boolean;
   castleWindows: "replace" | "layered";
   videoBackgrounds: Partial<Record<ThemeId,boolean>>;
@@ -126,6 +127,7 @@ export const FOOTER_MODES: { id: FooterMode; name: string }[] = [
 
 export const DEFAULTS: Settings = {
   backgroundMusic: true,
+  ps4GameBackgrounds: true,
   castleWeather: false,
   castleWindows: "replace",
   videoBackgrounds: {},
@@ -185,6 +187,7 @@ function merge(saved: any): Settings {
   s.xmb = { ...DEFAULTS.xmb, ...(saved?.xmb ?? {}) };
   s.coverStyles = Object.fromEntries(Object.entries(saved?.coverStyles ?? {}).filter(([theme,value]) => THEMES.some(t=>t.id===theme) && ["flat","case3d"].includes(String(value))));
   s.backgroundMusic = saved?.backgroundMusic !== false;
+  s.ps4GameBackgrounds = saved?.ps4GameBackgrounds !== false;
   s.castleWeather = saved?.castleWeather === true;
   s.castleWindows = saved?.castleWindows === "layered" ? "layered" : "replace";
   s.videoBackgrounds = { ...(saved?.videoBackgrounds ?? {}) };
