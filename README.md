@@ -75,4 +75,4 @@ blades theme from here https://github.com/Fabxx/XBMC360
 psp theme based on a bunch of icons from devianart and more stuff
 a bunch of assets from https://github.com/libretro/retroarch
 https://www.imsaud.me/browser for ps2 interface
-
+https://warrenuhrich.github.io/SAO-UI/ for sao animations
