@@ -73,6 +73,7 @@ The following projects, creators and resources were also supplied as references 
 
 | Project or resource | Contribution |
 | --- | --- |
+| [EldeBH — Classic Battlefront Menu SFX](https://www.nexusmods.com/starwarsbattlefront22017/mods/2673?tab=description) | Menu sound effects for the Republic Office theme |
 | [DeckThemes](https://deckthemes.com/) | Audio assets and sound packs |
 | [MrMilenko — Theseus](https://github.com/MrMilenko/Theseus) | Original Xbox dashboard reference and assets |
 | [Fabxx — XBMC360](https://github.com/Fabxx/XBMC360) | Xbox 360 Blades reference and assets |

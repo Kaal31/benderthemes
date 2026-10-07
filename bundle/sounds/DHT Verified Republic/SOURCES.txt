@@ -1,1 +1,4 @@
 User-supplied Classic Battlefront Menu SFX v1.2 Frosty mod by EldeBH. Zstandard CAS data unpacked and EA SPS audio decoded with vgmstream. Original EBX chunk GUID references map move=10, slider=8, back=7, activate=9, tab02=13, error=11, tab01=12. Music: user-supplied Star Wars - Emperor Palpatine Suite (Theme) - Jorah the Andal.mp3, unmodified.
+
+Classic Battlefront Menu SFX source: https://www.nexusmods.com/starwarsbattlefront22017/mods/2673?tab=description
+Used for the Republic Office theme menu sound effects.
