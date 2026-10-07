@@ -154,7 +154,7 @@ export function DialHome() {
         {cur && active && s.dial.floatingCover && <div className="alien-projection" key={cur.appid} aria-label={`Holographic projection of ${cur.name}`} style={{left:cx-radius*.63,top:cy-radius*.945,width:radius*1.26,height:radius*1.89}}>
           {s.dial.projectionLight && <DialProjectionLight/>}
           <div className="alien-hologram-float">
-          <div className="alien-hologram-card"><GameArt flat g={cur} kind="portrait" style={{width:"100%",height:"100%",objectFit:"contain"}}/><div className="alien-hologram-scan"/><div className="alien-hologram-glint"/></div>
+          <div className="alien-hologram-card"><div className="alien-hologram-art"><GameArt flat g={cur} kind="portrait" style={{width:"100%",height:"100%",objectFit:"contain"}}/></div><div className="alien-hologram-scan"/><div className="alien-hologram-glint"/></div>
           </div>
         </div>}
         <div className="alien-carousel" aria-label="Games">{offsets.map(d => {

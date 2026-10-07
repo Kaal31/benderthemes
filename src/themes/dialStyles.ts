@@ -17,7 +17,7 @@ export const DIAL_CSS = `
 @keyframes alienLightStreams{0%,100%{opacity:.5;transform:scaleX(.99)}50%{opacity:.85;transform:scaleX(1.015)}}
 .alien-hologram-float{position:absolute;inset:0;transform:rotateY(-9deg) rotateZ(-1deg);animation:alienFloat 4s ease-in-out infinite}
 .alien-hologram-card{position:absolute;inset:0;overflow:hidden;opacity:.72;mix-blend-mode:screen;box-shadow:0 0 1px 1px #8aff6488,0 0 22px #4aff0040;mask-image:linear-gradient(#000 82%,#0008 97%,transparent)}
-.alien-hologram-card img{filter:url(#alien-main-image-green) contrast(1.18);opacity:.86}
+.alien-hologram-art{position:absolute;inset:0;filter:url(#alien-main-image-green) contrast(1.18);opacity:.86}
 .alien-hologram-scan{position:absolute;inset:0;background:repeating-linear-gradient(0deg,#00200048 0px,#00200048 1px,transparent 1px,transparent 4px);box-shadow:inset 0 0 22px #65ff0025}
 .alien-hologram-glint{position:absolute;inset:0;background:linear-gradient(175deg,transparent 20%,#abff9920 46%,transparent 52%);background-size:100% 220%;animation:alienScan 4.5s linear infinite}
 @keyframes alienFloat{0%,100%{transform:translateY(0) rotateY(-9deg) rotateZ(-1deg)}50%{transform:translateY(-7px) rotateY(-6deg) rotateZ(0)}}

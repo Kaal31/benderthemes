@@ -436,7 +436,7 @@ export function MenuView({
   const st = cinematic ? {panel:{position:"absolute",left:"50%",top:"50%",transform:"translate(-50%,-50%)",minWidth:420,padding:18,background:variant==="castle"?"#eff8ffff":"#071019f5",border:"1px solid #e5c470",boxShadow:"0 15px 70px #0009"} as CSSProperties,item:(on:boolean)=>({fontSize:22,padding:"12px 22px",color:on?"#302400":variant==="castle"?"#30455c":"#e8d7af",background:on?"linear-gradient(100deg,#ffe579,#d4b157)":"transparent"}),title:{padding:12,fontSize:20,color:variant==="castle"?"#30455c":"#e8d7af"}} : styles[variant];
   return (
     <div className="dht-menu-backdrop" aria-hidden={!menu.isOpen} onClick={(e) => e.target === e.currentTarget && menu.handle({ btn: "b", repeat: false })} style={{ position: "absolute", inset: 0, zIndex: 50, pointerEvents:menu.isOpen?"auto":"none", background: variant === "xmb" ? "transparent" : "rgba(0,0,0,0.25)" }}>
-      <div className={`dht-menu dht-menu--${variant}`} ref={panel} style={{...st.panel, maxHeight:"82%", overflowY:"auto", boxSizing:"border-box", justifyContent:"flex-start"}}>
+      <div className={`dht-menu dht-menu--${variant}`} ref={panel} style={{...st.panel, maxHeight:variant==="ps4"?"100%":"82%", overflowY:"auto", boxSizing:"border-box", justifyContent:"flex-start"}}>
         {top.title && <div style={st.title}>{top.title}</div>}
         {top.items.map((it, i) => (
           <div key={i} className="dht-menu-item" data-selected={i === top.sel} onClick={() => menu.clickItem(i)} style={{ display: "flex", alignItems: "center", justifyContent: "space-between", gap: 20, ...st.item(i === top.sel, it.disabled) }}>

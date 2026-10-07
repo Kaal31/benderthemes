@@ -1,0 +1,6 @@
+import {chromium}from'playwright';import assert from'node:assert/strict';const b=await chromium.launch();const p=await b.newPage({viewport:{width:1304,height:820}});await p.goto('http://127.0.0.1:8766/preview/dial-preview.html?h=720');await p.locator('.alien-mechanism').waitFor();await p.keyboard.press('ArrowRight');await p.locator('.alien-hologram-art').waitFor();
+for(let n=0;n<16&&await p.locator('.alien-hologram-art img').count();n++){await p.locator('.alien-hologram-art img').evaluate(e=>e.dispatchEvent(new Event('error')));await p.waitForTimeout(30);}
+assert.equal(await p.locator('.alien-hologram-art img').count(),0);assert.ok((await p.locator('.alien-hologram-art').textContent()).trim());
+for(const look of['classic','chrome','crimson','arctic']){await p.evaluate(look=>window.__updateTheme(s=>({dial:{...s.dial,look}})),look);await p.waitForTimeout(100);assert.match(await p.locator('.alien-hologram-art').evaluate(e=>getComputedStyle(e).filter),/alien-main-image-green/);const filter=await p.locator('.alien-projection').evaluate(e=>getComputedStyle(e).filter);assert.ok(filter.includes(look==='crimson'?'alien-main-red':'hue-rotate'));}
+await b.close();console.log('PASS: artwork fallback is inside the tint layer for all dial colors.');
+

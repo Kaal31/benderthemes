@@ -31,7 +31,7 @@ Theme settings include supported cover treatments, reflections, motion controls 
 ## Install
 
 1. Install and enable Decky Loader on your Steam Deck.
-2. Download **DeckHomeThemes-v1.9.4.zip** from the Releases page and copy it to your Deck.
+2. Download **DeckHomeThemes-v1.9.5.zip** from the Releases page and copy it to your Deck.
 3. Enable Decky's developer options, then use **Install Plugin from ZIP** to select the archive.
 4. Open **Deck Home Themes** in Quick Access and choose a preset.
 
@@ -48,7 +48,7 @@ npm run build
 npm run package
 ```
 
-The installable archive is written to `out/DeckHomeThemes-v1.9.4.zip`. Packaging is self-contained: it does not require an older release ZIP.
+The installable archive is written to `out/DeckHomeThemes-v1.9.5.zip`. Packaging is self-contained: it does not require an older release ZIP.
 
 For browser previews:
 
@@ -78,9 +78,19 @@ The following projects, creators and resources were also supplied as references 
 | [MrMilenko — Theseus](https://github.com/MrMilenko/Theseus) | Original Xbox dashboard reference and assets |
 | [Fabxx — XBMC360](https://github.com/Fabxx/XBMC360) | Xbox 360 Blades reference and assets |
 | DeviantArt creators and other PSP references | Icons and visual references for the PSP theme |
-| [Libretro — RetroArch](https://github.com/libretro/retroarch) | Interface assets and icons |
+| [Libretro — RetroArch Assets](https://github.com/libretro/retroarch-assets) | Interface assets and icons |
+| [kmturley — Cover Forge](https://github.com/kmturley/cover-forge) | Reference for dimensional game cases, printed sleeves, spines and glossy surfaces |
+| [TheRensei — SteamDeckCSSThemes](https://github.com/TheRensei/SteamDeckCSSThemes/tree/main/Game%20Cover%20Reflections%20Theme) | Game-cover reflection reference |
+| [Aurek Fonts](https://github.com/AurekFonts/AurekFonts.github.io) | Aurebesh AF and readable Aurebesh English fonts for Republic Office |
+| [Simple Icons](https://github.com/simple-icons/simple-icons) | Steam icon artwork |
+| [vgmstream](https://github.com/vgmstream/vgmstream) | Tool used to decode the supplied Battlefront sound assets |
+| [Cinzel](https://github.com/NDISCOVER/Cinzel) and [Cormorant](https://github.com/CatharsisFonts/Cormorant) | Republic title and text font resources |
 | [Saud's PS2-inspired browser](https://www.imsaud.me/browser) | Visual reference for the PS2 interface |
 | [Warren Uhrich — SAO UI](https://warrenuhrich.github.io/SAO-UI/) | Animation reference for the Floating Castle / SAO interface |
+
+Additional repositories supplied as development references include [VitauMX/vita-ui](https://github.com/VitauMX/vita-ui) for Vita presentation, [uofw/uofw](https://github.com/uofw/uofw) for PSP research, and [seatann-dev/decky-wall](https://github.com/seatann-dev/decky-wall) for video-wallpaper ideas. These acknowledgements identify references supplied during development; they do not imply that their code is bundled.
+
+The plugin runs on [SteamDeckHomebrew/Decky Loader](https://github.com/SteamDeckHomebrew/decky-loader). Cover Forge inspired the lightweight CSS 3D case implementation; its complete renderer is not included.
 
 Bundled resources include third-party theme materials, fonts, sounds and reconstruction references. Their existing notices are retained in [third-party/](third-party/) and resource-level `SOURCES.txt` files. Original Deck Home Themes attribution is preserved in [Original-Deck-Home-Themes-BSD.txt](third-party/Original-Deck-Home-Themes-BSD.txt).
 
