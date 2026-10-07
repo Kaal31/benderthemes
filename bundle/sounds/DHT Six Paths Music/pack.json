@@ -1,0 +1,13 @@
+{
+  "name": "DHT Six Paths Music",
+  "author": "Girei (Pain’s Theme Song) — Action X Now; user-supplied recording",
+  "version": "1.0",
+  "manifest_version": 2,
+  "music": true,
+  "mappings": {
+    "menu_music.mp3": [
+      "menu_music.mp3"
+    ]
+  },
+  "ignore": []
+}

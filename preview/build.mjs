@@ -35,7 +35,7 @@ for(const file of readdirSync("bundle/sounds/DHT Verified SAO")) if(file.endsWit
 const bladesAudio = {};
 for(const file of readdirSync("bundle/sounds/DHT Verified MC360 Blades 1.7.2")) if(file.endsWith(".wav")) bladesAudio[file]="data:audio/wav;base64,"+readFileSync(`bundle/sounds/DHT Verified MC360 Blades 1.7.2/${file}`).toString("base64");
 const p3t = existsSync("preview/zengarden.json") ? JSON.parse(readFileSync("preview/zengarden.json","utf8")) : null;
-const suppliedPacks=["Minecraft Console Legacy","windows xp sounds"].map(folder=>({...JSON.parse(readFileSync(`bundle/sounds/${folder}/pack.json`,"utf8")),folder,files:readdirSync(`bundle/sounds/${folder}`),mappings:JSON.parse(readFileSync(`bundle/sounds/${folder}/pack.json`,"utf8")).mappings??{}}));
+const suppliedPacks=["Minecraft Console Legacy","windows xp sounds","DHT Nazarick Music","DHT Floating Castle Music","DHT Six Paths Music"].map(folder=>({...JSON.parse(readFileSync(`bundle/sounds/${folder}/pack.json`,"utf8")),folder,files:readdirSync(`bundle/sounds/${folder}`),mappings:JSON.parse(readFileSync(`bundle/sounds/${folder}/pack.json`,"utf8")).mappings??{}}));
 const wallJs = `window.__testPacks=[${JSON.stringify(republicPack)},${suppliedPacks.map(p=>JSON.stringify(p)).join(",")}];window.__castleAudio=${JSON.stringify(castleAudio)};window.__bladesAudio=${JSON.stringify(bladesAudio)};window.__testP3t=${JSON.stringify(p3t)};window.__dialAssets=${JSON.stringify(dialAssets)};window.__testWalls=${JSON.stringify(walls)};window.__testAssets=${JSON.stringify(assets)};`;
 writeFileSync(
   "preview/preview.html",

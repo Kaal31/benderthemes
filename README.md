@@ -66,6 +66,8 @@ Every source push to `main` is checked, built and packaged by GitHub Actions. Su
 
 ## Latest additions
 
+- Nazarick plays “No Man’s Dawn” (instrumental); Floating Castle plays Half Ghoul Music’s “Crossing Fields” instrumental remix. Six Paths plays “Girei” (Pain’s Theme Song). All three follow the existing global/theme music switches and music volume.
+
 - Styled loading screens for every theme, including Xbox 360 variants and Alien Dial colors. Steam and non-Steam games share the same launch handling.
 - Smooth page handoffs, preloaded Nazarick wallpapers, persistent Nazarick navigation, and ornate secondary windows.
 
@@ -120,6 +122,9 @@ The following projects, creators and resources were also supplied as references 
 | [South-Paw — typeface-minecraft](https://github.com/South-Paw/typeface-minecraft) | Minecraft-style typeface |
 | Gecked#0108 — Minecraft Console Legacy | User-supplied Minecraft menu sound pack |
 | cadecomposer — windows xp sounds | User-supplied Aero menu sound pack |
+| Girei (Pain’s Theme Song) — Action X Now recording | User-supplied Six Paths background music |
+| Mayu Maeshima — No Man’s Dawn (instrumental) | User-supplied Nazarick background music |
+| Half Ghoul Music — Crossing Fields (Instrumental Remix) | User-supplied Floating Castle background music |
 | C418 — Sweden, Minecraft Volume Alpha | User-supplied Block Worlds background music |
 | [Simple Icons](https://github.com/simple-icons/simple-icons) | Steam icon artwork |
 | [vgmstream](https://github.com/vgmstream/vgmstream) | Tool used to decode the supplied Battlefront sound assets |

@@ -1,0 +1,13 @@
+{
+  "name": "DHT Floating Castle Music",
+  "author": "Half Ghoul Music — Crossing Fields (Instrumental Remix); user-supplied recording",
+  "version": "1.0",
+  "manifest_version": 2,
+  "music": true,
+  "mappings": {
+    "menu_music.mp3": [
+      "menu_music.mp3"
+    ]
+  },
+  "ignore": []
+}

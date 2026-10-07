@@ -107,7 +107,9 @@ export function setPreviewSound(f: typeof previewSound) {
 export const PACK_MATCH: Record<string, { re: RegExp[]; suggest: string }> = {
   minecraft: { re: [/Minecraft Console Legacy/i], suggest: "Minecraft Console Legacy" },
   republic: { re: [/DHT Verified Republic/i], suggest: "DHT Verified Republic" },
-  castle: { re: [/DHT Verified SAO/i,/Sword Art Online/i], suggest: "DHT Verified SAO" },
+  pain: { re: [/DHT Six Paths Music/i], suggest: "DHT Six Paths Music" },
+  nazarick: { re: [/DHT Nazarick Music/i], suggest: "DHT Nazarick Music" },
+  castle: { re: [/DHT Floating Castle Music/i,/DHT Verified SAO/i,/Sword Art Online/i], suggest: "DHT Verified SAO" },
   vita: { re: [/vita/i], suggest: "PsVita SFX" },
   psp: { re: [/(^|[^a-z0-9])psp([^a-z0-9]|$)/i], suggest: "PSP Sounds" },
   ps3: { re: [/(^|[^a-z0-9])ps3([^0-9]|$)/i, /playstation\s*3/i, /(^|[^a-z])xmb([^a-z]|$)/i], suggest: "XMB" },
@@ -196,7 +198,7 @@ export function setPreviewSoundBase(b: string) {
   previewSoundBase = b;
 }
 async function packUrl(pack: SoundPack, file: string): Promise<string | null> {
-  if((window as any).__testAssets && ["DHT Verified Republic","Minecraft Console Legacy","windows xp sounds"].includes(pack.folder))return `../bundle/sounds/${encodeURIComponent(pack.folder)}/${encodeURIComponent(file)}`;
+  if((window as any).__testAssets && ["DHT Verified Republic","Minecraft Console Legacy","windows xp sounds","DHT Nazarick Music","DHT Floating Castle Music","DHT Six Paths Music"].includes(pack.folder))return `../bundle/sounds/${encodeURIComponent(pack.folder)}/${encodeURIComponent(file)}`;
   const base = previewSoundBase ?? (await mediaBase());
   return base ? `${base}/s/${encodeURIComponent(pack.folder)}/${encodeURIComponent(file)}` : null;
 }
@@ -369,7 +371,8 @@ export function useHomeMusic(theme: ThemeId, active: boolean) {
   const ducked = useDucked();
   const vol = ducked ? 0 : Math.max(0, Math.min(1, s.musicVolume / 100));
   const key = pack && file ? `${pack.folder}/${file}` : "";
-  const audioRef = useRef<HTMLAudioElement | null>(null);
+  const targetVolume = useRef(vol);
+  targetVolume.current = vol;
   useEffect(() => {
     preloadSounds(theme);
   }, [theme, pack?.folder]);
@@ -383,16 +386,17 @@ export function useHomeMusic(theme: ThemeId, active: boolean) {
       if (dead || !url) return;
       try {
         a = new (uiWindow().Audio ?? Audio)(url) as HTMLAudioElement;
-        audioRef.current = a;
         a.loop = true;
         a.volume = 0;
         await a.play();
-        // fade in
-        let v = 0;
+        if (dead) { a.pause(); return; }
+        // One envelope follows current volume/ducking, including changes while
+        // the file is loading. Competing fades must not restore stale volume.
         fade = setInterval(() => {
-          v = Math.min(vol, v + vol / 20);
-          if (a) a.volume = v;
-          if (v >= vol) clearInterval(fade);
+          if (!a) return;
+          const target = targetVolume.current;
+          const delta = target - a.volume;
+          a.volume = Math.abs(delta) <= .02 ? target : Math.max(0, Math.min(1, a.volume + Math.sign(delta) * .02));
         }, 60);
       } catch {
         /* blocked or missing */
@@ -402,7 +406,6 @@ export function useHomeMusic(theme: ThemeId, active: boolean) {
       dead = true;
       clearInterval(fade);
       const el = a;
-      audioRef.current = null;
       if (!el) return;
       // short fade out
       let v = el.volume;
@@ -420,19 +423,7 @@ export function useHomeMusic(theme: ThemeId, active: boolean) {
       }, 30);
     };
   }, [on, key]);
-  useEffect(() => {
-    // glide to the new volume (fades out under a trailer, back in after)
-    const iv = setInterval(() => {
-      const a = audioRef.current;
-      if (!a) return clearInterval(iv);
-      const d = vol - a.volume;
-      if (Math.abs(d) < 0.02) {
-        a.volume = vol;
-        clearInterval(iv);
-      } else a.volume = Math.max(0, Math.min(1, a.volume + Math.sign(d) * 0.03));
-    }, 40);
-    return () => clearInterval(iv);
-  }, [vol]);
+
 }
 
 // ───────────── Steam's native game menu (≡) ─────────────
