@@ -1,0 +1,19 @@
+import {chromium} from 'playwright';import {mkdirSync,writeFileSync} from 'node:fs';
+const out=process.env.SHOWCASE_OUT||'work/ui-demo';mkdirSync(out,{recursive:true});
+const entries=[['PS Vita','preview.html?theme=vita',['ArrowRight','ArrowRight']],['PlayStation 2','preview.html?theme=ps2',['Enter','ArrowRight','ArrowDown']],['PlayStation 3','preview.html?theme=ps3',['ArrowDown','ArrowDown','ArrowRight']],['PSP','preview.html?theme=psp',['ArrowDown','ArrowDown','ArrowRight']],['PlayStation 4','preview.html?theme=ps4',['ArrowRight','ArrowRight']],['PlayStation 5','preview.html?theme=ps5',['ArrowRight','ArrowRight']],['Original Xbox','preview.html?theme=xbox',['ArrowDown','ArrowDown','Enter']],['Xbox 360 · Blades','preview.html?theme=x360&xs=blades',['ArrowRight','ArrowDown']],['Xbox 360 · NXE','preview.html?theme=x360&xs=nxe',['ArrowRight','ArrowDown']],['Xbox 360 · Kinect','preview.html?theme=x360&xs=kinect',['ArrowRight','ArrowDown']],['Xbox 360 · Metro','preview.html?theme=x360&xs=metro',['ArrowRight','ArrowDown']],['Aero · Original','aero-preview.html?',['ArrowRight','ArrowRight']],['Aero v.2','aero2-preview.html?',['ArrowRight','ArrowRight']],['Alien Dial','dial-preview.html?',['ArrowRight','ArrowRight']],['Floating Castle','castle-preview.html?',['ArrowDown','ArrowRight']],['Republic Office','republic-preview.html?',['ArrowRight','ArrowRight']],['Block Worlds','minecraft-preview.html?',['ArrowDown','ArrowDown']],['Six Paths','pain-preview.html?',['ArrowUp','ArrowUp','ArrowRight']],['ZenGarden · PS3 skin','preview.html?theme=ps3&p3t=ZenGarden.p3t',['ArrowDown','ArrowDown']]];
+if(process.env.SHOWCASE_ONLY){const chosen=entries.filter(e=>e[0].includes(process.env.SHOWCASE_ONLY));entries.splice(0,entries.length,...chosen);}
+const b=await chromium.launch();const manifest=[];
+for(let i=0;i<entries.length;i++){
+ const [title,url,keys]=entries[i];const ctx=await b.newContext({viewport:{width:1280,height:800},recordVideo:{dir:out,size:{width:1280,height:800}}});const p=await ctx.newPage();const started=Date.now();const errors=[];p.on('pageerror',e=>errors.push(e.message));
+ await p.goto('http://127.0.0.1:8770/preview/'+url+'&h=800');await p.locator('[data-dht-root]').waitFor();
+ await p.evaluate(()=>{document.body.style.margin='0';document.body.style.overflow='hidden';document.getElementById('bar').style.display='none';const stage=document.getElementById('bar').nextElementSibling;Object.assign(stage.style,{width:'1280px',height:'800px',margin:'0',borderRadius:'0'});});
+ await p.waitForTimeout(1000);const trim=(Date.now()-started)/1000;
+ await p.evaluate(title=>{const label=document.createElement('div');label.id='demo-title';label.textContent=title;Object.assign(label.style,{position:'fixed',left:'20px',bottom:'12px',background:'#070810dc',border:'1px solid #ffffff30',borderRadius:'6px',color:'white',font:'15px Arial',padding:'7px 12px',zIndex:'999999',pointerEvents:'none'});document.body.append(label);},title);
+ await p.waitForTimeout(1400);
+ for(const key of keys){await p.keyboard.press(key);await p.waitForTimeout(650);}
+ await p.screenshot({path:`${out}/${String(i).padStart(2,'0')}.png`});
+ if(title==='Block Worlds'){await p.locator('.mc-change').click();await p.waitForTimeout(700);await p.getByRole('button',{name:'Randomize Skin',exact:true}).click();await p.waitForTimeout(900);await p.getByRole('button',{name:'Cancel',exact:true}).click();}
+ await p.keyboard.press('x');await p.waitForTimeout(1000);await p.keyboard.press('ArrowDown');await p.waitForTimeout(650);await p.keyboard.press('Escape');await p.waitForTimeout(1100);
+ const duration=(Date.now()-started)/1000-trim;const video=p.video();await ctx.close();const path=await video.path();manifest.push({title,path,trim,duration,errors});writeFileSync(`${out}/manifest.json`,JSON.stringify(manifest,null,2));console.log(title,errors.length?'ERRORS '+errors.join(';'):'recorded');
+}
+await b.close();

@@ -3,7 +3,7 @@ const b=await chromium.launch();const p=await b.newPage({viewport:{width:1556,he
 try{
 await p.goto('http://127.0.0.1:8766/preview/minecraft-preview.html?h=720');await p.locator('.mc-change').waitFor();await p.waitForTimeout(700);
 assert.equal(await p.locator('.mc-world').count(),5);assert.ok(await p.locator('.mc-scenery').evaluate(e=>e.naturalWidth>0));assert.equal(await p.locator('.mc-player-error').count(),0);
-await p.keyboard.press('ArrowDown');assert.match(await p.locator('.mc-world[data-selected=true]').textContent(),/Mountain Base/);
+await p.keyboard.press('ArrowDown');assert.match(await p.locator('.mc-world[data-selected=true]').textContent(),/Hades/);
 await p.locator('.mc-change').click();const editor=p.getByRole('dialog',{name:'Skin editor'});await editor.waitFor();await p.waitForTimeout(200);
 const cv=editor.locator('.mc-paint canvas');const initial=await cv.evaluate(c=>c.toDataURL());await editor.getByRole('button',{name:'Paint #bb3431',exact:true}).click();await cv.click({position:{x:62,y:62}});await p.waitForTimeout(100);assert.notEqual(await cv.evaluate(c=>c.toDataURL()),initial);
 await editor.getByRole('button',{name:'Undo',exact:true}).click();await p.waitForTimeout(100);assert.equal(await cv.evaluate(c=>c.toDataURL()),initial);

@@ -12,14 +12,9 @@ import { setPreviewShots, setPreviewTrailer } from "../src/media";
 import { setPreviewStore } from "../src/store";
 
 const themedPreview = (window as any).__themePreview as ThemeId | undefined;
-const referenceArt = (window as any).__referenceArt as Record<string, {portrait:string[];hero?:string[];logo?:string[]}> | undefined;
+const referenceArt = (window as any).__referenceArt as Record<string, {portrait:string[];landscape?:string[];hero?:string[];logo?:string[]}> | undefined;
 const referenceTitles: string[] | undefined = (window as any).__referenceTitles;
-const TITLES = [
-  "Starfall Odyssey", "Neon Drift", "Hollow Lantern", "Tidebreaker", "Copper Kingdoms", "Pixel Pilgrim", "Frostline Rally", "The Last Orchard",
-  "Moonlit Arcana", "Skyward Couriers", "Iron Petal", "Echoes of Vael", "Garden of Gears", "Riftrunner", "Paper Samurai", "Deep Signal",
-  "Lumen Tactics", "Wild Harbor", "Clockwork Choir", "Ember Trail", "Velvet Circuit", "Northbound", "Glass Meridian", "Saltmarsh Saga",
-  "Hexfall Arena", "Quiet Engines", "Aurora Post", "Cinder & Sage", "Byte Bandits", "Sunken Spire", "Petal Storm", "Orbit Gardener",
-];
+const TITLES = ["Cyberpunk 2077","Hades","Elden Ring","Hollow Knight","Stardew Valley","Balatro","Baldur’s Gate 3","DOOM Eternal","Persona 5 Royal","The Witcher 3","Portal 2","Red Dead Redemption 2"];
 function hue(s: string) {
   let h = 0;
   for (const c of s) h = (h * 31 + c.charCodeAt(0)) % 360;
@@ -61,7 +56,7 @@ const apps = (referenceTitles ?? TITLES).map((name, i) => ({
   steam_deck_compat_category: [3, 2, 3, 1, 0][i % 5],
   __art: art(name, i),
 }));
-const tools = ["Retro Emulator Hub", "Desktop Streamer"].map((name, i) => ({ appid: 5000 + i, app_type: 2, display_name: name, installed: true, __art: art(name, i) }));
+
 
 // Feed the library reader with the fake apps; art comes from __art.
 (globalThis as any).appStore = {
@@ -71,7 +66,7 @@ const tools = ["Retro Emulator Hub", "Desktop Streamer"].map((name, i) => ({ app
   GetCustomLogoImageURLs: (a: any) => a.__art?.logo,
 };
 setLibrarySource({
-  allApps: () => new URLSearchParams(location.search).has("empty") ? [] : (themedPreview ? apps : [...apps, ...tools]).slice(0, Number(new URLSearchParams(location.search).get("count")) || 1000),
+  allApps: () => new URLSearchParams(location.search).has("empty") ? [] : apps.slice(0, Number(new URLSearchParams(location.search).get("count")) || 1000),
   collections: () => [
     { id: "favorite", name: "Favorites", apps: apps.filter((_, i) => i % 6 === 1) },
     { id: "rpg", name: "RPGs", apps: apps.filter((_, i) => i % 5 === 2) },
@@ -80,7 +75,7 @@ setLibrarySource({
 setPreviewUser("DeckPlayer");
 // sample store data (the real store is fetched from Steam on the Deck)
 {
-  const STORE_NAMES = ["Skyforge Tactics", "Lantern Harbor", "Neon Courier", "Echo Valley", "Frost Line", "Copper Gears", "Moonlit Market", "Tidal Runner", "Ember Saga", "Pixel Caravan", "Starbound Post", "Orchard Story"];
+  const STORE_NAMES = referenceTitles ?? TITLES;
   const mk = (n: string, i: number, extra: any = {}) => ({ id: 900000 + i, name: n, header: (art(n, i + 3) as any).landscape[0], capsule: (art(n, i + 3) as any).hero[0], price: [1999, 2999, 999, 4999, 1499][i % 5], original: i % 3 === 0 ? [2999, 3999, 1999, 5999, 2499][i % 5] : undefined, discount: i % 3 === 0 ? [33, 25, 50, 17, 40][i % 5] : 0, currency: "USD", ...extra });
   const all = STORE_NAMES.map((n, i) => mk(n, i));
   const owned = apps.slice(0, 2).map((a, i) => ({ id: a.appid, name: a.display_name, header: a.__art.landscape[0], capsule: a.__art.hero[0], price: 1999, currency: "USD", discount: 0, ...(i ? {} : {}) }));
@@ -93,7 +88,7 @@ setPreviewUser("DeckPlayer");
       return { id, name: it.name, short: "A hand-made sample description so the store page can be tried in the browser preview. On the Deck this text, the price, screenshots and trailer come straight from the Steam Store.", header: it.header, screenshots: [it.capsule, it.header, it.capsule], genres: ["Adventure", "Indie"], release: "Oct 5, 2026", developers: ["Sample Studio"], publishers: ["Sample Studio"], priceText: "$" + ((it.price ?? 0) / 100).toFixed(2), originalText: it.original ? "$" + (it.original / 100).toFixed(2) : undefined, discount: it.discount, free: false, hasTrailer: true, platforms: ["windows", "linux"] };
     },
   });
-  (window as any).__previewPrompt = () => "lantern";
+  (window as any).__previewPrompt = () => "Hades";
   (window as any).__openStore = () => openSteamPreview("store");
 }
 (window as any).__soundDiag = (t: any) => soundDiag(t);

@@ -2,11 +2,11 @@
 
 Console-inspired home screens and cinematic interfaces for Steam Deck, built as a Decky Loader plugin.
 
-![Compilation of the theme previews](docs/showcase.gif)
+[![Watch every theme in use](docs/showcase-poster.jpg)](https://github.com/Kaal31/benderthemes/raw/refs/heads/main/docs/showcase.mp4)
 
-[Watch the MP4 showcase](docs/showcase.mp4) · [Download the latest installation ZIP](https://github.com/Kaal31/benderthemes/releases/latest)
+[Watch the full UI walkthrough (MP4)](https://github.com/Kaal31/benderthemes/raw/refs/heads/main/docs/showcase.mp4) · [Download the latest installation ZIP](https://github.com/Kaal31/benderthemes/releases/latest)
 
-The showcase records the actual browser previews with sample games. It demonstrates appearance and animation; it is not footage captured on a Steam Deck.
+The video demonstrates navigation, selection changes and options across every theme, including all four Xbox 360 dashboards, using real game covers. It records the browser previews with a sample library, not a Steam Deck. The demonstration is silent. [View theme timestamps](docs/showcase-chapters.md).
 
 ## Themes
 
@@ -57,7 +57,7 @@ npm run preview
 python -m http.server 8766
 ```
 
-Open `http://127.0.0.1:8766/preview/preview.html`, or the generated `dial-preview.html`, `aero-preview.html`, `castle-preview.html` and `republic-preview.html` in the same directory. Previews use sample games and mock Steam services; they do not launch real games. Playwright checks are in `tests/` and use this preview server.
+Open `http://127.0.0.1:8766/preview/preview.html`, or the generated `dial-preview.html`, `aero-preview.html`, `aero2-preview.html`, `castle-preview.html`, `republic-preview.html`, `minecraft-preview.html` and `pain-preview.html` in the same directory. Previews use sample games and mock Steam services; they do not launch real games. Playwright checks are in `tests/` and use this preview server.
 
 ## Numbered releases
 
@@ -84,7 +84,7 @@ Castle weather is opt-in and uses IP-based approximate location through ipwho.is
 ![Block Worlds](docs/minecraft.png)
 ![Six Paths](docs/six-paths.png)
 
-The earlier compilation above predates these additions. These screenshots are browser previews with sample games.
+The video above includes these additions. These screenshots are browser previews with sample games.
 
 ## Credits
 

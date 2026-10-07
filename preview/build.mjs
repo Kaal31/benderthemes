@@ -48,7 +48,7 @@ const referenceGames = {
   "Baldur’s Gate 3":1086940,"DOOM Eternal":782330,"Persona 5 Royal":1687950,"Red Dead Redemption 2":1174180,
   "STAR WARS Jedi: Survivor":1774580,"STAR WARS Battlefront II":1237950,"SWORD ART ONLINE Fractured Daydream":1858630,
   "Cyberpunk 2077":1091500,"The Witcher 3":292030,"Portal 2":620,"Grand Theft Auto V":271590,
-  "Red Dead Redemption 2":1174180,"Elden Ring":1245620,"Hollow Knight":367520,
+  "Elden Ring":1245620,"Hollow Knight":367520,
   "Hades":1145360,"Stardew Valley":413150,"Balatro":2379780,
 };
 const referenceArt = {};
@@ -73,13 +73,10 @@ for (const [theme,names] of Object.entries({
   writeFileSync(`preview/${theme}-preview.html`,html);
 }
 
-// Reference-matched sample worlds are preview-only; the installed theme reads Steam games.
-const worldNames=["My World","Mountain Base","Nether Project","Village Build","Exploration"];
-const worldArt={};
-for(const [i,name] of worldNames.entries()){
- const y=[177,305,425,547,668][i];
- const svg=`<svg xmlns="http://www.w3.org/2000/svg" width="230" height="108" viewBox="362 ${y} 227 108"><image href="${assets.minecraft.reference}" width="1536" height="865"/></svg>`;
- worldArt[name]={portrait:["data:image/svg+xml;base64,"+Buffer.from(svg).toString("base64")]};
-}
-const mcInit=`window.__themePreview="minecraft";window.__referenceTitles=${JSON.stringify(worldNames)};window.__referenceArt=${JSON.stringify(worldArt)};`;
-writeFileSync("preview/minecraft-preview.html",readFileSync("preview/preview.html","utf8").replace("<script>",`<script>${mcInit}</script><script>`));
+
+const allTitles=["Cyberpunk 2077","Hades","Elden Ring","Hollow Knight","Stardew Valley","Balatro","Baldur’s Gate 3","DOOM Eternal","Persona 5 Royal","The Witcher 3","Portal 2","Red Dead Redemption 2","Grand Theft Auto V","STAR WARS Jedi: Survivor","STAR WARS Battlefront II","SWORD ART ONLINE Fractured Daydream"];
+const baseHtml=readFileSync("preview/preview.html","utf8");
+const defaultInit=`window.__referenceTitles=${JSON.stringify(allTitles)};window.__referenceArt=${JSON.stringify(referenceArt)};`;
+writeFileSync("preview/preview.html",baseHtml.replace("<script>",`<script>${defaultInit}</script><script>`));
+const mcInit=`window.__themePreview="minecraft";window.__referenceTitles=${JSON.stringify(allTitles.slice(0,5))};window.__referenceArt=${JSON.stringify(referenceArt)};`;
+writeFileSync("preview/minecraft-preview.html",baseHtml.replace("<script>",`<script>${mcInit}</script><script>`));
