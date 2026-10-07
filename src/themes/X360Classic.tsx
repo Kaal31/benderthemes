@@ -1,3 +1,4 @@
+import { BLADE_BOUNDARIES } from "./bladeBoundaries";
 import { BladesAtmosphere } from "./BladesAtmosphere";
 import { BladesGuide } from "./BladesGuide";
 import { BLADES_FONT_CSS } from "./bladesFont";
@@ -116,7 +117,14 @@ export function BladesHome() {
   const left = 64+blade*TAB;
   const right = 64+(BLADES.length-1-blade)*TAB;
   const bodyW = W-left-right;
-  const pageOutline=`path("M 12 0 C 32 ${H*.2} 38 ${H*.36} 18 ${H*.6} C 3 ${H*.8} 0 ${H*.9} 12 ${H} L ${bodyW-12} ${H} C ${bodyW} ${H*.9} ${bodyW-3} ${H*.8} ${bodyW-18} ${H*.6} C ${bodyW-38} ${H*.36} ${bodyW-32} ${H*.2} ${bodyW-12} 0 Z")`;
+  // Follow the alpha silhouette of the original MC360 chrome, including its asymmetric waist.
+  const edgeLeft=left-44;
+  const edgeRight=blade<BLADES.length-1?W-100-(BLADES.length-2-blade)*TAB:W-97;
+  const rightAsset=blade<BLADES.length-1?`blades-size${Math.min(3,BLADES.length-1-blade)}-right-nf`:"blades-runner-right";
+  const rightWidth=blade<BLADES.length-1?94:180;
+  const leftPoints=BLADE_BOUNDARIES["blades-size4-header"].map(([y,x])=>`${edgeLeft+x*78+1}px ${y*H}px`);
+  const rightPoints=BLADE_BOUNDARIES[rightAsset].map(([y,x])=>`${edgeRight+x*rightWidth+3}px ${y*H}px`).reverse();
+  const pageOutline=`polygon(${[...leftPoints,...rightPoints].join(",")})`;
   const rowH = 49;
   const visibleRows = b.id==="live"?3:Math.max(3,Math.floor((H*.34)/rowH));
   const firstRow=Math.max(0,Math.min(sel-visibleRows+1,list.length-visibleRows));
@@ -134,6 +142,10 @@ export function BladesHome() {
           .dht-x360b-item{background-size:100% 100%;background-repeat:no-repeat}.dht-x360b-item[data-selected=true]{color:#292820}
         `}</style>
         <div className="dht-blades" style={{position:"absolute",inset:0}}>
+          <div className="dht-blades-page-fill" data-blade={b.id} style={{position:"absolute",inset:0,clipPath:pageOutline,backgroundImage:texture(`background-${gradient}`),backgroundSize:"100% 100%",backgroundColor:b.light,zIndex:10,pointerEvents:"none"}}>
+            <BladesAtmosphere assets={original} animate={s.animations}/>
+            <div style={{position:"absolute",inset:0,backgroundImage:texture(`background-${gradient}-alpha`),backgroundSize:"100% 100%"}}/>
+          </div>
           <img src={original["blades-runner-left"]} aria-hidden="true" style={{position:"absolute",left:-83,top:0,width:180,height:H}}/>
           <img src={original["blades-runner-right"]} aria-hidden="true" style={{position:"absolute",right:-83,top:0,width:180,height:H}}/>
           {BLADES.map((bl,i)=>{
@@ -146,10 +158,8 @@ export function BladesHome() {
               <span style={{position:"absolute",top:H*.22,left:isLeft?42:27,writingMode:"vertical-rl",fontSize:23,color:"#4c4c50",textTransform:"lowercase"}}>{bl.label}</span>
             </button>;
           })}
-          <div className="dht-blades-active-edge" style={{position:"absolute",left:left-44,transition:s.animations?"left 100ms linear":undefined,top:0,width:78,height:H,zIndex:40,pointerEvents:"none"}}><img src={original["blades-size4-header"]} aria-hidden="true" style={{width:"100%",height:"100%",filter:b.id==="live"||b.id==="market"?"sepia(1) saturate(2) brightness(.85)":undefined}}/><span style={{position:"absolute",left:42,top:H*.205,writingMode:"vertical-rl",fontSize:22,color:"#4e473a",textTransform:"lowercase"}}>{b.label}</span></div>
-          <div className="dht-x360b-blade" data-blade={b.id} style={{position:"absolute",left,top:0,width:bodyW,height:H,zIndex:10,clipPath:pageOutline,overflow:"hidden",backgroundImage:texture(`background-${gradient}`),backgroundSize:"100% 100%",backgroundColor:b.light,boxShadow:"0 0 12px #0008",transition:s.animations?"left 100ms linear":undefined}}>
-            <BladesAtmosphere assets={original} animate={s.animations}/>
-            <div aria-hidden style={{position:"absolute",inset:0,backgroundImage:texture(`background-${gradient}-alpha`),backgroundSize:"100% 100%",pointerEvents:"none"}}/>
+          <div className="dht-blades-active-edge" style={{position:"absolute",left:left-44,transition:s.animations?"left 100ms linear":undefined,top:0,width:78,height:H,zIndex:40,pointerEvents:"none"}}><img src={original["blades-size4-header"]} aria-hidden="true" style={{width:"100%",height:"100%",filter:`sepia(1) saturate(2) brightness(.85) hue-rotate(${({market:0,live:0,games:40,media:150,system:225} as Record<string,number>)[b.id]}deg)`}}/><span style={{position:"absolute",left:42,top:H*.205,writingMode:"vertical-rl",fontSize:22,color:"#4e473a",textTransform:"lowercase"}}>{b.label}</span></div>
+          <div className="dht-x360b-blade" data-blade={b.id} style={{position:"absolute",left,top:0,width:bodyW,height:H,zIndex:10,overflow:"hidden",transition:s.animations?"left 100ms linear":undefined}}>
             <div key={b.id} className="dht-blade-content" style={{position:"absolute",inset:0,["--blade-enter" as any]:`${direction*70*W/720}px`,animation:s.animations?"dhtBladeIn 100ms linear":undefined}}>
             {(["top","bottom"] as const).map(edge=><div key={edge} aria-hidden="true" className="dht-blades-glass" style={{position:"absolute",left:20,right:20,[edge]:0,height:H*64/576,display:"flex",pointerEvents:"none"}}>{["left","middle","right"].map(part=><img key={part} src={original[`bkgd-whitewash-glass-${edge}-${part}${part === "middle" ? "" : "-ws"}`]} style={{width:part === "middle"?undefined:25,flex:part === "middle"?1:undefined,height:"100%"}}/>)}</div>)}
             <div style={{position:"absolute",left:39,top:H*.06,fontSize:26,color:"#f7ede1",textShadow:"0 1px 2px #663d17"}}>{b.label=== "Xbox Live" ? "Xbox LIVE" : b.label}</div>
