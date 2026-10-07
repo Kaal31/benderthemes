@@ -1,0 +1,16 @@
+import {chromium} from 'playwright';import assert from 'node:assert/strict';
+const b=await chromium.launch();const p=await b.newPage({viewport:{width:1304,height:890}});const errors=[];p.on('pageerror',e=>errors.push(e.message));
+try{
+await p.goto('http://127.0.0.1:8770/preview/nazarick-preview.html?h=800');await p.locator('.naz-home').waitFor();
+for(const theme of ['vita','ps2','ps3','psp','ps4','ps5','xbox','x360','aero','aero2','dial','castle','republic','minecraft','pain','nazarick']){
+ await p.evaluate(theme=>window.__updateTheme({theme}),theme);await p.waitForTimeout(150);
+ await p.evaluate(()=>window.__launchGame(window.__libraryGame(1000)));await p.locator('.dht-launch').waitFor();assert.equal(await p.locator('.dht-launch').getAttribute('data-console'),theme);assert.ok(await p.locator('.dht-launch-loader').isVisible());
+ await p.locator('.dht-launch').screenshot({path:`work/launch-${theme}.png`});await p.keyboard.press('Escape');await p.locator('.dht-launch').waitFor({state:'detached'});
+ await p.evaluate(()=>window.__openPlace('store'));await p.waitForTimeout(450);await p.locator('.dht-store').waitFor();await p.keyboard.press('Escape');await p.waitForTimeout(550);await p.locator('.dht-store').waitFor({state:'detached'});assert.equal(await p.locator('[data-page-transition]').count(),0);
+}
+for(const [theme,key,variants] of [['x360','style',['blades','nxe','kinect','metro']],['dial','look',['classic','chrome','crimson','arctic']]]){for(const variant of variants){await p.evaluate(({theme,key,variant})=>window.__updateTheme({theme,[theme]:{[key]:variant}}),{theme,key,variant});await p.waitForTimeout(100);await p.evaluate(()=>window.__launchGame(window.__libraryGame(1000)));await p.locator('.dht-launch').waitFor();assert.equal(await p.locator('.dht-launch').getAttribute('data-variant'),variant);if(variant==='crimson')assert.equal(await p.locator('.dht-launch').evaluate(e=>getComputedStyle(e).getPropertyValue('--launch-color').trim()),'#ff344e');await p.keyboard.press('Escape');}}
+await p.evaluate(()=>window.__updateTheme({theme:'nazarick'}));await p.waitForTimeout(100);
+for(const page of ['Library','Store','Library','Store','Home']){await p.locator('[data-dht-root] .naz-top nav').last().getByRole('button',{name:new RegExp('^'+page+'$','i')}).click();await p.waitForTimeout(450);assert.equal(await p.locator('[data-page-transition]').count(),0);}
+await p.evaluate(()=>{window.__updateTheme({animations:false});});await p.waitForTimeout(100);await p.evaluate(()=>window.__openPlace('library'));assert.equal(await p.locator('[data-page-transition]').count(),0);await p.waitForTimeout(100);await p.keyboard.press('Escape');
+await p.evaluate(()=>{window.SteamClient={Apps:{RunGame:()=>Promise.resolve()}};const g={...window.__libraryGame(1000),name:'Non-Steam game',appid:999999,gameid:'999999',shortcut:true};window.__beginNativeLaunch(g);});await p.locator('.dht-launch').waitFor();assert.match(await p.locator('.dht-launch h1').textContent(),/Non-Steam/);await p.keyboard.press('Escape');assert.deepEqual(errors,[]);console.log('PASS: styled launch/cancel and store return across 16 themes; repeated Nazarick Library/Store transitions; reduced motion; non-Steam launch.');
+}finally{await b.close();}

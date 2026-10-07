@@ -66,6 +66,9 @@ Every source push to `main` is checked, built and packaged by GitHub Actions. Su
 
 ## Latest additions
 
+- Styled loading screens for every theme, including Xbox 360 variants and Alien Dial colors. Steam and non-Steam games share the same launch handling.
+- Smooth page handoffs, preloaded Nazarick wallpapers, persistent Nazarick navigation, and ornate secondary windows.
+
 - Nazarick theme and six generated wallpapers based on the supplied visual reference.
 - Blades options menu can open from the left or right.
 - Block Worlds sidebar uses transparent pixel icons.

@@ -1,3 +1,4 @@
+import {transitionPage} from "./pageTransition";
 import {NazarickNavigation,NazarickPage,nextNazarickPage} from "./themes/NazarickNavigation";
 import {NazarickBackdrop} from "./themes/NazarickBackdrop";
 import {castleWindowAppearance,useCastleWindow} from "./themes/castleWindow";
@@ -84,7 +85,7 @@ export function DestinationView({destination,settings,lib,onClose,onLaunch,onMed
   } else rows=[browse("library","library"),{label:"Store",icon:"store",run:()=>openSteam("store")},browse("friends","friends"),browse("downloads","download"),browse("notifications","bell"),browse("settings","gear"),browse("power","power")];
   const current=Math.min(sel,Math.max(0,rows.length-1));
   const choose=(i:number)=>{setSel(i);playSound("select");rows[i]?.run?.();};
-  const navigateNazarick=(place:NazarickPage)=>{playSound("tab");if(place==="home")closeSurface();else if(place==="store")closeSurface(()=>openSteam("store"));else{setPage({place});setHistory([]);setSel(0);setQuery("");setNotice("");}};
+  const navigateNazarick=(place:NazarickPage)=>{playSound("tab");if(place==="home")closeSurface();else if(place==="store")closeSurface(()=>openSteam("store"));else transitionPage(settings,()=>{setPage({place});setHistory([]);setSel(0);setQuery("");setNotice("");});};
   const handler=useRef<(p:Press)=>boolean>(()=>true);
   handler.current=p=>{if(menu.handle(p))return true;if(settings.theme==="nazarick"&&(p.btn==="l1"||p.btn==="r1")){navigateNazarick(nextNazarickPage(page.place,p.btn==="l1"?-1:1));return true;}if(p.btn==="b")back();else if(p.btn==="up"||p.btn==="down"){setSel(Math.max(0,Math.min(rows.length-1,current+(p.btn==="up"?-1:1))));playSound("move");}else if(p.btn==="a")choose(current);else if(p.btn==="y"){inputRef.current?.focus();}return true;};
   useEffect(()=>pushModalInput(p=>handler.current(p)),[]);

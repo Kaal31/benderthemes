@@ -1,3 +1,4 @@
+import {transitionPage} from "./pageTransition";
 import {NazarickHome} from "./themes/Nazarick";
 import {PainHome} from "./themes/Pain";
 import {AeroV2Home} from "./themes/AeroV2";
@@ -138,7 +139,8 @@ export function ThemedHome({ standalone }: { standalone?: boolean }) {
   const [overlay, setOverlay] = useState<Overlay>(null);
   const [destination,setDestination] = useState<Destination|null>(null);
   const launching=useLaunchState();
-  useEffect(()=>{setDestinationOpener(d=>{if(d.place==="media"){setOverlay({kind:"shots"});setDestination(null);}else{setOverlay(null);setDestination(d);}});return()=>{setDestinationOpener(null);dismissLaunch();};},[]);
+  useEffect(()=>{setDestinationOpener(d=>transitionPage(s,()=>{if(d.place==="media"){setOverlay({kind:"shots"});setDestination(null);}else{setOverlay(null);setDestination(d);}},doc));return()=>{setDestinationOpener(null);};},[s.theme,s.animations,doc]);
+  useEffect(()=>()=>dismissLaunch(),[]);
   useEffect(()=>{if(overlay)setDestination(null);},[overlay]);
 
   // L2 / R2 anywhere: previous / next preset, with a banner naming it.
@@ -170,11 +172,10 @@ export function ThemedHome({ standalone }: { standalone?: boolean }) {
   useEffect(() => {
     setStoreOpener(() => {
       playSound("open");
-      setDestination(null);
-      setOverlay({ kind: "store" });
+      transitionPage(s,()=>{setDestination(null);setOverlay({ kind: "store" });},doc);
     });
     return () => setStoreOpener(null);
-  }, []);
+  }, [s.theme,s.animations,doc]);
 
   const api: HomeApi = useMemo(
     () => ({
@@ -251,8 +252,8 @@ export function ThemedHome({ standalone }: { standalone?: boolean }) {
       {overlay?.kind === "shots" && <ScreenshotGallery appid={overlay.appid} index={overlay.index} lib={lib.byId} onClose={() => setOverlay(null)} />}
       {overlay?.kind === "trailer" && <TrailerPlayer game={overlay.game} onClose={() => setOverlay(null)} />}
       {overlay?.kind === "video" && <VideoPlayer video={overlay.video} lib={lib.byId} onClose={() => setOverlay(null)} />}
-      {overlay?.kind === "store" && <StoreView settings={s} lib={lib} onClose={() => setOverlay(null)} onLaunch={(g) => launchGame(g)} />}
-      {destination && <DestinationView destination={destination} settings={s} lib={lib} onClose={()=>setDestination(null)} onLaunch={launchGame} onMedia={()=>setOverlay({kind:"shots",appid:destination.game?.appid})} onTrailer={g=>setOverlay({kind:"trailer",game:g})}/>}
+      {overlay?.kind === "store" && <StoreView settings={s} lib={lib} onClose={() => transitionPage(s,()=>setOverlay(null),doc)} onLaunch={(g) => launchGame(g)} />}
+      {destination && <DestinationView destination={destination} settings={s} lib={lib} onClose={()=>transitionPage(s,()=>setDestination(null),doc)} onLaunch={launchGame} onMedia={()=>setOverlay({kind:"shots",appid:destination.game?.appid})} onTrailer={g=>setOverlay({kind:"trailer",game:g})}/>}
       {launching && <LaunchView value={launching} settings={s}/>}
       {banner && (
         <div

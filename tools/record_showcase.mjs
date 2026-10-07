@@ -15,6 +15,7 @@ for(let i=0;i<entries.length;i++){
  if(title==='Block Worlds'){await p.locator('.mc-change').click();await p.waitForTimeout(700);await p.getByRole('button',{name:'Randomize Skin',exact:true}).click();await p.waitForTimeout(900);await p.getByRole('button',{name:'Cancel',exact:true}).click();}
  if(title==='Nazarick'){for(const label of ['Library','Store','Friends','Downloads','Settings']){await p.locator('.naz-top nav').last().getByRole('button',{name:new RegExp('^'+label+'$','i')}).click();await p.waitForTimeout(1500);}await p.locator('.naz-top nav').last().getByRole('button',{name:/^home$/i}).click();await p.waitForTimeout(350);}
  await p.keyboard.press(title.includes('Blades')?'y':'x');await p.waitForTimeout(1000);await p.keyboard.press('ArrowDown');await p.waitForTimeout(650);await p.keyboard.press('Escape');await p.waitForTimeout(1100);
+ await p.evaluate(()=>window.__launchGame(window.__libraryGame(1000)));await p.waitForTimeout(1400);await p.keyboard.press('Escape');await p.waitForTimeout(450);
  const duration=(Date.now()-started)/1000-trim;const video=p.video();await ctx.close();const path=await video.path();manifest.push({title,path,trim,duration,errors});writeFileSync(`${out}/manifest.json`,JSON.stringify(manifest,null,2));console.log(title,errors.length?'ERRORS '+errors.join(';'):'recorded');
 }
 await b.close();
