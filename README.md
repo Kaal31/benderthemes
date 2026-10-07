@@ -67,4 +67,11 @@ Castle weather is opt-in and uses IP-based approximate location through ipwho.is
 
 ## Credits
 
-Bundled resources include third-party theme materials, fonts, sounds and reconstruction references. Their existing notices are retained in `third-party/` and resource-level `SOURCES.txt` files. Original Deck Home Themes attribution is preserved in `third-party/Original-Deck-Home-Themes-BSD.txt`. No project-wide license is added by this repository. Big credit to https://github.com/justinca92/spindeck for inspiring this plugin, without his implementation this wouldn't be ever possible, since ai probably used his code for this (it was fed his plugin amongst many other things).
+Bundled resources include third-party theme materials, fonts, sounds and reconstruction references. Their existing notices are retained in `third-party/` and resource-level `SOURCES.txt` files. Original Deck Home Themes attribution is preserved in `third-party/Original-Deck-Home-Themes-BSD.txt`. No project-wide license is added by this repository. Big credit to https://github.com/justinca92/spindeck for inspiring this plugin, without his implementation this wouldn't be ever possible, since ai probably used his code for this (it was fed his plugin amongst many other things). People whose stuff was fed into ai: 
+audio assets from https://deckthemes.com/
+xbox theme from https://github.com/MrMilenko/Theseus
+blades theme from here https://github.com/Fabxx/XBMC360
+psp theme based on a bunch of icons from devianart and more stuff
+a bunch of assets from https://github.com/libretro/retroarch
+https://www.imsaud.me/browser for ps2 interface
+
