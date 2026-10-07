@@ -31,7 +31,7 @@ Theme settings include supported cover treatments, reflections, motion controls 
 ## Install
 
 1. Install and enable Decky Loader on your Steam Deck.
-2. Download **DeckHomeThemes-v1.9.2.zip** from the Releases page and copy it to your Deck.
+2. Download **DeckHomeThemes-v1.9.3.zip** from the Releases page and copy it to your Deck.
 3. Enable Decky's developer options, then use **Install Plugin from ZIP** to select the archive.
 4. Open **Deck Home Themes** in Quick Access and choose a preset.
 
@@ -48,7 +48,7 @@ npm run build
 npm run package
 ```
 
-The installable archive is written to `out/DeckHomeThemes-v1.9.2.zip`. Packaging is self-contained: it does not require an older release ZIP.
+The installable archive is written to `out/DeckHomeThemes-v1.9.3.zip`. Packaging is self-contained: it does not require an older release ZIP.
 
 For browser previews:
 

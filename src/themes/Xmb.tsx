@@ -1,7 +1,7 @@
 import { openDestination } from "../destinations";
 // XrossMediaBar for the PS3 and PSP themes: a horizontal category bar
 // crossing a vertical item list, over a month-coloured gradient and wave.
-import { CSSProperties, useEffect, useMemo, useState } from "react";
+import { CSSProperties, ReactNode, useEffect, useMemo, useState } from "react";
 import { AnimCanvas } from "../canvas";
 import { darken, hex, lighten, mix, MONTH_NAMES, PS3_MONTHS, PSP_MONTHS, rgb, RGB } from "../color";
 import { BatteryGlyph, GameArt, Icon, IconName, MenuItem, MenuView, themeMenu, useHome, useMenu, useRemembered } from "../common";
@@ -24,6 +24,12 @@ function StockXmbIcon({name,size,variant,skinFallback=false}:{name:string;size:n
   if(variant==="psp" && (name==="globe"||name==="network")) return <svg viewBox="0 0 64 64" style={style} aria-hidden="true"><g fill="#eee">{Array.from({length:12},(_,i)=><circle key={i} cx={32+26*Math.cos(i*Math.PI/6)} cy={32+26*Math.sin(i*Math.PI/6)} r="1.7"/>)}</g><text x="32" y="38" textAnchor="middle" fontFamily="Arial" fontSize="16" fontWeight="bold" fill="#eee">WWW</text></svg>;
   const src=PS3_ICONS[name];
   return src?<img className="dht-xmb-icon" data-icon-source="esseti" src={src} style={style}/>:<Icon name={name as IconName} size={size} color="#fff"/>;
+}
+
+// A removed screenshot or malformed imported icon must not expose a broken-image glyph.
+function XmbImage({src,style,fallback,source}:{src:string;style:CSSProperties;fallback:ReactNode;source?:string}){
+  const [failed,setFailed]=useState<string>();
+  return failed===src?<>{fallback}</>:<img src={src} alt="" data-icon-source={source} style={style} onError={()=>setFailed(src)}/>;
 }
 
 interface XItem {
@@ -236,7 +242,7 @@ export function XmbHome({ variant }: { variant: Variant }) {
   const vids = useVideos();
   const skin = variant === "ps3" ? p3tSkin : null;
   const skinIcon=(key:string)=>{
-    const aliases:Record<string,string[]>={icon_psn:["icon_psnetwork","icon_accountmanage"],icon_store:["icon_psstore","icon_network"]};
+    const aliases:Record<string,string[]>={icon_psn:["icon_psnetwork","icon_accountmanage"],icon_store:["icon_psstore","icon_network"],icon_photo_album_default:["icon_photo"]};
     return skin?.icons[key] ?? aliases[key]?.map(k=>skin?.icons[k]).find(Boolean);
   };
 
@@ -290,7 +296,7 @@ export function XmbHome({ variant }: { variant: Variant }) {
       ],
     };
     // Photo: Steam screenshots, one folder per game (like the console's photo albums)
-    const photoItems: XItem[] = [{ key: "shots", p3t: "icon_photo_album_default", label: "All Screenshots", icon: "photo", sub: shots ? `${shots.length} pictures` : "Loading…", image: shots?.[0]?.url, action: () => api.openMedia() }];
+    const photoItems: XItem[] = [{ key: "shots", p3t: "icon_photo_album_default", label: "All Screenshots", icon: "photo", sub: shots ? `${shots.length} pictures` : "Loading…", action: () => api.openMedia() }];
     if (shots) {
       const byApp = new Map<number, typeof shots>();
       shots.forEach((sh) => byApp.set(sh.appid, [...(byApp.get(sh.appid) ?? []), sh]));
@@ -302,7 +308,6 @@ export function XmbHome({ variant }: { variant: Variant }) {
           sub: `${list.length} screenshot${list.length === 1 ? "" : "s"}`,
           icon: "photo",
           p3t: "icon_photo_album_default",
-          image: list[0].url,
           children: () => list.map((sh, i) => ({ key: sh.url, label: sh.created ? new Date(sh.created * 1000).toLocaleString() : `Screenshot ${i + 1}`, sub: name, image: sh.url, icon: "photo" as IconName, action: () => api.openMedia(appid, i) })),
         });
       }
@@ -519,13 +524,13 @@ export function XmbHome({ variant }: { variant: Variant }) {
     if (it.image)
       return (
         <div style={{ width: iw, height: ih, boxShadow: selected ? "0 6px 20px rgba(0,0,0,0.45)" : "0 3px 10px rgba(0,0,0,0.35)", overflow: "hidden", transition: "width 160ms, height 160ms", border: "2px solid rgba(255,255,255,0.85)", boxSizing: "border-box" }}>
-          <img src={it.image} style={{ width: "100%", height: "100%", objectFit: "cover", display: "block" }} />
+          <XmbImage src={it.image} style={{ width: "100%", height: "100%", objectFit: "cover", display: "block" }} fallback={<StockXmbIcon name={it.icon??"photo"} size={ih*.8} variant={variant} skinFallback={!!skin}/>}/>
         </div>
       );
     const gs = selected ? L.glyphSel : L.glyph;
     return (
       <div style={{ width: iw, height: ih, display: "flex", alignItems: "center", justifyContent: "center", filter: selected ? "drop-shadow(0 0 10px rgba(255,255,255,0.75))" : "drop-shadow(0 2px 4px rgba(0,0,0,0.4))" }}>
-        {it.p3t && skinIcon(it.p3t) ? <img data-icon-source="skin" src={skinIcon(it.p3t)} style={{ width: gs * 1.35, height: gs * 1.35,objectFit:"contain" }} /> : <StockXmbIcon name={it.icon ?? "folder"} size={gs*1.15} variant={variant} skinFallback={!!skin}/>}
+        {it.p3t && skinIcon(it.p3t) ? <XmbImage source="skin" src={skinIcon(it.p3t)!} style={{ width: gs * 1.35, height: gs * 1.35,objectFit:"contain" }} fallback={<StockXmbIcon name={it.icon??"folder"} size={gs*1.15} variant={variant} skinFallback={!!skin}/>}/> : <StockXmbIcon name={it.icon ?? "folder"} size={gs*1.15} variant={variant} skinFallback={!!skin}/>}
       </div>
     );
   };
@@ -571,7 +576,7 @@ export function XmbHome({ variant }: { variant: Variant }) {
                 }}
               >
                 <div style={{ filter: selected ? "drop-shadow(0 0 12px rgba(255,255,255,0.8))" : "drop-shadow(0 2px 4px rgba(0,0,0,0.35))" }}>
-                  {skinIcon(c.p3t) ? <img data-icon-source="skin" src={skinIcon(c.p3t)} style={{ width: size * 1.3, height: size * 1.3, display: "block",objectFit:"contain" }} /> : <StockXmbIcon name={c.icon} size={size*1.12} variant={variant} skinFallback={!!skin}/>}
+                  {skinIcon(c.p3t) ? <XmbImage source="skin" src={skinIcon(c.p3t)!} style={{ width: size * 1.3, height: size * 1.3, display: "block",objectFit:"contain" }} fallback={<StockXmbIcon name={c.icon} size={size*1.12} variant={variant} skinFallback={!!skin}/>}/> : <StockXmbIcon name={c.icon} size={size*1.12} variant={variant} skinFallback={!!skin}/>}
                 </div>
                 <div style={{ position: "absolute", top: size + 6, color: "#fff", fontSize: L.font - 4, opacity: selected ? 1 : 0, whiteSpace: "nowrap", textShadow: "0 1px 4px rgba(0,0,0,0.5)" }}>{c.label}</div>
               </div>

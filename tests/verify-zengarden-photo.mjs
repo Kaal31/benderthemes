@@ -1,0 +1,13 @@
+import {chromium} from 'playwright';import assert from 'node:assert/strict';
+const b=await chromium.launch();const p=await b.newPage({viewport:{width:1304,height:900}});
+await p.addInitScript(()=>{let value;Object.defineProperty(window,'__testP3t',{configurable:true,get:()=>value,set:v=>{if(v?.icons){v.icons.icon_photo_album_default='data:image/png;base64,invalid';v.icons.icon_photo='data:image/png;base64,invalid';}value=v;}})});
+await p.goto('http://127.0.0.1:8766/preview/preview.html?theme=ps3&p3t=ZenGarden.p3t&h=720');await p.waitForTimeout(700);for(let i=0;i<4;i++)await p.keyboard.press('ArrowLeft');await p.waitForTimeout(500);
+assert.ok(await p.getByText('All Screenshots',{exact:true}).isVisible());
+assert.equal(await p.locator('[data-dht-root] img').evaluateAll(es=>es.filter(e=>e.complete&&e.naturalWidth===0).length),0);
+assert.ok(await p.locator('[data-icon-source="esseti"]').count()>0);
+await p.locator('[data-dht-root]').screenshot({path:'preview/zengarden-photo-fixed.png'});
+await p.keyboard.press('ArrowDown');await p.keyboard.press('Enter');await p.waitForTimeout(350);
+const img=p.locator('[data-dht-root] img').filter({visible:true});const n=await img.count();assert.ok(n>0);
+await img.last().evaluate(e=>{e.src='data:image/png;base64,invalid';});await p.waitForTimeout(250);
+assert.equal(await p.locator('[data-dht-root] img').evaluateAll(es=>es.filter(e=>e.complete&&e.naturalWidth===0).length),0);
+await b.close();console.log('PASS: ZenGarden Photo albums and corrupt skin icons recover; failed screenshot thumbnail falls back.');
