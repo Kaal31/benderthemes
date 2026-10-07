@@ -3,7 +3,7 @@ export function Hourglass() {
   return <svg viewBox="0 0 100 100" width="100%" height="100%" aria-hidden="true"><path d="M23 8 Q50 -2 77 8 L55 50 L77 92 Q50 102 23 92 L45 50 Z" fill="var(--dht-dial-green,#57ff00)"/></svg>;
 }
 
-export function DialMechanism({turn,id,active=false,rhombus=false,skinArt,skinHue=0,cycle=0}:{turn:number;id:string;active?:boolean;rhombus?:boolean;skinArt?:string;skinHue?:number;cycle?:number}) {
+export function DialMechanism({turn,id,active=false,rhombus=false,slowMorph=false,skinArt,skinHue=0,cycle=0}:{turn:number;id:string;active?:boolean;rhombus?:boolean;slowMorph?:boolean;skinArt?:string;skinHue?:number;cycle?:number}) {
   const p = `alien-${id}`;
   const ornament = "M123 104 Q230 69 337 104 L247 230 L337 356 Q230 391 123 356 L207 230 Z";
   const diamond = "M230 88 Q230 88 230 88 L339 230 L230 372 Q230 372 230 372 L121 230 Z";
@@ -60,6 +60,7 @@ export function DialMechanism({turn,id,active=false,rhombus=false,skinArt,skinHu
       <path d="M230 86 L370 86 L370 374 L230 374 L280 230 Z" className="alien-shutter alien-shutter-right" fill="#030b04" style={{transform:active?"translateX(150px)":"translateX(0)"}}/>
       <path d={ornament} fill={fill("green")} opacity={active?.9:1}/>
       </>}
+      {slowMorph && rhombus && <g key={`glow-${cycle}`} className="alien-core-glow"><path d={active ? diamond : ornament} className={active ? "alien-rhombus-morph" : ""} fill="#89ff23" opacity=".25" filter={fill("glow")}/><path d={active ? diamond : ornament} className={active ? "alien-rhombus-morph" : ""} fill="none" stroke="#caff81" strokeWidth="3" opacity=".3" filter={fill("glow")}/></g>}
       <circle cx="230" cy="230" r="142" fill={fill("glass")} pointerEvents="none"/>
     </g>
     <path d="M115 144 A145 145 0 0 1 302 107" fill="none" stroke="#b5cd96" strokeOpacity=".55" strokeWidth="1.3"/>

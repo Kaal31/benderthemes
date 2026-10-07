@@ -31,6 +31,8 @@ export function DialHome() {
   const [browsed,setBrowsed] = useState(false);
   const active = s.dial.activation === "always" || (s.dial.activation === "on-browse" && browsed);
   const motions = s.dial.motions ?? (s.dial.motion === "none" ? [] : [s.dial.motion]);
+  const slowMorph = motions.includes("rhombus-slow");
+  const rhombus = slowMorph || motions.includes("rhombus");
   const motion = s.animations && motions.length ? "combined" : "none";
   const hardware = useRef<HTMLDivElement>(null);
   useEffect(() => {
@@ -48,6 +50,16 @@ export function DialHome() {
   const pending = useRef<ReturnType<typeof setTimeout> | null>(null);
   const release = useRef<ReturnType<typeof setTimeout> | null>(null);
   const cur: Game | undefined = games[sel];
+  const [outgoing, setOutgoing] = useState<Game | undefined>();
+  const previousCover = useRef(cur);
+  useEffect(() => {
+    const old = previousCover.current;
+    previousCover.current = cur;
+    if (!slowMorph || !s.animations || old?.appid === cur?.appid) return;
+    setOutgoing(old);
+    const timer = setTimeout(() => setOutgoing(undefined), 220);
+    return () => clearTimeout(timer);
+  }, [cur?.appid, slowMorph, s.animations]);
   useEffect(() => { if (remembered !== sel) setSel(sel); }, [remembered, sel]);
   useEffect(() => () => { if (pending.current) clearTimeout(pending.current); if (release.current) clearTimeout(release.current); }, []);
 
@@ -83,8 +95,8 @@ export function DialHome() {
     const common: MenuItem[] = [
       { label: "Dial skin", sub: () => ([["classic","Original"],["chrome","Classic chrome"],["crimson","Crimson reactor"],["arctic","Arctic ceramic"]] as const).map(([look,label]) => ({label,checked:getSettings().dial.look===look,action:()=>updateDial({look})})) },
       { label: "Switch animation", sub: () => ([
-        ["rhombus","Hourglass → Rhombus (video)"],["rotate","Rotate"],["pulse","Pulse"],["hologram","Hologram lift"],["none","None"],
-      ] as [DialMotion,string][]).map(([motion,label]) => ({label,checked:motion === "none" ? motions.length === 0 : motions.includes(motion),action:()=>{const d=getSettings().dial;const selected=d.motions ?? (d.motion === "none" ? [] : [d.motion]);updateDial({motions:motion === "none" ? [] : selected.includes(motion) ? selected.filter(m=>m!==motion) : [...selected,motion]});}})) },
+        ["rhombus","Hourglass → Rhombus (video)"],["rhombus-slow","Slower morph (650 ms hold)"],["rotate","Rotate"],["pulse","Pulse"],["hologram","Hologram lift"],["none","None"],
+      ] as [DialMotion,string][]).map(([motion,label]) => ({label,checked:motion === "none" ? motions.length === 0 : motions.includes(motion),action:()=>{const d=getSettings().dial;const selected=d.motions ?? (d.motion === "none" ? [] : [d.motion]);updateDial({motions:motion === "none" ? [] : selected.includes(motion) ? selected.filter(m=>m!==motion) : [...selected.filter(m => motion === "rhombus" ? m !== "rhombus-slow" : motion === "rhombus-slow" ? m !== "rhombus" : true),motion]});}})) },
       { label: "Dial activation", sub: () => ([
         ["on-browse","Activate when browsing"],["always","Always activated"],["off","Keep idle appearance"],
       ] as const).map(([activation,label]) => ({label,checked:getSettings().dial.activation===activation,action:()=>{setBrowsed(false);updateDial({activation});}})) },
@@ -141,7 +153,7 @@ export function DialHome() {
   return <ThemeRoot onInput={onInput} hints={{ a: "Play", y: "Options", menu: "Options" }}>
     <Stage background="#020403">
       <style>{DIAL_CSS}</style>
-      <div className="alien-dial" data-skin={s.dial.look} style={{"--alien-skin-hue":`${skinHue}deg`} as CSSProperties} data-motion={s.animations} data-launching={launching} data-animation={motion} data-active={active} data-reflections={s.dial.reflections} onKeyDown={e => { if (e.key === "Enter") e.preventDefault(); }}>
+      <div className="alien-dial" data-slow-morph={slowMorph} data-skin={s.dial.look} style={{"--alien-skin-hue":`${skinHue}deg`} as CSSProperties} data-motion={s.animations} data-launching={launching} data-animation={motion} data-active={active} data-reflections={s.dial.reflections} onKeyDown={e => { if (e.key === "Enter") e.preventDefault(); }}>
         {wall ? <img className="dht-dial-bg alien-wall" src={wall} alt=""/> : <DialScenery/>}
         <header className="alien-header">
           <button className="alien-steam" aria-label="Steam menu" onClick={() => openSteam("mainmenu")}><span className="alien-steam-mark"><svg viewBox="0 0 24 24" aria-hidden="true"><path fill="currentColor" d="M11.979 0C5.678 0 .511 4.86.022 11.037l6.432 2.658c.545-.371 1.203-.59 1.912-.59.063 0 .125.004.188.006l2.861-4.142V8.91c0-2.495 2.028-4.524 4.524-4.524 2.494 0 4.524 2.031 4.524 4.527s-2.03 4.525-4.524 4.525h-.105l-4.076 2.911c0 .052.004.105.004.159 0 1.875-1.515 3.396-3.39 3.396-1.635 0-3.016-1.173-3.331-2.727L.436 15.27C1.862 20.307 6.486 24 11.979 24c6.627 0 11.999-5.373 11.999-12S18.605 0 11.979 0zM7.54 18.21l-1.473-.61c.262.543.714.999 1.314 1.25 1.297.539 2.793-.076 3.332-1.375.263-.63.264-1.319.005-1.949s-.75-1.121-1.377-1.383c-.624-.26-1.29-.249-1.878-.03l1.523.63c.956.4 1.409 1.5 1.009 2.455-.397.957-1.497 1.41-2.454 1.012H7.54zm11.415-9.303c0-1.662-1.353-3.015-3.015-3.015-1.665 0-3.015 1.353-3.015 3.015 0 1.665 1.35 3.015 3.015 3.015 1.663 0 3.015-1.35 3.015-3.015zm-5.273-.005c0-1.252 1.013-2.266 2.265-2.266 1.249 0 2.266 1.014 2.266 2.266 0 1.251-1.017 2.265-2.266 2.265-1.253 0-2.265-1.014-2.265-2.265z"/></svg></span><span>STEAM</span></button>
@@ -149,12 +161,12 @@ export function DialHome() {
           <div className="alien-status"><Icon name="wifi" size={22} color={status.online ? "#d5d9d5" : "#596159"}/>{bat && <BatteryGlyph level={bat.level} charging={bat.charging} color="#58ff00" w={29}/>}<time>{fmtTime(now,s.clock24)}</time><span className="alien-mini"><Hourglass/></span></div>
         </header>
         <div className="alien-floor-light" style={{left:cx-radius,top:cy+radius-15,width:radius*2}}/>
-        {s.dial.reflections && <div className="alien-dial-reflection" aria-hidden="true" style={{left:cx-radius,top:cy+radius+3,width:radius*2,height:radius*2}}><DialMechanism turn={s.animations && motions.includes("rotate") ? turn : 0} active={active} rhombus={motions.includes("rhombus")} cycle={turn} skinArt={skinArt} skinHue={skinHue} id="reflection"/></div>}
-        <button className="alien-mechanism dht-dial-dial" aria-label={cur ? `Play ${cur.name}` : "Alien Dial"} disabled={!cur || launching} onClick={() => cur && launch(cur)} style={{left:cx-radius,top:cy-radius,width:radius*2,height:radius*2}}><div ref={hardware} className="alien-classic-motion"><DialMechanism turn={s.animations && motions.includes("rotate") ? turn : 0} active={active} rhombus={motions.includes("rhombus")} cycle={turn} skinArt={skinArt} skinHue={skinHue} id="main"/></div></button>
+        {s.dial.reflections && <div className="alien-dial-reflection" aria-hidden="true" style={{left:cx-radius,top:cy+radius+3,width:radius*2,height:radius*2}}><DialMechanism turn={s.animations && motions.includes("rotate") ? turn : 0} active={active} rhombus={rhombus} slowMorph={slowMorph} cycle={turn} skinArt={skinArt} skinHue={skinHue} id="reflection"/></div>}
+        <button className="alien-mechanism dht-dial-dial" aria-label={cur ? `Play ${cur.name}` : "Alien Dial"} disabled={!cur || launching} onClick={() => cur && launch(cur)} style={{left:cx-radius,top:cy-radius,width:radius*2,height:radius*2}}><div ref={hardware} className="alien-classic-motion"><DialMechanism turn={s.animations && motions.includes("rotate") ? turn : 0} active={active} rhombus={rhombus} slowMorph={slowMorph} cycle={turn} skinArt={skinArt} skinHue={skinHue} id="main"/></div></button>
         {cur && active && s.dial.floatingCover && <div className="alien-projection" key={cur.appid} aria-label={`Holographic projection of ${cur.name}`} style={{left:cx-radius*.63,top:cy-radius*.945,width:radius*1.26,height:radius*1.89}}>
           {s.dial.projectionLight && <DialProjectionLight/>}
           <div className="alien-hologram-float">
-          <div className="alien-hologram-card"><div className="alien-hologram-art"><GameArt flat g={cur} kind="portrait" style={{width:"100%",height:"100%",objectFit:"contain"}}/></div><div className="alien-hologram-scan"/><div className="alien-hologram-glint"/></div>
+          <div className="alien-hologram-card"><div className="alien-hologram-art alien-cover-in"><GameArt flat g={cur} kind="portrait" style={{width:"100%",height:"100%",objectFit:"contain"}}/></div>{slowMorph && outgoing && <div className="alien-hologram-art alien-cover-out"><GameArt flat g={outgoing} kind="portrait" style={{width:"100%",height:"100%",objectFit:"contain"}}/></div>}<div className="alien-hologram-scan"/><div className="alien-hologram-glint"/></div>
           </div>
         </div>}
         <div className="alien-carousel" aria-label="Games">{offsets.map(d => {

@@ -82,5 +82,15 @@ export function usePresets(): Preset[] {
   return getPresets();
 }
 
-export const presetCompany = (theme: ThemeId): string => theme === "xbox" || theme === "x360" ? "Microsoft" : theme === "aero" || theme === "dial" || theme === "castle" || theme === "republic" ? "Bonus" : "Sony";
+export const presetCompany = (theme: ThemeId): string => theme === "xbox" || theme === "x360" ? "Microsoft" : theme === "aero" || theme === "aero2" || theme === "dial" || theme === "castle" || theme === "republic" || theme === "minecraft" || theme === "pain" ? "Bonus" : "Sony";
 export function presetGroups() { return ["Sony", "Microsoft", "Bonus"].map(name => ({name, presets:getPresets().filter(p=>presetCompany(p.theme)===name)})); }
+
+/** Keep native dropdown selection valid when browsing a different company. */
+export function presetPickerState(s: Settings, presets: Preset[]) {
+  const company = s.presetCompany ?? presetCompany(s.theme);
+  const filtered = presets.filter(p=>presetCompany(p.theme)===company);
+  const current = currentPresetId(s);
+  const selected = filtered.some(p=>p.id===current) ? current : "__choose__";
+  const options = [...(selected === "__choose__" ? [{data:"__choose__",label:"Choose a preset…"}] : []), ...filtered.map(p=>({data:p.id,label:p.label}))];
+  return {company,selected,options};
+}

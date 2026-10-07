@@ -1,5 +1,5 @@
 import { beginLaunch, dismissLaunch, launchState } from "../src/launch";
-import { autoPack, packFile } from "../src/steam";
+import { autoPack, packFile, SOUND_FILES } from "../src/steam";
 // Browser preview of every theme with an invented sample library.
 import { createRoot } from "react-dom/client";
 import { useEffect, useState } from "react";
@@ -31,7 +31,7 @@ function svg(w: number, h: number, body: string) {
 function art(name: string, i: number) {
   if (referenceArt?.[name]) {
     const a = referenceArt[name];
-    return {portrait:a.portrait,landscape:a.portrait,hero:a.hero ?? a.portrait,logo:a.logo ?? []};
+    return {portrait:a.portrait,landscape:a.landscape ?? a.portrait,hero:a.hero ?? a.portrait,logo:a.logo ?? []};
   }
   const a = hue(name);
   const b = (a + 50 + (i % 3) * 40) % 360;
@@ -57,7 +57,7 @@ const apps = (referenceTitles ?? TITLES).map((name, i) => ({
   display_name: name,
   rt_last_time_played: now - i * 86400 * 1.7 - (i % 5) * 3600,
   minutes_playtime_forever: ((i * 7919) % 6000) + (i % 4 === 0 ? 0 : 30),
-  installed: i % 4 !== 3,
+  installed: themedPreview === "pain" ? i >= 6 : i % 4 !== 3,
   steam_deck_compat_category: [3, 2, 3, 1, 0][i % 5],
   __art: art(name, i),
 }));
@@ -110,6 +110,13 @@ setPreviewTier((id) => (["platinum", "gold", "silver", "bronze", "borked", "nati
 setPreviewBattery({ level: 0.72, charging: false });
 if (!new URLSearchParams(location.search).get("realsound")) setPreviewSound((kind,variation=0) => {
   const settings = getSettings();
+  if(settings?.theme === "minecraft" || settings?.theme === "aero" || settings?.theme === "aero2"){
+    if (["none","steam"].includes(settings.packs[settings.theme] ?? "")) return;
+    const folder=settings.theme === "minecraft" ? "Minecraft Console Legacy" : "windows xp sounds";
+    const file=SOUND_FILES[kind === "tile" ? "move" : kind];
+    const audio=new Audio(`../bundle/sounds/${encodeURIComponent(folder)}/${file}`);
+    audio.volume=Math.max(0,Math.min(1,(settings.sfxVolume??80)/100));audio.play().catch(()=>{});return;
+  }
   if(settings?.theme === "republic"){
     const names:Record<string,string>={move:"move",tile:"move",tab:variation%2?"tab_alt":"tab",end:"error",select:"confirm",launch:"confirm",toggle:"slider",open:"confirm",back:"back",menu:"confirm",close:"back"};
     const audio=new Audio(`../bundle/sounds/DHT%20Verified%20Republic/${names[kind]}.wav`);audio.volume=Math.max(0,Math.min(1,(settings.sfxVolume??80)/100));audio.play().catch(()=>{});return;

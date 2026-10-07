@@ -37,6 +37,7 @@ export function storeSkin(s: Settings): Skin {
   const t = s.theme;
   const ps = { title: "PlayStation Store", sale: "#f5c518" };
   switch (t) {
+    case "pain": return {title:"Store",sale:"#ba81ec",layout:"grid",bg:"radial-gradient(ellipse at 30% 20%,#2c173e,#09070f 75%)",panel:"#191021ed",text:"#e4cdf5",sub:"#b697cb",accent:"#b978ee",accentText:"#170a24",radius:12,ring:ring("#ce9bff","0 0 20px #a64eeb88")};
     case "castle": return {title:"Store",sale:"#e0ad14",layout:"grid",bg:"transparent",font:"Cardinal,sans-serif",panel:"#ffffffcc",text:"#304b64",sub:"#617d94",accent:"#ffdb36",accentText:"#253953",radius:3,ring:ring("#ffe470")};
     case "republic": return {title:"Republic Exchange",sale:"#d6b65b",layout:"grid",bg:"linear-gradient(140deg,#07101a,#152735)",panel:"#0c1824ee",text:"#d8e9f3",sub:"#b7a87e",accent:"#d9bb69",accentText:"#17150e",radius:3,ring:ring("#fce296")};
     case "ps5":
@@ -59,6 +60,7 @@ export function storeSkin(s: Settings): Skin {
       if (st === "nxe") return { title: "Marketplace", sale: "#8ee03a", layout: "grid", bg: "radial-gradient(ellipse at 60% 20%, #4a5266 0%, #262a35 45%, #0f1116 100%)", panel: "linear-gradient(180deg, #3a3f4c, #20232b)", text: "#fff", sub: "#a7adbb", accent: "#8ee03a", accentText: "#10200a", radius: 10, ring: ring("#8ee03a", "0 14px 30px rgba(0,0,0,.6)") };
       return { title: "Store", sale: "#107c10", layout: "grid", bg: "linear-gradient(180deg, #f2f2f2, #dcdcdc)", panel: "#fff", text: "#222", sub: "#666", accent: "#107c10", accentText: "#fff", radius: 0, font: '"Segoe UI", "Motiva Sans", sans-serif', ring: ring("#107c10") };
     }
+    case "aero2":
     case "aero":
       return { title: "Steam Store", sale: "#ff8a00", layout: "grid", bg: "linear-gradient(180deg, #4aa8ff 0%, #1d6ae0 45%, #0c40b0 100%)", panel: "linear-gradient(180deg, rgba(255,255,255,0.35), rgba(255,255,255,0.12))", text: "#fff", sub: "#dcefff", accent: "linear-gradient(180deg, #f4ffb0, #b6ee3c 40%, #5aa812)", accentText: "#123d06", radius: 18, ring: ring("#eaff7a", "0 0 20px rgba(200,255,80,.85)") };
     case "dial":

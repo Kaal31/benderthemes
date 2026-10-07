@@ -1,0 +1,17 @@
+import {chromium} from 'playwright';
+import assert from 'node:assert/strict';
+const browser=await chromium.launch({args:['--autoplay-policy=no-user-gesture-required']});
+const page=await browser.newPage();
+await page.addInitScript(()=>{window.__audioLog=[];const Native=window.Audio;window.Audio=class extends Native{constructor(url){super(url);window.__audioLog.push(this);}}});
+await page.goto('http://127.0.0.1:8766/preview/minecraft-preview.html?h=720');
+await page.locator('.mc-home').waitFor();await page.waitForTimeout(1500);
+assert.equal(await page.evaluate(()=>window.__autoPack('minecraft','music')?.folder),'Minecraft Console Legacy');
+assert.equal(await page.evaluate(()=>window.__autoPack('aero')?.folder),'windows xp sounds');
+await page.keyboard.press('ArrowDown');await page.waitForTimeout(500);
+const data=await page.evaluate(()=>window.__audioLog.map(a=>({src:a.src,loop:a.loop,paused:a.paused,error:a.error?.code})));
+assert.ok(data.some(a=>a.src.endsWith('menu_music.mp3')&&a.loop&&!a.paused&&!a.error));
+assert.ok(data.some(a=>a.src.endsWith('deck_ui_navigation.wav')&&!a.error));
+await page.evaluate(()=>window.__updateTheme({backgroundMusic:false}));await page.waitForTimeout(700);
+assert.ok(await page.evaluate(()=>window.__audioLog.filter(a=>a.loop).every(a=>a.paused)));
+console.log('PASS: automatic pack selection, Minecraft navigation audio, looping Sweden playback, global music off.');
+await browser.close();

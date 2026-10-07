@@ -2,6 +2,15 @@ export const DIAL_CSS = `
 .alien-projection{filter:hue-rotate(var(--alien-skin-hue,0deg))}
 .alien-dial[data-skin=crimson] .alien-projection{filter:url(#alien-main-red)}
 
+.alien-dial[data-slow-morph=true] .alien-rhombus-morph{animation-delay:650ms}
+.alien-dial[data-slow-morph=true][data-motion=true] .alien-cover-in{animation:alienCoverReveal 440ms ease-out 1300ms both}
+.alien-cover-out{animation:alienCoverExit 220ms ease-out both}
+.alien-core-glow{animation:alienCoreBreathe 4.8s ease-in-out infinite}
+@keyframes alienCoreBreathe{0%,100%{opacity:.72}50%{opacity:1}}
+@keyframes alienCoverReveal{from{opacity:0;transform:translateY(14px);clip-path:inset(100% 0 0)}to{opacity:.86;transform:translateY(0);clip-path:inset(0)}}
+@keyframes alienCoverExit{from{opacity:.86}to{opacity:0;transform:translateY(9px)}}
+.alien-dial[data-motion=false] .alien-core-glow{animation:none}
+@media(prefers-reduced-motion:reduce){.alien-dial .alien-cover-in,.alien-dial .alien-cover-out,.alien-core-glow{animation:none!important}.alien-cover-out{display:none}}
 .alien-rhombus-morph{animation:alienRhombusOpen 650ms cubic-bezier(.4,0,.2,1) both}
 @keyframes alienRhombusOpen{0%{d:path("M123 104 Q230 69 337 104 L247 230 L337 356 Q230 391 123 356 L207 230 Z")}100%{d:path("M230 88 Q230 88 230 88 L339 230 L230 372 Q230 372 230 372 L121 230 Z")}}
 .alien-dial[data-motion=false] .alien-rhombus-morph{animation:none}

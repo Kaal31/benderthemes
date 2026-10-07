@@ -1,0 +1,1 @@
+Steam game artwork for the Aero reference preview only. Copyright belongs to the respective game publishers. Retrieved from https://cdn.akamai.steamstatic.com/steam/apps/{appid}/{filename}. Not shipped in the plugin package. Real installations use the user's Steam library artwork.

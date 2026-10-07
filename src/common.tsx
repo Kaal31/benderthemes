@@ -386,6 +386,11 @@ export function MenuView({
   if (!menu.isOpen && !(variant==="castle"&&retained)) return null;
   const top = liveTop ?? retained!;
   const styles: Record<string, { panel: CSSProperties; item: (sel: boolean, dis?: boolean) => CSSProperties; title?: CSSProperties }> = {
+    minecraft: {
+      panel:{position:"absolute",left:"50%",top:"50%",transform:"translate(-50%,-50%)",width:490,padding:14,background:"#2b2d30",border:"4px solid #121316",boxShadow:"inset 2px 2px #777,0 0 0 2px #606266",fontFamily:"BlockWorlds,monospace"},
+      item:(s,d)=>({fontSize:22,color:d?"#888":"#eee",padding:"16px 20px",marginBottom:6,border:"2px solid #141619",background:s?"#356f1b":"#35373b",boxShadow:s?"inset 0 0 0 2px #b6f597":"inset 1px 1px #777",textShadow:"2px 2px #171917"}),
+      title:{fontSize:25,padding:"10px 20px 20px",color:"#eee"}
+    },
     xmb: {
       panel: { position: "absolute", top: "50%", left: "50%", transform: "translate(-50%,-50%)", width: 480, background: "linear-gradient(90deg, rgba(24,24,24,0.96), rgba(8,8,8,0.97))", padding: "22px 12px", display: "flex", flexDirection: "column", gap: 6, border: "1px solid rgba(255,255,255,0.24)", boxShadow:"0 18px 70px #0008" },
       item: (s, d) => ({ color: d ? "#777" : "#fff", fontSize: 22, padding: "8px 16px", textShadow: s ? "0 0 12px rgba(255,255,255,0.9)" : "none", opacity: s ? 1 : 0.75, background: s ? "linear-gradient(90deg, rgba(255,255,255,0.18), rgba(255,255,255,0))" : "none" }),
@@ -420,6 +425,11 @@ export function MenuView({
       panel: { position: "absolute", left: "50%", top: "50%", transform: "translate(-50%,-50%)", minWidth: 440, background: "linear-gradient(180deg, rgba(20,48,8,0.96), rgba(6,20,3,0.97))", border: "2px solid rgba(170,255,80,0.75)", borderRadius: 14, padding: "12px 10px", boxShadow: "0 0 40px rgba(120,255,40,0.35), inset 0 0 30px rgba(120,255,40,0.12)" },
       item: (s, d) => ({ color: d ? "rgba(180,240,120,0.4)" : s ? "#102e05" : "#c6ff6a", fontSize: 21, fontWeight: 700, letterSpacing: 1, textTransform: "uppercase", padding: "10px 24px", borderRadius: 8, background: s ? "linear-gradient(180deg, #e2ff8a, #8fe024 55%, #4f9e10)" : "none", textShadow: s ? "none" : "0 0 8px rgba(150,255,60,0.6)" }),
       title: { color: "#9fe050", fontSize: 15, letterSpacing: 2, textTransform: "uppercase", padding: "2px 24px 10px" },
+    },
+    pain: {
+      panel:{position:"absolute",right:75,bottom:95,minWidth:380,padding:"14px 10px",background:"#100a1bec",border:"1px solid #9b64c9",borderRadius:22,boxShadow:"0 0 30px #8c42c944"},
+      item:(on,disabled)=>({color:disabled?"#74617e":"#e2c3fa",fontSize:21,padding:"13px 22px",borderRadius:14,background:on?"linear-gradient(90deg,#7136a477,#29183d44)":"transparent",boxShadow:on?"inset 0 0 0 1px #a36dde":"none"}),
+      title:{color:"#b68ad9",fontSize:16,letterSpacing:2,padding:"8px 22px 14px"},
     },
     dial: {
       panel: { position: "absolute", right: 60, bottom: 90, minWidth: 380, background: "rgba(10,12,12,0.95)", border: "1px solid rgba(120,255,60,0.55)", borderRadius: 16, padding: "10px 8px", boxShadow: "0 0 30px rgba(80,255,40,0.25), 0 20px 50px rgba(0,0,0,0.7)" },

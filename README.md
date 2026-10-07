@@ -14,14 +14,14 @@ The showcase records the actual browser previews with sample games. It demonstra
 | --- | --- |
 | PlayStation | PS Vita bubbles, PS2 browser, PS3 XMB, PSP XMB, PS4 and PS5 |
 | Xbox | Original Xbox, Xbox 360 Blades, NXE, Kinect and Metro |
-| Bonus | Aero, Alien Dial, Floating Castle and Republic Office |
+| Bonus | Aero, Aero v.2, Alien Dial, Floating Castle, Republic Office, Block Worlds and Six Paths |
 
 Switch presets from the plugin's Quick Access panel or the home screen options menu. Console presets are grouped by company. Imported Vita skins and PS3 themes can add further presets.
 
 - **PS2:** orbiting blue lights, silver-gray memory-card browser, dimensional save icons and a soft selection spotlight.
 - **Vita:** glossy bubbles, adjustable sway, folders, collections and LiveArea.
 - **Xbox:** reconstructed dashboard assets, themed categories, clock and interface sounds; four Xbox 360 generations.
-- **Aero:** blue glass panels, vivid lime highlights and a sky-and-hills backdrop.
+- **Aero / Aero v.2:** blue glass panels, vivid lime highlights and a sky-and-hills backdrop.
 - **Alien Dial:** multiple dial colors, matching holographic covers, optional floating covers and projection light, and selectable animation combinations.
 - **Floating Castle:** looping video wallpaper, glass windows, animated circular navigation, replace-or-layer secondary windows, and optional automatic-location weather in Celsius.
 - **Republic Office:** looping city wallpaper, Aurebesh text, readable stylized navigation, a rotating golden emblem, blue holographic displays, Battlefront menu effects and background music.
@@ -48,7 +48,7 @@ npm run build
 npm run package
 ```
 
-The installable archive is written to `out/DeckHomeThemes-v1.9.5.zip`. Packaging is self-contained: it does not require an older release ZIP.
+The installable archive is written to `out/DeckHomeThemes-v1.9.6.zip`. Packaging is self-contained: it does not require an older release ZIP.
 
 For browser previews:
 
@@ -59,11 +59,32 @@ python -m http.server 8766
 
 Open `http://127.0.0.1:8766/preview/preview.html`, or the generated `dial-preview.html`, `aero-preview.html`, `castle-preview.html` and `republic-preview.html` in the same directory. Previews use sample games and mock Steam services; they do not launch real games. Playwright checks are in `tests/` and use this preview server.
 
+## Numbered releases
+
+Every source push to `main` is checked, built and packaged by GitHub Actions. Successful builds publish a new numbered release (starting with v1.9.6); the patch version advances automatically. Each release keeps its own ZIP and source tag. Failed checks do not publish a release. The workflow can also be started manually from Actions.
+
+## New in v1.9.6
+
+- **Block Worlds:** Minecraft-inspired library, live 3D player, skin painting/import/export/randomization, focus-following gaze, arm strikes and touch rotation. Browser opens minecraft.net.
+- **Aero v.2:** a separate preset with sculpted panels, integrated landscape sections and revised blue gloss. Original Aero remains available.
+- **Six Paths:** purple moonlit home, circular selected-game display, recent/installed rows, matching menus and smooth motion. The circle follows selection and labels its source section.
+- **Alien Dial:** optional slower hourglass-to-rhombus morph with a 650 ms hold.
+- **Audio:** Minecraft Console Legacy effects, C418’s Sweden background music, and Windows XP effects for both Aero versions; existing audio controls apply.
+- **Fix:** company selection persists and the preset dropdown stays valid when switching between Sony, Microsoft and Bonus.
+
 ## Current limits
 
 This release has browser-preview, type-check and build validation. Native Steam Deck behavior, controller integration and performance across all hardware configurations still need on-device testing. These are console-inspired reconstructions, not original console software or a claim of exact visual parity.
 
 Castle weather is opt-in and uses IP-based approximate location through ipwho.is and current conditions from Open-Meteo. Network failure shows an unavailable state. The Cardinal System address in the castle header is a sample address. Video backgrounds are 720p; motion can be disabled.
+
+## Additional theme previews
+
+![Aero v.2](docs/aero-v2.png)
+![Block Worlds](docs/minecraft.png)
+![Six Paths](docs/six-paths.png)
+
+The earlier compilation above predates these additions. These screenshots are browser previews with sample games.
 
 ## Credits
 
@@ -82,6 +103,11 @@ The following projects, creators and resources were also supplied as references 
 | [kmturley — Cover Forge](https://github.com/kmturley/cover-forge) | Reference for dimensional game cases, printed sleeves, spines and glossy surfaces |
 | [TheRensei — SteamDeckCSSThemes](https://github.com/TheRensei/SteamDeckCSSThemes/tree/main/Game%20Cover%20Reflections%20Theme) | Game-cover reflection reference |
 | [Aurek Fonts](https://github.com/AurekFonts/AurekFonts.github.io) | Aurebesh AF and readable Aurebesh English fonts for Republic Office |
+| [bs-community — skinview3d](https://github.com/bs-community/skinview3d) | Live Minecraft player renderer, with skinview-utils and Three.js; bundled notices retained |
+| [South-Paw — typeface-minecraft](https://github.com/South-Paw/typeface-minecraft) | Minecraft-style typeface |
+| Gecked#0108 — Minecraft Console Legacy | User-supplied Minecraft menu sound pack |
+| cadecomposer — windows xp sounds | User-supplied Aero menu sound pack |
+| C418 — Sweden, Minecraft Volume Alpha | User-supplied Block Worlds background music |
 | [Simple Icons](https://github.com/simple-icons/simple-icons) | Steam icon artwork |
 | [vgmstream](https://github.com/vgmstream/vgmstream) | Tool used to decode the supplied Battlefront sound assets |
 | [Cinzel](https://github.com/NDISCOVER/Cinzel) and [Cormorant](https://github.com/CatharsisFonts/Cormorant) | Republic title and text font resources |

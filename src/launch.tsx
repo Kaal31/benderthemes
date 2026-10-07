@@ -77,7 +77,7 @@ export function LaunchView({value,settings}:{value:LaunchState;settings:Settings
       <button onClick={dismissLaunch} style={{background:"#151a20",color:"white",border:"1px solid #9ba6b5",borderRadius:8,padding:"12px 24px",fontSize:18}}>B · Return home</button>
     </div>
     <style>{`
-      .dht-launch{--launch-color:#fff}.dht-launch[data-console=ps2]{--launch-color:#568cff}.dht-launch[data-console=ps4]{--launch-color:#54abff}.dht-launch[data-console=vita]{--launch-color:#51d5ff}.dht-launch[data-console=xbox],.dht-launch[data-console=x360],.dht-launch[data-console=dial]{--launch-color:#62ff00}.dht-launch[data-console=aero]{--launch-color:#c4ff22}
+      .dht-launch{--launch-color:#fff}.dht-launch[data-console=pain]{--launch-color:#bc83f3}.dht-launch[data-console=ps2]{--launch-color:#568cff}.dht-launch[data-console=ps4]{--launch-color:#54abff}.dht-launch[data-console=vita]{--launch-color:#51d5ff}.dht-launch[data-console=xbox],.dht-launch[data-console=x360],.dht-launch[data-console=dial]{--launch-color:#62ff00}.dht-launch[data-console=aero2],.dht-launch[data-console=aero]{--launch-color:#c4ff22}
       .dht-launch-loader{width:60px;height:60px;margin:24px auto;border:4px solid #ffffff26;border-top-color:var(--launch-color);border-radius:50%;animation:dhtLaunchSpin 1s linear infinite}
       .dht-launch[data-console=ps2] .dht-launch-loader{border-radius:3px;box-shadow:0 0 30px #487aff;animation-duration:2s}
       .dht-launch[data-console=psp] .dht-launch-loader,.dht-launch[data-console=ps3] .dht-launch-loader{width:210px;height:5px;border:0;background:#ffffff22;overflow:hidden;border-radius:0;animation:none}

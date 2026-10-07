@@ -20,7 +20,7 @@ for (const root of ["assets", "bundle/assets"]) {
   if (!existsSync(root)) continue;
   for (const set of readdirSync(root)) {
     assets[set] = assets[set] ?? {};
-    for (const f of readdirSync(`${root}/${set}`)) if (/\.png$/i.test(f)) assets[set][f.replace(/\.png$/i, "")] = "data:image/png;base64," + readFileSync(`${root}/${set}/${f}`).toString("base64");
+    for (const f of readdirSync(`${root}/${set}`)) if (/\.(png|webp)$/i.test(f)) assets[set][f.replace(/\.(png|webp)$/i, "")] = `data:image/${f.endsWith("webp")?"webp":"png"};base64,` + readFileSync(`${root}/${set}/${f}`).toString("base64");
   }
 }
 const dialAssets = {};
@@ -35,7 +35,8 @@ for(const file of readdirSync("bundle/sounds/DHT Verified SAO")) if(file.endsWit
 const bladesAudio = {};
 for(const file of readdirSync("bundle/sounds/DHT Verified MC360 Blades 1.7.2")) if(file.endsWith(".wav")) bladesAudio[file]="data:audio/wav;base64,"+readFileSync(`bundle/sounds/DHT Verified MC360 Blades 1.7.2/${file}`).toString("base64");
 const p3t = existsSync("preview/zengarden.json") ? JSON.parse(readFileSync("preview/zengarden.json","utf8")) : null;
-const wallJs = `window.__testPacks=[${JSON.stringify(republicPack)}];window.__castleAudio=${JSON.stringify(castleAudio)};window.__bladesAudio=${JSON.stringify(bladesAudio)};window.__testP3t=${JSON.stringify(p3t)};window.__dialAssets=${JSON.stringify(dialAssets)};window.__testWalls=${JSON.stringify(walls)};window.__testAssets=${JSON.stringify(assets)};`;
+const suppliedPacks=["Minecraft Console Legacy","windows xp sounds"].map(folder=>({...JSON.parse(readFileSync(`bundle/sounds/${folder}/pack.json`,"utf8")),folder,files:readdirSync(`bundle/sounds/${folder}`),mappings:JSON.parse(readFileSync(`bundle/sounds/${folder}/pack.json`,"utf8")).mappings??{}}));
+const wallJs = `window.__testPacks=[${JSON.stringify(republicPack)},${suppliedPacks.map(p=>JSON.stringify(p)).join(",")}];window.__castleAudio=${JSON.stringify(castleAudio)};window.__bladesAudio=${JSON.stringify(bladesAudio)};window.__testP3t=${JSON.stringify(p3t)};window.__dialAssets=${JSON.stringify(dialAssets)};window.__testWalls=${JSON.stringify(walls)};window.__testAssets=${JSON.stringify(assets)};`;
 writeFileSync(
   "preview/preview.html",
   `<!doctype html><html><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>Deck Home Themes preview</title><style>html,body{margin:0;background:#0d0f13}</style></head><body><div id="root"></div><script>${wallJs}</script><script>${js}</script></body></html>`,
@@ -44,6 +45,7 @@ console.log("preview/preview.html", (js.length / 1024).toFixed(0), "KB");
 
 // Self-contained reference previews: game artwork is demo-only, never part of the plugin.
 const referenceGames = {
+  "Baldur’s Gate 3":1086940,"DOOM Eternal":782330,"Persona 5 Royal":1687950,"Red Dead Redemption 2":1174180,
   "STAR WARS Jedi: Survivor":1774580,"STAR WARS Battlefront II":1237950,"SWORD ART ONLINE Fractured Daydream":1858630,
   "Cyberpunk 2077":1091500,"The Witcher 3":292030,"Portal 2":620,"Grand Theft Auto V":271590,
   "Red Dead Redemption 2":1174180,"Elden Ring":1245620,"Hollow Knight":367520,
@@ -52,7 +54,7 @@ const referenceGames = {
 const referenceArt = {};
 for (const [name,id] of Object.entries(referenceGames)) {
   const art = {};
-  for (const [kind,file] of Object.entries({portrait:"library_600x900.jpg",hero:"library_hero.jpg",logo:"logo.png"})) {
+  for (const [kind,file] of Object.entries({portrait:"library_600x900.jpg",landscape:"header.jpg",hero:"library_hero.jpg",logo:"logo.png"})) {
     const path = `preview/art/${id}-${file}`;
     if (existsSync(path)) art[kind] = ["data:image/"+(file.endsWith("png")?"png":"jpeg")+";base64,"+readFileSync(path).toString("base64")];
   }
@@ -62,9 +64,22 @@ for (const [theme,names] of Object.entries({
   republic:["STAR WARS Jedi: Survivor","STAR WARS Battlefront II","Elden Ring","Cyberpunk 2077","Hades","Balatro","Hollow Knight"],
   castle:["SWORD ART ONLINE Fractured Daydream","Elden Ring","Hades","Hollow Knight","Stardew Valley","Balatro"],
   dial:["Cyberpunk 2077","The Witcher 3","Portal 2","Grand Theft Auto V","Red Dead Redemption 2","Elden Ring","Hollow Knight"],
+  pain:["Elden Ring","Baldur’s Gate 3","Hades","Hollow Knight","Cyberpunk 2077","DOOM Eternal","Stardew Valley","Red Dead Redemption 2","The Witcher 3","Persona 5 Royal"],
+  aero2:["Cyberpunk 2077","Hades","Stardew Valley","Elden Ring","Balatro","Hollow Knight"],
   aero:["Cyberpunk 2077","Hades","Stardew Valley","Elden Ring","Balatro","Hollow Knight"],
 })) {
   const init = `window.__themePreview=${JSON.stringify(theme)};window.__referenceTitles=${JSON.stringify(names)};window.__referenceArt=${JSON.stringify(referenceArt)};`;
   const html = readFileSync("preview/preview.html","utf8").replace("<script>",`<script>${init}</script><script>`).replace("<title>Deck Home Themes preview</title>",`<title>${theme === "dial" ? "Alien Dial" : theme === "castle" ? "Floating Castle" : theme === "republic" ? "Galactic Republic" : "Aero"} - preview</title>`);
   writeFileSync(`preview/${theme}-preview.html`,html);
 }
+
+// Reference-matched sample worlds are preview-only; the installed theme reads Steam games.
+const worldNames=["My World","Mountain Base","Nether Project","Village Build","Exploration"];
+const worldArt={};
+for(const [i,name] of worldNames.entries()){
+ const y=[177,305,425,547,668][i];
+ const svg=`<svg xmlns="http://www.w3.org/2000/svg" width="230" height="108" viewBox="362 ${y} 227 108"><image href="${assets.minecraft.reference}" width="1536" height="865"/></svg>`;
+ worldArt[name]={portrait:["data:image/svg+xml;base64,"+Buffer.from(svg).toString("base64")]};
+}
+const mcInit=`window.__themePreview="minecraft";window.__referenceTitles=${JSON.stringify(worldNames)};window.__referenceArt=${JSON.stringify(worldArt)};`;
+writeFileSync("preview/minecraft-preview.html",readFileSync("preview/preview.html","utf8").replace("<script>",`<script>${mcInit}</script><script>`));

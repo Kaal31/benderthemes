@@ -1,3 +1,5 @@
+import {PainHome} from "./themes/Pain";
+import {AeroV2Home} from "./themes/AeroV2";
 import { Destination, DestinationView, setDestinationOpener } from "./destinations";
 import { LaunchView, useLaunchState, dismissLaunch } from "./launch";
 // The themed home: builds the shared API every theme uses, picks the theme
@@ -21,6 +23,7 @@ import { Ps4Home } from "./themes/Ps4";
 import { AeroHome } from "./themes/Aero";
 import { XboxHome } from "./themes/Xbox";
 import { CinematicHome } from "./themes/Cinematic";
+import { MinecraftHome } from "./themes/Minecraft";
 import { DialHome } from "./themes/Dial";
 import { Ps5Home } from "./themes/Ps5";
 import { X360Home } from "./themes/X360";
@@ -35,8 +38,11 @@ const THEME_COMPONENTS: Record<ThemeId, () => ReactNode> = {
   ps5: () => <Ps5Home />,
   x360: () => <X360Home />,
   aero: () => <AeroHome />,
+  aero2: () => <AeroV2Home />,
   xbox: () => <XboxHome />,
   dial: () => <DialHome />,
+  minecraft: () => <MinecraftHome />,
+  pain: () => <PainHome />,
   castle: () => <CinematicHome kind="castle"/>,
   republic: () => <CinematicHome kind="republic"/>,
 };

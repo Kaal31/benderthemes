@@ -53,7 +53,7 @@ export function setWallpaperOverride(f: typeof wallpaperOverride) {
 }
 /** Data URL of a user wallpaper (cached), or null. */
 /** Picture a theme uses when none is chosen (if that file is in the wallpapers folder). */
-export const DEFAULT_WALLPAPER: Partial<Record<ThemeId, string>> = { aero: "aero-background.jpg" };
+export const DEFAULT_WALLPAPER: Partial<Record<ThemeId, string>> = { aero: "aero-background.jpg", aero2: "aero-background.jpg" };
 export function useWallpaper(theme: ThemeId): string | null {
   const name = getSettings().wallpapers[theme] || DEFAULT_WALLPAPER[theme] || "";
   const [url, setUrl] = useState<string | null>(name ? wallCache.get(name) ?? null : null);
@@ -105,6 +105,7 @@ export function setPreviewSound(f: typeof previewSound) {
  * to suggest. Xbox 360 presets have their own entries ("x360:blades" …).
  */
 export const PACK_MATCH: Record<string, { re: RegExp[]; suggest: string }> = {
+  minecraft: { re: [/Minecraft Console Legacy/i], suggest: "Minecraft Console Legacy" },
   republic: { re: [/DHT Verified Republic/i], suggest: "DHT Verified Republic" },
   castle: { re: [/DHT Verified SAO/i,/Sword Art Online/i], suggest: "DHT Verified SAO" },
   vita: { re: [/vita/i], suggest: "PsVita SFX" },
@@ -119,14 +120,14 @@ export const PACK_MATCH: Record<string, { re: RegExp[]; suggest: string }> = {
   "x360:kinect": { re: [/kinect/i], suggest: "Xbox 360 NXE Dash UI" },
   "x360:nxe": { re: [/nxe/i], suggest: "Xbox 360 NXE Dash UI" },
   "x360:blades": { re: [/DHT Verified MC360 Blades 1\.7\.2/i, /blade/i], suggest: "Xbox 360 Blades" },
-  aero: { re: [/windows\s*7|win\s*7/i, /vista|aero|frutiger|media\s*center/i], suggest: "Windows 7 Default Sounds" },
+  aero: { re: [/windows\s*xp/i, /windows\s*7|win\s*7/i, /vista|aero|frutiger|media\s*center/i], suggest: "windows xp sounds" },
   dial: { re: [/alien\s*dial/i], suggest: "DHT Alien Dial (comes with the plugin)" },
 };
 export type PackKind = "sfx" | "music";
 /** Which PACK_MATCH entry applies (Xbox 360 depends on the chosen dashboard). */
 export function matchKey(theme: ThemeId): string {
   if (theme === "x360") return `x360:${getSettings().x360?.style ?? "metro"}`;
-  return theme;
+  return theme === "aero2" ? "aero" : theme;
 }
 /** How many of the UI sounds this theme uses a pack replaces. */
 export function sfxCoverage(p: SoundPack): number {
@@ -195,7 +196,7 @@ export function setPreviewSoundBase(b: string) {
   previewSoundBase = b;
 }
 async function packUrl(pack: SoundPack, file: string): Promise<string | null> {
-  if((window as any).__testAssets && pack.folder==="DHT Verified Republic")return `../bundle/sounds/${encodeURIComponent(pack.folder)}/${encodeURIComponent(file)}`;
+  if((window as any).__testAssets && ["DHT Verified Republic","Minecraft Console Legacy","windows xp sounds"].includes(pack.folder))return `../bundle/sounds/${encodeURIComponent(pack.folder)}/${encodeURIComponent(file)}`;
   const base = previewSoundBase ?? (await mediaBase());
   return base ? `${base}/s/${encodeURIComponent(pack.folder)}/${encodeURIComponent(file)}` : null;
 }

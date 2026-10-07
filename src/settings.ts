@@ -12,7 +12,7 @@ export const X360_STYLES: { id: X360Style; name: string }[] = [
   { id: "kinect", name: "Kinect (2010)" },
   { id: "metro", name: "Metro (2011)" },
 ];
-export type ThemeId = "vita" | "ps2" | "ps3" | "psp" | "ps4" | "ps5" | "x360" | "aero" | "xbox" | "dial" | "castle" | "republic";
+export type ThemeId = "vita" | "ps2" | "ps3" | "psp" | "ps4" | "ps5" | "x360" | "aero" | "aero2" | "xbox" | "dial" | "castle" | "republic" | "minecraft" | "pain";
 export type SortMode = "recent" | "alpha" | "playtime";
 export type AAction = "theme" | "launch" | "details";
 export type ArtPref = "portrait" | "landscape";
@@ -38,9 +38,12 @@ export const THEMES: { id: ThemeId; name: string; blurb: string }[] = [
   { id: "xbox", name: "Xbox", blurb: "Original dashboard with the green orb" },
   { id: "x360", name: "Xbox 360", blurb: "Blades, NXE, Kinect or Metro dashboard" },
   { id: "aero", name: "Aero (bonus)", blurb: "Glossy sky-blue dashboard with glass panels" },
+  { id: "aero2", name: "Aero v.2 (bonus)", blurb: "Sculpted glossy panels and integrated landscape sections" },
   { id: "dial", name: "Alien Dial (bonus)", blurb: "Sculpted metal hourglass dial with a reflected game carousel" },
   {id:"castle",name:"Floating Castle (bonus)",blurb:"Skyborne glass interface over a live cloudscape"},
   {id:"republic",name:"Galactic Republic (bonus)",blurb:"Gold-trimmed command desk over a live cityscape"},
+  {id:"pain",name:"Six Paths (bonus)",blurb:"Purple moonlight, orbital featured game and cinematic library"},
+  {id:"minecraft",name:"Block Worlds (bonus)",blurb:"Voxel sunset, block panels and a customizable 3D player"},
 ];
 
 export interface VitaFolder {
@@ -51,7 +54,7 @@ export interface VitaFolder {
 }
 
 export type DialLook = "classic" | "chrome" | "crimson" | "arctic";
-export type DialMotion = "rotate" | "pulse" | "hologram" | "rhombus" | "none";
+export type DialMotion = "rotate" | "pulse" | "hologram" | "rhombus" | "rhombus-slow" | "none";
 export interface DialSettings {
   look: DialLook;
   motion: DialMotion;
@@ -63,6 +66,10 @@ export interface DialSettings {
   sound: "reference" | "pack" | "off";
 }
 export interface Settings {
+  presetCompany?: "Sony" | "Microsoft" | "Bonus";
+  minecraftSkin?: string;
+  minecraftFollowFocus?: boolean;
+  minecraftSlim?: boolean;
   backgroundMusic: boolean;
   ps4GameBackgrounds: boolean;
   castleWeather: boolean;
@@ -173,10 +180,14 @@ const emit = () => listeners.forEach((l) => l());
 
 function merge(saved: any): Settings {
   const s: any = { ...DEFAULTS, ...(saved && typeof saved === "object" ? saved : {}) };
+  if (typeof s.minecraftSkin !== "string" || s.minecraftSkin.length > 60000 || !s.minecraftSkin.startsWith("data:image/png;base64,")) s.minecraftSkin = "";
+  s.minecraftSlim = s.minecraftSlim === true;
+  if (!["Sony","Microsoft","Bonus"].includes(s.presetCompany)) delete s.presetCompany;
+  s.minecraftFollowFocus = s.minecraftFollowFocus !== false;
   s.dial = { ...DEFAULTS.dial, ...(saved?.dial ?? {}) };
   if (!["classic","chrome","crimson","arctic"].includes(s.dial.look)) s.dial.look = "classic";
-  if (!["rotate","pulse","hologram","rhombus","none"].includes(s.dial.motion)) s.dial.motion = "rotate";
-  if (Array.isArray(s.dial.motions)) s.dial.motions = [...new Set(s.dial.motions.filter((m: string) => ["rotate","pulse","hologram","rhombus"].includes(m)))];
+  if (!["rotate","pulse","hologram","rhombus","rhombus-slow","none"].includes(s.dial.motion)) s.dial.motion = "rotate";
+  if (Array.isArray(s.dial.motions)) s.dial.motions = [...new Set(s.dial.motions.filter((m: string) => ["rotate","pulse","hologram","rhombus","rhombus-slow"].includes(m)))];
   else s.dial.motions = s.dial.motion === "none" ? [] : [s.dial.motion];
   if (!["on-browse","always","off"].includes(s.dial.activation)) s.dial.activation = "on-browse";
   if (!["reference","pack","off"].includes(s.dial.sound)) s.dial.sound = "reference";

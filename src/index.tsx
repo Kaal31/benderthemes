@@ -12,7 +12,7 @@ import { listSkins } from "./skins";
 import { MONTH_NAMES } from "./color";
 import { getUiDocument } from "./cssvars";
 import { BUBBLE_STYLES } from "./themes/vitaBubble";
-import { applyPreset, currentPresetId, refreshPresets, usePresets, presetCompany } from "./presets";
+import { applyPreset, refreshPresets, usePresets, presetPickerState } from "./presets";
 
 const ROUTE = "/deck-home-themes";
 const HOME_ROUTE = "/library/home";
@@ -60,8 +60,7 @@ function Panel() {
   };
   useEffect(refresh, []);
   const presets = usePresets();
-  const [company,setCompany] = useState(presetCompany(s.theme));
-  useEffect(()=>setCompany(presetCompany(s.theme)),[s.theme]);
+  const {company,selected:selectedPreset,options:presetOptions} = presetPickerState(s,presets);
   const th: ThemeId = s.theme;
   const themeName = THEMES.find((t) => t.id === th)?.name ?? th;
 
@@ -77,14 +76,15 @@ function Panel() {
         <PanelSectionRow>
           <ToggleField label="Themed home screen" description="Replace Steam's home with the console theme" checked={s.enabled} onChange={(v) => updateSettings({ enabled: v })} />
         </PanelSectionRow>
-        <PanelSectionRow><DropdownItem label="Company" rgOptions={["Sony","Microsoft","Bonus"].map(data=>({data,label:data}))} selectedOption={company} onChange={o=>setCompany(o.data)} /></PanelSectionRow>
+        <PanelSectionRow><DropdownItem label="Company" rgOptions={["Sony","Microsoft","Bonus"].map(data=>({data,label:data}))} selectedOption={company} onChange={o=>{if(["Sony","Microsoft","Bonus"].includes(o.data))updateSettings({presetCompany:o.data});}} /></PanelSectionRow>
         <PanelSectionRow><ToggleField label="TV mode" description="Safe screen margins and larger menu text" checked={s.tvMode} onChange={tvMode=>updateSettings({tvMode})}/></PanelSectionRow>
         <PanelSectionRow>
           <DropdownItem
             label="Preset"
             description="Console theme + skin. On the home: L2 / R2 switch presets, △ → Presets."
-            rgOptions={presets.filter(p=>presetCompany(p.theme)===company).map((p) => ({ data: p.id, label: p.label }))}
-            selectedOption={currentPresetId(s)}
+            key={company}
+            rgOptions={presetOptions}
+            selectedOption={selectedPreset}
             onChange={(o) => {
               const p = presets.find((x) => x.id === o.data);
               if (p) applyPreset(p);
