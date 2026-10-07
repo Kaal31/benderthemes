@@ -12,7 +12,7 @@ import { CSSProperties, useState } from "react";
 import { GameArt, Icon, IconName, MenuItem, MenuView, themeMenu, useHome, useMenu, useRemembered } from "../common";
 import { clamp, Press, Stage, ThemeRoot, useStage } from "../input";
 import { fmtLastPlayed, fmtPlaytime, Game, openAchievements, openSteam } from "../library";
-import { showTitle, THEMES } from "../settings";
+import { showTitle, THEMES, updateSettings } from "../settings";
 import { Badges } from "../badges";
 import { fmtTime, playSound, useClock, useSteamStatus, useWallpaper } from "../steam";
 import { useAssets } from "../assets";
@@ -85,6 +85,7 @@ export function BladesHome() {
 
   const options = () => {
     const extra: MenuItem[] = [
+      {label:"Options menu side",sub:()=>["right","left"].map(side=>({label:side==="right"?"Right side":"Left side",checked:(s.x360.guideSide??"right")===side,action:()=>updateSettings({x360:{...s.x360,guideSide:side as "left"|"right"}})}))},
       { label: "Presets", sub: () => themeMenu(s.theme, api.switchTheme, THEMES) },
       { label: "Home Screen Settings", action: api.openSettings },
       { label: "Home", action: api.showSteamHome },
@@ -188,7 +189,7 @@ export function BladesHome() {
             </div>
           </div>
         </div>
-        <BladesGuide menu={menu} assets={original} animate={s.animations}/>
+        <BladesGuide menu={menu} assets={original} animate={s.animations} side={s.x360.guideSide}/>
       </Stage>
     </ThemeRoot>
   );

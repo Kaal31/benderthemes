@@ -1,3 +1,4 @@
+import {NazarickHome} from "./themes/Nazarick";
 import {PainHome} from "./themes/Pain";
 import {AeroV2Home} from "./themes/AeroV2";
 import { Destination, DestinationView, setDestinationOpener } from "./destinations";
@@ -43,6 +44,7 @@ const THEME_COMPONENTS: Record<ThemeId, () => ReactNode> = {
   dial: () => <DialHome />,
   minecraft: () => <MinecraftHome />,
   pain: () => <PainHome />,
+  nazarick: () => <NazarickHome />,
   castle: () => <CinematicHome kind="castle"/>,
   republic: () => <CinematicHome kind="republic"/>,
 };

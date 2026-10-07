@@ -1,3 +1,4 @@
+import {MinecraftNavIcon} from "./MinecraftNavIcon";
 import {CSSProperties,useEffect,useMemo,useRef,useState} from 'react';
 import {GameArt,useHome,useMenu,MenuView,themeMenu} from '../common';
 import {ThemeRoot,Stage,useStage,Press} from '../input';
@@ -18,7 +19,7 @@ export function MinecraftHome(){
  const launch=()=>cur&&api.activate(cur,()=>api.launch(cur));
  const navAction=(i:number)=>{setNav(i);if(i===0){playSound('tab');setInstalled(false);setSel(0);setZone('games');}else if(i===1){playSound('open');openDestination({place:'browser',url:'https://www.minecraft.net/'});}else if(i===2)openSteam('friends');else if(i===3)openSteam('store');else options();};
  const input=(p:Press)=>{if(p.btn==='a')window.dispatchEvent(new Event('dht-minecraft-strike'));if(menu.handle(p))return true;if(editing)return true;if(p.btn==='x'||p.btn==='menu'){options();return true;}if(p.btn==='y'){if(cur)api.nativeMenu(cur);return true;}if(p.btn==='b'){playSound('back');setZone('nav');return true;}if(p.btn==='left'){playSound('move');setZone(zone==='player'?'games':'nav');return true;}if(p.btn==='right'){playSound('move');setZone(zone==='nav'?'games':'player');return true;}if(p.btn==='up'||p.btn==='down'){playSound('move');const d=p.btn==='up'?-1:1;if(zone==='nav')setNav(i=>Math.max(0,Math.min(4,i+d)));else if(zone==='games')setSel(i=>Math.max(0,Math.min(list.length-1,i+d)));return true;}if(p.btn==='a'){if(zone==='nav')navAction(nav);else if(zone==='player')editSkin();else launch();return true;}return false;};
- const icon=(i:number)=> <span className={`mc-icon mc-icon-${i}`} aria-hidden="true"/>;
+ const icon=(i:number)=> <MinecraftNavIcon index={i}/>;
  const progress=achievements(cur);
  const scale=W/1536;
  return <ThemeRoot onInput={input} hints={{a:'Select',b:'Back',x:'Options',y:'Game Options'}}><Stage background="#2b3036"><style>{MINECRAFT_CSS}</style><div className="mc-home" style={{width:1536,height:H/scale,transform:`scale(${scale})`,'--mc-reference':`url("${assets.reference||''}")`} as CSSProperties}>

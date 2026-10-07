@@ -82,7 +82,7 @@ export function usePresets(): Preset[] {
   return getPresets();
 }
 
-export const presetCompany = (theme: ThemeId): string => theme === "xbox" || theme === "x360" ? "Microsoft" : theme === "aero" || theme === "aero2" || theme === "dial" || theme === "castle" || theme === "republic" || theme === "minecraft" || theme === "pain" ? "Bonus" : "Sony";
+export const presetCompany = (theme: ThemeId): string => theme === "xbox" || theme === "x360" ? "Microsoft" : theme === "aero" || theme === "aero2" || theme === "dial" || theme === "castle" || theme === "republic" || theme === "minecraft" || theme === "pain" || theme === "nazarick" ? "Bonus" : "Sony";
 export function presetGroups() { return ["Sony", "Microsoft", "Bonus"].map(name => ({name, presets:getPresets().filter(p=>presetCompany(p.theme)===name)})); }
 
 /** Keep native dropdown selection valid when browsing a different company. */

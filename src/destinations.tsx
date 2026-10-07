@@ -1,3 +1,5 @@
+import {NazarickNavigation,NazarickPage,nextNazarickPage} from "./themes/NazarickNavigation";
+import {NazarickBackdrop} from "./themes/NazarickBackdrop";
 import {castleWindowAppearance,useCastleWindow} from "./themes/castleWindow";
 import { CSSProperties, useEffect, useRef, useState } from "react";
 import { GameArt, Icon, IconName, MenuView, themeMenu, useMenu } from "./common";
@@ -82,15 +84,17 @@ export function DestinationView({destination,settings,lib,onClose,onLaunch,onMed
   } else rows=[browse("library","library"),{label:"Store",icon:"store",run:()=>openSteam("store")},browse("friends","friends"),browse("downloads","download"),browse("notifications","bell"),browse("settings","gear"),browse("power","power")];
   const current=Math.min(sel,Math.max(0,rows.length-1));
   const choose=(i:number)=>{setSel(i);playSound("select");rows[i]?.run?.();};
+  const navigateNazarick=(place:NazarickPage)=>{playSound("tab");if(place==="home")closeSurface();else if(place==="store")closeSurface(()=>openSteam("store"));else{setPage({place});setHistory([]);setSel(0);setQuery("");setNotice("");}};
   const handler=useRef<(p:Press)=>boolean>(()=>true);
-  handler.current=p=>{if(menu.handle(p))return true;if(p.btn==="b")back();else if(p.btn==="up"||p.btn==="down"){setSel(Math.max(0,Math.min(rows.length-1,current+(p.btn==="up"?-1:1))));playSound("move");}else if(p.btn==="a")choose(current);else if(p.btn==="y"){inputRef.current?.focus();}return true;};
+  handler.current=p=>{if(menu.handle(p))return true;if(settings.theme==="nazarick"&&(p.btn==="l1"||p.btn==="r1")){navigateNazarick(nextNazarickPage(page.place,p.btn==="l1"?-1:1));return true;}if(p.btn==="b")back();else if(p.btn==="up"||p.btn==="down"){setSel(Math.max(0,Math.min(rows.length-1,current+(p.btn==="up"?-1:1))));playSound("move");}else if(p.btn==="a")choose(current);else if(p.btn==="y"){inputRef.current?.focus();}return true;};
   useEffect(()=>pushModalInput(p=>handler.current(p)),[]);
   useEffect(()=>{listRef.current?.querySelector("[data-selected=true]")?.scrollIntoView({block:"nearest"});},[current,page.place]);
   const itemStyle:CSSProperties={display:"flex",alignItems:"center",gap:22,padding:"16px 22px",minHeight:68,boxSizing:"border-box",borderRadius:skin.radius,border:"1px solid transparent",color:skin.text,width:"100%",textAlign:"left",font:"inherit",cursor:"pointer"};
   const menuVariant=settings.theme==="ps3"||settings.theme==="psp"?"xmb":settings.theme;
   return <div ref={surfaceRef} className="dht-destination" data-theme={settings.theme} data-place={page.place} style={{position:"absolute",inset:0,zIndex:85,...(settings.theme==="castle"?castleWindowAppearance(settings):{})}}><Stage background={skin.bg}>
-    <div style={{position:"absolute",inset:"5% 6%",color:skin.text,fontFamily:skin.font??'"Segoe UI",Arial,sans-serif',display:"flex",flexDirection:"column",gap:18}}>
-      <header style={{display:"flex",alignItems:"center",gap:24}}><button onClick={back} style={{...itemStyle,width:"auto",minHeight:48,background:skin.panel}}>‹ Back</button><h1 style={{fontSize:38,fontWeight:400,margin:0}}>{game?.name??names[page.place]}</h1></header>
+    {settings.theme==="nazarick"&&<><NazarickBackdrop page={page.place} motion={settings.animations}/><NazarickNavigation page={page.place} settings={settings} onNavigate={navigateNazarick}/></>}
+    <div className={settings.theme==="nazarick"?"naz-content":undefined} style={{position:"absolute",inset:"5% 6%",color:skin.text,fontFamily:skin.font??'"Segoe UI",Arial,sans-serif',display:"flex",flexDirection:"column",gap:18}}>
+      <header style={{display:"flex",alignItems:"center",gap:24}}>{settings.theme!=="nazarick"&&<button onClick={back} style={{...itemStyle,width:"auto",minHeight:48,background:skin.panel}}>‹ Back</button>}<h1 style={{fontSize:38,fontWeight:400,margin:0}}>{game?.name??names[page.place]}</h1></header>
       {subtitle&&<div style={{fontSize:21,color:skin.sub}}>{subtitle}</div>}
       {(page.place==="search"||page.place==="library")&&<input ref={inputRef} aria-label="Search games" placeholder="Search games…" value={query} onChange={e=>{setQuery(e.target.value);setSel(0);}} onKeyDown={e=>e.stopPropagation()} style={{fontSize:24,padding:14,background:skin.panel,color:skin.text,border:`1px solid ${skin.sub}`,borderRadius:skin.radius}}/>}
       {notice&&<p role="status">{notice}</p>}
@@ -98,7 +102,7 @@ export function DestinationView({destination,settings,lib,onClose,onLaunch,onMed
         {game&&<GameArt g={game} kind="portrait" style={{width:250,alignSelf:"flex-start",maxHeight:"85%",borderRadius:skin.radius}}/>}
         <div ref={listRef} style={{overflowY:"auto",flex:1,padding:6}}>{rows.length?rows.map((r,i)=><button key={`${r.label}-${i}`} className="dht-destination-row" data-selected={current===i} onClick={()=>choose(i)} style={{...itemStyle,marginBottom:8,background:current===i?skin.accent:skin.panel,color:current===i?skin.accentText:skin.text,...(current===i?{outline:`2px solid ${skin.sub}`,outlineOffset:1}:{} )}}>{r.game?<GameArt g={r.game} kind="portrait" style={{width:42,height:58,borderRadius:3}}/>:<Icon name={r.icon??"info"} size={32}/>}<span><span style={{display:"block",fontSize:settings.tvMode?27:24}}>{r.label}</span>{r.sub&&<span style={{display:"block",fontSize:18,marginTop:5}}>{r.sub}</span>}</span></button>):<p style={{fontSize:24}}>Nothing to display.</p>}</div>
       </div>}
-      <footer style={{fontSize:19}}>A · Select　 B · Back　{page.place==="library"||page.place==="search"?"Y · Search":""}</footer>
+      <footer style={{fontSize:19}}>{settings.theme==="nazarick"?"A · Select　 L1 / R1 · Categories　":"A · Select　 B · Back　"}{page.place==="library"||page.place==="search"?"Y · Search":""}</footer>
     </div><MenuView menu={menu} variant={menuVariant}/>
   </Stage></div>;
 }

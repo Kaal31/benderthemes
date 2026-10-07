@@ -54,7 +54,7 @@ export function Img({
   const [i, setI] = useState(0);
   const key = srcs.join("|");
   useEffect(() => setI(0), [key]);
-  if (i >= srcs.length) return <>{fallback ?? <div className={className} style={{ ...style, background: "linear-gradient(135deg,#2a3346,#151b26)" }} />}</>;
+  if (i >= srcs.length) return <>{fallback !== undefined ? fallback : <div className={className} style={{ ...style, background: "linear-gradient(135deg,#2a3346,#151b26)" }} />}</>;
   return (
     <img
       className={className}
@@ -105,7 +105,9 @@ export function GameArt({
   position,
   fit,
   flat = false,
+  logoFallback = null,
 }: {
+  logoFallback?: ReactNode;
   flat?: boolean;
   g: Game;
   kind: keyof Game["art"];
@@ -116,7 +118,7 @@ export function GameArt({
   const home = useContext(HomeCtx);
   const srcs = kind === "landscape" ? [...g.art.landscape, ...g.art.portrait] : kind === "portrait" ? [...g.art.portrait, ...g.art.landscape] : g.art[kind];
   const casing = !flat && kind === "portrait" && home && CASE_THEMES.includes(home.settings.theme) && home.settings.coverStyles?.[home.settings.theme] === "case3d";
-  const image = <Img srcs={srcs} style={casing ? {width:"100%",height:"100%"} : style} position={position} fit={fit} fallback={kind === "logo" ? null : <NameArt name={g.name} style={casing ? {width:"100%",height:"100%"} : style} />} />;
+  const image = <Img srcs={srcs} style={casing ? {width:"100%",height:"100%"} : style} position={position} fit={fit} fallback={kind === "logo" ? logoFallback : <NameArt name={g.name} style={casing ? {width:"100%",height:"100%"} : style} />} />;
   return casing ? <CaseArt name={g.name} theme={home.settings.theme} style={style} motion={home.settings.animations}>{image}</CaseArt> : image;
 }
 
@@ -425,6 +427,11 @@ export function MenuView({
       panel: { position: "absolute", left: "50%", top: "50%", transform: "translate(-50%,-50%)", minWidth: 440, background: "linear-gradient(180deg, rgba(20,48,8,0.96), rgba(6,20,3,0.97))", border: "2px solid rgba(170,255,80,0.75)", borderRadius: 14, padding: "12px 10px", boxShadow: "0 0 40px rgba(120,255,40,0.35), inset 0 0 30px rgba(120,255,40,0.12)" },
       item: (s, d) => ({ color: d ? "rgba(180,240,120,0.4)" : s ? "#102e05" : "#c6ff6a", fontSize: 21, fontWeight: 700, letterSpacing: 1, textTransform: "uppercase", padding: "10px 24px", borderRadius: 8, background: s ? "linear-gradient(180deg, #e2ff8a, #8fe024 55%, #4f9e10)" : "none", textShadow: s ? "none" : "0 0 8px rgba(150,255,60,0.6)" }),
       title: { color: "#9fe050", fontSize: 15, letterSpacing: 2, textTransform: "uppercase", padding: "2px 24px 10px" },
+    },
+    nazarick: {
+      panel:{position:"absolute",right:70,bottom:80,minWidth:410,padding:16,background:"#090610f5",border:"1px solid #b3975f",boxShadow:"0 0 0 4px #09061088,0 0 32px #7338aa55"},
+      item:(on,disabled)=>({fontFamily:"Georgia,serif",fontSize:22,padding:"13px 24px",color:disabled?"#736778":"#e0d3e8",background:on?"linear-gradient(90deg,#72339499,#1a0d28)":"transparent",boxShadow:on?"inset 0 0 0 1px #b18b56":"none"}),
+      title:{fontFamily:"Georgia,serif",color:"#c6a96d",fontSize:20,letterSpacing:2,padding:"8px 24px 16px"},
     },
     pain: {
       panel:{position:"absolute",right:75,bottom:95,minWidth:380,padding:"14px 10px",background:"#100a1bec",border:"1px solid #9b64c9",borderRadius:22,boxShadow:"0 0 30px #8c42c944"},

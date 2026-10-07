@@ -14,7 +14,7 @@ The video demonstrates navigation, selection changes and options across every th
 | --- | --- |
 | PlayStation | PS Vita bubbles, PS2 browser, PS3 XMB, PSP XMB, PS4 and PS5 |
 | Xbox | Original Xbox, Xbox 360 Blades, NXE, Kinect and Metro |
-| Bonus | Aero, Aero v.2, Alien Dial, Floating Castle, Republic Office, Block Worlds and Six Paths |
+| Bonus | Aero, Aero v.2, Alien Dial, Floating Castle, Republic Office, Block Worlds, Six Paths and Nazarick |
 
 Switch presets from the plugin's Quick Access panel or the home screen options menu. Console presets are grouped by company. Imported Vita skins and PS3 themes can add further presets.
 
@@ -24,6 +24,7 @@ Switch presets from the plugin's Quick Access panel or the home screen options m
 - **Aero / Aero v.2:** blue glass panels, vivid lime highlights and a sky-and-hills backdrop.
 - **Alien Dial:** multiple dial colors, matching holographic covers, optional floating covers and projection light, and selectable animation combinations.
 - **Floating Castle:** looping video wallpaper, glass windows, animated circular navigation, replace-or-layer secondary windows, and optional automatic-location weather in Celsius.
+- **Nazarick:** ornate gold and violet home screen, circular navigation, live featured game, and six category wallpapers: Ainz’s throne room, Demiurge’s library, Pandora’s treasury, Aura and Mare’s garden, Sebas’s receiving hall and Albedo’s study.
 - **Republic Office:** looping city wallpaper, Aurebesh text, readable stylized navigation, a rotating golden emblem, blue holographic displays, Battlefront menu effects and background music.
 
 Theme settings include supported cover treatments, reflections, motion controls and TV presentation. The global background-music switch silences theme music independently of interface sounds. Theme-owned library, store and other panels retain their theme's presentation. Some system operations still depend on Steam and Decky.
@@ -31,7 +32,7 @@ Theme settings include supported cover treatments, reflections, motion controls 
 ## Install
 
 1. Install and enable Decky Loader on your Steam Deck.
-2. Download **DeckHomeThemes-v1.9.5.zip** from the Releases page and copy it to your Deck.
+2. Download the latest **DeckHomeThemes-vX.Y.Z.zip** from the Releases page and copy it to your Deck.
 3. Enable Decky's developer options, then use **Install Plugin from ZIP** to select the archive.
 4. Open **Deck Home Themes** in Quick Access and choose a preset.
 
@@ -48,7 +49,7 @@ npm run build
 npm run package
 ```
 
-The installable archive is written to `out/DeckHomeThemes-v1.9.6.zip`. Packaging is self-contained: it does not require an older release ZIP.
+The installable archive is written to `out/DeckHomeThemes-v<version>.zip`. Packaging is self-contained: it does not require an older release ZIP.
 
 For browser previews:
 
@@ -57,11 +58,20 @@ npm run preview
 python -m http.server 8766
 ```
 
-Open `http://127.0.0.1:8766/preview/preview.html`, or the generated `dial-preview.html`, `aero-preview.html`, `aero2-preview.html`, `castle-preview.html`, `republic-preview.html`, `minecraft-preview.html` and `pain-preview.html` in the same directory. Previews use sample games and mock Steam services; they do not launch real games. Playwright checks are in `tests/` and use this preview server.
+Open `http://127.0.0.1:8766/preview/preview.html`, or the generated `dial-preview.html`, `aero-preview.html`, `aero2-preview.html`, `castle-preview.html`, `republic-preview.html`, `minecraft-preview.html` `pain-preview.html` and `nazarick-preview.html` in the same directory. Previews use sample games and mock Steam services; they do not launch real games. Playwright checks are in `tests/` and use this preview server.
 
 ## Numbered releases
 
 Every source push to `main` is checked, built and packaged by GitHub Actions. Successful builds publish a new numbered release (starting with v1.9.6); the patch version advances automatically. Each release keeps its own ZIP and source tag. Failed checks do not publish a release. The workflow can also be started manually from Actions.
+
+## Latest additions
+
+- Nazarick theme and six generated wallpapers based on the supplied visual reference.
+- Blades options menu can open from the left or right.
+- Block Worlds sidebar uses transparent pixel icons.
+- Six Paths shows a clean game name when logo art is missing; orbit symbols use vector strokes.
+- Republic controls and settings use readable Aurebesh-style English.
+- Alien Dial skins share all switch animations and restart activation when the skin changes.
 
 ## New in v1.9.6
 
@@ -121,3 +131,7 @@ The plugin runs on [SteamDeckHomebrew/Decky Loader](https://github.com/SteamDeck
 Bundled resources include third-party theme materials, fonts, sounds and reconstruction references. Their existing notices are retained in [third-party/](third-party/) and resource-level `SOURCES.txt` files. Original Deck Home Themes attribution is preserved in [Original-Deck-Home-Themes-BSD.txt](third-party/Original-Deck-Home-Themes-BSD.txt).
 
 No project-wide license is added by this repository.
+
+### Nazarick artwork
+
+The six bundled category wallpapers were generated from the user’s supplied visual reference with the built-in image-generation tool. Overlord characters and setting belong to their respective rights holders. [Artwork generation notes](docs/nazarick-artwork.md).

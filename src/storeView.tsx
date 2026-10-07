@@ -1,3 +1,5 @@
+import {NazarickNavigation,NazarickPage,nextNazarickPage} from "./themes/NazarickNavigation";
+import {NazarickBackdrop} from "./themes/NazarickBackdrop";
 import {castleWindowAppearance,useCastleWindow} from "./themes/castleWindow";
 // The themed store: Steam Store content (featured, specials, top sellers, new,
 // coming soon, search) shown in the style of the current home theme —
@@ -7,7 +9,7 @@ import {castleWindowAppearance,useCastleWindow} from "./themes/castleWindow";
 import { Navigation } from "@decky/ui";
 import { CSSProperties, useEffect, useRef, useState } from "react";
 import { Press, setModalInput, Stage, useStage } from "./input";
-import { Game, Library } from "./library";
+import { Game, Library, openSteam } from "./library";
 import { fmtPrice, loadStoreDetails, loadStoreLists, searchStore, STORE_TABS, StoreDetails, StoreItem, StoreTab } from "./store";
 import { TrailerVideo } from "./media";
 import { playSound } from "./steam";
@@ -17,6 +19,7 @@ import { useAssets } from "./assets";
 // ───────────── per-theme look ─────────────
 interface Skin {
   title: string;
+  categoryNavigation?:boolean;
   layout: "grid" | "list";
   bg: string;
   panel: string;
@@ -37,6 +40,7 @@ export function storeSkin(s: Settings): Skin {
   const t = s.theme;
   const ps = { title: "PlayStation Store", sale: "#f5c518" };
   switch (t) {
+    case "nazarick": return {categoryNavigation:true,title:"Nazarick Treasury",sale:"#cba765",layout:"list",bg:"transparent",font:"Georgia,serif",panel:"#08060cdd",text:"#dfd2e6",sub:"#b9a480",accent:"#67358bbd",accentText:"#f0dfff",radius:2,ring:ring("#c8a668","0 0 18px #a765dd66")};
     case "pain": return {title:"Store",sale:"#ba81ec",layout:"grid",bg:"radial-gradient(ellipse at 30% 20%,#2c173e,#09070f 75%)",panel:"#191021ed",text:"#e4cdf5",sub:"#b697cb",accent:"#b978ee",accentText:"#170a24",radius:12,ring:ring("#ce9bff","0 0 20px #a64eeb88")};
     case "castle": return {title:"Store",sale:"#e0ad14",layout:"grid",bg:"transparent",font:"Cardinal,sans-serif",panel:"#ffffffcc",text:"#304b64",sub:"#617d94",accent:"#ffdb36",accentText:"#253953",radius:3,ring:ring("#ffe470")};
     case "republic": return {title:"Republic Exchange",sale:"#d6b65b",layout:"grid",bg:"linear-gradient(140deg,#07101a,#152735)",panel:"#0c1824ee",text:"#d8e9f3",sub:"#b7a87e",accent:"#d9bb69",accentText:"#17150e",radius:3,ring:ring("#fce296")};
@@ -162,8 +166,10 @@ export function StoreView({ settings, lib, onClose, onLaunch }: { settings: Sett
     }
   };
   const COLS = skin.layout === "grid" ? 4 : 1;
+  const navigateNazarick=(place:NazarickPage)=>{if(place==="store"){setZone("items");setDetail(null);setSearchOpen(false);return;}close(()=>{if(place!=="home")openSteam(place);});};
   const handler = (p: Press): boolean => {
     const b = p.btn;
+    if(settings.theme==="nazarick"&&(b==="l1"||b==="r1")){navigateNazarick(nextNazarickPage("store",b==="l1"?-1:1));return true;}
     if(searchOpen){if(b==="b")setSearchOpen(false);else if(b==="a")submitSearch();return true;}
     if (zone === "trailer") {
       if (b === "b" || b === "a") setZone("detail");
@@ -217,8 +223,9 @@ export function StoreView({ settings, lib, onClose, onLaunch }: { settings: Sett
 
   return (
     <div ref={castleWindow.ref} className="dht-store" data-dht-store-skin={settings.theme} style={{ position: "absolute", inset: 0, zIndex: 85, background: "#000",...(settings.theme==="castle"?castleWindowAppearance(settings):{}) }}>
-      {searchOpen && <div className="dht-store-search" style={{position:"absolute",inset:0,zIndex:5,background:skin.bg,color:skin.text,display:"grid",placeItems:"center"}}><form onSubmit={e=>{e.preventDefault();submitSearch();}} style={{width:"65%"}}><h1>Search Store</h1><input autoFocus aria-label="Search Store" value={searchDraft} onChange={e=>setSearchDraft(e.target.value)} onKeyDown={e=>{e.stopPropagation();if(e.key==="Escape")setSearchOpen(false);}} style={{width:"100%",boxSizing:"border-box",fontSize:28,padding:18,color:skin.text,background:skin.panel,border:`2px solid ${skin.sub}`,borderRadius:skin.radius}}/><button type="submit" style={{fontSize:22,padding:"14px 30px",marginTop:24,background:skin.accent,color:skin.accentText}}>Search</button><button type="button" onClick={()=>setSearchOpen(false)} style={{fontSize:22,padding:"14px 30px",marginLeft:18}}>Back</button></form></div>}
+      {searchOpen && <div className="dht-store-search" style={{position:"absolute",inset:settings.theme==="nazarick"?"10% 0 0":0,zIndex:5,background:skin.bg,color:skin.text,display:"grid",placeItems:"center"}}><form onSubmit={e=>{e.preventDefault();submitSearch();}} style={{width:"65%"}}><h1>Search Store</h1><input autoFocus aria-label="Search Store" value={searchDraft} onChange={e=>setSearchDraft(e.target.value)} onKeyDown={e=>{e.stopPropagation();if(e.key==="Escape")setSearchOpen(false);}} style={{width:"100%",boxSizing:"border-box",fontSize:28,padding:18,color:skin.text,background:skin.panel,border:`2px solid ${skin.sub}`,borderRadius:skin.radius}}/><button type="submit" style={{fontSize:22,padding:"14px 30px",marginTop:24,background:skin.accent,color:skin.accentText}}>Search</button><button type="button" onClick={()=>setSearchOpen(false)} style={{fontSize:22,padding:"14px 30px",marginLeft:18}}>Back</button></form></div>}
       <Stage background="transparent">
+        {settings.theme==="nazarick"&&<><NazarickBackdrop page="store" motion={settings.animations}/><NazarickNavigation page="store" settings={settings} onNavigate={navigateNazarick}/></>}
         <StoreBody
           skin={skin}
           icon={skin.icon ? icons[skin.icon] : undefined}
@@ -280,7 +287,7 @@ function StoreBody(p: {
           {skin.title}
         </span>
       </div>
-      <div style={{ position: "absolute", right: 56, top: 36, fontSize: 15, color: skin.tabText ?? skin.sub }}>{T("L1 / R1 sections · Y search · B close")}</div>
+      <div className="dht-store-prompt" style={{ position: "absolute", right: 56, top: 36, fontSize: 15, color: skin.tabText ?? skin.sub }}>{T(skin.categoryNavigation?"L1 / R1 categories · Y search":"L1 / R1 sections · Y search · B close")}</div>
       <div style={{ position: "absolute", left: 56, top: 82, display: "flex", gap: 10 }}>
         {STORE_TABS.map((t) => {
           const on = t.id === p.tab;
@@ -303,7 +310,7 @@ function StoreBody(p: {
     return (
       <div className="dht-store-page" style={base}>
         {d.background && <img src={d.background} style={{ position: "absolute", inset: 0, width: W, height: H, objectFit: "cover", opacity: 0.25 }} />}
-        <div style={{ position: "absolute", left: 56, top: 30, fontSize: 15, color: skin.sub }} onClick={p.onBack}>
+        <div className="dht-store-prompt" style={{ position: "absolute", left: 56, top: 30, fontSize: 15, color: skin.sub }} onClick={p.onBack}>
           {T(`${skin.title}  ›  ${d.name}`)}
         </div>
         <div style={{ position: "absolute", left: 56, top: 70, width: 700, height: 394, borderRadius: skin.radius, overflow: "hidden", background: "#000", boxShadow: "0 12px 30px rgba(0,0,0,0.45)" }}>
@@ -343,7 +350,7 @@ function StoreBody(p: {
             </div>
           ))}
         </div>
-        <div style={{ position: "absolute", left: 56, bottom: 30, fontSize: 14, color: skin.sub }}>{T(p.zone === "trailer" ? "B back" : "A select · ◀ ▶ buttons · L1 / R1 screenshots · B back")}</div>
+        <div className="dht-store-prompt" style={{ position: "absolute", left: 56, bottom: 30, fontSize: 14, color: skin.sub }}>{T(p.zone === "trailer" ? "B back" : "A select · ◀ ▶ buttons · L1 / R1 screenshots · B back")}</div>
       </div>
     );
   }

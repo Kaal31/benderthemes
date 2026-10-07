@@ -64,6 +64,7 @@ for (const [theme,names] of Object.entries({
   republic:["STAR WARS Jedi: Survivor","STAR WARS Battlefront II","Elden Ring","Cyberpunk 2077","Hades","Balatro","Hollow Knight"],
   castle:["SWORD ART ONLINE Fractured Daydream","Elden Ring","Hades","Hollow Knight","Stardew Valley","Balatro"],
   dial:["Cyberpunk 2077","The Witcher 3","Portal 2","Grand Theft Auto V","Red Dead Redemption 2","Elden Ring","Hollow Knight"],
+  nazarick:["Elden Ring","Baldur’s Gate 3","Hades","Hollow Knight","DOOM Eternal","The Witcher 3","Cyberpunk 2077"],
   pain:["Elden Ring","Baldur’s Gate 3","Hades","Hollow Knight","Cyberpunk 2077","DOOM Eternal","Stardew Valley","Red Dead Redemption 2","The Witcher 3","Persona 5 Royal"],
   aero2:["Cyberpunk 2077","Hades","Stardew Valley","Elden Ring","Balatro","Hollow Knight"],
   aero:["Cyberpunk 2077","Hades","Stardew Valley","Elden Ring","Balatro","Hollow Knight"],

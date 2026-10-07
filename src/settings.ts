@@ -12,7 +12,7 @@ export const X360_STYLES: { id: X360Style; name: string }[] = [
   { id: "kinect", name: "Kinect (2010)" },
   { id: "metro", name: "Metro (2011)" },
 ];
-export type ThemeId = "vita" | "ps2" | "ps3" | "psp" | "ps4" | "ps5" | "x360" | "aero" | "aero2" | "xbox" | "dial" | "castle" | "republic" | "minecraft" | "pain";
+export type ThemeId = "vita" | "ps2" | "ps3" | "psp" | "ps4" | "ps5" | "x360" | "aero" | "aero2" | "xbox" | "dial" | "castle" | "republic" | "minecraft" | "pain" | "nazarick";
 export type SortMode = "recent" | "alpha" | "playtime";
 export type AAction = "theme" | "launch" | "details";
 export type ArtPref = "portrait" | "landscape";
@@ -42,6 +42,7 @@ export const THEMES: { id: ThemeId; name: string; blurb: string }[] = [
   { id: "dial", name: "Alien Dial (bonus)", blurb: "Sculpted metal hourglass dial with a reflected game carousel" },
   {id:"castle",name:"Floating Castle (bonus)",blurb:"Skyborne glass interface over a live cloudscape"},
   {id:"republic",name:"Galactic Republic (bonus)",blurb:"Gold-trimmed command desk over a live cityscape"},
+  {id:"nazarick",name:"Nazarick (bonus)",blurb:"Gothic gold and violet, with a guardian for every destination"},
   {id:"pain",name:"Six Paths (bonus)",blurb:"Purple moonlight, orbital featured game and cinematic library"},
   {id:"minecraft",name:"Block Worlds (bonus)",blurb:"Voxel sunset, block panels and a customizable 3D player"},
 ];
@@ -119,7 +120,7 @@ export interface Settings {
     collectionFolders: boolean;
     p3t: string; // PS3 .p3t theme file name or ""
   };
-  x360: { style: X360Style }; // which Xbox 360 dashboard era
+  x360: { style: X360Style; guideSide?: "left" | "right" }; // which Xbox 360 dashboard era
   dial: DialSettings;
   themedStore: boolean; // Store entries open the store styled like the current theme
   version: number;
@@ -164,7 +165,7 @@ export const DEFAULTS: Settings = {
   trailers: { preview: true, sound: false, video: false },
   vita: { folders: [], order: [], collectionFolders: true, systemBubbles: true, art: "portrait", skin: "", bubbleStyle: "lens", motion: true, sway: "gentle", gyro: true, focus: "vita", touch: true },
   xmb: { ps3Color: -1, pspColor: -1, collectionFolders: true, p3t: "" },
-  x360: { style: "metro" },
+  x360: { style: "metro", guideSide: "right" },
   dial: { look:"classic", motion:"rotate", activation:"on-browse", reflections:true, projectionLight:true, floatingCover:true, sound:"reference" },
   themedStore: true,
   version: 1,
@@ -206,6 +207,7 @@ function merge(saved: any): Settings {
   s.music = { ...DEFAULTS.music, ...(saved?.music ?? {}) };
   s.musicPacks = { ...(saved?.musicPacks ?? {}) };
   s.x360 = { ...DEFAULTS.x360, ...(saved?.x360 ?? {}) };
+  if (s.x360.guideSide !== "left" && s.x360.guideSide !== "right") s.x360.guideSide = "right";
   if (!X360_STYLES.some((x) => x.id === s.x360.style)) s.x360.style = "metro";
   s.wallpapers = { ...(saved?.wallpapers ?? {}) };
   s.badges = { ...DEFAULTS.badges, ...(saved?.badges ?? {}) };

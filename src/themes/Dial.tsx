@@ -29,6 +29,8 @@ export function DialHome() {
   const [tab, setTab] = useState(0);
   const [turn, setTurn] = useState(0);
   const [browsed,setBrowsed] = useState(false);
+  // All housings share the same live core and activation cycle. A new skin starts idle.
+  useEffect(() => {setBrowsed(false);}, [s.dial.look]);
   const active = s.dial.activation === "always" || (s.dial.activation === "on-browse" && browsed);
   const motions = s.dial.motions ?? (s.dial.motion === "none" ? [] : [s.dial.motion]);
   const slowMorph = motions.includes("rhombus-slow");
@@ -45,7 +47,7 @@ export function DialHome() {
       {transform:"translateY(0) scale(1)"}
     ],{duration:440,easing:"ease-out"});
     return () => animation?.cancel();
-  },[turn,s.animations,motions.join(",")]);
+  },[turn,s.animations,s.dial.look,motions.join(",")]);
   const [launching, setLaunching] = useState(false);
   const pending = useRef<ReturnType<typeof setTimeout> | null>(null);
   const release = useRef<ReturnType<typeof setTimeout> | null>(null);
@@ -161,8 +163,8 @@ export function DialHome() {
           <div className="alien-status"><Icon name="wifi" size={22} color={status.online ? "#d5d9d5" : "#596159"}/>{bat && <BatteryGlyph level={bat.level} charging={bat.charging} color="#58ff00" w={29}/>}<time>{fmtTime(now,s.clock24)}</time><span className="alien-mini"><Hourglass/></span></div>
         </header>
         <div className="alien-floor-light" style={{left:cx-radius,top:cy+radius-15,width:radius*2}}/>
-        {s.dial.reflections && <div className="alien-dial-reflection" aria-hidden="true" style={{left:cx-radius,top:cy+radius+3,width:radius*2,height:radius*2}}><DialMechanism turn={s.animations && motions.includes("rotate") ? turn : 0} active={active} rhombus={rhombus} slowMorph={slowMorph} cycle={turn} skinArt={skinArt} skinHue={skinHue} id="reflection"/></div>}
-        <button className="alien-mechanism dht-dial-dial" aria-label={cur ? `Play ${cur.name}` : "Alien Dial"} disabled={!cur || launching} onClick={() => cur && launch(cur)} style={{left:cx-radius,top:cy-radius,width:radius*2,height:radius*2}}><div ref={hardware} className="alien-classic-motion"><DialMechanism turn={s.animations && motions.includes("rotate") ? turn : 0} active={active} rhombus={rhombus} slowMorph={slowMorph} cycle={turn} skinArt={skinArt} skinHue={skinHue} id="main"/></div></button>
+        {s.dial.reflections && <div className="alien-dial-reflection" aria-hidden="true" style={{left:cx-radius,top:cy+radius+3,width:radius*2,height:radius*2}}><DialMechanism key={s.dial.look} turn={s.animations && motions.includes("rotate") ? turn : 0} active={active} rhombus={rhombus} slowMorph={slowMorph} cycle={turn} skinArt={skinArt} skinHue={skinHue} id="reflection"/></div>}
+        <button className="alien-mechanism dht-dial-dial" aria-label={cur ? `Play ${cur.name}` : "Alien Dial"} disabled={!cur || launching} onClick={() => cur && launch(cur)} style={{left:cx-radius,top:cy-radius,width:radius*2,height:radius*2}}><div ref={hardware} className="alien-classic-motion"><DialMechanism key={s.dial.look} turn={s.animations && motions.includes("rotate") ? turn : 0} active={active} rhombus={rhombus} slowMorph={slowMorph} cycle={turn} skinArt={skinArt} skinHue={skinHue} id="main"/></div></button>
         {cur && active && s.dial.floatingCover && <div className="alien-projection" key={cur.appid} aria-label={`Holographic projection of ${cur.name}`} style={{left:cx-radius*.63,top:cy-radius*.945,width:radius*1.26,height:radius*1.89}}>
           {s.dial.projectionLight && <DialProjectionLight/>}
           <div className="alien-hologram-float">
