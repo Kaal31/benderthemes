@@ -86,6 +86,20 @@ function makeTowerDraw(dim: number) {
 }
 
 // ───────────── pieces ─────────────
+// Orbiting light cluster inspired by the PS2 presentation at imsaud.me.
+function drawMenuOrbs(ctx:CanvasRenderingContext2D,t:number,w:number,h:number){
+ ctx.clearRect(0,0,w,h);
+ for(let i=0;i<8;i++){
+  const angle=t*.5+i*Math.PI/4;
+  const x=w*.30+Math.cos(angle)*w*.065;
+  const y=h*.49+Math.sin(angle*1.5+i*.12)*h*.055;
+  const radius=18+6*Math.sin(angle);
+  const glow=ctx.createRadialGradient(x,y,0,x,y,radius*2.4);
+  glow.addColorStop(0,'#edffff');glow.addColorStop(.10,'#b9f6ff');glow.addColorStop(.24,'#43c6ff');glow.addColorStop(.5,'#0872c76b');glow.addColorStop(1,'#004b9600');
+  ctx.fillStyle=glow;ctx.fillRect(x-radius*2.4,y-radius*2.4,radius*4.8,radius*4.8);
+ }
+}
+
 function Orb({ on, size = 46, color = "#6f8cff" }: { on: boolean; size?: number; color?: string }) {
   return (
     <div
@@ -141,22 +155,25 @@ function MemoryCard({ label, color, on, kind }: { label: string; color: string; 
   );
 }
 
-function SaveIcon({ g, on, size }: { g: Game; on: boolean; size: number }) {
+function SaveIcon({ g, on, size, animate }: { g: Game; on: boolean; size: number; animate:boolean }) {
   return (
-    <div style={{ width: size, height: size * 1.25, perspective: 600 }}>
+    <div className="dht-ps2-save-model" data-selected={on} style={{ position:"relative",width: size, height: size * 1.25, perspective: 600 }}>
+      {on&&<div aria-hidden className="dht-ps2-save-light"/>}
       <div
         style={{
           width: "100%",
           height: "100%",
           transformStyle: "preserve-3d",
-          animation: on ? "dhtTurn 4s linear infinite" : "dhtSway 6s ease-in-out infinite",
+          animation: !animate?"none":on ? "dhtTurn 9s linear infinite" : "dhtSway 6s ease-in-out infinite",
           animationDelay: on ? "0s" : `${(g.appid % 7) * -0.8}s`,
         }}
       >
-        <div style={{ position: "absolute", inset: 0, backfaceVisibility: "hidden", boxShadow: on ? "0 0 22px 4px rgba(130,160,255,0.85)" : "0 4px 10px rgba(0,0,0,0.6)", borderRadius: 4, overflow: "hidden" }}>
-          <GameArt g={g} kind="portrait" style={{ width: "100%", height: "100%" }} />
+        <div style={{ position: "absolute", inset: 0, backfaceVisibility: "hidden",transform:"translateZ(7px)", boxShadow: "0 4px 10px rgba(0,0,0,0.6)", borderRadius: 4, overflow: "hidden" }}>
+          <GameArt g={g} kind="portrait" style={{ width: "100%", height: "100%",objectFit:"cover" }} />
         </div>
-        <div style={{ position: "absolute", inset: 0, backfaceVisibility: "hidden", transform: "rotateY(180deg)", borderRadius: 4, overflow: "hidden", filter: "brightness(0.55) saturate(0.6)" }}>
+        <div aria-hidden style={{position:"absolute",left:0,top:0,bottom:0,width:14,background:"linear-gradient(90deg,#191b24,#606775,#171a24)",transform:"translateZ(7px) rotateY(90deg)",transformOrigin:"left center"}}/>
+        <div aria-hidden style={{position:"absolute",right:0,top:0,bottom:0,width:14,background:"linear-gradient(90deg,#11141b,#667080,#252a34)",transform:"translateZ(7px) rotateY(-90deg)",transformOrigin:"right center"}}/>
+        <div style={{ position: "absolute", inset: 0, backfaceVisibility: "hidden", transform: "rotateY(180deg) translateZ(7px)", borderRadius: 4, overflow: "hidden", filter: "brightness(0.55) saturate(0.6)" }}>
           <GameArt g={g} kind="portrait" style={{ width: "100%", height: "100%", transform: "scaleX(-1)" }} />
         </div>
       </div>
@@ -165,6 +182,10 @@ function SaveIcon({ g, on, size }: { g: Game; on: boolean; size: number }) {
 }
 
 const PS2_CSS = `
+.dht-ps2-save-light{position:absolute;left:-35%;right:-35%;bottom:-30px;height:64px;background:radial-gradient(ellipse,#f4ffffb0, #d9f2ff44 35%,transparent 70%);filter:blur(8px);pointer-events:none}
+.dht-ps2-scan{position:absolute;inset:0;pointer-events:none;background:repeating-linear-gradient(0deg,#0000000a 0 1px,transparent 1px 3px);z-index:1}
+@media(prefers-reduced-motion:reduce){.dht-ps2-save-model *{animation:none!important}}
+
 @keyframes dhtTurn { from { transform: rotateY(0deg); } to { transform: rotateY(360deg); } }
 @keyframes dhtSway { 0%,100% { transform: rotateY(-14deg) translateY(0); } 50% { transform: rotateY(14deg) translateY(-4px); } }
 @keyframes dhtIn2 { from { opacity: 0; } to { opacity: 1; } }
@@ -287,7 +308,7 @@ export function Ps2Home() {
   };
 
   const towerDraw = useMemo(() => makeTowerDraw(screen === "main" ? 1 : 0.55), [screen]);
-  const text = (on: boolean, size = 24): CSSProperties => ({ color: on ? "#fff" : BLUE, fontSize: size, fontFamily: FONT, textShadow: on ? "0 0 12px #7f9bff, 0 0 2px #fff" : "none", transition: "all 150ms" });
+  const text = (on: boolean, size = 24): CSSProperties => ({ color: on ? (screen === "main"?"#55caff":"#f4f4dd") : (screen === "main"?"#919295":screen === "card"||screen === "browser"?"#dedede":BLUE), fontSize: size, fontFamily: FONT, textShadow: "0 1px 2px #000,1px 0 1px #0008", transition: "all 150ms" });
 
   // card grid geometry
   const ICON = 118;
@@ -303,7 +324,8 @@ export function Ps2Home() {
     <ThemeRoot onInput={onInput} hints={hints}>
       <Stage background="#000">
         <style>{PS2_CSS}</style>
-        <AnimCanvas width={W} height={H} animate={s.animations} fps={30} draw={towerDraw} deps={[screen]} />
+        {screen==="main"?<><div style={{position:"absolute",inset:0,opacity:.12}}><AnimCanvas width={W} height={H} animate={s.animations} fps={20} draw={towerDraw} deps={[screen]}/></div><AnimCanvas width={W} height={H} animate={s.animations} fps={30} draw={drawMenuOrbs}/></>:screen==="browser"||screen==="card"||screen==="info"?<div className="dht-ps2-browser-field" style={{position:"absolute",inset:0,background:"radial-gradient(ellipse at 30% 40%,#9b9b9d 0%,#737376 38%,#3e3f43 80%,#222329 100%)"}}/>:<AnimCanvas width={W} height={H} animate={s.animations} fps={30} draw={towerDraw} deps={[screen]}/>}
+        <div className="dht-ps2-scan"/>
 
         {/* clock */}
         <div style={{ position: "absolute", right: 46, top: 30, ...text(false, 20), opacity: 0.85 }}>
@@ -311,11 +333,11 @@ export function Ps2Home() {
         </div>
 
         {screen === "main" && (
-          <div style={{ position: "absolute", left: W * 0.5 - 200, top: H * 0.2, display: "flex", flexDirection: "column", gap: 46, animation: "dhtIn2 500ms" }}>
+          <div style={{ position: "absolute", left: W * 0.54, top: H * 0.44, display: "flex", flexDirection: "column", gap: 14, animation: "dhtIn2 500ms" }}>
             {["Browser", "System Configuration"].map((label, i) => (
               <div key={label} className="dht-ps2-item" data-selected={msel === i} style={{ display: "flex", alignItems: "center", gap: 26 }}>
-                <Orb on={msel === i} color={i === 0 ? "#6f8cff" : "#5fd0ff"} />
-                <span style={text(msel === i, 32)}>{label}</span>
+                
+                <span style={text(msel === i, 28)}>{label}</span>
               </div>
             ))}
           </div>
@@ -346,7 +368,7 @@ export function Ps2Home() {
                 const on = i === gi;
                 return (
                   <div key={gm.appid} className="dht-ps2-save dht-tile" data-selected={on} data-name={gm.name} style={{ position: "absolute", left: (i % COLS) * GX, top: (Math.floor(i / COLS) - firstRow) * GY, transform: on ? "scale(1.12)" : "none", transition: "transform 150ms" }}>
-                    <SaveIcon g={gm} on={on} size={ICON} />
+                    <SaveIcon g={gm} on={on} size={ICON} animate={s.animations}/>
                   </div>
                 );
               })}
@@ -361,7 +383,7 @@ export function Ps2Home() {
           <div style={{ position: "absolute", inset: 0, animation: "dhtIn2 300ms" }}>
             <div style={{ position: "absolute", left: 60, top: 36, ...text(true, 24) }}>{dev.label}</div>
             <div style={{ position: "absolute", left: W * 0.12, top: H * 0.22 }}>
-              <SaveIcon g={g} on size={250} />
+              <SaveIcon g={g} on size={250} animate={s.animations}/>
             </div>
             <div style={{ position: "absolute", left: W * 0.5, top: H * 0.22, width: W * 0.42 }}>
               <div style={{ ...text(true, 30), marginBottom: 14 }}>{g.name}</div>
