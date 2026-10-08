@@ -4,6 +4,9 @@ import hashlib
 import json
 import re
 import zipfile
+import sys
+sys.path.insert(0, str(Path(__file__).resolve().parents[1] / "py_modules"))
+from theme_pack_names import asset_filename
 
 ROOT = Path(__file__).resolve().parents[1]
 LABELS = {"vita": "PS Vita", "ps2": "PS2", "ps3": "PS3", "psp": "PSP", "ps4": "PS4", "ps5": "PS5",
@@ -63,7 +66,7 @@ def build():
     for ident, files in groups.items():
         if not files:
             continue
-        target = out / f"theme-{ident}-v{version}.zip"
+        target = out / asset_filename(ident, version)
         previews = [(ROOT / f"out/theme-previews/{ident}.{ext}", f"assets/hub/{ident}.{ext}") for ext in ("gif", "jpg") if (ROOT / f"out/theme-previews/{ident}.{ext}").is_file()]
         files = files + previews
         all_files = files + notices

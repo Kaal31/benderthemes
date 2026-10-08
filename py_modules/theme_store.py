@@ -10,6 +10,7 @@ import tempfile
 import threading
 from urllib.request import Request
 from theme_network import urlopen
+from theme_pack_names import asset_filename
 import zipfile
 
 import decky
@@ -50,7 +51,7 @@ def validate_catalog(data):
         seen.add(ident)
         version_key(pack["version"])
         version_key(pack["minPluginVersion"])
-        expected = f"https://github.com/{REPO}/releases/download/v{pack['version']}/theme-{ident}-v{pack['version']}.zip"
+        expected = f"https://github.com/{REPO}/releases/download/v{pack['version']}/{asset_filename(ident, pack['version'])}"
         if pack.get("url") != expected or not re.fullmatch(r"[0-9a-f]{64}", pack.get("sha256", "")):
             raise ValueError("Untrusted theme download")
         if not 0 < pack.get("size", 0) <= MAX_DOWNLOAD or not 0 < pack.get("unpackedSize", 0) <= MAX_EXPANDED:

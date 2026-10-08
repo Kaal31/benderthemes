@@ -3,6 +3,9 @@ import hashlib
 import json
 from pathlib import Path
 import zipfile
+import sys
+sys.path.insert(0, str(Path(__file__).resolve().parents[1] / "py_modules"))
+from theme_pack_names import asset_filename
 
 root = Path(__file__).resolve().parents[1]
 version = json.loads((root / "package.json").read_text())["version"]
@@ -13,7 +16,7 @@ with zipfile.ZipFile(root / f"out/DeckHomeThemes-v{version}.zip") as plugin:
     assert json.loads(plugin.read("DeckHomeThemes/theme-catalog.json")) == catalog
     assert json.loads(plugin.read("DeckHomeThemes/package.json"))["version"] == version
 for theme in catalog["themes"]:
-    archive = root / "out/themes" / f"theme-{theme['id']}-v{version}.zip"
+    archive = root / "out/themes" / asset_filename(theme['id'], version)
     assert theme["version"] == version
     assert theme["url"] == f"https://github.com/Kaal31/benderthemes/releases/download/v{version}/{archive.name}"
     assert archive.stat().st_size == theme["size"]

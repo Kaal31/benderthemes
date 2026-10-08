@@ -65,5 +65,5 @@ jobs:
           GH_TOKEN: ${{ github.token }}
           VERSION: ${{ steps.version.outputs.version }}
         run: |
-          gh release create "v${VERSION}" "out/DeckHomeThemes-v${VERSION}.zip" out/themes/*.zip out/themes/theme-catalog.json --title "Deck Home Themes v${VERSION}" --generate-notes --draft --verify-tag
+          gh release create "v${VERSION}" "out/DeckHomeThemes-v${VERSION}.zip" out/themes/ThemeAssets-*-v${VERSION}.zip out/themes/theme-catalog.json --title "Deck Home Themes v${VERSION}" --generate-notes --draft --verify-tag
           gh release edit "v${VERSION}" --draft=false --latest

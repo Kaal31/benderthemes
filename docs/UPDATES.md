@@ -116,3 +116,6 @@ assets. The plugin installer also carries the small Hub preview gallery, served
 locally so browsing previews does not require downloading entire themes.
 HTTPS requests explicitly load the SteamOS system CA bundle alongside Python's
 default trust store; certificate and hostname verification remain enabled.
+
+Theme archives use descriptive names such as `ThemeAssets-PS-Vita-v1.10.1.zip`
+and `ThemeAssets-Block-Worlds-v1.10.1.zip`. Only current-version archives are published.
