@@ -3,6 +3,7 @@
 // variables (--dht-tilt-x / --dht-tilt-y, −1…1) straight onto an element, so
 // nothing re-renders per frame.
 import { useEffect, useRef } from "react";
+import { controllerMotion, inputController } from "./controllerSupport";
 
 declare const SteamClient: any;
 
@@ -29,10 +30,18 @@ export function useBubbleMotion(el: HTMLElement | null, opts: { enabled: boolean
     let g: { x: number; y: number; z: number } | null = null;
     let base: { x: number; y: number; z: number } | null = null;
     let reg: any = null;
+    let inputReg: any = null;
+    let active: number | null = null;
     if (opts.gyro) {
       try {
+        inputReg = SteamClient?.Input?.RegisterForControllerInputMessages?.((...args: unknown[]) => {
+          const next = inputController(args);
+          if (next !== null && next !== active) { active = next; g = null; base = null; }
+        });
+      } catch { /* Optional controller tracking must not block navigation. */ }
+      try {
         reg = SteamClient?.Input?.RegisterForControllerStateChanges?.((changes: any[]) => {
-          const c = changes?.[changes.length - 1];
+          const c = controllerMotion(changes, active);
           if (!c) return;
           const x = Number(c.flGravityVectorX) || 0;
           const y = Number(c.flGravityVectorY) || 0;
@@ -74,6 +83,7 @@ export function useBubbleMotion(el: HTMLElement | null, opts: { enabled: boolean
       clearInterval(iv);
       try {
         reg?.unregister?.();
+        inputReg?.unregister?.();
       } catch {
         /* ignore */
       }

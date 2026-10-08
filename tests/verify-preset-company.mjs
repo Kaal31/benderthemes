@@ -8,3 +8,11 @@ for(const company of ['Microsoft','Bonus','Sony']){
 }
 m.updateSettings({presetCompany:'Bonus'});const preset=m.getPresets().find(p=>p.theme==='pain');m.applyPreset(preset);assert.equal(m.presetPickerState(m.getSettings(),m.getPresets()).selected,preset.id);
 console.log('PASS: company browsing preserves active theme, dropdown selection always valid, persisted choice survives reload, new preset activates.');
+m.updateSettings({iconSizes:{minecraft:75,ps5:110},themeCollections:{minecraft:{source:'collections',ids:['favorite','rpg']},ps5:{source:'installed'}}});
+m.seedSettings(JSON.parse(JSON.stringify(m.getSettings())));
+assert.deepEqual(m.getSettings().iconSizes,{minecraft:75,ps5:110});
+assert.deepEqual(m.getSettings().themeCollections.minecraft,{source:'collections',ids:['favorite','rpg']});
+m.applyPreset(m.getPresets().find(p=>p.theme==='ps5'));
+assert.equal(m.getSettings().iconSizes.minecraft,75);
+assert.equal(m.getSettings().themeCollections.ps5.source,'installed');
+console.log('PASS: per-theme icon sizes and collection choices survive reload and preset switches.');

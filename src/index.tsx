@@ -4,7 +4,11 @@ import { useEffect, useRef, useState } from "react";
 import { HomeSwitch, SafeBoundary, showThemedHomeAgain, ThemedHome } from "./Home";
 import { listCollectionsForSettings, loadLibrary } from "./library";
 import { useDiag, logInfo, reportError } from "./diag";
-const PLUGIN_VERSION = "1.9.0";
+const PLUGIN_VERSION = "__DHT_VERSION__";
+import { Updates } from "./Updates";
+import { retryHome, useHomeFailure } from "./compatibility";
+import { restoreFooter } from "./steam";
+import { openMarketplace } from "./marketplaceState";
 import { CASE_THEMES } from "./CaseArt";
 import { initSettings, SortMode, THEMES, ThemeId, TITLE_MODES, updateSettings, updateVita, useSettings, useSettingsLoaded, X360_STYLES, FOOTER_MODES } from "./settings";
 import { autoPack, getPacks, listWallpapers, matchKey, musicFile, PACK_MATCH, packFor, refreshPacks, restoreHeader, sfxCoverage, soundDiag, SoundPack } from "./steam";
@@ -45,6 +49,7 @@ function DeferredText({ label, initial, onCommit }: { label: string; initial: st
 }
 
 function Panel() {
+  const failure = useHomeFailure();
   const s = useSettings();
   const loaded = useSettingsLoaded();
   const [packs, setPacks] = useState<SoundPack[]>(getPacks());
@@ -65,6 +70,7 @@ function Panel() {
   const themeName = THEMES.find((t) => t.id === th)?.name ?? th;
 
   const sources = [
+    ...(s.themeCollections?.[th]?.source === "collections" ? [{ data: "collections", label: "Selected collections" }] : []),
     { data: "installed", label: "Installed games" },
     { data: "all", label: "All games" },
     ...listCollectionsForSettings().map((c) => ({ data: `col:${c.id}`, label: `${c.name} (${c.count})` })),
@@ -72,6 +78,10 @@ function Panel() {
 
   return (
     <>
+      <Updates />
+      <PanelSection title="Themes"><PanelSectionRow><ButtonItem layout="below" description="Browse animated previews, download a theme and activate it." onClick={() => { openMarketplace(); Navigation.Navigate(ROUTE); Navigation.CloseSideMenus(); }}>Hub</ButtonItem></PanelSectionRow>
+      <PanelSectionRow><ToggleField label="Firmware update notifications" checked={s.firmwareNotifications !== false} onChange={value => updateSettings({ firmwareNotifications: value })} /></PanelSectionRow></PanelSection>
+      {failure && <PanelSection title="Steam Home restored"><PanelSectionRow><ButtonItem layout="below" description={failure} onClick={retryHome}>Retry themed home</ButtonItem></PanelSectionRow></PanelSection>}
       <PanelSection>
         <PanelSectionRow>
           <ToggleField label="Themed home screen" description="Replace Steam's home with the console theme" checked={s.enabled} onChange={(v) => updateSettings({ enabled: v })} />
@@ -126,7 +136,8 @@ function Panel() {
 
       <PanelSection title="Library">
         <PanelSectionRow>
-          <DropdownItem label="Show" rgOptions={sources} selectedOption={sources.some((o) => o.data === s.source) ? s.source : "installed"} onChange={(o) => updateSettings({ source: o.data as string })} />
+          <DropdownItem label="Show in this theme" rgOptions={sources} selectedOption={s.themeCollections?.[th]?.source ?? s.source} onChange={(o) => updateSettings(p => ({ themeCollections: { ...p.themeCollections, [th]: { ...p.themeCollections?.[th], source: o.data as string } } }))} />
+          <SliderField label="Icon size in this theme" value={s.iconSizes?.[th] ?? 100} min={75} max={110} step={5} showValue onChange={value => updateSettings(p => ({ iconSizes: { ...p.iconSizes, [th]: value } }))} />
         </PanelSectionRow>
         <PanelSectionRow>
           <DropdownItem
@@ -418,7 +429,7 @@ export default definePlugin(() => {
     patch = routerHook.addPatch(HOME_ROUTE, (props: any) => {
       try {
         const original = props.children;
-        if (original?.type !== HomeSwitch) props.children = <HomeSwitch original={original} />;
+        if (original != null && original?.type !== HomeSwitch) props.children = <HomeSwitch original={original} />;
       } catch (e) {
         reportError("home patch", e);
       }
@@ -442,6 +453,7 @@ export default definePlugin(() => {
       if (patch) routerHook.removePatch(HOME_ROUTE, patch);
       try {
         restoreHeader(getUiDocument() ?? document);
+        restoreFooter(getUiDocument() ?? document);
       } catch {
         /* ignore */
       }

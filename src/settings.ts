@@ -67,9 +67,13 @@ export interface DialSettings {
   sound: "reference" | "pack" | "off";
 }
 export interface Settings {
+  hiddenThemes?: ThemeId[];
+  dismissedFirmware?: string;
+  firmwareNotifications?: boolean;
   presetCompany?: "Sony" | "Microsoft" | "Bonus";
   minecraftSkin?: string;
   minecraftFollowFocus?: boolean;
+  minecraftWaitForSwipe?: boolean;
   minecraftSlim?: boolean;
   backgroundMusic: boolean;
   ps4GameBackgrounds: boolean;
@@ -80,6 +84,8 @@ export interface Settings {
   enabled: boolean; // replace Steam's home with the themed home
   theme: ThemeId;
   source: string; // "installed" | "all" | "col:<collection id>"
+  themeCollections?: Partial<Record<ThemeId, { source: string; ids?: string[] }>>;
+  iconSizes?: Partial<Record<ThemeId, number>>;
   sort: SortMode;
   aAction: AAction; // what Ⓐ does on a game
   hideSteamHeader: boolean; // hide Steam's own top bar while the themed home is shown
@@ -183,6 +189,7 @@ function merge(saved: any): Settings {
   const s: any = { ...DEFAULTS, ...(saved && typeof saved === "object" ? saved : {}) };
   if (typeof s.minecraftSkin !== "string" || s.minecraftSkin.length > 60000 || !s.minecraftSkin.startsWith("data:image/png;base64,")) s.minecraftSkin = "";
   s.minecraftSlim = s.minecraftSlim === true;
+  s.minecraftWaitForSwipe = s.minecraftWaitForSwipe === true;
   if (!["Sony","Microsoft","Bonus"].includes(s.presetCompany)) delete s.presetCompany;
   s.minecraftFollowFocus = s.minecraftFollowFocus !== false;
   s.dial = { ...DEFAULTS.dial, ...(saved?.dial ?? {}) };

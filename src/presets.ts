@@ -32,6 +32,7 @@ const pretty = (f: string) => f.replace(/\.(p3t|zip)$/i, "").replace(/[_-]+/g, "
 export function getPresets(): Preset[] {
   const out: Preset[] = [];
   for (const t of THEMES) {
+    if (getSettings().hiddenThemes?.includes(t.id)) continue;
     if (t.id === "ps3") {
       out.push({ id: "ps3", label: "PS3 · Original wave", theme: "ps3", p3t: "" });
       skins.p3t.forEach((f) => out.push({ id: `ps3:${f}`, label: `PS3 · ${pretty(f)}`, theme: "ps3", p3t: f }));
@@ -54,6 +55,7 @@ export function currentPresetId(s: Settings = getSettings()): string {
 
 export function applyPreset(p: Preset) {
   updateSettings((s) => ({
+    enabled: true,
     theme: p.theme,
     xmb: p.p3t !== undefined ? { ...s.xmb, p3t: p.p3t } : s.xmb,
     vita: p.vitaSkin !== undefined ? { ...s.vita, skin: p.vitaSkin } : s.vita,
@@ -64,6 +66,7 @@ export function applyPreset(p: Preset) {
 /** Step through the list (L2 / R2). Returns the preset now active. */
 export function cyclePreset(dir: number): Preset {
   const list = getPresets();
+  if (!list.length) return { id: getSettings().theme, label: "No themes installed · open Hub", theme: getSettings().theme };
   const i = Math.max(0, list.findIndex((p) => p.id === currentPresetId()));
   const next = list[(i + dir + list.length) % list.length];
   applyPreset(next);

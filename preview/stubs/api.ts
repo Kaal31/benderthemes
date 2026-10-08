@@ -1,5 +1,19 @@
 // Browser stand-ins for @decky/api.
 const backend: Record<string, (...a: any[]) => any> = {
+  theme_inventory: () => Object.fromEntries(((window as any).__themeCatalog?.themes || []).map((p: any) => [p.id, p.version])),
+  theme_catalog: () => ({ ...((window as any).__themeCatalog || { themes: [] }), progress: (window as any).__downloadProgress || { busy: false, percent: 0, id: "", message: "" } }),
+  theme_download_progress: () => (window as any).__downloadProgress || { busy: false, percent: 0, id: "", message: "" },
+  theme_install: async (id: string) => {
+    for (let percent = 0; percent <= 100; percent += 20) {
+      (window as any).__downloadProgress = { busy: percent < 100, percent, id, message: "Preview download…" };
+      await new Promise(resolve => setTimeout(resolve, 180));
+    }
+    const pack = (window as any).__themeCatalog?.themes.find((p: any) => p.id === id);
+    if (pack) pack.installedVersion = pack.version;
+    return { success: true };
+  },
+  theme_remove: (id: string) => { const pack = (window as any).__themeCatalog?.themes.find((p: any) => p.id === id); if (pack) delete pack.installedVersion; return { success: true }; },
+  plugin_update_status: () => ({ success: true, currentVersion: "1.10.0", releases: [], latest: null, updateAvailable: false, stale: false }),
   castle_weather: async()=>{
     const mock=(window as any).__testWeather;if(mock)return mock;
     try{

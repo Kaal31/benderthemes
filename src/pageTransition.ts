@@ -16,6 +16,23 @@ export function transitionPage(settings:Settings,change:()=>void,targetDoc:Docum
   snapshot.removeAttribute("data-dht-root");snapshot.setAttribute("data-page-transition","");snapshot.setAttribute("aria-hidden","true");snapshot.inert=true;
   snapshot.querySelectorAll("[id]").forEach(e=>e.removeAttribute("id"));
   Object.assign(snapshot.style,{position:"fixed",left:`${rect.left}px`,top:`${rect.top}px`,width:`${rect.width}px`,height:`${rect.height}px`,margin:"0",transform:"none",pointerEvents:"none",zIndex:"2147483000",overflow:"hidden"});
+  if(settings.theme==="nazarick"){
+    // Never dissolve two sets of text/frames over each other. Fade the old
+    // content into the theme's dark surface, commit, then reveal the new page.
+    // The header is outside this mask and stays readable throughout.
+    const curtain=doc.createElement('div');curtain.setAttribute('data-page-transition','');curtain.setAttribute('aria-hidden','true');curtain.inert=true;
+    Object.assign(curtain.style,{position:'fixed',left:`${rect.left}px`,top:`${rect.top}px`,width:`${rect.width}px`,height:`${rect.height}px`,background:'#08060c',pointerEvents:'none',zIndex:'2147483000',overflow:'hidden',clipPath:`inset(${rect.height*58/864}px 0 0)`});
+    snapshot.removeAttribute('data-page-transition');Object.assign(snapshot.style,{position:'absolute',left:'0',top:'0'});curtain.append(snapshot);doc.body.append(curtain);
+    snapshot.animate([{opacity:1},{opacity:0}],{duration:130,easing:'ease-in',fill:'forwards'});
+    const timer=setTimeout(()=>{
+      change();snapshot.remove();
+      const win=doc.defaultView;
+      win?.requestAnimationFrame(()=>win.requestAnimationFrame(()=>curtain.animate([{opacity:1},{opacity:0}],{duration:180,easing:'ease-out',fill:'forwards'})));
+      const finish=setTimeout(()=>{curtain.remove();if(active.get(doc)?.node===curtain)active.delete(doc);},230);
+      active.set(doc,{node:curtain,timer:finish});
+    },140);
+    active.set(doc,{node:curtain,timer});return;
+  }
   doc.body.append(snapshot);
   change();
   // Two paints let React commit the destination before revealing it.

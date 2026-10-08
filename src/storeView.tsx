@@ -18,6 +18,7 @@ import { useAssets } from "./assets";
 
 // ───────────── per-theme look ─────────────
 interface Skin {
+  compact?: boolean;
   title: string;
   categoryNavigation?:boolean;
   layout: "grid" | "list";
@@ -40,6 +41,7 @@ export function storeSkin(s: Settings): Skin {
   const t = s.theme;
   const ps = { title: "PlayStation Store", sale: "#f5c518" };
   switch (t) {
+    case "minecraft": return { compact: true, title: "Marketplace", sale: "#70b33e", layout: "grid", bg: "repeating-conic-gradient(#ffffff02 0% 25%,#00000003 0% 50%) 0 0 / 29px 29px, #292b2e", font: "BlockWorlds, monospace", panel: "linear-gradient(110deg,#303236,#242629)", text: "#eee", sub: "#bdbdc2", accent: "#326f18", accentText: "#fff", radius: 0, ring: on => on ? { boxShadow: "0 0 0 3px #171717,0 0 0 6px #82bf50", transform: "translateY(-2px)" } : { boxShadow: "inset 2px 2px #55565a,inset -2px -2px #191b1e" } };
     case "nazarick": return {categoryNavigation:true,title:"Nazarick Treasury",sale:"#cba765",layout:"list",bg:"transparent",font:"Georgia,serif",panel:"#08060cdd",text:"#dfd2e6",sub:"#b9a480",accent:"#67358bbd",accentText:"#f0dfff",radius:2,ring:ring("#c8a668","0 0 18px #a765dd66")};
     case "pain": return {title:"Store",sale:"#ba81ec",layout:"grid",bg:"radial-gradient(ellipse at 30% 20%,#2c173e,#09070f 75%)",panel:"#191021ed",text:"#e4cdf5",sub:"#b697cb",accent:"#b978ee",accentText:"#170a24",radius:12,ring:ring("#ce9bff","0 0 20px #a64eeb88")};
     case "castle": return {title:"Store",sale:"#e0ad14",layout:"grid",bg:"transparent",font:"Cardinal,sans-serif",panel:"#ffffffcc",text:"#304b64",sub:"#617d94",accent:"#ffdb36",accentText:"#253953",radius:3,ring:ring("#ffe470")};
@@ -165,8 +167,8 @@ export function StoreView({ settings, lib, onClose, onLaunch }: { settings: Sett
       if (STORE_TABS[n].id === "search" && !results.length) doSearch();
     }
   };
-  const COLS = skin.layout === "grid" ? 4 : 1;
-  const navigateNazarick=(place:NazarickPage)=>{if(place==="store"){setZone("items");setDetail(null);setSearchOpen(false);return;}close(()=>{if(place!=="home")openSteam(place);});};
+  const COLS = skin.layout === "grid" ? (skin.compact ? 2 : 4) : 1;
+  const navigateNazarick=(place:NazarickPage)=>{if(place==="store"){setZone("items");setDetail(null);setSearchOpen(false);return;}if(place==="home")close();else openSteam(place);};
   const handler = (p: Press): boolean => {
     const b = p.btn;
     if(settings.theme==="nazarick"&&(b==="l1"||b==="r1")){navigateNazarick(nextNazarickPage("store",b==="l1"?-1:1));return true;}
@@ -283,17 +285,17 @@ function StoreBody(p: {
     <>
       <div style={{ position: "absolute", left: 56, top: 26, display: "flex", alignItems: "center", gap: 14 }}>
         {p.icon && <img src={p.icon} style={{ width: 44, height: 44 }} />}
-        <span className="dht-store-title" style={{ fontSize: 30, fontWeight: skin.upper ? 800 : 300, letterSpacing: skin.upper ? 3 : 0 }}>
+        <span className="dht-store-title" style={{ fontSize: skin.compact ? 40 : 30, fontWeight: skin.upper ? 800 : 300, letterSpacing: skin.upper ? 3 : 0 }}>
           {skin.title}
         </span>
       </div>
       <div className="dht-store-prompt" style={{ position: "absolute", right: 56, top: 36, fontSize: 15, color: skin.tabText ?? skin.sub }}>{T(skin.categoryNavigation?"L1 / R1 categories · Y search":"L1 / R1 sections · Y search · B close")}</div>
-      <div style={{ position: "absolute", left: 56, top: 82, display: "flex", gap: 10 }}>
+      <div style={{ position: "absolute", left: 56, top: 82, right:56, display: "flex", flexWrap:"wrap", gap: 10 }}>
         {STORE_TABS.map((t) => {
           const on = t.id === p.tab;
           const focus = on && p.zone === "tabs";
           return (
-            <div key={t.id} className="dht-store-tab" data-selected={on} onClick={() => p.onTab(t.id)} style={{ padding: "7px 16px", borderRadius: Math.min(skin.radius, 20) || 0, fontSize: 16, fontWeight: on ? 700 : 500, letterSpacing: skin.upper ? 1.5 : 0, background: on ? skin.accent : "transparent", color: on ? skin.accentText : skin.tabText ?? skin.sub, boxShadow: focus ? `0 0 0 2px ${skin.text}` : "none", cursor: "pointer" }}>
+            <div key={t.id} className="dht-store-tab" data-selected={on} onClick={() => p.onTab(t.id)} style={{ padding: "7px 16px", borderRadius: Math.min(skin.radius, 20) || 0, fontSize: skin.compact ? 24 : 16, fontWeight: on ? 700 : 500, letterSpacing: skin.upper ? 1.5 : 0, background: on ? skin.accent : "transparent", color: on ? skin.accentText : skin.tabText ?? skin.sub, boxShadow: focus ? `0 0 0 2px ${skin.text}` : "none", cursor: "pointer" }}>
               {T(t.id === "search" && p.query ? `Search: ${p.query}` : t.label)}
             </div>
           );
@@ -358,11 +360,11 @@ function StoreBody(p: {
   // ── lists ──
   const empty = p.loading ? "Loading the store…" : p.failed ? "The store can't be reached right now (check the internet connection)." : p.tab === "search" ? (p.query ? "Nothing found." : "Press Y to search.") : "Nothing here right now.";
   if (skin.layout === "grid") {
-    const COLS = 4;
+    const COLS = skin.compact ? 2 : 4;
     const tw = Math.floor((W - 112 - (COLS - 1) * 20) / COLS);
     const th = Math.round((tw * 215) / 460);
-    const rowH = th + 64;
-    const rows = Math.max(1, Math.floor((H - 150) / rowH));
+    const rowH = th + (skin.compact ? 100 : 64);
+    const rows = Math.max(1, Math.floor((H - (skin.compact ? 210 : 150)) / rowH));
     const row = Math.floor(p.sel / COLS);
     const top = Math.max(0, Math.min(row - (rows - 1), Math.ceil(p.items.length / COLS) - rows));
     return (
@@ -373,7 +375,7 @@ function StoreBody(p: {
           const i = top * COLS + k;
           const on = i === p.sel && p.zone === "items";
           return (
-            <div key={it.id} className="dht-store-tile dht-tile" data-selected={on} onClick={() => p.onPick(i)} style={{ position: "absolute", left: 56 + (k % COLS) * (tw + 20), top: 140 + Math.floor(k / COLS) * rowH, width: tw, transition: "transform 140ms", ...skin.ring(on), borderRadius: skin.radius }}>
+            <div key={it.id} className="dht-store-tile dht-tile" data-selected={on} onClick={() => p.onPick(i)} style={{ position: "absolute", left: 56 + (k % COLS) * (tw + 20), top: (skin.compact ? 210 : 140) + Math.floor(k / COLS) * rowH, width: tw, transition: "transform 140ms", ...skin.ring(on), borderRadius: skin.radius }}>
               <div style={{ width: tw, height: th, borderRadius: skin.radius, overflow: "hidden", background: skin.panel, position: "relative" }}>
                 <img src={it.header} style={{ width: "100%", height: "100%", objectFit: "cover", display: "block" }} />
                 {!!it.discount && <span style={{ position: "absolute", left: 8, top: 8, padding: "2px 8px", borderRadius: 4, background: skin.sale, color: "#000", fontWeight: 800, fontSize: 14 }}>-{it.discount}%</span>}

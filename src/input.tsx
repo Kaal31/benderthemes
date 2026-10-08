@@ -2,6 +2,7 @@
 // simple button stream; the theme decides what each press does and whether
 // it consumed it (unconsumed Ⓑ goes back to Steam).
 import { Focusable, GamepadButton } from "@decky/ui";
+import { failHome } from "./compatibility";
 import { createContext, CSSProperties, ReactNode, useContext, useEffect, useMemo, useRef, useState } from "react";
 
 export type Btn = "up" | "down" | "left" | "right" | "a" | "b" | "x" | "y" | "menu" | "l1" | "r1" | "l2" | "r2";
@@ -58,23 +59,32 @@ export function setModalInput(h: InputHandler | null) {
 
 export function ThemeRoot({
   onInput,
+  activationGate,
   hints,
   children,
   style,
 }: {
   onInput: InputHandler;
+  activationGate?: (press:Press,run:()=>boolean)=>boolean;
   hints?: Hints;
   children: ReactNode;
   style?: CSSProperties;
 }) {
   const latest = useRef(onInput);
   latest.current = onInput;
+  const gate=useRef(activationGate);gate.current=activationGate;
   const fire = (btn: Btn, e: any) => {
     const press = { btn, repeat: !!e?.detail?.is_repeat };
-    const modal=modalLayers[modalLayers.length-1]??modalInput;
-    if (modal) return !!modal(press);
+    const run=()=>{
     if ((btn === "l2" || btn === "r2") && globalInput?.(press)) return true;
     return !!latest.current(press);
+    };
+    try {
+      const modal=modalLayers[modalLayers.length-1]??modalInput;
+      if (modal) return !!modal(press);
+      return gate.current?gate.current(press,run):run();
+    }
+    catch (error) { failHome(error); return false; }
   };
   const call = useMemo(
     () => ({

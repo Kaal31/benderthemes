@@ -1,4 +1,5 @@
 import { loadDialAsset } from "./themes/dialAssets";
+import { onResourcesChanged } from "./marketplaceState";
 // Small bridges to Steam's own UI: sounds, the native game menu, the top
 // bar, battery and user info. None of this is public API, so all of it is
 // defensive and every DOM change is undone on teardown.
@@ -47,6 +48,7 @@ export async function listWallpapers() {
 }
 
 const wallCache = new Map<string, string | null>();
+onResourcesChanged(() => { wallCache.clear(); void refreshPacks(); });
 let wallpaperOverride: ((name: string) => string | null) | null = null;
 export function setWallpaperOverride(f: typeof wallpaperOverride) {
   wallpaperOverride = f;

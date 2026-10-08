@@ -1,4 +1,6 @@
 import { beginLaunch, dismissLaunch, launchState } from "../src/launch";
+import { openMarketplace, useMarketplace } from "../src/marketplaceState";
+import { showFirmwarePreview } from "../src/FirmwareNotice";
 import { autoPack, packFile, SOUND_FILES } from "../src/steam";
 // Browser preview of every theme with an invented sample library.
 import { createRoot } from "react-dom/client";
@@ -135,12 +137,12 @@ seedSettings({
   vita: { folders: [{ id: "f1", name: "Adventures", apps: [1003, 1007, 1011, 1015], color: "#f5a623" }], order: [], collectionFolders: true, systemBubbles: true, art: "portrait", skin: params.get("vskin") ?? "", bubbleStyle: (params.get("bs") as any) ?? "lens" },
   animations: params.get("still") ? false : true,
   xmb: { ps3Color: -1, pspColor: -1, collectionFolders: true, p3t: params.get("p3t") ?? "" },
-  trailers: { preview: true, sound: false, video: params.get("tv") === "1" },
+    trailers: { preview: params.get("trailers") === "1", sound: false, video: params.get("tv") === "1" },
   x360: { style: (params.get("xs") as any) ?? "metro" },
 });
 (globalThis as any).__previewSettings = null;
 
-Object.assign(window,{__beginNativeLaunch:beginLaunch,__dismissLaunch:dismissLaunch,__launchState:launchState,__autoPack:autoPack,__packFile:packFile,__refreshPacks:refreshPacks,__openPlace:openSteamPreview,__updateTheme:updateSettings,__openGame:(id:number)=>openGamePage((window as any).__libraryGame(id)),__launchGame:launchGame});
+Object.assign(window,{__getThemeSettings:getSettings,__getThemeLibrary:()=>{const s=getSettings(),c=s.themeCollections?.[s.theme];return loadLibraryPreview(c?.source??s.source,s.sort,s.maxGames,c?.ids);},__beginNativeLaunch:beginLaunch,__dismissLaunch:dismissLaunch,__launchState:launchState,__autoPack:autoPack,__packFile:packFile,__refreshPacks:refreshPacks,__openPlace:openSteamPreview,__updateTheme:updateSettings,__openGame:(id:number)=>openGamePage((window as any).__libraryGame(id)),__launchGame:launchGame});
 (window as any).__libraryGame=(id:number)=>loadLibraryPreview("all","recent",400).byId.get(id);
 function Toast() {
   const [msg, setMsg] = useState("");
@@ -162,6 +164,7 @@ setPreviewActions({
 
 function App() {
   const s = useSettings();
+  const marketplace = useMarketplace();
   const [size, setSize] = useState({ w: 1280, h: 800 });
   useEffect(() => {
     const fit = () => {
@@ -179,15 +182,18 @@ function App() {
     <div style={{ font: "14px system-ui", color: "#ddd" }}>
       <div id="bar" style={{ display: "flex", gap: 6, alignItems: "center", padding: "10px 12px", flexWrap: "wrap" }}>
         <b style={{ marginRight: 8 }}>Deck Home Themes preview</b>
+        <button onClick={() => openMarketplace()}>Hub</button>
+        <button onClick={() => openSteamPreview("settings")}>Theme settings</button>
+        <button onClick={showFirmwarePreview}>Preview firmware update</button>
         {THEMES.map((t, i) => (
-          <button key={t.id} onClick={() => updateSettings({ theme: t.id })} style={{ padding: "5px 10px", borderRadius: 6, border: 0, cursor: "pointer", background: s.theme === t.id ? "#3d8bfd" : "#333", color: "#fff" }}>
+          <button key={t.id} onClick={() => updateSettings({ theme: t.id, enabled: true })} style={{ padding: "5px 10px", borderRadius: 6, border: 0, cursor: "pointer", background: s.theme === t.id ? "#3d8bfd" : "#333", color: "#fff" }}>
             {i + 1}. {t.name}
           </button>
         ))}
         <span style={{ opacity: 0.65, marginLeft: 10 }}>Arrows = D-pad · Enter = Ⓐ · Esc = Ⓑ · X · Y = △/Options · M = ≡ · Q/E = L1/R1 · Z/C = L2/R2 (presets)</span>
       </div>
       <div style={{ position: "relative", width: size.w, height: size.h, margin: "0 12px", transform: "translateZ(0)", overflow: "hidden", borderRadius: 10, boxShadow: "0 10px 40px #000" }}>
-        <ThemedHome standalone />
+        {s.enabled || marketplace.opened ? <ThemedHome standalone /> : <div style={{ padding: 70, background: "#162331", height: "100%", boxSizing: "border-box" }}><h1>Steam Home restored</h1><p>The deleted theme is hidden. Open Hub to download it again.</p><button onClick={() => openMarketplace()}>Open Hub</button></div>}
       </div>
       <Toast />
     </div>

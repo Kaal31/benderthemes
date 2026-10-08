@@ -1,6 +1,8 @@
 // Builds preview.html: every theme running in a normal browser with sample games.
 import { build } from "esbuild";
 import { existsSync, readdirSync, readFileSync, writeFileSync } from "fs";
+import { execFileSync } from "node:child_process";
+execFileSync(process.env.PYTHON || "python", ["tools/package_themes.py"], { stdio: "inherit" });
 const r = await build({
   entryPoints: ["preview/main.tsx"],
   bundle: true,
@@ -12,15 +14,17 @@ const r = await build({
   define: { "process.env.NODE_ENV": '"production"' },
 });
 const js = r.outputFiles[0].text.replace(/<\/script/g, "<\\/script");
+const previewCatalog = JSON.parse(readFileSync("theme-catalog.json", "utf8"));
+previewCatalog.themes = previewCatalog.themes.map((pack, i) => ({ ...pack, compatible: true, installedVersion: i < 3 ? pack.version : undefined, preview: `../out/theme-previews/${pack.id}.gif`, poster: `../out/theme-previews/${pack.id}.jpg` }));
 // personal builds: bundled wallpapers (./bundle/wallpapers) show up in the preview too
 const walls = {};
-if (existsSync("bundle/wallpapers/aero-background.jpg")) walls["aero-background.jpg"] = "data:image/jpeg;base64," + readFileSync("bundle/wallpapers/aero-background.jpg").toString("base64");
+if (existsSync("bundle/wallpapers/aero-background.jpg")) walls["aero-background.jpg"] = "../bundle/wallpapers/aero-background.jpg";
 const assets = {};
 for (const root of ["assets", "bundle/assets"]) {
   if (!existsSync(root)) continue;
   for (const set of readdirSync(root)) {
     assets[set] = assets[set] ?? {};
-    for (const f of readdirSync(`${root}/${set}`)) if (/\.(png|webp)$/i.test(f)) assets[set][f.replace(/\.(png|webp)$/i, "")] = `data:image/${f.endsWith("webp")?"webp":"png"};base64,` + readFileSync(`${root}/${set}/${f}`).toString("base64");
+    for (const f of readdirSync(`${root}/${set}`)) if (/\.(png|webp)$/i.test(f)) assets[set][f.replace(/\.(png|webp)$/i, "")] = `../${root}/${set}/${f}`;
   }
 }
 const dialAssets = {};
@@ -39,7 +43,7 @@ const suppliedPacks=["Minecraft Console Legacy","windows xp sounds","DHT Nazaric
 const wallJs = `window.__testPacks=[${JSON.stringify(republicPack)},${suppliedPacks.map(p=>JSON.stringify(p)).join(",")}];window.__castleAudio=${JSON.stringify(castleAudio)};window.__bladesAudio=${JSON.stringify(bladesAudio)};window.__testP3t=${JSON.stringify(p3t)};window.__dialAssets=${JSON.stringify(dialAssets)};window.__testWalls=${JSON.stringify(walls)};window.__testAssets=${JSON.stringify(assets)};`;
 writeFileSync(
   "preview/preview.html",
-  `<!doctype html><html><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>Deck Home Themes preview</title><style>html,body{margin:0;background:#0d0f13}</style></head><body><div id="root"></div><script>${wallJs}</script><script>${js}</script></body></html>`,
+  `<!doctype html><html><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>Deck Home Themes preview</title><style>html,body{margin:0;background:#0d0f13}</style></head><body><div id="root"></div><script>window.__themeCatalog=${JSON.stringify(previewCatalog)};window.__isThemePreview=true;</script><script>${wallJs}</script><script>${js}</script></body></html>`,
 );
 console.log("preview/preview.html", (js.length / 1024).toFixed(0), "KB");
 
@@ -56,7 +60,7 @@ for (const [name,id] of Object.entries(referenceGames)) {
   const art = {};
   for (const [kind,file] of Object.entries({portrait:"library_600x900.jpg",landscape:"header.jpg",hero:"library_hero.jpg",logo:"logo.png"})) {
     const path = `preview/art/${id}-${file}`;
-    if (existsSync(path)) art[kind] = ["data:image/"+(file.endsWith("png")?"png":"jpeg")+";base64,"+readFileSync(path).toString("base64")];
+    if (existsSync(path)) art[kind] = [`./art/${id}-${file}`];
   }
   referenceArt[name] = art;
 }

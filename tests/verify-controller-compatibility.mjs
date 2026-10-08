@@ -1,0 +1,15 @@
+import { build } from 'esbuild';
+import assert from 'node:assert/strict';
+const result = await build({ entryPoints:['src/controllerSupport.ts'], bundle:true, write:false, platform:'node', format:'esm' });
+const api = await import('data:text/javascript;base64,' + Buffer.from(result.outputFiles[0].text).toString('base64'));
+assert.equal(api.inputController([15,1,true]),15);
+assert.equal(api.inputController([15,1,false]),null);
+assert.equal(api.inputController([[{nController:0,bS:true},{nController:15,bS:true}]]),15);
+assert.equal(api.inputController([[{nController:15,bS:false}]]),null);
+assert.equal(api.inputController([{}]),null);
+assert.equal(api.controllerMotion(null,0),null);
+const deck={nController:0,flGravityVectorX:1}, external={nController:15,flGravityVectorX:2};
+assert.equal(api.controllerMotion([deck,external],0),deck);
+assert.equal(api.controllerMotion([deck,external],15),external);
+assert.equal(api.controllerMotion([deck],15),null);
+console.log('PASS: old and new Steam controller messages, external pad selection, missing motion data.');

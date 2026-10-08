@@ -4,11 +4,13 @@
 // set or an image is missing.
 import { callable } from "@decky/api";
 import { useEffect, useState } from "react";
+import { onResourcesChanged } from "./marketplaceState";
 
 type AssetSet = Record<string, string>; // name → data URL
 const backendAssets = callable<[name: string], AssetSet>("get_assets");
 const cache = new Map<string, AssetSet>();
 const pending = new Map<string, Promise<AssetSet>>();
+onResourcesChanged(() => { cache.clear(); pending.clear(); });
 
 export function loadAssets(name: string): Promise<AssetSet> {
   const hit = cache.get(name);

@@ -1,4 +1,8 @@
 import {transitionPage} from "./pageTransition";
+import { failHome, useHomeFailure } from "./compatibility";
+import { Marketplace, inventory } from "./Marketplace";
+import { openMarketplace, useMarketplace, useResourceRevision } from "./marketplaceState";
+import { FirmwareNotice } from "./FirmwareNotice";
 import {NazarickHome} from "./themes/Nazarick";
 import {PainHome} from "./themes/Pain";
 import {AeroV2Home} from "./themes/AeroV2";
@@ -9,10 +13,12 @@ import { LaunchView, useLaunchState, dismissLaunch } from "./launch";
 // the themed home and Steam's original one.
 import { Navigation } from "@decky/ui";
 import { Component, ReactNode, useEffect, useMemo, useRef, useState } from "react";
+import { createPortal } from "react-dom";
 import { HomeApi, HomeCtx } from "./common";
 import { Game, launchGame, loadLibrary, openGamePage, openSteam, setStoreOpener } from "./library";
+import { presentationVariables, PRESENTATION_CSS } from "./themePresentation";
 import { getSettings, ThemeId, updateSettings, useSettings, useSettingsLoaded } from "./settings";
-import { playSound, refreshPacks, useHiddenFooter, useHiddenHeader, useHomeMusic, userName } from "./steam";
+import { playSound, refreshPacks, restoreFooter, restoreHeader, useHiddenFooter, useHiddenHeader, useHomeMusic, userName } from "./steam";
 import { currentPresetId, cyclePreset, refreshPresets } from "./presets";
 import { bump, diag, reportError } from "./diag";
 import { setUiDocument } from "./cssvars";
@@ -58,6 +64,7 @@ export class SafeBoundary extends Component<{ fallback: ReactNode; children: Rea
   }
   componentDidCatch(e: unknown) {
     reportError(this.props.where ?? "render", e);
+    if (this.props.where === "home" || this.props.where?.startsWith("theme ")) failHome(e);
   }
   render() {
     return this.state.failed ? this.props.fallback : this.props.children;
@@ -90,8 +97,9 @@ export function HomeSwitch({ original }: { original: ReactNode }) {
   const s = useSettings();
   const loaded = useSettingsLoaded();
   const steamShown = useSteamHomeShown();
+  const failure = useHomeFailure();
   useEffect(() => bump("homePatchRenders"), []);
-  if (!loaded || !s.enabled || steamShown) return <>{original}</>;
+  if (!loaded || !s.enabled || steamShown || failure) return <>{original}</>;
   return (
     <SafeBoundary
       where="home"
@@ -117,7 +125,18 @@ function ErrorBanner() {
 }
 
 export function ThemedHome({ standalone }: { standalone?: boolean }) {
+  const revision = useResourceRevision();
+  return <ThemedHomeContent key={revision} standalone={standalone} />;
+}
+
+function ThemedHomeContent({ standalone }: { standalone?: boolean }) {
   const s = useSettings();
+  const market = useMarketplace();
+  useEffect(() => {
+    let alive = true;
+    inventory().then(installed => { if (alive && installed && !installed[s.theme]) openMarketplace(s.theme); }).catch(() => {});
+    return () => { alive = false; };
+  }, [s.theme]);
   const root = useRef<HTMLDivElement>(null);
   const [doc, setDoc] = useState<Document | null>(null);
   useEffect(() => {
@@ -132,12 +151,23 @@ export function ThemedHome({ standalone }: { standalone?: boolean }) {
     const iv = setInterval(() => setRev((r) => r + 1), 30000);
     return () => clearInterval(iv);
   }, []);
-  const lib = useMemo(() => loadLibrary(s.source, s.sort, s.maxGames), [s.source, s.sort, s.maxGames, rev]);
+  const collectionChoice = s.themeCollections?.[s.theme];
+  const librarySource = collectionChoice?.source ?? s.source;
+  const lib = useMemo(() => loadLibrary(librarySource, s.sort, s.maxGames, collectionChoice?.ids), [librarySource, collectionChoice, s.sort, s.maxGames, rev]);
+  // Empty libraries are valid; a missing/changed Steam API is a compatibility failure.
+  if (lib.error) throw new Error(lib.error);
 
   useHiddenHeader(doc, s.hideSteamHeader);
   useHiddenFooter(doc, s.footer);
+  useEffect(() => () => { restoreHeader(doc); restoreFooter(doc); }, [doc]);
   const [overlay, setOverlay] = useState<Overlay>(null);
   const [destination,setDestination] = useState<Destination|null>(null);
+  const [blockPanel,setBlockPanel] = useState<HTMLElement|null>(null);
+  useEffect(()=>{setBlockPanel(s.theme==="minecraft" ? root.current?.querySelector<HTMLElement>(".mc-content-slot")??null : null);},[s.theme]);
+  useEffect(()=>{if(!blockPanel)return;blockPanel.parentElement?.toggleAttribute("data-panel-open",!!destination||overlay?.kind==="store");return()=>blockPanel.parentElement?.removeAttribute("data-panel-open");},[blockPanel,destination,overlay]);
+  useEffect(()=>{const close=()=>{setDestination(null);setOverlay(null);};window.addEventListener("dht-block-play",close);return()=>window.removeEventListener("dht-block-play",close);},[]);
+  useEffect(()=>{if(s.theme==="minecraft")window.dispatchEvent(new CustomEvent("dht-block-page",{detail:overlay?.kind==="store"?"store":destination?.place??"play"}));},[s.theme,destination,overlay]);
+  const inBlockPanel=(content:ReactNode)=>blockPanel?createPortal(content,blockPanel):content;
   const launching=useLaunchState();
   useEffect(()=>{setDestinationOpener(d=>transitionPage(s,()=>{if(d.place==="media"){setOverlay({kind:"shots"});setDestination(null);}else{setOverlay(null);setDestination(d);}},doc));return()=>{setDestinationOpener(null);};},[s.theme,s.animations,doc]);
   useEffect(()=>()=>dismissLaunch(),[]);
@@ -224,16 +254,17 @@ export function ThemedHome({ standalone }: { standalone?: boolean }) {
         setOverlay({ kind: "video", video: v });
       },
       user: userName(),
-      busy: overlay !== null || destination !== null || launching !== null,
+      busy: overlay !== null || destination !== null || launching !== null || market.opened,
     }),
-    [lib, s, overlay !== null, destination !== null, launching !== null],
+    [lib, s, overlay !== null, destination !== null, launching !== null, market.opened],
   );
 
   const render = THEME_COMPONENTS[s.theme] ?? THEME_COMPONENTS.vita;
   return (
     // zIndex 1: Steam's own popups (context menus, modals) must paint above us.
     <div ref={root} data-dht-root="" data-tv={s.tvMode} data-motion={s.animations} data-dht-theme={s.theme} data-dht-preset={currentPresetId(s)} className={`dht-root dht-theme-${s.theme}`} style={{ position: "fixed", inset: 0, zIndex: standalone ? 900 : 1, background: "#000", overflow: "hidden", fontFamily: "var(--dht-font, inherit)", userSelect: "none", WebkitUserSelect: "none" }}>
-      <div className="dht-safe-area" style={{position:"absolute",inset:s.tvMode?"3%":"0"}}>
+      <div className="dht-safe-area" style={{position:"absolute",inset:s.tvMode?"3%":"0",...presentationVariables(s)}}>
+      <style>{PRESENTATION_CSS}</style>
       <style>{`.dht-root[data-tv=true] .dht-menu-item{font-size:25px!important;min-height:44px}.dht-root[data-motion=false] *{animation:none!important;transition:none!important}@media(prefers-reduced-motion:reduce){.dht-root *{animation:none!important;transition:none!important}}`}</style>
       <HomeCtx.Provider value={api}>
         <SafeBoundary
@@ -249,12 +280,14 @@ export function ThemedHome({ standalone }: { standalone?: boolean }) {
           <StageHost>{render()}</StageHost>
         </SafeBoundary>
       </HomeCtx.Provider>
-      {overlay?.kind === "shots" && <ScreenshotGallery appid={overlay.appid} index={overlay.index} lib={lib.byId} onClose={() => setOverlay(null)} />}
-      {overlay?.kind === "trailer" && <TrailerPlayer game={overlay.game} onClose={() => setOverlay(null)} />}
-      {overlay?.kind === "video" && <VideoPlayer video={overlay.video} lib={lib.byId} onClose={() => setOverlay(null)} />}
-      {overlay?.kind === "store" && <StoreView settings={s} lib={lib} onClose={() => transitionPage(s,()=>setOverlay(null),doc)} onLaunch={(g) => launchGame(g)} />}
-      {destination && <DestinationView destination={destination} settings={s} lib={lib} onClose={()=>transitionPage(s,()=>setDestination(null),doc)} onLaunch={launchGame} onMedia={()=>setOverlay({kind:"shots",appid:destination.game?.appid})} onTrailer={g=>setOverlay({kind:"trailer",game:g})}/>}
+      {overlay?.kind === "shots" && <div className="dht-themed-media"><ScreenshotGallery appid={overlay.appid} index={overlay.index} lib={lib.byId} onClose={() => setOverlay(null)} /></div>}
+      {overlay?.kind === "trailer" && <div className="dht-themed-media"><TrailerPlayer game={overlay.game} onClose={() => setOverlay(null)} /></div>}
+      {overlay?.kind === "video" && <div className="dht-themed-media"><VideoPlayer video={overlay.video} lib={lib.byId} onClose={() => setOverlay(null)} /></div>}
+      {overlay?.kind === "store" && inBlockPanel(<StoreView settings={s} lib={lib} onClose={() => transitionPage(s,()=>setOverlay(null),doc)} onLaunch={(g) => launchGame(g)} />)}
+      {destination && inBlockPanel(<DestinationView destination={destination} settings={s} lib={lib} onClose={()=>transitionPage(s,()=>setDestination(null),doc)} onLaunch={launchGame} onMedia={()=>setOverlay({kind:"shots",appid:destination.game?.appid})} onTrailer={g=>setOverlay({kind:"trailer",game:g})}/>)}
       {launching && <LaunchView value={launching} settings={s}/>}
+      {market.opened && <Marketplace requested={market.requested} />}
+      <FirmwareNotice paused={market.opened || !!overlay || !!destination || !!launching} />
       {banner && (
         <div
           key={banner.at}

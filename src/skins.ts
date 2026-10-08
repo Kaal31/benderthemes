@@ -5,6 +5,7 @@
 import { callable } from "@decky/api";
 import { useEffect, useState } from "react";
 import { getSettings, useSettings } from "./settings";
+import { onResourcesChanged } from "./marketplaceState";
 
 export interface VitaSkin {
   name: string;
@@ -30,6 +31,7 @@ export function setSkinOverride(o: Override) {
 
 const vitaCache = new Map<string, VitaSkin | null>();
 const p3tCache = new Map<string, P3tSkin | null>();
+onResourcesChanged(() => { vitaCache.clear(); p3tCache.clear(); });
 
 function useSkin<T>(name: string, cache: Map<string, T | null>, load: (n: string) => Promise<T | null>, ov?: (n: string) => T | null): T | null {
   const [v, setV] = useState<T | null>(name ? cache.get(name) ?? null : null);

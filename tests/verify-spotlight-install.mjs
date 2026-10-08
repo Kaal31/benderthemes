@@ -1,0 +1,13 @@
+import {build} from 'esbuild';
+import assert from 'node:assert/strict';
+const result=await build({stdin:{contents:'export {installSpotlightPlugin} from "./src/PluginSpotlight";export {SPOTLIGHT_PLUGINS} from "./src/spotlightCatalog";',resolveDir:process.cwd()},bundle:true,write:false,platform:'node',format:'esm',alias:{'@decky/ui':'./preview/stubs/ui.tsx'}});
+let calls=[];globalThis.window={addEventListener(){},DeckyBackend:{call:async(...args)=>calls.push(args)}};
+const m=await import('data:text/javascript;base64,'+Buffer.from(result.outputFiles[0].text).toString('base64')).catch(e=>{console.error(e.message);process.exit(1);});
+assert.equal(m.SPOTLIGHT_PLUGINS.length,21);
+assert.equal(m.SPOTLIGHT_PLUGINS.filter(p=>p.install).length,19);
+for(let i=0;i<m.SPOTLIGHT_PLUGINS.length;i++)await m.installSpotlightPlugin(i);
+assert.equal(calls.length,19);calls=[];m.SPOTLIGHT_PLUGINS.splice(0);
+m.SPOTLIGHT_PLUGINS.push({id:'test',name:'Test fixture',author:'Test',description:'',whyFeatured:'',projectUrl:'https://github.com/example/test',install:{pluginName:'Test fixture',version:'1.0.0',zipUrl:'https://github.com/example/test/releases/download/v1.0.0/plugin.zip'}});
+await m.installSpotlightPlugin(0);assert.deepEqual(calls[0],['utilities/install_plugin','https://github.com/example/test/releases/download/v1.0.0/plugin.zip','Test fixture','1.0.0','',1]);
+m.SPOTLIGHT_PLUGINS[0].install.zipUrl='https://github.com/other/test/releases/download/v1/plugin.zip';await assert.rejects(()=>m.installSpotlightPlugin(0));assert.equal(calls.length,1);
+console.log('PASS: verified release handoff to Decky; foreign download rejected.');

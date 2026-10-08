@@ -1,6 +1,7 @@
 // Browser stand-ins for @decky/ui so the themes run in a normal page.
 // Keyboard: arrows = D-pad, Enter = Ⓐ, Esc/Backspace = Ⓑ, X = Ⓧ, Y = Ⓨ/△, M = ≡, Q/E = L1/R1.
 import { CSSProperties, ReactNode, useEffect, useRef } from "react";
+export function ProgressBarWithInfo({ nProgress, sOperationText }: any) { return <div>{sOperationText}<progress value={nProgress} max={100} /></div>; }
 
 export enum GamepadButton {
   INVALID = 0, OK = 1, CANCEL = 2, SECONDARY = 3, OPTIONS = 4, BUMPER_LEFT = 5, BUMPER_RIGHT = 6, TRIGGER_LEFT = 7, TRIGGER_RIGHT = 8,

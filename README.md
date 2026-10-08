@@ -2,6 +2,15 @@
 
 Console-inspired home screens and cinematic interfaces for Steam Deck, built as a Decky Loader plugin.
 
+**Version 1.10.0:** plugin updates, themed firmware notifications, Hub with
+individual theme downloads, and collection selection in every theme's options
+menu. Preferences and installed themes persist through future updates/reinstalls.
+Delete and hide individual themes from their options menu.
+
+**Upgrading from before 1.10.0?** Old builds delete settings during replacement.
+This first upgrade starts fresh; no migration helper is needed.
+[Upgrade and Hub guide](docs/UPDATES.md).
+
 [![Watch every theme in use](docs/showcase-poster.jpg)](https://github.com/Kaal31/benderthemes/raw/refs/heads/main/docs/showcase.mp4)
 
 [Watch the full UI walkthrough (MP4)](https://github.com/Kaal31/benderthemes/raw/refs/heads/main/docs/showcase.mp4) · [Download the latest installation ZIP](https://github.com/Kaal31/benderthemes/releases/latest)

@@ -25,6 +25,8 @@ jobs:
       - run: npm ci
       - run: npm run typecheck
       - run: node tests/verify-preset-company.mjs
+      - run: node tests/verify-controller-compatibility.mjs
+      - run: python -m unittest discover -s tests -p "test_*.py"
       - name: Choose the next version
         id: version
         shell: bash
@@ -33,7 +35,19 @@ jobs:
       - name: Set package version
         run: npm version "${{ steps.version.outputs.version }}" --no-git-tag-version --allow-same-version
       - run: npm run build
+      - run: npx playwright install --with-deps chromium
+      - run: python -m pip install Pillow
+      - run: npm run preview
+      - run: node tools/capture_theme_previews.mjs
+      - run: python tools/make_theme_gifs.py
+      - run: node tests/verify-spotlight-install.mjs
+      - run: node tests/verify-spotlight-ui.mjs
+      - run: node tests/verify-marketplace.mjs
+      - run: node tests/verify-theme-options.mjs
+      - run: node tests/verify-block-panels.mjs
+      - run: node tests/verify-firmware-looks.mjs
       - run: npm run package
+      - run: python tools/verify_release.py
       - name: Commit version and tag
         env:
           VERSION: ${{ steps.version.outputs.version }}
@@ -51,4 +65,5 @@ jobs:
           GH_TOKEN: ${{ github.token }}
           VERSION: ${{ steps.version.outputs.version }}
         run: |
-          gh release create "v${VERSION}" "out/DeckHomeThemes-v${VERSION}.zip" --title "Deck Home Themes v${VERSION}" --generate-notes --latest
+          gh release create "v${VERSION}" "out/DeckHomeThemes-v${VERSION}.zip" out/themes/*.zip out/themes/theme-catalog.json out/theme-previews/*.gif out/theme-previews/*.jpg --title "Deck Home Themes v${VERSION}" --generate-notes --draft --verify-tag
+          gh release edit "v${VERSION}" --draft=false --latest

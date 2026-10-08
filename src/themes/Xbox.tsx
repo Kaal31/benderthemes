@@ -325,7 +325,7 @@ function GlassSphere({ W, H, children }: { W: number; H: number; children: React
   const cx = W * 0.255;
   const cy = H * 0.45;
   return (
-    <div style={{ position: "absolute", left: cx - r, top: cy - r, width: r * 2, height: r * 2 }}>
+    <div className="dht-xbox-game-sphere" style={{ position: "absolute", left: cx - r, top: cy - r, width: r * 2, height: r * 2 }}>
       <div style={{ position: "absolute", inset: -r * 0.12, borderRadius: "50%", background: "radial-gradient(circle at 45% 40%, rgba(120,220,50,0.08) 55%, rgba(150,240,70,0.32) 80%, rgba(200,255,120,0.45) 100%)", boxShadow: "0 0 40px rgba(120,230,40,0.3)" }} />
       <div style={{ position: "absolute", inset: r * 0.16, borderRadius: "50%", overflow: "hidden", boxShadow: "0 0 0 6px rgba(200,230,190,0.6), 0 0 0 10px rgba(140,230,60,0.5)" }}>{children}</div>
       <div style={{ position: "absolute", left: r * 0.4, top: r * 0.22, width: r * 0.8, height: r * 0.4, borderRadius: "50%", background: "radial-gradient(ellipse, rgba(255,255,255,0.35), transparent 70%)", pointerEvents: "none" }} />

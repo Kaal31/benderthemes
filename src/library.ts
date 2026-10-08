@@ -5,7 +5,7 @@
 import { beginLaunch } from "./launch";
 import { openDestination } from "./destinations";
 import { Navigation } from "@decky/ui";
-import { getSettings, SortMode } from "./settings";
+import { SortMode } from "./settings";
 import { findMediaRoute } from "./steam";
 
 declare const collectionStore: any;
@@ -117,7 +117,8 @@ const steamSource: LibrarySource = {
       collectionStore?.GetCollection?.("type-games") ??
       collectionStore?.allGamesCollection ??
       collectionStore?.allAppsCollection;
-    const games = c?.allApps ?? [];
+    if (!c || !Array.isArray(c.allApps)) throw new Error("Steam's library interface is unavailable. Steam Home has been restored.");
+    const games = c.allApps;
     // Non-game applications/tools are offered on the "apps"/"media" screens.
     let apps: any[] = [];
     try {
@@ -148,6 +149,7 @@ export function setLibrarySource(s: LibrarySource) {
 }
 
 export interface Library {
+  error?: string;
   games: Game[]; // the selected source, sorted (games only)
   apps: Game[]; // non-game applications
   all: Game[]; // every game, sorted
@@ -157,8 +159,8 @@ export interface Library {
 
 let cache: { key: string; at: number; lib: Library } | null = null;
 
-export function loadLibrary(src: string, sort: SortMode, max: number): Library {
-  const key = `${src}|${sort}|${max}`;
+export function loadLibrary(src: string, sort: SortMode, max: number, collectionIds: string[] = []): Library {
+  const key = JSON.stringify([src, sort, max, collectionIds]);
   if (cache && cache.key === key && Date.now() - cache.at < 4000) return cache.lib;
   let lib: Library;
   try {
@@ -176,7 +178,9 @@ export function loadLibrary(src: string, sort: SortMode, max: number): Library {
       games: sortGames((c.apps.map((a) => byId.get(a?.appid) ?? toGame(a)).filter(Boolean) as Game[]), sort),
     }));
     let chosen: Game[];
-    if (src.startsWith("col:")) chosen = collections.find((c) => c.id === src.slice(4))?.games ?? [];
+    const visibleCollections = src === "collections" ? collections.filter(c => collectionIds.includes(c.id)) : src.startsWith("col:") ? collections.filter(c => c.id === src.slice(4)) : collections;
+    if (src === "collections") chosen = [...new Map(visibleCollections.flatMap(c => c.games).map(g => [g.appid, g])).values()];
+    else if (src.startsWith("col:")) chosen = collections.find((c) => c.id === src.slice(4))?.games ?? [];
     else if (src === "all") chosen = games;
     else chosen = games.filter((g) => g.installed);
     lib = {
@@ -184,11 +188,11 @@ export function loadLibrary(src: string, sort: SortMode, max: number): Library {
       apps,
       all: sortGames(games, sort),
       byId,
-      collections: collections.filter((c) => c.games.length > 0),
+      collections: visibleCollections.filter((c) => c.games.length > 0),
     };
   } catch (e) {
     console.error("[DeckHomeThemes] library read failed", e);
-    lib = { games: [], apps: [], all: [], byId: new Map(), collections: [] };
+    lib = { games: [], apps: [], all: [], byId: new Map(), collections: [], error: String(e) };
   }
   cache = { key, at: Date.now(), lib };
   return lib;
@@ -243,7 +247,7 @@ export function setStoreOpener(f: (() => void) | null) {
 }
 export function openSteam(place: SteamPlace | "steamstore") {
   if (place === "store" && storeOpener) return storeOpener();
-  if (place !== "steamstore" && place !== "store" && !(place === "library" && getSettings().theme === "ps2") && openDestination({place})) return;
+  if (place !== "steamstore" && place !== "store" && openDestination({place})) return;
   if (place === "steamstore") place = "store";
   if (previewActions.nav) return previewActions.nav(place);
   try {

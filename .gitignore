@@ -1,6 +1,7 @@
 node_modules/
 dist/
 out/
+theme-catalog.json
 work/
 __pycache__/
 *.pyc

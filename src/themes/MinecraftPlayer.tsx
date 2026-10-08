@@ -1,3 +1,4 @@
+import {MINECRAFT_SWIPE_MS} from "./minecraftActivation";
 import {useEffect,useRef,useState} from "react";
 import {SkinViewer,IdleAnimation} from "skinview3d";
 import {pushModalInput} from "../input";
@@ -29,7 +30,7 @@ export function MinecraftPlayer({skin,slim=false,motion=true,followFocus=false,f
  return()=>{resize.disconnect();document.removeEventListener('visibilitychange',visibility);v.dispose();viewer.current=undefined;};}catch{setFailed(true);return()=>v?.dispose();}},[]);
  useEffect(()=>{viewer.current?.loadSkin(skin,{model:slim?"slim":"default"}).catch(()=>setFailed(true));},[skin,slim]);
  const strikeAt=useRef(-10000);
- useEffect(()=>{const strike=()=>{if(motion&&!matchMedia('(prefers-reduced-motion: reduce)').matches)strikeAt.current=performance.now();};const click=(e:MouseEvent)=>{if(e.target instanceof Element&&e.target.closest('.mc-home button,.dht-menu--minecraft .dht-menu-item'))strike();};document.addEventListener('click',click);window.addEventListener('dht-minecraft-strike',strike);return()=>{document.removeEventListener('click',click);window.removeEventListener('dht-minecraft-strike',strike);};},[motion]);
+ useEffect(()=>{const strike=()=>{if(motion&&!matchMedia('(prefers-reduced-motion: reduce)').matches)strikeAt.current=performance.now();};const click=(e:MouseEvent)=>{if((e as MouseEvent&{minecraftAfterSwipe?:boolean}).minecraftAfterSwipe)return;if(e.target instanceof Element&&e.target.closest('.mc-home button,.dht-menu--minecraft .dht-menu-item'))strike();};document.addEventListener('click',click);window.addEventListener('dht-minecraft-strike',strike);return()=>{document.removeEventListener('click',click);window.removeEventListener('dht-minecraft-strike',strike);};},[motion]);
  const focusTarget=useRef({x:0,y:0});
  useEffect(()=>{
   if(!followFocus)return;
@@ -39,7 +40,7 @@ export function MinecraftPlayer({skin,slim=false,motion=true,followFocus=false,f
  useEffect(()=>{const v=viewer.current;if(!v)return;const animate=motion&&!matchMedia('(prefers-reduced-motion: reduce)').matches;
   const idle=new IdleAnimation();if(!animate&&!followFocus){v.animation=null;return;}
   idle.speed=animate?.35:0;
-  let yaw=0,pitch=0,lean=0;idle.addAnimation((player)=>{const swing=(performance.now()-strikeAt.current)/420;if(animate&&swing>=0&&swing<1){const hit=Math.sin(Math.PI*swing);player.skin.rightArm.rotation.x=-hit*1.65;player.skin.rightArm.rotation.z=-hit*.18;player.skin.body.rotation.y=hit*.13;}if(!followFocus||dragging.current)return;const t=focusTarget.current;const blend=animate?.08:1;yaw+=(t.x*.95-yaw)*blend;pitch+=(t.y*.4-pitch)*blend;lean+=(-t.x*.075-lean)*blend;player.skin.head.rotation.y=yaw;player.skin.head.rotation.x=pitch;player.skin.body.rotation.z=lean;player.skin.body.rotation.y=yaw*.16+(animate&&swing>=0&&swing<1?Math.sin(Math.PI*swing)*.13:0);});v.animation=idle;
+  let yaw=0,pitch=0,lean=0;idle.addAnimation((player)=>{const swing=(performance.now()-strikeAt.current)/MINECRAFT_SWIPE_MS;if(animate&&swing>=0&&swing<1){const hit=Math.sin(Math.PI*swing);player.skin.rightArm.rotation.x=-hit*1.65;player.skin.rightArm.rotation.z=-hit*.18;player.skin.body.rotation.y=hit*.13;}if(!followFocus||dragging.current)return;const t=focusTarget.current;const blend=animate?.08:1;yaw+=(t.x*.95-yaw)*blend;pitch+=(t.y*.4-pitch)*blend;lean+=(-t.x*.075-lean)*blend;player.skin.head.rotation.y=yaw;player.skin.head.rotation.x=pitch;player.skin.body.rotation.z=lean;player.skin.body.rotation.y=yaw*.16+(animate&&swing>=0&&swing<1?Math.sin(Math.PI*swing)*.13:0);});v.animation=idle;
   return()=>{v.animation=null;};
  },[motion,followFocus]);
  return <>{failed?<div className="mc-player-error">3D preview unavailable on this renderer.<br/>Your skin is still saved.</div>:null}<canvas ref={canvas} aria-label="3D player — swipe or drag to rotate" onPointerDown={e=>e.stopPropagation()} style={{touchAction:"none",cursor:"grab",width:"100%",height:"100%",display:failed?"none":"block"}}/></>;

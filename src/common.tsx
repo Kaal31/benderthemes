@@ -2,12 +2,14 @@
 // original icon set, an in-theme options menu, and the shared home context.
 import { createContext, CSSProperties, ReactNode, useContext, useEffect, useRef, useState } from "react";
 import { Btn, Press } from "./input";
-import { Game, Library } from "./library";
+import { Game, Library, listCollectionsForSettings } from "./library";
 import type { LocalVideo } from "./media";
 import { playSound } from "./steam";
 import { CaseArt, CASE_THEMES } from "./CaseArt";
 import { getSettings, updateSettings, Settings, ThemeId } from "./settings";
 import { applyPreset, currentPresetId, presetGroups } from "./presets";
+import { openMarketplace } from "./marketplaceState";
+import { deleteCurrentTheme } from "./themeActions";
 
 // ───────────── home context ─────────────
 export interface HomeApi {
@@ -295,12 +297,39 @@ export interface MenuLevel {
   sel: number;
 }
 
+export function collectionMenu(theme: ThemeId): MenuItem {
+    const choice = () => getSettings().themeCollections?.[theme] ?? { source: getSettings().source };
+    const choose = (source: string, ids?: string[]) => updateSettings(s => ({ themeCollections: { ...s.themeCollections, [theme]: { source, ids } } }));
+    return { label: "Collections", sub: () => {
+      const collections = listCollectionsForSettings();
+      return [
+        { label: "Installed games", checked: choice().source === "installed", action: () => choose("installed") },
+        { label: "All games", checked: choice().source === "all", action: () => choose("all") },
+        ...collections.map(c => ({ label: `${c.name} (${c.count})`, checked: choice().source === `col:${c.id}`, action: () => choose(`col:${c.id}`) })),
+        { label: "Choose multiple collections", disabled: !collections.length, sub: () => [
+          ...collections.map(c => ({ label: c.name, get checked() { return choice().source === "collections" && !!choice().ids?.includes(c.id); }, keepOpen: true, action: () => {
+            const current = choice();
+            const ids = current.source === "collections" ? current.ids ?? [] : current.source.startsWith("col:") ? [current.source.slice(4)] : [];
+            choose("collections", ids.includes(c.id) ? ids.filter(id => id !== c.id) : [...ids, c.id]);
+          } })),
+          { label: "Done", action: () => {} },
+        ] },
+        ...(!collections.length ? [{ label: "Create collections in your Steam Library", disabled: true }] : []),
+      ];
+    } };
+}
+
 /** State machine for the theme's own options menu (△ / Y). Each theme draws it in its own style. */
 export function useMenu() {
   const [stack, setStack] = useState<MenuLevel[]>([]);
   const ref = useRef(stack);
   ref.current = stack;
   const open = (items: MenuItem[], title?: string) => {
+    const theme = getSettings().theme;
+    items = [...items, { label: "Icon size", sub: () => [75, 85, 100, 110].map(size => ({ label: `${size}%${size === 100 ? " · Default" : ""}`, checked: (getSettings().iconSizes?.[theme] ?? 100) === size, action: () => updateSettings(s => ({ iconSizes: { ...s.iconSizes, [theme]: size } })) })) }];
+    items = [...items, collectionMenu(theme)];
+    if (!items.some(item => item.label === "Hub")) items = [...items, { label: "Hub", action: () => openMarketplace() }];
+    if (!items.some(item => item.label === "Delete theme")) items = [...items, { label: "Delete theme", sub: () => [{ label: "Delete resources and return to Steam Home", action: deleteCurrentTheme }, { label: "Keep theme", action: () => {} }] }];
     const settings=getSettings();
     if(CASE_THEMES.includes(settings.theme) && items.some(i=>/Presets|Home Screen Settings/.test(i.label)) && !items.some(i=>i.label==="Cover style")) items=[...items,{label:"Cover style",sub:()=>["flat","case3d"].map(mode=>({label:mode==="flat"?"Flat":"3D case",checked:(getSettings().coverStyles?.[settings.theme]??"flat")===mode,action:()=>updateSettings(s=>({coverStyles:{...s.coverStyles,[settings.theme]:mode as "flat"|"case3d"}}))}))}];
     if(items.some(i=>/Presets|Home Screen Settings/.test(i.label)))items=[...items,{label:"Background music · all themes",sub:()=>[{label:"On",checked:getSettings().backgroundMusic!==false,action:()=>updateSettings({backgroundMusic:true})},{label:"Off",checked:getSettings().backgroundMusic===false,action:()=>updateSettings({backgroundMusic:false})}]}];
@@ -449,6 +478,7 @@ export function MenuView({
       title: { color: "#c8d2ff", fontSize: 18, padding: "0 30px 10px" },
     },
   };
+  styles.aero2 = styles.aero;
   const cinematic = variant === "castle" || variant === "republic";
   const st = cinematic ? {panel:{position:"absolute",left:"50%",top:"50%",transform:"translate(-50%,-50%)",minWidth:420,padding:18,background:variant==="castle"?"#eff8ffff":"#071019f5",border:"1px solid #e5c470",boxShadow:"0 15px 70px #0009"} as CSSProperties,item:(on:boolean)=>({fontSize:22,padding:"12px 22px",color:on?"#302400":variant==="castle"?"#30455c":"#e8d7af",background:on?"linear-gradient(100deg,#ffe579,#d4b157)":"transparent"}),title:{padding:12,fontSize:20,color:variant==="castle"?"#30455c":"#e8d7af"}} : styles[variant];
   return (

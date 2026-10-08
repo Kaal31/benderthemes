@@ -58,7 +58,22 @@ def _skin_dir() -> str:
 
 def _bundled_dir(kind: str) -> str:
     # Optional extras shipped inside the plugin zip (test builds): <plugin>/defaults/skins/<kind>
-    return os.path.join(decky.DECKY_PLUGIN_DIR, "defaults", "skins", kind)
+    return _resource("skins/" + kind)
+
+
+def _resource(relative: str) -> str:
+    import theme_store
+    return theme_store.resource(relative)
+
+
+def _resource_names(relative: str):
+    import theme_store
+    return theme_store.names(relative)
+
+
+def _user_resource(folder, name, relative):
+    path = os.path.join(folder, _safe_name(name))
+    return path if os.path.exists(path) else _resource(relative + "/" + _safe_name(name))
 
 
 def _sounds_dir() -> str:
@@ -570,7 +585,8 @@ def _sound_file(folder: str, name: str):
     p = os.path.realpath(os.path.join(root, folder, name))
     if not p.startswith(root + os.sep):
         return None
-    return p
+    downloaded = _resource("sounds/" + folder + "/" + name)
+    return downloaded if os.path.isfile(downloaded) else p
 
 
 async def _send(writer, status: str, headers: dict, body: bytes = b""):
@@ -664,6 +680,39 @@ async def _ensure_server():
 
 
 class Plugin:
+    async def theme_inventory(self):
+        import theme_store
+        return theme_store.local_inventory()
+
+    async def theme_catalog(self, refresh: bool = False):
+        import theme_store
+        return await asyncio.to_thread(theme_store.catalog, bool(refresh))
+
+    async def theme_install(self, ident: str):
+        import theme_store
+        return await asyncio.to_thread(theme_store.install, ident)
+
+    async def theme_remove(self, ident: str):
+        import theme_store
+        return await asyncio.to_thread(theme_store.remove, ident)
+
+    async def theme_download_progress(self):
+        import theme_store
+        return theme_store.progress()
+
+    async def plugin_update_status(self):
+        import theme_updates
+        return await asyncio.get_running_loop().run_in_executor(None, theme_updates.status)
+
+    async def plugin_prepare_replacement(self, version: str, url: str):
+        import theme_updates
+        return theme_updates.prepare_replacement(version, url)
+
+    async def plugin_cancel_replacement(self):
+        import theme_updates
+        theme_updates.clear_replacement()
+        return True
+
     # ───── settings ─────
     async def get_settings(self):
         try:
@@ -708,10 +757,10 @@ class Plugin:
     async def list_sound_packs(self):
         out = []
         root = _sounds_dir()
-        if not os.path.isdir(root):
-            return out
-        for entry in sorted(os.listdir(root)):
-            folder = os.path.join(root, entry)
+        entries = set(os.listdir(root) if os.path.isdir(root) else []) | set(_resource_names("sounds"))
+        for entry in sorted(entries):
+            downloaded = _resource("sounds/" + entry)
+            folder = downloaded if os.path.isdir(downloaded) else os.path.join(root, entry)
             pj = os.path.join(folder, "pack.json")
             if not os.path.isfile(pj):
                 continue
@@ -737,11 +786,11 @@ class Plugin:
     async def list_wallpapers(self):
         d = _wall_dir()
         os.makedirs(d, exist_ok=True)
-        files = sorted(n for n in os.listdir(d) if n.lower().endswith(IMAGE_EXT))
+        files = sorted(n for n in set(os.listdir(d)) | set(_resource_names("wallpapers")) if n.lower().endswith(IMAGE_EXT))
         return {"dir": d, "files": files}
 
     async def get_wallpaper(self, name: str):
-        p = os.path.join(_wall_dir(), _safe_name(name))
+        p = _user_resource(_wall_dir(), name, "wallpapers")
         if not os.path.isfile(p):
             return None
         with open(p, "rb") as f:
@@ -754,15 +803,15 @@ class Plugin:
         vita_dir = os.path.join(base, "vita")
         os.makedirs(p3t_dir, exist_ok=True)
         os.makedirs(vita_dir, exist_ok=True)
-        p3t = sorted(n for n in os.listdir(p3t_dir) if n.lower().endswith(".p3t"))
+        p3t = sorted(n for n in set(os.listdir(p3t_dir)) | set(_resource_names("skins/p3t")) if n.lower().endswith(".p3t"))
         vita = sorted(
-            n for n in os.listdir(vita_dir)
-            if n.lower().endswith(".zip") or os.path.isfile(os.path.join(vita_dir, n, "theme.xml"))
+            n for n in set(os.listdir(vita_dir)) | set(_resource_names("skins/vita"))
+            if n.lower().endswith(".zip") or os.path.isfile(os.path.join(_user_resource(vita_dir, n, "skins/vita"), "theme.xml"))
         )
         return {"p3t": p3t, "vita": vita, "dir": base}
 
     async def get_p3t(self, name: str):
-        p = os.path.join(_skin_dir(), "p3t", _safe_name(name))
+        p = _user_resource(os.path.join(_skin_dir(), "p3t"), name, "skins/p3t")
         if not os.path.isfile(p):
             return None
         try:
@@ -772,7 +821,7 @@ class Plugin:
             return None
 
     async def get_vita_skin(self, name: str):
-        p = os.path.join(_skin_dir(), "vita", _safe_name(name))
+        p = _user_resource(os.path.join(_skin_dir(), "vita"), name, "skins/vita")
         if not os.path.exists(p):
             return None
         try:
@@ -787,7 +836,7 @@ class Plugin:
         allowed = {"wake.wav", "switch.wav", "launch.wav", "back.wav"}
         if not isinstance(name, str) or name not in allowed:
             return None
-        path = os.path.join(decky.DECKY_PLUGIN_DIR, "defaults", "dial", name)
+        path = _resource("dial/" + name)
         if not os.path.isfile(path) or os.path.getsize(path) > 12 * 1024 * 1024:
             return None
         with open(path, "rb") as f:
@@ -796,7 +845,7 @@ class Plugin:
         return "data:" + mime + ";base64," + payload
 
     async def get_assets(self, name: str):
-        folder = os.path.join(decky.DECKY_PLUGIN_DIR, "defaults", "assets", _safe_name(name))
+        folder = _resource("assets/" + _safe_name(name))
         out = {}
         try:
             for n in sorted(os.listdir(folder)):
@@ -842,10 +891,9 @@ class Plugin:
     async def cinematic_assets(self, name: str):
         if name not in ("castle", "republic") or not await _ensure_server():
             return {}
-        root = os.path.join(decky.DECKY_PLUGIN_DIR, "defaults", "cinematic")
         result = {}
         for key, ext in (("video", ".mp4"), ("poster", ".jpg")):
-            path = os.path.join(root, name + ext)
+            path = _resource("cinematic/" + name + ext)
             if os.path.isfile(path):
                 ident = "cinematic-" + name + "-" + key
                 _vi.files[ident] = path
@@ -871,12 +919,17 @@ class Plugin:
 
     # ───── lifecycle ─────
     async def _main(self):
+        import theme_updates
+        theme_updates.clear_replacement()
+        import theme_store
+        theme_store.recover()
+        theme_store.migrate_legacy_resources()
         os.makedirs(_wall_dir(), exist_ok=True)
         os.makedirs(os.path.join(_skin_dir(), "p3t"), exist_ok=True)
         os.makedirs(os.path.join(_skin_dir(), "vita"), exist_ok=True)
         # Copy any skins bundled in the zip into the user's skins folder (never overwrites).
         for kind in ("p3t", "vita"):
-            src = _bundled_dir(kind)
+            src = os.path.join(decky.DECKY_PLUGIN_DIR, "defaults", "skins", kind)
             if not os.path.isdir(src):
                 continue
             for n in os.listdir(src):
@@ -943,10 +996,6 @@ class Plugin:
             pass
 
     async def _uninstall(self):
-        for p in (_settings_path(), _settings_path() + ".tmp"):
-            try:
-                os.remove(p)
-            except FileNotFoundError:
-                pass
-            except Exception as e:
-                decky.logger.error(f"failed to remove {p}: {e}")
+        # Decky also invokes this for manual ZIP reinstalls. User preferences and
+        # installed theme resources deliberately outlive the plugin directory.
+        await self._unload()
