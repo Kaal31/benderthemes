@@ -107,3 +107,12 @@ is available. Missing motion APIs do not block navigation.
 
 Additional references: [SpinDeck](https://github.com/justinca92/spindeck) safety
 and controller handling; [Decky installer](https://github.com/SteamDeckHomebrew/decky-loader/blob/main/backend/decky_loader/browser.py).
+
+## Release layout from v1.10.1
+
+GitHub releases contain the plugin installer, theme ZIPs and the JSON catalogue.
+GIF and JPG previews are inside their respective theme ZIPs, not loose release
+assets. The plugin installer also carries the small Hub preview gallery, served
+locally so browsing previews does not require downloading entire themes.
+HTTPS requests explicitly load the SteamOS system CA bundle alongside Python's
+default trust store; certificate and hostname verification remain enabled.

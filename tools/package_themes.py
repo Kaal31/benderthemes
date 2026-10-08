@@ -64,6 +64,8 @@ def build():
         if not files:
             continue
         target = out / f"theme-{ident}-v{version}.zip"
+        previews = [(ROOT / f"out/theme-previews/{ident}.{ext}", f"assets/hub/{ident}.{ext}") for ext in ("gif", "jpg") if (ROOT / f"out/theme-previews/{ident}.{ext}").is_file()]
+        files = files + previews
         all_files = files + notices
         with zipfile.ZipFile(target, "w", zipfile.ZIP_DEFLATED, compresslevel=6) as z:
             for path, name in all_files:
@@ -79,8 +81,8 @@ def build():
             "unpackedSize": sum(p.stat().st_size for p, _ in all_files),
             "sha256": hashlib.sha256(target.read_bytes()).hexdigest(),
             "url": f"https://github.com/Kaal31/benderthemes/releases/download/v{version}/{target.name}",
-            "preview": f"https://github.com/Kaal31/benderthemes/releases/download/v{version}/{ident}.gif" if ident != "extras" else None,
-            "poster": f"https://github.com/Kaal31/benderthemes/releases/download/v{version}/{ident}.jpg" if ident != "extras" else None})
+            "preview": None,
+            "poster": None})
     payload = json.dumps(catalog, indent=2) + "\n"
     (out / "theme-catalog.json").write_text(payload, encoding="utf-8")
     (ROOT / "theme-catalog.json").write_text(payload, encoding="utf-8")

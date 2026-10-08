@@ -23,5 +23,11 @@ for theme in catalog["themes"]:
         assert sum(item.file_size for item in pack.infolist()) == theme["unpackedSize"]
     if theme.get("theme"):
         for ext in ("gif", "jpg"):
-            assert (root / f"out/theme-previews/{theme['id']}.{ext}").is_file()
+            preview = root / f"out/theme-previews/{theme['id']}.{ext}"
+            assert preview.is_file()
+            with zipfile.ZipFile(archive) as pack:
+                assert pack.read(f"assets/hub/{theme['id']}.{ext}") == preview.read_bytes()
+            with zipfile.ZipFile(root / f"out/DeckHomeThemes-v{version}.zip") as plugin:
+                assert plugin.read(f"DeckHomeThemes/hub-previews/{theme['id']}.{ext}") == preview.read_bytes()
+        assert theme['preview'] is None and theme['poster'] is None
 print(f"Verified installer and {len(catalog['themes'])} separate Hub packs for v{version}.")

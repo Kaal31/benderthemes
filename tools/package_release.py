@@ -12,6 +12,12 @@ target=out/f'DeckHomeThemes-v{version}.zip'
 with zipfile.ZipFile(target,'w',zipfile.ZIP_DEFLATED,compresslevel=6) as z:
     for name in ['main.py','plugin.json','package.json','README.md','dist/index.js','theme-catalog.json']:
         z.write(root/name,'DeckHomeThemes/'+name)
+    for theme in json.loads((root/'theme-catalog.json').read_text())["themes"]:
+        if theme.get("theme"):
+            for ext in ("gif", "jpg"):
+                preview = root/f"out/theme-previews/{theme['id']}.{ext}"
+                assert preview.is_file(), f"Missing Hub preview: {preview}"
+                z.write(preview, f"DeckHomeThemes/hub-previews/{preview.name}")
     for folder,destination in [('third-party','third-party'),('py_modules','py_modules')]:
         for p in sorted((root/folder).rglob('*')):
             if p.is_file() and '__pycache__' not in p.parts:

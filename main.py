@@ -686,7 +686,19 @@ class Plugin:
 
     async def theme_catalog(self, refresh: bool = False):
         import theme_store
-        return await asyncio.to_thread(theme_store.catalog, bool(refresh))
+        result = await asyncio.to_thread(theme_store.catalog, bool(refresh))
+        if await _ensure_server():
+            for pack in result["themes"]:
+                if not theme_store.ID.fullmatch(pack["id"]):
+                    continue
+                for key, ext in (("preview", "gif"), ("poster", "jpg")):
+                    path = os.path.join(decky.DECKY_PLUGIN_DIR, "hub-previews", f"{pack['id']}.{ext}")
+                    pack[key] = None
+                    if os.path.isfile(path):
+                        ident = f"hub-{pack['id']}-{ext}"
+                        _vi.files[ident] = path
+                        pack[key] = _vi.url(f"f/{ident}")
+        return result
 
     async def theme_install(self, ident: str):
         import theme_store
@@ -863,7 +875,8 @@ class Plugin:
         if cached and time.monotonic() - cached[0] < (60 if cached[1].get("error") else 600):
             return cached[1]
         def fetch():
-            from urllib.request import urlopen, Request
+            from urllib.request import Request
+            from theme_network import urlopen
             from urllib.parse import urlencode
             import math
             def read(url):

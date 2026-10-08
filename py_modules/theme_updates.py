@@ -3,7 +3,8 @@ import json
 import os
 import re
 import time
-from urllib.request import Request, urlopen
+from urllib.request import Request
+from theme_network import urlopen
 
 import decky
 

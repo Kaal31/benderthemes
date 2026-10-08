@@ -8,7 +8,8 @@ import shutil
 import stat
 import tempfile
 import threading
-from urllib.request import Request, urlopen
+from urllib.request import Request
+from theme_network import urlopen
 import zipfile
 
 import decky
