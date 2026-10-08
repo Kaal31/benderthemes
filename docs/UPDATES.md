@@ -1,3 +1,5 @@
+> Beta branch: the current asset layout is documented in [BETA-ASSETS.md](BETA-ASSETS.md). The release layout below describes earlier stable builds.
+
 # Plugin updates
 
 Open Deck Home Themes in Quick Access. The Plugin updates section checks GitHub

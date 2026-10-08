@@ -687,12 +687,13 @@ class Plugin:
     async def theme_catalog(self, refresh: bool = False):
         import theme_store
         result = await asyncio.to_thread(theme_store.catalog, bool(refresh))
-        if await _ensure_server():
+        gallery = await asyncio.to_thread(theme_store.gallery)
+        if gallery and await _ensure_server():
             for pack in result["themes"]:
                 if not theme_store.ID.fullmatch(pack["id"]):
                     continue
                 for key, ext in (("preview", "gif"), ("poster", "jpg")):
-                    path = os.path.join(decky.DECKY_PLUGIN_DIR, "hub-previews", f"{pack['id']}.{ext}")
+                    path = os.path.join(gallery, f"{pack['id']}.{ext}")
                     pack[key] = None
                     if os.path.isfile(path):
                         ident = f"hub-{pack['id']}-{ext}"

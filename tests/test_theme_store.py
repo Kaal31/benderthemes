@@ -45,7 +45,7 @@ class ThemeStoreTests(unittest.TestCase):
         self.payload = archive({"assets/vita/test.png": b"test-image", "sounds/Vita/pack.json": b'{"name":"Vita"}'})
         self.size = len(b"test-image") + len(b'{"name":"Vita"}')
         self.pack = {"id": "vita", "theme": "vita", "name": "PS Vita", "version": "1.10.0", "minPluginVersion": "1.10.0",
-            "url": "https://github.com/Kaal31/benderthemes/releases/download/v1.10.0/ThemeAssets-PS-Vita-v1.10.0.zip",
+            "url": "https://github.com/Kaal31/deckthemes-assets/releases/download/vita-v1.10.0/ThemeAssets-PS-Vita-v1.10.0.zip",
             "sha256": hashlib.sha256(self.payload).hexdigest(), "size": len(self.payload), "unpackedSize": self.size}
         store._catalog = {"schema": 1, "themes": [self.pack]}
 

@@ -16,7 +16,8 @@ import zipfile
 import decky
 from theme_updates import REPO, current_version, version_key
 
-CATALOG_URL = f"https://github.com/{REPO}/releases/latest/download/theme-catalog.json"
+ASSET_REPO = "Kaal31/deckthemes-assets"
+CATALOG_URL = f"https://github.com/{ASSET_REPO}/releases/download/beta-catalog/theme-catalog.json"
 MAX_DOWNLOAD = 256 * 1024 * 1024
 MAX_EXPANDED = 512 * 1024 * 1024
 _lock = threading.Lock()
@@ -51,7 +52,7 @@ def validate_catalog(data):
         seen.add(ident)
         version_key(pack["version"])
         version_key(pack["minPluginVersion"])
-        expected = f"https://github.com/{REPO}/releases/download/v{pack['version']}/{asset_filename(ident, pack['version'])}"
+        expected = f"https://github.com/{ASSET_REPO}/releases/download/{ident}-v{pack['version']}/{asset_filename(ident, pack['version'])}"
         if pack.get("url") != expected or not re.fullmatch(r"[0-9a-f]{64}", pack.get("sha256", "")):
             raise ValueError("Untrusted theme download")
         if not 0 < pack.get("size", 0) <= MAX_DOWNLOAD or not 0 < pack.get("unpackedSize", 0) <= MAX_EXPANDED:
@@ -307,3 +308,51 @@ def names(relative):
         if folder.is_dir():
             found.update(p.name for p in folder.iterdir())
     return sorted(found)
+
+
+_gallery_lock = threading.Lock()
+
+def gallery():
+    """Fetch the small preview gallery once; never download a theme just to browse."""
+    meta = (_catalog or {}).get("gallery")
+    if not meta:
+        return None
+    digest = meta.get("sha256", "")
+    size = meta.get("size", 0)
+    expected = f"https://github.com/{ASSET_REPO}/releases/download/gallery-{digest[:16]}/HubPreviews.zip"
+    if not re.fullmatch(r"[0-9a-f]{64}", digest) or meta.get("url") != expected or not 0 < size <= 24 * 1024 * 1024:
+        return None
+    destination = root() / "preview-cache" / digest
+    with _gallery_lock:
+        if (destination / ".complete").is_file():
+            return destination
+        destination.parent.mkdir(parents=True, exist_ok=True)
+        try:
+            with tempfile.TemporaryDirectory(dir=destination.parent) as temp:
+                archive = Path(temp) / "gallery.zip"
+                total = 0
+                checksum = hashlib.sha256()
+                with urlopen(Request(expected, headers={"User-Agent": "DeckHomeThemes/gallery"}), timeout=30) as response, archive.open("wb") as output:
+                    while chunk := response.read(262144):
+                        total += len(chunk)
+                        if total > size:
+                            raise ValueError("Preview download exceeds catalogue size")
+                        checksum.update(chunk)
+                        output.write(chunk)
+                if total != size or checksum.hexdigest() != digest:
+                    raise ValueError("Preview checksum mismatch")
+                content = Path(temp) / "content"
+                content.mkdir()
+                with zipfile.ZipFile(archive) as z:
+                    if sum(i.file_size for i in z.infolist()) > 32 * 1024 * 1024 or len(z.infolist()) > 64:
+                        raise ValueError("Preview gallery is too large")
+                    for info in z.infolist():
+                        if not re.fullmatch(r"[a-z][a-z0-9-]{0,47}\.(gif|jpg)", info.filename):
+                            raise ValueError("Invalid preview filename")
+                        (content / info.filename).write_bytes(z.read(info))
+                (content / ".complete").touch()
+                content.rename(destination)
+            return destination
+        except Exception as exc:
+            decky.logger.warning(f"Hub previews unavailable: {exc}")
+            return None

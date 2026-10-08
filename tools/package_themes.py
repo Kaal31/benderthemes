@@ -62,13 +62,15 @@ def build():
     for path in sorted((ROOT / "third-party").rglob("*")):
         if path.is_file():
             notices.append((path, "notices/third-party/" + path.relative_to(ROOT / "third-party").as_posix()))
+    lock_path = ROOT / "asset-catalog.json"
+    previous = json.loads(lock_path.read_text(encoding="utf-8")) if lock_path.exists() else {"themes": []}
+    old = {p["id"]: p for p in previous["themes"]}
     catalog = {"schema": 1, "themes": []}
     for ident, files in groups.items():
         if not files:
             continue
         target = out / asset_filename(ident, version)
-        previews = [(ROOT / f"out/theme-previews/{ident}.{ext}", f"assets/hub/{ident}.{ext}") for ext in ("gif", "jpg") if (ROOT / f"out/theme-previews/{ident}.{ext}").is_file()]
-        files = files + previews
+        # Previews are published separately and cached by the Hub.
         all_files = files + notices
         with zipfile.ZipFile(target, "w", zipfile.ZIP_DEFLATED, compresslevel=6) as z:
             for path, name in all_files:
@@ -76,16 +78,38 @@ def build():
                 info.compress_type = zipfile.ZIP_DEFLATED
                 info.external_attr = 0o100644 << 16
                 z.writestr(info, path.read_bytes())
-        catalog["themes"].append({"id": ident, "name": LABELS[ident], "version": version,
+        digest = hashlib.sha256(target.read_bytes()).hexdigest()
+        prior = old.get(ident)
+        pack_version = prior["version"] if prior else "1.0.0"
+        if prior and prior["sha256"] != digest:
+            major, minor, patch = map(int, pack_version.split("."))
+            pack_version = f"{major}.{minor}.{patch + 1}"
+        renamed = out / asset_filename(ident, pack_version)
+        if renamed != target:
+            target.replace(renamed)
+        target = renamed
+        catalog["themes"].append({"id": ident, "name": LABELS[ident], "version": pack_version,
             "theme": ident if ident != "extras" else None,
             "description": "Artwork, sounds and optional skins for " + LABELS[ident] + ".",
-            "minPluginVersion": "1.10.0", "size": target.stat().st_size,
+            "minPluginVersion": "1.10.2", "size": target.stat().st_size,
             "resources": [name for _, name in files],
             "unpackedSize": sum(p.stat().st_size for p, _ in all_files),
             "sha256": hashlib.sha256(target.read_bytes()).hexdigest(),
-            "url": f"https://github.com/Kaal31/benderthemes/releases/download/v{version}/{target.name}",
+            "url": f"https://github.com/Kaal31/deckthemes-assets/releases/download/{ident}-v{pack_version}/{target.name}",
             "preview": None,
             "poster": None})
+    preview_zip = out / "HubPreviews.zip"
+    with zipfile.ZipFile(preview_zip, "w", zipfile.ZIP_DEFLATED) as z:
+        for ident in LABELS:
+            for ext in ("gif", "jpg"):
+                path = ROOT / f"out/theme-previews/{ident}.{ext}"
+                if path.is_file():
+                    info = zipfile.ZipInfo(f"{ident}.{ext}", (2020,1,1,0,0,0))
+                    info.compress_type = zipfile.ZIP_DEFLATED
+                    z.writestr(info, path.read_bytes())
+    preview_hash = hashlib.sha256(preview_zip.read_bytes()).hexdigest()
+    catalog["gallery"] = {"sha256": preview_hash, "size": preview_zip.stat().st_size,
+        "url": f"https://github.com/Kaal31/deckthemes-assets/releases/download/gallery-{preview_hash[:16]}/HubPreviews.zip"}
     payload = json.dumps(catalog, indent=2) + "\n"
     (out / "theme-catalog.json").write_text(payload, encoding="utf-8")
     (ROOT / "theme-catalog.json").write_text(payload, encoding="utf-8")
