@@ -399,5 +399,25 @@ export const SPOTLIGHT_PLUGINS: SpotlightPlugin[] = [
     ],
     "version": "v1.4.0",
     "unreviewed": true
+  },
+  {
+    "id": "finally-3d-game-cases",
+    "name": "Finally 3D Game Cases",
+    "author": "otisabiburada",
+    "category": "Library",
+    "description": "Turns library and home covers into 3D game cases.",
+    "whyFeatured": "Portrait covers in the Gaming Mode library and home become tilted game cases with a spine, sleeve, gloss and shadow. Console looks per game or per collection, optional wear, and non-Steam games work too.",
+    "projectUrl": "https://github.com/otisabiburada/finally-3d-game-cases-plugin",
+    "install": {
+      "pluginName": "Finally 3D Game Cases",
+      "version": "1.8.2",
+      "zipUrl": "https://github.com/otisabiburada/finally-3d-game-cases-plugin/releases/download/1.8.2/Finally-3D-Game-Cases-v1.8.2.zip"
+    },
+    "tags": [
+      "customization",
+      "library"
+    ],
+    "image": "https://raw.githubusercontent.com/otisabiburada/finally-3d-game-cases-plugin/main/docs/images/library.png",
+    "version": "1.8.2"
   }
 ];

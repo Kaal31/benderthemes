@@ -39,7 +39,7 @@ try{
  await p.getByRole('button',{name:'Hub',exact:true}).first().click();
  await p.getByRole('tab',{name:'Plugin Spotlight',exact:true}).click();
  const results=p.locator('.dht-spotlight-result');await results.first().waitFor();
- assert.equal(await results.count(),27,'without a query only our picks');
+ assert.equal(await results.count(),28,'without a query only our picks');
  assert.match(await p.locator('.dht-spotlight-attribution').innerText(),/Decky Plugins Explorer by safetzahirovic/);
  const names=async()=>results.evaluateAll(els=>els.map(e=>e.querySelector('strong').textContent));
  const search=p.locator('.dht-spotlight-search input');
@@ -98,7 +98,7 @@ try{
  // offline without a cache: the note, our picks still there
  await p.evaluate(()=>{window.__pluginCatalog={entries:[],installed:[],stale:true,error:'Could not update the plugin list: URLError'};});
  await search.fill('');await p.getByRole('button',{name:'↻ Update list'}).click();
- await p.locator('.dht-spotlight-note',{hasText:'Could not update'}).waitFor();assert.equal(await results.count(),27);
+ await p.locator('.dht-spotlight-note',{hasText:'Could not update'}).waitFor();assert.equal(await results.count(),28);
  await p.locator('[data-dht-root]').screenshot({path:'out/theme-previews/spotlight-offline.png'});
  // Hub themed per console look (opened from the PS3 home): the Spotlight uses the hub tokens
  const q=await b.newPage({viewport:{width:1304,height:930}});
