@@ -46,7 +46,7 @@ try {
   assert.equal(await page.locator('[data-dht-root]').getAttribute('data-dht-theme'), 'minecraft');
   await page.getByRole('button',{name:'Preview firmware update',exact:true}).click();
   await page.locator('.fw-actions button').first().click();
-  assert.match(await page.locator('.fw-note').textContent(), /will now ask you to confirm/, 'the explanation comes before Decky’s prompt');await page.locator('.fw-note',{hasText:'Preview: Decky'}).waitFor();
+  await page.locator('.fw-note',{hasText:'Preview: Decky'}).waitFor();
   await page.keyboard.press('Escape');
   await page.locator('.dht-firmware').waitFor({state:'detached'});
   await page.getByRole('button',{name:'Hub',exact:true}).first().click();

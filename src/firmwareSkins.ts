@@ -22,4 +22,39 @@ export const FIRMWARE_SKINS = `
 .dht-firmware[data-firmware-theme=wii],.dht-firmware[data-firmware-theme=wiiu]{background:linear-gradient(#fff,#e9edf0)!important;color:#41474b;border:2px solid #b8c4cb;border-radius:28px;box-shadow:inset 0 2px white,0 15px 50px #0005}.dht-firmware[data-firmware-theme=wii] h2,.dht-firmware[data-firmware-theme=wiiu] h2{font-weight:400}.dht-firmware[data-firmware-theme=wii] button,.dht-firmware[data-firmware-theme=wiiu] button{color:#3b4c56;background:linear-gradient(#fff,#dce8ed);border:2px solid #b9c7ce;border-radius:22px;box-shadow:inset 0 2px white}.dht-firmware[data-firmware-theme=wii] button[data-selected=true],.dht-firmware[data-firmware-theme=wiiu] button[data-selected=true]{outline-color:#30c8ed;border-color:#00a6db;background:linear-gradient(#fff,#d7f7ff);box-shadow:0 0 9px #00b9eb77}.dht-firmware[data-firmware-theme=wii] .fw-version,.dht-firmware[data-firmware-theme=wiiu] .fw-version{border-color:#b8c4cb}.dht-firmware[data-firmware-theme=wiiu]{border-radius:16px;border-top:7px solid #00a4cf}
 .dht-firmware[data-firmware-theme=x360][data-dashboard=blades]{border:5px solid #afb1ac;border-top:5px solid #e8e9e5;border-radius:42px 12px 12px 42px;background:linear-gradient(100deg,#c8cfc2,#eef0e9 14%,#d5dccb 90%,#9aa28c)!important;box-shadow:inset 3px 0 7px #fff,0 18px 60px #0008}.dht-firmware[data-firmware-theme=x360][data-dashboard=blades] button{border-radius:20px;border:1px solid #88927c}.dht-firmware[data-firmware-theme=x360][data-dashboard=blades] button[data-selected=true]{background:linear-gradient(#d7ed9b,#8db342);color:#24360b;box-shadow:inset 0 2px #fff9;outline-color:#6d8c3a}
 .dht-firmware[data-firmware-theme=x360][data-dashboard=nxe]{border-radius:18px 4px;background:linear-gradient(120deg,#fafcf7,#bdc8b4)!important}.dht-firmware[data-firmware-theme=x360][data-dashboard=kinect]{border-radius:3px;border-top-width:12px;background:#f4f5f0!important}.dht-firmware[data-firmware-theme=x360][data-dashboard=metro]{border-radius:0;background:#e8e8e8!important;border-top:0;border-left:9px solid #498b16}.dht-firmware[data-firmware-theme=x360][data-dashboard=metro] button{border-radius:0}
+/* Switch: the light System Settings card, cyan focus ring */
+.dht-firmware[data-firmware-theme=switch]{background:#ebebeb!important;color:#2d2d30;border:0;border-radius:4px;box-shadow:0 20px 70px #0007;font-family:"Nunito","Trebuchet MS","Segoe UI",Arial,sans-serif!important}
+.dht-firmware[data-firmware-theme=switch] .fw-top{color:#6e6e74;letter-spacing:.4px;font-size:12px}
+.dht-firmware[data-firmware-theme=switch] .fw-symbol{border:0;background:#00c3e3;color:#fff}
+.dht-firmware[data-firmware-theme=switch] h2{font-weight:600}
+.dht-firmware[data-firmware-theme=switch] .fw-version{border-color:#d2d2d4}
+.dht-firmware[data-firmware-theme=switch] .fw-version strong{color:#00a3bf}
+.dht-firmware[data-firmware-theme=switch] button{background:#fff;color:#2d2d30;border:0;border-radius:4px;box-shadow:0 1px 2px #0002}
+.dht-firmware[data-firmware-theme=switch] button[data-selected=true]{background:#fff;color:#2d2d30;outline:none;box-shadow:0 0 0 3px #00c3e3,0 0 0 5px #fff,0 0 14px 4px #00c3e377}
+/* Nintendo 3DS: the HOME Menu's warm white dialog, mint cursor */
+.dht-firmware[data-firmware-theme=n3ds]{background:linear-gradient(#fbfaf8,#ebe9e4)!important;color:#4a524f;border:2px solid #b9b6af;border-radius:10px;box-shadow:inset 0 1px #fff,0 18px 60px #0006;font-family:"Trebuchet MS","Segoe UI",Arial,sans-serif!important}
+.dht-firmware[data-firmware-theme=n3ds] .fw-top{color:#12795f}
+.dht-firmware[data-firmware-theme=n3ds] .fw-symbol{border:0;background:#3fe3b5;color:#0b3a2d;border-radius:8px}
+.dht-firmware[data-firmware-theme=n3ds] .fw-version{border-color:#cfccc5}
+.dht-firmware[data-firmware-theme=n3ds] .fw-version strong{color:#1f8f72}
+.dht-firmware[data-firmware-theme=n3ds] button{background:linear-gradient(#fff,#e6e3dd);color:#4a524f;border:2px solid #b9b6af;border-radius:8px}
+.dht-firmware[data-firmware-theme=n3ds] button[data-selected=true]{background:linear-gradient(#fff,#dff8ef);color:#0b3a2d;outline:none;border-color:#1f8f72;box-shadow:0 0 0 3px #3fe3b5}
+/* PS1: the BIOS screens' dark panel, bevelled grey buttons, typewriter capitals */
+.dht-firmware[data-firmware-theme=ps1]{background:linear-gradient(#1b1e27,#0c0e14)!important;color:#d9dbe8;border:2px solid #4b5170;border-radius:0;box-shadow:0 0 0 2px #0c0e14,0 18px 60px #000c;font-family:"Courier New",ui-monospace,monospace!important;text-transform:uppercase}
+.dht-firmware[data-firmware-theme=ps1] .fw-top{color:#8fd0ff;letter-spacing:2px}
+.dht-firmware[data-firmware-theme=ps1] .fw-symbol{border:2px outset #8c91ac;border-radius:0;background:#2d3650;color:#fff}
+.dht-firmware[data-firmware-theme=ps1] h2{font-weight:700;letter-spacing:1px}
+.dht-firmware[data-firmware-theme=ps1] .fw-version{border-color:#4b5170}
+.dht-firmware[data-firmware-theme=ps1] .fw-version strong{color:#8fd0ff}
+.dht-firmware[data-firmware-theme=ps1] button{background:linear-gradient(#5a6080,#2d3650);color:#e4e6f2;border:2px outset #8c91ac;border-radius:0;text-transform:uppercase}
+.dht-firmware[data-firmware-theme=ps1] button[data-selected=true]{background:linear-gradient(#8c91ac,#56627e);color:#fff;outline:2px solid #fff;outline-offset:2px}
+/* iiSU style: a white rounded card, pill buttons, the sky accent */
+.dht-firmware[data-firmware-theme=iisu]{background:#fff!important;color:#2b2f3a;border:1.5px solid #e3e6ee;border-radius:26px;box-shadow:0 10px 40px #0f2a4833;font-family:"Segoe UI","Motiva Sans",system-ui,sans-serif!important}
+.dht-firmware[data-firmware-theme=iisu] .fw-top{color:#4aa6ee}
+.dht-firmware[data-firmware-theme=iisu] .fw-symbol{border:0;background:#8fd2ff;color:#0f2a48}
+.dht-firmware[data-firmware-theme=iisu] h2{font-weight:700}
+.dht-firmware[data-firmware-theme=iisu] .fw-version{border-color:#e3e6ee}
+.dht-firmware[data-firmware-theme=iisu] .fw-version strong{color:#4aa6ee}
+.dht-firmware[data-firmware-theme=iisu] button{background:#f2f4f8;color:#2b2f3a;border:1.5px solid #e1e5ee;border-radius:22px;font-weight:600}
+.dht-firmware[data-firmware-theme=iisu] button[data-selected=true]{background:#8fd2ff;color:#0f2a48;border-color:#4aa6ee;outline:none;box-shadow:0 0 0 3px #8fd2ff88}
 `;

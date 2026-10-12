@@ -5,7 +5,7 @@ import { updateSettings, useSettings } from "./settings";
 import { useAssets } from "./assets";
 import { FIRMWARE_SKINS } from "./firmwareSkins";
 const identities: Record<string,[string,string]> = {
- wii:["Wii System Update","#208fb9"],wiiu:["Wii U System Update","#009ac7"], vita:["System Software Update","#83dcff"],ps2:["SYSTEM CONFIGURATION","#92bfff"],ps3:["System Update","#fff"],psp:["System Software","#fce69f"],ps4:["System Software Update","#79d1ff"],ps5:["System software update","#91b9ff"],xbox:["SYSTEM UPDATE","#a8ff35"],x360:["System Update","#9cec46"],aero:["Updates are ready to install","#dcff91"],aero2:["Aero System Update","#aff1ff"],dial:["FIRMWARE TRANSMISSION","#ff493b"],castle:["SYSTEM MESSAGE","#8ddeff"],republic:["REPUBLIC SYSTEMS / FIRMWARE","#e0c58e"],minecraft:["UPDATE AVAILABLE","#a4df6d"],pain:["A NEW TRANSMISSION","#cca9ee"],nazarick:["DECREE OF THE GREAT TOMB","#dbc17b"]
+ wii:["Wii System Update","#208fb9"],switch:["System Update","#00c3e3"],n3ds:["System Update","#3fe3b5"],ps1:["SYSTEM UPDATE","#8fd0ff"],iisu:["Update ready","#8fd2ff"],wiiu:["Wii U System Update","#009ac7"], vita:["System Software Update","#83dcff"],ps2:["SYSTEM CONFIGURATION","#92bfff"],ps3:["System Update","#fff"],psp:["System Software","#fce69f"],ps4:["System Software Update","#79d1ff"],ps5:["System software update","#91b9ff"],xbox:["SYSTEM UPDATE","#a8ff35"],x360:["System Update","#9cec46"],aero:["Updates are ready to install","#dcff91"],aero2:["Aero System Update","#aff1ff"],dial:["FIRMWARE TRANSMISSION","#ff493b"],castle:["SYSTEM MESSAGE","#8ddeff"],republic:["REPUBLIC SYSTEMS / FIRMWARE","#e0c58e"],minecraft:["UPDATE AVAILABLE","#a4df6d"],pain:["A NEW TRANSMISSION","#cca9ee"],nazarick:["DECREE OF THE GREAT TOMB","#dbc17b"]
 };
 let previewStatus:Status|null=null;
 const listeners=new Set<()=>void>();
@@ -20,16 +20,16 @@ export function FirmwareNotice({paused=false}:{paused?:boolean}){
  const release=status?.latest;
  const visible=!handedOff&&!paused&&settings.firmwareNotifications!==false&&status?.success&&!status.stale&&status.updateAvailable&&release&&settings.dismissedFirmware!==release.version;
  const dismiss=()=>{if(release)updateSettings({dismissedFirmware:release.version});setMessage("");};
- // Decky's confirmation opens on top of everything as soon as it is asked for: say what comes first, give it a moment,
- // then hand over and step aside (for this session; cancelling in Decky brings the notice back next time)
- const accept=async()=>{if(!release||busy)return;setBusy(true);setMessage("Decky Loader will now ask you to confirm the update. Your themes and settings will be kept.");try{await new Promise(r=>setTimeout(r,1400));if(!mounted.current)return;if(!release.assetUrl){setMessage("Preview: Decky would now ask you to confirm the update.");return;}await installFirmware(release,status!.currentVersion);if(mounted.current){setMessage("");setHandedOff(true);}}catch(e){if(mounted.current)setMessage(String(e));}finally{if(mounted.current)setBusy(false);}};
+ // Decky's own confirmation opens on top of everything at once: hand over and step aside (for this session; cancelling
+ // in Decky brings the notice back next time)
+ const accept=async()=>{if(!release||busy)return;setBusy(true);setMessage("");try{if(!release.assetUrl){setMessage("Preview: Decky would now ask you to confirm the update.");return;}await installFirmware(release,status!.currentVersion);if(mounted.current){setMessage("");setHandedOff(true);}}catch(e){if(mounted.current)setMessage(String(e));}finally{if(mounted.current)setBusy(false);}};
  const latest=useRef({accept,dismiss,busy,selection,message});latest.current={accept,dismiss,busy,selection,message};
  useEffect(()=>{if(!visible)return;return pushModalInput(p=>{const s=latest.current;if(p.btn==="b"&&!s.busy)s.dismiss();if(["left","right","up","down"].includes(p.btn))setSelection(s.selection?0:1);if(p.btn==="a"&&!p.repeat&&!s.busy){if(s.selection||s.message)s.dismiss();else void s.accept();}return true;});},[!!visible]);
  if(!visible)return null;
  if(theme==="psp")return <PspUpdateDialog from={status.currentVersion} to={release.version} selection={selection} busy={busy} message={message} onSelect={setSelection} onYes={()=>void accept()} onNo={dismiss}/>;
- const [label,baseColor]=identities[theme]??["System Update","#7fd3ff"]; // looks without their own wording (iiSU, 3DS, Switch, PS1)
+ const [label,baseColor]=identities[theme]??["System Update","#7fd3ff"]; // a look without its own wording (a community theme)
  const color=theme==="dial"?({classic:"#85ff00",chrome:"#85ff00",crimson:"#ff344e",arctic:"#42ddff"}[settings.dial.look]):baseColor;
- const headline:Record<string,string>={minecraft:"A new world awaits.",nazarick:"An invitation to ascend.",republic:"System upgrade authorized.",pain:"The next evolution.",dial:"New firmware detected.",castle:"A message from your system.",ps2:"Update data found.",xbox:"UPGRADE YOUR SYSTEM"};
+ const headline:Record<string,string>={switch:"A system update is available.",n3ds:"A system update is available.",ps1:"New system data found.",iisu:"Something new is here!",minecraft:"A new world awaits.",nazarick:"An invitation to ascend.",republic:"System upgrade authorized.",pain:"The next evolution.",dial:"New firmware detected.",castle:"A message from your system.",ps2:"Update data found.",xbox:"UPGRADE YOUR SYSTEM"};
  return <div style={{position:"absolute",inset:0,zIndex:500}}><div className="dht-firmware" data-firmware-theme={theme} data-dashboard={settings.x360.style} data-animated={settings.animations} role="dialog" aria-label="Firmware update" aria-modal="true" style={{"--fw-accent":color,fontFamily:theme==="republic"?"AurebeshEnglish,sans-serif":theme==="nazarick"?"Georgia,serif":"system-ui,sans-serif"} as CSSProperties}>
  <style>{BASE}{FIRMWARE_SKINS}</style>
  <div className="fw-top"><span className="fw-symbol">{emblem?<img src={emblem} alt=""/>:theme==="pain"?"◎":["castle","republic","nazarick"].includes(theme)?"✦":"↓"}</span><span>{label}</span></div>
