@@ -14,13 +14,15 @@ export function FirmwareNotice({paused=false}:{paused?:boolean}){
  const settings=useSettings(),theme=settings.theme;
  const art=useAssets(theme==="nazarick"?"nazarick":theme==="xbox"?"xbox-original":"xmb-monochrome");
  const emblem=theme==="nazarick"?art.downloads:theme==="xbox"?art.orb:["vita","ps3","psp"].includes(theme)?art.gear:undefined;
- const [status,setStatus]=useState<Status|null>(previewStatus),[selection,setSelection]=useState(0),[busy,setBusy]=useState(false),[message,setMessage]=useState("");
+ const [status,setStatus]=useState<Status|null>(previewStatus),[selection,setSelection]=useState(0),[busy,setBusy]=useState(false),[message,setMessage]=useState(""),[handedOff,setHandedOff]=useState(false);
  const mounted=useRef(true);
  useEffect(()=>{mounted.current=true;const preview=()=>{setStatus(previewStatus);setMessage("");setBusy(false);setSelection(0);updateSettings({dismissedFirmware:""});};listeners.add(preview);const off=onFirmwareStatus(v=>{if(mounted.current&&!previewStatus)setStatus(v);});const check=()=>void checkFirmware().then(v=>{if(mounted.current&&!previewStatus)setStatus(v);}).catch(()=>{});check();const timer=setInterval(check,1800000);return()=>{mounted.current=false;listeners.delete(preview);off();clearInterval(timer);};},[]);
  const release=status?.latest;
- const visible=!paused&&settings.firmwareNotifications!==false&&status?.success&&!status.stale&&status.updateAvailable&&release&&settings.dismissedFirmware!==release.version;
+ const visible=!handedOff&&!paused&&settings.firmwareNotifications!==false&&status?.success&&!status.stale&&status.updateAvailable&&release&&settings.dismissedFirmware!==release.version;
  const dismiss=()=>{if(release)updateSettings({dismissedFirmware:release.version});setMessage("");};
- const accept=async()=>{if(!release||busy)return;setBusy(true);try{if(!release.assetUrl){setMessage("Preview: Decky would now ask you to confirm the update.");return;}await installFirmware(release,status!.currentVersion);if(mounted.current)setMessage("Confirm the update in Decky Loader. Your themes and settings will be kept.");}catch(e){if(mounted.current)setMessage(String(e));}finally{if(mounted.current)setBusy(false);}};
+ // Decky's confirmation opens on top of everything as soon as it is asked for: say what comes first, give it a moment,
+ // then hand over and step aside (for this session; cancelling in Decky brings the notice back next time)
+ const accept=async()=>{if(!release||busy)return;setBusy(true);setMessage("Decky Loader will now ask you to confirm the update. Your themes and settings will be kept.");try{await new Promise(r=>setTimeout(r,1400));if(!mounted.current)return;if(!release.assetUrl){setMessage("Preview: Decky would now ask you to confirm the update.");return;}await installFirmware(release,status!.currentVersion);if(mounted.current){setMessage("");setHandedOff(true);}}catch(e){if(mounted.current)setMessage(String(e));}finally{if(mounted.current)setBusy(false);}};
  const latest=useRef({accept,dismiss,busy,selection,message});latest.current={accept,dismiss,busy,selection,message};
  useEffect(()=>{if(!visible)return;return pushModalInput(p=>{const s=latest.current;if(p.btn==="b"&&!s.busy)s.dismiss();if(["left","right","up","down"].includes(p.btn))setSelection(s.selection?0:1);if(p.btn==="a"&&!p.repeat&&!s.busy){if(s.selection||s.message)s.dismiss();else void s.accept();}return true;});},[!!visible]);
  if(!visible)return null;
