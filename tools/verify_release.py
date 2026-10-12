@@ -9,12 +9,21 @@ from theme_pack_names import asset_filename
 
 root = Path(__file__).resolve().parents[1]
 version = json.loads((root / "package.json").read_text())["version"]
-catalog = json.loads((root / "out/themes/theme-catalog.json").read_text())
+# USE_PUBLISHED_ASSETS=1: the packs were published earlier on Kaal31/deckthemes-assets and the installer carries
+# asset-catalog.json; only the installer is checked here (the packs were verified when they were published).
+import os
+PUBLISHED = os.environ.get("USE_PUBLISHED_ASSETS") == "1"
+catalog = json.loads((root / ("asset-catalog.json" if PUBLISHED else "out/themes/theme-catalog.json")).read_text())
 with zipfile.ZipFile(root / f"out/DeckHomeThemes-v{version}.zip") as plugin:
     assert plugin.testzip() is None
     assert not any(n.startswith(("DeckHomeThemes/defaults/", "DeckHomeThemes/bundle/")) for n in plugin.namelist()), "Bundled resources leaked into the installer"
     assert json.loads(plugin.read("DeckHomeThemes/theme-catalog.json")) == catalog
     assert json.loads(plugin.read("DeckHomeThemes/package.json"))["version"] == version
+if PUBLISHED:
+    for theme in catalog["themes"]:
+        assert theme["url"] == f"https://github.com/Kaal31/deckthemes-assets/releases/download/{theme['id']}-v{theme['version']}/{asset_filename(theme['id'], theme['version'])}"
+    print("installer verified against the published catalogue")
+    sys.exit(0)
 for theme in catalog["themes"]:
     archive = root / "out/themes" / asset_filename(theme['id'], theme['version'])
     assert theme["url"] == f"https://github.com/Kaal31/deckthemes-assets/releases/download/{theme['id']}-v{theme['version']}/{archive.name}"

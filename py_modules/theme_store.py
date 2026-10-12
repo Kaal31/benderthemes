@@ -16,6 +16,7 @@ import decky
 from theme_updates import REPO, current_version, version_key
 
 import asset_source
+ASSET_REPO = asset_source.PUBLIC_REPO  # public releases (online test builds read asset_source instead)
 MAX_DOWNLOAD = 256 * 1024 * 1024
 MAX_EXPANDED = 512 * 1024 * 1024
 _lock = threading.Lock()

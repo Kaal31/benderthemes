@@ -51,6 +51,8 @@ jobs:
         env:
           USE_PUBLISHED_ASSETS: '1' # theme packs live on Kaal31/deckthemes-assets (asset-catalog.json)
       - run: python tools/verify_release.py
+        env:
+          USE_PUBLISHED_ASSETS: '1'
       - name: Commit version and tag
         env:
           VERSION: ${{ steps.version.outputs.version }}

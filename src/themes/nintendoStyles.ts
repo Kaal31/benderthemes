@@ -51,13 +51,13 @@ export const NINTENDO_CSS=`
 .nt-home[data-motion=true] .nt-plaza-game{animation:nt-plaza-drop .6s cubic-bezier(.3,1.45,.5,1) backwards,nt-plaza-bob 3.4s ease-in-out infinite alternate;animation-delay:calc(var(--i,0)*90ms + .15s),calc(var(--i,0)*-470ms)}
 @keyframes nt-plaza-drop{from{opacity:0;translate:0 -80px;scale:.45}}
 @keyframes nt-plaza-bob{from{transform:translate(-50%,-50%)}to{transform:translate(-50%,calc(-50% - 7px))}}
-.nt-plaza-post{position:absolute;z-index:6;width:max-content;max-width:540px;min-height:92px;transform:translateY(calc(-100% - 16px));display:flex;align-items:center;gap:16px;padding:14px 24px 14px 16px;border-radius:28px;background:var(--dht-wiiu-post-bg,linear-gradient(#fff,#f2f5f6));box-shadow:0 5px 16px #4e6b7638,inset 0 -2px 0 #dde6e9;color:#353b3f;pointer-events:none;transform-origin:var(--speaker-x,50%) 100%;animation:nt-post-in .34s cubic-bezier(.3,1.4,.6,1) both}
+.nt-plaza-post{position:absolute;z-index:6;width:max-content;max-width:540px;min-height:92px;transform:translateY(calc(-100% - 16px));display:flex;align-items:center;gap:16px;padding:14px 24px 14px 16px;border-radius:28px;background:var(--dht-wiiu-post-bg,linear-gradient(#fff,#f2f5f6));box-shadow:0 5px 16px #4e6b7638,inset 0 -2px 0 #dde6e9;color:#353b3f;pointer-events:none;transform-origin:var(--speaker-x,50%) 100%;animation:nt-post-in .56s cubic-bezier(.3,1.2,.6,1) both}
 .nt-plaza-post:after{content:'';position:absolute;top:100%;left:var(--speaker-x,50%);translate:-50% -1px;border:14px solid transparent;border-top-color:#f2f5f6;border-bottom:0}
 .nt-plaza-post b{position:absolute;left:-4px;top:-27px;max-width:260px;overflow:hidden;white-space:nowrap;text-overflow:ellipsis;border-radius:13px;padding:4px 12px;background:var(--dht-wiiu-post-name,#2c3134);color:#fff;font-size:19px;font-weight:400}
 .nt-post-icon{position:relative;flex:none;width:66px;height:66px;border-radius:14px;overflow:hidden;background:#e7eef0;box-shadow:0 0 0 1px #c9d3d7,0 2px 4px #4e6b7640}
 .nt-post-icon img{width:100%;height:100%;object-fit:cover}
 .nt-plaza-post p{margin:0;font-size:23px;line-height:1.32;letter-spacing:.2px;display:-webkit-box;-webkit-line-clamp:3;-webkit-box-orient:vertical;overflow:hidden}
-@keyframes nt-post-in{from{opacity:0;scale:.55}}
+@keyframes nt-post-in{0%{opacity:0;scale:.55}50%{opacity:1;scale:1.03;translate:0 -7px}72%{scale:.99;translate:0 1px}86%{translate:0 -2px}100%{scale:1;translate:0 0}}
 .nt-home[data-motion=false] .nt-plaza-post{animation:none}
 .nt-plaza-pager{position:absolute;left:26px;bottom:22px;z-index:7;display:flex;align-items:center;gap:12px}
 .nt-home[data-plaza=true] .nt-plaza-pager .nt-arrow{position:static;width:46px;height:46px;padding:0;border-radius:50%;display:grid;place-items:center;background:radial-gradient(circle at 35% 30%,#fff,#d8e1e5);box-shadow:0 2px 6px #4f6a7540,inset 0 -2px 3px #a9bbc2;color:#8a979d!important;font-size:34px!important;line-height:1;text-shadow:none}
