@@ -1,6 +1,5 @@
 import { PluginSpotlight } from "./PluginSpotlight";
 import { ThemeFiles } from "./ThemeFiles";
-import { callable } from "@decky/api";
 import { useEffect, useRef, useState } from "react";
 import { InputHandler, pushModalInput } from "./input";
 import { getSettings, THEMES, ThemeId, updateSettings, useSettings } from "./settings";
@@ -8,16 +7,17 @@ import { consoleThemeIds, hubStyle, hubThemeKey, hubVarsCss, HUB_DECO_CSS, resol
 import { playThemeIntro } from "./themeIntro";
 import { closeMarketplace, resourcesChanged, useResourceRevision } from "./marketplaceState";
 import { playSound } from "./steam";
-import { ensurePackInstalled, PackProgress, themeCatalog, themeDownloadProgress } from "./themePacks";
+import { ensurePackInstalled, PackProgress, ThemeArt, themeCatalog, themeDownloadProgress } from "./themePacks";
 import { deleteTheme } from "./themeActions";
+import { refreshInventory } from "./presets";
 
 export type ThemePack = { id: string; name: string; theme: ThemeId | null; description: string; size: number; version: string; installedVersion?: string; compatible: boolean; preview?: string; poster?: string };
 type Progress = PackProgress;
 // catalog, download and progress calls are shared with the themed store's Themes section (themePacks.ts)
 const catalog = themeCatalog, downloadProgress = themeDownloadProgress;
-const remoteInventory = callable<[], Record<string, string>>("theme_inventory");
-export const inventory = async ():Promise<Record<string,string>> => ({...await remoteInventory(),wii:"built-in",wiiu:"built-in",switch:"built-in",n3ds:"built-in",ps1:"built-in",iisu:"built-in"});
-const builtInPacks = ():ThemePack[] => THEMES.filter(t=>t.id==="wii"||t.id==="wiiu").map(t=>({id:t.id,theme:t.id,name:t.name,description:t.blurb,size:0,version:"built-in",installedVersion:"built-in",compatible:true}));
+// the switchers' cache of downloaded themes is refreshed on every read (presets.ts)
+export const inventory = refreshInventory;
+const builtInPacks = (art:ThemeArt = {}):ThemePack[] => THEMES.filter(t=>t.id==="wii"||t.id==="wiiu").map(t=>({id:t.id,theme:t.id,name:t.name,description:t.blurb,size:0,version:"built-in",installedVersion:"built-in",compatible:true,...art[t.id]}));
 
 type Tab = "discover" | "yours" | "files" | "spotlight";
 const TABS: { id: Tab; name: string }[] = [{ id: "discover", name: "Discover" }, { id: "yours", name: "Your themes" }, { id: "files", name: "Theme files" }, { id: "spotlight", name: "Plugin Spotlight" }];
@@ -35,7 +35,7 @@ export function Marketplace({ requested, from }: { requested?: ThemeId; from?: T
   const [progress, setProgress] = useState<Progress | null>(null);
   // The Hub's look follows the "Hub style" setting live: Auto = the console theme home it was opened on (`from`; it
   // follows a theme switch made while the Hub is open), a fixed choice = that console theme, Neutral = the default look.
-  // A console theme is only worn once it is installed; the inventory is re-read after every install or delete, so
+  // A fixed console theme is only worn once it is installed (Auto also before its download); the inventory is re-read after every install or delete, so
   // installing a theme, switching theme or changing the control restyles the open Hub at once. See resolveHubTheme.
   const s = useSettings();
   const revision = useResourceRevision();
@@ -63,7 +63,7 @@ export function Marketplace({ requested, from }: { requested?: ThemeId; from?: T
     try {
       const result = await catalog(refresh);
       if (!alive.current) return;
-      setPacks([...result.themes.filter(p=>p.id!=="wii"&&p.id!=="wiiu"),...builtInPacks()]); setError(result.error || "");
+      setPacks([...result.themes.filter(p=>p.id!=="wii"&&p.id!=="wiiu"),...builtInPacks(result.art)]); setError(result.error || "");
       setProgress(result.progress); setBusy(result.progress.busy);
     } catch (e) { if (alive.current) setError(`Cannot load themes: ${e}`); }
     finally { if (alive.current) setLoading(false); }
@@ -191,7 +191,8 @@ export function Marketplace({ requested, from }: { requested?: ThemeId; from?: T
 // Layout: one header row (brand, sections, controls), a body that fills the rest, a hint footer. Sizes follow the Hub's own
 // box (container queries on `dht-hub`): the Deck's 1280 x 800 is the reference, small windows (854 x 534) tighten it,
 // TV-sized Big Picture (>= 1600 px) zooms the whole page. Posters and previews are 16:10 and are never cropped
-// (aspect-ratio boxes + object-fit: contain). The selected card's ring stays inside the grid's padding.
+// (16:10 boxes + object-fit: contain). The boxes take their height from a ::before spacer (padding-top: 62.5% of the
+// width), not aspect-ratio: in a flex <button> the Deck's Steam browser collapsed aspect-ratio boxes to a thin strip. The selected card's ring stays inside the grid's padding.
 const MARKET_CSS = `
 .dht-market{position:absolute;inset:0;z-index:400;background:var(--dht-hub-bg);color:var(--dht-hub-text);display:flex;flex-direction:column;padding:20px 0 12px;box-sizing:border-box;font:15px var(--dht-hub-font);letter-spacing:0;color-scheme:var(--dht-hub-scheme);overflow:hidden;text-transform:var(--dht-hub-case);container:dht-hub / size;transition:background-color .3s,color .3s}
 .dht-market>*:not(.dht-hub-deco){position:relative;z-index:1;margin-inline:32px}
@@ -213,15 +214,16 @@ const MARKET_CSS = `
 .dht-hub-empty{grid-column:1/-1;color:var(--dht-hub-sub)}
 .market-card{display:flex;flex-direction:column;text-align:left;background:var(--dht-hub-panel);color:var(--dht-hub-card-text)!important;border-radius:var(--dht-hub-radius);padding:0 0 12px;overflow:hidden;min-width:0;box-shadow:var(--dht-hub-shadow);transition:transform .15s,box-shadow .15s}
 .market-card[data-selected=true]{background:var(--dht-hub-panel-hi);box-shadow:var(--dht-hub-ring);transform:translateY(-2px)}
-.market-art{position:relative;aspect-ratio:16/10;background:linear-gradient(135deg,#3c4f6b,#141c2a);color:#fff;display:grid;place-items:center;overflow:hidden;flex-shrink:0}
+.market-art{position:relative;width:100%;background:linear-gradient(135deg,#3c4f6b,#141c2a);color:#fff;display:grid;place-items:center;overflow:hidden;flex-shrink:0}
 .market-art img{position:absolute;inset:0;width:100%;height:100%;object-fit:contain}.market-art>span{font-weight:700;opacity:.8}
+.market-art::before,.market-detail-art::before{content:"";grid-area:1/1;justify-self:stretch;padding-top:62.5%}.market-art>span,.market-detail-art>span{grid-area:1/1}
 .dht-hub-state{position:absolute;left:8px;top:8px;font:700 10px/1 var(--dht-hub-font);font-style:normal;letter-spacing:.4px;text-transform:uppercase;padding:5px 8px;border-radius:var(--dht-hub-pill);background:#000a;color:#fff;backdrop-filter:blur(4px)}
 .dht-hub-state[data-state=active]{background:var(--dht-hub-accent);color:var(--dht-hub-accent-text)}.dht-hub-state[data-state=update]{background:#d39b22;color:#1d1300}
 .market-card-title{display:flex;justify-content:space-between;align-items:baseline;padding:10px 12px 0;gap:6px;min-width:0}.market-card-title strong{font-size:14px;letter-spacing:var(--dht-hub-track);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}.market-card-title span{font-size:10px;color:var(--dht-hub-card-sub);white-space:nowrap}
 .market-card p{margin:4px 12px 0;font-size:11px;color:var(--dht-hub-card-sub);white-space:nowrap;overflow:hidden;text-overflow:ellipsis;text-transform:none}
 .dht-market aside.dht-hub-detail{display:flex;flex-direction:column;min-height:0;background:color-mix(in srgb,var(--dht-hub-panel) 70%,transparent);border-radius:var(--dht-hub-radius);box-shadow:var(--dht-hub-shadow);overflow:hidden}
 .dht-hub-detail-scroll{flex:1;min-height:0;overflow:auto;padding:14px 14px 4px}
-.market-detail-art{aspect-ratio:16/10;border-radius:calc(var(--dht-hub-radius)*.7);overflow:hidden;background:#141a24;color:#fff;display:grid;place-items:center;position:relative}.market-detail-art img{position:absolute;inset:0;width:100%;height:100%;object-fit:contain}
+.market-detail-art{width:100%;border-radius:calc(var(--dht-hub-radius)*.7);overflow:hidden;background:#141a24;color:#fff;display:grid;place-items:center;position:relative}.market-detail-art img{position:absolute;inset:0;width:100%;height:100%;object-fit:contain}
 .dht-market h2{font-size:22px;line-height:1.15;margin:12px 0 6px;letter-spacing:var(--dht-hub-track)}.dht-hub-detail p{font-size:12px;line-height:1.6;color:var(--dht-hub-card-sub);text-transform:none;margin:0}
 .dht-market dl{border-top:1px solid var(--dht-hub-line);padding:8px 0 0;margin:12px 0 4px}.dht-market dl div{display:flex;justify-content:space-between;gap:10px;font-size:11px;margin:5px 0}.dht-market dt{color:var(--dht-hub-card-sub)}.dht-market dd{margin:0;color:var(--dht-hub-card-text)}
 .dht-hub-detail-actions{flex-shrink:0;padding:10px 14px 12px;border-top:1px solid var(--dht-hub-line);display:flex;flex-direction:column;gap:6px}

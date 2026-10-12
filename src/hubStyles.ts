@@ -96,14 +96,16 @@ export const consoleThemeIds = (): string[] => [...new Set(BUILTIN_THEMES.filter
 /**
  * Which theme look the Hub wears, decided when it opens. `setting` = settings.hubStyle ("auto" | "neutral" | theme id),
  * `from` = the theme home it was opened on (undefined from Quick Access, links, the Steam overlay...), `inv` = the installed packs.
- * Neutral (theme null) unless the resolved theme is a console theme and installed. `source` goes to `data-hub-source`.
+ * Neutral (theme null) unless the resolved theme is a console theme. A fixed choice must also be installed; Auto wears the
+ * home it was opened on even before its pack is downloaded (the look is CSS only), so switching to a theme that still needs
+ * its download (L1 switcher, L2 / R2) opens the Hub in that theme's style. `source` goes to `data-hub-source`.
  */
 export function resolveHubTheme(setting: string | undefined, from: string | undefined, inv: Record<string, string> | undefined | null): { theme: string | null; source: "auto" | "setting" | "none" } {
   const s = setting || "auto";
   if (s === "neutral") return { theme: null, source: "none" };
   const fixed = s !== "auto";
   const t = fixed ? s : from;
-  const ok = !!t && !!inv && !!inv[t] && isConsoleTheme(t);
+  const ok = !!t && isConsoleTheme(t) && (!fixed || (!!inv && !!inv[t]));
   return { theme: ok ? (t as string) : null, source: ok ? (fixed ? "setting" : "auto") : "none" };
 }
 

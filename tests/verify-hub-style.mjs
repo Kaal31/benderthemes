@@ -29,6 +29,7 @@ try {
   t = await open('theme=ps3', 'Hub', 'c-no-context'); assert.deepEqual(t.r, NEUTRAL); await t.page.close();
   t = await open('theme=ps3&hubstyle=xbox', H, 'd-setting-xbox'); assert.deepEqual(t.r, { theme: 'xbox', styled: 'true', source: 'setting' }); await t.page.close();
   t = await open('theme=ps3&hubstyle=ps5', H, 'e-setting-not-installed'); assert.deepEqual(t.r, NEUTRAL); await t.page.close();
+  t = await open('theme=ps5', H, 'e2-auto-not-installed'); assert.deepEqual(t.r, { theme: 'ps5', styled: 'true', source: 'auto' }, 'Auto wears a theme still to download'); await t.page.close();
   t = await open('theme=castle', H, 'f-bonus-auto'); assert.deepEqual(t.r, NEUTRAL); await t.page.close();
   t = await open('theme=ps3&hubstyle=neutral', H); assert.deepEqual(t.r, NEUTRAL); await t.page.close();
   t = await open('theme=ps3&hubstyle=bogus', H); assert.equal(t.r.source, 'auto', 'an invalid saved value falls back to auto'); await t.page.close();
@@ -51,5 +52,5 @@ try {
   assert.equal(await t.page.locator('.dht-market').getAttribute('data-hub-source'), 'setting', 'kept when reopened');
   await t.page.close();
   assert.deepEqual(errors, []);
-  console.log('PASS: Hub style Auto / opened-on / neutral / fixed / not installed / bonus / control restyles at once.');
+  console.log('PASS: Hub style Auto / opened-on / neutral / fixed / not installed (fixed: neutral, auto: styled) / bonus / control restyles at once.');
 } finally { await browser.close(); server.close(); }

@@ -36,7 +36,7 @@ import { setUiDocument } from "./cssvars";
 import { Overlay, ScreenshotGallery, TrailerPlayer, VideoPlayer } from "./overlays";
 import { MusicPlayerView, NowPlayingMini } from "./mediaCenter";
 import { StoreView } from "./storeView";
-import { pushModalInput, ThemeRoot, setGlobalInput, StageHost } from "./input";
+import { l1Held, pushModalInput, ThemeRoot, setGlobalInput, StageHost } from "./input";
 import { ThemeSwitcher } from "./themeSwitcher";
 import { VitaHome } from "./themes/Vita";
 import { Ps3Home, PspHome } from "./themes/Xmb";
@@ -168,9 +168,12 @@ function ThemedHomeContent({ standalone }: { standalone?: boolean }) {
   const s = useSettings();
   const market = useMarketplace();
   useEffect(() => {
-    let alive = true;
-    if (s.theme !== "frame") inventory().then(installed => { if (alive && installed && !installed[s.theme]) openMarketplace(s.theme, { from: s.theme }); }).catch(() => {});
-    return () => { alive = false; };
+    let alive = true, wait: any = 0;
+    // a theme still to download opens the Hub on it; while L1 is held the switcher is still browsing, so only the theme
+    // it stops on asks (switching again cancels this one)
+    const offer = () => { if (!alive) return; if (l1Held()) { wait = setTimeout(offer, 250); return; } openMarketplace(s.theme, { from: s.theme }); };
+    if (s.theme !== "frame") inventory().then(installed => { if (alive && installed && !installed[s.theme]) offer(); }).catch(() => {});
+    return () => { alive = false; clearTimeout(wait); };
   }, [s.theme]);
   const root = useRef<HTMLDivElement>(null);
   const [doc, setDoc] = useState<Document | null>(null);

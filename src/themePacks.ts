@@ -6,7 +6,9 @@ import { refreshPacks } from "./steam";
 import { refreshPresets } from "./presets";
 
 export type PackProgress = { busy: boolean; id: string; percent: number; message: string };
-export const themeCatalog = callable<[refresh: boolean], { themes: ThemePack[]; error?: string; progress: PackProgress }>("theme_catalog");
+/** art: the Hub preview gallery (Kaal31/deckthemes-assets) by theme id, including the built-in themes that have no pack. */
+export type ThemeArt = Record<string, { poster?: string; preview?: string }>;
+export const themeCatalog = callable<[refresh: boolean], { themes: ThemePack[]; art?: ThemeArt; error?: string; progress: PackProgress }>("theme_catalog");
 export const themeInstall = callable<[ident: string], { success: boolean; error?: string }>("theme_install");
 export const themeDownloadProgress = callable<[], PackProgress>("theme_download_progress");
 

@@ -1,7 +1,7 @@
 import { chromium } from "playwright";
 import { mkdirSync } from "node:fs";
 import { startPreviewServer } from "../preview/server.mjs";
-const themes = ["vita","ps2","ps3","psp","ps4","ps5","xbox","x360","aero","aero2","dial","castle","republic","minecraft","pain","nazarick"];
+const themes = ["wii","wiiu","iisu","vita","ps2","ps3","psp","ps4","ps5","xbox","x360","aero","aero2","dial","castle","republic","minecraft","pain","nazarick"];
 mkdirSync("out/theme-previews", { recursive: true });
 const browser = await chromium.launch({ headless: true });
 const { server, url } = await startPreviewServer();
@@ -41,5 +41,5 @@ try {
     await page.locator(psp ? ".dht-psp-dialog .pd-buttons button" : ".fw-actions button").last().click();
   }
   if (errors.length) throw new Error([...new Set(errors)].join("\n"));
-  console.log("All 16 themes and firmware prompts captured without page errors.");
+  console.log("All 19 themes and firmware prompts captured without page errors.");
 } finally { await browser.close(); server.close(); }

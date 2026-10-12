@@ -1562,17 +1562,19 @@ class Plugin:
         import theme_store
         result = await asyncio.to_thread(theme_store.catalog, bool(refresh))
         gallery = await asyncio.to_thread(theme_store.gallery)
+        # art: every theme in the gallery, also the built-in ones without a pack (Wii, iiSU), keyed by theme id
+        art = {}
         if gallery and await _ensure_server():
+            for name in sorted(os.listdir(gallery)):
+                ident, _, ext = name.rpartition(".")
+                if ext in ("gif", "jpg") and theme_store.ID.fullmatch(ident):
+                    key = f"hub-{ident}-{ext}"
+                    _vi.files[key] = os.path.join(gallery, name)
+                    art.setdefault(ident, {})["preview" if ext == "gif" else "poster"] = _vi.url(f"f/{key}")
             for pack in result["themes"]:
-                if not theme_store.ID.fullmatch(pack["id"]):
-                    continue
-                for key, ext in (("preview", "gif"), ("poster", "jpg")):
-                    path = os.path.join(gallery, f"{pack['id']}.{ext}")
-                    pack[key] = None
-                    if os.path.isfile(path):
-                        ident = f"hub-{pack['id']}-{ext}"
-                        _vi.files[ident] = path
-                        pack[key] = _vi.url(f"f/{ident}")
+                pack["preview"] = art.get(pack["id"], {}).get("preview")
+                pack["poster"] = art.get(pack["id"], {}).get("poster")
+        result["art"] = art
         return result
 
     async def theme_install(self, ident: str):

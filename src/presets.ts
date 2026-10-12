@@ -11,6 +11,7 @@
 // and the "this theme" scope all work on this one object. Holding L1 with the D-pad / left stick shows the switcher
 // (up/down = console, left/right = the console's presets, looks in order: consoleRows below, themeSwitcher.tsx).
 import { useEffect, useState } from "react";
+import { callable } from "@decky/api";
 import { cleanSettings, getRawSettings, getSettings, MAX_STORED_PRESETS, MAX_USER_PRESETS, setLookChangeHook, Settings, ThemeId, updateSettings, UserPreset } from "./settings";
 import { listSkins } from "./skins";
 import { listSwitchThemes, SwitchListEntry } from "./switchThemes";
@@ -47,6 +48,19 @@ let skins = { p3t: [] as string[], vita: [] as string[], psp: [] as string[], xb
 const listeners = new Set<() => void>();
 onThemesChanged(() => listeners.forEach((l) => l()));
 
+// Downloaded theme packs (theme_inventory) plus the themes that ship inside the plugin. The switchers (L1 hold, L2 / R2)
+// only step through looks whose console is here: never to a deleted or not yet downloaded theme. null = not read yet.
+const remoteInventory = callable<[], Record<string, string>>("theme_inventory");
+const BUILT_IN: Record<string, string> = { wii: "built-in", wiiu: "built-in", switch: "built-in", n3ds: "built-in", ps1: "built-in", iisu: "built-in" };
+let downloaded: Record<string, string> | null = null;
+export async function refreshInventory(): Promise<Record<string, string>> {
+  downloaded = { ...((await remoteInventory()) ?? {}), ...BUILT_IN };
+  return downloaded;
+}
+const switchable = (list: Preset[]) => (downloaded ? list.filter((p) => !!downloaded![p.theme]) : list);
+/** The presets the switchers step through: getPresets() without the consoles that are not downloaded. */
+export const switchPresets = (s: Settings = getSettings()) => switchable(getPresets(s));
+
 export async function refreshPresets() {
   try {
     const r = await listSkins();
@@ -62,6 +76,11 @@ export async function refreshPresets() {
   }
   try {
     skins.wiiu = (await listWiiuThemes())?.themes ?? [];
+  } catch {
+    /* keep what we had */
+  }
+  try {
+    await refreshInventory();
   } catch {
     /* keep what we had */
   }
@@ -193,7 +212,7 @@ export function applyPreset(p: Preset) {
 
 /** Step through every preset of every look (L2 / R2). Returns the preset now active. */
 export function cyclePreset(dir: number): Preset {
-  const list = getPresets();
+  const list = switchPresets();
   if (!list.length) return { id: getSettings().theme, label: "No themes installed · open Hub", look: getSettings().theme, theme: getSettings().theme, company: "Sony", origin: "default", file: "", dataTheme: "" };
   const i = Math.max(0, list.findIndex((p) => p.id === currentPresetId()));
   const next = list[(i + dir + list.length) % list.length];
@@ -202,7 +221,7 @@ export function cyclePreset(dir: number): Preset {
 }
 /** Step through the presets of the look on screen (L1 left / right). */
 export function cycleLookPreset(dir: number): Preset {
-  const list = lookPresets(currentLook());
+  const list = switchable(lookPresets(currentLook()));
   if (!list.length) return cyclePreset(dir);
   const i = Math.max(0, list.findIndex((p) => p.id === currentPresetId()));
   const next = list[(i + dir + list.length) % list.length];
@@ -211,7 +230,7 @@ export function cycleLookPreset(dir: number): Preset {
 }
 /** Step to the next / previous look (L1 up / down): its default preset. */
 export function cycleLook(dir: number): Preset {
-  const looks = getPresets().filter((p) => p.origin === "default");
+  const looks = switchPresets().filter((p) => p.origin === "default");
   if (!looks.length) return cyclePreset(dir);
   const i = Math.max(0, looks.findIndex((p) => p.look === currentLook()));
   const next = looks[(i + dir + looks.length) % looks.length];
@@ -235,7 +254,7 @@ const CONSOLE_NAMES: Record<string, string> = { wii: "Wii", wiiu: "Wii U", switc
 /** The presets grouped by console (hidden looks are already left out of getPresets). A console's row is the presets of
  *  each of its looks in turn (presets v2: one list, `lookPresets`): a look's default, its theme files, its saved
  *  presets; then the next look of that console (Xbox 360 Blades → NXE → Kinect → Metro, PS Vita Default → Sakura). */
-export function consoleRows(list: Preset[] = getPresets()): ConsoleRow[] {
+export function consoleRows(list: Preset[] = switchPresets()): ConsoleRow[] {
   const installed = new Set(allThemes().filter((t) => t.source !== "builtin").map((t) => t.id)); // data themes: a console of their own
   const keyOf = (p: Preset) => (p.dataTheme && installed.has(p.dataTheme) ? `theme:${p.dataTheme}` : p.theme);
   const rows = new Map<string, ConsoleRow>();
