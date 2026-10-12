@@ -19,6 +19,9 @@ const catalog = themeCatalog, downloadProgress = themeDownloadProgress;
 export const inventory = refreshInventory;
 const builtInPacks = (art:ThemeArt = {}):ThemePack[] => THEMES.filter(t=>t.id==="wii"||t.id==="wiiu").map(t=>({id:t.id,theme:t.id,name:t.name,description:t.blurb,size:0,version:"built-in",installedVersion:"built-in",compatible:true,...art[t.id]}));
 
+/** The Hub's logo (four tiles, a home on the first): next to the title in every Hub style. */
+const HubLogo = () => <svg className="dht-hub-logo" viewBox="225 225 1025 1025" aria-hidden="true"><rect x="225" y="225" width="472" height="472" rx="112" fill="#3cdcff"/><rect x="778" y="225" width="472" height="472" rx="112" fill="#788bff"/><rect x="225" y="778" width="472" height="472" rx="112" fill="#ff4ed8"/><rect x="778" y="778" width="472" height="472" rx="112" fill="#ffb840"/><path d="M312 470 441 348Q460 332 479 348L608 470 575 506 460 401 346 506Z" fill="#0a0c1e"/><rect x="385" y="489" width="152" height="85" fill="#0a0c1e"/></svg>;
+
 type Tab = "discover" | "yours" | "files" | "spotlight";
 const TABS: { id: Tab; name: string }[] = [{ id: "discover", name: "Discover" }, { id: "yours", name: "Your themes" }, { id: "files", name: "Theme files" }, { id: "spotlight", name: "Plugin Spotlight" }];
 const upToDate = (p: ThemePack) => p.installedVersion === "legacy" || p.installedVersion === p.version;
@@ -149,7 +152,7 @@ export function Marketplace({ requested, from }: { requested?: ThemeId; from?: T
   return <div className="dht-market dht-hub" data-hub-theme={hubThemeKey(styled?.theme, styled?.x360)} data-hub-styled={styled ? "true" : "false"} data-hub-source={source} data-hub-tab={tab} data-motion={s.animations} role="dialog" aria-modal="true" aria-label="Hub">
     <style>{hubVarsCss()}{HUB_DECO_CSS}{MARKET_CSS}</style><div className="dht-hub-deco" data-deco={styled ? hs.deco : "none"} aria-hidden="true"/>
     <header className="dht-hub-header">
-      <div className="dht-hub-brand"><span className="market-eyebrow">DECK HOME THEMES</span><h1>Hub</h1><p className="dht-hub-tagline">{styled ? hs.tagline : "Pick a theme and make it yours."}</p></div>
+      <div className="dht-hub-brand"><span className="market-eyebrow">DECK HOME THEMES</span><h1><HubLogo />Hub</h1><p className="dht-hub-tagline">{styled ? hs.tagline : "Pick a theme and make it yours."}</p></div>
       <nav className="market-toolbar dht-hub-tabs" aria-label="Hub sections">
         <kbd className="dht-hub-glyph" aria-hidden="true">LB</kbd>
         <div role="tablist">{TABS.map(t => <button key={t.id} role="tab" aria-selected={tab === t.id} data-active={tab === t.id} onClick={() => goTab(t.id)}>{t.name}{count[t.id] !== undefined && <small>{count[t.id]}</small>}</button>)}</div>
@@ -202,7 +205,8 @@ const MARKET_CSS = `
 .dht-market kbd{display:inline-grid;place-items:center;min-width:20px;height:20px;padding:0 5px;border-radius:6px;font:800 10px/1 var(--dht-hub-font);letter-spacing:.2px;background:color-mix(in srgb,var(--dht-hub-text) 14%,transparent);color:inherit;border:1px solid color-mix(in srgb,var(--dht-hub-text) 22%,transparent);vertical-align:middle;text-transform:none}
 .dht-hub-header{display:grid;grid-template-columns:auto minmax(0,1fr) auto;align-items:center;gap:18px;padding-bottom:14px;border-bottom:1px solid var(--dht-hub-line);flex-shrink:0}
 .dht-hub-brand{display:grid;grid-template-columns:auto;min-width:0}.market-eyebrow{font-size:9px;letter-spacing:2px;color:var(--dht-hub-sub);font-weight:700}
-.dht-market h1{font-size:28px;line-height:1;letter-spacing:var(--dht-hub-track);margin:4px 0 2px}.dht-hub-tagline{margin:0;color:var(--dht-hub-sub);font-size:11px;text-transform:none;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;max-width:220px}
+.dht-market h1{font-size:28px;line-height:1;letter-spacing:var(--dht-hub-track);margin:4px 0 2px;display:flex;align-items:center;gap:.3em}
+.dht-hub-logo{width:1.1em;height:1.1em;flex:none;filter:drop-shadow(0 1px 2px #0003)}.dht-hub-tagline{margin:0;color:var(--dht-hub-sub);font-size:11px;text-transform:none;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;max-width:220px}
 .market-toolbar{display:flex;align-items:center;justify-content:center;gap:8px;min-width:0}.market-toolbar>div{display:flex;gap:2px;padding:4px;border-radius:calc(var(--dht-hub-pill) + 4px);background:color-mix(in srgb,var(--dht-hub-panel) 80%,transparent);min-width:0;overflow:hidden}
 .market-toolbar button{background:transparent;padding:8px 14px;color:var(--dht-hub-sub);border-radius:var(--dht-hub-pill);white-space:nowrap;font-size:14px;font-weight:600}.market-toolbar button[data-active=true]{background:var(--dht-hub-tab);color:var(--dht-hub-tab-text)}.market-toolbar small{margin-left:7px;opacity:.65;font-size:11px}
 .dht-hub-glyph{opacity:.75}
