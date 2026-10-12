@@ -67,14 +67,17 @@ def build():
         if not path.is_file() or "__pycache__" in path.parts:
             continue
         relative = path.relative_to(ROOT / "bundle")
+        if any(part.startswith(".") for part in relative.parts):
+            continue
         assigned = owners(relative)
         if not assigned:
             notices.append((path, relative.as_posix()))
         for key in assigned:
             groups[key].append((path, relative.as_posix()))
     for path in sorted((ROOT / "third-party").rglob("*")):
-        if path.is_file():
-            notices.append((path, "notices/third-party/" + path.relative_to(ROOT / "third-party").as_posix()))
+        relative = path.relative_to(ROOT / "third-party")
+        if path.is_file() and not any(part.startswith(".") for part in relative.parts):
+            notices.append((path, "notices/third-party/" + relative.as_posix()))
     lock_path = ROOT / "asset-catalog.json"
     previous = json.loads(lock_path.read_text(encoding="utf-8")) if lock_path.exists() else {"themes": []}
     old = {p["id"]: p for p in previous["themes"]}
@@ -135,6 +138,8 @@ def offline_catalog():
     for path in sorted((ROOT / "bundle").rglob("*")):
         if path.is_file() and "__pycache__" not in path.parts:
             relative = path.relative_to(ROOT / "bundle")
+            if any(part.startswith(".") for part in relative.parts):
+                continue
             for key in owners(relative):
                 groups[key].append(relative.as_posix())
     catalog = {"schema": 1, "themes": [
