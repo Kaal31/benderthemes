@@ -288,8 +288,9 @@ export function IisuHome() {
             </div>
             {online === undefined ? "Friends" : `${online} online`}
           </div>
+          {/* the title: 32 % of the width, padding included, so it ends short of the clock pill */}
           {title && (
-            <div className="dht-iisu-pill dht-iisu-title" style={{ ...pill, position: "absolute", left: "50%", top: 22, transform: "translateX(-50%)", height: 50, maxWidth: W * 0.4, padding: "0 30px", display: "flex", alignItems: "center", fontSize: 19, whiteSpace: "nowrap", overflow: "hidden", textOverflow: "ellipsis" }}>{title}</div>
+            <div className="dht-iisu-pill dht-iisu-title" style={{ ...pill, position: "absolute", left: "50%", top: 22, transform: "translateX(-50%)", height: 50, maxWidth: W * 0.32, boxSizing: "border-box", padding: "0 30px", display: "flex", alignItems: "center", fontSize: 19 }}><span style={{ minWidth: 0, whiteSpace: "nowrap", overflow: "hidden", textOverflow: "ellipsis" }}>{title}</span></div>
           )}
           <div className="dht-iisu-pill dht-iisu-status" style={{ ...pill, position: "absolute", right: 98, top: 22, height: 50, padding: "0 20px", display: "flex", alignItems: "center", gap: 12, fontSize: 18 }}>
             <Icon name="clock" size={20} color="currentColor" />
@@ -353,7 +354,8 @@ export function IisuHome() {
 }
 
 const Bar = () => <span style={{ width: 2, height: 20, background: "currentColor", opacity: 0.45, borderRadius: 1 }} />;
-const Btn = ({ c }: { c: string }) => <span style={{ display: "inline-grid", placeItems: "center", width: 22, height: 22, borderRadius: 11, border: "2px solid currentColor", fontSize: 12, marginRight: 4, verticalAlign: "middle", boxSizing: "border-box" }}>{c}</span>;
+// lineHeight 1: the hint rows' 26px line height would make the glyph's line taller than the circle (off centre)
+const Btn = ({ c }: { c: string }) => <span style={{ display: "inline-grid", placeItems: "center", width: 22, height: 22, borderRadius: 11, border: "2px solid currentColor", fontSize: 12, lineHeight: 1, marginRight: 4, verticalAlign: "middle", boxSizing: "border-box" }}>{c}</span>;
 function Badge({ text, style }: { text: string; style: CSSProperties }) {
   return <span style={{ position: "absolute", ...style, fontSize: 11, fontWeight: 900, padding: "1px 5px", borderRadius: 6, background: "#fff", color: "#222", border: "1px solid #0000001a", boxShadow: "0 2px 6px #0004" }}>{text}</span>;
 }
