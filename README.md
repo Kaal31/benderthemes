@@ -1,51 +1,69 @@
-# Bender Themes · Deck Home Themes
+<p align="center"><img src="docs/logo.svg" width="128" height="128" alt="ThemeHub logo"></p>
 
-Console-inspired home screens and cinematic interfaces for Steam Deck, built as a Decky Loader plugin.
+<h1 align="center">ThemeHub</h1>
 
-**Version 1.10.0:** plugin updates, themed firmware notifications, Hub with
-individual theme downloads, and collection selection in every theme's options
-menu. Preferences and installed themes persist through future updates/reinstalls.
-Delete and hide individual themes from their options menu.
+<p align="center">Console-style home screens for the Steam Deck: PlayStation, Xbox and Nintendo looks, a theme Hub, theme-file importers and Plugin Spotlight. A <a href="https://github.com/SteamDeckHomebrew/decky-loader">Decky Loader</a> plugin.</p>
 
-**Upgrading from before 1.10.0?** Old builds delete settings during replacement.
-This first upgrade starts fresh; no migration helper is needed.
-[Upgrade and Hub guide](docs/UPDATES.md).
+<p align="center"><a href="https://github.com/Kaal31/benderthemes/releases/latest"><b>Download the latest release</b></a></p>
 
-[![Watch every theme in use](docs/showcase-poster.jpg)](https://github.com/Kaal31/benderthemes/raw/refs/heads/main/docs/showcase.mp4)
+ThemeHub was previously called **Deck Home Themes** (and, as a repository, Bender Themes). The release ZIPs keep the `DeckHomeThemes-vX.Y.Z.zip` name so existing installs update normally.
 
-[Watch the full UI walkthrough (MP4)](https://github.com/Kaal31/benderthemes/raw/refs/heads/main/docs/showcase.mp4) · [Download the latest installation ZIP](https://github.com/Kaal31/benderthemes/releases/latest)
+## Gallery
 
-The video demonstrates navigation, selection changes and options across every theme, including all four Xbox 360 dashboards, using real game covers. It records the browser previews with a sample library, not a Steam Deck. The demonstration is silent. [View theme timestamps](docs/showcase-chapters.md).
+Browser previews with a sample library (not recorded on a Deck).
+
+| | | |
+| :---: | :---: | :---: |
+| <img src="docs/gallery/ps3.gif" width="260" alt="PS3 XMB"><br>PS3 XMB | <img src="docs/gallery/psp.gif" width="260" alt="PSP XMB"><br>PSP XMB | <img src="docs/gallery/vita.gif" width="260" alt="PS Vita"><br>PS Vita |
+| <img src="docs/gallery/ps2.gif" width="260" alt="PS2"><br>PS2 | <img src="docs/gallery/ps5.gif" width="260" alt="PS5"><br>PS5 | <img src="docs/gallery/x360.gif" width="260" alt="Xbox 360"><br>Xbox 360 |
+| <img src="docs/gallery/wii.gif" width="260" alt="Wii"><br>Wii | <img src="docs/gallery/wiiu.gif" width="260" alt="Wii U"><br>Wii U | <img src="docs/gallery/iisu.gif" width="260" alt="iiSU style"><br>iiSU style |
+| <img src="docs/gallery/aero2.gif" width="260" alt="Aero v.2"><br>Aero v.2 | <img src="docs/gallery/dial.gif" width="260" alt="Alien Dial"><br>Alien Dial | <img src="docs/gallery/minecraft.gif" width="260" alt="Block Worlds"><br>Block Worlds |
 
 ## Themes
 
-| Collection | Included styles |
+| Collection | Looks |
 | --- | --- |
-| PlayStation | PS Vita bubbles, PS2 browser, PS3 XMB, PSP XMB, PS4 and PS5 |
-| Xbox | Original Xbox, Xbox 360 Blades, NXE, Kinect and Metro |
-| Bonus | Aero, Aero v.2, Alien Dial, Floating Castle, Republic Office, Block Worlds, Six Paths and Nazarick |
+| PlayStation | PS1, PS2 browser, PS3 XMB, PSP XMB, PS4, PS5, PS Vita bubbles and LiveArea |
+| Nintendo | Wii channels, Wii U (grid and Wara Wara Plaza), Switch, Nintendo 3DS |
+| Xbox | Original Xbox, Xbox 360 Blades, NXE, Kinect and Metro dashboards |
+| Bonus | Aero, Aero v.2, Alien Dial, Floating Castle, Republic Office, Block Worlds, Six Paths, Nazarick, iiSU style |
 
-Switch presets from the plugin's Quick Access panel or the home screen options menu. Console presets are grouped by company. Theme files you import are presets too, listed right after their console's own theme: PS3 `.p3t`, PSP `.ptf`/`.ctf`, Vita skins, Switch `.nxtheme`, Wii `.mym`/`.csm`, Wii U `.utheme`, Nintendo 3DS themes, Xbox skins and Xbox 360 theme packages (the last ones after the 360 dashboards). The Theme options pickers stay and show the same selection.
+Wii, Wii U, Switch, 3DS, PS1 and iiSU style come with the plugin. The other themes are downloaded one by one from the Hub, so you only keep what you use.
 
-- **PS2:** orbiting blue lights, silver-gray memory-card browser, dimensional save icons and a soft selection spotlight.
-- **Vita:** glossy bubbles, adjustable sway, folders, collections and LiveArea.
-- **Xbox:** reconstructed dashboard assets, themed categories, clock and interface sounds; four Xbox 360 generations.
-- **Aero / Aero v.2:** blue glass panels, vivid lime highlights and a sky-and-hills backdrop.
-- **Alien Dial:** multiple dial colors, matching holographic covers, optional floating covers and projection light, and selectable animation combinations.
-- **Floating Castle:** looping video wallpaper, glass windows, animated circular navigation, replace-or-layer secondary windows, and optional automatic-location weather in Celsius.
-- **Nazarick:** ornate gold and violet home screen, circular navigation, live featured game, and six category wallpapers: Ainz’s throne room, Demiurge’s library, Pandora’s treasury, Aura and Mare’s garden, Sebas’s receiving hall and Albedo’s study.
-- **Republic Office:** looping city wallpaper, Aurebesh text, readable stylized navigation, a rotating golden emblem, blue holographic displays, Battlefront menu effects and background music.
+## What's inside
 
-Theme settings include supported cover treatments, reflections, motion controls and TV presentation. The global background-music switch silences theme music independently of interface sounds. Theme-owned library, store and other panels retain their theme's presentation. Some system operations still depend on Steam and Decky.
+- **Hub:** browse every theme with animated previews, download, activate or delete it. The Hub can wear the look of the theme you came from (Auto), the theme focused in Discover (Preview), a fixed theme, or stay Neutral.
+- **Theme files:** search and download real console theme files (PS3 `.p3t`, PSP `.ptf`/`.ctf`, Vita, Switch `.nxtheme`, Wii, Xbox and more) from public sources, or add your own.
+- **Plugin Spotlight:** a hand-picked list of Decky plugins plus a search over every public Decky plugin, with installs handed to Decky for confirmation.
+- **Presets and switching:** every look, imported theme file and saved preset is a preset. Hold L1 and use the D-pad to switch console or preset; L2 / R2 step through all presets; Quick Access lists the downloaded looks.
+- **Themed extras:** a store, library and search pages styled like each console, themed loading screens, sound packs and background music, Steam keyboard skins, and update notices in each console's own style.
 
 ## Install
 
 1. Install and enable Decky Loader on your Steam Deck.
-2. Download the latest **DeckHomeThemes-vX.Y.Z.zip** from the Releases page and copy it to your Deck.
-3. Enable Decky's developer options, then use **Install Plugin from ZIP** to select the archive.
-4. Open **Deck Home Themes** in Quick Access and choose a preset.
+2. Download the latest **DeckHomeThemes-vX.Y.Z.zip** from the [Releases page](https://github.com/Kaal31/benderthemes/releases/latest) and copy it to your Deck.
+3. Enable Decky's developer options, then use **Install Plugin from ZIP** and pick the archive.
+4. Open **ThemeHub** in Quick Access. The first-run setup lets you pick a theme; the Hub downloads it.
 
-This ZIP includes the compiled plugin, wallpapers, video backgrounds, sound packs and theme resources. Do not use GitHub's automatic source ZIP as the install package.
+Later versions are offered inside the plugin (Quick Access and an update notice on the home) and installed through Decky. Settings and downloaded themes are kept across updates. Do not use GitHub's automatic source ZIP as the install package.
+
+## Your own theme files
+
+Put theme files in the plugin's skins folder (the path is shown in Quick Access), or download them from the Hub's Theme files tab:
+
+| Folder | Files |
+| --- | --- |
+| `skins/p3t` | PS3 `.p3t`: background, icons, sound effects, slideshows |
+| `skins/psp` | PSP `.ptf` and custom-firmware `.ctf`: wallpaper, icons, sounds, animated backgrounds and the 3D wave |
+| `skins/vita` | PS Vita theme folder or `.zip` with `theme.xml`: wallpapers, bubbles, colours, lock screen, music |
+| `skins/switch` | Nintendo Switch `.nxtheme` |
+| `skins/wii` | Wii `.mym` / `.csm` |
+| `skins/wiiu` | Wii U `.utheme` |
+| `skins/3ds` | Nintendo 3DS themes (`.zip`, folder or `body_LZ.bin`) |
+| `skins/xbox` | Original Xbox skins |
+| `skins/x360` | Xbox 360 theme packages |
+
+Vita theme music is ATRAC9. Playing it needs the free [vgmstream](https://github.com/vgmstream/vgmstream) decoder, which is not bundled; Quick Access offers to download its official Linux build once. The Vita lock screen is visual only: Steam's own PIN still protects the Deck.
 
 ## Build from source
 
@@ -58,112 +76,105 @@ npm run build
 npm run package
 ```
 
-The installable archive is written to `out/DeckHomeThemes-v<version>.zip`. Packaging is self-contained: it does not require an older release ZIP.
+The installable archive is written to `out/DeckHomeThemes-v<version>.zip`.
 
-For browser previews:
+Browser previews: `npm run preview`, then serve the folder (`python -m http.server 8766`) and open `http://127.0.0.1:8766/preview/preview.html`. Previews use sample games and mock Steam services. Playwright checks in `tests/` use the same previews.
 
-```sh
-npm run preview
-python -m http.server 8766
-```
+## Releases
 
-Open `http://127.0.0.1:8766/preview/preview.html`, or the generated `dial-preview.html`, `aero-preview.html`, `aero2-preview.html`, `castle-preview.html`, `republic-preview.html`, `minecraft-preview.html` `pain-preview.html` and `nazarick-preview.html` in the same directory. Previews use sample games and mock Steam services; they do not launch real games. Playwright checks are in `tests/` and use this preview server.
-
-## Numbered releases
-
-Every source push to `main` is checked, built and packaged by GitHub Actions. Successful builds publish a new numbered release (starting with v1.9.6); the patch version advances automatically. Each release keeps its own ZIP and source tag. Failed checks do not publish a release. The workflow can also be started manually from Actions.
-
-## Latest additions
-
-- **Keyboard skins:** Steam's on-screen keyboard takes the look of the active console's keyboard (PS3/PSP silver keys, PS4/PS5 dark keys, Wii/Wii U/3DS/Switch, Xbox and Xbox 360, iiSU; bonus looks share a neutral skin). Quick Access → Keyboard skin turns it off; a CSS Loader keyboard theme or a Points Shop keyboard always wins. Not yet tried on a Deck.
-- Nazarick plays “No Man’s Dawn” (instrumental); Floating Castle plays Half Ghoul Music’s “Crossing Fields” instrumental remix. Six Paths plays “Girei” (Pain’s Theme Song). All three follow the existing global/theme music switches and music volume.
-
-- Styled loading screens for every theme, including Xbox 360 variants and Alien Dial colors. Steam and non-Steam games share the same launch handling.
-- Smooth page handoffs, preloaded Nazarick wallpapers, persistent Nazarick navigation, and ornate secondary windows.
-
-- Nazarick theme and six generated wallpapers based on the supplied visual reference.
-- Blades options menu can open from the left or right.
-- Block Worlds sidebar uses transparent pixel icons.
-- Six Paths shows a clean game name when logo art is missing; orbit symbols use vector strokes.
-- Republic controls and settings use readable Aurebesh-style English.
-- Alien Dial skins share all switch animations and restart activation when the skin changes.
-
-## New in v1.9.6
-
-- **Block Worlds:** Minecraft-inspired library, live 3D player, skin painting/import/export/randomization, focus-following gaze, arm strikes and touch rotation. Browser opens minecraft.net.
-- **Aero v.2:** a separate preset with sculpted panels, integrated landscape sections and revised blue gloss. Original Aero remains available.
-- **Six Paths:** purple moonlit home, circular selected-game display, recent/installed rows, matching menus and smooth motion. The circle follows selection and labels its source section.
-- **Alien Dial:** optional slower hourglass-to-rhombus morph with a 650 ms hold.
-- **Audio:** Minecraft Console Legacy effects, C418’s Sweden background music, and Windows XP effects for both Aero versions; existing audio controls apply.
-- **Fix:** company selection persists and the preset dropdown stays valid when switching between Sony, Microsoft and Bonus.
-
-## Real console theme files
-
-Put your own theme files in the plugin's skins folder (the path is shown in Quick Access):
-
-| Folder | Files | What is used |
-| --- | --- | --- |
-| `skins/p3t` | PS3 `.p3t` | Background, icons, sound effects; slideshow/animated themes show their images as a rotating slideshow (decoded once in the background, then cached) |
-| `skins/psp` | PSP `.ptf` (official) and `.ctf` (custom firmware) | Wallpaper, category and item icons, sound effects (`.ctf`), and optional XMB extras |
-| `skins/vita` | PS Vita theme folder or `.zip` with `theme.xml` | Page wallpapers, bubble icons, bar and label colours, lock screen image, background music (see below) |
-
-Vita theme music is ATRAC9 (`.at9`). Playing it needs the free [vgmstream](https://github.com/vgmstream/vgmstream) decoder, which is not bundled: when a theme has music, Quick Access offers a *Download music decoder* button that fetches the official Linux build from vgmstream's GitHub releases once. The music is then decoded once into a sound pack and plays while the theme's music is set to Automatic. The decoded track is shrunk to Ogg Opus (about 2 MB instead of ~27 MB WAV) by the Steam UI's built-in encoder, or by `ffmpeg` if one is installed; if neither is available the WAV is kept. The optional Vita lock screen (Quick Access → Lock screen) is visual only; Steam's own PIN still protects the Deck.
-
-XMB extras (focus glow, folder/loading/broken pictures, default game thumbnail) only appear when the active theme supplies them; without one the XMB looks exactly as before. A theme's sound effects become a sound pack that is used while the theme's sound pack is set to Automatic. `.ctf` icon names follow firmware 6.6x (themes for firmware with readable texture names are read directly). A `.ctf` that replaces `system_plugin_bg.rco` also brings its **animated background**: the layout pictures run by the theme's own animation scripts (move, fade, recolour, rotate, scale, chains), and its **3D wave model** (a GMO B-spline surface with its fcurve animation and reflection map), drawn with WebGL. Clock and info-text colours come from `system_plugin_fg.rco`. Each of these can be switched or tuned per theme file in Quick Access. The wave renderer was written for this plugin; [Vlnky](https://github.com/pauliquib/Vlnky) (GPL-2.0) was used only as a reference for the GMO layout, no code was copied. A `.ctf`'s own font (`ltn0.pgf`) is decoded and traced into a TrueType web font for the XMB's labels and clock. Not reproduced: animated 3D PS3 scenes, menu layouts and the firmware screens a `.ctf` also patches.
+Every push to `main` is checked, built and packaged by GitHub Actions; a successful build publishes the next numbered release, which the plugin then offers as an update. Theme packs and the Hub's preview gallery are published separately on [Kaal31/deckthemes-assets](https://github.com/Kaal31/deckthemes-assets).
 
 ## Current limits
 
-This release has browser-preview, type-check and build validation. Native Steam Deck behavior, controller integration and performance across all hardware configurations still need on-device testing. These are console-inspired reconstructions, not original console software or a claim of exact visual parity.
-
-Castle weather is opt-in and uses IP-based approximate location through ipwho.is and current conditions from Open-Meteo. Network failure shows an unavailable state. The Cardinal System address in the castle header is a sample address. Video backgrounds are 720p; motion can be disabled.
-
-## Additional theme previews
-
-![Aero v.2](docs/aero-v2.png)
-![Block Worlds](docs/minecraft.png)
-![Six Paths](docs/six-paths.png)
-
-The video above includes these additions. These screenshots are browser previews with sample games.
+Most features are checked with browser previews, type checks and builds; behaviour on a Deck (controller handling, Steam's keyboard, performance) still needs on-device testing. These are console-inspired reconstructions, not original console software, and make no claim of exact visual parity. Floating Castle weather is opt-in and uses approximate IP location (ipwho.is) and current conditions (Open-Meteo).
 
 ## Credits
 
-Special thanks to **[justinca92 — SpinDeck](https://github.com/justinca92/spindeck)** for inspiring this plugin. SpinDeck's implementation was one of the reference projects supplied during AI-assisted development and helped make this project possible.
+ThemeHub is built on the work, art, sounds and research of many people. Thank you all.
 
-The following projects, creators and resources were also supplied as references or asset sources during AI-assisted development:
+### Inspiration
 
-| Project or resource | Contribution |
+- **[justinca92 — SpinDeck](https://github.com/justinca92/spindeck)**, which inspired this plugin and was a reference during development.
+- **SLSDeck**'s numbered-release updater, which ThemeHub's own updater was adapted from.
+- The original **Deck Home Themes** plugin: its BSD-3-Clause notice is kept in [third-party/Original-Deck-Home-Themes-BSD.txt](third-party/Original-Deck-Home-Themes-BSD.txt).
+
+### Theme art and references
+
+| Creator / project | Used for |
 | --- | --- |
-| [EldeBH — Classic Battlefront Menu SFX](https://www.nexusmods.com/starwarsbattlefront22017/mods/2673?tab=description) | Menu sound effects for the Republic Office theme |
-| [DeckThemes](https://deckthemes.com/) | Audio assets and sound packs |
-| [MrMilenko — Theseus](https://github.com/MrMilenko/Theseus) | Original Xbox dashboard reference and assets |
-| [Fabxx — XBMC360](https://github.com/Fabxx/XBMC360) | Xbox 360 Blades reference and assets |
-| DeviantArt creators and other PSP references | Icons and visual references for the PSP theme |
+| [MrMilenko — Theseus](https://github.com/MrMilenko/Theseus) (GPL-3.0) | Original Xbox dashboard reference, orb art and textures |
+| Team Blackbolt — MC360 2.1 skin | Xbox 360 Blades textures and font |
+| [thedev0ps — Xbox 360 Dashboard Archive](https://github.com/thedev0ps/Xbox-360-Dashboard-Archive) | Xbox 360 Blades, NXE, Kinect and Metro dashboard resources |
+| [Fabxx — XBMC360](https://github.com/Fabxx/XBMC360) | Xbox 360 Blades reference |
+| esseti (DeviantArt) — PlayStation 3 XMB icons | PS3 XMB icons |
+| DeviantArt creators and other PSP references | PSP icons and visual references |
 | [Libretro — RetroArch Assets](https://github.com/libretro/retroarch-assets) | Interface assets and icons |
-| [kmturley — Cover Forge](https://github.com/kmturley/cover-forge) | Reference for dimensional game cases, printed sleeves, spines and glossy surfaces |
-| [TheRensei — SteamDeckCSSThemes](https://github.com/TheRensei/SteamDeckCSSThemes/tree/main/Game%20Cover%20Reflections%20Theme) | Game-cover reflection reference |
-| [Aurek Fonts](https://github.com/AurekFonts/AurekFonts.github.io) | Aurebesh AF and readable Aurebesh English fonts for Republic Office |
-| [bs-community — skinview3d](https://github.com/bs-community/skinview3d) | Live Minecraft player renderer, with skinview-utils and Three.js; bundled notices retained |
-| [South-Paw — typeface-minecraft](https://github.com/South-Paw/typeface-minecraft) | Minecraft-style typeface |
-| Gecked#0108 — Minecraft Console Legacy | User-supplied Minecraft menu sound pack |
-| cadecomposer — windows xp sounds | User-supplied Aero menu sound pack |
-| Girei (Pain’s Theme Song) — Action X Now recording | User-supplied Six Paths background music |
-| Mayu Maeshima — No Man’s Dawn (instrumental) | User-supplied Nazarick background music |
-| Half Ghoul Music — Crossing Fields (Instrumental Remix) | User-supplied Floating Castle background music |
-| C418 — Sweden, Minecraft Volume Alpha | User-supplied Block Worlds background music |
-| [Simple Icons](https://github.com/simple-icons/simple-icons) | Steam icon artwork |
-| [vgmstream](https://github.com/vgmstream/vgmstream) | Tool used to decode the supplied Battlefront sound assets |
-| [Cinzel](https://github.com/NDISCOVER/Cinzel) and [Cormorant](https://github.com/CatharsisFonts/Cormorant) | Republic title and text font resources |
-| [Saud's PS2-inspired browser](https://www.imsaud.me/browser) | Visual reference for the PS2 interface |
-| [Warren Uhrich — SAO UI](https://warrenuhrich.github.io/SAO-UI/) | Animation reference for the Floating Castle / SAO interface |
+| [Saud — PS2-inspired browser](https://www.imsaud.me/browser) | PS2 interface reference |
+| [Warren Uhrich — SAO UI](https://warrenuhrich.github.io/SAO-UI/) | Floating Castle animation reference |
+| [kmturley — Cover Forge](https://github.com/kmturley/cover-forge) (CC0-1.0) | Reference for 3D game cases, sleeves, spines and gloss |
+| [TheRensei — SteamDeckCSSThemes](https://github.com/TheRensei/SteamDeckCSSThemes) (MIT) | Game-cover reflection reference |
+| [VitauMX — vita-ui](https://github.com/VitauMX/vita-ui), [uofw](https://github.com/uofw/uofw), [pauliquib — Vlnky](https://github.com/pauliquib/Vlnky) | Vita presentation, PSP research, PSP wave model layout (reference only, no code copied) |
+| [seatann-dev — decky-wall](https://github.com/seatann-dev/decky-wall) | Video-wallpaper ideas |
+| the iiSU emulation frontend | Inspiration for the iiSU style look (drawn from scratch, no iiSU artwork) |
 
-Additional repositories supplied as development references include [VitauMX/vita-ui](https://github.com/VitauMX/vita-ui) for Vita presentation, [uofw/uofw](https://github.com/uofw/uofw) for PSP research, and [seatann-dev/decky-wall](https://github.com/seatann-dev/decky-wall) for video-wallpaper ideas. These acknowledgements identify references supplied during development; they do not imply that their code is bundled.
+### Sound packs and music
 
-The plugin runs on [SteamDeckHomebrew/Decky Loader](https://github.com/SteamDeckHomebrew/decky-loader). Cover Forge inspired the lightweight CSS 3D case implementation; its complete renderer is not included.
+| Pack | Creator |
+| --- | --- |
+| Original Xbox sound and music packs | Ollum |
+| Theseus Xbox Dashboard sounds | Team UIX (Theseus) |
+| Xbox 360 UI | calencyr |
+| Xbox 360 dashboard sounds | Microsoft (extracted) |
+| MC360 Blades sounds | Team Blackbolt |
+| PS2 System Sounds | Junomede |
+| PS2 Ambience | superfluid-cs |
+| PS3 Menu Music | plumber-craic |
+| PS4 sounds | Midnight |
+| PlayStation 4 Home Menu | kobacat |
+| PS5 sounds | theamanproject |
+| PSP Sounds | SGL-Galaxy |
+| PS Vita SFX | trollfacegaming420 |
+| PS Vita Menu | Starlogical |
+| Wii U SFX | Creeper Of Doom#5959 |
+| Wii U Friends, Settings and Download Management music | Haxorzz |
+| iiSU SFX | DreamerSouls |
+| Windows XP sounds (Aero) | cadecomposer |
+| Minecraft Console Legacy (Block Worlds) | Gecked#0108 |
+| SAO sounds (Floating Castle) | Who!#6464 |
+| Classic Battlefront Menu SFX (Republic Office) | [EldeBH / Florisvdwetering](https://www.nexusmods.com/starwarsbattlefront22017/mods/2673?tab=description); Palpatine Suite supplied by Jorah the Andal |
+| Sweden — C418 (Block Worlds) | user-supplied recording |
+| Crossing Fields, instrumental remix — Half Ghoul Music (Floating Castle) | user-supplied recording |
+| No Man’s Dawn, instrumental — Mayu Maeshima (Nazarick) | user-supplied recording |
+| Girei, Pain’s Theme Song — Action X Now (Six Paths) | user-supplied recording |
 
-Bundled resources include third-party theme materials, fonts, sounds and reconstruction references. Their existing notices are retained in [third-party/](third-party/) and resource-level `SOURCES.txt` files. Original Deck Home Themes attribution is preserved in [Original-Deck-Home-Themes-BSD.txt](third-party/Original-Deck-Home-Themes-BSD.txt).
+Many packs come from the [DeckThemes](https://deckthemes.com/) community. PlayStation sounds belong to Sony, Xbox sounds to Microsoft. The Alien Dial sounds are synthesised for this plugin.
+
+### Fonts
+
+| Font | License |
+| --- | --- |
+| [Aurek Fonts](https://github.com/AurekFonts/AurekFonts.github.io) — Aurebesh AF, Aurebesh English (Republic Office) | free for personal and commercial use; Rodian under MIT |
+| [Cinzel](https://github.com/NDISCOVER/Cinzel) and [Cormorant](https://github.com/CatharsisFonts/Cormorant) (Republic titles and text) | SIL OFL 1.1 |
+| Share Tech | SIL OFL 1.1 |
+| [The League of Moveable Type — Orbitron](https://github.com/theleagueof/orbitron) | SIL OFL 1.1 |
+| [South-Paw — typeface-minecraft](https://github.com/South-Paw/typeface-minecraft) (Block Worlds) | see its repository |
+
+### Code and data
+
+| Project | Used for |
+| --- | --- |
+| [Decky Loader](https://github.com/SteamDeckHomebrew/decky-loader) | the plugin platform |
+| [bs-community — skinview3d](https://github.com/bs-community/skinview3d) and skinview-utils | the live Minecraft player in Block Worlds |
+| [three.js](https://github.com/mrdoob/three.js) (MIT) | 3D rendering |
+| [Simple Icons](https://github.com/simple-icons/simple-icons) (CC0-1.0) | the Steam mark |
+| [vgmstream](https://github.com/vgmstream/vgmstream) | decoding Vita theme music and the supplied Battlefront sounds |
+| [safetzahirovic — Decky Plugins Explorer](https://safetzahirovic.github.io/decky-plugins-explorer/) | the plugin list behind Plugin Spotlight's search |
+| [Themezer](https://themezer.net), [PSPunk](https://www.pspunk.com), [Internet Archive](https://archive.org), [PS3-Pro/Themes](https://github.com/PS3-Pro/Themes), [Shenron0/PSP-Themes](https://github.com/Shenron0/PSP-Themes), [Acemad/VitaShell-Themes](https://github.com/Acemad/VitaShell-Themes) | the sources the Theme files tab searches; every theme file stays its creator's work |
+
+Plugin Spotlight credits each plugin's author on its own page.
+
+### Notices
+
+Bundled third-party notices are kept in [third-party/](third-party/) and next to the resources (`SOURCES.txt`, `SOURCE.txt`, `Copyright`). The Nazarick category wallpapers were generated from a supplied visual reference; Overlord characters and setting belong to their rights holders. PlayStation, Xbox, Nintendo, Wii, Steam and the other console and product names are trademarks of their owners; ThemeHub is a fan project and is not affiliated with or endorsed by them.
 
 No project-wide license is added by this repository.
-
-### Nazarick artwork
-
-The six bundled category wallpapers were generated from the user’s supplied visual reference with the built-in image-generation tool. Overlord characters and setting belong to their respective rights holders. [Artwork generation notes](docs/nazarick-artwork.md).
