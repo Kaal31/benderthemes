@@ -75,7 +75,7 @@ const LAYOUT_OWN: Partial<Record<ThemeId, Path[]>> = {
   switch: [["switchTheme"]],
   wii: [["wiiSkin"]],
   xbox: [["xboxSkin"]],
-  n3ds: [["n3dsSkin"], ["n3dsCursor"], ["n3dsTop"], ["n3dsLayout"]],
+  n3ds: [["n3dsSkin"], ["n3dsCursor"], ["n3dsTop"], ["n3dsArrows"], ["n3dsHandle"], ["n3dsLayout"]],
 };
 /** Records keyed by layout: a preset holds its layout's entry. */
 const PER_LAYOUT = ["iconPicks", "styles", "themeOptions", "wallpapers", "packs", "music", "musicPacks", "iconSizes", "titles", "coverStyles", "videoBackgrounds", "storeSections"];

@@ -318,6 +318,8 @@ export interface Settings {
   n3dsSkin?: string; // Nintendo 3DS theme: a .zip / folder / body_LZ.bin name under skins/3ds ("" = the built-in stock look)
   n3dsTop?: "show" | "hide"; // 3DS look: "hide" shows only the bottom screen, as large as possible ("show" when unset)
   n3dsCursor?: "3ds" | "simple"; // 3DS look: the bobbing corner cursor, or a plain focus frame ("3ds" when unset)
+  n3dsArrows?: "show" | "hide"; // 3DS look: the half-ring page arrows at the screen edges ("show" when unset; L1 / R1 and swipes still page)
+  n3dsHandle?: "show" | "hide"; // 3DS look: the grey scroll bar along the bottom of the icon grid ("show" when unset)
   n3dsLayout?: N3dsLayout; // 3DS home: zoom level and where each icon / folder / badge sits (kept in presets, like the console's saved layouts)
   xboxSkin?: string; // original Xbox skin: a folder or .zip name under skins/xbox ("" = none)
   switchTheme?: string; // Switch theme: a .nxtheme path under skins/switch ("file" or "folder/file") or ""
@@ -570,6 +572,8 @@ function merge(saved: any): Settings {
   s.n3dsSkin = typeof saved?.n3dsSkin === "string" ? saved.n3dsSkin : "";
   s.n3dsCursor = saved?.n3dsCursor === "simple" ? "simple" : "3ds";
   s.n3dsTop = saved?.n3dsTop === "hide" ? "hide" : "show";
+  s.n3dsArrows = saved?.n3dsArrows === "hide" ? "hide" : "show";
+  s.n3dsHandle = saved?.n3dsHandle === "hide" ? "hide" : "show";
   s.n3dsLayout = cleanN3dsLayout(saved?.n3dsLayout);
   s.wallpapers = { ...(saved?.wallpapers ?? {}) };
   s.badges = { ...DEFAULTS.badges, ...(saved?.badges ?? {}) };
@@ -723,7 +727,7 @@ export function resetThemeSettings(theme: ThemeId) {
     if (theme === "wii" && p.wiiSkin) keys.push(`wii:${p.wiiSkin}`);
     if (theme === "wiiu" && p.wiiuTheme) keys.push(`wiiu:${p.wiiuTheme}`);
     if (theme === "xbox" && p.xboxSkin) keys.push(`xbox:${p.xboxSkin}`);
-    if (theme === "n3ds") { out.n3dsCursor = "3ds"; out.n3dsTop = "show"; if (p.n3dsSkin) keys.push(`n3ds:${p.n3dsSkin}`); }
+    if (theme === "n3ds") { out.n3dsCursor = "3ds"; out.n3dsTop = "show"; out.n3dsArrows = "show"; out.n3dsHandle = "show"; if (p.n3dsSkin) keys.push(`n3ds:${p.n3dsSkin}`); }
     if (theme === "x360") {
       // like the other consoles: the theme package and gamer picture in use stay, their switches go back to defaults
       out.x360 = { ...DEFAULTS.x360, ...(p.x360?.skin ? { skin: p.x360.skin } : {}), ...(p.x360?.gamerpic ? { gamerpic: p.x360.gamerpic } : {}) };

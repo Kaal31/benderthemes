@@ -973,7 +973,7 @@ export function N3dsHome() {
               })()}
             </div>
             {grid.at.size === 0 && !inFolder && <div style={{ position: "absolute", left: 20, right: 20, top: 100, textAlign: "center", fontSize: 12, color: "#777", pointerEvents: "none" }}>No software found for the selected library view.</div>}
-            {maxScroll > 0 && (
+            {maxScroll > 0 && s.n3dsHandle !== "hide" && (
               <div className="dht-n3ds-handle" data-scroll={scroll} data-max={maxScroll}
                 onPointerDown={(e) => { handleRef.current = { x0: e.clientX, w: trackW }; try { (e.currentTarget as any).setPointerCapture?.(e.pointerId); } catch { /* */ } handleAt(e.clientX); }}
                 onPointerMove={(e) => { if (handleRef.current) handleAt(e.clientX); }}
@@ -983,8 +983,8 @@ export function N3dsHome() {
                 <div className="dht-n3ds-thumb" style={{ position: "absolute", left: thumbX, top: 4, width: thumbW, height: 4, borderRadius: 2, background: `var(--dht-n3ds-handle, ${look.folder ? fc.main : "#9aa0ab"})`, boxShadow: "0 0 0 1px #fffa, 0 1px 2px #0003", transition: "left 200ms" }} />
               </div>
             )}
-            {scroll > 0 && ring("l", () => scrollBy(-visCols))}
-            {scroll < maxScroll && ring("r", () => scrollBy(visCols))}
+            {s.n3dsArrows !== "hide" && scroll > 0 && ring("l", () => scrollBy(-visCols))}
+            {s.n3dsArrows !== "hide" && scroll < maxScroll && ring("r", () => scrollBy(visCols))}
             {/* tab strip: HOME Settings + shortcuts (a back button in a folder, Done while arranging), the two resize buttons */}
             <div className="dht-n3ds-tabs" style={{ position: "absolute", left: 0, right: 0, top: 0, height: 31, background: "linear-gradient(#e8ebf2,#dde1ea)", boxShadow: "0 1px 0 #c2c8d4", display: "flex", alignItems: "flex-end", paddingLeft: 3, zIndex: 7 }}>
               {tabs.filter((t) => t !== "big" && t !== "small").map((id) => {
