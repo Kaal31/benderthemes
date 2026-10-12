@@ -1,13 +1,13 @@
 name: Beta build
 on:
   push:
-    branches: [benderthemes-beta]
+    branches: [beta]
   workflow_dispatch:
 permissions:
-  contents: read
+  contents: write
 jobs:
   beta:
-    if: github.ref == 'refs/heads/benderthemes-beta'
+    if: github.ref == 'refs/heads/beta'
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
@@ -29,3 +29,14 @@ jobs:
         with:
           name: DeckHomeThemes-beta
           path: out/DeckHomeThemes-*.zip
+      - name: Publish beta prerelease
+        env:
+          GH_TOKEN: ${{ github.token }}
+        shell: bash
+        run: |
+          TAG="beta-${GITHUB_SHA:0:12}"
+          if gh release view "$TAG" >/dev/null 2>&1; then
+            gh release upload "$TAG" out/DeckHomeThemes-*.zip --clobber
+          else
+            gh release create "$TAG" out/DeckHomeThemes-*.zip --target "$GITHUB_SHA" --title "ThemeHub beta (${GITHUB_SHA:0:7})" --notes "Testing build from the beta branch. Uses the existing published theme catalog; rebuilt theme assets are not published by this workflow." --prerelease --latest=false
+          fi
