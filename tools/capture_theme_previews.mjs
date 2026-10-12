@@ -1,7 +1,9 @@
 import { chromium } from "playwright";
 import { mkdirSync } from "node:fs";
 import { startPreviewServer } from "../preview/server.mjs";
-const themes = ["wii","wiiu","iisu","vita","ps2","ps3","psp","ps4","ps5","xbox","x360","aero","aero2","dial","castle","republic","minecraft","pain","nazarick"];
+// Wii, Wii U and iiSU: Hub previews only (no firmware update prompt)
+const hubOnly = ["wii","wiiu","iisu"];
+const themes = [...hubOnly, "vita","ps2","ps3","psp","ps4","ps5","xbox","x360","aero","aero2","dial","castle","republic","minecraft","pain","nazarick"];
 mkdirSync("out/theme-previews", { recursive: true });
 const browser = await chromium.launch({ headless: true });
 const { server, url } = await startPreviewServer();
@@ -31,7 +33,7 @@ try {
   await page.locator(".dht-market").waitFor();
   await page.locator("[data-dht-root]").screenshot({ path: "out/theme-previews/marketplace.png" });
   await page.locator(".market-close").click();
-  for (const theme of themes) {
+  for (const theme of themes.filter(t => !hubOnly.includes(t))) {
     await page.evaluate(theme => window.__updateTheme({ theme }), theme);
     await page.getByRole("button", { name: "Preview firmware update", exact: true }).click();
     // the PSP look shows the PSP's own system-update dialog (.dht-psp-dialog) instead of the firmware card
@@ -41,5 +43,5 @@ try {
     await page.locator(psp ? ".dht-psp-dialog .pd-buttons button" : ".fw-actions button").last().click();
   }
   if (errors.length) throw new Error([...new Set(errors)].join("\n"));
-  console.log("All 19 themes and firmware prompts captured without page errors.");
+  console.log("All 19 themes and 16 firmware prompts captured without page errors.");
 } finally { await browser.close(); server.close(); }
