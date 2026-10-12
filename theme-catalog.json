@@ -1448,19 +1448,30 @@
     {
       "id": "nazarick",
       "name": "Nazarick",
-      "version": "local",
+      "version": "1.0.2",
       "theme": "nazarick",
+      "description": "Artwork, sounds and optional skins for Nazarick.",
+      "minPluginVersion": "1.10.2",
+      "size": 43025690,
       "resources": [
+        "assets/nazarick/downloads-video.mp4",
         "assets/nazarick/downloads.png",
         "assets/nazarick/friends.png",
+        "assets/nazarick/home-video.mp4",
         "assets/nazarick/home.png",
         "assets/nazarick/library.png",
         "assets/nazarick/settings.png",
+        "assets/nazarick/store-video.mp4",
         "assets/nazarick/store.png",
         "assets/nazarick/wheel.png",
         "sounds/DHT Nazarick Music/menu_music.mp3",
         "sounds/DHT Nazarick Music/pack.json"
-      ]
+      ],
+      "unpackedSize": 43478604,
+      "sha256": "d74359fcda411ced75185cddc13c805b47bdfad2da6f1f3b7608925fa5cce6c3",
+      "url": "https://github.com/Kaal31/deckthemes-assets/releases/download/nazarick-v1.0.2/ThemeAssets-Nazarick-v1.0.2.zip",
+      "preview": null,
+      "poster": null
     },
     {
       "id": "extras",
