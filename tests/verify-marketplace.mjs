@@ -4,9 +4,10 @@ import assert from 'node:assert/strict';
 import { startPreviewServer } from '../preview/server.mjs';
 const { server, url } = await startPreviewServer();
 const browser = await launch();
-// the Hub lists every catalog theme except wii/wiiu, which are built in (and added back) plus the two built-ins
+// the Hub lists every catalog theme plus the built-in themes without a pack of their own (Wii, Switch, 3DS, PS1)
 const catalog = JSON.parse(readFileSync(new URL('../theme-catalog.json', import.meta.url), 'utf8')).themes.filter(p => p.theme);
-const expectedCards = new Set([...catalog.map(p => p.theme), 'wii', 'wiiu']).size;
+const BUILT_IN = ['wii', 'wiiu', 'switch', 'n3ds', 'ps1', 'iisu'];
+const expectedCards = new Set([...catalog.map(p => p.theme), ...BUILT_IN]).size;
 mkdirSync('out/theme-previews', { recursive: true });
 try {
   const page = await browser.newPage({ viewport: { width: 1304, height: 930 } });
@@ -17,6 +18,10 @@ try {
   await page.getByRole('button', { name: 'Hub (from this home)', exact: true }).click();
   await page.locator('.market-card').first().waitFor();
   assert.equal(await page.locator('.market-card').count(), expectedCards);
+  // Your themes: every built-in theme is yours without a download (Switch, 3DS and PS1 were missing; iiSU only counted once its pack was downloaded)
+  await page.locator('.dht-hub-tabs button', { hasText: 'Your themes' }).click(); await page.waitForTimeout(300);
+  for (const name of ['Switch', 'Nintendo 3DS', 'PS1', 'iiSU']) assert.ok(await page.locator('.market-card', { hasText: name }).count(), name + ' is in Your themes');
+  await page.locator('.dht-hub-tabs button', { hasText: 'Discover' }).click(); await page.waitForTimeout(300);
   // the Hub wears the selected theme (installed in the preview), with the decoration layer and the tokens
   await page.locator('.dht-market.dht-hub[data-hub-styled=true][data-hub-theme=vita]').waitFor();
   assert.equal(await page.locator('.dht-market .dht-hub-deco').count(), 1);

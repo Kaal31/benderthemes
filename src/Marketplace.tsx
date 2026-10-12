@@ -10,15 +10,25 @@ import { playSound } from "./steam";
 import { ensurePackInstalled, PackProgress, ThemeArt, themeCatalog, themeDownloadProgress } from "./themePacks";
 import { deleteTheme } from "./themeActions";
 import { HubLogo } from "./hubLogo";
-import { refreshInventory } from "./presets";
+import { BUILT_IN_THEMES, refreshInventory } from "./presets";
 
-export type ThemePack = { id: string; name: string; theme: ThemeId | null; description: string; size: number; version: string; installedVersion?: string; compatible: boolean; preview?: string; poster?: string };
+export type ThemePack = { id: string; name: string; theme: ThemeId | null; description: string; size: number; version: string; installedVersion?: string; compatible: boolean; preview?: string; poster?: string; builtIn?: boolean };
 type Progress = PackProgress;
 // catalog, download and progress calls are shared with the themed store's Themes section (themePacks.ts)
 const catalog = themeCatalog, downloadProgress = themeDownloadProgress;
 // the switchers' cache of downloaded themes is refreshed on every read (presets.ts)
 export const inventory = refreshInventory;
-const builtInPacks = (art:ThemeArt = {}):ThemePack[] => THEMES.filter(t=>t.id==="wii"||t.id==="wiiu").map(t=>({id:t.id,theme:t.id,name:t.name,description:t.blurb,size:0,version:"built-in",installedVersion:"built-in",compatible:true,...art[t.id]}));
+// Built-in themes are always yours (unless deleted, i.e. hidden). Wii U and iiSU keep their catalog pack (art, sounds,
+// music: extras that are not in the plugin ZIP), marked builtIn until it is downloaded; the others get a card of their own.
+// Built-in themes come after the downloadable ones, as before.
+const isBuiltIn = (id: string) => (BUILT_IN_THEMES as readonly string[]).includes(id);
+const withBuiltIns = (themes: ThemePack[], art: ThemeArt = {}): ThemePack[] => [
+  ...themes.filter(p => !isBuiltIn(p.id)),
+  ...themes.filter(p => isBuiltIn(p.id)).map(p => ({ ...p, builtIn: true, compatible: true })),
+  ...THEMES.filter(t => isBuiltIn(t.id) && !themes.some(p => p.id === t.id)).map(t => ({ id: t.id, theme: t.id, name: t.name, description: t.blurb, size: 0, version: "built-in", installedVersion: "built-in", compatible: true, builtIn: true, ...art[t.id] })),
+];
+/** A built-in theme whose optional extras are not downloaded yet. */
+const extrasMissing = (p: ThemePack) => !!p.builtIn && !p.installedVersion;
 
 type Tab = "discover" | "yours" | "files" | "spotlight";
 const TABS: { id: Tab; name: string }[] = [{ id: "discover", name: "Discover" }, { id: "yours", name: "Your themes" }, { id: "files", name: "Theme files" }, { id: "spotlight", name: "Plugin Spotlight" }];
@@ -59,14 +69,14 @@ export function Marketplace({ requested, from }: { requested?: ThemeId; from?: T
   const alive = useRef(true);
   const listRef = useRef<HTMLDivElement>(null);
   const installedOnly = tab === "yours";
-  const filtered = packs.filter(p => !!p.theme && (!installedOnly || !!p.installedVersion));
+  const filtered = packs.filter(p => !!p.theme && (!installedOnly || !!p.installedVersion || (!!p.builtIn && !s.hiddenThemes?.includes(p.theme))));
   const current = filtered[Math.min(selected, Math.max(0, filtered.length - 1))];
   const load = async (refresh = false) => {
     setLoading(true);
     try {
       const result = await catalog(refresh);
       if (!alive.current) return;
-      setPacks([...result.themes.filter(p=>p.id!=="wii"&&p.id!=="wiiu"),...builtInPacks(result.art)]); setError(result.error || "");
+      setPacks(withBuiltIns(result.themes, result.art)); setError(result.error || "");
       setProgress(result.progress); setBusy(result.progress.busy);
     } catch (e) { if (alive.current) setError(`Cannot load themes: ${e}`); }
     finally { if (alive.current) setLoading(false); }
@@ -105,7 +115,7 @@ export function Marketplace({ requested, from }: { requested?: ThemeId; from?: T
     finally { if (alive.current) setBusy(false); }
   };
   const deletePack = async () => {
-    if (!current?.installedVersion || busy || !current.theme) return;
+    if (!(current?.installedVersion || current?.builtIn) || busy || !current.theme) return;
     setBusy(true);
     try {
       await deleteTheme(current.theme);
@@ -166,7 +176,7 @@ export function Marketplace({ requested, from }: { requested?: ThemeId; from?: T
     {tab === "spotlight" ? <PluginSpotlight inputRef={tabInput}/> : tab === "files" ? <ThemeFiles inputRef={tabInput}/> : <main className="dht-hub-body"><div className="market-grid dht-hub-grid" ref={listRef}>
       {!filtered.length && <p className="dht-hub-empty">{loading ? "Loading your next home…" : installedOnly ? "Your collection starts here. Browse Discover to download a theme." : "No themes are available yet. Try Refresh."}</p>}
       {filtered.map((pack, i) => {
-        const state = pack.theme === s.theme && pack.installedVersion ? "Active" : pack.installedVersion ? (upToDate(pack) || pack.installedVersion === "built-in" ? "Installed" : "Update") : "";
+        const state = pack.theme === s.theme && (pack.installedVersion || pack.builtIn) ? "Active" : pack.installedVersion ? (upToDate(pack) || pack.installedVersion === "built-in" ? "Installed" : "Update") : extrasMissing(pack) ? "Built in" : "";
         return <button key={pack.id} className="market-card dht-hub-card" data-selected={i === selected} onClick={() => setSelected(i)} onFocus={() => setSelected(i)}>
           <div className="market-art dht-hub-art" data-theme={pack.id}>{pack.poster ? <img src={pack.poster} alt="" loading="lazy" onError={e => { e.currentTarget.style.display = "none"; }} /> : <span>{pack.name}</span>}{state && <em className="dht-hub-state" data-state={state.toLowerCase()}>{state}</em>}</div>
           <div className="market-card-title"><strong>{pack.name}</strong>{pack.size > 0 && <span>{(pack.size / 1048576).toFixed(1)} MB</span>}</div>
@@ -180,9 +190,9 @@ export function Marketplace({ requested, from }: { requested?: ThemeId; from?: T
         <dl><div><dt>Download</dt><dd>{current.size ? `${(current.size / 1048576).toFixed(1)} MB` : "Built in"}</dd></div><div><dt>Version</dt><dd>{current.version}</dd></div><div><dt>Available offline</dt><dd>{current.installedVersion ? "Ready to play" : "After download"}</dd></div></dl>
       </div>
       <div className="dht-hub-detail-actions">
-        <button className="market-primary dht-hub-primary" disabled={busy || loading || !current.compatible} onClick={() => void activate()}>{busy ? `${progress?.percent || 0}% · ${progress?.message || "Preparing…"}` : !current.compatible ? "Coming soon" : upToDate(current) ? "Activate theme" : current.installedVersion ? "Update & activate" : "Download theme"}<kbd>A</kbd></button>
+        <button className="market-primary dht-hub-primary" disabled={busy || loading || !current.compatible} onClick={() => void activate()}>{busy ? `${progress?.percent || 0}% · ${progress?.message || "Preparing…"}` : !current.compatible ? "Coming soon" : upToDate(current) ? "Activate theme" : current.installedVersion ? "Update & activate" : extrasMissing(current) ? "Download extras & activate" : "Download theme"}<kbd>A</kbd></button>
         {busy && <progress max={100} value={progress?.percent || 0} />}
-        {current.installedVersion && <button className="market-remove dht-hub-remove" disabled={busy || current.theme === s.theme} onClick={() => void deletePack()}>Delete theme</button>}
+        {(current.installedVersion || current.builtIn) && <button className="market-remove dht-hub-remove" disabled={busy || current.theme === s.theme} onClick={() => void deletePack()}>Delete theme</button>}
         <small>Your settings are kept when you switch themes.</small>
       </div>
     </>}</aside></main>}

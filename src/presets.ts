@@ -51,7 +51,9 @@ onThemesChanged(() => listeners.forEach((l) => l()));
 // Downloaded theme packs (theme_inventory) plus the themes that ship inside the plugin. The switchers (L1 hold, L2 / R2)
 // and the Quick Access Look list only offer looks whose console is here: never a deleted or not yet downloaded theme. null = not read yet.
 const remoteInventory = callable<[], Record<string, string>>("theme_inventory");
-const BUILT_IN: Record<string, string> = { wii: "built-in", wiiu: "built-in", switch: "built-in", n3ds: "built-in", ps1: "built-in", iisu: "built-in" };
+/** The themes whose look ships inside the plugin (Wii U and iiSU also have an optional pack of extras in the Hub). */
+export const BUILT_IN_THEMES = ["wii", "wiiu", "switch", "n3ds", "ps1", "iisu"] as const;
+const BUILT_IN: Record<string, string> = Object.fromEntries(BUILT_IN_THEMES.map((id) => [id, "built-in"]));
 let downloaded: Record<string, string> | null = null;
 export async function refreshInventory(): Promise<Record<string, string>> {
   downloaded = { ...((await remoteInventory()) ?? {}), ...BUILT_IN };
