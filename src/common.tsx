@@ -10,8 +10,7 @@ import type { LocalVideo } from "./media";
 import { playSound } from "./steam";
 import { CaseArt, CASE_THEMES } from "./CaseArt";
 import { getSettings, updateSettings, Settings, ThemeId } from "./settings";
-import { applyPreset, currentPresetId, presetGroups } from "./presets";
-import { essentialItems, globalSettingsItems, resetGroup, themeSettingsItems } from "./themeSettingsMenu";
+import { essentialItems, globalSettingsItems, presetItems, themeSettingsItems } from "./themeSettingsMenu";
 import { iconUrl } from "./engine/registry";
 
 // ───────────── home context ─────────────
@@ -341,7 +340,7 @@ export function optionsMenu(items: MenuItem[]): MenuItem[] {
   const moved = items.filter((i) => GLOBAL_ENTRY.test(i.label)).map((i) => (/^home$/i.test(i.label) ? { ...i, label: "Steam Home" } : i));
   const seen = new Set(own.map((i) => baseLabel(i.label)));
   const themeOwn = themeSettingsItems().filter((i) => !seen.has(baseLabel(i.label)));
-  return [...own, ...essentialItems(moved), ...themeOwn, resetGroup(), { label: "Global settings", sub: globalSettingsItems }];
+  return [...own, ...essentialItems(moved), ...themeOwn, { label: "Global settings", sub: globalSettingsItems }];
 }
 
 /** State machine for the theme's own options menu (△ / Y). Each theme draws it in its own style. */
@@ -587,7 +586,7 @@ export function useRemembered<T>(key: string, initial: T): [T, (v: T | ((p: T) =
 }
 
 /** Preset switch sub-menu (console + skin), shared by every theme's △ menu. */
+/** Presets v2: the same Presets list everywhere (this look's presets, other looks, save / rename / delete). */
 export function themeMenu(_current?: ThemeId, _switch?: (id: ThemeId) => void, _list?: unknown): MenuItem[] {
-  const cur = currentPresetId();
-  return presetGroups().map(group => ({ label: group.name, checked: group.presets.some(p=>p.id===cur), sub: () => group.presets.map(p=>({label:p.label, checked:p.id===cur, action:()=> (playSound("tab"),applyPreset(p))})) }));
+  return presetItems();
 }

@@ -139,3 +139,13 @@ const CSS = `.wiiu-import{position:absolute;left:50%;top:50%;transform:translate
 .wiiu-import h2{margin:0 0 12px;font-size:25px;font-weight:500;color:#2a6f8c}.wiiu-import p{margin:0 0 24px;font-size:16px;line-height:1.55}
 .wi-actions{display:flex;gap:16px;justify-content:center}.wi-actions button{min-width:170px;padding:13px 22px;border-radius:30px;border:2px solid #b9c7cf;background:#fff;color:#4a5961;font-size:17px}
 .wi-actions button[data-selected=true],.wi-actions button[data-selected=""]{border-color:#16b7e0;box-shadow:0 0 0 3px #16b7e055;color:#0e7ea3}`;
+
+/** One-off read of a Wii U theme (presets v2: its grid background can fill another look's background slot). */
+export async function loadWiiuSkin(name: string): Promise<WiiuSkin | null> {
+  if (!name) return null;
+  if (cache.has(name)) return cache.get(name)!;
+  const gen = generation;
+  const r = (await getWiiu(name).catch(() => null)) ?? null;
+  if (gen === generation) cache.set(name, r);
+  return r;
+}

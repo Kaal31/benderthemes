@@ -15,9 +15,9 @@ import { GameArt, MenuItem, MenuView, themeMenu, useHome, useMenu, useRemembered
 import { clamp, Press, Stage, ThemeRoot, useStage } from "../input";
 import { Game, openSteam, SteamPlace, fmtPlaytime } from "../library";
 import { cleanN3dsLayout, N3dsCell, N3dsFolder, N3dsLayout, N3DS_FOLDER_ITEMS, N3DS_MAX_FOLDERS, N3DS_SLOTS, showTitle, THEMES, updateSettings } from "../settings";
-import { fmtDate, fmtTime, playSound, useBattery, useClock } from "../steam";
+import { fmtDate, fmtTime, playSound, useBattery, useClock, useWallpaper } from "../steam";
 import { themeSettingsItems } from "../themeSettingsMenu";
-import { useN3dsLook } from "../skins";
+import { N3dsScreen, useN3dsLook } from "../skins";
 import { useReportFocus } from "../focus";
 import { useLuma } from "./Switch";
 import { BadgeDef, BadgeSet, useN3dsBadges } from "./n3dsBadges";
@@ -194,7 +194,10 @@ const CSS = `
 
 export function N3dsHome() {
   const api = useHome(), s = api.settings, { W, H } = useStage(), menu = useMenu();
-  const now = useClock(15000), bat = useBattery(), look = useN3dsLook();
+  const now = useClock(15000), bat = useBattery(), look0 = useN3dsLook(), wall = useWallpaper("n3ds");
+  // presets v2: the preset's Background (any installed picture) fills the top screen (the bottom one when it is hidden)
+  const wallScreen: N3dsScreen | null = wall ? { mode: "texture", image: wall } : null;
+  const look = wallScreen ? { ...look0, top: wallScreen, ...(s.n3dsTop === "hide" ? { bottom: wallScreen } : {}) } : look0;
   const badges = useN3dsBadges();
   const layout = useMemo(() => cleanN3dsLayout(s.n3dsLayout), [s.n3dsLayout]);
   const [mainCur, setMainCur] = useRemembered("n3ds-cur", 0);

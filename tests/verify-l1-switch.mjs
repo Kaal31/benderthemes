@@ -121,20 +121,21 @@ try {
   await p.waitForTimeout(400);
   assert.equal(await preset(p), "ps2");
 
-  // a saved preset sits with its console, after the files
+  // a saved preset sits with its console, right after the presets of its own look (presets v2: one list per look)
   await p.evaluate(() => window.__applyPreset("x360:kinect"));
   await p.waitForTimeout(400);
   await p.evaluate(() => window.__saveUserPreset());
   await p.waitForTimeout(200);
   const x360 = (await p.evaluate(() => window.__consoleRows())).find((r) => r.key === "x360").presets;
   assert.equal(x360.length, 6);
-  assert.ok(x360[5].id.startsWith("my:") && x360[5].name.startsWith("★ "), "saved preset last in its console");
+  assert.ok(x360[3].id.startsWith("my:") && x360[3].name.startsWith("★ "), "saved preset after the Kinect look it was saved on");
+  assert.deepEqual(x360.map((x) => x.id).filter((id) => !id.startsWith("my:")), ["x360:blades", "x360:nxe", "x360:kinect", "x360:metro", "x360skin:Orange Pack"]);
   await p.evaluate(() => window.__applyPreset("x360:blades"));
   await p.waitForTimeout(1800); // the Blades dashboard's opening takes the buttons for a moment (a modal layer: the switcher stays off)
   await p.keyboard.down("q");
-  await p.keyboard.press("ArrowLeft");
+  for (let i = 0; i < 3; i++) await p.keyboard.press("ArrowRight");
   if (process.env.DEBUG_L1) { await shot(p, "debug-x360"); console.log(await p.evaluate(() => [window.__l1Held(), window.__currentPreset(), document.querySelector(".dht-switcher")?.outerHTML?.slice(0, 300)])); }
-  await hudIs(p, /^Xbox 360 · ★ My preset 1 · Xbox 360 · Kinect \(2010\) \(6\/6\)$/);
+  await hudIs(p, /^Xbox 360 · ★ My preset 1 · Xbox 360 · Kinect \(2010\) \(4\/6\)$/);
   await shot(p, "7-x360-saved-preset");
   await p.keyboard.up("q");
   await p.waitForTimeout(400);

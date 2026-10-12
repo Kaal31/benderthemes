@@ -170,6 +170,8 @@ try {
   // persistence: the layout is part of a saved preset
   const saved = await q.evaluate(() => window.__saveUserPreset()?.id);
   assert.ok(saved);
+  // (presets v2: the preset in use keeps its changes, so the layout is cleared on another preset of the look)
+  await q.evaluate(() => window.__applyPreset("n3ds"));
   await q.evaluate(() => window.__updateTheme({ n3dsLayout: { rows: 3 } }));
   await q.waitForTimeout(150);
   assert.equal(await q.locator('.dht-n3ds-tile[data-own="true"]').count(), 0);

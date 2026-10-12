@@ -34,7 +34,11 @@ export interface SoundPack {
 interface EngineHooks {
   /** undefined = the engine has no say, null = the slot is deliberately empty. */
   pack(theme: ThemeId, kind: "sfx" | "music"): SoundPack | null | undefined;
-  wallpaper(theme: ThemeId): string | null | undefined;
+  /** The background of the look on screen as an asset reference (src/engine/assets.ts): undefined = the engine has
+   *  no say (a wallpapers-folder picture or the look's own), "" = deliberately none. `folder`: the folder picture set. */
+  background(theme: ThemeId, folder: string | undefined): string | undefined;
+  /** Reads a reference that is not a wallpapers-folder file. */
+  resolve(ref: string): Promise<string | null>;
 }
 let engine: EngineHooks | null = null;
 export function setEngineHooks(h: EngineHooks | null) {
@@ -72,31 +76,41 @@ let wallpaperOverride: ((name: string) => string | null) | null = null;
 export function setWallpaperOverride(f: typeof wallpaperOverride) {
   wallpaperOverride = f;
 }
-/** Data URL of a user wallpaper (cached), or null. */
+/** Data URL of a wallpapers-folder picture (cached), or null. */
+export async function loadWallpaper(name: string): Promise<string | null> {
+  if (!name) return null;
+  if (wallpaperOverride) return wallpaperOverride(name);
+  const key = `@wp/${name}`;
+  if (wallCache.has(key)) return wallCache.get(key)!;
+  const u = (await backendWallpaper(name).catch(() => null)) ?? null;
+  wallCache.set(key, u);
+  return u;
+}
 /** Picture a theme uses when none is chosen (if that file is in the wallpapers folder). */
 export const DEFAULT_WALLPAPER: Partial<Record<ThemeId, string>> = { aero: "aero-background.jpg", aero2: "aero-background.jpg" };
+/** The one background of the look on screen (presets v2: the preset's Background choice, from any installed source;
+ *  else a wallpapers-folder picture chosen before v2; else the theme's own or the look's default picture), with game
+ *  art, brightness and colour applied. null = the look draws its own background. */
 export function useWallpaper(theme: ThemeId): string | null {
   const chosen = getSettings().wallpapers[theme];
-  const fromTheme = chosen ? undefined : engine?.wallpaper(theme);
-  const name = fromTheme === undefined ? chosen || DEFAULT_WALLPAPER[theme] || "" : "";
-  const [url, setUrl] = useState<string | null>(name ? wallCache.get(name) ?? null : null);
+  const fromEngine = engine?.background(theme, chosen);
+  const ref = fromEngine !== undefined ? fromEngine : chosen ? `@wp/${chosen}` : DEFAULT_WALLPAPER[theme] ? `@wp/${DEFAULT_WALLPAPER[theme]}` : "";
+  const [state, setState] = useState<{ ref: string; url: string | null }>({ ref, url: ref ? wallCache.get(ref) ?? null : null });
   useEffect(() => {
-    if (fromTheme !== undefined) return;
-    if (!name) return setUrl(null);
-    if (wallpaperOverride) return setUrl(wallpaperOverride(name));
-    if (wallCache.has(name)) return setUrl(wallCache.get(name)!);
+    if (!ref) return setState({ ref, url: null });
+    if (wallCache.has(ref)) return setState({ ref, url: wallCache.get(ref)! });
     let alive = true;
-    backendWallpaper(name)
+    (ref.startsWith("@wp/") ? loadWallpaper(ref.slice(4)) : engine ? engine.resolve(ref) : Promise.resolve(null))
       .then((u) => {
-        wallCache.set(name, u ?? null);
-        if (alive) setUrl(u ?? null);
+        wallCache.set(ref, u ?? null);
+        if (alive) setState({ ref, url: u ?? null });
       })
-      .catch(() => alive && setUrl(null));
+      .catch(() => alive && setState({ ref, url: null }));
     return () => {
       alive = false;
     };
-  }, [name, fromTheme]);
-  const raw = fromTheme !== undefined ? fromTheme : url;
+  }, [ref]);
+  const raw = state.ref === ref ? state.url : null;
   // Standard options → Game art behind the menu: the focused game's art takes the wallpaper's place
   const focused = useFocusedGame();
   const art = getSettings().gameArt && theme !== "ps4" && theme !== "ps5" ? focused?.art.hero[0] ?? focused?.art.landscape[0] : undefined;

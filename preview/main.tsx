@@ -5,7 +5,7 @@ import { showFirmwarePreview } from "../src/FirmwareNotice";
 import { autoPack, packFile, SOUND_FILES } from "../src/steam";
 // Browser preview of every theme with an invented sample library.
 import { createRoot } from "react-dom/client";
-import { applyPreset, consoleRows, currentPresetId, cyclePreset, getPresets, refreshPresets, usePresets, saveUserPreset, variantLabel } from "../src/presets";
+import { applyPreset, consoleRows, currentPresetId, cycleLook, cycleLookPreset, cyclePreset, getPresets, refreshPresets, usePresets, saveUserPreset, variantLabel } from "../src/presets";
 import { l1Held } from "../src/input";
 import { useEffect, useState } from "react";
 import { ThemedHome } from "../src/Home";
@@ -249,8 +249,10 @@ function App() {
 (window as any).__initSettings = () => initSettings();
 (window as any).__updateSettings = (p: any) => updateSettings(p);
 (window as any).__resetThemeSettings = (t: any) => resetThemeSettings(t);
-(window as any).__presets = () => getPresets().map((p) => ({ id: p.id, label: p.label, company: p.company, theme: p.theme }));
+(window as any).__presets = () => getPresets().map((p) => ({ id: p.id, label: p.label, company: p.company, theme: p.theme, look: p.look, origin: p.origin }));
 (window as any).__cyclePreset = (d: number) => cyclePreset(d).id;
+(window as any).__cycleLookPreset = (d: number) => cycleLookPreset(d).id;
+(window as any).__cycleLook = (d: number) => cycleLook(d).id;
 (window as any).__currentPreset = () => currentPresetId();
 // tests: the hold-L1 switcher's consoles and their looks, and whether L1 is held for it
 (window as any).__consoleRows = () => consoleRows().map((r) => ({ key: r.key, label: r.label, presets: r.presets.map((p) => ({ id: p.id, name: variantLabel(r, p) })) }));

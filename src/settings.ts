@@ -4,6 +4,7 @@
 import { callable } from "@decky/api";
 import { useEffect, useState } from "react";
 import { setSettingsBackend } from "./diag";
+import { migrateUserPreset, StoredPreset } from "./lookState";
 
 export type X360Style = "blades" | "nxe" | "kinect" | "metro";
 export const X360_STYLES: { id: X360Style; name: string }[] = [
@@ -157,22 +158,23 @@ export function cleanStoreSections(v: any): Partial<Record<ThemeId, StoreSection
 }
 export const storeSectionOn = (s: Pick<Settings, "storeSections">, theme: ThemeId, which: keyof StoreSections) => s.storeSections?.[theme]?.[which] === true;
 
-/** What a preset decides: the look. Everything else (clock, volume, library sorting, Ⓐ…) is the user's own. */
+/** What a preset decided before presets v2 (the whole look of every theme, copied). Kept to read and migrate presets
+ *  saved then (lookState.migrateUserPreset); v2 presets hold only their own look's paths (lookState.lookPaths).
+ *  Everything else (clock, volume, library sorting, Ⓐ…) is the user's own. */
 export const LOOK_KEYS = [
   "theme", "activeTheme", "pages", "mix", "iconPicks", "themeOptions", "styles", "vita", "xmb", "x360", "dial", "wallpapers", "wallpaperDim", "packs", "musicPacks", "music",
   "coverStyles", "titles", "iconSizes", "videoBackgrounds", "ps4GameBackgrounds", "castleWeather", "castleWindows",
   "minecraftFollowFocus", "minecraftWaitForSwipe", "minecraftSlim", "themeFx", "wiiuView", "wiiuTheme", "xboxSkin", "wiiSkin", "switchTheme", "wiiuPlazaPositions", "wiiuPlazaTips", "n3dsSkin", "n3dsCursor", "n3dsTop", "n3dsLayout", "hubStyle", "storeSections",
 ] as const;
 export type LookKey = (typeof LOOK_KEYS)[number];
-export interface UserPreset {
-  id: string; // "my:<n>"
-  name: string;
-  look: Partial<Pick<Settings, LookKey>>;
-}
+/** A stored preset (v2): "my:<n>" for the user's own, or a built-in / theme-file preset's id once its state was kept. */
+export type UserPreset = StoredPreset;
 export const MAX_USER_PRESETS = 30;
+/** Stored states of built-in looks and theme files (one per preset that was used and changed). */
+export const MAX_STORED_PRESETS = 300;
 /** A saved preset's look as it may be applied: only the look keys, each with the type its setting has (a hand-edited or
  *  damaged file must not be able to set `enabled`, replace `userPresets` or give the home an unknown theme). */
-export function cleanLook(v: any): UserPreset["look"] {
+export function cleanLook(v: any): Partial<Pick<Settings, LookKey>> {
   const out: any = {};
   if (!v || typeof v !== "object" || Array.isArray(v)) return out;
   for (const k of LOOK_KEYS) {
@@ -205,7 +207,9 @@ export type StandardOptions = Pick<Settings, StandardKey>;
 export interface Settings {
   /** The theme (engine manifest id) in use; "" = chosen the old way (layout + skin file). */
   activeTheme: string;
-  /** Mix and match: per theme, which other theme supplies a slot ("none" = leave it empty). */
+  /** A look's slots (presets v2): per look id, what fills each slot. A theme id (that theme's own file), "none", or an
+   *  asset reference from any installed source ("@wp/<file>", "@hub/<set>/<name>", "@file/<kind>/<file>", "#rrggbb"),
+   *  see src/engine/assets.ts. Called "Mix and match" before v2; old values stay valid. */
   mix: Record<string, Partial<Record<string, string>>>;
   /** Small data a community interface asked the engine to keep for it (per theme id). */
   frameData: Record<string, unknown>;
@@ -213,9 +217,9 @@ export interface Settings {
   pages: Partial<Record<string, string>>;
   /** Icons picked one at a time: layout → icon spot → "themeId/iconName". */
   iconPicks: Partial<Record<string, Record<string, string>>>;
-  /** Presets the user saved (Theme options → Save as preset). */
+  /** Stored presets (v2): the user's own ("my:<n>") and the kept state of built-in / theme-file presets. */
   userPresets: UserPreset[];
-  /** The saved preset in use, "" when a built-in or community theme was picked. */
+  /** The preset in use (any preset id); "" = the one the look and theme file on screen give. */
   userPreset: string;
   hiddenThemes?: ThemeId[];
   dismissedFirmware?: string;
@@ -449,7 +453,7 @@ export const DEFAULTS: Settings = {
   gameBoot: "",
   onboardingDone: true,
   themeFx: {},
-  version: 1,
+  version: 2, // 2: presets v2 (stored presets are {id, name, base, theme, diff})
 };
 
 const backendGet = callable<[], Partial<Settings> | null>("get_settings");
@@ -465,6 +469,8 @@ export function onSettingsChange(l: () => void): () => void {
   return () => void listeners.delete(l);
 }
 
+/** Checks and completes settings read from a file (or a preset patch laid over the current settings). */
+export const cleanSettings = (saved: any): Settings => merge(saved);
 function merge(saved: any): Settings {
   const s: any = { ...DEFAULTS, ...(saved && typeof saved === "object" ? saved : {}) };
   if (typeof s.minecraftSkin !== "string" || s.minecraftSkin.length > 60000 || !s.minecraftSkin.startsWith("data:image/png;base64,")) s.minecraftSkin = "";
@@ -472,10 +478,10 @@ function merge(saved: any): Settings {
   if (s.wiiuView!=="plaza") s.wiiuView="grid";
   s.minecraftSlim = s.minecraftSlim === true;
   s.minecraftWaitForSwipe = s.minecraftWaitForSwipe === true;
-  if (!["Sony","Microsoft","Nintendo","Bonus","Community","My presets"].includes(s.presetCompany)) delete s.presetCompany;
+  if (!["Sony","Microsoft","Nintendo","Bonus","Community"].includes(s.presetCompany)) delete s.presetCompany; // "My presets" (before v2): saved presets are listed with their look now
   if (typeof s.activeTheme !== "string" || s.activeTheme.length > 64) s.activeTheme = "";
   s.mix = Object.fromEntries(Object.entries(s.mix && typeof s.mix === "object" ? s.mix : {}).filter(([k, v]) => k.length <= 64 && v && typeof v === "object").slice(0, 500)
-    .map(([k, v]: [string, any]) => [k, Object.fromEntries(Object.entries(v).filter(([slot, from]) => slot.length <= 32 && typeof from === "string" && from.length <= 64))]));
+    .map(([k, v]: [string, any]) => [k, Object.fromEntries(Object.entries(v).filter(([slot, from]) => slot.length <= 32 && typeof from === "string" && from.length <= 320))]));
   s.frameData = Object.fromEntries(Object.entries(s.frameData && typeof s.frameData === "object" ? s.frameData : {}).filter(([k, v]) => k.length <= 64 && JSON.stringify(v ?? null).length <= 65536).slice(0, 100));
   s.pages = cleanPages(s.pages);
   s.clockShown = s.clockShown !== false;
@@ -492,8 +498,14 @@ function merge(saved: any): Settings {
     .map(([k, v]: [string, any]) => [k, Object.fromEntries(Object.entries(v).filter(([key, val]) => key.length <= 32 && (["boolean", "number"].includes(typeof val) || (typeof val === "string" && val.length <= 80))).slice(0, 60))]));
   s.iconPicks = Object.fromEntries(Object.entries(s.iconPicks && typeof s.iconPicks === "object" ? s.iconPicks : {}).filter(([k, v]) => k.length <= 16 && v && typeof v === "object").slice(0, 40)
     .map(([k, v]: [string, any]) => [k, Object.fromEntries(Object.entries(v).filter(([spot, key]) => spot.length <= 41 && typeof key === "string" && key.length <= 106).slice(0, 100))]));
-  s.userPresets = (Array.isArray(s.userPresets) ? s.userPresets : []).filter((p: any, i: number, all: any[]) => p && typeof p.id === "string" && /^my:\d{1,6}$/.test(p.id) && all.findIndex((q: any) => q?.id === p.id) === i && typeof p.name === "string" && p.look && typeof p.look === "object")
-    .slice(0, MAX_USER_PRESETS).map((p: any) => ({ id: p.id, name: p.name.slice(0, 60), look: cleanLook(p.look) }));
+  // presets saved before v2 ({id, name, look}) are migrated to {id, name, base, theme, diff} here, once
+  let mine = 0, kept = 0;
+  s.userPresets = (Array.isArray(s.userPresets) ? s.userPresets : []).filter((p: any, i: number, all: any[]) => p && typeof p.id === "string" && p.id.length <= 320 && all.findIndex((q: any) => q?.id === p.id) === i && typeof p.name === "string")
+    .filter((p: any) => (/^my:\d{1,6}$/.test(p.id) ? ++mine <= MAX_USER_PRESETS : !p.id.startsWith("my:") && ++kept <= MAX_STORED_PRESETS))
+    .map((p: any) => migrateUserPreset(p, THEMES.some((t) => t.id === s.theme) ? s.theme : DEFAULTS.theme))
+    .filter((p: UserPreset | null): p is UserPreset => !!p && p.base.length <= 64 && JSON.stringify(p.diff).length <= 200000)
+    .map((p: UserPreset) => ({ ...p, name: p.name.slice(0, 60) }));
+  s.version = 2;
   if (typeof s.userPreset !== "string" || !s.userPresets.some((p: UserPreset) => p.id === s.userPreset)) s.userPreset = "";
   s.minecraftFollowFocus = s.minecraftFollowFocus !== false;
   s.dial = { ...DEFAULTS.dial, ...(saved?.dial ?? {}) };
@@ -659,8 +671,13 @@ export function setThemeOption<K extends StandardKey>(theme: ThemeId, key: K, va
 export const settingsLoaded = () => loaded;
 
 let saveTimer: any;
+// presets.ts: when a change shows another look than the one on screen, the preset that was in use keeps its state
+type LookChangeHook = (before: Settings, patch: Partial<Settings>) => Partial<Settings>;
+let lookChangeHook: LookChangeHook | null = null;
+export const setLookChangeHook = (h: LookChangeHook | null) => { lookChangeHook = h; };
 export function updateSettings(patch: Partial<Settings> | ((s: Settings) => Partial<Settings>)) {
-  const p = typeof patch === "function" ? patch(current) : patch;
+  let p = typeof patch === "function" ? patch(current) : patch;
+  if (lookChangeHook && loaded) p = lookChangeHook(current, p);
   current = { ...current, ...p };
   emit();
   if (storeUnread) {
@@ -745,7 +762,8 @@ export function resetThemeSettings(theme: ThemeId) {
 
 /** Every setting back to defaults (the current theme stays selected; deleted themes stay deleted). */
 export function resetAllSettings() {
-  updateSettings((p) => ({ ...DEFAULTS, theme: p.theme, activeTheme: p.activeTheme, frameData: p.frameData, userPresets: p.userPresets, enabled: p.enabled, hiddenThemes: p.hiddenThemes, iconSizes: {}, themeCollections: {}, minecraftSkin: "" }));
+  // the user's own presets stay; the kept states of built-in looks and theme files go back to their defaults
+  updateSettings((p) => ({ ...DEFAULTS, theme: p.theme, activeTheme: p.activeTheme, frameData: p.frameData, userPresets: p.userPresets.filter((u) => u.id.startsWith("my:")), enabled: p.enabled, hiddenThemes: p.hiddenThemes, iconSizes: {}, themeCollections: {}, minecraftSkin: "" }));
 }
 
 /** The PSP theme file in use ("" = none: the drawn wave). */

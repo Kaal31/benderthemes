@@ -34,9 +34,11 @@ try {
   for (const theme of themes) {
     await page.evaluate(theme => window.__updateTheme({ theme }), theme);
     await page.getByRole("button", { name: "Preview firmware update", exact: true }).click();
-    await page.locator(".dht-firmware").waitFor();
+    // the PSP look shows the PSP's own system-update dialog (.dht-psp-dialog) instead of the firmware card
+    const psp = theme === "psp";
+    await page.locator(psp ? ".dht-psp-dialog" : ".dht-firmware").waitFor();
     await page.locator("[data-dht-root]").screenshot({ path: `out/theme-previews/firmware-${theme}.png` });
-    await page.locator(".fw-actions button").last().click();
+    await page.locator(psp ? ".dht-psp-dialog .pd-buttons button" : ".fw-actions button").last().click();
   }
   if (errors.length) throw new Error([...new Set(errors)].join("\n"));
   console.log("All 16 themes and firmware prompts captured without page errors.");

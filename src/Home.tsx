@@ -17,7 +17,7 @@ import { LaunchView, useLaunchState, dismissLaunch, setGameBootClip, setGameBoot
 import { BootIntro } from "./bootIntro";
 import { Onboarding } from "./Onboarding";
 import { ThemeIntro } from "./themeIntro";
-import { essentialItems, globalSettingsItems, refreshThemeLists, resetGroup, setThemeSettingsOpener, themeSettingsItems } from "./themeSettingsMenu";
+import { essentialItems, globalSettingsItems, refreshThemeLists, setThemeSettingsOpener, themeSettingsItems } from "./themeSettingsMenu";
 import { cachedPspSkin, loadPspSkin } from "./skins";
 // The themed home: builds the shared API every theme uses, picks the theme
 // and hosts it in a full-screen layer. Also the switch that decides between
@@ -53,7 +53,8 @@ import { Ps1Home } from "./themes/Ps1";
 import { IisuHome } from "./themes/Iisu";
 import { FrameHome } from "./engine/FrameHome";
 import { VideoIntro } from "./engine/VideoIntro";
-import { activeTheme, slotAccent, slotUrl, useThemes } from "./engine/registry";
+import { activeTheme, slotAccent, slotFont, slotUrl, useThemes } from "./engine/registry";
+import { LAYOUT_SLOTS } from "./engine/assets";
 import { pageSettings } from "./engine/pages";
 
 // CSS hook: which theme file is active, as "<kind>:<file name>" (empty for looks without theme files)
@@ -223,7 +224,7 @@ function ThemedHomeContent({ standalone }: { standalone?: boolean }) {
   const openThemeSettings = () => {
     const name = engineTheme?.name ?? THEMES.find((t) => t.id === s.theme)?.name ?? s.theme;
     // the same as the options menu (△ / Y): this theme's options, then everything shared by all themes
-    themeMenu.open([...essentialItems([], () => api.showSteamHome()), ...themeSettingsItems(), resetGroup(), { label: "Global settings", sub: globalSettingsItems }], `${name} options`, { page: true });
+    themeMenu.open([...essentialItems([], () => api.showSteamHome()), ...themeSettingsItems(), { label: "Global settings", sub: globalSettingsItems }], `${name} options`, { page: true });
   };
   useEffect(() => { setThemeSettingsOpener(openThemeSettings); return () => setThemeSettingsOpener(null); });
   useEffect(()=>{setDestinationOpener(d=>transitionPage(s,()=>{if(d.place==="media"){setOverlay({kind:"shots"});setDestination(null);}else if(d.place==="music"){setOverlay({kind:"music"});setDestination(null);}else{setOverlay(null);setDestination(d);}},doc));return()=>{setDestinationOpener(null);};},[s.theme,s.animations,doc]);
@@ -320,8 +321,11 @@ function ThemedHomeContent({ standalone }: { standalone?: boolean }) {
   const render = THEME_COMPONENTS[s.theme] ?? THEME_COMPONENTS.vita;
   // the engine theme's colour and font, for layouts that use --dht-accent / inherit the font
   const accent = tintOf(s) ?? slotAccent(s);
-  const themeFont = slotUrl("font", s);
-  const themeSlotStyle = { ...(accent ? { "--dht-accent": accent } : {}), ...(themeFont ? { "--dht-font": '"dht-theme-font", "Motiva Sans", sans-serif', fontFamily: "var(--dht-font)" } : {}) } as CSSProperties;
+  const themeFont = slotFont(s);
+  // presets v2: the accent slot is written to the look's own colour variables too (capability table, engine/assets.ts)
+  const slotColour = slotAccent(s);
+  const lookAccent = slotColour ? Object.fromEntries((LAYOUT_SLOTS[s.theme]?.accent ?? []).map((v) => [v, slotColour])) : {};
+  const themeSlotStyle = { ...(accent ? { "--dht-accent": accent } : {}), ...lookAccent, ...(themeFont ? { "--dht-font": '"dht-theme-font", "Motiva Sans", sans-serif', fontFamily: "var(--dht-font)" } : {}) } as CSSProperties;
   return (
     // zIndex 1: Steam's own popups (context menus, modals) must paint above us.
     <div ref={root} data-dht-root="" data-tv={s.tvMode} data-motion={s.animations} data-dht-theme={s.theme} data-dht-preset={currentPresetId(s)} data-dht-skin={skinHook(s) || undefined} className={`dht-root dht-theme-${s.theme}`} style={{ position: "fixed", inset: 0, zIndex: standalone ? 900 : 1, background: "#000", overflow: "hidden", fontFamily: "var(--dht-font, inherit)", userSelect: "none", WebkitUserSelect: "none" }}>

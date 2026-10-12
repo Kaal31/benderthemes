@@ -437,3 +437,20 @@ export async function loadPspSkin(name: string): Promise<P3tSkin | null> {
 }
 export const cachedP3tSkin = (name: string) => p3tCache.get(name);
 export const cachedPspSkin = (name: string) => pspCache.get(name);
+
+/** One-off read of any console theme file (presets v2: a preset's slots can take a wallpaper or icons from a theme file
+ *  of another console, see src/engine/assets.ts). Cached with the hooks above; null when it can't be read. */
+export async function loadSkinFile(kind: "p3t" | "psp" | "vita" | "x360" | "xbox" | "wii" | "n3ds", name: string): Promise<any> {
+  if (!name) return null;
+  const pick: Record<string, [Map<string, any>, (n: string) => Promise<any>, ((n: string) => any) | undefined]> = {
+    p3t: [p3tCache, getP3t, override.p3t], psp: [pspCache, getPsp, override.psp], vita: [vitaCache, getVita, override.vita],
+    x360: [x360Cache, loadX360, undefined], xbox: [xboxCache, loadXbox, undefined], wii: [wiiCache, loadWii, undefined], n3ds: [n3dsCache, loadN3ds, undefined],
+  };
+  const [cache, load, ov] = pick[kind] ?? [];
+  if (!cache) return null;
+  if (ov) return ov(name);
+  if (cache.has(name)) return cache.get(name);
+  const r = (await load(name).catch(() => null)) ?? null;
+  cache.set(name, r);
+  return r;
+}

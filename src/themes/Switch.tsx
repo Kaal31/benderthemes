@@ -7,7 +7,7 @@ import { GameArt, Icon, IconName, MenuView, themeMenu, useHome, useMenu, useReme
 import { clamp, Press, Stage, ThemeRoot, useStage } from "../input";
 import { Game, openSteam, SteamPlace } from "../library";
 import { showTitle, THEMES } from "../settings";
-import { playSound, useBattery, useClock } from "../steam";
+import { playSound, useBattery, useClock, useWallpaper } from "../steam";
 import { themeSettingsItems } from "../themeSettingsMenu";
 import { switchParts, useSwitchSkin } from "../switchThemes";
 
@@ -102,7 +102,10 @@ export function SwitchHome() {
   const api = useHome(), s = api.settings, { W, H } = useStage(), menu = useMenu();
   const now = useClock(15000), bat = useBattery(), skin = useSwitchSkin();
   const [view, setView] = useState<"home" | "apps" | "set" | "lock">("home");
-  const parts = switchParts(skin, view);
+  // presets v2: the preset's Background (any installed picture) takes the theme wallpaper's place
+  const wall = useWallpaper("switch");
+  const parts0 = switchParts(skin, view);
+  const parts = wall ? { ...parts0, background: wall, brightness: undefined, own: false } : parts0;
   const luma = useLuma(parts.background, parts.brightness);
   const dark = parts.background ? (luma ?? 0.5) < 0.55 : false; // built-in look is the light one
   const ink = dark ? "#fff" : "#2d2d2d";

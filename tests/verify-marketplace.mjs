@@ -33,6 +33,7 @@ try {
   await page.keyboard.press('Escape');
   await page.keyboard.press('Escape');
   await page.keyboard.press('m');
+  await page.locator('.dht-menu').getByText('Advanced', {exact:true}).click(); // presets v2: reset / delete live under Advanced
   await page.locator('.dht-menu').getByText('Reset or delete', {exact:true}).click(); // grouped since the options-menu cleanup
   await page.locator('.dht-menu').getByText(/^Delete Block/).click();
   await page.getByText('Delete its resources and return to Steam Home', {exact:true}).click();

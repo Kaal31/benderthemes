@@ -2,7 +2,7 @@ import {CSSProperties,useEffect,useMemo,useRef,useState} from "react";
 import {GameArt,Icon,IconName,MenuView,themeMenu,useHome,useMenu} from "../common";
 import {Press,Stage,ThemeRoot,useStage} from "../input";
 import {Game,openAchievements,openGamePage,openSteam} from "../library";
-import {fmtTime,playSound,useClock,useSteamStatus,userName} from "../steam";
+import {fmtTime,playSound,useClock,useSteamStatus,userName,useWallpaper} from "../steam";
 import {useFriends,useNotices} from "../activity";
 import {WiiuDetail,WiiuNotifyBanners,WiiuNotifyBell} from "./wiiuPlazaActivity";
 import {buildFeed} from "./wiiuPlazaFeed";
@@ -63,7 +63,9 @@ const WiiHand=()=><svg className="nt-wii-hand" viewBox="0 0 40 52" width="46" ar
 const WiiSdCard=()=><svg className="nt-sd-card" viewBox="0 0 50 66" aria-hidden="true"><path d="M6 2h29l13 13v46a3 3 0 0 1-3 3H6a3 3 0 0 1-3-3V5a3 3 0 0 1 3-3Z" fill="#eaf7fc" stroke="#4dbfe8" strokeWidth="3" strokeLinejoin="round"/><rect x="8" y="9" width="34" height="42" rx="2" fill="#fff"/><text x="25" y="37" textAnchor="middle" fontSize="17" fontWeight="800" fontStyle="italic" fill="#4dbfe8" fontFamily="Arial,sans-serif">SD</text><rect x="8" y="54" width="34" height="5" rx="1" fill="#8fd7f0"/></svg>;
 export function NintendoHome({kind}:{kind:"wii"|"wiiu"}){
  const api=useHome(),s=api.settings,{W,H}=useStage(),menu=useMenu(),clock=useClock(),u=kind==="wiiu";
- const wl=useWiiLook(),assets=useAssets("wiiu"),status=useSteamStatus(),skin=useWiiuSkin(),fx=themeFx(s,wiiuFxKey(s.wiiuTheme)),themeArt:Record<string,string>=u?wiiuArt(skin,fx):{},art:Record<string,string>={...assets,...themeArt,...(themeArt["plaza-floor"]&&!themeArt["plaza-background"]?{"plaza-background":themeArt["plaza-floor"]}:{})},splash=u&&fx.background?skin?.splash:undefined;
+ // presets v2: the preset's Background (any installed picture) replaces the grid background / the Wii menu wallpaper
+ const wall=useWallpaper(kind);
+ const wl0=useWiiLook(),wl=wall&&!u?{...wl0,wallpaper:wall,fit:"cover" as const}:wl0,assets=useAssets("wiiu"),status=useSteamStatus(),skin=useWiiuSkin(),fx=themeFx(s,wiiuFxKey(s.wiiuTheme)),themeArt:Record<string,string>=u?wiiuArt(skin,fx):{},art:Record<string,string>={...assets,...themeArt,...(themeArt["plaza-floor"]&&!themeArt["plaza-background"]?{"plaza-background":themeArt["plaza-floor"]}:{}),...(wall&&u?{"grid-background":wall}:{})},splash=u&&fx.background?skin?.splash:undefined;
  const [customThemes,setCustomThemes]=useState<string[]>([]);
  useEffect(()=>{if(u)listWiiuThemes().then(r=>setCustomThemes(r?.themes??[])).catch(()=>{});},[u,s.wiiuTheme]);
  const themeItems=()=>[...(wiiuProblem(skin)?[{label:wiiuProblem(skin),disabled:true}]:[]),{label:"None (built-in look)",checked:!s.wiiuTheme,action:()=>updateSettings({wiiuTheme:""})},...customThemes.map(n=>({label:n.replace(/\.utheme$/i,""),checked:s.wiiuTheme===n,action:()=>updateSettings({wiiuTheme:n})}))];

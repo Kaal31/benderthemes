@@ -134,7 +134,7 @@ function SwitcherHud({ rows, r, v, applied, held }: HudState) {
           <i aria-hidden="true">{n > 1 ? "▶" : ""}</i>
         </div>
         <div className="dht-switcher-dots" aria-hidden="true">
-          {n <= 24 ? row.presets.map((x, i) => <i key={x.id} data-on={i === v} data-user={!!x.user} />) : <em style={{ width: `${((v + 1) / n) * 100}%` }} />}
+          {n <= 24 ? row.presets.map((x, i) => <i key={x.id} data-on={i === v} data-user={x.origin === "saved"} />) : <em style={{ width: `${((v + 1) / n) * 100}%` }} />}
         </div>
       </div>
       <div className="dht-switcher-foot">{held ? (applied ? "Release L1 to keep" : "Loading when you stop…") : "Kept"} · {row.label} · {name} ({v + 1}/{n})</div>

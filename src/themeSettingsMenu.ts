@@ -5,7 +5,7 @@ import { openDestination } from "./destinations";
 import { musicPlaybackItems } from "./musicPlayer";
 import { setStyle, style, StyleOption, THEME_STYLES } from "./engine/themeStyles";
 import type { MenuItem } from "./common";
-import { collectionMenu, themeMenu } from "./common";
+import { collectionMenu } from "./common";
 import { openMarketplace } from "./marketplaceState";
 import { consoleThemeIds } from "./hubStyles";
 import { deleteCurrentTheme } from "./themeActions";
@@ -14,18 +14,21 @@ import { CASE_THEMES } from "./CaseArt";
 import { MONTH_NAMES, PS3_MONTHS } from "./color";
 import { cleanN3dsLayout, N3DS_LAYOUT, N3DS_SLOTS, storeSectionOn } from "./settings";
 import { FOOTER_MODES, FX_DEFAULT, MAX_USER_PRESETS, getRawSettings, setThemeOption, StandardKey, getSettings, pspFile, resetAllSettings, resetThemeSettings, Settings, SMOOTH_LEVELS, updateDial, themeFx, ThemeFx, ThemeId, THEMES, TITLE_MODES, updateSettings, updateThemeFx, updateVita, VITA_LOOKS, X360_STYLES } from "./settings";
-import { autoPack, getPacks, listWallpapers, musicFile, refreshPacks, sfxCoverage } from "./steam";
+import { listWallpapers, refreshPacks } from "./steam";
 import { cachedP3tSkin, cachedPspSkin, installMusicDecoder, listSkins, loadPspSkin, loadVitaSkin, musicDecoderStatus } from "./skins";
 import { ART_EDGES, BUBBLE_STYLES } from "./themes/vitaBubble";
 import { xmbFxKey } from "./themes/Xmb";
 import { resourcesChanged } from "./marketplaceState";
 import { playBootIntro } from "./bootIntro";
-import { activeTheme, allIcons, allThemes, hasSlot, setMix } from "./engine/registry";
-import { ICON_SPOTS, SLOTS } from "./engine/manifest";
+import { activeTheme, allIcons, allThemes } from "./engine/registry";
+import { ICON_SPOTS } from "./engine/manifest";
+import { customizeControls, nameOf, refreshCustomizeLists, SlotControl } from "./customize";
+import { LAYOUT_SLOTS } from "./engine/assets";
 import { PAGES } from "./engine/pages";
 import { listSwitchThemes, switchFxKey } from "./switchThemes";
 import { listWiiuThemes } from "./wiiuThemes";
-import { currentPresetId, deleteUserPreset, saveUserPreset, updateUserPreset } from "./presets";
+import { applyPreset, currentLook, currentPresetId, deleteUserPreset, getPresets, lookPresets, presetGroups, renamePreset, saveUserPreset } from "./presets";
+import { playSound } from "./steam";
 
 // the themed home registers how it opens this menu (over the current theme)
 let opener: (() => void) | null = null;
@@ -40,6 +43,7 @@ export function refreshThemeLists() {
   listWiiuThemes().then((r) => { lists.wiiu = r?.themes ?? []; }).catch(() => {});
   listWallpapers().then((r) => { lists.walls = r?.files ?? []; }).catch(() => {});
   refreshPacks().catch(() => {});
+  refreshCustomizeLists();
   const v = getSettings().vita.skin;
   lists.decoderNeeded = false;
   if (v)
@@ -164,9 +168,17 @@ export function pspClipItems(file: string): MenuItem[] {
   ];
 }
 
-function vitaItems(): MenuItem[] {
+function vitaItems(part: "file" | "look"): MenuItem[] {
   const v = () => S().vita;
   const key = () => `vita:${v().skin}`;
+  if (part === "file") return [
+    choice("Custom Vita theme", [{ id: "", name: "None" }, ...lists.vita.map((n) => ({ id: n, name: fileName(n) }))], () => v().skin, (x) => updateVita({ skin: x })),
+    ...(v().skin ? [group("Theme file effects", () => fxItems(key(), "vita", true))] : []),
+    ...(lists.decoderNeeded ? [{
+      label: "Download music decoder (vgmstream, 3.4 MB)",
+      action: () => { installMusicDecoder().then((r) => { if (r.installed) { lists.decoderNeeded = false; resourcesChanged(); refreshPacks(); } }).catch(() => {}); },
+    }] : []),
+  ];
   return [
     group("Bubbles", () => [
       toggle("System bubbles", () => v().systemBubbles, (x) => updateVita({ systemBubbles: x })),
@@ -182,18 +194,18 @@ function vitaItems(): MenuItem[] {
       toggle("Touch controls", () => v().touch, (x) => updateVita({ touch: x })),
       { label: "Reset bubble arrangement", sub: () => [{ label: `Put every bubble back in order (${v().folders.length} folder(s) stay)`, action: () => updateVita({ order: [] }) }, { label: "Keep arrangement", action: () => {} }] },
     ]),
-    choice("Colour look", VITA_LOOKS, () => v().look, (x) => updateVita({ look: x as any })),
+    // the colour look is a look of its own (PS Vita · Default / Sakura): picking it shows that look's preset
+    choice("Colour look", VITA_LOOKS, () => v().look, (x) => showLook(x === "sakura" ? "vita-look:sakura" : "vita")),
     choice("Lock screen", [{ id: "off", name: "Off" }, { id: "wake", name: "After sleep" }, { id: "always", name: "After sleep and at start" }], () => v().lock, (x) => updateVita({ lock: x as any })),
-    choice("Custom Vita theme", [{ id: "", name: "None" }, ...lists.vita.map((n) => ({ id: n, name: fileName(n) }))], () => v().skin, (x) => updateVita({ skin: x })),
-    ...(v().skin ? [group("Theme file effects", () => fxItems(key(), "vita", true))] : []),
-    ...(lists.decoderNeeded ? [{
-      label: "Download music decoder (vgmstream, 3.4 MB)",
-      action: () => { installMusicDecoder().then((r) => { if (r.installed) { lists.decoderNeeded = false; resourcesChanged(); refreshPacks(); } }).catch(() => {}); },
-    }] : []),
   ];
 }
+/** Show a look (its preset in use is kept): the default preset of `look`. */
+function showLook(look: string) {
+  const p = getPresets().find((x) => x.id === look);
+  if (p && currentLook() !== look) applyPreset(p);
+}
 
-function xmbItems(variant: "ps3" | "psp"): MenuItem[] {
+function xmbItems(variant: "ps3" | "psp", part: "file" | "look"): MenuItem[] {
   const x = () => S().xmb;
   const setX = (p: Partial<Settings["xmb"]>) => updateSettings((s) => ({ xmb: { ...s.xmb, ...p } }));
   const file = () => (variant === "psp" ? pspFile(S()) : x().p3t);
@@ -202,14 +214,16 @@ function xmbItems(variant: "ps3" | "psp"): MenuItem[] {
   const months = [{ id: -1, name: "By month (original)" }, ...MONTH_NAMES.map((m, i) => ({ id: i, name: m }))];
   const tr = () => S().trailers;
   const setTr = (p: Partial<Settings["trailers"]>) => updateSettings((s) => ({ trailers: { ...s.trailers, ...p } }));
-  return [
+  if (part === "file") return [
     choice(variant === "psp" ? "PSP theme (.ptf / .ctf)" : "PS3 theme (.p3t)", [...noneChoices, ...files.map((n) => ({ id: n, name: fileName(n) }))], () => (variant === "psp" ? x().psp : x().p3t), (v) => {
       setX(variant === "psp" ? { psp: v } : { p3t: v });
       if (variant === "psp" && pspFile(S())) loadPspSkin(pspFile(S())).catch(() => {});
     }),
-    group("Brightness", () => (fxItems(xmbFxKey(S(), variant), variant, false)[0] as any).sub()),
     ...(file() ? [group("Theme file effects", () => fxItems(xmbFxKey(S(), variant), variant, true).slice(1))] : []),
     ...(variant === "psp" && file() ? pspClipItems(file()) : []),
+  ];
+  return [
+    group("Brightness", () => (fxItems(xmbFxKey(S(), variant), variant, false)[0] as any).sub()),
     choice("Background colour", months, () => (variant === "ps3" ? x().ps3Color : x().pspColor), (v) => setX(variant === "ps3" ? { ps3Color: v } : { pspColor: v })),
     ...(variant === "psp" ? [choice("PSP size", [{ id: "auto" as const, name: "Auto (console size with a theme file)" }, { id: "console" as const, name: "Console proportions" }, { id: "compact" as const, name: "Compact" }], () => x().pspSize, (v) => setX({ pspSize: v, pspAccurate: v === "console" }))] : []),
     toggle("Collections as folders", () => x().collectionFolders, (v) => setX({ collectionFolders: v })),
@@ -218,17 +232,6 @@ function xmbItems(variant: "ps3" | "psp"): MenuItem[] {
       toggle("Trailer sound", () => tr().sound, (v) => setTr({ sound: v })),
       toggle("Game trailers in Video (internet)", () => tr().video, (v) => setTr({ video: v })),
     ]),
-  ];
-}
-
-function soundItems(th: ThemeId): MenuItem[] {
-  const packs = getPacks();
-  const sfx = [{ id: "", name: `Automatic${autoPack(th, "sfx") ? ` (${autoPack(th, "sfx")!.name})` : ""}` }, { id: "steam", name: "Steam sounds" }, ...packs.filter((p) => sfxCoverage(p) > 0).map((p) => ({ id: p.folder, name: p.name }))];
-  const mus = [{ id: "", name: `Automatic${autoPack(th, "music") ? ` (${autoPack(th, "music")!.name})` : " (none found)"}` }, ...packs.filter((p) => !!musicFile(p)).map((p) => ({ id: p.folder, name: p.name }))];
-  return [
-    choice("Sound effects", sfx, () => S().packs[th] ?? "", (v) => updateSettings((p) => ({ packs: { ...p.packs, [th]: v } }))),
-    toggle("Theme music", () => S().music[th] !== false, (v) => updateSettings((p) => ({ music: { ...p.music, [th]: v } }))),
-    choice("Music from", mus, () => S().musicPacks[th] ?? "", (v) => updateSettings((p) => ({ musicPacks: { ...p.musicPacks, [th]: v } })), () => S().music[th] === false),
   ];
 }
 
@@ -283,25 +286,27 @@ function wiiFileItems(): MenuItem[] {
 }
 
 /** Nintendo 3DS HOME: the theme file (a .zip, folder or body_LZ.bin in skins/3ds), which of its parts to show, and the cursor. */
-function n3dsItems(): MenuItem[] {
+function n3dsItems(part: "file" | "look"): MenuItem[] {
   const n3l = () => cleanN3dsLayout(S().n3dsLayout);
   const file = () => S().n3dsSkin ?? "";
   const key = () => `n3ds:${file()}`;
   const fx = () => themeFx(S(), key());
   const tg = (label: string, k: keyof ThemeFx) => toggle(label, () => (k === "scroll" ? fx().scroll !== false : !!fx()[k]), (v) => updateThemeFx(key(), { [k]: v } as Partial<ThemeFx>), () => !file());
-  return [
+  if (part === "file") return [
     choice("3DS theme file", [{ id: "", name: "None (stock HOME look)" }, ...lists.n3ds.map((n) => ({ id: n, name: n }))], file, (v) => updateSettings({ n3dsSkin: v }), undefined, "Put 3DS themes (.zip, folder or body_LZ.bin) in the skins/3ds folder, then reopen this menu"),
-    choice("Top screen", [{ id: "show", name: "Show (both screens)" }, { id: "hide", name: "Hide (bottom screen fills the display)" }], () => S().n3dsTop ?? "show", (v) => updateSettings({ n3dsTop: v as "show" | "hide" })),
-    choice("Cursor", [{ id: "3ds", name: "3DS cursor (bobbing corners)" }, { id: "simple", name: "Simple focus frame" }], () => S().n3dsCursor ?? "3ds", (v) => updateSettings({ n3dsCursor: v as "3ds" | "simple" })),
-    choice("Grid size", [1, 2, 3, 4, 5, 6].map((r) => ({ id: r, name: `${r} row${r > 1 ? "s" : ""} (${Math.ceil(N3DS_SLOTS / r)} columns)` })), () => n3l().rows, (v) => updateSettings({ n3dsLayout: { ...n3l(), rows: v } })),
-    toggle("Steam collections as folders", () => n3l().collections, (v) => updateSettings({ n3dsLayout: { ...n3l(), collections: v } })),
-    { label: "Reset home layout (folders, badges, icon places)", action: () => updateSettings({ n3dsLayout: { ...N3DS_LAYOUT, rows: n3l().rows, slots: {}, folders: [] } }) },
     group("Theme file parts", () => [
       tg("Theme wallpapers (top and bottom screen)", "background"),
       tg("Scrolling wallpapers move with the page", "scroll"),
       tg("Theme cursor, folder and text colours", "labels"),
       tg("Theme folder and icon-frame pictures", "icons"),
     ]),
+  ];
+  return [
+    choice("Top screen", [{ id: "show", name: "Show (both screens)" }, { id: "hide", name: "Hide (bottom screen fills the display)" }], () => S().n3dsTop ?? "show", (v) => updateSettings({ n3dsTop: v as "show" | "hide" })),
+    choice("Cursor", [{ id: "3ds", name: "3DS cursor (bobbing corners)" }, { id: "simple", name: "Simple focus frame" }], () => S().n3dsCursor ?? "3ds", (v) => updateSettings({ n3dsCursor: v as "3ds" | "simple" })),
+    choice("Grid size", [1, 2, 3, 4, 5, 6].map((r) => ({ id: r, name: `${r} row${r > 1 ? "s" : ""} (${Math.ceil(N3DS_SLOTS / r)} columns)` })), () => n3l().rows, (v) => updateSettings({ n3dsLayout: { ...n3l(), rows: v } })),
+    toggle("Steam collections as folders", () => n3l().collections, (v) => updateSettings({ n3dsLayout: { ...n3l(), collections: v } })),
+    { label: "Reset home layout (folders, badges, icon places)", action: () => updateSettings({ n3dsLayout: { ...N3DS_LAYOUT, rows: n3l().rows, slots: {}, folders: [] } }) },
   ];
 }
 
@@ -322,19 +327,34 @@ function switchItems(): MenuItem[] {
   ];
 }
 
-/** All of the current theme's own options. */
-export function themeSettingsItems(): MenuItem[] {
-  refreshThemeLists();
-  const th = S().theme;
-  const name = THEMES.find((t) => t.id === th)?.name ?? th;
+/** The console theme file of the look and its effects (Customize → Theme file). */
+function themeFileItems(th: ThemeId): MenuItem[] {
+  if (th === "vita") return vitaItems("file");
+  if (th === "ps3" || th === "psp") return xmbItems(th, "file");
+  if (th === "xbox") return xboxFileItems();
+  if (th === "wii") return wiiFileItems();
+  if (th === "x360") return x360FileItems();
+  if (th === "switch") return switchItems();
+  if (th === "n3ds") return n3dsItems("file");
+  if (th === "wiiu") return [
+    choice("Wii U theme file", [{ id: "", name: "None (built-in look)" }, ...lists.wiiu.map((n) => ({ id: n, name: n.replace(/\.utheme$/i, "") }))], () => S().wiiuTheme ?? "", (v) => updateSettings({ wiiuTheme: v }), undefined, "Put .utheme files (Themezer / Theme Café) in the skins/wiiu folder, or in Downloads, then reopen this menu"),
+    ...(S().wiiuTheme ? [group("Theme file effects", () => {
+      const key = `wiiu:${S().wiiuTheme ?? ""}`;
+      const tg = (label: string, k: "background" | "icons") => toggle(label, () => !!themeFx(S(), key)[k], (v) => updateThemeFx(key, { [k]: v }));
+      return [tg("Theme backgrounds and boot picture", "background"), tg("Theme icons and buttons", "icons")];
+    })] : []),
+  ];
+  return [];
+}
+
+/** The look's own options (Customize → Look options): what only this look has. */
+function lookOptionItems(th: ThemeId): MenuItem[] {
   const items: MenuItem[] = [];
-  if (th === "vita") items.push(...vitaItems());
-  if (th === "ps3" || th === "psp") items.push(...xmbItems(th));
-  if (th === "xbox") items.push(...xboxFileItems());
-  if (th === "wii") items.push(...wiiFileItems());
+  if (th === "vita") items.push(...vitaItems("look"));
+  if (th === "ps3" || th === "psp") items.push(...xmbItems(th, "look"));
   if (th === "x360") items.push(
-    ...x360FileItems(),
-    choice("Dashboard", X360_STYLES, () => S().x360.style, (v) => updateSettings((p) => ({ x360: { ...p.x360, style: v } }))),
+    // each dashboard era is a look of its own: picking one shows that look's preset
+    choice("Dashboard", X360_STYLES, () => S().x360.style, (v) => showLook(`x360:${v}`)),
     choice("Options menu side", [{ id: "right", name: "Right side" }, { id: "left", name: "Left side" }], () => S().x360.guideSide ?? "right", (v) => updateSettings((p) => ({ x360: { ...p.x360, guideSide: v as "left" | "right" } }))),
   );
   if (th === "castle" || th === "republic") items.push(onOff("Video background", () => S().videoBackgrounds[th] !== false, (v) => updateSettings((p) => ({ videoBackgrounds: { ...p.videoBackgrounds, [th]: v } }))));
@@ -343,18 +363,8 @@ export function themeSettingsItems(): MenuItem[] {
     choice("Window presentation", [{ id: "replace", name: "Replace home panels" }, { id: "layered", name: "Layered glass windows" }], () => S().castleWindows, (v) => updateSettings({ castleWindows: v as "replace" | "layered" })),
   );
   if (th === "wii" || th === "wiiu") items.push(shortcutToggle());
-  if (th === "wiiu") items.push(
-    choice("Start view", [{ id: "grid", name: "Menu grid" }, { id: "plaza", name: "Wara Wara Plaza" }], () => S().wiiuView ?? "grid", (v) => updateSettings({ wiiuView: v as "grid" | "plaza" })),
-    choice("Wii U theme file", [{ id: "", name: "None (built-in look)" }, ...lists.wiiu.map((n) => ({ id: n, name: n.replace(/\.utheme$/i, "") }))], () => S().wiiuTheme ?? "", (v) => updateSettings({ wiiuTheme: v }), undefined, "Put .utheme files (Themezer / Theme Café) in the skins/wiiu folder, or in Downloads, then reopen this menu"),
-    ...(S().wiiuTheme ? [group("Theme file effects", () => {
-      const key = `wiiu:${S().wiiuTheme ?? ""}`;
-      const tg = (label: string, k: "background" | "icons") => toggle(label, () => !!themeFx(S(), key)[k], (v) => updateThemeFx(key, { [k]: v }));
-      return [tg("Theme backgrounds and boot picture", "background"), tg("Theme icons and buttons", "icons")];
-    })] : []),
-  );
-  if (th === "switch") items.push(...switchItems());
-  if (th === "n3ds") items.push(...n3dsItems());
-  if (th === "ps4") items.push(choice("Game backgrounds", [{ id: true, name: "On" }, { id: false, name: "Off · Library background" }], () => S().ps4GameBackgrounds, (v) => updateSettings({ ps4GameBackgrounds: v })));
+  if (th === "wiiu") items.push(choice("Start view", [{ id: "grid", name: "Menu grid" }, { id: "plaza", name: "Wara Wara Plaza" }], () => S().wiiuView ?? "grid", (v) => updateSettings({ wiiuView: v as "grid" | "plaza" })));
+  if (th === "n3ds") items.push(...n3dsItems("look"));
   if (th === "minecraft") items.push(
     onOff("Player follows focus", () => !!S().minecraftFollowFocus, (v) => updateSettings({ minecraftFollowFocus: v })),
     onOff("Wait for hand swipe", () => !!S().minecraftWaitForSwipe, (v) => updateSettings({ minecraftWaitForSwipe: v })),
@@ -372,12 +382,48 @@ export function themeSettingsItems(): MenuItem[] {
   }
   const own = THEME_STYLES[th];
   if (own?.length) items.push(...styleItems(th, own));
-  // a PSP theme's boot intro / game-start clip stays in use on other themes: it can be turned off from any of them
-  if (th !== "psp" && (S().bootIntro || S().gameBoot)) items.push(group("PSP intro and game start video", () => pspClipItems("")));
-  // the options every theme shares, after the theme's own: only those that change something on this theme's home
-  items.push(
-    // (iiSU has its own "Library" group of options: this one is then named after what it holds)
-    group(items.some((i) => i.label === "Library") ? "Games shown" : "Library", () => [
+  return items;
+}
+
+/** One slot of the preset in use as a menu entry: the look's own / special choices, then a sub-menu per source. */
+function slotItem(c: SlotControl): MenuItem {
+  const pick = (id: string, name: string): MenuItem => ({ label: name, get checked() { return c.get() === id; }, action: () => c.set(id) }) as MenuItem;
+  const th = S().theme;
+  const caps = LAYOUT_SLOTS[th];
+  return {
+    get label() { return `${c.label}: ${nameOf(c)}`; },
+    sub: () => [
+      ...c.special.map((o) => pick(o.id, o.name)),
+      // the asset browser: every installed source that has something for this slot
+      ...c.groups.map((g) => ({ label: g.source, get checked() { return g.items.some((i) => i.ref === c.get()); }, sub: () => g.items.map((i) => pick(i.ref, i.name)) }) as MenuItem),
+      ...(c.more === "background" && caps?.brightness ? [themeOpt("Brightness", "bgBrightness", [100, 90, 80, 70, 60, 50].map((v, i) => ({ id: v, name: i ? `−${i} (${v}%)` : "Normal" })))] : []),
+      ...(c.more === "background" && caps?.tint ? [themeOpt("Colour", "tint", TINTS)] : []),
+      ...(c.more === "icons" ? [group("Pick icons one by one", iconItems)] : []),
+    ],
+  } as MenuItem;
+}
+/** A standard option with this look's own value (shown in its slot, e.g. Background → Brightness). */
+function themeOpt<K extends StandardKey>(label: string, key: K, options: { id: Settings[K]; name: string }[]): MenuItem {
+  const th = () => S().theme;
+  const R = () => getRawSettings();
+  return {
+    get label() { const own = R().themeOptions[th()]?.[key]; const v = own === undefined ? R()[key] : own; return `${label}: ${options.find((o) => o.id === v)?.name ?? String(v)}`; },
+    sub: () => options.map((o) => ({ label: o.name, get checked() { const own = R().themeOptions[th()]?.[key]; return (own === undefined ? R()[key] : own) === o.id; }, action: () => setThemeOption(th(), key, o.id) }) as MenuItem),
+  } as MenuItem;
+}
+
+/** Customize: the slots of the preset in use that its look draws (capability table), then the look's theme file,
+ *  its own options, the library view and pages. */
+export function customizeItems(): MenuItem[] {
+  refreshThemeLists();
+  const th = S().theme;
+  const file = th === "frame" ? [] : themeFileItems(th);
+  const own = lookOptionItems(th);
+  return [
+    ...customizeControls().filter((c) => c.id !== "file").map(slotItem),
+    ...(file.length ? [group("Theme file", () => themeFileItems(S().theme))] : []),
+    ...(own.length ? [group("Look options", () => lookOptionItems(S().theme))] : []),
+    group(own.some((i) => i.label === "Library") ? "Games shown" : "Library", () => [
       { ...collectionMenu(th), label: "Show in this theme" },
       choice("Icon size", [75, 85, 100, 110].map((v) => ({ id: v, name: `${v}%${v === 100 ? " · default" : ""}` })), () => S().iconSizes?.[th] ?? 100, (v) => updateSettings((p) => ({ iconSizes: { ...p.iconSizes, [th]: v } }))),
       ...(USES.titles.includes(th) ? [choice("Game titles", TITLE_MODES, () => S().titles[th] ?? "show", (v) => updateSettings((p) => ({ titles: { ...p.titles, [th]: v } })))] : []),
@@ -385,17 +431,26 @@ export function themeSettingsItems(): MenuItem[] {
     ]),
     // the themed store's optional sections (src/storeSections.tsx), per theme, hidden by default
     group("Store sections", () => (["themes", "plugins"] as const).map((k) => toggle(k === "themes" ? "Themes (packs and theme files)" : "Plugins (Spotlight)", () => storeSectionOn(S(), th, k), (v) => updateSettings((p) => ({ storeSections: { ...p.storeSections, [th]: { ...p.storeSections?.[th], [k]: v } } }))))),
-    ...(USES.wallpaper.includes(th) ? [choice("Wallpaper", [{ id: "", name: "Theme default" }, ...lists.walls.map((f) => ({ id: f, name: f }))], () => S().wallpapers[th] ?? "", (v) => updateSettings((p) => ({ wallpapers: { ...p.wallpapers, [th]: v } })))] : []),
-    group("Sound and music", () => soundItems(th)),
-    // rarely changed: per-theme values of the global settings, other themes' parts, pages and icons
-    group("More options", () => [
-      group("Standard options (this theme's own values)", () => standardItems(th)),
-      ...(activeTheme(S()) ? [group("Mix and match", mixItems)] : []),
-      ...(th !== "frame" ? [group("Pages", pageItems)] : []),
-      group("Icons", iconItems),
-    ]),
-  );
-  return items.length ? items : [{ label: `No options for ${name}`, disabled: true }];
+    ...(th !== "frame" ? [group("Pages", pageItems)] : []),
+  ];
+}
+
+/** Advanced: this look's own values of the standard options, single icons, PSP clips in use elsewhere, reset / delete. */
+export function advancedItems(): MenuItem[] {
+  const th = S().theme;
+  return [
+    group("Standard options (this look's own values)", () => standardItems(th)),
+    ...(LAYOUT_SLOTS[th]?.icons ? [group("Icons one by one", iconItems)] : []),
+    // a PSP theme's boot intro / game-start clip stays in use on other themes: it can be turned off from any of them
+    ...(th !== "psp" && (S().bootIntro || S().gameBoot) ? [group("PSP intro and game start video", () => pspClipItems(""))] : []),
+    resetGroup(),
+  ];
+}
+
+/** The current theme's entries after Presets and the shared destinations: Customize and Advanced. */
+export function themeSettingsItems(): MenuItem[] {
+  refreshThemeLists();
+  return [group("Customize", customizeItems), group("Advanced", advancedItems)];
 }
 
 /**
@@ -416,21 +471,6 @@ function shortcutToggle(): MenuItem {
   return toggle("Shortcut buttons (Library, Settings)", () => !!S().shortcutButtons, (v) => updateSettings({ shortcutButtons: v }));
 }
 
-
-/** Mix and match: take any slot (sounds, music, wallpaper, videos, colour, font) from another theme. */
-function mixItems(): MenuItem[] {
-  const t = activeTheme(S());
-  if (!t) return [{ label: "Pick a theme from Presets first", disabled: true }];
-  return SLOTS.map((slot) => {
-    const others = allThemes().filter((o) => o.id !== t.id && hasSlot(o, slot.id));
-    const options = [
-      { id: "", name: hasSlot(t, slot.id) ? `${t.name} (this theme)` : "Layout default" },
-      ...others.map((o) => ({ id: o.id, name: o.name })),
-      { id: "none", name: "None" },
-    ];
-    return choice(slot.name, options, () => S().mix[t.id]?.[slot.id] ?? "", (v) => setMix(t.id, slot.id, v || undefined));
-  });
-}
 
 /** Pages: draw the store, browser, library… with another theme than the home. */
 function pageItems(): MenuItem[] {
@@ -516,25 +556,35 @@ function iconItems(): MenuItem[] {
       return { iconPicks: { ...p.iconPicks, [th]: mine } };
     });
   return [
-    ...(activeTheme(S()) ? [{ label: "Whole icon set: Mix and match → Icons", disabled: true } as MenuItem] : []),
+    ...(activeTheme(S()) ? [{ label: "Whole icon set: Customize → Icons", disabled: true } as MenuItem] : []),
     ...ICON_SPOTS.map((spot) => choice(spot.name, options, () => S().iconPicks[th]?.[spot.id] ?? "", (v) => set(spot.id, v))),
     { label: "Put back every icon", action: () => updateSettings((p) => ({ iconPicks: { ...p.iconPicks, [th]: {} } })) },
   ];
 }
 
-/** Save the look (home, pages, mixed slots, every theme's own settings) as a preset of the user's own. */
-function userPresetItems(): MenuItem[] {
-  const own = S().userPresets.find((p) => p.id === currentPresetId(S()));
+/** Presets: this look's presets (L1 left / right steps through them), every other look's, then save / rename / delete. */
+export function presetItems(): MenuItem[] {
+  const cur = currentPresetId(S());
+  const look = currentLook(S());
+  const mine = lookPresets(look);
+  const p = getPresets().find((x) => x.id === cur);
+  const pick = (x: { id: string; label: string }) => ({ label: x.label, checked: x.id === cur, action: () => (playSound("tab"), applyPreset(getPresets().find((y) => y.id === x.id)!)) }) as MenuItem;
+  const name = p?.label ?? look;
+  const rename = (): void => {
+    const typed = typeof window !== "undefined" && (window as any).prompt ? (window as any).prompt("Preset name", name) : null;
+    if (typed) renamePreset(cur, typed);
+  };
+  const confirm = (label: string, yes: string, run: () => void): MenuItem => ({ label, sub: () => [{ label: yes, action: run }, { label: "Cancel", action: () => {} }] });
   return [
-    S().userPresets.length < MAX_USER_PRESETS
+    ...mine.map(pick),
+    group("Other looks", () => presetGroups().map((g) => ({ label: g.name, checked: g.presets.some((x) => x.id === cur), sub: () => g.presets.map(pick) }) as MenuItem)),
+    S().userPresets.filter((u) => u.id.startsWith("my:")).length < MAX_USER_PRESETS
       ? { label: "Save as new preset", action: () => void saveUserPreset() }
       : { label: `${MAX_USER_PRESETS} saved presets is the most · delete one first`, disabled: true },
-    ...(own
-      ? [
-          { label: `Save changes to ${own.name}`, action: () => updateUserPreset(own.id) },
-          { label: `Delete ${own.name}`, sub: () => [{ label: "Delete this saved preset", action: () => deleteUserPreset(own.id) }, { label: "Cancel", action: () => {} }] },
-        ]
-      : []),
+    { label: `Rename ${name}`, action: rename },
+    ...(p?.origin === "saved"
+      ? [confirm(`Delete ${name}`, "Delete this saved preset", () => deleteUserPreset(cur))]
+      : p?.user ? [confirm(`Reset ${name}`, "Forget this preset's changes", () => deleteUserPreset(cur))] : []),
   ];
 }
 
@@ -544,10 +594,10 @@ function userPresetItems(): MenuItem[] {
  *  gets the save entries too). Reset and Delete are in resetGroup(), near the end of the menu. */
 export function essentialItems(moved: MenuItem[] = [], steamHome?: () => void): MenuItem[] {
   const has = (re: RegExp) => moved.some((m) => re.test(m.label));
-  const withSaving = (presets: () => MenuItem[]) => () => [...presets(), ...userPresetItems()];
   return [
-    ...(has(/^presets$/i) ? [] : [{ label: "Presets", sub: withSaving(() => themeMenu()) }]),
-    ...moved.map((m) => (/^presets$/i.test(m.label) && m.sub ? { ...m, sub: withSaving(m.sub) } : m)),
+    // one Presets entry for every theme (a theme's own Presets entry is replaced by it: presets work the same everywhere)
+    { label: "Presets", sub: presetItems },
+    ...moved.filter((m) => !/^presets$/i.test(m.label)),
     ...(!has(/^steam home$/i) && steamHome ? [{ label: "Steam Home", action: steamHome }] : []),
     // the shared music player and capture viewer, reachable from every theme
     { label: "Music player", action: () => void openDestination({ place: "music" }) },

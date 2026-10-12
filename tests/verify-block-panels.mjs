@@ -23,7 +23,7 @@ try {
   if(label==='Friends'){
    await page.keyboard.press('Escape');
    await page.locator('.mc-world-list').waitFor();
-   assert.equal(await nav.locator('.mc-green').textContent(),'Play›');
+   assert.equal(await nav.locator('.mc-green').textContent(),'Friends›'); // focus returns to the entry the page was opened from
   }
  }
  await nav.getByRole('button',{name:'Play',exact:true}).click();
@@ -31,6 +31,7 @@ try {
  assert.equal(await page.locator('.mc-content-slot .dht-destination').count(),0);
  const icon=page.locator('.mc-thumbnail').first();
  await page.evaluate(()=>window.__updateTheme({iconSizes:{minecraft:85},tvMode:false}));
+ await page.waitForTimeout(250);
  const before=await icon.boundingBox();
  await page.evaluate(()=>window.__updateTheme({tvMode:true}));
  await page.waitForTimeout(250);

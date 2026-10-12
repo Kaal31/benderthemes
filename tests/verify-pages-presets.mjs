@@ -49,11 +49,11 @@ try {
   await p.evaluate(() => window.__updateTheme((s) => ({ ps4GameBackgrounds: false })));
   const saved = await p.evaluate(() => window.__saveUserPreset());
   assert.ok(saved?.id?.startsWith("my:"));
-  assert.equal(saved.look.theme, "ps4");
-  assert.deepEqual(saved.look.pages, { store: "x360:blades", browser: "vita", library: "wii" });
-  assert.equal(saved.look.ps4GameBackgrounds, false, "the theme's own settings are saved");
-  assert.equal(saved.look.clock24, undefined, "personal preferences are not part of a preset");
-  assert.equal(saved.look.vita?.folders, undefined, "the Vita's folders are not part of a preset");
+  assert.equal(saved.base, "ps4", "a preset belongs to the look it was saved on");
+  assert.deepEqual(saved.diff.pages, { store: "x360:blades", browser: "vita", library: "wii" });
+  assert.equal(saved.diff.ps4GameBackgrounds, false, "the theme's own settings are saved");
+  assert.equal(saved.diff.clock24, undefined, "personal preferences are not part of a preset");
+  assert.equal(saved.diff.vita?.folders, undefined, "the Vita's folders are not part of a preset");
   assert.equal(await p.locator("[data-dht-root]").getAttribute("data-dht-preset"), saved.id);
 
   await p.evaluate(() => window.__updateTheme({ clock24: true }));
@@ -74,9 +74,22 @@ try {
   assert.equal(await p.locator("[data-dht-root]").getAttribute("data-dht-preset"), saved.id);
   assert.ok(s.userPresets.length >= 1);
 
-  // ── it is listed under My presets and reachable with L2 / R2 ──
-  const listed = await p.evaluate(() => window.__getThemeSettings().userPresets.map((u) => u.name));
+  // ── it is listed with its look's presets (after PS4's own) and reachable with L2 / R2 and L1 left / right ──
+  const listed = await p.evaluate(() => window.__getThemeSettings().userPresets.filter((u) => u.id.startsWith("my:")).map((u) => u.name));
   assert.match(listed[0], /^My preset 1 · /);
+  const ids = await p.evaluate(() => window.__presets().map((x) => x.id));
+  assert.equal(ids[ids.indexOf("ps4") + 1], saved.id, "a saved preset follows its look's own presets");
+  assert.equal(await p.evaluate(() => window.__cycleLookPreset(-1)), "ps4");
+  assert.equal(await p.evaluate(() => window.__cycleLookPreset(1)), saved.id);
+
+  // ── the preset in use keeps its changes: switch away and back, they are still there ──
+  await p.evaluate(() => window.__updateTheme({ pages: { store: "vita" } }));
+  await p.evaluate(() => window.__applyPreset("vita"));
+  await p.evaluate((id) => window.__applyPreset(id), saved.id);
+  assert.deepEqual((await settings()).pages, { store: "vita" }, "changes made on a preset stay in it");
+  // PS4's own preset kept what it had when "Save as new preset" copied it (changes are kept in the preset in use)
+  await p.evaluate(() => window.__applyPreset("ps4"));
+  assert.deepEqual((await settings()).pages, { store: "x360:blades", browser: "vita", library: "wii" }, "PS4's own preset keeps its own pages");
 
   assert.deepEqual(errors, []);
   console.log("pages and saved presets: OK");

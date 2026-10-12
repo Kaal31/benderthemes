@@ -4,9 +4,12 @@
 import { callable } from "@decky/api";
 import { useEffect, useState } from "react";
 import { getSettings, Settings, THEMES, ThemeId, updateSettings } from "../settings";
-import { autoPack, setEngineHooks, SoundPack } from "../steam";
+import { autoPack, loadWallpaper, setEngineHooks, SoundPack } from "../steam";
 import { BUILTIN_THEMES } from "./builtin";
 import { SlotKind, ThemeEntry, validateManifest } from "./manifest";
+import { accentOf, clearAssetCache, fontUrl, iconSet, isAssetRef, resolveImage, setAssetsLoaded, setThemeLookup, setWallpaperLoader } from "./assets";
+import { lookIdOf, setLookResolver } from "../lookState";
+import { onResourcesChanged } from "../marketplaceState";
 
 interface BackendPack { files: string[]; mappings: Record<string, string[]>; ignore: string[] }
 type BackendTheme = Record<string, unknown> & { source?: string; packs?: Partial<Record<"sounds" | "music", BackendPack>>; icons?: Record<string, string> };
@@ -78,11 +81,14 @@ export function allThemes(s: Settings = getSettings()): ThemeEntry[] {
 }
 
 export const findTheme = (id: string): ThemeEntry | undefined => allThemes().find((t) => t.id === id);
+// presets v2: a look is an engine theme; hidden built-in looks still count (a preset can belong to one)
+setLookResolver((id) => found.find((t) => t.id === id) ?? BUILTIN_THEMES.find((t) => t.id === id));
 
-/** The theme in use, if the user picked one through the engine and its layout is on screen. */
+/** The look in use: the engine theme picked for the layout on screen, or the layout's built-in look (settings saved
+ *  before the engine, or a layout switched to directly). null only for a layout that has no built-in look. */
 export function activeTheme(s: Settings = getSettings()): ThemeEntry | null {
-  if (!s.activeTheme) return null;
-  const t = findTheme(s.activeTheme);
+  const id = lookIdOf(s);
+  const t = findTheme(id) ?? BUILTIN_THEMES.map((b) => ({ ...b, source: "builtin" as const })).find((b) => b.id === id);
   return t && t.layout === s.theme ? t : null;
 }
 
@@ -109,12 +115,19 @@ export function frameUrl(theme: ThemeEntry): string | null {
 
 // ───────────── slots ─────────────
 
-/** Who supplies a slot of `theme`: the theme itself, or another theme chosen in Mix and match. */
+/** Who supplies a slot of `theme`: the theme itself, or another theme chosen in the preset's slots. An asset reference
+ *  (a wallpaper, Hub pack or theme file, see ./assets.ts) is not a theme: those are read with slotRef. */
 export function slotSource(theme: ThemeEntry, slot: SlotKind, s: Settings = getSettings()): ThemeEntry | null {
   const from = s.mix?.[theme.id]?.[slot];
   if (from === "none") return null;
+  if (from && isAssetRef(from)) return null;
   if (from) return findTheme(from) ?? theme;
   return theme;
+}
+/** The raw slot value of the look on screen ("" = the look's own). */
+export function slotRef(slot: SlotKind, s: Settings = getSettings()): string {
+  const t = activeTheme(s);
+  return (t && s.mix?.[t.id]?.[slot]) || "";
 }
 
 export function setMix(themeId: string, slot: SlotKind, from: string | undefined) {
@@ -161,7 +174,15 @@ export function slotUrl(slot: Exclude<SlotKind, "sounds" | "music" | "accent" | 
 export function slotAccent(s: Settings = getSettings()): string | undefined {
   const t = activeTheme(s);
   if (!t) return undefined;
+  const ref = slotRef("accent", s);
+  if (isAssetRef(ref)) return accentOf(ref);
   return slotSource(t, "accent", s)?.slots?.accent;
+}
+/** The font file of the look on screen (a theme's font slot, or a PSP .ctf font), or undefined. */
+export function slotFont(s: Settings = getSettings()): string | undefined {
+  const ref = slotRef("font", s);
+  if (isAssetRef(ref)) return fontUrl(ref) ?? undefined;
+  return slotUrl("font", s) ?? undefined;
 }
 
 // ───────────── icons ─────────────
@@ -197,6 +218,8 @@ export function iconUrl(spot: string, s: Settings = getSettings()): string | und
   if (pick) return pickedIcon(pick);
   const t = activeTheme(s);
   if (!t) return undefined;
+  const ref = slotRef("icons", s);
+  if (isAssetRef(ref)) return iconSet(ref)?.[spot];
   const from = slotSource(t, "icons", s);
   return from ? themeIcons(from)[spot] : undefined;
 }
@@ -204,8 +227,9 @@ export function iconUrl(spot: string, s: Settings = getSettings()): string | und
 /** The icons a community interface receives: its icon set plus anything picked by hand. */
 export function iconMap(s: Settings = getSettings()): Record<string, string> {
   const t = activeTheme(s);
+  const ref = slotRef("icons", s);
   const from = t ? slotSource(t, "icons", s) : null;
-  const out: Record<string, string> = from ? { ...themeIcons(from) } : {};
+  const out: Record<string, string> = isAssetRef(ref) ? { ...(iconSet(ref) ?? {}) } : from ? { ...themeIcons(from) } : {};
   for (const [spot, key] of Object.entries(s.iconPicks?.[s.theme] ?? {})) {
     const url = key ? pickedIcon(key) : undefined;
     if (url) out[spot] = url;
@@ -223,9 +247,34 @@ setEngineHooks({
     if (from === t && t.source === "builtin") return undefined; // the layout's usual rules
     return themePack(from, kind);
   },
-  wallpaper(theme: ThemeId) {
-    const t = activeTheme();
+  background(theme: ThemeId, folder: string | undefined) {
+    const s = getSettings();
+    const t = activeTheme(s);
     if (!t || t.layout !== theme) return undefined;
-    return slotUrl("wallpaper");
+    const ref = s.mix?.[t.id]?.wallpaper;
+    if (ref === "none") return "";
+    if (ref) return ref; // the preset's Background choice wins over everything else
+    if (folder) return undefined; // a wallpapers-folder picture (chosen before v2)
+    return t.slots?.wallpaper ? t.id : undefined; // the data theme's own
+  },
+  resolve: resolveImage,
+});
+
+// what a theme id gives a slot, for asset references that name a theme (./assets.ts)
+setThemeLookup({
+  image: (id) => {
+    const t = findTheme(id);
+    return t?.slots?.wallpaper ? themeFileUrl(t, t.slots.wallpaper) : null;
+  },
+  icons: (id) => {
+    const t = findTheme(id);
+    return t ? themeIcons(t) : {};
+  },
+  font: (id) => {
+    const t = findTheme(id);
+    return t?.slots?.font ? themeFileUrl(t, t.slots.font) : null;
   },
 });
+setAssetsLoaded(() => emit());
+setWallpaperLoader(loadWallpaper);
+onResourcesChanged(() => clearAssetCache());

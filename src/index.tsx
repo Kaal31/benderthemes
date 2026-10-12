@@ -17,7 +17,8 @@ import { useOtherPlugins } from "./otherPlugins";
 import { startKeyboardSkins } from "./keyboardSkins";
 import { refreshThemeLists } from "./themeSettingsMenu";
 import { deleteCurrentTheme } from "./themeActions";
-import { applyPreset, getPresets, refreshPresets, usePresets, presetPickerState, PRESET_GROUPS } from "./presets";
+import { applyPreset, currentLook, currentPresetId, deleteUserPreset, getPresets, refreshPresets, renamePreset, saveUserPreset, usePresets, PRESET_GROUPS } from "./presets";
+import { customizeControls } from "./customize";
 
 const ROUTE = "/deck-home-themes";
 const HOME_ROUTE = "/library/home";
@@ -91,35 +92,26 @@ function Panel() {
   };
   useEffect(refresh, []);
   const presets = usePresets();
-  const {company,selected:selectedPreset,options:presetOptions} = presetPickerState(s,presets);
+  const [advanced, setAdvanced] = useState(false);
   const th: ThemeId = s.theme;
   const themeName = THEMES.find((t) => t.id === th)?.name ?? th;
+  const look = currentLook(s);
+  const current = currentPresetId(s);
+  const preset = presets.find((p) => p.id === current);
+  const mine = presets.filter((p) => p.look === look);
+  // Look: every look, grouped by company (its own presets are under Preset)
+  const looks = PRESET_GROUPS.map((company) => ({ label: company, options: presets.filter((p) => p.company === company && p.origin === "default").map((p) => ({ data: p.look, label: p.label })) })).filter((g) => g.options.length);
+  // Customize: the slots this look draws, each with every installed asset grouped by source
+  const controls = s.enabled ? customizeControls() : [];
 
   return (
     <>
       <Updates />
-      <PanelSection title="Themes"><PanelSectionRow><ButtonItem layout="below" description="Browse animated previews, download a theme and activate it." onClick={() => { openMarketplace(); Navigation.Navigate(ROUTE); Navigation.CloseSideMenus(); }}>Hub</ButtonItem></PanelSectionRow>
-      <AddThemeRow />
-      <PanelSectionRow><ToggleField label="Firmware update notifications" checked={s.firmwareNotifications !== false} onChange={value => updateSettings({ firmwareNotifications: value })} /></PanelSectionRow></PanelSection>
-      {failure && <PanelSection title="Steam Home restored"><PanelSectionRow><ButtonItem layout="below" description={failure} onClick={retryHome}>Retry themed home</ButtonItem></PanelSectionRow></PanelSection>}
-      <PanelSection>
+      <PanelSection title="Themes">
+        <PanelSectionRow><ButtonItem layout="below" description="Browse animated previews, download a theme and activate it." onClick={() => { openMarketplace(); Navigation.Navigate(ROUTE); Navigation.CloseSideMenus(); }}>Hub</ButtonItem></PanelSectionRow>
+        <AddThemeRow />
         <PanelSectionRow>
           <ToggleField label="Themed home screen" description="Replace Steam's home with the console theme" checked={s.enabled} onChange={(v) => updateSettings({ enabled: v })} />
-        </PanelSectionRow>
-        <PanelSectionRow><DropdownItem label="Company" rgOptions={PRESET_GROUPS.filter(c=>(c!=="Community"&&c!=="My presets")||presets.some(p=>p.company===c)).map(data=>({data,label:data}))} selectedOption={company} onChange={o=>{if(PRESET_GROUPS.includes(o.data))updateSettings({presetCompany:o.data});}} /></PanelSectionRow>
-        <PanelSectionRow><ToggleField label="TV mode" description="Safe screen margins and larger menu text" checked={s.tvMode} onChange={tvMode=>updateSettings({tvMode})}/></PanelSectionRow>
-        <PanelSectionRow>
-          <DropdownItem
-            label="Preset"
-            description={`Console theme + skin. On the home: hold L1 + ▲▼ to change console, L1 + ◀▶ for that console's looks and theme files; L2 / R2 step through all presets. ${themeName}'s own options (icons, theme file, brightness, wallpaper, sounds…): △ / Y on the home → Theme options.`}
-            key={company}
-            rgOptions={presetOptions}
-            selectedOption={selectedPreset}
-            onChange={(o) => {
-              const p = presets.find((x) => x.id === o.data);
-              if (p) applyPreset(p);
-            }}
-          />
         </PanelSectionRow>
         <PanelSectionRow>
           <ButtonItem
@@ -135,100 +127,105 @@ function Panel() {
           </ButtonItem>
         </PanelSectionRow>
       </PanelSection>
+      {failure && <PanelSection title="Steam Home restored"><PanelSectionRow><ButtonItem layout="below" description={failure} onClick={retryHome}>Retry themed home</ButtonItem></PanelSectionRow></PanelSection>}
 
-      {s.enabled && (
-        <PanelSection>
-          <PanelSectionRow>
-            <ButtonItem
-              layout="below"
-              description="Steam's Home button / Library → Home shows the theme"
-              onClick={() => {
-                showThemedHomeAgain();
-                Navigation.CloseSideMenus();
-                setTimeout(() => Navigation.Navigate(HOME_ROUTE), 80);
-              }}
-            >
-              Go to Steam Home
-            </ButtonItem>
-          </PanelSectionRow>
+      <PanelSection title="Presets">
+        <PanelSectionRow>
+          <DropdownItem label="Look" rgOptions={looks} selectedOption={look} onChange={(o) => { const p = presets.find((x) => x.id === o.data); if (p) applyPreset(p); }} />
+        </PanelSectionRow>
+        <PanelSectionRow>
+          <DropdownItem
+            label="Preset"
+            description={`${themeName}'s presets: its own look, its imported theme files and the ones you saved. Changes are kept in the preset in use. On the home: hold L1 + ▲▼ to change console, L1 + ◀▶ for its presets; L2 / R2 every preset; △ / Y → Presets.`}
+            key={look}
+            rgOptions={mine.map((p) => ({ data: p.id, label: p.label }))}
+            selectedOption={current}
+            onChange={(o) => { const p = presets.find((x) => x.id === o.data); if (p) applyPreset(p); }}
+          />
+        </PanelSectionRow>
+        <PanelSectionRow><ButtonItem layout="below" onClick={() => void saveUserPreset()}>Save as new preset</ButtonItem></PanelSectionRow>
+        <PanelSectionRow>
+          <DeferredText key={`${current}|${preset?.label}`} label="Name" initial={preset?.label ?? ""} onCommit={(v) => { if (v.trim() && v !== preset?.label) renamePreset(current, v); }} />
+        </PanelSectionRow>
+        {(preset?.origin === "saved" || preset?.user) && <PresetDeleteRow id={current} saved={preset?.origin === "saved"} name={preset?.label ?? ""} />}
+      </PanelSection>
+
+      {controls.length > 0 && (
+        <PanelSection title="Customize">
+          {controls.map((c) => (
+            <PanelSectionRow key={c.id}>
+              <DropdownItem
+                label={c.label}
+                rgOptions={[...c.special.map((o) => ({ data: o.id, label: o.name })), ...c.groups.map((g) => ({ label: g.source, options: g.items.map((i) => ({ data: i.ref, label: i.name })) }))]}
+                selectedOption={c.get()}
+                onChange={(o) => c.set(o.data)}
+              />
+            </PanelSectionRow>
+          ))}
         </PanelSection>
       )}
 
-      <PanelSection title="Library · all themes">
+      <PanelSection title="Advanced">
         <PanelSectionRow>
-          <DropdownItem
-            label="Sort"
-            rgOptions={[
-              { data: "recent", label: "Recently played" },
-              { data: "alpha", label: "A–Z" },
-              { data: "playtime", label: "Most played" },
-            ]}
-            selectedOption={s.sort}
-            onChange={(o) => updateSettings({ sort: o.data as SortMode })}
-          />
+          <ToggleField label="Show advanced options" description="Settings for all themes, rescanning, reset and delete" checked={advanced} onChange={setAdvanced} />
         </PanelSectionRow>
-        <PanelSectionRow>
-          <DropdownItem
-            label="Ⓐ on a game"
-            rgOptions={[
-              { data: "theme", label: "Like the console (LiveArea, Start…)" },
-              { data: "launch", label: "Launch right away" },
-              { data: "details", label: "Open Steam's game page" },
-            ]}
-            selectedOption={s.aAction}
-            onChange={(o) => updateSettings({ aAction: o.data })}
-          />
-        </PanelSectionRow>
+        {advanced && (
+          <>
+            {s.enabled && (
+              <PanelSectionRow>
+                <ButtonItem layout="below" description="Steam's Home button / Library → Home shows the theme" onClick={() => { showThemedHomeAgain(); Navigation.CloseSideMenus(); setTimeout(() => Navigation.Navigate(HOME_ROUTE), 80); }}>
+                  Go to Steam Home
+                </ButtonItem>
+              </PanelSectionRow>
+            )}
+            <PanelSectionRow><ToggleField label="Firmware update notifications" checked={s.firmwareNotifications !== false} onChange={(value) => updateSettings({ firmwareNotifications: value })} /></PanelSectionRow>
+            <PanelSectionRow><ToggleField label="TV mode" description="Safe screen margins and larger menu text" checked={s.tvMode} onChange={(tvMode) => updateSettings({ tvMode })} /></PanelSectionRow>
+            <PanelSectionRow>
+              <DropdownItem label="Sort · all themes" rgOptions={[{ data: "recent", label: "Recently played" }, { data: "alpha", label: "A–Z" }, { data: "playtime", label: "Most played" }]} selectedOption={s.sort} onChange={(o) => updateSettings({ sort: o.data as SortMode })} />
+            </PanelSectionRow>
+            <PanelSectionRow>
+              <DropdownItem label="Ⓐ on a game" rgOptions={[{ data: "theme", label: "Like the console (LiveArea, Start…)" }, { data: "launch", label: "Launch right away" }, { data: "details", label: "Open Steam's game page" }]} selectedOption={s.aAction} onChange={(o) => updateSettings({ aAction: o.data })} />
+            </PanelSectionRow>
+            <PanelSectionRow><ToggleField label="Themed store" description="Store entries open the Steam Store styled like this theme (off: Steam's own store)" checked={s.themedStore !== false} onChange={(v) => updateSettings({ themedStore: v })} /></PanelSectionRow>
+            <PanelSectionRow><ToggleField label="ProtonDB badges" description="Community rating on game details (needs internet)" checked={s.badges.protondb} onChange={(v) => updateSettings((p) => ({ badges: { ...p.badges, protondb: v } }))} /></PanelSectionRow>
+            <PanelSectionRow><ToggleField label="Steam Deck compatibility badges" checked={s.badges.deck} onChange={(v) => updateSettings((p) => ({ badges: { ...p.badges, deck: v } }))} /></PanelSectionRow>
+            <PanelSectionRow><ToggleField label="Hide Steam's top bar" description="While the themed home is on screen" checked={s.hideSteamHeader} onChange={(v) => updateSettings({ hideSteamHeader: v })} /></PanelSectionRow>
+            <PanelSectionRow><ToggleField label="Themed keyboard" description="Off by default. Steam's on-screen keyboard looks like the active console's keyboard, in every theme (a CSS Loader keyboard theme or a Points Shop keyboard wins)" checked={s.keyboardSkin === true} onChange={(v) => updateSettings({ keyboardSkin: v })} /></PanelSectionRow>
+            <PanelSectionRow><DropdownItem label="Steam's bottom bar" description="Steam Menu · Ⓐ Select · Ⓑ Back, while the themed home is on screen" rgOptions={FOOTER_MODES.map((f) => ({ data: f.id, label: f.name }))} selectedOption={s.footer} onChange={(o) => updateSettings({ footer: o.data })} /></PanelSectionRow>
+            <PanelSectionRow><ToggleField label="Background animations" checked={s.animations} onChange={(v) => updateSettings({ animations: v })} /></PanelSectionRow>
+            <PanelSectionRow><ToggleField label="24-hour clock" checked={s.clock24} onChange={(v) => updateSettings({ clock24: v })} /></PanelSectionRow>
+            <PanelSectionRow><DeferredText key={String(loaded)} label="Profile name (blank = Steam name)" initial={s.profileName} onCommit={(v) => updateSettings({ profileName: v })} /></PanelSectionRow>
+            <PanelSectionRow><ToggleField label="Background music" description="Master switch; keeps each preset's own music" checked={s.backgroundMusic !== false} onChange={(v) => updateSettings({ backgroundMusic: v })} /></PanelSectionRow>
+            <PanelSectionRow><ToggleField label="Navigation sounds" checked={s.sounds} onChange={(v) => updateSettings({ sounds: v })} /></PanelSectionRow>
+            <PanelSectionRow><SliderField label="Sound volume" min={0} max={100} step={5} value={s.sfxVolume} showValue onChange={(v) => updateSettings({ sfxVolume: v })} /></PanelSectionRow>
+            <PanelSectionRow><SliderField label="Music volume" min={0} max={100} step={5} value={s.musicVolume} showValue onChange={(v) => updateSettings({ musicVolume: v })} /></PanelSectionRow>
+            <PanelSectionRow>
+              <ButtonItem layout="below" description="After adding sound packs, wallpapers or theme files" onClick={refresh}>
+                Rescan packs, wallpapers and skins
+              </ButtonItem>
+            </PanelSectionRow>
+            <ResetSection th={th} themeName={themeName} />
+          </>
+        )}
       </PanelSection>
-
-      <PanelSection title="Look · all themes">
-        <PanelSectionRow>
-          <ToggleField label="Themed store" description="Store entries open the Steam Store styled like this theme (off: Steam's own store)" checked={s.themedStore !== false} onChange={(v) => updateSettings({ themedStore: v })} />
-        </PanelSectionRow>
-        <PanelSectionRow>
-          <ToggleField label="ProtonDB badges" description="Community rating on game details (needs internet)" checked={s.badges.protondb} onChange={(v) => updateSettings((p) => ({ badges: { ...p.badges, protondb: v } }))} />
-        </PanelSectionRow>
-        <PanelSectionRow>
-          <ToggleField label="Steam Deck compatibility badges" checked={s.badges.deck} onChange={(v) => updateSettings((p) => ({ badges: { ...p.badges, deck: v } }))} />
-        </PanelSectionRow>
-        <PanelSectionRow>
-          <ToggleField label="Hide Steam's top bar" description="While the themed home is on screen" checked={s.hideSteamHeader} onChange={(v) => updateSettings({ hideSteamHeader: v })} />
-        </PanelSectionRow>
-        <PanelSectionRow>
-          <ToggleField label="Themed keyboard" description="Off by default. Steam's on-screen keyboard looks like the active console's keyboard, in every theme (a CSS Loader keyboard theme or a Points Shop keyboard wins)" checked={s.keyboardSkin === true} onChange={(v) => updateSettings({ keyboardSkin: v })} />
-        </PanelSectionRow>
-        <PanelSectionRow>
-          <DropdownItem label="Steam's bottom bar" description="Steam Menu · Ⓐ Select · Ⓑ Back, while the themed home is on screen" rgOptions={FOOTER_MODES.map((f) => ({ data: f.id, label: f.name }))} selectedOption={s.footer} onChange={(o) => updateSettings({ footer: o.data })} />
-        </PanelSectionRow>
-        <PanelSectionRow>
-          <ToggleField label="Background animations" checked={s.animations} onChange={(v) => updateSettings({ animations: v })} />
-        </PanelSectionRow>
-        <PanelSectionRow>
-          <ToggleField label="24-hour clock" checked={s.clock24} onChange={(v) => updateSettings({ clock24: v })} />
-        </PanelSectionRow>
-        <PanelSectionRow>
-          <DeferredText key={String(loaded)} label="Profile name (blank = Steam name)" initial={s.profileName} onCommit={(v) => updateSettings({ profileName: v })} />
-        </PanelSectionRow>
-      </PanelSection>
-
-      <PanelSection title="Sound · all themes"><PanelSectionRow><ToggleField label="Background music" description="Master switch; keeps each theme's own music setting" checked={s.backgroundMusic!==false} onChange={v=>updateSettings({backgroundMusic:v})}/></PanelSectionRow>
-        <PanelSectionRow>
-          <ToggleField label="Navigation sounds" checked={s.sounds} onChange={(v) => updateSettings({ sounds: v })} />
-        </PanelSectionRow>
-        <PanelSectionRow>
-          <SliderField label="Sound volume" min={0} max={100} step={5} value={s.sfxVolume} showValue onChange={(v) => updateSettings({ sfxVolume: v })} />
-        </PanelSectionRow>
-        <PanelSectionRow>
-          <SliderField label="Music volume" min={0} max={100} step={5} value={s.musicVolume} showValue onChange={(v) => updateSettings({ musicVolume: v })} />
-        </PanelSectionRow>
-        <PanelSectionRow>
-          <ButtonItem layout="below" description="After adding sound packs, wallpapers or theme files" onClick={refresh}>
-            Rescan packs, wallpapers and skins
-          </ButtonItem>
-        </PanelSectionRow>
-      </PanelSection>
-      <ResetSection th={th} themeName={themeName} />
     </>
+  );
+}
+
+/** Delete a saved preset, or forget a built-in / theme-file preset's changes (press twice). */
+function PresetDeleteRow({ id, saved, name }: { id: string; saved: boolean; name: string }) {
+  const [armed, setArmed] = useState(false);
+  useEffect(() => {
+    if (!armed) return;
+    const t = setTimeout(() => setArmed(false), 5000);
+    return () => clearTimeout(t);
+  }, [armed]);
+  return (
+    <PanelSectionRow>
+      <ButtonItem layout="below" description={saved ? undefined : "Back to how this preset starts (the look's defaults, its theme file)"} onClick={() => (armed ? (deleteUserPreset(id), setArmed(false)) : setArmed(true))}>
+        {armed ? "Press again" : saved ? `Delete ${name}` : `Reset ${name}`}
+      </ButtonItem>
+    </PanelSectionRow>
   );
 }
 
@@ -241,7 +238,7 @@ function ResetSection({ th, themeName }: { th: ThemeId; themeName: string }) {
     return () => clearTimeout(t);
   }, [armed]);
   return (
-    <PanelSection title="Reset and delete">
+    <>
       <PanelSectionRow>
         <ButtonItem
           layout="below"
@@ -269,7 +266,7 @@ function ResetSection({ th, themeName }: { th: ThemeId; themeName: string }) {
           {armed === "all" ? "Press again to reset everything" : "Reset all settings"}
         </ButtonItem>
       </PanelSectionRow>
-    </PanelSection>
+    </>
   );
 }
 

@@ -67,3 +67,12 @@ export function switchParts(skin: SwitchSkin | null, screen: "home" | "apps" | "
   if (!fx.background) return { ...none, icons: fx.icons ? skin.icons : {} };
   return { background: pic?.background ?? null, icons: fx.icons ? skin.icons : {}, brightness: pic?.brightness, own: !!own?.background };
 }
+
+/** One-off read of a Switch theme set (presets v2: its wallpaper can fill another look's background slot). */
+export async function loadSwitchSkin(name: string): Promise<SwitchSkin | null> {
+  if (!name) return null;
+  if (cache.has(name)) return cache.get(name)!;
+  const r = (await getSwitch(name).catch(() => null)) ?? null;
+  cache.set(name, r);
+  return r;
+}

@@ -42,7 +42,7 @@ try {
 
   // ── picks belong to the layout, and saved presets keep them ──
   const saved = await p.evaluate(() => window.__saveUserPreset());
-  assert.deepEqual(saved.look.iconPicks, { ps4: { store: "midnight-ps4/moon", gear: "midnight-ps4/star" } });
+  assert.deepEqual(saved.diff.iconPicks, { ps4: { store: "midnight-ps4/moon", gear: "midnight-ps4/star" } });
   await p.evaluate(() => window.__applyPreset("ps5"));
   await p.waitForTimeout(800);
   assert.equal(await p.locator("[data-dht-root] img[data-dht-icon]").count(), 0, "another layout is untouched");

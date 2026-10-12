@@ -65,10 +65,11 @@ const initials = (s: string) => s.replace(/[^\p{L}\p{N} ]/gu, " ").trim().split(
 const matches = (t: Tile, q: string) => q.split(/\s+/).filter(Boolean).every((w) => `${t.name} ${t.sub} ${t.text ?? ""}`.toLowerCase().includes(w));
 
 // ───────────── Themes: packs, looks and theme files of this console ─────────────
-const FILE_KINDS: [keyof Preset, string][] = [["p3t", "PS3 theme"], ["psp", "PSP theme"], ["vitaSkin", "PS Vita theme"], ["switchTheme", "Switch theme"], ["wiiSkin", "Wii theme"], ["wiiuTheme", "Wii U theme"], ["n3dsSkin", "3DS theme"], ["xboxSkin", "Xbox skin"], ["x360skin", "Xbox 360 theme"]];
+// presets v2: a theme-file preset carries its console (p.theme) and its file (p.file)
+const FILE_LABEL: Record<string, string> = { ps3: "PS3 theme", psp: "PSP theme", vita: "PS Vita theme", switch: "Switch theme", wii: "Wii theme", wiiu: "Wii U theme", n3ds: "3DS theme", xbox: "Xbox skin", x360: "Xbox 360 theme" };
 function fileTile(p: Preset, current: string): Tile {
-  const [key, label] = FILE_KINDS.find(([k]) => typeof p[k] === "string" && p[k]) ?? [undefined, "Theme file"];
-  const file = key ? String(p[key]) : "";
+  const label = (p.file && FILE_LABEL[p.theme]) || "Theme file";
+  const file = p.file;
   const ext = file.match(/\.([a-z0-9]{2,8})$/i)?.[1]?.toUpperCase();
   const name = p.label.includes(" · ") ? p.label.slice(p.label.indexOf(" · ") + 3) : p.label;
   return { id: p.id, kind: "file", name, sub: ext ? `${label} (.${ext.toLowerCase()})` : label, meta: p.id === current ? "In use" : "Installed", mark: ext ? (ext.length > 4 ? ext.slice(0, 2) : ext) : initials(name), hue: hueOf(p.id), preset: p,
@@ -100,13 +101,13 @@ function useThemeShelves(s: Settings, query: string) {
       art: p.poster || p.preview, mark: initials(p.name), hue: hueOf(p.id), pack: p, badge: p.installedVersion && !packIsCurrent(p) ? "Update" : undefined, badgeKind: "update",
       text: THEMES.find((t) => t.id === p.theme)?.blurb || p.description,
     }));
-    const mine = presets.filter((p) => p.theme === console && !p.user);
-    const lookTiles: Tile[] = mine.filter((p) => p.dataTheme).map((p) => {
+    const mine = presets.filter((p) => p.theme === console && p.origin !== "saved");
+    const lookTiles: Tile[] = mine.filter((p) => p.origin === "default").map((p) => {
       const e = engine.get(p.dataTheme);
       return { id: p.id, kind: "look", name: p.label, sub: e?.author ? `By ${e.author}` : name, meta: p.id === current ? "In use" : "Installed", mark: initials(p.label), hue: hueOf(p.id), preset: p,
         text: e?.description || `A look of the ${name} theme.` };
     });
-    const fileTiles: Tile[] = mine.filter((p) => !p.dataTheme).map((p) => fileTile(p, current));
+    const fileTiles: Tile[] = mine.filter((p) => p.origin === "file").map((p) => fileTile(p, current));
     const info: Tile = { id: "info:files", kind: "info", name: "Add theme files", sub: "From your Deck", meta: "", mark: "+", hue: 210,
       text: `Copy ${name} theme files into ${dir || "the plugin's skins folder"} (or Downloads), then reopen the store. Theme options lists what each console reads.` };
     const all: Shelf[] = [

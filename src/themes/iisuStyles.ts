@@ -24,7 +24,12 @@ export const IISU_ACCENTS: Record<string, [string, string, string]> = {
   rose: ["#ffa8cb", "#ee5f97", "#4a1430"],
   mono: ["#f2f2f5", "#9a9aa6", "#1c1c22"],
 };
-export const iisuAccent = (s: Settings) => IISU_ACCENTS[String(s.styles?.iisu?.accent ?? "sky")] ?? IISU_ACCENTS.sky;
+export const iisuAccent = (s: Settings) => {
+  // presets v2: an accent colour chosen in Customize → Accent colour (#rrggbb) replaces the theme colour
+  const own = s.mix?.[s.activeTheme || "iisu"]?.accent;
+  if (own && /^#[0-9a-f]{6}$/i.test(own)) return [own, own, `color-mix(in srgb, ${own} 45%, #000)`] as typeof IISU_ACCENTS.sky;
+  return IISU_ACCENTS[String(s.styles?.iisu?.accent ?? "sky")] ?? IISU_ACCENTS.sky;
+};
 
 /** A pill of the top or bottom bars. */
 export const iisuPill: CSSProperties = {

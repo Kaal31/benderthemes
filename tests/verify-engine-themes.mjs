@@ -66,11 +66,12 @@ try {
   assert.doesNotMatch(mixed, /^Shelf/, "sounds now come from the Xbox 360 Metro theme's pack (or Steam's when none is installed)");
   await p.keyboard.press("y");
 
-  await p.getByText("Mix and match").first().waitFor();
-  await p.getByText("Mix and match").first().click();
+  // presets v2: the slots are under Customize (Mix and match before)
+  await p.getByText("Customize").first().waitFor();
+  await p.getByText("Customize").first().click();
   await p.getByText(/^Music: Midnight/).first().waitFor();
   await p.locator("[data-dht-root]").screenshot({ path: "work/engine-mix-menu.png" });
-  for (let i = 0; i < 3 && (await p.getByText("Mix and match").count()); i++) {
+  for (let i = 0; i < 3 && (await p.getByText(/^(Customize|Music: Midnight)/).count()); i++) {
     await p.keyboard.press("Escape");
     await p.waitForTimeout(400);
   }
