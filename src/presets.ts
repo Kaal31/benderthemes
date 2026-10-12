@@ -49,7 +49,7 @@ const listeners = new Set<() => void>();
 onThemesChanged(() => listeners.forEach((l) => l()));
 
 // Downloaded theme packs (theme_inventory) plus the themes that ship inside the plugin. The switchers (L1 hold, L2 / R2)
-// only step through looks whose console is here: never to a deleted or not yet downloaded theme. null = not read yet.
+// and the Quick Access Look list only offer looks whose console is here: never a deleted or not yet downloaded theme. null = not read yet.
 const remoteInventory = callable<[], Record<string, string>>("theme_inventory");
 const BUILT_IN: Record<string, string> = { wii: "built-in", wiiu: "built-in", switch: "built-in", n3ds: "built-in", ps1: "built-in", iisu: "built-in" };
 let downloaded: Record<string, string> | null = null;
@@ -57,7 +57,9 @@ export async function refreshInventory(): Promise<Record<string, string>> {
   downloaded = { ...((await remoteInventory()) ?? {}), ...BUILT_IN };
   return downloaded;
 }
-const switchable = (list: Preset[]) => (downloaded ? list.filter((p) => !!downloaded![p.theme]) : list);
+/** A console (layout) whose pack is downloaded or built in; true until the inventory has been read. */
+export const isDownloaded = (layout: string) => !downloaded || !!downloaded[layout];
+const switchable = (list: Preset[]) => list.filter((p) => isDownloaded(p.theme));
 /** The presets the switchers step through: getPresets() without the consoles that are not downloaded. */
 export const switchPresets = (s: Settings = getSettings()) => switchable(getPresets(s));
 

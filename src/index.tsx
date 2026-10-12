@@ -17,7 +17,7 @@ import { useOtherPlugins } from "./otherPlugins";
 import { startKeyboardSkins } from "./keyboardSkins";
 import { refreshThemeLists } from "./themeSettingsMenu";
 import { deleteCurrentTheme } from "./themeActions";
-import { applyPreset, currentLook, currentPresetId, deleteUserPreset, getPresets, refreshPresets, renamePreset, saveUserPreset, usePresets, PRESET_GROUPS } from "./presets";
+import { applyPreset, currentLook, currentPresetId, deleteUserPreset, getPresets, isDownloaded, refreshPresets, renamePreset, saveUserPreset, usePresets, PRESET_GROUPS } from "./presets";
 import { customizeControls } from "./customize";
 
 const ROUTE = "/deck-home-themes";
@@ -99,8 +99,8 @@ function Panel() {
   const current = currentPresetId(s);
   const preset = presets.find((p) => p.id === current);
   const mine = presets.filter((p) => p.look === look);
-  // Look: every look, grouped by company (its own presets are under Preset)
-  const looks = PRESET_GROUPS.map((company) => ({ label: company, options: presets.filter((p) => p.company === company && p.origin === "default").map((p) => ({ data: p.look, label: p.label })) })).filter((g) => g.options.length);
+  // Look: every downloaded look (and the one in use), grouped by company (its own presets are under Preset)
+  const looks = PRESET_GROUPS.map((company) => ({ label: company, options: presets.filter((p) => p.company === company && p.origin === "default" && (isDownloaded(p.theme) || p.look === look)).map((p) => ({ data: p.look, label: p.label })) })).filter((g) => g.options.length);
   // Customize: the slots this look draws, each with every installed asset grouped by source
   const controls = s.enabled ? customizeControls() : [];
 
