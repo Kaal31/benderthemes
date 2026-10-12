@@ -2,6 +2,7 @@
 // Welcome → pick a theme (the page takes on the highlighted theme's look) → done. Finishing selects the theme and plays
 // its intro (its own boot sequence when it has one, else the generic reveal of themeIntro.tsx).
 // B on the first step skips the setup and keeps the default theme.
+import { HubLogo } from "./hubLogo";
 import { useEffect, useRef, useState } from "react";
 import { pushModalInput } from "./input";
 import { getSettings, THEMES, ThemeId, updateSettings } from "./settings";
@@ -48,6 +49,7 @@ export function Onboarding() {
       <div className="dht-hub-deco" data-deco={shown.deco} aria-hidden="true" />
       <div className="dht-ob-dots" aria-hidden="true">{[0, 1, 2].map((i) => <i key={i} data-on={i <= step} />)}</div>
       {step === 0 && <section className="dht-ob-card dht-ob-welcome">
+        <HubLogo className="dht-ob-logo" />
         <span className="dht-ob-eyebrow">DECK HOME THEMES</span>
         <h1>Welcome home</h1>
         <p>Turn your Steam Deck into a console of your choice. Pick a look, and your home comes with its menus, sounds and intro.</p>
@@ -90,6 +92,7 @@ const ONBOARDING_CSS = `
 .dht-onboarding *{box-sizing:border-box}.dht-onboarding>*:not(.dht-hub-deco){position:relative;z-index:1}.dht-onboarding>.dht-intro{position:absolute}
 .dht-onboarding button{font:inherit;color:inherit;border:0;cursor:pointer;text-transform:inherit}.dht-onboarding button:focus-visible{outline:3px solid var(--dht-hub-accent);outline-offset:3px}
 .dht-ob-dots{position:absolute!important;top:26px;left:0;right:0;display:flex;gap:10px;justify-content:center}.dht-ob-dots i{width:10px;height:10px;border-radius:50%;background:var(--dht-hub-line)}.dht-ob-dots i[data-on=true]{background:var(--dht-hub-accent)}
+.dht-ob-logo{display:block;width:72px;height:72px;margin:0 auto 16px;filter:drop-shadow(0 4px 10px #0003)}
 .dht-ob-eyebrow{font-size:11px;letter-spacing:2.5px;font-weight:700;color:var(--dht-hub-sub)}
 .dht-onboarding h1{font-size:44px;letter-spacing:var(--dht-hub-track);margin:10px 0 14px}.dht-onboarding h2{font-size:28px;letter-spacing:var(--dht-hub-track);margin:18px 0 8px}.dht-onboarding p{color:var(--dht-hub-sub);line-height:1.6;font-size:15px;margin:0 0 12px;text-transform:none}.dht-onboarding small{display:block;color:var(--dht-hub-sub);font-size:11px;opacity:.85;text-transform:none}
 .dht-ob-card{text-align:center;max-width:560px;padding:44px 48px;background:var(--dht-hub-panel);color:var(--dht-hub-card-text);border-radius:calc(var(--dht-hub-radius) * 1.6);box-shadow:var(--dht-hub-shadow),0 20px 60px #0004}.dht-ob-card p,.dht-ob-card small,.dht-ob-card .dht-ob-eyebrow{color:var(--dht-hub-card-sub)}.dht-ob-card small{margin-top:16px}

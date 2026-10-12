@@ -9,6 +9,7 @@ import { closeMarketplace, resourcesChanged, useResourceRevision } from "./marke
 import { playSound } from "./steam";
 import { ensurePackInstalled, PackProgress, ThemeArt, themeCatalog, themeDownloadProgress } from "./themePacks";
 import { deleteTheme } from "./themeActions";
+import { HubLogo } from "./hubLogo";
 import { refreshInventory } from "./presets";
 
 export type ThemePack = { id: string; name: string; theme: ThemeId | null; description: string; size: number; version: string; installedVersion?: string; compatible: boolean; preview?: string; poster?: string };
@@ -18,9 +19,6 @@ const catalog = themeCatalog, downloadProgress = themeDownloadProgress;
 // the switchers' cache of downloaded themes is refreshed on every read (presets.ts)
 export const inventory = refreshInventory;
 const builtInPacks = (art:ThemeArt = {}):ThemePack[] => THEMES.filter(t=>t.id==="wii"||t.id==="wiiu").map(t=>({id:t.id,theme:t.id,name:t.name,description:t.blurb,size:0,version:"built-in",installedVersion:"built-in",compatible:true,...art[t.id]}));
-
-/** The Hub's logo (four tiles, a home on the first): next to the title in every Hub style. */
-const HubLogo = () => <svg className="dht-hub-logo" viewBox="225 225 1025 1025" aria-hidden="true"><rect x="225" y="225" width="472" height="472" rx="112" fill="#3cdcff"/><rect x="778" y="225" width="472" height="472" rx="112" fill="#788bff"/><rect x="225" y="778" width="472" height="472" rx="112" fill="#ff4ed8"/><rect x="778" y="778" width="472" height="472" rx="112" fill="#ffb840"/><path d="M312 470 441 348Q460 332 479 348L608 470 575 506 460 401 346 506Z" fill="#0a0c1e"/><rect x="385" y="489" width="152" height="85" fill="#0a0c1e"/></svg>;
 
 type Tab = "discover" | "yours" | "files" | "spotlight";
 const TABS: { id: Tab; name: string }[] = [{ id: "discover", name: "Discover" }, { id: "yours", name: "Your themes" }, { id: "files", name: "Theme files" }, { id: "spotlight", name: "Plugin Spotlight" }];
