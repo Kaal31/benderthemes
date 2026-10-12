@@ -320,6 +320,10 @@ font-family:${v("font", k.font)};${k.panelEdge ? `box-shadow:${k.panelEdge};` : 
   out.push(`${S} .${c.KeyboardBackspace}{background-image:${v("back-image", k.backImg ?? (k.back ? "none" : fnImg), "none")}}`);
   out.push(`${S} .${c.KeyboardSpacebar}{background-image:${v("space-image", k.spaceImg ?? (k.space ? "none" : k.keyImg ?? "none"), "none")}}`);
   out.push(`${K} img{filter:${glyph(k.glyphs)}}`);
+  // Backspace / Enter carry Steam's button glyph at the left edge (Ⓧ on Backspace) and the label bottom-right: a skin's
+  // font (bold, or a wider fallback on the Deck) must not run the label into the glyph, so the label keeps clear of it
+  // and ends in an ellipsis on a key too narrow for it
+  out.push(`${S} .${c.KeyboardBackspace} span,${S} .${c.KeyboardEnter} span{display:block;margin-left:auto;max-width:calc(100% - 48px);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}`);
   out.push(`${K}.${c.ToggleOn},${K}.${c.ToggleOneShot}{background-image:none}`);
   out.push(`${K}.${c.Focused},${S} .${c.KeyboardExtendedKey}.${c.Focused}{background-image:${v("focus-image", k.focusImg, "none")};box-shadow:${k.focusShadow ?? "none"};${k.focusBorder ? `border-color:${k.focusBorder};` : ""}${k.focusScale ? `transform:scale(${k.focusScale});` : ""}z-index:4}`);
   out.push(`${K}.${c.Focused} img{filter:${glyph(k.focusGlyphs)}}`);
