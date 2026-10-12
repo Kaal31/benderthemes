@@ -39,6 +39,21 @@ try {
   assert.match(await btn.textContent(), /Auto/);
   await btn.click(); await t.page.waitForTimeout(150); // Neutral
   assert.equal(await t.page.locator('.dht-market').getAttribute('data-hub-theme'), 'default', 'Neutral applies at once');
+  await btn.click(); await t.page.waitForTimeout(250); // Preview: the theme of the card focused in Discover, installed or not
+  assert.match(await btn.textContent(), /Preview/);
+  const market = t.page.locator('.dht-market');
+  assert.equal(await market.getAttribute('data-hub-source'), 'preview');
+  const themeOf = async () => (await market.getAttribute('data-hub-theme')).replace(/^x360-.*/, 'x360');
+  const first = await themeOf();
+  await t.page.keyboard.press('ArrowRight'); await t.page.waitForTimeout(250);
+  const second = await themeOf();
+  assert.notEqual(second, first, 'Preview follows the focused card');
+  const seen = new Set([first, second]);
+  for (let i = 0; i < 8; i++) { await t.page.keyboard.press('ArrowRight'); await t.page.waitForTimeout(120); seen.add(await themeOf()); }
+  assert.ok([...seen].some(th => !(th in INSTALLED)), 'Preview also wears themes that are not installed: ' + [...seen]);
+  await t.page.locator('.dht-hub-tabs button', { hasText: 'Your themes' }).click(); await t.page.waitForTimeout(250);
+  assert.equal(await market.getAttribute('data-hub-source'), 'auto', 'outside Discover, Preview is Auto');
+  await t.page.locator('.dht-hub-tabs button', { hasText: 'Discover' }).click(); await t.page.waitForTimeout(150);
   await btn.click(); await t.page.waitForTimeout(150); // the first installed console theme
   assert.doesNotMatch(await btn.textContent(), /Auto|Neutral/);
   const saved = await t.page.evaluate(() => window.__getThemeSettings().hubStyle);
@@ -52,5 +67,5 @@ try {
   assert.equal(await t.page.locator('.dht-market').getAttribute('data-hub-source'), 'setting', 'kept when reopened');
   await t.page.close();
   assert.deepEqual(errors, []);
-  console.log('PASS: Hub style Auto / opened-on / neutral / fixed / not installed (fixed: neutral, auto: styled) / bonus / control restyles at once.');
+  console.log('PASS: Hub style Auto / opened-on / Preview follows Discover focus / neutral / fixed / not installed (fixed: neutral, auto: styled) / bonus / control restyles at once.');
 } finally { await browser.close(); server.close(); }

@@ -325,7 +325,7 @@ export interface Settings {
   switchTheme?: string; // Switch theme: a .nxtheme path under skins/switch ("file" or "folder/file") or ""
   x360: { style: X360Style; guideSide?: "left" | "right"; skin?: string; gamerpic?: string }; // skin / gamerpic: STFS package names in skins/x360 ("" = none); which Xbox 360 dashboard era
   dial: DialSettings;
-  hubStyle: string; // Hub look: "auto" (the theme home it was opened on), "neutral" or a console theme id (always that look when installed)
+  hubStyle: string; // Hub look: "auto" (the theme home it was opened on), "neutral", "preview" (the theme focused in Discover) or a console theme id (always that look when installed)
   themedStore: boolean; // Store entries open the store styled like the current theme
   /** Extra sections of the themed store, per home theme: Themes (packs + theme files) and Plugins (Spotlight). Hidden unless turned on. */
   storeSections: Partial<Record<ThemeId, StoreSections>>;
@@ -580,7 +580,7 @@ function merge(saved: any): Settings {
   s.titles = { ...(saved?.titles ?? {}) };
   s.storeSections = cleanStoreSections(saved?.storeSections);
   s.trailers = { ...DEFAULTS.trailers, ...(saved?.trailers ?? {}) };
-  if (s.hubStyle !== "auto" && s.hubStyle !== "neutral" && !THEMES.some((t) => t.id === s.hubStyle)) s.hubStyle = "auto";
+  if (s.hubStyle !== "auto" && s.hubStyle !== "neutral" && s.hubStyle !== "preview" && !THEMES.some((t) => t.id === s.hubStyle)) s.hubStyle = "auto";
   if (!FOOTER_MODES.some((f) => f.id === s.footer)) s.footer = DEFAULTS.footer;
   if (!THEMES.some((t) => t.id === s.theme)) s.theme = DEFAULTS.theme;
   if (!Array.isArray(s.vita.folders)) s.vita.folders = [];

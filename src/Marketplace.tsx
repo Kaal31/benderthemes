@@ -42,11 +42,13 @@ export function Marketplace({ requested, from }: { requested?: ThemeId; from?: T
   const [inv, setInv] = useState<Record<string, string> | null>(null);
   const reloadInventory = () => inventory().then(i => { if (alive.current) setInv(i || {}); }).catch(() => {});
   useEffect(() => { void reloadInventory(); }, [revision]);
-  const resolved = resolveHubTheme(s.hubStyle, from ? s.theme : undefined, inv);
+  // Hub style "Preview": the theme of the card focused in Discover (cards with a theme, as `filtered` below)
+  const discoverFocus = tab === "discover" ? packs.filter(p => !!p.theme)[selected]?.theme ?? null : null;
+  const resolved = resolveHubTheme(s.hubStyle, from ? s.theme : undefined, inv, discoverFocus);
   const styled = resolved.theme ? { theme: resolved.theme, x360: s.x360?.style } : null;
   const source = resolved.source;
   const styleChoice = s.hubStyle || "auto";
-  const styleOptions = [{ id: "auto", name: "Auto" }, { id: "neutral", name: "Neutral" },
+  const styleOptions = [{ id: "auto", name: "Auto" }, { id: "neutral", name: "Neutral" }, { id: "preview", name: "Preview" },
     ...consoleThemeIds().filter(id => (inv ? !!inv[id] : false) || id === styleChoice).map(id => ({ id, name: THEMES.find(t => t.id === id)?.name ?? id }))];
   const cycleStyle = () => {
     const i = styleOptions.findIndex(o => o.id === styleChoice);
