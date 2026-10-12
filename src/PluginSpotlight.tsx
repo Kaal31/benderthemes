@@ -107,12 +107,15 @@ const MAX_RESULTS = 60;
 /**
  * Plugin Spotlight: our curated picks, plus a search over every public Decky plugin. The Hub routes controller
  * presses here through `inputRef` (Marketplace.tsx). Zones: the search box (A opens it / the on-screen keyboard)
- * and the result list (↑↓ choose, ←→ scroll the details, A install or view, X project page).
+ * the result list (↑↓ choose, ← scroll the details up, → into the info panel, A install or view, X project page) and the
+ * info panel (↑↓ its buttons and links, scrolling past the last one; A presses; ← or B back to the list), so a
+ * controller reaches every button without touch.
  */
 export function PluginSpotlight({ inputRef }: { inputRef: MutableRefObject<InputHandler | null> }) {
   const [query, setQuery] = useState("");
   const [selected, setSelected] = useState(0);
-  const [zone, setZone] = useState<"search" | "list">("list");
+  const [zone, setZone] = useState<"search" | "list" | "panel">("list");
+  const [panelAt, setPanelAt] = useState(0); // the focused button / link in the info panel
   const [catalog, setCatalog] = useState<Catalog | null>(null);
   const [loading, setLoading] = useState(true);
   const [message, setMessage] = useState("");
@@ -122,6 +125,7 @@ export function PluginSpotlight({ inputRef }: { inputRef: MutableRefObject<Input
   const listRef = useRef<HTMLDivElement>(null);
   const detailRef = useRef<HTMLDivElement>(null);
   const searchRef = useRef<HTMLInputElement>(null);
+  const panelControls = () => Array.from(detailRef.current?.querySelectorAll<HTMLElement>("button:not([disabled]), a[href]") ?? []);
   const load = (refresh = false) => {
     setLoading(true);
     let live = true;
@@ -135,7 +139,7 @@ export function PluginSpotlight({ inputRef }: { inputRef: MutableRefObject<Input
   const current: SearchItem | undefined = results[Math.min(selected, results.length - 1)];
   useEffect(() => { setSelected(0); }, [query]);
   useEffect(() => {
-    setMessage(""); setConfirm(0); detailRef.current?.scrollTo?.({ top: 0 });
+    setMessage(""); setConfirm(0); setPanelAt(0); detailRef.current?.scrollTo?.({ top: 0 });
     listRef.current?.querySelector<HTMLElement>('[data-selected="true"]')?.scrollIntoView({ block: "nearest" });
   }, [selected, query]);
   const install = async () => {
@@ -146,6 +150,19 @@ export function PluginSpotlight({ inputRef }: { inputRef: MutableRefObject<Input
     try { setMessage(await installSpotlightPlugin(current.pickIndex)); setConfirm(0); } catch (e) { setMessage(String(e)); } finally { setBusy(false); }
   };
   useEffect(() => { if (confirm) detailRef.current?.querySelector(".dht-spotlight-confirm")?.scrollIntoView?.({ block: "nearest" }); }, [confirm]);
+  // a confirmation in the panel takes the panel focus on its Yes button
+  useEffect(() => { if (confirm && zone === "panel") setPanelAt(Math.max(0, panelControls().findIndex(el => el.classList.contains("dht-spotlight-confirm-yes")))); }, [confirm]);
+  // the panel focus ring: one control marked at a time, kept in view
+  useEffect(() => {
+    const all = panelControls();
+    all.forEach(el => el.removeAttribute("data-pad-focus"));
+    if (zone !== "panel") return;
+    const el = all[Math.min(panelAt, all.length - 1)];
+    if (!el) { setZone("list"); return; }
+    el.setAttribute("data-pad-focus", "true");
+    el.scrollIntoView?.({ block: "nearest" });
+  });
+
   const installUnreviewed = async () => {
     if (busy || !current || current.source !== "explorer" || !current.zipUrl) return;
     const needed = current.root ? 2 : 1;
@@ -159,7 +176,17 @@ export function PluginSpotlight({ inputRef }: { inputRef: MutableRefObject<Input
     if (p.btn === "b") { // the Hub closes on B unless something here is open
       if (confirm) { setConfirm(0); return true; }
       if (zone === "search" && document.activeElement === searchRef.current) { leaveSearch(false); return true; }
+      if (zone === "panel") { setZone("list"); return true; }
       return false;
+    }
+    if (zone === "panel") {
+      const all = panelControls(), at = Math.min(panelAt, all.length - 1);
+      if (p.btn === "left") setZone("list");
+      else if (p.btn === "down") { if (at < all.length - 1) setPanelAt(at + 1); else detailRef.current?.scrollBy?.({ top: 160 }); }
+      else if (p.btn === "up") { if (at > 0) setPanelAt(at - 1); else detailRef.current?.scrollBy?.({ top: -160 }); }
+      else if (p.btn === "a" && !p.repeat) all[at]?.click();
+      else if (p.btn === "x" && !p.repeat) openUrl(current?.url);
+      return true;
     }
     if (zone === "search") {
       if (p.btn === "a" && !p.repeat) openSearch();
@@ -171,7 +198,8 @@ export function PluginSpotlight({ inputRef }: { inputRef: MutableRefObject<Input
     if (p.btn === "a" && !p.repeat) document.querySelector<HTMLButtonElement>(".dht-spotlight-detail .dht-spotlight-primary")?.click();
     if (p.btn === "up" && selected === 0) { setZone("search"); return true; }
     if (p.btn === "up" || p.btn === "down") setSelected(Math.max(0, Math.min(results.length - 1, selected + (p.btn === "up" ? -1 : 1))));
-    if (p.btn === "left" || p.btn === "right") detailRef.current?.scrollBy?.({ top: p.btn === "left" ? -160 : 160 });
+    if (p.btn === "left") detailRef.current?.scrollBy?.({ top: -160 });
+    if (p.btn === "right" && panelControls().length) { setPanelAt(Math.max(0, panelControls().findIndex(el => el.classList.contains("dht-spotlight-primary")))); setZone("panel"); } // starts on the main button
     return true;
   };
   useEffect(() => () => { inputRef.current = null; }, []);
@@ -260,7 +288,7 @@ export function PluginSpotlight({ inputRef }: { inputRef: MutableRefObject<Input
         {message && <p role="status">{message}</p>}
       </div>
     </div>}
-    <div className="dht-spotlight-hints">{zone === "search" ? "A Type (STEAM + X opens the keyboard) · ↓ Results · B Done" : `↑ Search · ↑↓ Choose · ←→ Scroll details · A ${confirm ? "Confirm" : current?.source === "explorer" ? "View project" : "Install"} · X Project page${confirm ? " · B Cancel" : current?.zipUrl ? " · ☰ Install release" : ""}`}</div>
+    <div className="dht-spotlight-hints">{zone === "search" ? "A Type (STEAM + X opens the keyboard) · ↓ Results · B Done" : zone === "panel" ? "↑↓ Buttons and links · A Press · ← / B Back to the list" : `↑ Search · ↑↓ Choose · → Info panel · A ${confirm ? "Confirm" : current?.source === "explorer" ? "View project" : "Install"} · X Project page${confirm ? " · B Cancel" : current?.zipUrl ? " · ☰ Install release" : ""}`}</div>
   </section>;
 }
 
@@ -309,6 +337,7 @@ const SPOTLIGHT_CSS = `
 .dht-spotlight-readme{font-size:13px;line-height:1.6;overflow-wrap:anywhere}.dht-spotlight-readme h5{font-size:15px;margin:12px 0 4px}.dht-spotlight-readme p{margin:6px 0;font-size:13px}
 .dht-spotlight-readme ul{margin:6px 0;padding-left:20px}.dht-spotlight-readme pre{white-space:pre-wrap;background:var(--dht-hub-bg);color:var(--dht-hub-text);padding:8px 10px;border-radius:6px;font-size:12px}
 .dht-spotlight-readme code{background:var(--dht-hub-line);padding:0 4px;border-radius:4px}
+.dht-spotlight-detail [data-pad-focus]{outline:none;box-shadow:var(--dht-hub-ring)!important;border-radius:var(--dht-hub-pill)}
 .dht-spotlight-hints{flex-shrink:0;margin-top:8px;font-size:11px;color:var(--dht-hub-sub)}
 @container dht-hub (max-width:960px){.dht-spotlight-intro p{display:none}.dht-spotlight-intro h2{font-size:18px}.dht-spotlight-search{flex-basis:300px;height:36px}.dht-spotlight-attribution{margin-left:0}.dht-spotlight .spotlight-layout{gap:12px}.dht-spotlight-detail{padding:12px}}
 @container dht-hub (max-height:620px){.dht-spotlight-intro p{display:none}.dht-spotlight-intro{margin-bottom:6px}.dht-spotlight-status{margin-bottom:6px;font-size:11px}.dht-spotlight-result p{display:none}.dht-spotlight-result small{margin-bottom:5px}.dht-spotlight-hints{display:none}.dht-spotlight-image{max-height:120px}}
