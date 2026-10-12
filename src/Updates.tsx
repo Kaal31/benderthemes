@@ -17,9 +17,13 @@ const compare = (a: string, b: string) => {
   return x[0] - y[0] || x[1] - y[1] || x[2] - y[2];
 };
 let latestCheck: { at: number; promise: Promise<Status> } | null = null;
+// every finished check (Quick Access, the themed notice's own timer) reaches the themed home's notice at once
+const statusListeners = new Set<(status: Status) => void>();
+export function onFirmwareStatus(fn: (status: Status) => void) { statusListeners.add(fn); return () => { statusListeners.delete(fn); }; }
 export function checkFirmware(force = false): Promise<Status> {
   if (!force && latestCheck && Date.now() - latestCheck.at < 30 * 60 * 1000) return latestCheck.promise;
   const promise = checkUpdates();
+  promise.then((status) => statusListeners.forEach((fn) => fn(status))).catch(() => {});
   latestCheck = { at: Date.now(), promise };
   promise.catch(() => { latestCheck = null; });
   return promise;

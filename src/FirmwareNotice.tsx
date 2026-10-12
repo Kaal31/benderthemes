@@ -1,5 +1,5 @@
 import { CSSProperties, useEffect, useRef, useState } from "react";
-import { checkFirmware, installFirmware, Status } from "./Updates";
+import { checkFirmware, installFirmware, onFirmwareStatus, Status } from "./Updates";
 import { pushModalInput } from "./input";
 import { updateSettings, useSettings } from "./settings";
 import { useAssets } from "./assets";
@@ -16,7 +16,7 @@ export function FirmwareNotice({paused=false}:{paused?:boolean}){
  const emblem=theme==="nazarick"?art.downloads:theme==="xbox"?art.orb:["vita","ps3","psp"].includes(theme)?art.gear:undefined;
  const [status,setStatus]=useState<Status|null>(previewStatus),[selection,setSelection]=useState(0),[busy,setBusy]=useState(false),[message,setMessage]=useState("");
  const mounted=useRef(true);
- useEffect(()=>{mounted.current=true;const preview=()=>{setStatus(previewStatus);setMessage("");setBusy(false);setSelection(0);updateSettings({dismissedFirmware:""});};listeners.add(preview);const check=()=>checkFirmware().then(v=>{if(mounted.current&&!previewStatus)setStatus(v);}).catch(()=>{});void check();const timer=setInterval(check,1800000);return()=>{mounted.current=false;listeners.delete(preview);clearInterval(timer);};},[]);
+ useEffect(()=>{mounted.current=true;const preview=()=>{setStatus(previewStatus);setMessage("");setBusy(false);setSelection(0);updateSettings({dismissedFirmware:""});};listeners.add(preview);const off=onFirmwareStatus(v=>{if(mounted.current&&!previewStatus)setStatus(v);});const check=()=>void checkFirmware().then(v=>{if(mounted.current&&!previewStatus)setStatus(v);}).catch(()=>{});check();const timer=setInterval(check,1800000);return()=>{mounted.current=false;listeners.delete(preview);off();clearInterval(timer);};},[]);
  const release=status?.latest;
  const visible=!paused&&settings.firmwareNotifications!==false&&status?.success&&!status.stale&&status.updateAvailable&&release&&settings.dismissedFirmware!==release.version;
  const dismiss=()=>{if(release)updateSettings({dismissedFirmware:release.version});setMessage("");};
@@ -25,7 +25,7 @@ export function FirmwareNotice({paused=false}:{paused?:boolean}){
  useEffect(()=>{if(!visible)return;return pushModalInput(p=>{const s=latest.current;if(p.btn==="b"&&!s.busy)s.dismiss();if(["left","right","up","down"].includes(p.btn))setSelection(s.selection?0:1);if(p.btn==="a"&&!p.repeat&&!s.busy){if(s.selection||s.message)s.dismiss();else void s.accept();}return true;});},[!!visible]);
  if(!visible)return null;
  if(theme==="psp")return <PspUpdateDialog from={status.currentVersion} to={release.version} selection={selection} busy={busy} message={message} onSelect={setSelection} onYes={()=>void accept()} onNo={dismiss}/>;
- const [label,baseColor]=identities[theme];
+ const [label,baseColor]=identities[theme]??["System Update","#7fd3ff"]; // looks without their own wording (iiSU, 3DS, Switch, PS1)
  const color=theme==="dial"?({classic:"#85ff00",chrome:"#85ff00",crimson:"#ff344e",arctic:"#42ddff"}[settings.dial.look]):baseColor;
  const headline:Record<string,string>={minecraft:"A new world awaits.",nazarick:"An invitation to ascend.",republic:"System upgrade authorized.",pain:"The next evolution.",dial:"New firmware detected.",castle:"A message from your system.",ps2:"Update data found.",xbox:"UPGRADE YOUR SYSTEM"};
  return <div style={{position:"absolute",inset:0,zIndex:500}}><div className="dht-firmware" data-firmware-theme={theme} data-dashboard={settings.x360.style} data-animated={settings.animations} role="dialog" aria-label="Firmware update" aria-modal="true" style={{"--fw-accent":color,fontFamily:theme==="republic"?"AurebeshEnglish,sans-serif":theme==="nazarick"?"Georgia,serif":"system-ui,sans-serif"} as CSSProperties}>
