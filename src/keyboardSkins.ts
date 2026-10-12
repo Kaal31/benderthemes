@@ -263,6 +263,23 @@ export function keyboardLookFor(s: Pick<Settings, "enabled" | "theme" | "x360"> 
   }
 }
 
+// ───────────── room for the keyboard ─────────────
+/** How far Steam's on-screen keyboard reaches up from the bottom of `doc`'s window (0 when it is closed or in another
+ *  window). Steam lays the keyboard out at the bottom of the page with no z-index of its own, so our full-screen themed
+ *  home (position: fixed) would paint over it: Home.tsx ends the home this far above the bottom while it is open. */
+export function keyboardInset(doc: Document | null): number {
+  const view = doc?.defaultView;
+  if (!doc || !view) return 0;
+  const { classes } = keyboardClasses();
+  let top = view.innerHeight;
+  for (const el of Array.from(doc.querySelectorAll(`.${classes.Keyboard}, .${classes.VirtualKeyboardContainer}`))) {
+    if (el.closest("[data-dht-root]")) continue;
+    const r = el.getBoundingClientRect();
+    if (r.height > 40 && r.width > 100 && r.top > 0 && r.top < view.innerHeight) top = Math.min(top, r.top);
+  }
+  return Math.round(Math.min(view.innerHeight - top, view.innerHeight * 0.75));
+}
+
 // ───────────── CSS ─────────────
 const v = (hook: string, value: string | undefined, fallback?: string) => `var(--dht-kb-${hook}, ${value ?? fallback ?? "transparent"})`;
 const glyph = (g: "light" | "dark" | undefined) => (g === "dark" ? "invert(1) opacity(0.75)" : "none");

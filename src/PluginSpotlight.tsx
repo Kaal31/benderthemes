@@ -1,6 +1,7 @@
 import { Navigation } from "@decky/ui";
 import { callable } from "@decky/api";
 import { Fragment, MutableRefObject, ReactNode, useEffect, useMemo, useRef, useState } from "react";
+import { opensKeyboardOnTap, showSteamKeyboard } from "./steamKeyboard";
 import { SPOTLIGHT_PLUGINS } from "./spotlightCatalog";
 import { ExplorerEntry, mergeCatalogue, repoKey, searchCatalogue, SearchItem } from "./pluginSearch";
 import type { InputHandler } from "./input";
@@ -40,15 +41,6 @@ export async function installUnreviewedPlugin(item: SearchItem, confirmations: n
   if (!backend?.call) throw new Error("Decky installation is unavailable in this window.");
   await backend.call("utilities/install_plugin", item.zipUrl, item.name, item.release || "unknown", "", 1);
   return "Continue in Decky's installation dialog. Decky will download and install the plugin after confirmation.";
-}
-
-/** Best effort: Steam's on-screen keyboard for the focused search box (STEAM + X always works as well). Unverified on a Deck. */
-function showSteamKeyboard() {
-  try {
-    const win = (window as any).SteamUIStore?.ActiveWindowInstance ?? (window as any).SteamUIStore?.GetFocusedWindowInstance?.();
-    const kb = win?.VirtualKeyboardManager;
-    if (typeof kb?.SetVirtualKeyboardVisible === "function") kb.SetVirtualKeyboardVisible();
-  } catch { /* the keyboard shortcut still works */ }
 }
 
 // ---- all Decky plugins (Decky Plugins Explorer data, fetched + cached by the backend: py_modules/plugin_catalog.py)
@@ -161,7 +153,7 @@ export function PluginSpotlight({ inputRef }: { inputRef: MutableRefObject<Input
     setBusy(true);
     try { setMessage(await installUnreviewedPlugin(current, confirm)); setConfirm(0); } catch (e) { setMessage(String(e)); } finally { setBusy(false); }
   };
-  const openSearch = () => { setZone("search"); searchRef.current?.focus(); showSteamKeyboard(); };
+  const openSearch = () => { setZone("search"); showSteamKeyboard(searchRef.current); };
   const leaveSearch = (toList: boolean) => { searchRef.current?.blur(); setZone(toList && results.length ? "list" : "search"); if (toList) setSelected(0); };
   inputRef.current = p => {
     if (p.btn === "b") { // the Hub closes on B unless something here is open
@@ -191,7 +183,7 @@ export function PluginSpotlight({ inputRef }: { inputRef: MutableRefObject<Input
       <div><h2>Plugin Spotlight</h2><p>Our picks of independent Decky plugins, and a search across every public Decky plugin.</p></div>
       <label className="dht-spotlight-search" data-focused={zone === "search"}>
         <span aria-hidden="true">⌕</span>
-        <input ref={searchRef} type="search" aria-label="Search all Decky plugins" placeholder={loading && !catalog ? "Search all Decky plugins (loading the list…)" : `Search ${total} Decky plugins: name, author, tag…`}
+        <input ref={searchRef} {...opensKeyboardOnTap} type="search" aria-label="Search all Decky plugins" placeholder={loading && !catalog ? "Search all Decky plugins (loading the list…)" : `Search ${total} Decky plugins: name, author, tag…`}
           value={query} onFocus={() => setZone("search")} onChange={e => setQuery(e.target.value)}
           onKeyDown={e => { e.stopPropagation(); if (e.key === "Enter" || e.key === "ArrowDown") { e.preventDefault(); leaveSearch(true); } if (e.key === "Escape") { e.preventDefault(); leaveSearch(false); } }} />
         {query && <button type="button" aria-label="Clear search" onClick={() => { setQuery(""); openSearch(); }}>✕</button>}

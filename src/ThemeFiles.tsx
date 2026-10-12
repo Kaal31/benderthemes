@@ -5,6 +5,7 @@
 import { Navigation } from "@decky/ui";
 import { callable } from "@decky/api";
 import { MutableRefObject, useEffect, useMemo, useRef, useState } from "react";
+import { opensKeyboardOnTap, showSteamKeyboard } from "./steamKeyboard";
 import type { InputHandler } from "./input";
 import { resourcesChangedOnClose } from "./marketplaceState";
 import { playSound } from "./steam";
@@ -98,7 +99,7 @@ export function ThemeFiles({ inputRef }: { inputRef: MutableRefObject<InputHandl
     setSource(list[(list.indexOf(src) + 1) % list.length]);
   };
   // focused after the press, so a keyboard key mapped to ☰ (the preview: M) is not typed into the box
-  const openSearch = () => { setZone("search"); setTimeout(() => searchRef.current?.focus(), 0); };
+  const openSearch = () => { setZone("search"); setTimeout(() => showSteamKeyboard(searchRef.current), 0); };
   const leaveSearch = (toGrid: boolean) => { searchRef.current?.blur(); setQuery(typed.trim()); setZone(toGrid ? "grid" : "kinds"); setSelected(0); };
   const startDownload = async (file: FileRef) => {
     if (!current || busy) return;
@@ -179,7 +180,7 @@ export function ThemeFiles({ inputRef }: { inputRef: MutableRefObject<InputHandl
       </div>
       <label className="dht-files-search" data-focused={zone === "search"}>
         <span aria-hidden="true">⌕</span>
-        <input ref={searchRef} type="search" aria-label="Search theme files" placeholder={`Search ${kindInfo?.label ?? ""} themes`} value={typed}
+        <input ref={searchRef} {...opensKeyboardOnTap} type="search" aria-label="Search theme files" placeholder={`Search ${kindInfo?.label ?? ""} themes`} value={typed}
           onFocus={() => setZone("search")} onChange={e => setTyped(e.target.value)}
           onKeyDown={e => { e.stopPropagation(); if (e.key === "Enter" || e.key === "ArrowDown") { e.preventDefault(); leaveSearch(true); } if (e.key === "Escape") { e.preventDefault(); searchRef.current?.blur(); setTyped(query); setZone("kinds"); } }} />
       </label>

@@ -8,6 +8,7 @@ import {castleWindowAppearance,useCastleWindow} from "./themes/castleWindow";
 // happens on Steam's own store page ("View in Steam Store").
 import { Navigation } from "@decky/ui";
 import { CSSProperties, ReactNode, useEffect, useRef, useState } from "react";
+import { opensKeyboardOnTap, showSteamKeyboard } from "./steamKeyboard";
 import { Press, setModalInput, Stage, useStage } from "./input";
 import { Game, Library, openSteam } from "./library";
 import { fmtPrice, loadStoreDetails, loadStoreLists, searchStore, STORE_TABS, StoreDetails, StoreItem, StoreTab } from "./store";
@@ -132,6 +133,9 @@ export function StoreView({ settings, lib, onClose, onLaunch }: { settings: Sett
   const [query, setQuery] = useState("");
   const [searchOpen,setSearchOpen]=useState(false);
   const [searchDraft,setSearchDraft]=useState("");
+  const searchBox=useRef<HTMLInputElement>(null);
+  // the search box opens with Steam's keyboard (also on a tap and on Ⓐ); Ⓨ or the keyboard's Enter searches
+  useEffect(()=>{if(searchOpen)showSteamKeyboard(searchBox.current);},[searchOpen]);
   const [zone, setZone] = useState<Zone>("items");
   const [sel, setSel] = useState(0);
   const [detail, setDetail] = useState<StoreDetails | null>(null);
@@ -197,7 +201,7 @@ export function StoreView({ settings, lib, onClose, onLaunch }: { settings: Sett
   const handler = (p: Press): boolean => {
     const b = p.btn;
     if(settings.theme==="nazarick"&&(b==="l1"||b==="r1")){navigateNazarick(nextNazarickPage("store",b==="l1"?-1:1));return true;}
-    if(searchOpen){if(b==="b")setSearchOpen(false);else if(b==="a")submitSearch();return true;}
+    if(searchOpen){if(b==="b")setSearchOpen(false);else if(b==="a")showSteamKeyboard(searchBox.current);else if(b==="y"||b==="menu")submitSearch();return true;}
     if (zone === "trailer") {
       if (b === "b" || b === "a") setZone("detail");
       return true;
@@ -258,7 +262,7 @@ export function StoreView({ settings, lib, onClose, onLaunch }: { settings: Sett
   return (
     <div ref={castleWindow.ref} className="dht-store" data-dht-store-skin={settings.theme} data-scheme={iisuSchemeAttr(settings)} style={{ position: "absolute", inset: 0, zIndex: 85, background: "#000",...iisuPageVars(settings),...(settings.theme==="castle"?castleWindowAppearance(settings):{}) }}>
       <style>{NINTENDO_STORE_CSS + "\n" + IISU_STORE_CSS}</style>
-      {searchOpen && <div className="dht-store-search" style={{position:"absolute",inset:settings.theme==="nazarick"?"10% 0 0":0,zIndex:5,background:skin.bg,color:skin.text,display:"grid",placeItems:"center"}}><form onSubmit={e=>{e.preventDefault();submitSearch();}} style={{width:"65%"}}><h1>{tab === "plugins" ? "Search plugins" : tab === "themes" ? "Search themes" : "Search Store"}</h1><input autoFocus aria-label={tab === "plugins" ? "Search plugins" : tab === "themes" ? "Search themes" : "Search Store"} value={searchDraft} onChange={e=>setSearchDraft(e.target.value)} onKeyDown={e=>{e.stopPropagation();if(e.key==="Escape")setSearchOpen(false);}} style={{width:"100%",boxSizing:"border-box",fontSize:28,padding:18,color:skin.text,background:skin.panel,border:`2px solid ${skin.sub}`,borderRadius:skin.radius}}/><button type="submit" style={{fontSize:22,padding:"14px 30px",marginTop:24,background:skin.accent,color:skin.accentText}}>Search</button><button type="button" onClick={()=>setSearchOpen(false)} style={{fontSize:22,padding:"14px 30px",marginLeft:18}}>Back</button></form></div>}
+      {searchOpen && <div className="dht-store-search" style={{position:"absolute",inset:settings.theme==="nazarick"?"10% 0 0":0,zIndex:5,background:skin.bg,color:skin.text,display:"grid",placeItems:"center"}}><form onSubmit={e=>{e.preventDefault();submitSearch();}} style={{width:"65%"}}><h1>{tab === "plugins" ? "Search plugins" : tab === "themes" ? "Search themes" : "Search Store"}</h1><input ref={searchBox} autoFocus {...opensKeyboardOnTap} aria-label={tab === "plugins" ? "Search plugins" : tab === "themes" ? "Search themes" : "Search Store"} value={searchDraft} onChange={e=>setSearchDraft(e.target.value)} onKeyDown={e=>{e.stopPropagation();if(e.key==="Escape")setSearchOpen(false);}} style={{width:"100%",boxSizing:"border-box",fontSize:28,padding:18,color:skin.text,background:skin.panel,border:`2px solid ${skin.sub}`,borderRadius:skin.radius}}/><button type="submit" style={{fontSize:22,padding:"14px 30px",marginTop:24,background:skin.accent,color:skin.accentText}}>Search</button><button type="button" onClick={()=>setSearchOpen(false)} style={{fontSize:22,padding:"14px 30px",marginLeft:18}}>Back</button><p style={{marginTop:22,fontSize:16,color:skin.sub}}>Ⓐ Keyboard · Ⓨ Search · Ⓑ Back</p></form></div>}
       <Stage background="transparent">
         {settings.theme==="nazarick"&&<><NazarickBackdrop page="store" motion={settings.animations}/><NazarickNavigation page="store" settings={settings} onNavigate={navigateNazarick}/></>}
         <StoreBody

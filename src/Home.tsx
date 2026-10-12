@@ -38,6 +38,7 @@ import { MusicPlayerView, NowPlayingMini } from "./mediaCenter";
 import { StoreView } from "./storeView";
 import { l1Held, pushModalInput, ThemeRoot, setGlobalInput, StageHost } from "./input";
 import { ThemeSwitcher } from "./themeSwitcher";
+import { keyboardInset } from "./keyboardSkins";
 import { VitaHome } from "./themes/Vita";
 import { Ps3Home, PspHome } from "./themes/Xmb";
 import { Ps4Home } from "./themes/Ps4";
@@ -177,6 +178,13 @@ function ThemedHomeContent({ standalone }: { standalone?: boolean }) {
   }, [s.theme]);
   const root = useRef<HTMLDivElement>(null);
   const [doc, setDoc] = useState<Document | null>(null);
+  // Steam's keyboard (STEAM + X, a search box) opens under our fixed home: end the home above it while it is open
+  const [kbInset, setKbInset] = useState(0);
+  useEffect(() => {
+    if (!doc) return;
+    const iv = setInterval(() => { const h = keyboardInset(doc); setKbInset((v) => (v === h ? v : h)); }, 250);
+    return () => clearInterval(iv);
+  }, [doc]);
   useEffect(() => {
     setDoc(root.current?.ownerDocument ?? null);
     setUiDocument(root.current?.ownerDocument ?? null);
@@ -331,7 +339,7 @@ function ThemedHomeContent({ standalone }: { standalone?: boolean }) {
   const themeSlotStyle = { ...(accent ? { "--dht-accent": accent } : {}), ...lookAccent, ...(themeFont ? { "--dht-font": '"dht-theme-font", "Motiva Sans", sans-serif', fontFamily: "var(--dht-font)" } : {}) } as CSSProperties;
   return (
     // zIndex 1: Steam's own popups (context menus, modals) must paint above us.
-    <div ref={root} data-dht-root="" data-tv={s.tvMode} data-motion={s.animations} data-dht-theme={s.theme} data-dht-preset={currentPresetId(s)} data-dht-skin={skinHook(s) || undefined} className={`dht-root dht-theme-${s.theme}`} style={{ position: "fixed", inset: 0, zIndex: standalone ? 900 : 1, background: "#000", overflow: "hidden", fontFamily: "var(--dht-font, inherit)", userSelect: "none", WebkitUserSelect: "none" }}>
+    <div ref={root} data-dht-root="" data-tv={s.tvMode} data-motion={s.animations} data-dht-theme={s.theme} data-dht-preset={currentPresetId(s)} data-dht-skin={skinHook(s) || undefined} className={`dht-root dht-theme-${s.theme}`} style={{ position: "fixed", inset: 0, bottom: kbInset, zIndex: standalone ? 900 : 1, background: "#000", overflow: "hidden", fontFamily: "var(--dht-font, inherit)", userSelect: "none", WebkitUserSelect: "none" }}>
       <div className="dht-safe-area" style={{position:"absolute",inset:s.tvMode?"3%":"0",...presentationVariables(s),...themeSlotStyle}}>
       {themeFont && <style>{`@font-face{font-family:"dht-theme-font";src:url("${themeFont}")}`}</style>}
       <style>{PRESENTATION_CSS}</style>
