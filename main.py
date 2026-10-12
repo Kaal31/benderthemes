@@ -116,6 +116,8 @@ def _steamui_dir() -> str:
 
 def _mime(name: str) -> str:
     n = name.lower()
+    if n.endswith(".mp4"):
+        return "video/mp4"
     if n.endswith(".png"):
         return "image/png"
     if n.endswith(".webp"):
@@ -2022,7 +2024,7 @@ class Plugin:
         out = {}
         try:
             for n in sorted(os.listdir(folder)):
-                if n.lower().endswith(IMAGE_EXT + (".glb",)):
+                if n.lower().endswith(IMAGE_EXT + (".glb", ".mp4",)):
                     with open(os.path.join(folder, n), "rb") as f:
                         out[os.path.splitext(n)[0]] = _data_url(f.read(), "model/gltf-binary" if n.lower().endswith(".glb") else _mime(n))
         except Exception:
