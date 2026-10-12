@@ -4,19 +4,19 @@ import { BladesGuide } from "./BladesGuide";
 import { BLADES_FONT_CSS } from "./bladesFont";
 // Earlier Xbox 360 dashboards, chosen with the "Xbox 360 dashboard" preset:
 //  • Blades (2005): coloured blades that slide sideways, a menu on each.
-//  • NXE (2008) / Kinect (2010): channels stacked vertically, each a row of
-//    cards receding in perspective. Kinect is the white-and-green restyle.
+//  NXE and Kinect live in X360Nxe.tsx and X360Kinect.tsx.
 // Layout is drawn here; in personal test builds the dashboards' own icons and
 // button images (asset sets x360-blades / x360-nxe / x360-metro) are used.
-import { CSSProperties, useState } from "react";
-import { GameArt, Icon, IconName, MenuItem, MenuView, themeMenu, useHome, useMenu, useRemembered } from "../common";
+import { useState } from "react";
+import { GameArt, Icon, IconName, MenuItem, themeMenu, useHome, useMenu, useRemembered } from "../common";
 import { clamp, Press, Stage, ThemeRoot, useStage } from "../input";
 import { fmtLastPlayed, fmtPlaytime, Game, openAchievements, openSteam } from "../library";
-import { showTitle, THEMES, updateSettings } from "../settings";
-import { Badges } from "../badges";
-import { fmtTime, playSound, useClock, useSteamStatus, useWallpaper } from "../steam";
+import { THEMES, updateSettings } from "../settings";
+import { playSound, useSteamStatus, useWallpaper } from "../steam";
 import { useAssets } from "../assets";
+import { useX360Gamerpic } from "../skins";
 
+import { useReportFocus } from "../focus";
 type Entry = { key: string; label: string; sub?: string; icon?: IconName; img?: string; game?: Game; run: () => void };
 
 function Btn({ img, letter, color }: { img?: string; letter: string; color: string }) {
@@ -41,7 +41,9 @@ export function BladesHome() {
   const s = api.settings;
   const { W, H } = useStage();
   const st = useSteamStatus();
+  const wall = useWallpaper("x360");
   const a = useAssets("x360-blades");
+  const pickedPic = useX360Gamerpic(); // gamer picture package chosen in Theme options
   const original = useAssets("x360-blades-original");
   const menu = useMenu();
   const [blade, setBlade] = useRemembered("blades-blade", 1);
@@ -55,7 +57,7 @@ export function BladesHome() {
     market: [
       { key: "store", label: "Steam Store", sub: "New releases, deals and demos", img: a.store, icon: "store", run: () => openSteam("store") },
       { key: "dl", label: "Active Downloads", sub: "Downloads and updates", img: a.downloads, icon: "download", run: () => openSteam("downloads") },
-      { key: "tiles", label: "Themes and Gamer Pictures", sub: "Presets for this home screen", img: a.themes, icon: "palette", run: () => menu.open(themeMenu(s.theme, api.switchTheme, THEMES), "Presets") },
+      { key: "tiles", label: "Themes and Gamer Pictures", sub: "Presets for this home screen", img: a.themes, icon: "palette", run: () => menu.open(themeMenu(s.theme, api.switchTheme, THEMES), "Presets", { page: true }) },
     ],
     live: [
       { key: "friends", label: "Friends", sub: st.friendsOnline !== undefined ? `${st.friendsOnline} online` : "Friends and chat", img: a.friends, icon: "friends", run: () => openSteam("friends") },
@@ -63,7 +65,7 @@ export function BladesHome() {
       { key: "community", label: "Steam Community", sub: "Hubs, guides and workshop", img: a.live, icon: "globe", run: () => openSteam("community") },
     ],
     games: [
-      ...recent.map((g) => ({ key: `g${g.appid}`, label: g.name, sub: fmtPlaytime(g.playtime), game: g, run: () => api.activate(g, () => api.launch(g)) })),
+      ...recent.map((g) => ({ key: `g${g.appid}`, label: g.name, sub: fmtPlaytime(g.playtime, g.lastPlayed), game: g, run: () => api.activate(g, () => api.launch(g)) })),
       { key: "lib", label: "Games Library", sub: `${api.lib.games.length} games`, img: a.controller, icon: "library" as IconName, run: () => openSteam("library") },
       { key: "ach", label: "Achievements", sub: "Your progress", img: a.trophy, icon: "trophy" as IconName, run: () => (recent[0] ? openAchievements(recent[0]) : openSteam("library")) },
     ],
@@ -73,8 +75,8 @@ export function BladesHome() {
     ],
     system: [
       { key: "settings", label: "Console Settings", sub: "Steam settings", icon: "gear", run: () => openSteam("settings") },
-      { key: "home", label: "Home Screen Settings", sub: "Deck Home Themes options", icon: "home", run: api.openSettings },
-      { key: "presets", label: "Dashboard", sub: "Switch presets", img: a.themes, icon: "palette", run: () => menu.open(themeMenu(s.theme, api.switchTheme, THEMES), "Presets") },
+      { key: "home", label: "Home Screen Settings", sub: "ThemeHub options", icon: "home", run: api.openSettings },
+      { key: "presets", label: "Dashboard", sub: "Switch presets", img: a.themes, icon: "palette", run: () => menu.open(themeMenu(s.theme, api.switchTheme, THEMES), "Presets", { page: true }) },
       { key: "steamhome", label: "Home", sub: "Show Steam's own home", icon: "steam", run: api.showSteamHome },
       { key: "power", label: "Turn Off", sub: "Power options", icon: "power", run: () => openSteam("power") },
     ],
@@ -82,6 +84,7 @@ export function BladesHome() {
   const list = entries[b.id];
   const sel = clamp(sels[b.id] ?? 0, 0, list.length - 1);
   const cur = list[sel];
+  useReportFocus(cur?.game);
 
   const options = () => {
     const extra: MenuItem[] = [
@@ -144,7 +147,8 @@ export function BladesHome() {
         `}</style>
         <div className="dht-blades" style={{position:"absolute",inset:0}}>
           <div className="dht-blades-page-fill" data-blade={b.id} style={{position:"absolute",inset:0,clipPath:pageOutline,backgroundImage:texture(`background-${gradient}`),backgroundSize:"100% 100%",backgroundColor:b.light,zIndex:10,pointerEvents:"none"}}>
-            <BladesAtmosphere assets={original} animate={s.animations}/>
+            {wall&&<img src={wall} alt="" className="dht-blades-wall" style={{position:"absolute",inset:0,width:"100%",height:"100%",objectFit:"cover"}}/>}
+            {!wall&&<BladesAtmosphere assets={original} animate={s.animations}/>}
             <div style={{position:"absolute",inset:0,backgroundImage:texture(`background-${gradient}-alpha`),backgroundSize:"100% 100%"}}/>
           </div>
           <img src={original["blades-runner-left"]} aria-hidden="true" style={{position:"absolute",left:-83,top:0,width:180,height:H}}/>
@@ -167,7 +171,7 @@ export function BladesHome() {
             <div className="dht-blades-profile" style={{position:"absolute",left:36,top:H*.135,width:column,height:H*.2,backgroundImage:texture("gamecard_home-silver"),backgroundSize:"100% 100%",boxSizing:"border-box",padding:"12px 28px"}}>
               <div style={{fontSize:24,fontWeight:600,overflow:"hidden",whiteSpace:"nowrap",textOverflow:"ellipsis"}}>{api.user}</div>
               <div style={{display:"flex",alignItems:"center",gap:14,marginTop:6}}>
-                {a.avatar?<img src={a.avatar} alt="" style={{width:58,height:58,objectFit:"contain",border:"2px solid #a58555",background:"#726f60"}}/>:<Icon name="user" size={52} color="#776648"/>}
+                {pickedPic||a.avatar?<img src={pickedPic??a.avatar} alt="" style={{width:58,height:58,objectFit:"contain",border:"2px solid #a58555",background:"#726f60"}}/>:<Icon name="user" size={52} color="#776648"/>}
                 <div style={{flex:1,minWidth:0,fontSize:19,lineHeight:1.16}}><div style={{display:"flex",justifyContent:"space-between"}}><span>Games</span><span>{api.lib.games.length}</span></div><div style={{display:"flex",justifyContent:"space-between"}}><span>Friends online</span><span>{st.friendsOnline??"—"}</span></div><div style={{display:"flex",justifyContent:"space-between"}}><span>Notifications</span><span>{st.notifications??"—"}</span></div></div>
               </div>
             </div>
@@ -194,153 +198,3 @@ export function BladesHome() {
     </ThemeRoot>
   );
 }
-
-// ═════════════════════════════ NXE / KINECT ═════════════════════════════
-type Channel = { id: string; label: string; cards: Entry[] };
-
-export function NxeHome({ variant }: { variant: "nxe" | "kinect" }) {
-  const api = useHome();
-  const s = api.settings;
-  const { W, H } = useStage();
-  const now = useClock(15000);
-  const st = useSteamStatus();
-  const wall = useWallpaper("x360");
-  const a = useAssets(variant === "nxe" ? "x360-nxe" : "x360-metro");
-  const btn = useAssets("x360-nxe");
-  const metro = useAssets("x360-metro");
-  const menu = useMenu();
-  const light = variant === "kinect";
-  const ink = light ? "#3a3a3a" : "#fff";
-  const accent = light ? "#5dc21e" : "#8ee03a";
-  const games = api.lib.games;
-
-  const channels: Channel[] = [
-    { id: "spotlight", label: "Spotlight", cards: [...games.slice(0, 1).map((g) => ({ key: `s${g.appid}`, label: g.name, sub: "Jump back in", game: g, run: () => api.activate(g, () => api.launch(g)) })), { key: "store", label: "Steam Store", sub: "Featured and specials", icon: "store", img: a.store, run: () => openSteam("store") }, { key: "dl", label: "Downloads", sub: "Queue and updates", icon: "download", img: a.downloads, run: () => openSteam("downloads") }] },
-    { id: "games", label: "Games", cards: [...games.slice(0, 12).map((g) => ({ key: `g${g.appid}`, label: g.name, sub: fmtPlaytime(g.playtime), game: g, run: () => api.activate(g, () => api.launch(g)) })), { key: "lib", label: "Game Library", sub: `${games.length} games`, icon: "library", img: a.gamertiles ?? a.controller, run: () => openSteam("library") }] },
-    { id: "media", label: "Pictures", cards: [{ key: "shots", label: "Screenshots", sub: "Your captures", icon: "photo", img: a.media, run: () => api.openMedia() }, { key: "web", label: "Internet", sub: "Web browser", icon: "globe", img: a.globe, run: () => openSteam("browser") }] },
-    { id: "social", label: "Social", cards: [{ key: "friends", label: "Friends", sub: st.friendsOnline !== undefined ? `${st.friendsOnline} online` : "Friends and chat", icon: "friends", img: a.friends, run: () => openSteam("friends") }, { key: "msg", label: "Messages", sub: st.notifications ? `${st.notifications} new` : "Notifications", icon: "bell", img: a.messages, run: () => openSteam("notifications") }, { key: "community", label: "Community", sub: "Steam Community", icon: "globe", img: a.live, run: () => openSteam("community") }] },
-    { id: "my", label: "My Xbox", cards: [{ key: "settings", label: "Settings", sub: "Steam settings", icon: "gear", img: a.settings ?? a.console, run: () => openSteam("settings") }, { key: "home", label: "Home Screen", sub: "Deck Home Themes options", icon: "home", img: a.themes, run: api.openSettings }, { key: "presets", label: "Dashboards", sub: "Switch presets", icon: "palette", run: () => menu.open(themeMenu(s.theme, api.switchTheme, THEMES), "Presets") }, { key: "steamhome", label: "Home", sub: "Steam's own home", icon: "steam", run: api.showSteamHome }, { key: "power", label: "Turn Off", sub: "Power options", icon: "power", run: () => openSteam("power") }] },
-  ];
-  const [ch, setCh] = useRemembered("nxe-ch", 1);
-  const [sels, setSels] = useRemembered<Record<string, number>>("nxe-sels", {});
-  const chan = channels[clamp(ch, 0, channels.length - 1)];
-  const sel = clamp(sels[chan.id] ?? 0, 0, chan.cards.length - 1);
-  const cur = chan.cards[sel];
-
-  const options = () => {
-    const extra: MenuItem[] = [
-      { label: "Presets", sub: () => themeMenu(s.theme, api.switchTheme, THEMES) },
-      { label: "Home Screen Settings", action: api.openSettings },
-      { label: "Home", action: api.showSteamHome },
-    ];
-    const g = cur?.game;
-    menu.open(g ? [{ label: "Play", action: () => api.launch(g) }, { label: "Game Details", action: () => api.details(g) }, { label: "Watch Trailer", action: () => api.playTrailer(g) }, { label: "Game Options", action: () => api.nativeMenu(g) }, ...extra] : extra, g?.name);
-  };
-  const onInput = (p: Press): boolean => {
-    if (menu.handle(p)) return true;
-    const k = p.btn;
-    if (k === "y") return options(), true;
-    if (k === "up" || k === "down") {
-      const n = clamp(ch + (k === "up" ? -1 : 1), 0, channels.length - 1);
-      if (n !== ch) (setCh(n), playSound("tab"));
-      else playSound("end");
-      return true;
-    }
-    if (k === "left" || k === "right" || k === "l1" || k === "r1") {
-      const d = k === "left" ? -1 : k === "right" ? 1 : k === "l1" ? -4 : 4;
-      const n = clamp(sel + d, 0, chan.cards.length - 1);
-      if (n !== sel) (setSels((m) => ({ ...m, [chan.id]: n })), playSound("move"));
-      else playSound("end");
-      return true;
-    }
-    if (k === "a" && cur) return playSound("select"), cur.run(), true;
-    if (k === "x" && cur?.game) return api.launch(cur.game), true;
-    if (k === "menu" && cur?.game) return api.nativeMenu(cur.game), true;
-    return false;
-  };
-
-  // cards: the selected one big at the front, the rest receding to the right
-  const CW = 470;
-  const CH = 264;
-  const cx = 230;
-  const cy = H * 0.5 - CH / 2;
-  const card = (e: Entry, i: number) => {
-    const d = i - sel;
-    if (d < -1 || d > 6) return null;
-    const style: CSSProperties =
-      d < 0
-        ? { left: cx - CW * 0.55, top: cy, opacity: 0, transform: "perspective(900px) rotateY(30deg) scale(0.8)" }
-        : d === 0
-          ? { left: cx, top: cy, opacity: 1, transform: "none", zIndex: 20 }
-          : { left: cx + CW + 30 + (d - 1) * 150, top: cy + 26, opacity: Math.max(0.25, 1 - d * 0.13), transform: `perspective(900px) rotateY(-32deg) scale(${0.82 - d * 0.03})`, zIndex: 20 - d };
-    const on = d === 0;
-    return (
-      <div key={e.key} className="dht-x360n-card dht-tile" data-selected={on} data-name={e.label} onClick={() => (on ? e.run() : setSels((m) => ({ ...m, [chan.id]: i })))} style={{ position: "absolute", width: CW, height: CH, borderRadius: light ? 4 : 10, overflow: "hidden", transformOrigin: "0 50%", transition: "left 260ms ease-out, top 260ms, transform 260ms, opacity 260ms", background: light ? "#fff" : "linear-gradient(180deg, #3a3f4c, #20232b)", boxShadow: on ? `0 0 0 3px ${accent}, 0 16px 36px rgba(0,0,0,${light ? 0.25 : 0.6})` : `0 10px 24px rgba(0,0,0,${light ? 0.15 : 0.5})`, ...style }}>
-        {e.game ? (
-          <GameArt g={e.game} kind="landscape" style={{ position: "absolute", inset: 0, width: "100%", height: "100%" }} />
-        ) : (
-          <div style={{ position: "absolute", inset: 0, display: "flex", alignItems: "center", justifyContent: "center", background: light ? "linear-gradient(135deg, #ffffff, #e9efe4)" : `linear-gradient(135deg, ${accent}55, #20232b)` }}>
-            {e.img ? <img src={e.img} style={{ width: 110, height: 110, filter: light ? "brightness(0.4)" : "none" }} /> : <Icon name={e.icon ?? "folder"} size={96} color={light ? "#666" : "#fff"} />}
-          </div>
-        )}
-        <div style={{ position: "absolute", left: 0, right: 0, bottom: 0, padding: "10px 16px", background: light ? "rgba(255,255,255,0.92)" : "linear-gradient(180deg, transparent, rgba(0,0,0,0.8))", color: light ? "#333" : "#fff" }}>
-          <div style={{ fontSize: 20, fontWeight: 600, whiteSpace: "nowrap", overflow: "hidden", textOverflow: "ellipsis" }}>{!e.game || showTitle(s, "x360", on) ? e.label : ""}</div>
-          {e.sub && <div style={{ fontSize: 13, opacity: 0.75 }}>{e.sub}</div>}
-        </div>
-      </div>
-    );
-  };
-
-  return (
-    <ThemeRoot onInput={onInput} hints={{ a: "Select", y: "Options" }}>
-      <Stage background={light ? "#eee" : "#111"}>
-        {wall ? (
-          <img src={wall} style={{ position: "absolute", inset: 0, width: W, height: H, objectFit: "cover" }} />
-        ) : (
-          <div className="dht-x360n-bg" style={{ position: "absolute", inset: 0, background: light ? "radial-gradient(ellipse at 60% 30%, #ffffff 0%, #eef0ec 45%, #d6dad3 100%)" : "radial-gradient(ellipse at 60% 20%, #4a5266 0%, #262a35 45%, #0f1116 100%)" }}>
-            <div style={{ position: "absolute", left: "-10%", right: "-10%", top: "55%", height: "40%", background: light ? "linear-gradient(180deg, rgba(93,194,30,0.10), transparent)" : "linear-gradient(180deg, rgba(142,224,58,0.10), transparent)", transform: "skewY(-6deg)" }} />
-          </div>
-        )}
-        {/* channel names, the current one large */}
-        {channels.map((c, i) => {
-          const d = i - ch;
-          if (Math.abs(d) > 2) return null;
-          const on = d === 0;
-          return (
-            <div key={c.id} className="dht-x360n-channel" data-selected={on} onClick={() => setCh(i)} style={{ position: "absolute", left: on ? cx : cx + 6, top: on ? cy - 64 : d < 0 ? cy - 64 + d * 46 - 30 : cy + CH + 30 + (d - 1) * 40, color: on ? ink : light ? "#8a8a8a" : "rgba(255,255,255,0.45)", fontSize: on ? 40 : 24, fontWeight: on ? 300 : 400, transition: "top 260ms, font-size 260ms", whiteSpace: "nowrap" }}>
-              {c.label}
-            </div>
-          );
-        })}
-        <div key={chan.id} style={{ position: "absolute", inset: 0, animation: "dhtNxeIn 280ms ease-out" }}>
-          <style>{`@keyframes dhtNxeIn { from { opacity: 0; transform: translateY(24px) } to { opacity: 1; transform: none } }`}</style>
-          {chan.cards.map(card)}
-        </div>
-        {/* profile and clock */}
-        <div style={{ position: "absolute", left: 40, top: 28, display: "flex", alignItems: "center", gap: 12, color: ink }}>
-          <div style={{ width: 46, height: 46, borderRadius: 6, overflow: "hidden", background: accent }}>{st.avatar ? <img src={st.avatar} style={{ width: 46, height: 46 }} /> : a.avatar ?? metro.avatar ? <img src={a.avatar ?? metro.avatar} style={{ width: 46, height: 46 }} /> : null}</div>
-          <div>
-            <div style={{ fontSize: 19, fontWeight: 600 }}>{api.user}</div>
-            <div style={{ fontSize: 13, color: st.online ? accent : "#999" }}>{st.online ? "Online" : "Offline"}</div>
-          </div>
-        </div>
-        <div style={{ position: "absolute", right: 44, top: 34, color: ink, fontSize: 20 }}>{fmtTime(now, s.clock24)}</div>
-        <div style={{ position: "absolute", left: cx, bottom: 34, display: "flex", gap: 22, alignItems: "center", color: ink, fontSize: 16 }}>
-          <span style={{ display: "flex", gap: 8, alignItems: "center" }}>
-            <Btn img={btn.a} letter="A" color="#3fb83f" /> Select
-          </span>
-          <span style={{ display: "flex", gap: 8, alignItems: "center" }}>
-            <Btn img={btn.y} letter="Y" color="#e9c31d" /> Options
-          </span>
-          {cur?.game && (
-            <span style={{ display: "flex", gap: 10, alignItems: "center", opacity: 0.85 }}>
-              {cur.game.name} · Last played {fmtLastPlayed(cur.game.lastPlayed)} <Badges g={cur.game} size={12} />
-            </span>
-          )}
-        </div>
-        <MenuView menu={menu} variant="x360" />
-      </Stage>
-    </ThemeRoot>
-  );
-}
-

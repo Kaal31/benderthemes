@@ -1,10 +1,11 @@
 node_modules/
 dist/
 out/
-theme-catalog.json
-work/
 __pycache__/
 *.pyc
+*.tgz
 preview/*.html
-preview/*.png
-preview/*.webm
+
+# Rendered promo video and poster (re-render with tools/promo/, see handoff-notes/promo-video.md)
+/promo/
+asset-source.json

@@ -30,17 +30,27 @@ export function MinecraftPlayer({skin,slim=false,motion=true,followFocus=false,f
  return()=>{resize.disconnect();document.removeEventListener('visibilitychange',visibility);v.dispose();viewer.current=undefined;};}catch{setFailed(true);return()=>v?.dispose();}},[]);
  useEffect(()=>{viewer.current?.loadSkin(skin,{model:slim?"slim":"default"}).catch(()=>setFailed(true));},[skin,slim]);
  const strikeAt=useRef(-10000);
- useEffect(()=>{const strike=()=>{if(motion&&!matchMedia('(prefers-reduced-motion: reduce)').matches)strikeAt.current=performance.now();};const click=(e:MouseEvent)=>{if((e as MouseEvent&{minecraftAfterSwipe?:boolean}).minecraftAfterSwipe)return;if(e.target instanceof Element&&e.target.closest('.mc-home button,.dht-menu--minecraft .dht-menu-item'))strike();};document.addEventListener('click',click);window.addEventListener('dht-minecraft-strike',strike);return()=>{document.removeEventListener('click',click);window.removeEventListener('dht-minecraft-strike',strike);};},[motion]);
+ useEffect(()=>{const strike=()=>{if(motion&&!matchMedia('(prefers-reduced-motion: reduce)').matches)strikeAt.current=performance.now();};const click=(e:MouseEvent)=>{if((e as MouseEvent&{minecraftAfterSwipe?:boolean}).minecraftAfterSwipe)return;if((e.target as Element|null)?.nodeType===1&&(e.target as Element).closest('.mc-home button,.dht-menu--minecraft .dht-menu-item'))strike();};const doc=canvas.current?.ownerDocument??document;doc.addEventListener('click',click);window.addEventListener('dht-minecraft-strike',strike);return()=>{doc.removeEventListener('click',click);window.removeEventListener('dht-minecraft-strike',strike);};},[motion]);
  const focusTarget=useRef({x:0,y:0});
  useEffect(()=>{
-  if(!followFocus)return;
-  const update=(e?:Event)=>{const node=e?.target instanceof Element?e.target.closest('button,[data-selected=true]'):null;const target=node??document.querySelector('.dht-menu--minecraft [data-selected=true]')??document.querySelector('.mc-home [data-focus=true]');const r=target?.getBoundingClientRect(),c=canvas.current?.getBoundingClientRect();if(r&&c)focusTarget.current={x:Math.max(-1,Math.min(1,(r.x+r.width/2-c.x-c.width/2)/600)),y:Math.max(-1,Math.min(1,(r.y+r.height/2-c.y-c.height*.3)/400))};};
-  update();document.addEventListener('pointerover',update);document.addEventListener('focusin',update);return()=>{document.removeEventListener('pointerover',update);document.removeEventListener('focusin',update);};
+  const node=canvas.current;if(!node||!followFocus)return;
+  const doc=node.ownerDocument,root=node.closest('[data-dht-root]')??doc.body,win=doc.defaultView??window;
+  const update=(event?:Event)=>{
+   const hovered=event?.target instanceof win.Element?(event.target as Element).closest('button,.dht-menu-item'):null;
+   if(event&&(event.type==='pointerover'||event.type==='focusin')&&!hovered)return;
+   if(hovered&&!root.contains(hovered))return;
+   const target=hovered??root.querySelector('.dht-menu--minecraft [data-selected=true]')??root.querySelector('.mc-content-slot [data-selected=true]')??root.querySelector('.mc-home [data-focus=true]');
+   const r=target?.getBoundingClientRect(),c=node.getBoundingClientRect(),stage=root.getBoundingClientRect();
+   if(r&&c.width&&stage.width){focusTarget.current={x:Math.max(-1,Math.min(1,(r.x+r.width/2-c.x-c.width/2)/(stage.width*.8))),y:Math.max(-1,Math.min(1,(r.y+r.height/2-c.y-c.height*.28)/(stage.height*.6)))};node.dataset.lookTarget=`${focusTarget.current.x.toFixed(3)},${focusTarget.current.y.toFixed(3)}`;}
+  };
+  update();const observer=new MutationObserver(()=>update());observer.observe(root,{subtree:true,attributes:true,attributeFilter:['data-focus','data-selected']});
+  doc.addEventListener('pointerover',update);doc.addEventListener('focusin',update);win.addEventListener('resize',update);
+  return()=>{observer.disconnect();doc.removeEventListener('pointerover',update);doc.removeEventListener('focusin',update);win.removeEventListener('resize',update);};
  },[followFocus,focusKey]);
  useEffect(()=>{const v=viewer.current;if(!v)return;const animate=motion&&!matchMedia('(prefers-reduced-motion: reduce)').matches;
   const idle=new IdleAnimation();if(!animate&&!followFocus){v.animation=null;return;}
   idle.speed=animate?.35:0;
-  let yaw=0,pitch=0,lean=0;idle.addAnimation((player)=>{const swing=(performance.now()-strikeAt.current)/MINECRAFT_SWIPE_MS;if(animate&&swing>=0&&swing<1){const hit=Math.sin(Math.PI*swing);player.skin.rightArm.rotation.x=-hit*1.65;player.skin.rightArm.rotation.z=-hit*.18;player.skin.body.rotation.y=hit*.13;}if(!followFocus||dragging.current)return;const t=focusTarget.current;const blend=animate?.08:1;yaw+=(t.x*.95-yaw)*blend;pitch+=(t.y*.4-pitch)*blend;lean+=(-t.x*.075-lean)*blend;player.skin.head.rotation.y=yaw;player.skin.head.rotation.x=pitch;player.skin.body.rotation.z=lean;player.skin.body.rotation.y=yaw*.16+(animate&&swing>=0&&swing<1?Math.sin(Math.PI*swing)*.13:0);});v.animation=idle;
+  let yaw=0,pitch=0,lean=0;idle.addAnimation((player)=>{const swing=(performance.now()-strikeAt.current)/MINECRAFT_SWIPE_MS;if(animate&&swing>=0&&swing<1){const hit=Math.sin(Math.PI*swing);player.skin.rightArm.rotation.x=-hit*1.65;player.skin.rightArm.rotation.z=-hit*.18;player.skin.body.rotation.y=hit*.13;}if(!followFocus||dragging.current)return;const t=focusTarget.current;const blend=animate?.08:1;yaw+=(t.x*.95-yaw)*blend;pitch+=(t.y*.65-pitch)*blend;lean+=(-t.x*.075-lean)*blend;player.skin.head.rotation.y=yaw;player.skin.head.rotation.x=pitch;player.skin.body.rotation.z=lean;player.skin.body.rotation.y=yaw*.16+(animate&&swing>=0&&swing<1?Math.sin(Math.PI*swing)*.13:0);});v.animation=idle;
   return()=>{v.animation=null;};
  },[motion,followFocus]);
  return <>{failed?<div className="mc-player-error">3D preview unavailable on this renderer.<br/>Your skin is still saved.</div>:null}<canvas ref={canvas} aria-label="3D player — swipe or drag to rotate" onPointerDown={e=>e.stopPropagation()} style={{touchAction:"none",cursor:"grab",width:"100%",height:"100%",display:failed?"none":"block"}}/></>;

@@ -1,0 +1,16 @@
+{
+  "schema": 1,
+  "id": "frame-test",
+  "name": "Shelf (test fixture)",
+  "author": "Deck Home Themes",
+  "description": "Test fixture for community interfaces (tests only, not shipped): its own HTML page, sealed off from Steam, talking to the plugin only through messages.",
+  "company": "Community",
+  "layout": "frame",
+  "frame": {
+    "entry": "index.html"
+  },
+  "slots": {
+    "sounds": "sounds",
+    "accent": "#7cc4ff"
+  }
+}

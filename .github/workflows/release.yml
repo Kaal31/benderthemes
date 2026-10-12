@@ -10,6 +10,7 @@ concurrency:
   cancel-in-progress: false
 jobs:
   release:
+    if: github.ref == 'refs/heads/main'
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
@@ -47,6 +48,8 @@ jobs:
       - run: node tests/verify-block-panels.mjs
       - run: node tests/verify-firmware-looks.mjs
       - run: npm run package
+        env:
+          USE_PUBLISHED_ASSETS: '1' # theme packs live on Kaal31/deckthemes-assets (asset-catalog.json)
       - run: python tools/verify_release.py
       - name: Commit version and tag
         env:
@@ -65,5 +68,5 @@ jobs:
           GH_TOKEN: ${{ github.token }}
           VERSION: ${{ steps.version.outputs.version }}
         run: |
-          gh release create "v${VERSION}" "out/DeckHomeThemes-v${VERSION}.zip" out/themes/ThemeAssets-*-v${VERSION}.zip out/themes/theme-catalog.json --title "Deck Home Themes v${VERSION}" --generate-notes --draft --verify-tag
+          gh release create "v${VERSION}" "out/DeckHomeThemes-v${VERSION}.zip" asset-catalog.json --title "ThemeHub v${VERSION}" --generate-notes --draft --verify-tag
           gh release edit "v${VERSION}" --draft=false --latest

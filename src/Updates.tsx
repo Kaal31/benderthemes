@@ -10,7 +10,7 @@ export type Status = {
 const checkUpdates = callable<[], Status>("plugin_update_status");
 const prepare = callable<[version: string, url: string], { success: boolean; error?: string }>("plugin_prepare_replacement");
 const cancel = callable<[], boolean>("plugin_cancel_replacement");
-const NAME = "Deck Home Themes";
+const NAME = "ThemeHub";
 const backend = (): any => (window as any).DeckyBackend ?? (window.opener as any)?.DeckyBackend;
 const compare = (a: string, b: string) => {
   const x = a.split(".").map(Number), y = b.split(".").map(Number);

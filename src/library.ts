@@ -5,8 +5,9 @@
 import { beginLaunch } from "./launch";
 import { openDestination } from "./destinations";
 import { Navigation } from "@decky/ui";
-import { SortMode } from "./settings";
+import { getSettings, SortMode } from "./settings";
 import { findMediaRoute } from "./steam";
+import { readLastPlayed, readPlaytime, isHiddenApp } from "./steamData";
 
 declare const collectionStore: any;
 declare const appStore: any;
@@ -20,6 +21,7 @@ export interface Game {
   playtime: number; // minutes
   installed: boolean;
   shortcut: boolean;
+  hidden?: boolean; // in Steam's Hidden collection (kept out of every list unless the Hidden collection is opened)
   kind: "game" | "app";
   art: {
     portrait: string[]; // 600×900 cover
@@ -86,8 +88,8 @@ function toGame(a: any): Game | null {
     appid: a.appid,
     gameid: String(a.m_gameid ?? a.gameid ?? a.appid),
     name: a.display_name ?? a.sort_as ?? String(a.appid),
-    lastPlayed: a.rt_last_time_played ?? a.rt_last_time_locally_played ?? 0,
-    playtime: Number(a.minutes_playtime_forever ?? 0),
+    lastPlayed: readLastPlayed(a),
+    playtime: readPlaytime(a),
     installed: shortcut ? true : !!(a.installed ?? a.local_per_client_data?.installed),
     shortcut,
     kind: isGame ? "game" : "app",
@@ -108,6 +110,8 @@ export function sortGames(list: Game[], sort: SortMode): Game[] {
 
 export interface LibrarySource {
   allApps(): any[];
+  /** App ids in Steam's Hidden collection. */
+  hiddenIds?(): Set<number>;
   collections(): { id: string; name: string; apps: any[] }[];
 }
 
@@ -128,6 +132,17 @@ const steamSource: LibrarySource = {
       /* ignore */
     }
     return [...games, ...apps];
+  },
+  hiddenIds() {
+    const out = new Set<number>();
+    try {
+      const h = collectionStore?.GetCollection?.("hidden");
+      const list: any[] = h?.allApps ?? h?.visibleApps ?? (h?.apps?.values ? Array.from(h.apps.values()) : []);
+      for (const a of list) if (a?.appid != null) out.add(Number(a.appid));
+    } catch {
+      /* ignore */
+    }
+    return out;
   },
   collections() {
     const out: { id: string; name: string; apps: any[] }[] = [];
@@ -164,7 +179,17 @@ export function loadLibrary(src: string, sort: SortMode, max: number, collection
   if (cache && cache.key === key && Date.now() - cache.at < 4000) return cache.lib;
   let lib: Library;
   try {
-    const every = (source.allApps() ?? []).map(toGame).filter(Boolean) as Game[];
+    // Hidden games stay out of every list unless the Hidden collection itself is the source ("col:hidden").
+    const showHidden = src === "col:hidden";
+    let hiddenSet = new Set<number>();
+    try {
+      hiddenSet = source.hiddenIds?.() ?? new Set<number>();
+    } catch {
+      /* ignore */
+    }
+    const isHidden = (a: any) => isHiddenApp(a, hiddenSet);
+    const everyAll = (source.allApps() ?? []).map((a: any) => { const g = toGame(a); if (g && isHidden(a)) g.hidden = true; return g; }).filter(Boolean) as Game[];
+    const every = showHidden ? everyAll : everyAll.filter((g) => !g.hidden);
     const games = every.filter((g) => g.kind === "game");
     const apps = sortGames(
       every.filter((g) => g.kind === "app"),
@@ -175,8 +200,9 @@ export function loadLibrary(src: string, sort: SortMode, max: number, collection
     const collections: Collection[] = (source.collections() ?? []).map((c) => ({
       id: c.id,
       name: c.name,
-      games: sortGames((c.apps.map((a) => byId.get(a?.appid) ?? toGame(a)).filter(Boolean) as Game[]), sort),
+      games: sortGames((c.apps.filter((a) => showHidden || !isHidden(a)).map((a) => byId.get(a?.appid) ?? toGame(a)).filter(Boolean) as Game[]), sort),
     }));
+    if (showHidden) collections.push({ id: "hidden", name: "Hidden", games: sortGames(everyAll.filter((g) => g.hidden && g.kind === "game"), sort) });
     let chosen: Game[];
     const visibleCollections = src === "collections" ? collections.filter(c => collectionIds.includes(c.id)) : src.startsWith("col:") ? collections.filter(c => c.id === src.slice(4)) : collections;
     if (src === "collections") chosen = [...new Map(visibleCollections.flatMap(c => c.games).map(g => [g.appid, g])).values()];
@@ -246,7 +272,7 @@ export function setStoreOpener(f: (() => void) | null) {
   storeOpener = f;
 }
 export function openSteam(place: SteamPlace | "steamstore") {
-  if (place === "store" && storeOpener) return storeOpener();
+  if (place === "store" && storeOpener && getSettings().themedStore !== false) return storeOpener();
   if (place !== "steamstore" && place !== "store" && openDestination({place})) return;
   if (place === "steamstore") place = "store";
   if (previewActions.nav) return previewActions.nav(place);
@@ -322,8 +348,10 @@ export function openAchievements(g: Game) {
 }
 
 // ───────────── formatting helpers ─────────────
-export function fmtPlaytime(min: number): string {
-  if (!min) return "Never played";
+/** "Never played" only when there is neither playtime nor a last-played time; a game with a last-played time
+ *  but no readable playtime (non-Steam shortcuts) shows when it was last played instead. */
+export function fmtPlaytime(min: number, lastPlayed = 0, lastShownElsewhere = false): string {
+  if (!min) return !lastPlayed ? "Never played" : lastShownElsewhere ? "Playtime not recorded" : `Last played ${fmtLastPlayed(lastPlayed)}`;
   if (min < 60) return `${min} min played`;
   const h = min / 60;
   return `${h < 10 ? h.toFixed(1) : Math.round(h)} hrs played`;

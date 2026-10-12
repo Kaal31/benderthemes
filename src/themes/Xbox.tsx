@@ -10,13 +10,16 @@ import { clamp, Press, Stage, ThemeRoot, useStage } from "../input";
 import { fmtLastPlayed, fmtPlaytime, Game, openAchievements, openSteam } from "../library";
 import { showTitle, THEMES, updateSettings } from "../settings";
 import { Badges } from "../badges";
-import { fmtTime, playSound, useClock, useWallpaper } from "../steam";
+import { fmtDate, fmtTime, playSound, useClock, useWallpaper } from "../steam";
 import { XBOX_ORIGINAL_FONT_CSS } from "./xboxOriginalFont";
 import { useAssets } from "../assets";
+import { useXboxLook } from "../skins";
 import { TheseusSurface } from "./TheseusSurface";
+import { styleOf } from "../engine/themeStyles";
+import { useReportFocus } from "../focus";
 
 const FONT = '"DHT Xbox Original", sans-serif';
-const TEXT = "#a8d86b";
+const TEXT = "var(--dht-xbox-skin-text, #a8d86b)"; // a skin file can recolour the text
 const CSS = `${XBOX_ORIGINAL_FONT_CSS}
 @keyframes dhtXbSpin { to { transform: rotate(360deg) } }
 @keyframes dhtXbBreath { 0%,100% { transform: scale(1) } 50% { transform: scale(1.025) } }
@@ -25,6 +28,18 @@ const CSS = `${XBOX_ORIGINAL_FONT_CSS}
 `;
 
 type Screen = "main" | "games" | "settings";
+
+/** "Live blue": the dashboard's green turned to the Xbox Live blue. */
+const BLUE = "hue-rotate(110deg)";
+type Lang = "en" | "de" | "fr" | "es" | "it";
+/** The dashboard's own words in the languages the console offered (Japanese left out: the font is ASCII only). */
+const WORDS: Record<Lang, Record<string, string>> = {
+  en: { memory: "MEMORY", music: "MUSIC", live: "XBOX LIVE", settings: "SETTINGS", select: "SELECT", back: "BACK", clock: "Clock", language: "Language", audio: "Audio", video: "Video", network: "Network Settings", parental: "Parental Control", autooff: "Auto Off", skins: "Skins", system: "System Info", power: "Shutdown" },
+  de: { memory: "SPEICHER", music: "MUSIK", live: "XBOX LIVE", settings: "EINSTELLUNGEN", select: "AUSWÄHLEN", back: "ZURÜCK", clock: "Uhr", language: "Sprache", audio: "Audio", video: "Video", network: "Netzwerkeinstellungen", parental: "Jugendschutz", autooff: "Automatisch aus", skins: "Skins", system: "Systeminfo", power: "Ausschalten" },
+  fr: { memory: "MÉMOIRE", music: "MUSIQUE", live: "XBOX LIVE", settings: "PARAMÈTRES", select: "SÉLECTIONNER", back: "RETOUR", clock: "Horloge", language: "Langue", audio: "Audio", video: "Vidéo", network: "Paramètres réseau", parental: "Contrôle parental", autooff: "Arrêt auto", skins: "Skins", system: "Infos système", power: "Arrêt" },
+  es: { memory: "MEMORIA", music: "MÚSICA", live: "XBOX LIVE", settings: "CONFIGURACIÓN", select: "SELECCIONAR", back: "ATRÁS", clock: "Reloj", language: "Idioma", audio: "Audio", video: "Vídeo", network: "Configuración de red", parental: "Control parental", autooff: "Apagado automático", skins: "Skins", system: "Info. del sistema", power: "Apagar" },
+  it: { memory: "MEMORIA", music: "MUSICA", live: "XBOX LIVE", settings: "IMPOSTAZIONI", select: "SELEZIONA", back: "INDIETRO", clock: "Orologio", language: "Lingua", audio: "Audio", video: "Video", network: "Impostazioni di rete", parental: "Controllo genitori", autooff: "Spegnimento automatico", skins: "Skin", system: "Info di sistema", power: "Spegni" },
+};
 
 // ───────────── wireframe sphere background ─────────────
 function rng(seed: number) {
@@ -81,13 +96,13 @@ function meshPath(W: number, H: number, cx: number, cy: number): string {
   return out;
 }
 
-function Backdrop({ W, H, cx, cy, animate }: { W: number; H: number; cx: number; cy: number; animate: boolean }) {
+function Backdrop({ W, H, cx, cy, animate, plain, tint }: { W: number; H: number; cx: number; cy: number; animate: boolean; plain?: boolean; tint?: string }) {
   const d = useMemo(() => meshPath(W, H, cx, cy), [W, H, cx, cy]);
   const assets = useAssets("xbox-original");
   return (
-    <div className="dht-xbox-bg" style={{ position: "absolute", inset: 0, overflow: "hidden", background: `var(--dht-xbox-bg, radial-gradient(ellipse at ${(cx / W) * 100}% ${(cy / H) * 100}%, #000d00 0%, #001300 30%, #032603 62%, #073005 100%))` }}>
-      {assets.cellwall && <TheseusSurface src={assets.cellwall} W={W} H={H} animate={animate}/>}
-      <svg width={W} height={H} style={{ position: "absolute", inset: 0 }}> 
+    <div className="dht-xbox-bg" style={{ position: "absolute", inset: 0, overflow: "hidden", filter: tint, background: `var(--dht-xbox-bg, radial-gradient(ellipse at ${(cx / W) * 100}% ${(cy / H) * 100}%, #000d00 0%, #001300 30%, #032603 62%, #073005 100%))` }}>
+      {!plain && assets.cellwall && <TheseusSurface src={assets.cellwall} W={W} H={H} animate={animate}/>}
+      {!plain && <svg width={W} height={H} style={{ position: "absolute", inset: 0 }}> 
         <defs>
           <radialGradient id="dhtXbMeshFade" cx={cx / W} cy={cy / H} r="0.8">
             <stop offset="0" stopColor="#000" />
@@ -105,19 +120,20 @@ function Backdrop({ W, H, cx, cy, animate }: { W: number; H: number; cx: number;
           <path d={`M ${W * 0.62} ${-H * 0.1} Q ${W * 0.82} ${H * 0.45} ${W * 0.7} ${H * 1.1}`} stroke="#5cc22a" strokeOpacity="0.4" strokeWidth="2" fill="none" />
           <path d={`M ${-W * 0.05} ${H * 0.18} Q ${W * 0.2} ${H * 0.4} ${W * 0.08} ${H * 1.05}`} stroke="#5cc22a" strokeOpacity="0.35" strokeWidth="2" fill="none" />
         </g>
-      </svg>
+      </svg>}
     </div>
   );
 }
 
 // ───────────── the orb ─────────────
-function Orb({ x, y, r, animate, burst }: { x: number; y: number; r: number; animate: boolean; burst: number }) {
+function Orb({ x, y, r, animate, burst, glow = "normal" }: { x: number; y: number; r: number; animate: boolean; burst: number; glow?: string }) {
+  const g = glow === "soft" ? { o: 0.35, k: 1.35, f: "brightness(0.85)" } : glow === "bright" ? { o: 1, k: 1.8, f: "brightness(1.12) drop-shadow(0 0 18px rgba(190,255,60,0.6))" } : { o: 0.65, k: 1.55, f: undefined };
   const S = r * 3.4;
   const assets = useAssets("xbox-original");
 
 
   return (
-    <div className="dht-xbox-orb" style={{ position: "absolute", left: x - S / 2, top: y - S / 2, width: S, height: S, pointerEvents: "none", animation: undefined }}>
+    <div className="dht-xbox-orb" style={{ position: "absolute", left: x - S / 2, top: y - S / 2, width: S, height: S, pointerEvents: "none", animation: undefined, filter: g.f }}>
       <svg width={S} height={S} viewBox={`${-S / 2} ${-S / 2} ${S} ${S}`} style={{ overflow: "visible" }}>
         <defs>
           <radialGradient id="dhtXbCore" cx="0.6" cy="0.72" r="0.75">
@@ -141,7 +157,7 @@ function Orb({ x, y, r, animate, burst }: { x: number; y: number; r: number; ani
             <stop offset="1" stopColor="rgba(120,230,30,0)" />
           </radialGradient>
         </defs>
-        <circle r={r * 1.55} fill="url(#dhtXbGlow)" opacity={burst ? 1 : 0.65} />
+        <circle r={r * g.k} fill="url(#dhtXbGlow)" opacity={burst ? 1 : g.o} />
         {/* orbit rings and the translucent band */}
         <g style={{ transformOrigin: "0 0", animation: animate ? "dhtXbSpin 60s linear infinite" : undefined }}>
           <ellipse rx={r * 1.42} ry={r * 0.44} transform="rotate(-64)" fill="none" stroke="rgba(150,235,70,0.18)" strokeWidth={r * 0.2} />
@@ -285,14 +301,13 @@ function Plate({ W, H, title, sub, children }: { W: number; H: number; title: st
 }
 
 /** Rows inside the plate (slanted right end, bright yellow-green when selected). */
-function Rows({ W, H, items, sel, onPick }: { W: number; H: number; items: { key: string; label: string; value?: string }[]; sel: number; onPick: (i: number) => void }) {
+function Rows({ W, H, items, sel, onPick, vis = 5 }: { W: number; H: number; items: { key: string; label: string; value?: string }[]; sel: number; onPick: (i: number) => void; vis?: number }) {
   const assets=useAssets("xbox-original");
   const x = W * 0.39;
   const w = W * 0.415;
   const y0 = H * 0.215;
-  const rh = H * 0.088;
   const gap = H * 0.011;
-  const vis = 5;
+  const rh = vis === 5 ? H * 0.088 : (H * 0.5 - gap * (vis - 1)) / vis;
   const top = clamp(sel - (vis - 2), 0, Math.max(0, items.length - vis));
   return (
     <>
@@ -320,14 +335,14 @@ function Rows({ W, H, items, sel, onPick }: { W: number; H: number; items: { key
 }
 
 /** Glass sphere on the left of the plate (clock for Settings, the cover for Games). */
-function GlassSphere({ W, H, children }: { W: number; H: number; children: ReactNode }) {
+function GlassSphere({ W, H, children, tint }: { W: number; H: number; children: ReactNode; tint?: string }) {
   const r = H * 0.2;
   const cx = W * 0.255;
   const cy = H * 0.45;
   return (
     <div className="dht-xbox-game-sphere" style={{ position: "absolute", left: cx - r, top: cy - r, width: r * 2, height: r * 2 }}>
-      <div style={{ position: "absolute", inset: -r * 0.12, borderRadius: "50%", background: "radial-gradient(circle at 45% 40%, rgba(120,220,50,0.08) 55%, rgba(150,240,70,0.32) 80%, rgba(200,255,120,0.45) 100%)", boxShadow: "0 0 40px rgba(120,230,40,0.3)" }} />
-      <div style={{ position: "absolute", inset: r * 0.16, borderRadius: "50%", overflow: "hidden", boxShadow: "0 0 0 6px rgba(200,230,190,0.6), 0 0 0 10px rgba(140,230,60,0.5)" }}>{children}</div>
+      <div style={{ position: "absolute", inset: -r * 0.12, borderRadius: "50%", filter: tint, background: "radial-gradient(circle at 45% 40%, rgba(120,220,50,0.08) 55%, rgba(150,240,70,0.32) 80%, rgba(200,255,120,0.45) 100%)", boxShadow: "0 0 40px rgba(120,230,40,0.3)" }} />
+      <div style={{ position: "absolute", inset: r * 0.16, borderRadius: "50%", overflow: "hidden", boxShadow: `0 0 0 6px rgba(200,230,190,0.6), 0 0 0 10px ${tint ? "rgba(60,150,240,0.5)" : "rgba(140,230,60,0.5)"}` }}>{children}</div>
       <div style={{ position: "absolute", left: r * 0.4, top: r * 0.22, width: r * 0.8, height: r * 0.4, borderRadius: "50%", background: "radial-gradient(ellipse, rgba(255,255,255,0.35), transparent 70%)", pointerEvents: "none" }} />
     </div>
   );
@@ -355,11 +370,17 @@ export function XboxHome() {
   const s = api.settings;
   const { W, H } = useStage();
   const now = useClock(15000);
-  const wall = useWallpaper("xbox");
+  const userWall = useWallpaper("xbox");
+  const look = useXboxLook();
+  const wall = userWall ?? look.bg;
   const menu = useMenu();
   const [screen, setScreen] = useRemembered<Screen>("xb-screen", "main");
   const [msel, setMsel] = useRemembered("xb-main", 1);
   const burst = 0;
+  const st = styleOf(s, "xbox");
+  const tint = st("colour") === "blue" ? BLUE : undefined;
+  const T = WORDS[(st<string>("lang") in WORDS ? st<string>("lang") : "en") as Lang];
+  const vis = Number(st("rows")) || 5;
 
   const lists = [{ id: "all", name: "All Games", games: api.lib.games }, ...api.lib.collections.map((c) => ({ id: c.id, name: c.name, games: c.games }))];
   const [lsel, setLsel] = useRemembered("xb-list", 0);
@@ -371,27 +392,32 @@ export function XboxHome() {
   const [ssel, setSsel] = useState(0);
 
   const SETTINGS: { key: string; label: string; value?: string; run: () => void }[] = [
-    {key:"clock",label:"Clock",run:()=>menu.open([{label:"12-hour clock",checked:!s.clock24,action:()=>updateSettings({clock24:false})},{label:"24-hour clock",checked:s.clock24,action:()=>updateSettings({clock24:true})}],"Clock")},
-    {key:"language",label:"Language",run:()=>menu.open([{label:"Steam system language",action:()=>openSteam("settings")}],"Language")},
-    {key:"audio",label:"Audio",run:()=>menu.open([{label:"Sound effects",checked:s.sounds,action:()=>updateSettings({sounds:!s.sounds})},{label:"Background music",checked:s.music.xbox!==false,action:()=>updateSettings(p=>({music:{...p.music,xbox:p.music.xbox===false}}))},{label:"Volume",sub:()=>[0,20,40,60,80,100].map(n=>({label:`${n}%`,checked:s.sfxVolume===n,action:()=>updateSettings({sfxVolume:n})}))}],"Audio")},
-    {key:"video",label:"Video",run:()=>menu.open([{label:"TV mode",checked:s.tvMode,action:()=>updateSettings({tvMode:!s.tvMode})},{label:"Animations",checked:s.animations,action:()=>updateSettings({animations:!s.animations})}],"Video")},
-    {key:"network",label:"Network Settings",run:()=>openSteam("settings")},
-    {key:"parental",label:"Parental Control",run:()=>openSteam("settings")},
-    {key:"autooff",label:"Auto Off",run:()=>openSteam("power")},
-    {key:"skins",label:"Skins",run:()=>menu.open(themeMenu(s.theme,api.switchTheme,THEMES),"Skins")},
-    {key:"system",label:"System Info",run:()=>api.openSettings()},
-    {key:"power",label:"Shutdown",run:()=>openSteam("power")},
+    {key:"clock",label:T.clock,run:()=>menu.open([{label:"12-hour clock",checked:!s.clock24,action:()=>updateSettings({clock24:false})},{label:"24-hour clock",checked:s.clock24,action:()=>updateSettings({clock24:true})}],"Clock",{page:true})},
+    {key:"language",label:T.language,run:()=>menu.open([{label:"Steam system language",action:()=>openSteam("settings")}],"Language",{page:true})},
+    {key:"audio",label:T.audio,run:()=>menu.open([{label:"Sound effects",checked:s.sounds,action:()=>updateSettings({sounds:!s.sounds})},{label:"Background music",checked:s.music.xbox!==false,action:()=>updateSettings(p=>({music:{...p.music,xbox:p.music.xbox===false}}))},{label:"Volume",sub:()=>[0,20,40,60,80,100].map(n=>({label:`${n}%`,checked:s.sfxVolume===n,action:()=>updateSettings({sfxVolume:n})}))}],"Audio",{page:true})},
+    {key:"video",label:T.video,run:()=>menu.open([{label:"TV mode",checked:s.tvMode,action:()=>updateSettings({tvMode:!s.tvMode})},{label:"Animations",checked:s.animations,action:()=>updateSettings({animations:!s.animations})}],"Video",{page:true})},
+    {key:"network",label:T.network,run:()=>openSteam("settings")},
+    {key:"parental",label:T.parental,run:()=>openSteam("settings")},
+    {key:"autooff",label:T.autooff,run:()=>openSteam("power")},
+    {key:"skins",label:T.skins,run:()=>menu.open(themeMenu(s.theme,api.switchTheme,THEMES),"Skins",{page:true})},
+    {key:"system",label:T.system,run:()=>api.openSettings()},
+    {key:"power",label:T.power,run:()=>openSteam("power")},
   ];
   const categoryModels = {clock:"ClockIcon",language:"GlobeIcon",audio:"StereoIcon",video:"FullscreenIcon",network:"network_icon",parental:"LockIcon",autooff:"AutoOffIcon",skins:"ConsoleIcon",system:"ConsoleIcon",power:"AutoOffIcon"} as const;
   const selectedCategory=SETTINGS[clamp(ssel,0,SETTINGS.length-1)].key as keyof typeof categoryModels;
 
   type MainItem = { id: string; label: string; small?: string; run: () => void };
   const MAIN: MainItem[] = [
-    { id: "games", label: "MEMORY", run: () => go("games") },
-    { id: "media", label: "MUSIC", run: () => openDestination({place:"music"}) },
-    { id: "settings", label: "SETTINGS", run: () => go("settings") },
+    // the 2001 dashboard put the inserted disc's title above Memory; here it is the last game played
+    ...(st("disc") === "last" && recent ? [{ id: "disc", label: recent.name, run: () => api.launch(recent) }] : []),
+    { id: "games", label: T.memory, run: () => go("games") },
+    { id: "media", label: T.music, run: () => openDestination({place:"music"}) },
+    // the 2003 dashboard added Xbox Live to the main menu
+    ...(st("dash") === "2003" ? [{ id: "live", label: T.live, run: () => openSteam("friends") }] : []),
+    { id: "settings", label: T.settings, run: () => go("settings") },
   ];
   const mcur = clamp(msel, 0, MAIN.length - 1);
+  useReportFocus(screen === "games" ? cur : screen === "main" && MAIN[mcur]?.id === "disc" ? recent : undefined);
 
   function go(sc: Screen) {
     setScreen(sc);
@@ -412,6 +438,7 @@ export function XboxHome() {
     const extra: MenuItem[] = [
       { label:"Xbox Live", action:()=>openSteam("friends") },
       { label:"Marketplace", action:()=>openSteam("store") },
+      { label:"Downloads", action:()=>openSteam("downloads") },
       { label:"Screenshots", action:api.openMedia },
       { label: "Presets", sub: () => themeMenu(s.theme, api.switchTheme, THEMES) },
       { label: "Home Screen Settings", action: api.openSettings },
@@ -475,12 +502,13 @@ export function XboxHome() {
   return (
     <ThemeRoot onInput={onInput} hints={{ a: "Select", b: "Back", y: "Options" }}>
       <Stage background="#061402">
-        <style>{CSS}</style>
-        {wall ? <img src={wall} style={{ position: "absolute", inset: 0, width: W, height: H, objectFit: "cover" }} /> : <Backdrop W={W} H={H} cx={ox} cy={oy} animate={s.animations}/>}
+        <style>{CSS}{look.css}</style>
+        {!wall && look.bgColor && <div className="dht-xbox-bg" data-dht-from-skin="xbox" style={{ position: "absolute", inset: 0, background: look.bgColor }} />}
+        {wall ? <img src={wall} className="dht-xbox-bg" data-dht-from-skin={userWall ? undefined : "xbox"} style={{ position: "absolute", inset: 0, width: W, height: H, objectFit: "cover" }} /> : look.bgColor ? null : <Backdrop W={W} H={H} cx={ox} cy={oy} animate={s.animations} plain={st("wall") === "plain"} tint={tint}/>}
 
         {screen === "main" && (
-          <div key="main" style={main}>
-            <Orb x={ox} y={oy} r={or} animate={s.animations} burst={burst}/>
+          <div key="main" style={{ ...main, filter: tint }}>
+            <Orb x={ox} y={oy} r={or} animate={s.animations} burst={burst} glow={st<string>("glow")}/>
             {MAIN.map((it, i) => {
               const on = i === mcur;
               const { y, px } = items[i];
@@ -494,32 +522,33 @@ export function XboxHome() {
                 </div>
               );
             })}
-            <Hint x={W * 0.665} y={H * 0.86} k="A" label="SELECT" side="right" H={H} W={W} />
+            <Hint x={W * 0.665} y={H * 0.86} k="A" label={T.select} side="right" H={H} W={W} />
           </div>
         )}
 
         {screen === "settings" && (
-          <div key="settings" style={main}>
+          <div key="settings" style={{ ...main, filter: tint }}>
             <div className="dht-xbox-category" style={{position:"absolute",left:W*.255-H*.245,top:H*.45-H*.245,width:H*.49,height:H*.49}}>
               <div style={{position:"absolute",inset:"6%",borderRadius:"50%",background:"radial-gradient(circle,#b4ff2310,transparent 70%)",boxShadow:"inset 0 0 20px #9aff1928"}}/>
               <TheseusSurface key={selectedCategory} model={categoryModels[selectedCategory]} W={H*.49} H={H*.49} animate={s.animations}/>
             </div>
-            <Plate W={W} H={H} title="SETTINGS">
-              <Rows W={W} H={H} items={SETTINGS} sel={ssel} onPick={(i) => (setSsel(i), SETTINGS[i].run())} />
+            <Plate W={W} H={H} title={T.settings}>
+              <Rows W={W} H={H} items={SETTINGS} sel={ssel} vis={vis} onPick={(i) => (setSsel(i), SETTINGS[i].run())} />
             </Plate>
             <InfoBox W={W} H={H}>
-              {selectedCategory === "clock" ? `${now.toLocaleDateString()} ${fmtTime(now,s.clock24)}` : SETTINGS[ssel]?.label.toUpperCase()}
+              {selectedCategory === "clock" ? `${fmtDate(now, true)} ${fmtTime(now,s.clock24)}` : SETTINGS[ssel]?.label.toUpperCase()}
             </InfoBox>
-            <Hint x={W * 0.27} y={H * 0.905} k="B" label="BACK" side="left" H={H} W={W} />
-            <Hint x={W * 0.68} y={H * 0.905} k="A" label="SELECT" side="right" H={H} W={W} />
+            <Hint x={W * 0.27} y={H * 0.905} k="B" label={T.back} side="left" H={H} W={W} />
+            <Hint x={W * 0.68} y={H * 0.905} k="A" label={T.select} side="right" H={H} W={W} />
           </div>
         )}
 
         {screen === "games" && (
           <div key="games" style={main}>
-            <GlassSphere W={W} H={H}>{cur ? <GameArt flat g={cur} kind="portrait" position="50% 20%" style={{ width: "100%", height: "100%" }} /> : <div style={{ width: "100%", height: "100%", background: "#0b2604" }} />}</GlassSphere>
-            <Plate W={W} H={H} title="MEMORY" sub={`◀ ${list?.name.toUpperCase()} ▶`}>
-              <Rows W={W} H={H} items={games.map((g, i) => ({ key: String(g.appid), label: showTitle(s, "xbox", i === gsel) ? g.name : "· · ·" }))} sel={clamp(gsel, 0, Math.max(0, games.length - 1))} onPick={(i) => (i === gsel && cur ? gameMenu(cur) : setGsel(i))} />
+            <GlassSphere W={W} H={H} tint={tint}>{cur ? <GameArt flat g={cur} kind="portrait" position="50% 20%" style={{ width: "100%", height: "100%" }} /> : <div style={{ width: "100%", height: "100%", background: "#0b2604" }} />}</GlassSphere>
+            <div style={{ position: "absolute", inset: 0, filter: tint }}>
+            <Plate W={W} H={H} title={T.memory} sub={`◀ ${list?.name.toUpperCase()} ▶`}>
+              <Rows W={W} H={H} items={games.map((g, i) => ({ key: String(g.appid), label: showTitle(s, "xbox", i === gsel) ? g.name : "· · ·" }))} sel={clamp(gsel, 0, Math.max(0, games.length - 1))} vis={vis} onPick={(i) => (i === gsel && cur ? gameMenu(cur) : setGsel(i))} />
               {!games.length && <div style={{ position: "absolute", left: W * 0.4, top: H * 0.25, fontFamily: FONT, color: TEXT, fontSize: H * 0.03 }}>NO SAVED GAMES</div>}
             </Plate>
             <InfoBox W={W} H={H}>
@@ -527,19 +556,20 @@ export function XboxHome() {
                 <>
                   <span>{fmtLastPlayed(cur.lastPlayed).toUpperCase()}</span>
                   <span style={{ opacity: 0.7 }}>·</span>
-                  <span>{fmtPlaytime(cur.playtime).toUpperCase()}</span>
+                  <span>{fmtPlaytime(cur.playtime, cur.lastPlayed, true).toUpperCase()}</span>
                 </>
               ) : (
                 "—"
               )}
             </InfoBox>
+            <Hint x={W * 0.27} y={H * 0.905} k="B" label={T.back} side="left" H={H} W={W} />
+            <Hint x={W * 0.68} y={H * 0.905} k="A" label={T.select} side="right" H={H} W={W} />
+            </div>
             {cur && (
               <div style={{ position: "absolute", left: W * 0.45, top: H * 0.775 }}>
                 <Badges g={cur} size={12} />
               </div>
             )}
-            <Hint x={W * 0.27} y={H * 0.905} k="B" label="BACK" side="left" H={H} W={W} />
-            <Hint x={W * 0.68} y={H * 0.905} k="A" label="SELECT" side="right" H={H} W={W} />
           </div>
         )}
 

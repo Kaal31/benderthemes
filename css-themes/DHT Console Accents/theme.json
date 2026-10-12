@@ -1,32 +1,137 @@
 {
   "name": "DHT Console Accents",
-  "version": "v1.0",
+  "version": "v1.1",
   "author": "Deck Home Themes",
   "target": "Home",
   "manifest_version": 8,
   "description": "Template for restyling every Deck Home Themes console screen: colour pickers for the main accents plus a few toggles. Copy it to start your own.",
-  "inject": { "shared.css": ["SP"] },
+  "inject": {
+    "shared.css": [
+      "SP"
+    ]
+  },
   "patches": {
     "Accents": {
       "default": "On",
       "type": "none",
-      "values": { "On": {} },
+      "values": {
+        "On": {}
+      },
       "components": [
-        { "name": "PS3/PSP background colour", "type": "color-picker", "on": "On", "default": "#2f6fd6", "css_variable": "dht-xmb-color", "tabs": ["SP"] },
-        { "name": "Xbox 360 accent", "type": "color-picker", "on": "On", "default": "#107c10", "css_variable": "dht-x360-accent", "tabs": ["SP"] },
-        { "name": "PS2 menu text", "type": "color-picker", "on": "On", "default": "#9fb4ff", "css_variable": "dht-ps2-text", "tabs": ["SP"] },
-        { "name": "Vita status bar", "type": "color-picker", "on": "On", "default": "#000000", "css_variable": "dht-vita-bar", "tabs": ["SP"] }
+        {
+          "name": "PS3/PSP background colour",
+          "type": "color-picker",
+          "on": "On",
+          "default": "#2f6fd6",
+          "css_variable": "dht-xmb-color",
+          "tabs": [
+            "SP"
+          ]
+        },
+        {
+          "name": "Xbox 360 accent",
+          "type": "color-picker",
+          "on": "On",
+          "default": "#107c10",
+          "css_variable": "dht-x360-accent",
+          "tabs": [
+            "SP"
+          ]
+        },
+        {
+          "name": "PS2 menu text",
+          "type": "color-picker",
+          "on": "On",
+          "default": "#9fb4ff",
+          "css_variable": "dht-ps2-text",
+          "tabs": [
+            "SP"
+          ]
+        },
+        {
+          "name": "Vita status bar",
+          "type": "color-picker",
+          "on": "On",
+          "default": "#000000",
+          "css_variable": "dht-vita-bar",
+          "tabs": [
+            "SP"
+          ]
+        },
+        {
+          "name": "PS3 dynamic scene: darken (%)",
+          "type": "slider",
+          "on": "On",
+          "default": 0,
+          "min": 0,
+          "max": 80,
+          "step": 5,
+          "css_variable": "dht-ps3-scene-dim",
+          "tabs": [
+            "SP"
+          ]
+        }
       ]
     },
     "Compatibility badges": {
       "default": "Show",
       "type": "dropdown",
-      "values": { "Show": {}, "Hide": { "hide-badges.css": ["SP"] } }
+      "values": {
+        "Show": {},
+        "Hide": {
+          "hide-badges.css": [
+            "SP"
+          ]
+        }
+      }
     },
     "Selected tile outline": {
       "default": "White",
       "type": "dropdown",
-      "values": { "White": {}, "Accent glow": { "glow-tiles.css": ["SP"] } }
+      "values": {
+        "White": {},
+        "Accent glow": {
+          "glow-tiles.css": [
+            "SP"
+          ]
+        }
+      }
+    },
+    "PS3 dynamic scene": {
+      "default": "Live 3D scene",
+      "type": "dropdown",
+      "values": {
+        "Live 3D scene": {},
+        "Slideshow only": {
+          "ps3-scene-off.css": [
+            "SP"
+          ]
+        }
+      }
+    },
+    "PSP theme scene": {
+      "default": "On",
+      "type": "dropdown",
+      "values": {
+        "On": {},
+        "Off": {
+          "psp-scene-off.css": [
+            "SP"
+          ]
+        }
+      }
+    },
+    "XMB wave": {
+      "default": "On",
+      "type": "dropdown",
+      "values": {
+        "On": {},
+        "Off": {
+          "xmb-wave-off.css": [
+            "SP"
+          ]
+        }
+      }
     }
   }
 }

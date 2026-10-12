@@ -25,7 +25,7 @@ The video demonstrates navigation, selection changes and options across every th
 | Xbox | Original Xbox, Xbox 360 Blades, NXE, Kinect and Metro |
 | Bonus | Aero, Aero v.2, Alien Dial, Floating Castle, Republic Office, Block Worlds, Six Paths and Nazarick |
 
-Switch presets from the plugin's Quick Access panel or the home screen options menu. Console presets are grouped by company. Imported Vita skins and PS3 themes can add further presets.
+Switch presets from the plugin's Quick Access panel or the home screen options menu. Console presets are grouped by company. Theme files you import are presets too, listed right after their console's own theme: PS3 `.p3t`, PSP `.ptf`/`.ctf`, Vita skins, Switch `.nxtheme`, Wii `.mym`/`.csm`, Wii U `.utheme`, Nintendo 3DS themes, Xbox skins and Xbox 360 theme packages (the last ones after the 360 dashboards). The Theme options pickers stay and show the same selection.
 
 - **PS2:** orbiting blue lights, silver-gray memory-card browser, dimensional save icons and a soft selection spotlight.
 - **Vita:** glossy bubbles, adjustable sway, folders, collections and LiveArea.
@@ -75,6 +75,7 @@ Every source push to `main` is checked, built and packaged by GitHub Actions. Su
 
 ## Latest additions
 
+- **Keyboard skins:** Steam's on-screen keyboard takes the look of the active console's keyboard (PS3/PSP silver keys, PS4/PS5 dark keys, Wii/Wii U/3DS/Switch, Xbox and Xbox 360, iiSU; bonus looks share a neutral skin). Quick Access → Keyboard skin turns it off; a CSS Loader keyboard theme or a Points Shop keyboard always wins. Not yet tried on a Deck.
 - Nazarick plays “No Man’s Dawn” (instrumental); Floating Castle plays Half Ghoul Music’s “Crossing Fields” instrumental remix. Six Paths plays “Girei” (Pain’s Theme Song). All three follow the existing global/theme music switches and music volume.
 
 - Styled loading screens for every theme, including Xbox 360 variants and Alien Dial colors. Steam and non-Steam games share the same launch handling.
@@ -95,6 +96,20 @@ Every source push to `main` is checked, built and packaged by GitHub Actions. Su
 - **Alien Dial:** optional slower hourglass-to-rhombus morph with a 650 ms hold.
 - **Audio:** Minecraft Console Legacy effects, C418’s Sweden background music, and Windows XP effects for both Aero versions; existing audio controls apply.
 - **Fix:** company selection persists and the preset dropdown stays valid when switching between Sony, Microsoft and Bonus.
+
+## Real console theme files
+
+Put your own theme files in the plugin's skins folder (the path is shown in Quick Access):
+
+| Folder | Files | What is used |
+| --- | --- | --- |
+| `skins/p3t` | PS3 `.p3t` | Background, icons, sound effects; slideshow/animated themes show their images as a rotating slideshow (decoded once in the background, then cached) |
+| `skins/psp` | PSP `.ptf` (official) and `.ctf` (custom firmware) | Wallpaper, category and item icons, sound effects (`.ctf`), and optional XMB extras |
+| `skins/vita` | PS Vita theme folder or `.zip` with `theme.xml` | Page wallpapers, bubble icons, bar and label colours, lock screen image, background music (see below) |
+
+Vita theme music is ATRAC9 (`.at9`). Playing it needs the free [vgmstream](https://github.com/vgmstream/vgmstream) decoder, which is not bundled: when a theme has music, Quick Access offers a *Download music decoder* button that fetches the official Linux build from vgmstream's GitHub releases once. The music is then decoded once into a sound pack and plays while the theme's music is set to Automatic. The decoded track is shrunk to Ogg Opus (about 2 MB instead of ~27 MB WAV) by the Steam UI's built-in encoder, or by `ffmpeg` if one is installed; if neither is available the WAV is kept. The optional Vita lock screen (Quick Access → Lock screen) is visual only; Steam's own PIN still protects the Deck.
+
+XMB extras (focus glow, folder/loading/broken pictures, default game thumbnail) only appear when the active theme supplies them; without one the XMB looks exactly as before. A theme's sound effects become a sound pack that is used while the theme's sound pack is set to Automatic. `.ctf` icon names follow firmware 6.6x (themes for firmware with readable texture names are read directly). A `.ctf` that replaces `system_plugin_bg.rco` also brings its **animated background**: the layout pictures run by the theme's own animation scripts (move, fade, recolour, rotate, scale, chains), and its **3D wave model** (a GMO B-spline surface with its fcurve animation and reflection map), drawn with WebGL. Clock and info-text colours come from `system_plugin_fg.rco`. Each of these can be switched or tuned per theme file in Quick Access. The wave renderer was written for this plugin; [Vlnky](https://github.com/pauliquib/Vlnky) (GPL-2.0) was used only as a reference for the GMO layout, no code was copied. A `.ctf`'s own font (`ltn0.pgf`) is decoded and traced into a TrueType web font for the XMB's labels and clock. Not reproduced: animated 3D PS3 scenes, menu layouts and the firmware screens a `.ctf` also patches.
 
 ## Current limits
 

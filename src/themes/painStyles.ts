@@ -20,4 +20,12 @@ export const PAIN_CSS=`
 @keyframes pain-feature-change{from{opacity:.25;transform:scale(1.035)}to{opacity:1;transform:scale(1)}}
 
 .pain-logo-name{display:flex;align-items:center;justify-content:center;width:100%;height:100%;color:#e5c7ff;font-size:34px;font-weight:600;line-height:1.15;text-align:center;text-wrap:balance;background:none;overflow-wrap:anywhere}
+.pain-home:not([data-palette=rinnegan])>:is(header,.pain-inscription,.pain-quote,section,nav){filter:hue-rotate(var(--pain-hue))}.pain-home:not([data-palette=rinnegan]) :is(header,section) img{filter:hue-rotate(calc(-1 * var(--pain-hue)))}
+.pain-home[data-palette=akatsuki]{--pain-hue:82deg}.pain-home[data-palette=chakra]{--pain-hue:-62deg}.pain-home[data-palette=sage]{--pain-hue:128deg}.pain-home[data-palette=rinnegan]{--pain-hue:0deg}
+.pain-home[data-glow=ring] .pain-card[data-focus=true]{box-shadow:0 0 0 2px #d5a6ff}.pain-home[data-glow=ring] .pain-feature-actions [data-focus=true]{box-shadow:0 0 0 2px #d39aff!important}.pain-home[data-glow=ring] .pain-nav [data-selected=true]>span{box-shadow:none}.pain-home[data-glow=ring] .pain-nav [data-focus=true] b{text-shadow:none}
+.pain-home[data-glow=bloom] .pain-card[data-focus=true]{box-shadow:0 0 0 1px #ecd2ff,0 0 26px 6px #a35fe9cc,0 0 48px #7a3fd080}.pain-home[data-glow=bloom] .pain-feature-actions [data-focus=true]{box-shadow:0 0 0 1px #ecd2ff,0 0 30px 6px #b96dffcc!important}.pain-home[data-glow=bloom] .pain-nav [data-selected=true]>span{box-shadow:inset 0 0 16px #bc6dff,0 0 14px #d3a4ff,0 0 40px 6px #aa54df}
+.pain-home[data-motion=true][data-ring=pulse] .pain-orbit-light{animation:pain-ring-pulse 2.8s ease-in-out infinite alternate}.pain-home[data-ring=still] .pain-orbit-light{animation:none}
+@keyframes pain-ring-pulse{from{opacity:.3}to{opacity:1}}
+.pain-home[data-rows=recent] .pain-recent{top:390px}.pain-home[data-rows=installed] .pain-installed{top:420px}.pain-home[data-rows=installed] .pain-installed .pain-card{height:120px}
+.pain-home[data-status=clock] .pain-status time{font-size:14px}
 `;

@@ -1,17 +1,22 @@
+import { THEME_STYLES } from "../src/engine/themeStyles";
 import { beginLaunch, dismissLaunch, launchState } from "../src/launch";
 import { openMarketplace, useMarketplace } from "../src/marketplaceState";
 import { showFirmwarePreview } from "../src/FirmwareNotice";
 import { autoPack, packFile, SOUND_FILES } from "../src/steam";
 // Browser preview of every theme with an invented sample library.
 import { createRoot } from "react-dom/client";
+import { applyPreset, consoleRows, currentPresetId, cyclePreset, getPresets, refreshPresets, usePresets, saveUserPreset, variantLabel } from "../src/presets";
+import { l1Held } from "../src/input";
 import { useEffect, useState } from "react";
 import { ThemedHome } from "../src/Home";
-import { openSteam as openSteamPreview, setLibrarySource, setPreviewAchievements, setPreviewActions, openGamePage, launchGame, loadLibrary as loadLibraryPreview } from "../src/library";
-import { getSettings, seedSettings, THEMES, updateSettings, useSettings, ThemeId } from "../src/settings";
+import { openSteam as openSteamPreview, setLibrarySource, setPreviewAchievements, setPreviewActions, openGamePage, openAchievements, launchGame, loadLibrary as loadLibraryPreview } from "../src/library";
+import { getSettings, initSettings, resetThemeSettings, seedSettings, THEMES, updateSettings, useSettings, ThemeId } from "../src/settings";
 import { refreshPacks, setPreviewBattery, setPreviewSound, setPreviewStatus, setPreviewUser, setWallpaperOverride, soundDiag } from "../src/steam";
 import { setPreviewTier } from "../src/badges";
 import { setPreviewShots, setPreviewTrailer } from "../src/media";
 import { setPreviewStore } from "../src/store";
+import { openDestination } from "../src/destinations";
+import { musicPlayer } from "../src/musicPlayer";
 
 const themedPreview = (window as any).__themePreview as ThemeId | undefined;
 const referenceArt = (window as any).__referenceArt as Record<string, {portrait:string[];landscape?:string[];hero?:string[];logo?:string[]}> | undefined;
@@ -60,6 +65,23 @@ const apps = (referenceTitles ?? TITLES).map((name, i) => ({
 }));
 
 
+// ?bugs=1 adds the cases of the 2026-10-12 bug reports (handoff-notes/bugfixes-2026-10-12.md): a non-Steam game whose
+// playtime only the app details know, a non-Steam game with a last-played time but no playtime, a hidden game
+// (also in Favorites) and, below, friends with nicknames.
+const bugCases = new URLSearchParams(location.search).has("bugs");
+const HIDDEN_ID = 5003;
+if (bugCases) {
+  const mkShortcut = (appid: number, name: string, ago: number, mins: number) => ({
+    appid, app_type: 1073741824, display_name: name, rt_last_time_played: now - ago, minutes_playtime_forever: mins, installed: true, steam_deck_compat_category: 0, __art: art(name, appid % 7),
+  });
+  apps.splice(1, 0,
+    mkShortcut(5001, "Dolphin Emulator", 1800, 0), // playtime lives in the app details only
+    mkShortcut(5002, "Heroic Launcher", 5400, 0), // no playtime anywhere, but it was played
+    { ...mkShortcut(HIDDEN_ID, "Secret Hidden Game", 600, 900), app_type: 1 }, // in Steam's Hidden collection
+  );
+  (globalThis as any).appDetailsStore = { GetAppDetails: (id: number) => (id === 5001 ? { nPlaytimeForever: 185 } : null) };
+}
+
 // Feed the library reader with the fake apps; art comes from __art.
 (globalThis as any).appStore = {
   GetCustomVerticalCapsuleURLs: (a: any) => a.__art?.portrait,
@@ -69,8 +91,9 @@ const apps = (referenceTitles ?? TITLES).map((name, i) => ({
 };
 setLibrarySource({
   allApps: () => new URLSearchParams(location.search).has("empty") ? [] : apps.slice(0, Number(new URLSearchParams(location.search).get("count")) || 1000),
+  hiddenIds: () => new Set(bugCases ? [HIDDEN_ID] : []),
   collections: () => [
-    { id: "favorite", name: "Favorites", apps: apps.filter((_, i) => i % 6 === 1) },
+    { id: "favorite", name: "Favorites", apps: apps.filter((a, i) => i % 6 === 1 || a.appid === HIDDEN_ID) },
     { id: "rpg", name: "RPGs", apps: apps.filter((_, i) => i % 5 === 2) },
   ],
 });
@@ -94,9 +117,11 @@ setPreviewUser("DeckPlayer");
   (window as any).__openStore = () => openSteamPreview("store");
 }
 (window as any).__soundDiag = (t: any) => soundDiag(t);
+(window as any).__openDestination = openDestination; // tests: open the shared music player / captures
+(window as any).__musicPlayer = musicPlayer; // tests: drive the shared music player
 (window as any).__refreshPacks = () => refreshPacks();
 setWallpaperOverride((n) => (window as any).__testWalls?.[n] ?? null);
-setPreviewStatus({ friendsOnline: 3, notifications: 2, downloads: 0, online: true });
+setPreviewStatus({ friendsOnline: 3, notifications: 3, downloads: 0, online: true });
 setPreviewAchievements((id) => (id % 3 === 2 ? null : { unlocked: (id * 7) % 40, total: 57 }));
 // sample screenshots (drawn) and an optional local test trailer (?trailer=http://…/dash_h264.mpd)
 setPreviewShots(
@@ -132,17 +157,27 @@ const params = new URLSearchParams(location.search);
 const initialTheme = (params.get("theme") as ThemeId) || themedPreview || "vita";
 seedSettings({
   theme: initialTheme,
+  onboardingDone: params.get("onboarding") !== "1",
+  ...(params.get("hubstyle") ? { hubStyle: params.get("hubstyle")! } : {}),
   tvMode: params.get("tvMode")==="1",
   source: "all",
   vita: { folders: [{ id: "f1", name: "Adventures", apps: [1003, 1007, 1011, 1015], color: "#f5a623" }], order: [], collectionFolders: true, systemBubbles: true, art: "portrait", skin: params.get("vskin") ?? "", bubbleStyle: (params.get("bs") as any) ?? "lens" },
   animations: params.get("still") ? false : true,
+  wiiuView: params.get("plaza") ? "plaza" : "grid",
   xmb: { ps3Color: -1, pspColor: -1, collectionFolders: true, p3t: params.get("p3t") ?? "" },
     trailers: { preview: params.get("trailers") === "1", sound: false, video: params.get("tv") === "1" },
-  x360: { style: (params.get("xs") as any) ?? "metro" },
+  x360: { style: (params.get("xs") as any) ?? "metro", ...(params.get("x360skin") ? { skin: params.get("x360skin")! } : {}), ...(params.get("x360pic") ? { gamerpic: params.get("x360pic")! } : {}) },
+  xboxSkin: params.get("xboxskin") ?? "",
+  wiiSkin: params.get("wiiskin") ?? "",
+  n3dsSkin: params.get("n3ds") ?? "",
+  n3dsCursor: params.get("cursor") === "simple" ? "simple" : "3ds",
+  n3dsTop: params.get("top") === "hide" ? "hide" : "show",
+  switchTheme: params.get("switchTheme") ?? "",
+  ...(params.get("wall") ? { wallpapers: { x360: params.get("wall")! } } : {}),
 });
 (globalThis as any).__previewSettings = null;
 
-Object.assign(window,{__getThemeSettings:getSettings,__getThemeLibrary:()=>{const s=getSettings(),c=s.themeCollections?.[s.theme];return loadLibraryPreview(c?.source??s.source,s.sort,s.maxGames,c?.ids);},__beginNativeLaunch:beginLaunch,__dismissLaunch:dismissLaunch,__launchState:launchState,__autoPack:autoPack,__packFile:packFile,__refreshPacks:refreshPacks,__openPlace:openSteamPreview,__updateTheme:updateSettings,__openGame:(id:number)=>openGamePage((window as any).__libraryGame(id)),__launchGame:launchGame});
+Object.assign(window,{__themeStyles:THEME_STYLES,__getThemeSettings:getSettings,__getThemeLibrary:()=>{const s=getSettings(),c=s.themeCollections?.[s.theme];return loadLibraryPreview(c?.source??s.source,s.sort,s.maxGames,c?.ids);},__beginNativeLaunch:beginLaunch,__dismissLaunch:dismissLaunch,__launchState:launchState,__autoPack:autoPack,__packFile:packFile,__refreshPacks:refreshPacks,__openPlace:openSteamPreview,__updateTheme:updateSettings,__openGame:(id:number)=>openGamePage((window as any).__libraryGame(id)),__openAchievements:()=>openAchievements(loadLibraryPreview("all","recent",400).games[0]),__launchGame:launchGame});
 (window as any).__libraryGame=(id:number)=>loadLibraryPreview("all","recent",400).byId.get(id);
 function Toast() {
   const [msg, setMsg] = useState("");
@@ -164,6 +199,7 @@ setPreviewActions({
 
 function App() {
   const s = useSettings();
+  const presets = usePresets();
   const marketplace = useMarketplace();
   const [size, setSize] = useState({ w: 1280, h: 800 });
   useEffect(() => {
@@ -183,11 +219,17 @@ function App() {
       <div id="bar" style={{ display: "flex", gap: 6, alignItems: "center", padding: "10px 12px", flexWrap: "wrap" }}>
         <b style={{ marginRight: 8 }}>Deck Home Themes preview</b>
         <button onClick={() => openMarketplace()}>Hub</button>
+        <button onClick={() => openMarketplace(undefined, { from: s.theme })}>Hub (from this home)</button>
         <button onClick={() => openSteamPreview("settings")}>Theme settings</button>
         <button onClick={showFirmwarePreview}>Preview firmware update</button>
-        {THEMES.map((t, i) => (
-          <button key={t.id} onClick={() => updateSettings({ theme: t.id, enabled: true })} style={{ padding: "5px 10px", borderRadius: 6, border: 0, cursor: "pointer", background: s.theme === t.id ? "#3d8bfd" : "#333", color: "#fff" }}>
+        {THEMES.filter((t) => t.id !== "frame").map((t, i) => (
+          <button key={t.id} onClick={() => updateSettings({ theme: t.id, activeTheme: "", enabled: true })} style={{ padding: "5px 10px", borderRadius: 6, border: 0, cursor: "pointer", background: s.theme === t.id ? "#3d8bfd" : "#333", color: "#fff" }}>
             {i + 1}. {t.name}
+          </button>
+        ))}
+        {presets.filter((p) => p.company === "Community").map((p) => (
+          <button key={p.id} onClick={() => applyPreset(p)} style={{ padding: "5px 10px", borderRadius: 6, border: 0, cursor: "pointer", background: currentPresetId(s) === p.id ? "#8b5cf6" : "#3a2a55", color: "#fff" }}>
+            {p.label}
           </button>
         ))}
         <span style={{ opacity: 0.65, marginLeft: 10 }}>Arrows = D-pad · Enter = Ⓐ · Esc = Ⓑ · X · Y = △/Options · M = ≡ · Q/E = L1/R1 · Z/C = L2/R2 (presets)</span>
@@ -200,8 +242,46 @@ function App() {
   );
 }
 
+(window as any).__saveUserPreset = () => saveUserPreset();
+(window as any).__applyPreset = (id: string) => { const p = getPresets().find((x) => x.id === id); if (p) applyPreset(p); return !!p; };
+(window as any).__refreshPresets = () => refreshPresets();
+(window as any).__seedSettings = (s: any) => seedSettings(s);
+(window as any).__initSettings = () => initSettings();
+(window as any).__updateSettings = (p: any) => updateSettings(p);
+(window as any).__resetThemeSettings = (t: any) => resetThemeSettings(t);
+(window as any).__presets = () => getPresets().map((p) => ({ id: p.id, label: p.label, company: p.company, theme: p.theme }));
+(window as any).__cyclePreset = (d: number) => cyclePreset(d).id;
+(window as any).__currentPreset = () => currentPresetId();
+// tests: the hold-L1 switcher's consoles and their looks, and whether L1 is held for it
+(window as any).__consoleRows = () => consoleRows().map((r) => ({ key: r.key, label: r.label, presets: r.presets.map((p) => ({ id: p.id, name: variantLabel(r, p) })) }));
+(window as any).__l1Held = () => l1Held();
 window.addEventListener("keydown", (e) => {
+  const layouts = THEMES.filter((t) => t.id !== "frame");
   const n = Number(e.key);
-  if (n >= 1 && n <= THEMES.length) updateSettings({ theme: THEMES[n - 1].id });
+  if (n >= 1 && n <= layouts.length) updateSettings({ theme: layouts[n - 1].id, activeTheme: "" });
 });
 createRoot(document.getElementById("root")!).render(<App />);
+
+// Sample friends and achievements, so the friends and trophy pages have something to draw in the preview.
+(globalThis as any).friendStore ??= {
+  allFriends: [
+    ["Kaida", 1, "Hades"], ["Orrin", 1, ""], ["Mei", 0, ""], ["Tobias", 1, "Elden Ring"],
+    ["Sable", 0, ""], ["Juno", 1, "Stardew Valley"], ["Rook", 0, ""], ["Wren", 1, ""],
+  ].map(([n, st, g]) => ({ persona: { m_strPlayerName: n, m_ePersonaState: st, m_strGameName: g || undefined, m_steamid: `7656119${n}`, ...(bugCases && n === "Kaida" ? { m_strNickname: "Kai (best buddy)" } : bugCases && n === "Tobias" ? { m_strNickname: "Toby" } : {}) } })),
+};
+{
+  const sc = ((globalThis as any).SteamClient ??= {});
+  sc.Apps ??= {};
+  // Same numbers as setPreviewAchievements above: 57 achievements, the first (id * 7) % 40 unlocked, most recent last; every third game has none.
+  const ACH = ["First Steps", "Night Owl", "Collector", "Untouchable", "Speedrunner", "Completionist", "Pacifist", "Treasure Hunter", "Lone Wolf", "Quick Draw", "Master Chef", "Explorer"];
+  sc.Apps.GetMyAchievementsForApp ??= async (gameid: string | number) => {
+    const id = Number(gameid), total = id % 3 === 2 ? 0 : 57, unlocked = (id * 7) % 40;
+    return { data: { rgAchievements: Array.from({ length: total }, (_, i) => ({ strID: `ACH_${i}`, strName: i < 12 ? ACH[i] : `${ACH[i % 12]} ${Math.floor(i / 12) + 1}`, bAchieved: i < unlocked, strDescription: "Preview achievement", rtUnlocked: i < unlocked ? Math.floor(Date.now() / 1000) - (unlocked - i) * 86400 : 0 })) } };
+  };
+  // Steam's notification tray (unread items), so the Wii U / 3DS notification banners and bell have something to show.
+  (globalThis as any).notificationStore ??= { m_rgNotificationTray: [
+    { notificationID: "n1", title: "Kaida invited you to play", body: "Hades", appid: 1145360, rtCreated: 1 },
+    { notificationID: "n2", title: "New message from Mei", body: "Are you free tonight?", rtCreated: 2 },
+    { notificationID: "n3", title: "Download complete", body: "Stardew Valley is ready to play", appid: 413150, rtCreated: 3 },
+  ] };
+}

@@ -1,0 +1,8 @@
+{
+  "schema": 1,
+  "id": "leak-test",
+  "name": "Leak test",
+  "description": "Test fixture (not shipped): a hostile community interface that tries to send the library away by navigating its own frame.",
+  "layout": "frame",
+  "frame": { "entry": "leak.html" }
+}

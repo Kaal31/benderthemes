@@ -243,3 +243,85 @@ export const AERO_CSS = `
 .aero-rail .aero-community{border-color:#e7f9ff}
 .aero-continue{border-top-color:#bfeaff}
 `;
+
+// ── Theme options (src/themes/options/aero2.ts) ─────────────────────────────
+// Windows "Window Color and Appearance": each swatch is a filter over the sky-blue
+// glass, [hue-rotate°, saturate, brightness], tuned by eye from the Vista/7 swatches.
+const AERO_SWATCH: Record<string, [number, number, number]> = {
+  sky: [0, 1, 1],
+  twilight: [8, 0.8, 0.68],
+  sea: [-34, 0.9, 1.05],
+  leaf: [-94, 0.65, 0.95],
+  lime: [-139, 0.85, 1.15],
+  sun: [-166, 1, 1.35],
+  pumpkin: [-188, 1.1, 1.1],
+  blush: [122, 0.8, 1.1],
+  violet: [78, 0.65, 0.9],
+  lavender: [40, 0.4, 1.15],
+  taupe: [-178, 0.3, 1.05],
+  chocolate: [168, 0.6, 0.6],
+  slate: [0, 0.08, 0.85],
+  frost: [0, 0.15, 1.45],
+};
+
+/** The glass filter, opacity and desktop classes for the chosen window colour, intensity, transparency and scheme. */
+export function aeroGlass(color: string, intensity: string, transparency: string, scheme: string) {
+  const basic = scheme === "basic";
+  const opaque = basic || transparency === "off";
+  const [rot, sat0, bri] = basic ? [0, 0.35, 1.3] : AERO_SWATCH[color] ?? AERO_SWATCH.sky;
+  const k = basic ? 1 : intensity === "low" ? 0.5 : intensity === "medium" ? 0.75 : 1;
+  const sat = sat0 * k;
+  const opacity = opaque ? 1 : intensity === "low" ? 0.62 : intensity === "medium" ? 0.82 : 1;
+  const filter = rot || sat !== 1 || bri !== 1 ? `hue-rotate(${rot}deg) saturate(${sat}) brightness(${bri})` : undefined;
+  const layered = !!filter || opacity !== 1 || opaque;
+  return {
+    /** Style for the SVG glass groups; undefined at the defaults. */
+    svg: layered ? { filter, opacity } : undefined,
+    vars: layered ? ({ "--aw-f": filter ?? "none", "--aw-o": String(opacity) } as Record<string, string>) : undefined,
+    opaque,
+    classes: [layered && "aero-glass", opaque && "aero-opaque", basic && "aero-basic"].filter(Boolean).join(" "),
+  };
+}
+
+const AERO_OPTION_COMMON = `
+/* Shared by the option classes on .aero-desktop. */
+.aero-glass .aero-continue,.aero-glass .aero-library,.aero-glass .aero-rail .aero-activity:not(.aero-discover){isolation:isolate}
+.aero-glass .aero-continue:after,.aero-glass .aero-library:after,.aero-glass .aero-rail .aero-activity:not(.aero-discover):after{content:"";position:absolute;inset:0;border-radius:inherit;filter:var(--aw-f);opacity:var(--aw-o);z-index:-1;pointer-events:none}
+.aero-glass .aero-continue,.aero-glass .aero-library{background:none!important}
+.aero-glass .aero-continue:after{background:linear-gradient(160deg,#086ee0c4,#63c2ff22 80%)}
+.aero-glass .aero-library:after{background:linear-gradient(135deg,#188bece8,#004bb5e8)}
+.aero-opaque .aero-continue:after,.aero-opaque .aero-library:after,.aero-opaque .aero-rail .aero-activity:not(.aero-discover):not(.aero-community):after{background-color:#1468d4!important}
+.aero-opaque .aero-rail .aero-community:after{background-color:#bfe3fd!important}
+.aero-basic .aero-shine-fx,.aero-basic .aero-tabs button[data-active=true]:before,.aero-basic .aero-play-group:before,.aero-basic .aero-sidebar nav button[data-active=true]:after,.aero-basic .aero-rail .aero-activity:before{display:none}
+.aero-basic .aero-hero:after{box-shadow:none}
+
+/* Start orb: Vista's black glass orb with its blue under-glow. */
+.aero-orb-vista .aero-footer>button:first-child>div{position:relative;background:radial-gradient(circle at 50% 28%,#5d6d82 0%,#1d2733 46%,#05080c 100%)!important;box-shadow:0 0 0 2px #0b1118,0 0 0 3px #9cb2c9,0 0 12px #57baff,inset 0 -7px 10px #2f9ae6cc!important}
+.aero-orb-vista .aero-footer>button:first-child>div:after{content:"";position:absolute;left:12%;right:12%;top:4%;height:44%;border-radius:50%;background:linear-gradient(#ffffffa8,#ffffff10);pointer-events:none}
+
+/* Taskbar: use small icons. */
+.aero-tb-small .aero-footer{height:38px;bottom:24px;font-size:16px;gap:14px}
+.aero-tb-small .aero-footer>button{gap:12px}
+.aero-tb-small .aero-footer>button:first-child>div{width:34px!important;height:34px!important}
+.aero-tb-small .aero-footer>button:first-child svg{width:30px;height:30px}
+.aero-tb-small .aero-footer>i{height:18px}
+.aero-tb-small .aero-hints{font-size:14px;gap:18px}
+.aero-tb-small .aero-hints b{width:22px;height:22px;font-size:15px}
+
+/* Window animation: Vista/7 windows open with a short zoom, or a plain fade. */
+@keyframes aeroWinZoom{from{opacity:0;transform:scale(.93)}to{opacity:1;transform:none}}
+@keyframes aeroWinFade{from{opacity:0}to{opacity:1}}
+.aero-anim-zoom .aero-hero,.aero-anim-zoom .aero-continue,.aero-anim-zoom .aero-library{animation:aeroWinZoom .22s ease-out}
+.aero-anim-fade .aero-hero,.aero-anim-fade .aero-continue,.aero-anim-fade .aero-library{animation:aeroWinFade .25s ease-out}
+
+/* Selection: Explorer's pale-blue rounded highlight instead of the lime glow. */
+.aero-hl-explorer [data-focus=true]{box-shadow:0 0 0 1px #ffffffd0,0 0 0 3px #7da2ce,0 0 14px #b8d6fb!important}
+.aero-hl-explorer .aero-game[data-selected=true]{background:linear-gradient(#fbfdff,#e4effd 45%,#c4dbf8);box-shadow:0 0 0 1px #84acdd,inset 0 0 0 1px #fff,0 4px 10px #0c3d7a55}
+`;
+export const AERO_OPTION_CSS =
+  AERO_OPTION_COMMON +
+  `
+.aero-glass .aero-rail .aero-activity:not(.aero-discover){background:none}
+.aero-glass .aero-rail .aero-activity:not(.aero-discover):not(.aero-community):after{background:radial-gradient(ellipse at 28% -15%,#8cceff70,transparent 66%),linear-gradient(175deg,#217be0 0%,#1065cf 43%,#0a54bc 70%,#206fcf 100%)}
+.aero-glass .aero-rail .aero-community:after{background:radial-gradient(ellipse at 36% 9%,#ffffffd9,transparent 60%),linear-gradient(170deg,#cbeeff,#a9d8fb 40%,#70b0e9 71%,#c3e7fc)}
+`;

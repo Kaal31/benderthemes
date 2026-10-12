@@ -1,0 +1,31 @@
+<!doctype html>
+<html>
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Shelf</title>
+<link rel="stylesheet" href="style.css">
+</head>
+<body>
+<div id="backdrop"></div>
+<header>
+  <div class="who"><span class="dot"></span><span id="user">Player</span></div>
+  <div id="clock">--:--</div>
+</header>
+<main>
+  <h1 id="title">Loading your library…</h1>
+  <p id="meta"></p>
+  <div id="shelf"></div>
+</main>
+<aside id="checks" aria-label="Sandbox check">
+  <div class="checks-title">Sandbox check</div>
+  <div data-check="network">Internet: checking…</div>
+  <div data-check="parent">Steam page: checking…</div>
+  <div data-check="storage">Browser storage: checking…</div>
+</aside>
+<footer>
+  <span><b>A</b> Play</span><span><b>X</b> Details</span><span><b>Y</b> Options</span><span><b>B</b> Steam</span>
+</footer>
+<script src="app.js"></script>
+</body>
+</html>

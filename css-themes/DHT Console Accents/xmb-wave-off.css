@@ -1,0 +1,2 @@
+/* PS3/PSP: no drawn wave behind the XMB */
+:root { --dht-xmb-wave: off; }

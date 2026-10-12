@@ -1,6 +1,11 @@
-// Xbox 360 Metro-era dashboard: lowercase pivots across the top and a
-// horizontally scrolling field of flat tiles on a light background.
-import { BladesHome, NxeHome } from "./X360Classic";
+// Xbox 360 Metro-era dashboard (2011): lowercase pivots across the top and a
+// horizontally scrolling field of flat tiles on the grey V2 background. The
+// background, the XboxLogoHoriz at (1012,42), the tile icons and the legend at
+// (90,605) on a 1280×720 canvas come from the Metro dashboard in
+// thedev0ps/Xbox-360-Dashboard-Archive (asset set x360-metro-dash).
+import { BladesHome } from "./X360Classic";
+import { KinectHome } from "./X360Kinect";
+import { NxeHome } from "./X360Nxe";
 import { CSSProperties, useMemo, useState } from "react";
 import { GameArt, Icon, IconName, MenuItem, MenuView, themeMenu, useHome, useMenu, useRemembered } from "../common";
 import { clamp, Press, spatial, Stage, ThemeRoot, useStage } from "../input";
@@ -8,7 +13,10 @@ import { fmtPlaytime, Game, openSteam } from "../library";
 import { showTitle, THEMES } from "../settings";
 import { Badges } from "../badges";
 import { fmtTime, playSound, useClock, useWallpaper } from "../steam";
+import { useAssets } from "../assets";
+import { useX360Look, X360_SECTION } from "../skins";
 
+import { useReportFocus } from "../focus";
 interface XTile {
   key: string;
   x: number;
@@ -22,14 +30,16 @@ interface XTile {
   color?: string;
   run: () => void;
 }
-const GREEN = "var(--dht-x360-accent, #107c10)";
-const FONT = `var(--dht-font, "Segoe UI", "Segoe UI Light", "Motiva Sans", "Helvetica Neue", Arial, sans-serif)`;
+const GREEN = "var(--dht-x360-accent, var(--dht-x360-skin-accent, #107c10))"; // CSS Loader colour > Xbox 360 theme file colour > default
+const SHADOW = "0 1px 2px rgba(15,15,15,.45)";
+const FONT = `var(--dht-font, "Segoe UI Light", "Segoe UI", "Motiva Sans", "Helvetica Neue", Arial, sans-serif)`;
 
 /** Xbox 360: the dashboard era chosen in settings (Metro is this file). */
 export function X360Home() {
   const style = useHome().settings.x360?.style ?? "metro";
   if (style === "blades") return <BladesHome />;
-  if (style === "nxe" || style === "kinect") return <NxeHome variant={style} />;
+  if (style === "nxe") return <NxeHome />;
+  if (style === "kinect") return <KinectHome />;
   return <X360MetroHome />;
 }
 
@@ -39,11 +49,15 @@ function X360MetroHome() {
   const { W, H } = useStage();
   const now = useClock(15000);
   const wall = useWallpaper("x360");
+  const a = useAssets("x360-metro-dash");
+  const look = useX360Look();
   const menu = useMenu();
   const games = api.lib.games;
+  // the dashboard's own white glyphs for the system tiles
+  const ICO: Partial<Record<IconName, string>> = { game: "ico-games", store: "ico-marketplace", friends: "ico-addfriends", bell: "ico-messages", download: "ico-installedgame", library: "ico-controller", globe: "ico-internet", palette: "ico-changetheme", gear: "ico-settingspreferences", power: "ico-turnoff", apps: "ico-apps" };
 
   const play = (g: Game) => () => api.activate(g, () => api.launch(g));
-  const themes = () => menu.open(themeMenu(s.theme, api.switchTheme, THEMES), "presets");
+  const themes = () => menu.open(themeMenu(s.theme, api.switchTheme, THEMES), "presets", { page: true });
 
   const pivots = useMemo(() => {
     const sys = (key: string, x: number, y: number, w: number, h: number, label: string, icon: IconName, run: () => void, color = GREEN): XTile => ({ key, x, y, w, h, label, icon, color, run });
@@ -115,6 +129,7 @@ function X360MetroHome() {
   const pv = pivots[clamp(pivot, 0, pivots.length - 1)];
   const sel = clamp(sels[pivot] ?? 0, 0, pv.tiles.length - 1);
   const cur = pv.tiles[sel];
+  useReportFocus(cur?.game);
 
   const options = () => {
     const g = cur?.game;
@@ -166,6 +181,7 @@ function X360MetroHome() {
   };
 
   // ───── layout ─────
+  const k = Math.min(W / 1280, H / 720);
   const X0 = 96;
   const Y0 = Math.min(196, H * .25);
   const tileScale = Math.min(1, Math.max(.65,(H-280)/455));
@@ -182,18 +198,16 @@ function X360MetroHome() {
   return (
     <ThemeRoot onInput={onInput} hints={{ a: "Select", y: "Options", menu: "Options" }}>
       <Stage background="#d9d9d9">
-        <div className="dht-x360-bg" style={{ position: "absolute", inset: 0, background: "var(--dht-x360-bg, radial-gradient(ellipse at 75% 10%, #ffffff 0%, #ececec 35%, #cfcfcf 100%))" }} />
+      <div className="dht-x360-skin" data-dht-from-skin={look.bg || look.accent ? "x360" : undefined} style={{ display: "contents", ...look.vars } as CSSProperties}>
+        <div className="dht-x360-bg" style={{ position: "absolute", inset: 0, background: `var(--dht-x360-bg, ${look.bg || a.background ? `url("${look.bgFor(X360_SECTION[pv.name] ?? "home") ?? a.background}") center/cover` : "linear-gradient(180deg, #6e6e6e 0%, #9a9a9a 55%, #c4c4c4 100%)"})` }} />
         {wall && <img src={wall} style={{ position: "absolute", inset: 0, width: W, height: H, objectFit: "cover" }} />}
-        {/* faint background shapes */}
-        {!wall && (
-          <svg width={W} height={H} style={{ position: "absolute", inset: 0, opacity: 0.35 }}>
-            <circle cx={W * 0.85} cy={H * 0.95} r={H * 0.55} fill="none" stroke="#fff" strokeWidth="60" />
-            <circle cx={W * 0.12} cy={H * 0.1} r={H * 0.25} fill="none" stroke="#fff" strokeWidth="30" />
-          </svg>
-        )}
+        {!wall && a["bottom-vignette"] && <img src={a["bottom-vignette"]} aria-hidden="true" style={{ position: "absolute", left: 0, bottom: 0, width: W, height: H * 300 / 720, pointerEvents: "none" }} />}
+
+        {/* Xbox 360 logo, top right */}
+        {a["xbox-logo-horiz"] && <img src={a["xbox-logo-horiz"]} aria-hidden="true" style={{ position: "absolute", left: 1012 * k, top: 42 * k, width: 170 * k, height: 35 * k }} />}
 
         {/* gamer corner */}
-        <div style={{ position: "absolute", right: 70, top: 34, display: "flex", alignItems: "center", gap: 14, fontFamily: FONT, color: wall ? "#fff" : "#333" }}>
+        <div style={{ position: "absolute", right: 98 * k, top: 92 * k, display: "flex", alignItems: "center", gap: 14, fontFamily: FONT, color: "#fff", textShadow: SHADOW }}>
           <div style={{ textAlign: "right" }}>
             <div style={{ fontSize: 20 }}>{api.user}</div>
             <div style={{ fontSize: 15, opacity: 0.7 }}>{fmtTime(now, s.clock24)}</div>
@@ -206,7 +220,7 @@ function X360MetroHome() {
         {/* pivots */}
         <div style={{ position: "absolute", left: X0, top: 104, display: "flex", gap: 38, fontFamily: FONT, transition: "transform 250ms ease-out", transform: `translateX(${-Math.max(0, pivot - 1) * 120}px)` }}>
           {pivots.map((pv2, i) => (
-            <span key={pv2.name} className="dht-x360-pivot" data-selected={i === pivot} style={{ fontSize: 40, fontWeight: 300, letterSpacing: -0.5, color: i === pivot ? (wall ? "#fff" : "#2a2a2a") : wall ? "rgba(255,255,255,0.55)" : "#9a9a9a", textDecoration: onBar && i === pivot ? "underline" : "none", textUnderlineOffset: 8 }}>
+            <span key={pv2.name} className="dht-x360-pivot" data-selected={i === pivot} style={{ fontSize: 40, fontWeight: 300, letterSpacing: -0.5, color: i === pivot ? "#fff" : "rgba(255,255,255,0.5)", textShadow: SHADOW, textDecoration: onBar && i === pivot ? "underline" : "none", textUnderlineOffset: 8 }}>
               {pv2.name}
             </span>
           ))}
@@ -249,7 +263,7 @@ function X360MetroHome() {
                 ) : (
                   <>
                     <div style={{ position: "absolute", left: 14, top: 14 }}>
-                      <Icon name={t.icon ?? "apps"} size={t.h > 200 ? 64 : 40} color="#fff" />
+                      {a[ICO[t.icon ?? "apps"] ?? ""] ? <img src={a[ICO[t.icon ?? "apps"]!]} style={{ width: t.h > 200 ? 64 : 40, height: t.h > 200 ? 64 : 40, display: "block" }} /> : <Icon name={t.icon ?? "apps"} size={t.h > 200 ? 64 : 40} color="#fff" />}
                     </div>
                     <div style={{ ...label, fontSize: 20 }}>{t.label}</div>
                   </>
@@ -262,13 +276,20 @@ function X360MetroHome() {
 
         {/* focused game caption */}
         {cur?.game && !onBar && (
-          <div style={{ position: "absolute", left: X0, top: Y0 + 455*tileScale + 20, fontFamily: FONT, color: wall ? "#fff" : "#2a2a2a" }}>
+          <div style={{ position: "absolute", left: X0, top: Y0 + 455*tileScale + 20, fontFamily: FONT, color: "#fff", textShadow: SHADOW }}>
             {showTitle(s, "x360", true) && <div style={{ fontSize: 26, fontWeight: 300 }}>{cur.game.name}</div>}
-            <div style={{ fontSize: 16, opacity: 0.65 }}>{fmtPlaytime(cur.game.playtime)}</div>
+            <div style={{ fontSize: 16, opacity: 0.65 }}>{fmtPlaytime(cur.game.playtime, cur.game.lastPlayed)}</div>
             <Badges g={cur.game} size={14} style={{ marginTop: 6 }} />
           </div>
         )}
+        {/* button legend */}
+        <div style={{ position: "absolute", left: 90 * k, bottom: Math.max(16, H - Y0 - 455 * tileScale - 140), display: "flex", gap: 30, alignItems: "center", fontFamily: FONT, fontSize: 18, color: "#fff", textShadow: SHADOW }}>
+          {([["legend-a", "select"], ["legend-y", "options"]] as const).map(([img, text]) => (
+            <span key={img} style={{ display: "flex", alignItems: "center", gap: 6 }}>{a[img] && <img src={a[img]} style={{ width: 32, height: 32 }} />}{text}</span>
+          ))}
+        </div>
         <MenuView menu={menu} variant="x360" />
+      </div>
       </Stage>
     </ThemeRoot>
   );

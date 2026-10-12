@@ -20,4 +20,4 @@
 }
 @keyframes dhtSakura { to { background-position: 140px 640px, 220px 500px; } }
 .dht-theme-vita .dht-bubble-label { text-shadow: 0 1px 3px rgba(90, 0, 40, 0.9) !important; }
-.dht-theme-vita .dht-folder-title { background: rgba(120, 10, 60, 0.55) !important; }
+.dht-theme-vita .dht-folder-title { text-shadow: 0 1px 3px rgba(90, 0, 40, 0.9) !important; }

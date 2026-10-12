@@ -11,6 +11,7 @@ import { DIAL_CSS } from "./dialStyles";
 import { DialProjectionLight } from "./dialProjectionLight";
 import { useAssets } from "../assets";
 
+import { useReportFocus } from "../focus";
 export function DialHome() {
   const api = useHome();
   const { settings: s, lib: { games } } = api;
@@ -25,6 +26,7 @@ export function DialHome() {
   const menu = useMenu();
   const [remembered, setSel] = useRemembered("dial-sel", 0);
   const sel = clamp(remembered, 0, Math.max(0, games.length - 1));
+  useReportFocus(games[sel]);
   const [zone, setZone] = useState<"row" | "tabs">("row");
   const [tab, setTab] = useState(0);
   const [turn, setTurn] = useState(0);
@@ -91,6 +93,7 @@ export function DialHome() {
   const tabs = [
     { name: "Library", run: () => { setZone("row"); playSound("tab"); } },
     { name: "Store", run: () => openSteam("store") },
+    { name: "Downloads", run: () => openSteam("downloads") },
     { name: "Settings", run: () => openSteam("settings") },
   ];
   const options = () => {

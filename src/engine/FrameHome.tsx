@@ -1,0 +1,208 @@
+// The "frame" layout: a community theme's own interface, sealed off from Steam.
+//
+// The interface is an HTML page from the theme's folder. It runs in an iframe
+// with sandbox="allow-scripts" and no allow-same-origin, so it gets an opaque
+// origin: it can't read this page, Steam's page or SteamClient, and has no
+// cookies or storage. The plugin's server adds a Content-Security-Policy to the
+// page (see py_modules/data_themes.py: frame_csp) that blocks every network
+// request. connect-src doesn't cover navigation, so the iframe here opens the
+// plugin's wrapper page (data_themes.py: frame_wrapper), which holds the theme
+// page in a second sandboxed frame whose frame-src allows only the theme's own
+// folder: the interface can't carry the library away by navigating itself.
+// The wrapper only passes messages through in both directions.
+//
+// It talks to the engine only through postMessage, with the short list of
+// messages below (docs/THEME-FORMAT.md describes them for theme authors).
+// Every request is checked here; the worst a theme can do is look bad or
+// launch one of the user's own games.
+import { useEffect, useMemo, useRef, useState } from "react";
+import { useHome } from "../common";
+import { Btn, Hints, Press, ThemeRoot } from "../input";
+import { Game, openSteam, SteamPlace } from "../library";
+import { getSettings, updateSettings } from "../settings";
+import { fmtTime, playSound, SOUND_FILES, SoundKind } from "../steam";
+import { activeTheme, iconMap, slotAccent, slotUrl, frameUrl } from "./registry";
+
+export const FRAME_PROTOCOL = 1;
+const BUTTONS: Btn[] = ["up", "down", "left", "right", "a", "b", "x", "y", "menu", "l1", "r1"];
+const PLACES: SteamPlace[] = ["library", "store", "friends", "settings", "downloads", "search", "power", "mainmenu"];
+const MAX_SAVE = 64 * 1024;
+
+/** What an interface may know about a game: no Steam objects, only plain data. */
+function publicGame(g: Game, abs: (u: string) => string) {
+  const art = (list: string[]) => list.slice(0, 3).map(abs);
+  return {
+    appid: g.appid,
+    name: g.name,
+    installed: g.installed,
+    lastPlayed: g.lastPlayed,
+    playtime: g.playtime,
+    kind: g.kind,
+    art: { portrait: art(g.art.portrait), landscape: art(g.art.landscape), hero: art(g.art.hero), logo: art(g.art.logo) },
+  };
+}
+
+export function FrameHome() {
+  const api = useHome();
+  const theme = activeTheme(api.settings);
+  const frame = useRef<HTMLIFrameElement>(null);
+  const [ready, setReady] = useState<{ handles: Set<Btn> } | null>(null);
+  const [hints, setHints] = useState<Hints>({});
+  const lastLaunch = useRef(0);
+  const url = theme?.frame ? frameUrl(theme) : null; // the wrapper page, never the theme page directly
+
+  const post = (msg: Record<string, unknown>) => {
+    try {
+      frame.current?.contentWindow?.postMessage({ dht: FRAME_PROTOCOL, ...msg }, "*");
+    } catch {
+      /* the frame went away */
+    }
+  };
+
+  // What the interface receives: games, a few settings, and its own saved data.
+  const state = useMemo(() => {
+    const doc = frame.current?.ownerDocument ?? document;
+    const abs = (u: string) => {
+      try {
+        return new URL(u, doc.baseURI).href;
+      } catch {
+        return "";
+      }
+    };
+    const s = api.settings;
+    return {
+      theme: theme ? { id: theme.id, name: theme.name } : null,
+      user: api.user,
+      settings: { clock24: s.clock24, animations: s.animations, sounds: s.sounds, tvMode: s.tvMode, accent: slotAccent(s) ?? null },
+      // the theme's slots after mix and match: files from data themes only
+      slots: { wallpaper: slotUrl("wallpaper", s) ?? null, bootVideo: slotUrl("bootVideo", s) ?? null, launchVideo: slotUrl("launchVideo", s) ?? null, font: slotUrl("font", s) ?? null, icons: iconMap(s) },
+      games: api.lib.games.map((g) => publicGame(g, abs)),
+      apps: api.lib.apps.map((g) => publicGame(g, abs)),
+      collections: api.lib.collections.map((c) => ({ id: c.id, name: c.name, appids: c.games.map((g) => g.appid) })),
+      saved: theme ? s.frameData[theme.id] ?? null : null,
+      busy: api.busy,
+    };
+  }, [api.lib, api.settings, api.user, api.busy, theme?.id, ready]);
+
+  useEffect(() => {
+    if (ready) post({ type: "state", ...state });
+  }, [state]);
+
+  // Messages from the interface. Only our own iframe is listened to.
+  useEffect(() => {
+    const view = frame.current?.ownerDocument?.defaultView ?? window;
+    const find = (appid: unknown) => (typeof appid === "number" ? api.lib.byId.get(appid) : undefined);
+    const onMessage = (e: MessageEvent) => {
+      if (!frame.current || e.source !== frame.current.contentWindow) return;
+      const m = e.data;
+      if (!m || typeof m !== "object" || m.dht !== FRAME_PROTOCOL || typeof m.type !== "string") return;
+      switch (m.type) {
+        case "ready": {
+          const handles = new Set<Btn>((Array.isArray(m.handles) ? m.handles : []).filter((b: unknown): b is Btn => BUTTONS.includes(b as Btn)));
+          setReady({ handles });
+          post({ type: "state", ...state });
+          return;
+        }
+        case "hints": {
+          const h: Hints = {};
+          for (const k of ["a", "x", "y", "menu"] as const) if (typeof m[k] === "string") h[k] = m[k].slice(0, 24);
+          setHints(h);
+          return;
+        }
+        case "sound":
+          if (typeof m.name === "string" && m.name in SOUND_FILES) playSound(m.name as SoundKind);
+          return;
+        case "launch": {
+          const g = find(m.appid);
+          if (!g || Date.now() - lastLaunch.current < 1500) return;
+          lastLaunch.current = Date.now();
+          api.activate(g, () => api.launch(g));
+          return;
+        }
+        case "details": {
+          const g = find(m.appid);
+          if (g) api.details(g);
+          return;
+        }
+        case "open":
+          if (m.place === "options") api.openSettings();
+          else if (m.place === "steamHome") api.showSteamHome();
+          else if (PLACES.includes(m.place)) openSteam(m.place);
+          return;
+        case "save": {
+          if (!theme) return;
+          let size = Infinity;
+          try {
+            size = JSON.stringify(m.data ?? null).length;
+          } catch {
+            /* not plain data */
+          }
+          if (size <= MAX_SAVE) updateSettings((p) => ({ frameData: { ...p.frameData, [theme.id]: m.data ?? null } }));
+          return;
+        }
+      }
+    };
+    view.addEventListener("message", onMessage);
+    return () => view.removeEventListener("message", onMessage);
+  }, [api, state, theme?.id]);
+
+  // A tap inside the frame must not take keyboard/controller focus away from the home.
+  useEffect(() => {
+    const el = frame.current;
+    const view = el?.ownerDocument?.defaultView;
+    if (!el || !view) return;
+    const onBlur = () => setTimeout(() => {
+      if (el.ownerDocument.activeElement === el) el.blur();
+    }, 0);
+    view.addEventListener("blur", onBlur);
+    return () => view.removeEventListener("blur", onBlur);
+  }, [url]);
+
+  useEffect(() => setReady(null), [url]);
+
+  const onInput = (p: Press) => {
+    if (ready?.handles.has(p.btn)) {
+      post({ type: "input", btn: p.btn, repeat: p.repeat });
+      return true;
+    }
+    if (p.btn === "y" || p.btn === "menu") {
+      api.openSettings();
+      return true;
+    }
+    return false; // Ⓑ and anything else go back to Steam
+  };
+
+  return (
+    <ThemeRoot onInput={onInput} hints={{ y: "Options", ...hints }}>
+      {url ? (
+        <iframe
+          ref={frame}
+          key={url}
+          src={url}
+          title={theme?.name ?? "Community theme"}
+          // allow-scripts only: an opaque origin, no forms, popups, navigation of the top page, or storage
+          sandbox="allow-scripts"
+          referrerPolicy="no-referrer"
+          allow=""
+          tabIndex={-1}
+          style={{ position: "absolute", inset: 0, width: "100%", height: "100%", border: 0, background: "#000" }}
+        />
+      ) : (
+        <FrameMissing name={theme?.name} />
+      )}
+    </ThemeRoot>
+  );
+}
+
+function FrameMissing({ name }: { name?: string }) {
+  const s = getSettings();
+  return (
+    <div style={{ position: "absolute", inset: 0, display: "grid", placeItems: "center", background: "#101216", color: "#d6d9de", font: '20px "Motiva Sans", Arial, sans-serif', textAlign: "center", padding: 40 }}>
+      <div>
+        <div style={{ fontSize: 28, marginBottom: 12 }}>{name ?? "Community interface"}</div>
+        <div style={{ opacity: 0.75 }}>This theme's interface couldn't be opened. Pick another look with L1 held + the D-pad or L2 / R2, or press △ / Y for options.</div>
+        <div style={{ opacity: 0.5, marginTop: 24, fontSize: 16 }}>{fmtTime(new Date(), s.clock24)}</div>
+      </div>
+    </div>
+  );
+}

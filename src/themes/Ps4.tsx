@@ -11,11 +11,13 @@ import { BatteryGlyph } from "../common";
 import { Badges } from "../badges";
 import { fmtTime, playSound, useBattery, useClock, useWallpaper } from "../steam";
 
+import { useReportFocus } from "../focus";
 type Tile = { key: string; label: string; game?: Game; icon?: IconName; color?: string; action?: () => void };
 const FUNCS: { id: string; label: string; icon: IconName; place?: SteamPlace; action?: "settings" | "theme" }[] = [
   { id: "store", label: "Store", icon: "store", place: "store" },
   { id: "notif", label: "Notifications", icon: "bell", place: "notifications" },
   { id: "friends", label: "Friends", icon: "friends", place: "friends" },
+  { id: "downloads", label: "Downloads", icon: "download", place: "downloads" },
   { id: "search", label: "Search", icon: "search", place: "search" },
   { id: "media", label: "Capture Gallery", icon: "photo", place: "media" },
   { id: "theme", label: "Themes", icon: "palette", action: "theme" },
@@ -72,6 +74,7 @@ export function Ps4Home() {
   const [isel, setIsel] = useState(0);
   const cur = tiles[clamp(sel, 0, tiles.length - 1)];
   const g = cur?.game;
+  useReportFocus(g);
 
   // Background art follows the focused game after a short settle.
   const [bgGame, setBgGame] = useState<Game | undefined>(g);
@@ -95,7 +98,7 @@ export function Ps4Home() {
     if (f.place === "media") api.openMedia();
     else if (f.place) openSteam(f.place);
     else if (f.action === "settings") api.openSettings();
-    else menu.open(themeMenu(s.theme, api.switchTheme, THEMES), "Presets");
+    else menu.open(themeMenu(s.theme, api.switchTheme, THEMES), "Presets", { page: true });
   };
 
   const options = () => {
@@ -253,7 +256,7 @@ export function Ps4Home() {
             {g && row !== "info" && (
               <div style={{ display: "flex", alignItems: "center", gap: 10 }}>
                 <span style={{ padding: "6px 26px", border: "1px solid rgba(255,255,255,0.8)", borderRadius: 3, fontSize: 18 }}>Start</span>
-                <span style={{ fontSize: 15, opacity: 0.7 }}>{fmtPlaytime(g.playtime)}</span>
+                <span style={{ fontSize: 15, opacity: 0.7 }}>{fmtPlaytime(g.playtime, g.lastPlayed)}</span>
                 <Badges g={g} size={14} />
               </div>
             )}

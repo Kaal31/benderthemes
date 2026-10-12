@@ -1,0 +1,2 @@
+/* PSP theme files: skip the theme's own animated layout and 3D wave */
+:root { --dht-psp-scene: off; }

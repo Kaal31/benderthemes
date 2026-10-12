@@ -1,5 +1,5 @@
 // Browser stand-ins for @decky/ui so the themes run in a normal page.
-// Keyboard: arrows = D-pad, Enter = Ⓐ, Esc/Backspace = Ⓑ, X = Ⓧ, Y = Ⓨ/△, M = ≡, Q/E = L1/R1.
+// Keyboard: arrows = D-pad, Enter = Ⓐ, Esc/Backspace = Ⓑ, X = Ⓧ, Y = Ⓨ/△, M = ≡, Q/E = L1/R1 (hold Q + arrows = theme switcher), Z/C = L2/R2.
 import { CSSProperties, ReactNode, useEffect, useRef } from "react";
 export function ProgressBarWithInfo({ nProgress, sOperationText }: any) { return <div>{sOperationText}<progress value={nProgress} max={100} /></div>; }
 
@@ -36,6 +36,13 @@ if (typeof window !== "undefined") {
     if (key === "z" || k.key === "[") return top.onButtonDown?.(ev(7, r));
     if (key === "c" || k.key === "]") return top.onButtonDown?.(ev(8, r));
   });
+  // releases (Steam's onButtonUp): only the bumpers matter to the themes (hold L1 = theme switcher)
+  window.addEventListener("keyup", (k) => {
+    const top = stack[stack.length - 1]?.current;
+    const key = k.key.toLowerCase();
+    if (key === "q") top?.onButtonUp?.(ev(5, false));
+    if (key === "e") top?.onButtonUp?.(ev(6, false));
+  });
 }
 
 export function Focusable(props: any) {
@@ -67,7 +74,12 @@ export const Navigation = {
 export const showContextMenu = () => toast("Steam's game menu");
 export const showModal = (el: any) => {
   const name = window.prompt(el?.props?.strTitle ?? "Name", "");
-  if (name !== null) el?.props?.onOK?.();
+  if (name !== null) {
+    // hand the typed text to the dialog's text field, as typing into it on the Deck would
+    const kids = [el?.props?.children].flat();
+    if (name) kids.forEach((c: any) => c?.props?.onChange?.({ target: { value: name } }));
+    el?.props?.onOK?.();
+  }
   return { Close() {} };
 };
 export const ConfirmModal = (p: any) => <div>{p.children}</div>;

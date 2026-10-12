@@ -9,6 +9,7 @@ import {fmtLastPlayed,openSteam} from "../library";
 import {fmtTime,playSound,useBattery,useClock,useSteamStatus} from "../steam";
 import {THEMES,updateSettings} from "../settings";
 import {CINEMATIC_CSS} from "./cinematicStyles";
+import { useReportFocus } from "../focus";
 const getMedia=callable<[string],{video?:string;poster?:string}>("cinematic_assets");
 function Background({kind,paused}:{kind:string;paused:boolean}){
  const ref=useRef<HTMLVideoElement>(null);const [assets,setAssets]=useState<{video?:string;poster?:string}>({});
@@ -23,6 +24,7 @@ function Globe(){const id=useId().replace(/:/g,"");return <svg className="republ
 export function CinematicHome({kind}:{kind:"castle"|"republic"}){
  const api=useHome(),s=api.settings,{W,H}=useStage(),menu=useMenu(),now=useClock(15000),battery=useBattery(),status=useSteamStatus();
  const games=api.lib.games;const [sel,setSel]=useState(0),[nav,setNav]=useState(0),[zone,setZone]=useState<"nav"|"games"|"hero"|"quick">("games");const selected=Math.min(sel,Math.max(0,games.length-1)),g=games[selected];const row=useRef<HTMLDivElement>(null);const navRef=useRef<HTMLElement>(null);const [navVisible,setNavVisible]=useState(true);
+ useReportFocus(g);
  useEffect(()=>{const node=navRef.current;if(kind!=="castle"||!node)return;const disabled=!s.animations||window.matchMedia("(prefers-reduced-motion: reduce)").matches;const motion=node.animate(navVisible?[{transform:"translateY(-125%)"},{transform:"translateY(0)"}]:[{transform:"translateY(0)"},{transform:"translateY(-125%)"}],{duration:disabled?0:200,easing:"ease",fill:"forwards"});return()=>motion.cancel();},[navVisible,kind,s.animations]);
  useEffect(()=>{row.current?.querySelector('[data-selected="true"]')?.scrollIntoView({block:"nearest",inline:"nearest",behavior:s.animations?"smooth":"auto"});},[selected,s.animations]);
  const entries:{label:string;icon:IconName;run:()=>void}[]=[{label:"Home",icon:"home",run:()=>{if(kind==="castle")returnToCastleHome();setZone("games");setNav(0);}},{label:"Library",icon:"library",run:()=>openSteam("library")},...(kind==="castle"?[{label:"Store",icon:"store" as IconName,run:()=>openSteam("store")},{label:"Friends",icon:"friends" as IconName,run:()=>openSteam("friends")}]:[]),{label:"Downloads",icon:"download",run:()=>openSteam("downloads")},{label:"Settings",icon:"gear",run:()=>openSteam("settings")}];

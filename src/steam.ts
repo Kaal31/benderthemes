@@ -1,3 +1,5 @@
+import { useFocusedGame } from "./focus";
+import { tintOf } from "./color";
 import { loadDialAsset } from "./themes/dialAssets";
 import { onResourcesChanged } from "./marketplaceState";
 // Small bridges to Steam's own UI: sounds, the native game menu, the top
@@ -8,6 +10,9 @@ import { callable } from "@decky/api";
 import { createElement, useEffect, useRef, useState } from "react";
 import { getUiDocument } from "./cssvars";
 import { getSettings, ThemeId } from "./settings";
+import { onMusicCompress, onSkinPack, skinSoundPack } from "./skins";
+import { encodeOggOpus, opusSupported, parseWav, toBase64 } from "./oggOpus";
+import { holdOtherMusic } from "./otherPlugins";
 
 declare const SteamClient: any;
 
@@ -20,6 +25,20 @@ export interface SoundPack {
   ignore: string[];
   music: boolean;
   author: string;
+  /** Packs that belong to a data theme are served from the theme's folder. */
+  base?: string;
+}
+
+// The theme engine (src/engine) decides what the active theme puts in its slots.
+// It registers here instead of being imported, so this file stays free of engine imports.
+interface EngineHooks {
+  /** undefined = the engine has no say, null = the slot is deliberately empty. */
+  pack(theme: ThemeId, kind: "sfx" | "music"): SoundPack | null | undefined;
+  wallpaper(theme: ThemeId): string | null | undefined;
+}
+let engine: EngineHooks | null = null;
+export function setEngineHooks(h: EngineHooks | null) {
+  engine = h;
 }
 const backendPacks = callable<[], SoundPack[]>("list_sound_packs");
 const backendWallpapers = callable<[], { dir: string; files: string[] }>("list_wallpapers");
@@ -57,9 +76,12 @@ export function setWallpaperOverride(f: typeof wallpaperOverride) {
 /** Picture a theme uses when none is chosen (if that file is in the wallpapers folder). */
 export const DEFAULT_WALLPAPER: Partial<Record<ThemeId, string>> = { aero: "aero-background.jpg", aero2: "aero-background.jpg" };
 export function useWallpaper(theme: ThemeId): string | null {
-  const name = getSettings().wallpapers[theme] || DEFAULT_WALLPAPER[theme] || "";
+  const chosen = getSettings().wallpapers[theme];
+  const fromTheme = chosen ? undefined : engine?.wallpaper(theme);
+  const name = fromTheme === undefined ? chosen || DEFAULT_WALLPAPER[theme] || "" : "";
   const [url, setUrl] = useState<string | null>(name ? wallCache.get(name) ?? null : null);
   useEffect(() => {
+    if (fromTheme !== undefined) return;
     if (!name) return setUrl(null);
     if (wallpaperOverride) return setUrl(wallpaperOverride(name));
     if (wallCache.has(name)) return setUrl(wallCache.get(name)!);
@@ -73,10 +95,64 @@ export function useWallpaper(theme: ThemeId): string | null {
     return () => {
       alive = false;
     };
-  }, [name]);
-  return url;
+  }, [name, fromTheme]);
+  const raw = fromTheme !== undefined ? fromTheme : url;
+  // Standard options → Game art behind the menu: the focused game's art takes the wallpaper's place
+  const focused = useFocusedGame();
+  const art = getSettings().gameArt && theme !== "ps4" && theme !== "ps5" ? focused?.art.hero[0] ?? focused?.art.landscape[0] : undefined;
+  return useDimmed(art ?? raw, getSettings().bgBrightness, tintOf(getSettings()));
 }
 
+/** Recolours what's drawn to the colour's hue, keeping its light and shade (the PSP tints its background the same way). */
+export function tintCanvas(g: CanvasRenderingContext2D, w: number, h: number, tint: string, strength = 0.75) {
+  g.save();
+  g.setTransform(1, 0, 0, 1, 0, 0);
+  g.globalCompositeOperation = "color";
+  g.globalAlpha = strength;
+  g.fillStyle = tint;
+  g.fillRect(0, 0, w, h);
+  g.restore();
+}
+
+// Standard options → Background brightness: the picture itself is darkened, so every
+// theme that draws a wallpaper honours it without code of its own.
+const dimCache = new Map<string, string>();
+function useDimmed(src: string | null, pct: number, tint?: string): string | null {
+  const key = src && (pct < 100 || tint) ? `${pct}|${tint ?? ""}|${src}` : "";
+  const [out, setOut] = useState<string | null>(key ? dimCache.get(key) ?? null : src);
+  useEffect(() => {
+    if (!key || !src) return setOut(src);
+    const hit = dimCache.get(key);
+    if (hit) return setOut(hit);
+    let alive = true;
+    const img = new Image();
+    img.crossOrigin = "anonymous";
+    img.onload = () => {
+      try {
+        const c = document.createElement("canvas");
+        c.width = img.naturalWidth;
+        c.height = img.naturalHeight;
+        const g = c.getContext("2d")!;
+        g.drawImage(img, 0, 0);
+        if (tint) tintCanvas(g, c.width, c.height, tint);
+        g.fillStyle = `rgba(0,0,0,${(100 - pct) / 100})`;
+        g.fillRect(0, 0, c.width, c.height);
+        const url = c.toDataURL("image/jpeg", 0.9);
+        if (dimCache.size > 12) dimCache.delete(dimCache.keys().next().value!);
+        dimCache.set(key, url);
+        if (alive) setOut(url);
+      } catch {
+        if (alive) setOut(src); // a picture the browser won't let us read: shown as it is
+      }
+    };
+    img.onerror = () => alive && setOut(src);
+    img.src = src;
+    return () => {
+      alive = false;
+    };
+  }, [key, src]);
+  return key ? out ?? src : src;
+}
 // ───────────── sounds ─────────────
 // Each theme uses an AudioLoader pack: the one picked in Quick Access, or
 // automatically the installed pack whose name matches the console (e.g.
@@ -95,6 +171,19 @@ export const SOUND_FILES = {
   menu: "deck_ui_show_modal.wav",
   close: "deck_ui_hide_modal.wav",
   toggle: "deck_ui_switch_toggle_on.wav",
+  // Steam's own notification cues; a pack can map several files to each (the iiSU pack does). Played only from a pack: Steam
+  // plays its own sound when the pack has none, so there is no fallback (see playNoticeSound).
+  friendOnline: "ui_steam_smoother_friend_online.m4a",
+  friendJoin: "ui_steam_smoother_friend_join.m4a",
+  message: "ui_steam_message_old_smooth.m4a",
+  // the PSP's own confirm / cancel sounds of the Game, Music and Photo areas (from a theme's sound pack);
+  // without them the usual select / back sounds play
+  gameSelect: "dht_game_decide.wav",
+  gameBack: "dht_game_cancel.wav",
+  musicSelect: "dht_music_decide.wav",
+  musicBack: "dht_music_cancel.wav",
+  photoSelect: "dht_photo_decide.wav",
+  photoBack: "dht_photo_cancel.wav",
 } as const;
 export type SoundKind = keyof typeof SOUND_FILES;
 let previewSound: ((k: SoundKind, variation?: number) => void) | null = null;
@@ -107,6 +196,9 @@ export function setPreviewSound(f: typeof previewSound) {
  * to suggest. Xbox 360 presets have their own entries ("x360:blades" …).
  */
 export const PACK_MATCH: Record<string, { re: RegExp[]; suggest: string }> = {
+  wii: {re:[/^wii(?![ _-]*u)/i],suggest:"Wii Menu Sounds"},
+  wiiu: {re:[/wii[ _-]*u/i],suggest:"Wii U Menu Sounds"},
+  switch: {re:[/(^|[^a-z0-9])switch([^a-z0-9]|$)/i],suggest:"Switch Menu Sounds"},
   minecraft: { re: [/Minecraft Console Legacy/i], suggest: "Minecraft Console Legacy" },
   republic: { re: [/DHT Verified Republic/i], suggest: "DHT Verified Republic" },
   pain: { re: [/DHT Six Paths Music/i], suggest: "DHT Six Paths Music" },
@@ -125,6 +217,7 @@ export const PACK_MATCH: Record<string, { re: RegExp[]; suggest: string }> = {
   "x360:nxe": { re: [/nxe/i], suggest: "Xbox 360 NXE Dash UI" },
   "x360:blades": { re: [/DHT Verified MC360 Blades 1\.7\.2/i, /blade/i], suggest: "Xbox 360 Blades" },
   aero: { re: [/windows\s*xp/i, /windows\s*7|win\s*7/i, /vista|aero|frutiger|media\s*center/i], suggest: "windows xp sounds" },
+  iisu: { re: [/iisu/i], suggest: "iisu SFX (comes with the plugin)" },
   dial: { re: [/alien\s*dial/i], suggest: "DHT Alien Dial (comes with the plugin)" },
 };
 export type PackKind = "sfx" | "music";
@@ -135,11 +228,11 @@ export function matchKey(theme: ThemeId): string {
 }
 /** How many of the UI sounds this theme uses a pack replaces. */
 export function sfxCoverage(p: SoundPack): number {
-  return Object.values(SOUND_FILES).filter((f) => packFile(p, f)).length;
+  return Object.values(SOUND_FILES).filter((f) => !f.startsWith("dht_") && !f.startsWith("ui_steam_") && packFile(p, f)).length;
 }
 export function autoPack(theme: ThemeId, kind: PackKind = "sfx"): SoundPack | null {
   for (const re of (PACK_MATCH[matchKey(theme)] ?? PACK_MATCH[theme])?.re ?? []) {
-    const hits = packs.filter((p) => re.test(p.name) || re.test(p.folder));
+    const hits = packs.filter((p) => (re.test(p.name) || re.test(p.folder)) && !(theme==="wiiu" && kind==="music" && /download|friends|settings/i.test(p.name+" "+p.folder)));
     if (kind === "music") {
       const m = hits.find((p) => !!musicFile(p));
       if (m) return m;
@@ -156,8 +249,38 @@ export function packFor(theme: ThemeId, kind: PackKind = "sfx"): SoundPack | nul
   const set = (kind === "sfx" ? s.packs[theme] : s.musicPacks?.[theme]) ?? "";
   if (set === "steam" || set === "none") return null;
   if (set) return packs.find((p) => p.folder === set) ?? autoPack(theme, kind);
+  const fromTheme = engine?.pack(theme, kind);
+  if (fromTheme !== undefined) return fromTheme;
+  const themed = skinSoundPack(theme, kind === "sfx" ? "sfx" : "music");
+  const found = themed ? packs.find((p) => p.folder === themed) : undefined;
+  if (found) return found;
   return autoPack(theme, kind);
 }
+// A theme file's extracted pack is written on first load: re-read the pack list then.
+onSkinPack(() => { void refreshPacks(); });
+
+// Decoded theme music is a large WAV: encode it once to Ogg Opus with the UI's own
+// WebCodecs encoder and let the backend replace the WAV. Without support, the WAV stays.
+const storeThemeMusic = callable<[folder: string, data: string], boolean>("store_theme_music");
+const compressing = new Set<string>();
+onMusicCompress((folder) => {
+  if (compressing.has(folder)) return;
+  compressing.add(folder);
+  void (async () => {
+    try {
+      const base = previewSoundBase ?? (await mediaBase());
+      if (!base) return;
+      const r = await fetch(`${base}/s/${encodeURIComponent(folder)}/menu_music.wav`);
+      if (!r.ok) return;
+      const wav = parseWav(await r.arrayBuffer());
+      if (!wav || !(await opusSupported(wav.rate, wav.channels.length))) return;
+      const ogg = await encodeOggOpus(wav.channels, wav.rate);
+      if (await storeThemeMusic(folder, toBase64(ogg))) await refreshPacks();
+    } catch {
+      /* keep the WAV */
+    }
+  })();
+});
 export function packFile(pack: SoundPack, file: string): string | null {
   const exact = (name:string) => {
     if(pack.ignore.includes(name))return null;
@@ -172,7 +295,8 @@ export function packFile(pack: SoundPack, file: string): string | null {
     "deck_ui_default_activation.wav":["deck_ui_into_game_detail.wav"],
     "deck_ui_hide_modal.wav":["deck_ui_out_of_game_detail.wav"],
     "deck_ui_show_modal.wav":["deck_ui_into_game_detail.wav"],
-    "deck_ui_switch_toggle_on.wav":["deck_ui_default_activation.wav","deck_ui_into_game_detail.wav"]
+    "deck_ui_switch_toggle_on.wav":["deck_ui_default_activation.wav","deck_ui_into_game_detail.wav"],
+    ...Object.fromEntries(Object.entries(AREA_BASE).map(([k, v]) => [k, [v, ...(v === "deck_ui_default_activation.wav" ? ["deck_ui_into_game_detail.wav"] : [])]])),
   };
   for(const alternate of related[file]??[]){const result=exact(alternate);if(result)return result;}
   return null;
@@ -200,12 +324,13 @@ export function setPreviewSoundBase(b: string) {
   previewSoundBase = b;
 }
 async function packUrl(pack: SoundPack, file: string): Promise<string | null> {
-  if((window as any).__testAssets && ["DHT Verified Republic","Minecraft Console Legacy","windows xp sounds","DHT Nazarick Music","DHT Floating Castle Music","DHT Six Paths Music"].includes(pack.folder))return `../bundle/sounds/${encodeURIComponent(pack.folder)}/${encodeURIComponent(file)}`;
+  if (pack.base) return `${pack.base}/${encodeURIComponent(file)}`;
+  if((window as any).__testAssets && ["Wii U Download Management","Wii U Friends theme","Wii U Settings","Wii U SFX","DHT Verified Republic","Minecraft Console Legacy","windows xp sounds","DHT Nazarick Music","DHT Floating Castle Music","DHT Six Paths Music"].includes(pack.folder))return `../bundle/sounds/${encodeURIComponent(pack.folder)}/${encodeURIComponent(file)}`;
   const base = previewSoundBase ?? (await mediaBase());
   return base ? `${base}/s/${encodeURIComponent(pack.folder)}/${encodeURIComponent(file)}` : null;
 }
 
-function uiWindow(): any {
+export function uiWindow(): any {
   try {
     return getUiDocument()?.defaultView ?? window;
   } catch {
@@ -236,7 +361,8 @@ function loadBuffer(url: string): Promise<AudioBuffer | null> {
       const r = await fetch(url);
       if (!r.ok) return null;
       const data = await r.arrayBuffer();
-      return await new Promise<AudioBuffer | null>((res) => c.decodeAudioData(data, (b) => res(b), () => res(null)));
+      // the promise form only: with callbacks Chromium still rejects the returned promise unhandled on bad data
+      return await c.decodeAudioData(data).catch(() => null);
     })().catch(() => null);
     buffers.set(url, p);
   }
@@ -254,7 +380,13 @@ function playBuffer(b: AudioBuffer, volume: number) {
   return true;
 }
 /** Steam's own UI sound: its file played directly (reliable), else through Steam's audio store. */
+/** Area sounds fall back to these when a pack (or Steam) has no own file for them. */
+const AREA_BASE: Record<string, string> = {
+  "dht_game_decide.wav": "deck_ui_default_activation.wav", "dht_music_decide.wav": "deck_ui_default_activation.wav", "dht_photo_decide.wav": "deck_ui_default_activation.wav",
+  "dht_game_cancel.wav": "deck_ui_out_of_game_detail.wav", "dht_music_cancel.wav": "deck_ui_out_of_game_detail.wav", "dht_photo_cancel.wav": "deck_ui_out_of_game_detail.wav",
+};
 function steamSound(file: string) {
+  file = AREA_BASE[file] ?? file;
   const vol = Math.max(0, Math.min(1, (getSettings().sfxVolume ?? 80) / 100));
   loadBuffer(`https://steamloopback.host/sounds/${file}`)
     .then((b) => {
@@ -305,6 +437,32 @@ export function soundDiag(theme: ThemeId): string {
   const music = packFor(theme, "music");
   return `${pack ? pack.name : "Steam sounds"} · music ${music ? music.name : "none"} · audio ${ctx?.state ?? "idle"} · server ${serverBase ? "on" : "off"}`;
 }
+/** The notification cues (friend online / joined a game / message): a random one of the files the active pack maps, nothing
+ *  when it has none (Steam's own sound is not touched). */
+export const NOTICE_SOUNDS = ["friendOnline", "friendJoin", "message"] as const;
+export type NoticeSound = (typeof NOTICE_SOUNDS)[number];
+export function pickNoticeFile(pack: SoundPack | null, kind: NoticeSound, random: () => number = Math.random): string | null {
+  if (!pack) return null;
+  const name = SOUND_FILES[kind];
+  if (pack.ignore.includes(name)) return null;
+  const mapped = pack.mappings[name];
+  const list = (Array.isArray(mapped) ? mapped : mapped ? [mapped] : []).filter((f) => pack.files.includes(f));
+  return list.length ? list[Math.min(list.length - 1, Math.floor(random() * list.length))] : null;
+}
+export function playNoticeSound(kind: NoticeSound) {
+  const s = getSettings();
+  if (!s.sounds) return;
+  const pack = packFor(s.theme);
+  const f = pickNoticeFile(pack, kind);
+  if (!pack || !f) return;
+  const vol = Math.max(0, Math.min(1, (s.sfxVolume ?? 80) / 100));
+  const ready = audioCtx();
+  const resumed = ready?.state === "suspended" ? ready.resume().catch(() => {}) : Promise.resolve();
+  packUrl(pack, f)
+    .then((url) => (url ? loadBuffer(url) : null))
+    .then(async (b) => { await resumed; if (b && getSettings().sounds) playBuffer(b, vol); })
+    .catch(() => {});
+}
 let lastPlay = 0;
 let lastDialCue = 0;
 export function playSound(kind: SoundKind, variation = 0) {
@@ -314,6 +472,7 @@ export function playSound(kind: SoundKind, variation = 0) {
   const now = Date.now();
   if ((kind === "move" || kind === "tile") && now - lastPlay < 45) return;
   lastPlay = now;
+  if ((NOTICE_SOUNDS as readonly string[]).includes(kind)) return playNoticeSound(kind as NoticeSound);
   if (s.theme === "dial" && s.dial.sound === "reference") {
     const name = kind === "launch" ? "launch.wav" : kind === "open" || kind === "menu" ? "wake.wav" : kind === "back" || kind === "close" ? "back.wav" : "switch.wav";
     const volume = Math.max(0,Math.min(1,s.sfxVolume/100));
@@ -365,10 +524,11 @@ function useDucked() {
 }
 
 /** The theme's music (the pack's menu music), looping while the home is shown. */
-export function useHomeMusic(theme: ThemeId, active: boolean) {
+export function useHomeMusic(theme: ThemeId, active: boolean, page?: string) {
   const s = getSettings();
   const on = s.backgroundMusic !== false && s.music[theme] !== false && active;
-  const pack = packFor(theme, "music");
+  const context=theme==="wiiu"&&!s.musicPacks?.wiiu ? ({downloads:"Wii U Download Management",friends:"Wii U Friends theme",settings:"Wii U Settings",qam:"Wii U Settings"} as Record<string,string>)[page??""] : undefined;
+  const pack = context ? packs.find(p=>p.name===context||p.folder===context)??null : packFor(theme, "music");
   const file = pack ? musicFile(pack) : null;
   const ducked = useDucked();
   const vol = ducked ? 0 : Math.max(0, Math.min(1, s.musicVolume / 100));
@@ -383,6 +543,7 @@ export function useHomeMusic(theme: ThemeId, active: boolean) {
     let dead = false;
     let a: HTMLAudioElement | null = null;
     let fade: any = null;
+    let release: (() => void) | null = null;
     (async () => {
       const url = await packUrl(pack, file);
       if (dead || !url) return;
@@ -392,6 +553,8 @@ export function useHomeMusic(theme: ThemeId, active: boolean) {
         a.volume = 0;
         await a.play();
         if (dead) { a.pause(); return; }
+        // AudioLoader's / ThemeDeck's menu music would play underneath ours.
+        release = holdOtherMusic();
         // One envelope follows current volume/ducking, including changes while
         // the file is loading. Competing fades must not restore stale volume.
         fade = setInterval(() => {
@@ -409,6 +572,8 @@ export function useHomeMusic(theme: ThemeId, active: boolean) {
       clearInterval(fade);
       const el = a;
       if (!el) return;
+      const done = release;
+      release = null;
       // short fade out
       let v = el.volume;
       const out = setInterval(() => {
@@ -421,6 +586,7 @@ export function useHomeMusic(theme: ThemeId, active: boolean) {
           } catch {
             /* ignore */
           }
+          done?.();
         } else el.volume = v;
       }, 30);
     };
@@ -520,21 +686,39 @@ export function openNativeGameMenu(appid: number, overview: any, anchor: EventTa
 // ───────────── clock / battery / user ─────────────
 export function useClock(intervalMs = 10000): Date {
   const [now, setNow] = useState(() => new Date());
+  // a clock with seconds (Standard options) ticks every second
+  const every = getSettings().clockSeconds ? Math.min(intervalMs, 1000) : intervalMs;
   useEffect(() => {
-    const iv = setInterval(() => setNow(new Date()), intervalMs);
+    const iv = setInterval(() => setNow(new Date()), every);
     return () => clearInterval(iv);
-  }, [intervalMs]);
+  }, [every]);
   return now;
 }
 
+/** The home's clock text. Standard options decide whether it shows, and with seconds. */
 export function fmtTime(d: Date, h24: boolean, seconds = false): string {
+  const opt = getSettings();
+  if (!opt.clockShown) return "";
   let h = d.getHours();
   const m = String(d.getMinutes()).padStart(2, "0");
-  const s = seconds ? ":" + String(d.getSeconds()).padStart(2, "0") : "";
+  const s = seconds || opt.clockSeconds ? ":" + String(d.getSeconds()).padStart(2, "0") : "";
   if (h24) return `${String(h).padStart(2, "0")}:${m}${s}`;
   const ap = h >= 12 ? "PM" : "AM";
   h = h % 12 || 12;
   return `${h}:${m}${s} ${ap}`;
+}
+
+/** A date in the format chosen in Standard options. `year` adds the year. */
+export function fmtDate(d: Date, year = false): string {
+  const opt = getSettings();
+  if (!opt.clockShown) return "";
+  const D = String(d.getDate()), M = String(d.getMonth() + 1), Y = String(d.getFullYear());
+  const pad = (v: string) => (year ? v.padStart(2, "0") : v);
+  switch (opt.dateFormat) {
+    case "DMY": return year ? `${pad(D)}/${pad(M)}/${Y}` : `${D}/${M}`;
+    case "YMD": return year ? `${Y}/${pad(M)}/${pad(D)}` : `${M}/${D}`;
+    default: return year ? `${pad(M)}/${pad(D)}/${Y}` : `${M}/${D}`;
+  }
 }
 
 export interface Battery {
@@ -677,6 +861,16 @@ function footerLegendClass(): string | null {
   return legendClass ?? null;
 }
 const ours = (el: Element) => !!(el.closest("[data-dht-root]") || el.querySelector("[data-dht-root]"));
+// Steam's on-screen keyboard is drawn in the page itself (class names like "virtualkeyboard_...", "...Keyboard...").
+// Its own bottom row / button legend looks exactly like the footer strip, and hiding it (or a parent that holds
+// it) collapses the keyboard's height, so it slides down while it opens. Nothing in or around it is ever touched.
+const KEYBOARD_SEL = '[class*="eyboard"],[class*="KEYBOARD"],[data-keyboard],[aria-label*="eyboard"]';
+export const touchesKeyboard = (el: Element) => !!(el.closest(KEYBOARD_SEL) || el.querySelector(KEYBOARD_SEL));
+// The themed home stays mounted under other pages (chat, settings): the bar is only ours to hide while it is on screen.
+const homeVisible = (doc: Document) => {
+  const r = doc.querySelector<HTMLElement>("[data-dht-root]");
+  return !!r && r.getClientRects().length > 0 && getComputedStyle(r).visibility !== "hidden";
+};
 function bottomStrips(doc: Document): HTMLElement[] {
   const view = doc.defaultView;
   if (!view) return [];
@@ -684,7 +878,7 @@ function bottomStrips(doc: Document): HTMLElement[] {
   const Hh = view.innerHeight || 800;
   const out: HTMLElement[] = [];
   for (const el of Array.from(doc.querySelectorAll<HTMLElement>("body *"))) {
-    if (el.hasAttribute(FOOT_ATTR) || ours(el)) continue;
+    if (el.hasAttribute(FOOT_ATTR) || ours(el) || touchesKeyboard(el)) continue;
     const r = el.getBoundingClientRect();
     if (r.bottom < Hh - 3 || r.bottom > Hh + 4 || r.height < 24 || r.height > 90 || r.width < W * 0.8) continue;
     if (el.parentElement?.closest(`[${FOOT_ATTR}]`)) continue;
@@ -695,7 +889,7 @@ function bottomStrips(doc: Document): HTMLElement[] {
   return out;
 }
 function markFooter(el: HTMLElement, how: "display" | "visibility") {
-  if (el.hasAttribute(FOOT_ATTR) || ours(el)) return;
+  if (el.hasAttribute(FOOT_ATTR) || ours(el) || touchesKeyboard(el)) return;
   el.setAttribute(FOOT_ATTR, `${how}:${el.style.getPropertyValue(how) || "-"}`);
   el.style.setProperty(how, how === "display" ? "none" : "hidden", "important");
 }
@@ -703,7 +897,7 @@ function hideFooter(doc: Document, mode: "hints" | "hide") {
   const view = doc.defaultView;
   const W = view?.innerWidth || 1280;
   const cls = footerLegendClass();
-  const legends = cls ? Array.from(doc.querySelectorAll<HTMLElement>(`.${cls}`)).filter((e) => !ours(e)) : [];
+  const legends = cls ? Array.from(doc.querySelectorAll<HTMLElement>(`.${cls}`)).filter((e) => !ours(e) && !touchesKeyboard(e)) : [];
   if (mode === "hints") {
     if (legends.length) legends.forEach((e) => markFooter(e, "visibility"));
     else bottomStrips(doc).forEach((e) => markFooter(e, "visibility"));
@@ -714,7 +908,7 @@ function hideFooter(doc: Document, mode: "hints" | "hide") {
   for (const l of legends) {
     let bar: HTMLElement = l;
     for (let p = l.parentElement; p && p !== doc.body; p = p.parentElement) {
-      if (ours(p)) break;
+      if (ours(p) || touchesKeyboard(p)) break;
       const r = p.getBoundingClientRect();
       if (r.height > 110) break;
       if (r.width >= W * 0.8) bar = p;
@@ -724,20 +918,30 @@ function hideFooter(doc: Document, mode: "hints" | "hide") {
   if (!bars.size) bottomStrips(doc).forEach((e) => bars.add(e));
   bars.forEach((e) => markFooter(e, "display"));
 }
+function restoreOne(el: HTMLElement) {
+  const [how, prev] = (el.getAttribute(FOOT_ATTR) ?? "display:-").split(":");
+  if (prev === "-" || !prev) el.style.removeProperty(how);
+  else el.style.setProperty(how, prev);
+  el.removeAttribute(FOOT_ATTR);
+}
 export function restoreFooter(doc: Document | null | undefined) {
   if (!doc) return;
-  for (const el of Array.from(doc.querySelectorAll<HTMLElement>(`[${FOOT_ATTR}]`))) {
-    const [how, prev] = (el.getAttribute(FOOT_ATTR) ?? "display:-").split(":");
-    if (prev === "-" || !prev) el.style.removeProperty(how);
-    else el.style.setProperty(how, prev);
-    el.removeAttribute(FOOT_ATTR);
-  }
+  for (const el of Array.from(doc.querySelectorAll<HTMLElement>(`[${FOOT_ATTR}]`))) restoreOne(el);
 }
 export function useHiddenFooter(doc: Document | null | undefined, mode: "show" | "hints" | "hide") {
   useEffect(() => {
     if (!doc || mode === "show") return;
     const run = () => {
       try {
+        if (!homeVisible(doc)) {
+          restoreFooter(doc); // another page is on top: leave Steam's own bar alone
+          return;
+        }
+        // a text field has focus, so the keyboard is opening or open: change nothing in the page meanwhile
+        const ae = doc.activeElement as HTMLElement | null;
+        if (ae && (ae.isContentEditable || /^(INPUT|TEXTAREA)$/.test(ae.tagName))) return;
+        // if the keyboard ended up inside something we hid earlier, give that back at once
+        for (const el of Array.from(doc.querySelectorAll<HTMLElement>(`[${FOOT_ATTR}]`))) if (touchesKeyboard(el)) restoreOne(el);
         hideFooter(doc, mode);
       } catch {
         /* ignore */

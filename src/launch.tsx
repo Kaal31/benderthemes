@@ -2,12 +2,12 @@ import { useEffect, useState } from "react";
 import { Navigation } from "@decky/ui";
 import type { Game } from "./library";
 import { GameArt } from "./common";
-import { Settings } from "./settings";
+import { getSettings, Settings } from "./settings";
 import { pushModalInput } from "./input";
 import { LAUNCH_CSS } from "./launchStyles";
 import { playSound } from "./steam";
 
-export interface LaunchState { game: Game; message: string; failed: boolean; waitingUI?: boolean }
+export interface LaunchState { game: Game; message: string; failed: boolean; waitingUI?: boolean; clip?: string }
 let state: LaunchState | null = null;
 const listeners = new Set<() => void>();
 let teardown = () => {};
@@ -20,12 +20,41 @@ export function useLaunchState() {
   return value;
 }
 
+/** A PSP theme's game-start clip (GAMEBOOT.PMF as MP4), played before every game starts; null = none. */
+let bootClip: string | null = null;
+export function setGameBootClip(url: string | null) { bootClip = url; }
+/** The theme's game-start sound (played instead of the launch sound), null = none. */
+let bootSound: string | null = null;
+export function setGameBootSound(url: string | null) { bootSound = url; }
+function playBootSound() {
+  try {
+    const a = new Audio(bootSound!);
+    a.volume = Math.max(0, Math.min(1, getSettings().sfxVolume / 100));
+    a.play().catch(() => {});
+  } catch { /* ignore */ }
+}
+let clipNext: (() => void) | null = null;
+/** The game-start clip ended (or was skipped): start the game. */
+export function finishGameBoot() { const f = clipNext; clipNext = null; f?.(); }
+
 /** Observe real Steam launch tasks and window focus; never navigate to an app page. */
 export function beginLaunch(game: Game, preview?: (g: Game)=>void) {
   if (state && !state.failed) return;
   teardown();
+  if (bootSound) playBootSound(); else playSound("launch");
+  if (bootClip) {
+    let gone = false;
+    teardown = () => { gone = true; clipNext = null; };
+    clipNext = () => { if (!gone) startGame(game, preview); };
+    emit({ game, message: "", failed: false, clip: bootClip });
+    return;
+  }
+  startGame(game, preview);
+}
+
+function startGame(game: Game, preview?: (g: Game)=>void) {
+  teardown();
   emit({game,message:"Preparing game…",failed:false});
-  playSound("launch");
   let dead=false;
   const regs: any[]=[];
   const timers: ReturnType<typeof setTimeout>[]=[];
@@ -64,7 +93,21 @@ export function beginLaunch(game: Game, preview?: (g: Game)=>void) {
   catch(error) { update(error instanceof Error?error.message:"Steam could not start this game.",true); }
 }
 
+/** The game-start clip, full screen; Ⓐ skips it, Ⓑ cancels the launch. If it can't play, the game just starts. */
+function GameBootClip({ src }: { src: string }) {
+  useEffect(() => pushModalInput((p) => { if (p.btn === "b") dismissLaunch(); else if (p.btn === "a" || p.btn === "menu") finishGameBoot(); return true; }), []);
+  useEffect(() => { const t = setTimeout(finishGameBoot, 20000); return () => clearTimeout(t); }, []);
+  return <div className="dht-gameboot" onClick={finishGameBoot} style={{ position: "absolute", inset: 0, zIndex: 91, background: "#000" }}>
+    <video src={src} autoPlay muted playsInline onEnded={finishGameBoot} onError={finishGameBoot} style={{ width: "100%", height: "100%", objectFit: "contain", display: "block" }} />
+  </div>;
+}
+
 export function LaunchView({value,settings}:{value:LaunchState;settings:Settings}) {
+  if (value.clip) return <GameBootClip src={value.clip} />;
+  return <LaunchScreen value={value} settings={settings} />;
+}
+
+function LaunchScreen({value,settings}:{value:LaunchState;settings:Settings}) {
   useEffect(()=>pushModalInput(p=>{if(p.btn==="b")dismissLaunch();return true;}),[]);
   const theme=settings.theme;
   return <div className="dht-launch" data-console={theme} data-variant={theme==="x360"?settings.x360.style:theme==="dial"?settings.dial.look:undefined} data-motion={settings.animations} role="status" aria-live="polite" style={{position:"absolute",inset:0,zIndex:90,background:"#030507",color:"white",display:"grid",placeItems:"center"}}>

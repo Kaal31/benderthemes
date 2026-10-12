@@ -1,0 +1,9 @@
+{
+  "name": "Wii U Settings",
+  "author": "Haxorzz",
+  "version": "v1.0",
+  "manifest_version": 1,
+  "music": true,
+  "ignore": [],
+  "id": "e2b1f1bf-a2c7-4b43-8ea2-f11cfc8bc640"
+}

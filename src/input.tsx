@@ -3,7 +3,7 @@
 // it consumed it (unconsumed Ⓑ goes back to Steam).
 import { Focusable, GamepadButton } from "@decky/ui";
 import { failHome } from "./compatibility";
-import { createContext, CSSProperties, ReactNode, useContext, useEffect, useMemo, useRef, useState } from "react";
+import { createContext, CSSProperties, ReactNode, useContext, useLayoutEffect, useMemo, useRef, useState } from "react";
 
 export type Btn = "up" | "down" | "left" | "right" | "a" | "b" | "x" | "y" | "menu" | "l1" | "r1" | "l2" | "r2";
 export interface Press {
@@ -46,6 +46,50 @@ const consume = (e: any) => {
  */
 /** Buttons handled the same on every theme (L2 / R2 = previous / next preset). */
 let globalInput: InputHandler | null = null;
+
+// ───────────── Hold L1 + direction: theme switcher ─────────────
+// While L1 is held on the home, the D-pad / left stick step through the themes (up/down = console, left/right =
+// that console's variants) instead of moving the theme's focus. L1's own action (tabs, pages…) still works: it
+// fires when L1 is released without a direction in between, or right away when another button is pressed while
+// L1 is down (so quick L1→R1 rolls keep their order). See handoff-notes/theme-switching.md.
+export type SwitchAxis = "console" | "variant";
+export interface L1Switcher {
+  /** May the switcher take over L1 now (home on screen, nothing open over it)? */
+  available(): boolean;
+  /** L1 went down (the switcher may show its HUD after a moment). */
+  begin(): void;
+  step(axis: SwitchAxis, dir: -1 | 1, repeat: boolean): void;
+  /** L1 released (or the hold was cut short). `stepped`: a direction was pressed during the hold. */
+  end(stepped: boolean): void;
+}
+let l1Switcher: L1Switcher | null = null;
+export function setL1Switcher(h: L1Switcher | null) {
+  l1Switcher = h;
+}
+const hold = { on: false, used: false, guard: 0 as any, upSeen: false, upBroken: false };
+/** True while L1 is held for the switcher (tests). */
+export const l1Held = () => hold.on;
+const DIR_AXIS: Partial<Record<Btn, [SwitchAxis, -1 | 1]>> = { up: ["console", -1], down: ["console", 1], left: ["variant", -1], right: ["variant", 1] };
+/** Ends the hold. True when it was L1 alone (no direction), i.e. L1's own action is still owed. */
+function stopHold(): boolean {
+  clearTimeout(hold.guard);
+  const was = hold.on, used = hold.used;
+  hold.on = false;
+  hold.used = false;
+  if (was) {
+    try { l1Switcher?.end(used); } catch (e) { console.warn("[DeckHomeThemes] switcher end", e); }
+  }
+  return was && !used;
+}
+/** If Steam never reports L1's release, give up on the hold rather than keep swallowing the D-pad. */
+function armGuard(onTimeout: () => void) {
+  clearTimeout(hold.guard);
+  hold.guard = setTimeout(() => {
+    if (!hold.on) return;
+    if (!hold.upSeen) hold.upBroken = true; // no release events here: L1 behaves as before from now on
+    if (stopHold()) onTimeout();
+  }, hold.upSeen ? 10000 : 4000);
+}
 export function setGlobalInput(h: InputHandler | null) {
   globalInput = h;
 }
@@ -73,15 +117,46 @@ export function ThemeRoot({
   const latest = useRef(onInput);
   latest.current = onInput;
   const gate=useRef(activationGate);gate.current=activationGate;
-  const fire = (btn: Btn, e: any) => {
+  const fire = (btn: Btn, e: any, direct = false): boolean => {
     const press = { btn, repeat: !!e?.detail?.is_repeat };
+    if (!direct) {
+      const modalOpen = modalLayers.length > 0 || !!modalInput;
+      if (btn === "l1") {
+        if (hold.on) return true; // Steam's repeat while held
+        if (!hold.upBroken && !modalOpen && l1Switcher?.available()) {
+          hold.on = true;
+          hold.used = false;
+          armGuard(() => fire("l1", null, true));
+          try { l1Switcher.begin(); } catch (err) { console.warn("[DeckHomeThemes] switcher begin", err); }
+          return true; // L1's own action waits for the release
+        }
+      } else if (hold.on) {
+        const axis = DIR_AXIS[btn];
+        if (axis) {
+          hold.used = true;
+          armGuard(() => fire("l1", null, true));
+          try { l1Switcher?.step(axis[0], axis[1], press.repeat); } catch (err) { console.warn("[DeckHomeThemes] switcher step", err); }
+          return true; // the theme's focus stays put
+        }
+        // another button while L1 is down: L1 counts as pressed first, then this button as usual
+        if (stopHold()) {
+          fire("l1", null, true);
+          // the look's handler sees L1's result only after it re-renders: run this button a moment later
+          // (Ⓑ stays immediate so an unhandled Ⓑ still reaches Steam)
+          if (btn !== "b") {
+            setTimeout(() => fire(btn, { detail: { is_repeat: press.repeat } }, true), 40);
+            return true;
+          }
+        }
+      }
+    }
     const run=()=>{
+    const modal=modalLayers[modalLayers.length-1]??modalInput;
+    if(modal)return !!modal(press);
     if ((btn === "l2" || btn === "r2") && globalInput?.(press)) return true;
     return !!latest.current(press);
     };
     try {
-      const modal=modalLayers[modalLayers.length-1]??modalInput;
-      if (modal) return !!modal(press);
       return gate.current?gate.current(press,run):run();
     }
     catch (error) { failHome(error); return false; }
@@ -96,7 +171,15 @@ export function ThemeRoot({
         const b = OTHER[e?.detail?.button];
         if (b && fire(b, e)) consume(e);
       },
-      ok: (e: any) => {
+      up: (e: any) => {
+        if (e?.detail?.button !== GamepadButton.BUMPER_LEFT) return;
+        hold.upSeen = true;
+        hold.upBroken = false; // releases do arrive after all
+        if (!hold.on) return;
+        consume(e);
+        if (stopHold()) fire("l1", null, true); // L1 alone: its own action, now
+      },
+      ok:(e: any) => {
         if (fire("a", e)) consume(e);
       },
       x: (e: any) => {
@@ -118,6 +201,7 @@ export function ThemeRoot({
       noFocusRing
       onGamepadDirection={call.dir}
       onButtonDown={call.down}
+      onButtonUp={call.up}
       onOKButton={call.ok}
       onOKActionDescription={hints?.a}
       onSecondaryButton={call.x}
@@ -147,7 +231,9 @@ export const useStage = () => useContext(StageCtx);
 /** Measures an element: the 1280-wide design surface scaled to fit it. */
 function useMeasure(ref: { current: HTMLDivElement | null }, on: boolean): StageSize {
   const [size, setSize] = useState<StageSize>({ W: 1280, H: 800, scale: 1 });
-  useEffect(() => {
+  // Resolve the stage scale before paint so newly opened pages never flash
+  // at the default 1280px size before settling into their actual viewport.
+  useLayoutEffect(() => {
     const el = ref.current;
     if (!el || !on) return;
     const view: any = el.ownerDocument?.defaultView ?? window;
@@ -246,3 +332,4 @@ export function spatial(points: { x: number; y: number }[], cur: number, dir: "u
   row.sort((a, b) => a.off - b.off || a.primary - b.primary);
   return row[0].i;
 }
+

@@ -7,7 +7,7 @@ import {castleWindowAppearance,useCastleWindow} from "./themes/castleWindow";
 // ones. Item pages show price, details, screenshots and the trailer; buying
 // happens on Steam's own store page ("View in Steam Store").
 import { Navigation } from "@decky/ui";
-import { CSSProperties, useEffect, useRef, useState } from "react";
+import { CSSProperties, ReactNode, useEffect, useRef, useState } from "react";
 import { Press, setModalInput, Stage, useStage } from "./input";
 import { Game, Library, openSteam } from "./library";
 import { fmtPrice, loadStoreDetails, loadStoreLists, searchStore, STORE_TABS, StoreDetails, StoreItem, StoreTab } from "./store";
@@ -15,6 +15,20 @@ import { TrailerVideo } from "./media";
 import { playSound } from "./steam";
 import { Settings } from "./settings";
 import { useAssets } from "./assets";
+import { PS1_STORE } from "./themes/ps1Styles";
+import { IISU_STORE_CSS, iisuPageVars, iisuSchemeAttr, iisuStore } from "./themes/iisuStyles";
+import { NINTENDO_STORE_CSS } from "./themes/nintendoPageLooks";
+import { SectionInput, StoreSection } from "./storeSections";
+import { getSettings, storeSectionOn } from "./settings";
+
+/** The store's tabs: Steam's lists, then the optional Themes / Plugins sections the home theme turned on, then Search. */
+function storeTabs(s: Settings): { id: StoreTab; label: string }[] {
+  const home = getSettings().theme || s.theme; // the toggles belong to the theme the store was opened from
+  const extra = ([["themes", "Themes"], ["plugins", "Plugins"]] as const).filter(([k]) => storeSectionOn(getSettings(), home, k)).map(([id, label]) => ({ id, label }));
+  const i = STORE_TABS.findIndex((t) => t.id === "search");
+  return [...STORE_TABS.slice(0, i), ...extra, ...STORE_TABS.slice(i)];
+}
+const isSection = (t: StoreTab): t is "themes" | "plugins" => t === "themes" || t === "plugins";
 
 // ───────────── per-theme look ─────────────
 interface Skin {
@@ -41,11 +55,18 @@ export function storeSkin(s: Settings): Skin {
   const t = s.theme;
   const ps = { title: "PlayStation Store", sale: "#f5c518" };
   switch (t) {
+    case "wii": case "wiiu": return {title:t==="wii"?"Shopping Channel":"Nintendo-style Shop",sale:"#1f93ba",layout:"grid",bg:"radial-gradient(ellipse at top,#fff,#e6eef3)",font:"Arial,sans-serif",panel:"linear-gradient(#fff,#edf3f7)",text:"#536c7b",sub:"#708895",accent:"#d9f4ff",accentText:"#256a89",radius:t==="wii"?24:18,ring:on=>on?{boxShadow:"0 0 0 3px #37bce9,0 4px 12px #70b9d644"}: {boxShadow:"0 2px 5px #879dab22"}};
+    // Switch: the eShop's near-white pages, its orange sidebar colour on the open section, the system's teal focus frame
+    case "switch": return {title:"Nintendo eShop",sale:"#ff8a8a",layout:"grid",bg:"var(--dht-switch-store-bg,#f4f4f4)",font:'"Nintendo Switch UI","Segoe UI",Roboto,"Helvetica Neue",Arial,sans-serif',panel:"#fff",text:"#2d2d2d",sub:"#6c6c6c",accent:"#fa7e00",accentText:"#fff",radius:4,ring:on=>on?{boxShadow:"0 0 0 2px #fff,0 0 0 6px var(--dht-switch-accent,#00c3e3),0 6px 16px #0003"}:{boxShadow:"0 1px 3px #0002"}};
+    // 3DS: the eShop's pale cream pages, white cards on a soft edge, the thick orange cursor, pink sale tags
+    case "n3ds": return {title:"Nintendo eShop",sale:"#f37ea1",layout:"grid",bg:"var(--dht-n3ds-store-bg,linear-gradient(#f8f6dc,#efecc6))",font:'"Nunito","Varela Round","Hiragino Maru Gothic ProN","Segoe UI",system-ui,sans-serif',panel:"#fff",text:"#4b4b4b",sub:"#8a8670",accent:"#f39800",accentText:"#fff",radius:14,ring:on=>on?{boxShadow:"0 0 0 4px #fff,0 0 0 9px #f39800,0 6px 14px #0003"}:{boxShadow:"0 3px 0 #d8d4ad"}};
     case "minecraft": return { compact: true, title: "Marketplace", sale: "#70b33e", layout: "grid", bg: "repeating-conic-gradient(#ffffff02 0% 25%,#00000003 0% 50%) 0 0 / 29px 29px, #292b2e", font: "BlockWorlds, monospace", panel: "linear-gradient(110deg,#303236,#242629)", text: "#eee", sub: "#bdbdc2", accent: "#326f18", accentText: "#fff", radius: 0, ring: on => on ? { boxShadow: "0 0 0 3px #171717,0 0 0 6px #82bf50", transform: "translateY(-2px)" } : { boxShadow: "inset 2px 2px #55565a,inset -2px -2px #191b1e" } };
     case "nazarick": return {categoryNavigation:true,title:"Nazarick Treasury",sale:"#cba765",layout:"list",bg:"transparent",font:"Georgia,serif",panel:"#08060cdd",text:"#dfd2e6",sub:"#b9a480",accent:"#67358bbd",accentText:"#f0dfff",radius:2,ring:ring("#c8a668","0 0 18px #a765dd66")};
     case "pain": return {title:"Store",sale:"#ba81ec",layout:"grid",bg:"radial-gradient(ellipse at 30% 20%,#2c173e,#09070f 75%)",panel:"#191021ed",text:"#e4cdf5",sub:"#b697cb",accent:"#b978ee",accentText:"#170a24",radius:12,ring:ring("#ce9bff","0 0 20px #a64eeb88")};
     case "castle": return {title:"Store",sale:"#e0ad14",layout:"grid",bg:"transparent",font:"Cardinal,sans-serif",panel:"#ffffffcc",text:"#304b64",sub:"#617d94",accent:"#ffdb36",accentText:"#253953",radius:3,ring:ring("#ffe470")};
     case "republic": return {title:"Republic Exchange",sale:"#d6b65b",layout:"grid",bg:"linear-gradient(140deg,#07101a,#152735)",panel:"#0c1824ee",text:"#d8e9f3",sub:"#b7a87e",accent:"#d9bb69",accentText:"#17150e",radius:3,ring:ring("#fce296")};
+    case "ps1": return PS1_STORE;
+    case "iisu": return iisuStore(s);
     case "ps5":
       return { ...ps, layout: "grid", bg: "radial-gradient(ellipse at 75% 0%, #26449a 0%, #0c1534 50%, #05070f 100%)", panel: "#152043", text: "#fff", sub: "#a9b4cc", accent: "#fff", accentText: "#000", radius: 14, ring: ring("#fff", "0 12px 30px rgba(0,0,0,.6)") };
     case "ps4":
@@ -146,9 +167,13 @@ export function StoreView({ settings, lib, onClose, onLaunch }: { settings: Sett
       ]
     : [];
 
-  const doSearch = () => {setSearchOpen(true);setSearchDraft(query);};
+  const tabs = storeTabs(settings);
+  const sectionInput = useRef<SectionInput | null>(null);
+  const [sectionQuery, setSectionQuery] = useState<Record<string, string>>({});
+  const doSearch = () => {setSearchOpen(true);setSearchDraft(isSection(tab) ? sectionQuery[tab] ?? "" : query);};
   const submitSearch = async () => {
     const q = searchDraft.trim();
+    if (isSection(tab)) { setSearchOpen(false); setSectionQuery((x) => ({ ...x, [tab]: q })); setZone("items"); return; } // empty clears the section's search
     if (!q) return;
     setSearchOpen(false);
     setQuery(q);
@@ -158,13 +183,13 @@ export function StoreView({ settings, lib, onClose, onLaunch }: { settings: Sett
     setResults(await searchStore(q).catch(() => []));
   };
   const switchTab = (d: number) => {
-    const i = STORE_TABS.findIndex((t) => t.id === tab);
-    const n = Math.max(0, Math.min(STORE_TABS.length - 1, i + d));
+    const i = tabs.findIndex((t) => t.id === tab);
+    const n = Math.max(0, Math.min(tabs.length - 1, i + d));
     if (n !== i) {
-      setTab(STORE_TABS[n].id);
+      setTab(tabs[n].id);
       setSel(0);
       playSound("tab");
-      if (STORE_TABS[n].id === "search" && !results.length) doSearch();
+      if (tabs[n].id === "search" && !results.length) doSearch();
     }
   };
   const COLS = skin.layout === "grid" ? (skin.compact ? 2 : 4) : 1;
@@ -185,6 +210,13 @@ export function StoreView({ settings, lib, onClose, onLaunch }: { settings: Sett
       } else if (b === "l1" || b === "r1") setShot((x) => Math.max(0, Math.min((detail?.screenshots.length ?? 1) - 1, x + (b === "l1" ? -1 : 1))));
       else if (b === "a") (playSound("select"), actions[dsel]?.run());
       return true;
+    }
+    // Themes / Plugins: the section moves its own focus and opens its pages; up from its first row reaches the tabs
+    if (isSection(tab) && zone === "items") {
+      const r = sectionInput.current?.(p);
+      if (r === "top") return setZone("tabs"), playSound("tab"), true;
+      if (r) return true;
+      if (b === "left" || b === "right") return switchTab(b === "left" ? -1 : 1), true;
     }
     if (b === "b") return close(), playSound("back"), true;
     if (b === "y") return doSearch(), true;
@@ -224,8 +256,9 @@ export function StoreView({ settings, lib, onClose, onLaunch }: { settings: Sett
   }, []);
 
   return (
-    <div ref={castleWindow.ref} className="dht-store" data-dht-store-skin={settings.theme} style={{ position: "absolute", inset: 0, zIndex: 85, background: "#000",...(settings.theme==="castle"?castleWindowAppearance(settings):{}) }}>
-      {searchOpen && <div className="dht-store-search" style={{position:"absolute",inset:settings.theme==="nazarick"?"10% 0 0":0,zIndex:5,background:skin.bg,color:skin.text,display:"grid",placeItems:"center"}}><form onSubmit={e=>{e.preventDefault();submitSearch();}} style={{width:"65%"}}><h1>Search Store</h1><input autoFocus aria-label="Search Store" value={searchDraft} onChange={e=>setSearchDraft(e.target.value)} onKeyDown={e=>{e.stopPropagation();if(e.key==="Escape")setSearchOpen(false);}} style={{width:"100%",boxSizing:"border-box",fontSize:28,padding:18,color:skin.text,background:skin.panel,border:`2px solid ${skin.sub}`,borderRadius:skin.radius}}/><button type="submit" style={{fontSize:22,padding:"14px 30px",marginTop:24,background:skin.accent,color:skin.accentText}}>Search</button><button type="button" onClick={()=>setSearchOpen(false)} style={{fontSize:22,padding:"14px 30px",marginLeft:18}}>Back</button></form></div>}
+    <div ref={castleWindow.ref} className="dht-store" data-dht-store-skin={settings.theme} data-scheme={iisuSchemeAttr(settings)} style={{ position: "absolute", inset: 0, zIndex: 85, background: "#000",...iisuPageVars(settings),...(settings.theme==="castle"?castleWindowAppearance(settings):{}) }}>
+      <style>{NINTENDO_STORE_CSS + "\n" + IISU_STORE_CSS}</style>
+      {searchOpen && <div className="dht-store-search" style={{position:"absolute",inset:settings.theme==="nazarick"?"10% 0 0":0,zIndex:5,background:skin.bg,color:skin.text,display:"grid",placeItems:"center"}}><form onSubmit={e=>{e.preventDefault();submitSearch();}} style={{width:"65%"}}><h1>{tab === "plugins" ? "Search plugins" : tab === "themes" ? "Search themes" : "Search Store"}</h1><input autoFocus aria-label={tab === "plugins" ? "Search plugins" : tab === "themes" ? "Search themes" : "Search Store"} value={searchDraft} onChange={e=>setSearchDraft(e.target.value)} onKeyDown={e=>{e.stopPropagation();if(e.key==="Escape")setSearchOpen(false);}} style={{width:"100%",boxSizing:"border-box",fontSize:28,padding:18,color:skin.text,background:skin.panel,border:`2px solid ${skin.sub}`,borderRadius:skin.radius}}/><button type="submit" style={{fontSize:22,padding:"14px 30px",marginTop:24,background:skin.accent,color:skin.accentText}}>Search</button><button type="button" onClick={()=>setSearchOpen(false)} style={{fontSize:22,padding:"14px 30px",marginLeft:18}}>Back</button></form></div>}
       <Stage background="transparent">
         {settings.theme==="nazarick"&&<><NazarickBackdrop page="store" motion={settings.animations}/><NazarickNavigation page="store" settings={settings} onNavigate={navigateNazarick}/></>}
         <StoreBody
@@ -244,6 +277,8 @@ export function StoreView({ settings, lib, onClose, onLaunch }: { settings: Sett
           dsel={dsel}
           shot={shot}
           lib={lib}
+          tabs={tabs}
+          section={isSection(tab) ? <StoreSection kind={tab} settings={settings} skin={skin} query={sectionQuery[tab] ?? ""} active={zone === "items"} inputRef={sectionInput} onClose={close} /> : null}
           onTab={(t) => (setTab(t), setSel(0), setZone("items"), t === "search" && doSearch())}
           onPick={(i) => (i === sel ? handler({ btn: "a", repeat: false }) : setSel(i))}
           onAction={(i) => (setDsel(i), actions[i]?.run())}
@@ -270,6 +305,8 @@ function StoreBody(p: {
   dsel: number;
   shot: number;
   lib: Library;
+  tabs: { id: StoreTab; label: string }[];
+  section: ReactNode;
   onTab: (t: StoreTab) => void;
   onPick: (i: number) => void;
   onAction: (i: number) => void;
@@ -291,7 +328,7 @@ function StoreBody(p: {
       </div>
       <div className="dht-store-prompt" style={{ position: "absolute", right: 56, top: 36, fontSize: 15, color: skin.tabText ?? skin.sub }}>{T(skin.categoryNavigation?"L1 / R1 categories · Y search":"L1 / R1 sections · Y search · B close")}</div>
       <div style={{ position: "absolute", left: 56, top: 82, right:56, display: "flex", flexWrap:"wrap", gap: 10 }}>
-        {STORE_TABS.map((t) => {
+        {p.tabs.map((t) => {
           const on = t.id === p.tab;
           const focus = on && p.zone === "tabs";
           return (
@@ -356,6 +393,9 @@ function StoreBody(p: {
       </div>
     );
   }
+
+  // ── Themes / Plugins sections (storeSections.tsx), under the same title and tabs ──
+  if (p.section) return <div className={`${skin.layout === "grid" ? "dht-store-grid" : "dht-store-list"} dht-store-sections`} style={base}>{header}{p.section}</div>;
 
   // ── lists ──
   const empty = p.loading ? "Loading the store…" : p.failed ? "The store can't be reached right now (check the internet connection)." : p.tab === "search" ? (p.query ? "Nothing found." : "Press Y to search.") : "Nothing here right now.";

@@ -6,13 +6,17 @@ import { AnimCanvas } from "../canvas";
 import { BatteryGlyph, GameArt, Icon, IconName, MenuItem, MenuView, themeMenu, useHome, useMenu, useRemembered } from "../common";
 import { clamp, Press, spatial, Stage, ThemeRoot, useStage } from "../input";
 import { fmtLastPlayed, fmtPlaytime, Game, openSteam, SteamPlace } from "../library";
-import { showTitle, THEMES, TITLE_MODES, updateSettings, updateVita, VitaFolder } from "../settings";
+import { showTitle, themeFx, THEMES, updateVita, VitaFolder, VitaLook } from "../settings";
 import { fmtTime, playSound, useBattery, useClock, useWallpaper } from "../steam";
 import { useVitaSkin, VitaSkin } from "../skins";
 import { Badges } from "../badges";
 import { useBubbleMotion } from "../motion";
-import { BubbleDefs, BubbleStyle, BUBBLE_STYLES, VitaBubble } from "./vitaBubble";
+import { ArtEdge, BubbleDefs, BubbleStyle, EdgeArt, VitaBubble } from "./vitaBubble";
+import { pressLock, useVitaLock, VitaLockScreen } from "./vitaLock";
+import { useSmoothIcon } from "../iconSmooth";
+import { useStockBubble } from "./vitaStockBubble";
 
+import { useReportFocus } from "../focus";
 const PER_PAGE = 10;
 const D = 184; // bubble diameter (~138 px on the 960×544 Vita screen)
 const BAR = 43; // information bar height
@@ -99,7 +103,7 @@ function VitaBackground({ page, skin, animate }: { page: number; skin: VitaSkin 
             "var(--dht-vita-bg, radial-gradient(ellipse 75% 22% at 35% 64%, rgba(190,245,255,0.55), transparent 70%), radial-gradient(ellipse 90% 45% at 20% 100%, rgba(110,225,255,0.65), transparent 70%), linear-gradient(176deg, #031d42 0%, #08427e 26%, #1477bd 48%, #33b2e6 66%, #49c9ef 78%, #2696d6 100%))",
         }}
       />
-      {img && <img key={img.slice(-40)} src={img} style={{ position: "absolute", inset: 0, width: "100%", height: "100%", objectFit: "cover" }} />}
+      {img && <img key={img.slice(-40)} src={img} data-dht-from-skin={skinBg ? "" : undefined} style={{ position: "absolute", inset: 0, width: "100%", height: "100%", objectFit: "cover" }} />}
       {!img && <AnimCanvas width={W} height={H} animate={animate} fps={24} draw={drawVitaWave} />}
     </div>
   );
@@ -111,16 +115,55 @@ interface MotionProps {
   motion: boolean;
   phase: number;
   sway: "off" | "gentle" | "lively";
+  edge: ArtEdge;
 }
 function Sphere({ children, bg, art = true, style, mp }: { children: ReactNode; bg?: string; art?: boolean; style: BubbleStyle; mp: MotionProps }) {
   return (
-    <VitaBubble d={D} style={style} bg={bg} zoomArt={art} motion={mp.motion} phase={mp.phase} sway={mp.sway}>
+    <VitaBubble d={D} style={style} bg={bg} zoomArt={art} motion={mp.motion} phase={mp.phase} sway={mp.sway} edge={mp.edge}>
       {children}
     </VitaBubble>
   );
 }
 
-function Bubble({ item, art, skin, bs, mp }: { item: VItem; art: "portrait" | "landscape"; skin: VitaSkin | null; bs: BubbleStyle; mp: MotionProps }) {
+/** A finished bubble picture (theme or stock), drawn flat as on the console; floats and sways like the others. */
+function ImageBubble({ url, mp, kind, shadow = 100 }: { url: string; mp: MotionProps; kind: string; shadow?: number }) {
+  const k = shadow / 100;
+  const swayK = 0.75 + ((mp.phase * 7.3) % 1) * 0.5;
+  return (
+    <div
+      className="dht-bubble-float"
+      style={{ width: D, height: D, animation: mp.sway === "off" ? "none" : `dhtBubbleFloat ${mp.sway === "gentle" ? 7.5 : 5.5}s ease-in-out ${-mp.phase}s infinite`, ["--dht-float-distance" as any]: mp.sway === "lively" ? "5px" : "2px", ["--dht-float-angle" as any]: mp.sway === "lively" ? "1.3deg" : ".55deg" }}
+    >
+      <div className={`dht-bubble-icon--${kind}${mp.motion ? " dht-bubble-sway" : ""}`} style={{ width: D, height: D, position: "relative", ["--dht-sway-k" as any]: swayK }}>
+        <img src={url} alt="" draggable={false} data-dht-from-skin={kind === "theme" ? "" : undefined} style={{ width: "100%", height: "100%", objectFit: "contain", display: "block", filter: k > 0 ? `drop-shadow(0 ${(5 * Math.min(k, 1.5)).toFixed(1)}px ${(6 * k).toFixed(1)}px rgba(0,20,50,${Math.min(0.85, 0.4 * k).toFixed(2)}))` : undefined }} />
+      </div>
+    </div>
+  );
+}
+function ThemeBubbleIcon({ src, mp, smooth, shadow }: { src: string; mp: MotionProps; smooth: number; shadow: number }) {
+  return <ImageBubble url={useSmoothIcon(src, smooth) ?? src} mp={mp} kind="theme" shadow={shadow} />;
+}
+function StockBubbleIcon({ item, bs, mp }: { item: { icon: IconName; color: string }; bs: BubbleStyle; mp: MotionProps }) {
+  const { url, probe } = useStockBubble(item.icon, item.color);
+  if (url) return <ImageBubble url={url} mp={mp} kind="stock" />;
+  return (
+    <>
+      {probe}
+      <LiveStock item={item} bs={bs} mp={mp} />
+    </>
+  );
+}
+function LiveStock({ item, bs, mp }: { item: { icon: IconName; color: string }; bs: BubbleStyle; mp: MotionProps }) {
+  return (
+    <Sphere style={bs} mp={mp} art={false} bg="radial-gradient(circle at 50% 35%, #ffffff 0%, #eef3f8 55%, #c9d6e3 100%)">
+      <div style={{ position: "absolute", inset: 0, display: "flex", alignItems: "center", justifyContent: "center" }}>
+        <Icon name={item.icon} size={86} color={item.color} />
+      </div>
+    </Sphere>
+  );
+}
+
+function Bubble({ item, art, skin, bs, mp, stock, smooth, shadow }: { item: VItem; art: "portrait" | "landscape"; skin: VitaSkin | null; bs: BubbleStyle; mp: MotionProps; stock: "image" | "live"; smooth: number; shadow: number }) {
   if (item.kind === "game")
     return (
       <Sphere style={bs} mp={mp}>
@@ -129,20 +172,15 @@ function Bubble({ item, art, skin, bs, mp }: { item: VItem; art: "portrait" | "l
     );
   if (item.kind === "sys") {
     const custom = skin?.icons[item.sys.skinKey] ?? (item.sys.altKey ? skin?.icons[item.sys.altKey] : undefined);
+    // Vita theme icons are complete bubbles (glass, rim and glyph drawn by the theme), so they are shown
+    // as they are: wrapping them in our own glass and zooming would crop the rim and blow up the glyph.
     if (custom)
       return (
-        <Sphere style={bs} mp={mp}>
-          <img src={custom} style={{ width: "100%", height: "100%", objectFit: "cover", display: "block" }} />
-        </Sphere>
+        <ThemeBubbleIcon src={custom} mp={mp} smooth={smooth} shadow={shadow} />
       );
-    // Stock-style system bubble: white sphere with a coloured glyph.
-    return (
-      <Sphere style={bs} mp={mp} art={false} bg="radial-gradient(circle at 50% 35%, #ffffff 0%, #eef3f8 55%, #c9d6e3 100%)">
-        <div style={{ position: "absolute", inset: 0, display: "flex", alignItems: "center", justifyContent: "center" }}>
-          <Icon name={item.sys.icon} size={86} color={item.sys.color} />
-        </div>
-      </Sphere>
-    );
+    // Stock system bubble: by default a finished picture (coloured glossy sphere + white glyph) like the
+    // console's own icons; "live" keeps the selectable glass style with a coloured glyph.
+    return stock === "image" ? <StockBubbleIcon item={item.sys} bs={bs} mp={mp} /> : <LiveStock item={item.sys} bs={bs} mp={mp} />;
   }
   // Folder / collection: a tinted sphere holding up to four mini bubbles.
   const tint = item.kind === "folder" ? item.folder.color : "#d9a441";
@@ -151,8 +189,10 @@ function Bubble({ item, art, skin, bs, mp }: { item: VItem; art: "portrait" | "l
     <Sphere style={bs} mp={mp} art={false} bg={`radial-gradient(circle at 50% 35%, #ffffff, ${tint} 85%)`}>
       <div style={{ position: "absolute", left: "19%", top: "19%", right: "19%", bottom: "19%", display: "grid", gridTemplateColumns: "1fr 1fr", gap: 6 }}>
         {minis.map((g) => (
-          <div key={g.appid} style={{ borderRadius: "50%", overflow: "hidden", aspectRatio: "1", boxShadow: "0 1px 3px rgba(0,0,0,0.35)" }}>
-            <GameArt g={g} kind={art} style={{ width: "100%", height: "100%" }} />
+          <div key={g.appid} style={{ position: "relative", borderRadius: "50%", overflow: "hidden", aspectRatio: "1", boxShadow: "0 1px 3px rgba(0,0,0,0.35)" }}>
+            <EdgeArt edge={mp.edge} zoom={1.12}>
+              <GameArt g={g} kind={art} style={{ width: "100%", height: "100%" }} />
+            </EdgeArt>
           </div>
         ))}
       </div>
@@ -161,7 +201,7 @@ function Bubble({ item, art, skin, bs, mp }: { item: VItem; art: "portrait" | "l
 }
 
 // ───────────── information bar & page indicator ─────────────
-function VitaStatus({ h24, color }: { h24: boolean; color?: string }) {
+function VitaStatus({ h24, color, title, count }: { h24: boolean; color?: string; title?: string; count?: number }) {
   const now = useClock(15000);
   const bat = useBattery();
   const t = fmtTime(now, h24);
@@ -172,8 +212,14 @@ function VitaStatus({ h24, color }: { h24: boolean; color?: string }) {
         <circle cx="4" cy="18" r="2.6" fill="#fff" />
         <path d="M2 10a10 10 0 0110 10M2 3a17 17 0 0117 17" stroke="#fff" strokeWidth="2.6" fill="none" strokeLinecap="round" />
       </svg>
-      <div style={{ flex: 1, display: "flex", justifyContent: "center" }}>
+      <div style={{ flex: 1, minWidth: 0, display: "flex", justifyContent: "center", alignItems: "center", gap: 10 }}>
         <Icon name="home" size={26} color="#fff" />
+        {/* an open folder's name sits in the information bar, never over the bubbles */}
+        {title != null && (
+          <span className="dht-folder-title" style={{ minWidth: 0, maxWidth: "45%", overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap", fontSize: 21, fontWeight: 500, textShadow: "0 1px 2px rgba(0,0,0,0.6)" }}>
+            {title} {count != null && <span style={{ opacity: 0.7, fontSize: 16 }}>({count})</span>}
+          </span>
+        )}
       </div>
       <span style={{ fontSize: 30, fontWeight: 400, letterSpacing: 0.5 }}>
         {m ? m[1] : t}
@@ -250,7 +296,7 @@ function LiveArea({ game, focus, closing, art, peel = 0, onTap }: { game: Game; 
       {/* info card */}
       <div className="dht-livearea-info" style={{ position: "absolute", left: 40, top: H * 0.3, width: 380, padding: "18px 22px", borderRadius: 14, background: "rgba(255,255,255,0.88)", color: "#1c2433", fontSize: 19, lineHeight: 1.7, boxShadow: "0 8px 22px rgba(0,0,0,0.35)" }}>
         <div>
-          <b>Play time:</b> {fmtPlaytime(game.playtime)}
+          <b>Play time:</b> {fmtPlaytime(game.playtime, game.lastPlayed, true)}
         </div>
         <div>
           <b>Last played:</b> {fmtLastPlayed(game.lastPlayed)}
@@ -277,6 +323,59 @@ function LiveArea({ game, focus, closing, art, peel = 0, onTap }: { game: Game; 
       {/* page-curl corner */}
       <div style={{ position: "absolute", right: 0, top: 0, width: 0, height: 0, borderStyle: "solid", borderWidth: "0 86px 86px 0", borderColor: "transparent rgba(235,240,248,0.95) transparent transparent", filter: "drop-shadow(-4px 4px 6px rgba(0,0,0,0.4))" }} />
       <div style={{ position: "absolute", right: 10, top: 92, color: "#fff", fontSize: 14, opacity: 0.85, textShadow: "0 1px 3px #000" }}>Ⓑ / drag to peel</div>
+    </div>
+  );
+}
+
+// Built-in "Sakura" look. Same values as the optional CSS Loader example theme
+// (DHT Vita Sakura), but applied from the plugin's own settings. The variables
+// are set inline on the Vita layer, so they beat anything a CSS Loader theme
+// puts on :root, and every var(--dht-…, default) in this file picks them up.
+const SAKURA_VARS = {
+  "--dht-vita-bg": "radial-gradient(ellipse 80% 30% at 30% 70%, rgba(255, 230, 240, 0.7), transparent 70%), linear-gradient(170deg, #4a0f2e 0%, #a3315f 40%, #e77fa8 70%, #ffd0e2 100%)",
+  "--dht-vita-bar": "rgba(60, 0, 25, 0.85)",
+  "--dht-vita-halo-ring": "rgba(255, 220, 235, 0.95)",
+} as CSSProperties;
+const LOOK_VARS: Record<VitaLook, CSSProperties | undefined> = { "": undefined, sakura: SAKURA_VARS };
+// Petals drift over the page; the label/folder-title rules need !important
+// because those elements set their style inline. Only emitted for this look.
+const SAKURA_CSS = `
+@keyframes dhtPetalFall { from { transform: translate3d(0, -40px, 0) } to { transform: translate3d(var(--drift), calc(var(--fall) + 40px), 0) } }
+@keyframes dhtPetalSway { 0%, 100% { transform: translateX(calc(var(--sway) * -1)) rotate(-18deg) rotateY(0deg) } 50% { transform: translateX(var(--sway)) rotate(28deg) rotateY(62deg) } }
+.dht-sakura { position: absolute; inset: 0; overflow: hidden; pointer-events: none; }
+.dht-petal { position: absolute; top: 0; will-change: transform; animation: dhtPetalFall var(--dur) linear var(--delay) infinite; }
+.dht-petal > i { display: block; width: var(--size); height: calc(var(--size) * 0.72); border-radius: 80% 0 80% 0 / 90% 0 90% 0;
+  background: radial-gradient(ellipse at 30% 30%, #fff5f9 0%, #ffc6dc 45%, #f48fb6 100%); opacity: var(--alpha);
+  box-shadow: 0 1px 2px rgba(120, 20, 60, 0.18); animation: dhtPetalSway var(--swayDur) ease-in-out var(--delay) infinite; }
+.dht-root[data-motion=false] .dht-petal, .dht-root[data-motion=false] .dht-petal > i { animation-play-state: paused !important; }
+@media (prefers-reduced-motion: reduce) { .dht-petal, .dht-petal > i { animation-play-state: paused !important; } }
+.dht-look-sakura .dht-bubble-label { text-shadow: 0 1px 3px rgba(90, 0, 40, 0.9) !important; }
+.dht-look-sakura .dht-folder-title { text-shadow: 0 1px 3px rgba(90, 0, 40, 0.9) !important; }
+`;
+
+/** Falling cherry petals: each petal has its own size, speed, drift and sway, seeded so the field is stable. */
+function SakuraPetals({ H }: { H: number }) {
+  const petals = useMemo(() => {
+    let seed = 7;
+    const rnd = () => ((seed = (seed * 16807) % 2147483647) / 2147483647);
+    return Array.from({ length: 30 }, () => {
+      const dur = 11 + rnd() * 10;
+      const near = rnd() < 0.3;
+      return {
+        left: `${rnd() * 104 - 2}%`,
+        style: {
+          "--dur": `${dur}s`, "--delay": `${-rnd() * dur}s`, "--drift": `${(rnd() - 0.35) * 220}px`, "--fall": `${H}px`,
+          "--sway": `${10 + rnd() * 22}px`, "--swayDur": `${2.4 + rnd() * 2.6}s`, "--size": `${near ? 22 + rnd() * 8 : 12 + rnd() * 7}px`,
+          "--alpha": `${near ? 0.95 : 0.55 + rnd() * 0.3}`,
+        } as CSSProperties,
+      };
+    });
+  }, [H]);
+  return (
+    <div className="dht-sakura" aria-hidden="true">
+      {petals.map((q, i) => (
+        <div key={i} className="dht-petal" style={{ left: q.left, ...q.style }}><i /></div>
+      ))}
     </div>
   );
 }
@@ -315,7 +414,20 @@ export function VitaHome() {
   const v = s.vita;
   const { W, H } = useStage();
   const menu = useMenu();
-  const skin = useVitaSkin();
+  const rawSkin = useVitaSkin();
+  const fx = themeFx(s, v.skin ? `vita:${v.skin}` : "");
+  // the parts of the theme the user switched off are left out
+  const skin = useMemo<VitaSkin | null>(
+    () =>
+      rawSkin && {
+        ...rawSkin,
+        icons: fx.icons ? rawSkin.icons : {},
+        pages: fx.background ? rawSkin.pages : [],
+        fontColors: fx.labels ? rawSkin.fontColors : undefined,
+      },
+    [rawSkin, fx.icons, fx.background, fx.labels],
+  );
+  const lock = useVitaLock();
 
   // Build the item list in the user's order.
   const items: VItem[] = useMemo(() => {
@@ -349,6 +461,7 @@ export function VitaHome() {
 
   const view = openFolder ? folderList : list;
   const cur = openFolder ? clamp(fsel, 0, Math.max(0, view.length - 1)) : clamp(sel, 0, Math.max(0, view.length - 1));
+  { const it = view[cur]; useReportFocus(it && "game" in it ? it.game : undefined); }
   const setCurRaw = (i: number) => (openFolder ? setFsel(i) : setSel(i));
   // 3D bubbles: they turn and sway only when the Deck is tilted (gyro)
   const [tiltEl, setTiltEl] = useState<HTMLDivElement | null>(null);
@@ -387,28 +500,6 @@ export function VitaHome() {
 
   const commonMenu = (): MenuItem[] => [
     { label: "Create Folder", action: () => newFolder() },
-    {
-      label: "Bubble Settings",
-      sub: () => [
-        { label: "Bubble Style", sub: () => BUBBLE_STYLES.map((b) => ({ label: b.name, checked: b.id === v.bubbleStyle, action: () => updateVita({ bubbleStyle: b.id }) })) },
-        {
-          label: "Focus Highlight",
-          sub: () =>
-            (
-              [
-                ["vita", "Vita glow (soft)"],
-                ["ring", "Ring"],
-                ["none", "None (grow only)"],
-              ] as const
-            ).map(([id, name]) => ({ label: name, checked: v.focus === id, action: () => updateVita({ focus: id }) })),
-        },
-        { label: "Game Titles", sub: () => TITLE_MODES.map((m) => ({ label: m.name, checked: (s.titles.vita ?? "show") === m.id, action: () => updateSettings((p) => ({ titles: { ...p.titles, vita: m.id } })) })) },
-        { label: "3D Bubbles", checked: v.motion, action: () => updateVita({ motion: !v.motion }) },
-        { label: "Bubble Sway", sub: () => (["off", "gentle", "lively"] as const).map(sway => ({ label: sway === "off" ? "Off" : sway === "gentle" ? "Gentle" : "Lively", checked: v.sway === sway, action: () => updateVita({ sway }) })) },
-        { label: "Gyro Sway", checked: v.gyro, action: () => updateVita({ gyro: !v.gyro }) },
-        { label: "Touch Controls", checked: v.touch, action: () => updateVita({ touch: !v.touch }) },
-      ],
-    },
     { label: "Presets", sub: () => themeMenu(s.theme, api.switchTheme, THEMES) },
     { label: "Home Screen Settings", action: api.openSettings },
     { label: "Home", action: api.showSteamHome },
@@ -477,6 +568,7 @@ export function VitaHome() {
   };
 
   const onInput = (p: Press): boolean => {
+    if (lock.locked) return pressLock(), true;
     if (menu.handle(p)) return true;
     // LiveArea
     if (live) {
@@ -685,6 +777,11 @@ export function VitaHome() {
     }
   };
 
+  // Labels as on the console: one small line just under the bubble, cut with an ellipsis. The line must fit the gap above the next
+  // row (rows 152-155 Vita px apart, bubbles 138: a ~15 px band) and stay within one bubble step, so it never runs onto other bubbles.
+  const labelGap = 152 * Math.min(1.42, (H - BAR) / 512) - D;
+  const labelFont = Math.max(14, Math.min(22, Math.floor((labelGap - 2) / 1.15)));
+  const labelW = Math.round((208 * W) / 960 - 14);
   const renderPages = (arr: VItem[], selIdx: number, wobble: boolean) => {
     const pg = Math.floor(selIdx / PER_PAGE);
     const out: ReactElement[] = [];
@@ -715,26 +812,26 @@ export function VitaHome() {
                 animation: selected && launching ? "dhtLaunch 600ms ease-in forwards" : selected && v.focus === "ring" ? "dhtHalo 1.8s ease-in-out infinite" : "none",
               }}
             >
-              <Bubble item={it} art={v.art} skin={skin} bs={v.bubbleStyle} mp={{ motion: v.motion && s.animations, sway: s.animations ? v.sway : "off", phase: (i * 2.3) % 9 }} />
+              <Bubble item={it} art={v.art} skin={skin} bs={v.bubbleStyle} stock={v.stockIcons} smooth={fx.smooth} shadow={fx.shadow} mp={{ motion: v.motion && s.animations, sway: s.animations ? v.sway : "off", phase: (i * 2.3) % 9, edge: v.artEdge }} />
             </div>
           </div>
           <div
             className="dht-bubble-label"
             style={{
               position: "absolute",
-              top: D + 2,
+              top: D + 1,
               left: D / 2,
               transform: "translateX(-50%)",
-              width: 300,
+              width: "max-content",
+              maxWidth: labelW,
               textAlign: "center",
-              color: "var(--dht-vita-label, #fff)",
-              fontSize: 24,
+              color: `var(--dht-vita-label, ${skin?.fontColors?.[Math.min(page, Math.max(0, (skin?.fontColors?.length ?? 1) - 1))] ?? "#fff"})`,
+              fontSize: labelFont,
               fontWeight: 500,
-              lineHeight: 1.1,
+              lineHeight: 1.15,
               textShadow: "0 1px 2px rgba(0,0,0,0.85), 0 0 6px rgba(0,30,70,0.6)",
-              display: "-webkit-box",
-              WebkitLineClamp: 2,
-              WebkitBoxOrient: "vertical",
+              whiteSpace: "nowrap",
+              textOverflow: "ellipsis",
               overflow: "hidden",
             }}
           >
@@ -804,7 +901,8 @@ export function VitaHome() {
       <Stage>
        <div
         ref={setTiltEl}
-        style={{ position: "absolute", inset: 0, touchAction: "none", userSelect: "none", WebkitUserSelect: "none" }}
+        className={v.look ? `dht-look-${v.look}` : undefined}
+        style={{ position: "absolute", inset: 0, touchAction: "none", userSelect: "none", WebkitUserSelect: "none", ...LOOK_VARS[v.look] }}
         onPointerDown={(e) => e.pointerType === "touch" ? undefined : onPointerDown(e)}
         onPointerMove={(e) => e.pointerType === "touch" ? undefined : onPointerMove(e)}
         onPointerUp={(e) => e.pointerType === "touch" ? undefined : onPointerUp(e)}
@@ -820,18 +918,16 @@ export function VitaHome() {
           }
         }}
        >
-        <style>{VITA_CSS}</style>
+        <style>{VITA_CSS}{v.look === "sakura" ? SAKURA_CSS : ""}</style>
         <BubbleDefs d={D} style={v.bubbleStyle} />
         <VitaBackground page={openFolder ? 0 : page} skin={skin} animate={s.animations} />
+        {v.look === "sakura" && <SakuraPetals H={H} />}
         <div style={{ position: "absolute", inset: 0, opacity: openFolder ? 0 : 1, transition: "opacity 200ms, transform 260ms ease-out", transform: !openFolder && drag ? `translateY(${drag * 0.55}px)` : undefined }}>
           {renderPages(list, openFolder ? clamp(sel, 0, list.length - 1) : cur, !!moving)}
         </div>
         {!openFolder && <PageDots page={page} pages={pages} target={swipeTarget} />}
         {openFolder && folderItem && (
           <div style={{ position: "absolute", inset: 0 }}>
-            <div className="dht-folder-title" style={{ position: "absolute", left: "50%", top: 52, transform: "translateX(-50%)", padding: "4px 22px", borderRadius: 18, background: "rgba(0,20,50,0.45)", color: "#fff", fontSize: 24, fontWeight: 600, textShadow: "0 1px 4px rgba(0,0,0,0.6)", whiteSpace: "nowrap" }}>
-              {folderItem.label} <span style={{ opacity: 0.7, fontSize: 18 }}>({folderList.length})</span>
-            </div>
             <div style={{ position: "absolute", inset: 0, transition: "transform 260ms ease-out", transform: drag ? `translateY(${drag * 0.55}px)` : undefined }}>{renderPages(folderList, cur, false)}</div>
             <PageDots page={page} pages={pages} target={swipeTarget} />
             {folderList.length === 0 && <div style={{ position: "absolute", left: 0, right: 0, top: H / 2, textAlign: "center", color: "#fff", opacity: 0.8, fontSize: 20 }}>This folder is empty. Use △ → Add to Folder on a game.</div>}
@@ -853,8 +949,9 @@ export function VitaHome() {
             }}
           />
         )}
-        <VitaStatus h24={s.clock24} color={skin?.barColor} />
+        <VitaStatus h24={s.clock24} color={skin?.barColor} title={openFolder && folderItem ? folderItem.label : undefined} count={openFolder && folderItem ? folderList.length : undefined} />
         <MenuView menu={menu} variant="vita" />
+        {lock.locked && <VitaLockScreen skin={skin} h24={s.clock24} W={W} H={H} animate={s.animations} onUnlock={lock.unlock} />}
        </div>
       </Stage>
     </ThemeRoot>

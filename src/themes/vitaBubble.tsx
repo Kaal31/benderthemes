@@ -43,6 +43,34 @@ const VITA_LAYERS = [
 const RIM_MASK = "radial-gradient(circle at 50% 50%,#000 0%,#000 88%,rgba(0,0,0,.7) 95%,rgba(0,0,0,.35) 100%)";
 const RIM_GLOW = "0 0 5px 1px rgba(200,240,255,.35)";
 const SHADOW = "drop-shadow(0 6px 7px rgba(0,20,50,.45))";
+// Cover art edge. The zoom puts the edge of the picture (often a printed title) right at the
+// rim, where slivers of it read as glitches.
+//   blend – the art fades into a blurred copy of itself: clean rim, same colours (default)
+//   fade  – the art fades into the bubble's dark base
+//   off   – art runs to the rim
+export type ArtEdge = "blend" | "fade" | "off";
+export const ART_EDGES: { id: ArtEdge; name: string }[] = [
+  { id: "blend", name: "Blend (clean, same colours)" },
+  { id: "fade", name: "Fade (darker rim)" },
+  { id: "off", name: "Off (art to the edge)" },
+];
+export const ART_FADE = "radial-gradient(circle closest-side, #000 82%, rgba(0,0,0,.4) 92%, transparent 98%)";
+/** Art clipped to a circle with a clean edge (folder minis use this too). */
+export function EdgeArt({ children, edge, zoom = 1 }: { children: ReactNode; edge: ArtEdge; zoom?: number }) {
+  const z = zoom !== 1 ? `scale(${zoom})` : undefined;
+  return (
+    <>
+      {edge === "blend" && (
+        <div className="dht-bubble-artblur" style={{ position: "absolute", inset: 0, filter: "blur(4px) saturate(1.1)", transform: `scale(${zoom * 1.12})` }}>
+          {children}
+        </div>
+      )}
+      <div style={{ position: "absolute", inset: 0, WebkitMaskImage: edge === "off" ? undefined : ART_FADE, maskImage: edge === "off" ? undefined : ART_FADE }}>
+        <div style={{ position: "absolute", inset: 0, transform: z }}>{children}</div>
+      </div>
+    </>
+  );
+}
 
 const SPECS: Record<BubbleStyle, Spec> = {
   lens: { zoom: 1.08, layers: VITA_LAYERS, specular: [5], mask: RIM_MASK, glow: RIM_GLOW, outline: "0 0 0 1px rgba(0,25,60,.35)", lens: 0.12, shadow: SHADOW },
@@ -182,7 +210,9 @@ export function VitaBubble({
   motion = false,
   phase = 0,
   sway = "off",
+  edge = "blend",
 }: {
+  edge?: ArtEdge;
   d: number;
   style: BubbleStyle;
   children: ReactNode;
@@ -218,7 +248,11 @@ export function VitaBubble({
         <div className="dht-bubble-art" style={{ position: "absolute", inset: 0, filter: lens, overflow: "hidden", borderRadius: "50%" }}>
           <div className={motion ? "dht-bubble-tilt" : undefined} style={{ position: "absolute", inset: 0 }}>
             <div className="dht-bubble-spin" style={{ position: "absolute", inset: 0 }}>
-              <div style={{ position: "absolute", inset: 0, transform: zoom !== 1 ? `scale(${zoom})` : undefined }}>{children}</div>
+              {zoomArt ? (
+                <EdgeArt edge={edge} zoom={zoom}>{children}</EdgeArt>
+              ) : (
+                <div style={{ position: "absolute", inset: 0, transform: zoom !== 1 ? `scale(${zoom})` : undefined }}>{children}</div>
+              )}
             </div>
           </div>
         </div>

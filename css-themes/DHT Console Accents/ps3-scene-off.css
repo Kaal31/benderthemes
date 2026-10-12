@@ -1,0 +1,2 @@
+/* PS3 dynamic themes: use the slideshow instead of the live 3D scene */
+:root { --dht-ps3-scene: off; }

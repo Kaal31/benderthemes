@@ -1,14 +1,16 @@
-import { storeSkin } from "./storeView";
-import { useSettings } from "./settings";
-// Full-screen overlays shared by every theme: a screenshot gallery (Steam's own
-// screenshots) and a trailer player. While one is open it receives all input.
+// Full-screen overlays shared by every theme: the capture viewer (Steam's own screenshots and the
+// videos on the Deck), the trailer player and the video player. They are drawn in the look of the
+// theme showing the "media" page (see mediaCenter.tsx). While one is open it receives all input, and
+// a video playing with sound pauses the shared music player until it closes.
 import { useEffect, useRef, useState } from "react";
-import { Press, setModalInput, Stage, useStage } from "./input";
+import { Press, setModalInput, useStage } from "./input";
 import { Game } from "./library";
-import { fmtDuration, LocalVideo, LocalVideoView, loadScreenshots, Shot, TrailerVideo } from "./media";
+import { fmtDuration, LocalVideo, LocalVideoView, loadScreenshots, Shot, TrailerVideo, useVideos } from "./media";
+import { MediaFrame, mediaVars, MEDIA_CSS, useMediaSettings } from "./mediaCenter";
+import { musicPlayer } from "./musicPlayer";
 import { playSound } from "./steam";
 
-export type Overlay = { kind: "shots"; appid?: number; index?: number } | { kind: "trailer"; game: Game } | { kind: "video"; video: LocalVideo } | { kind: "store" } | null;
+export type Overlay = { kind: "shots"; appid?: number; index?: number; tab?: "shots" | "videos" } | { kind: "trailer"; game: Game } | { kind: "video"; video: LocalVideo; back?: boolean } | { kind: "music" } | { kind: "store" } | null;
 
 function useModal(handler: (p: Press) => boolean) {
   const ref = useRef(handler);
@@ -19,109 +21,154 @@ function useModal(handler: (p: Press) => boolean) {
   }, []);
 }
 
-// ───────────── screenshots ─────────────
-export function ScreenshotGallery({ appid, index, lib, onClose }: { appid?: number; index?: number; lib: Map<number, Game>; onClose: () => void }) {
-  const skin=storeSkin(useSettings());
+/** A video with sound is playing: hold the shared music player until it closes. */
+function useMusicHold() {
+  useEffect(() => musicPlayer.hold(), []);
+}
+
+// The viewer's place survives closing it and switching themes.
+const viewer = { tab: "shots" as "shots" | "videos", shot: 0, video: 0 };
+
+// ───────────── captures: screenshots and videos ─────────────
+export function ScreenshotGallery({ appid, index, tab, lib, onClose, onVideo }: { appid?: number; index?: number; tab?: "shots" | "videos"; lib: Map<number, Game>; onClose: () => void; onVideo?: (v: LocalVideo) => void }) {
+  const s = useMediaSettings();
   const [all, setAll] = useState<Shot[] | null>(null);
   useEffect(() => {
     loadScreenshots().then(setAll);
   }, []);
-  const shots = (all ?? []).filter((s) => !appid || s.appid === appid);
-  const [sel, setSel] = useState(index ?? 0);
+  const vids = useVideos();
+  const shots = (all ?? []).filter((x) => !appid || x.appid === appid);
+  const videos = (vids ?? []).filter((v) => !appid || v.appid === appid);
+  const [mode, setMode] = useState<"shots" | "videos">(tab ?? (index !== undefined ? "shots" : viewer.tab));
+  const [sel, setSel] = useState(index ?? (mode === "shots" ? viewer.shot : viewer.video));
   const [full, setFull] = useState(index !== undefined);
+  useEffect(() => {
+    viewer.tab = mode;
+    if (mode === "shots") viewer.shot = sel;
+    else viewer.video = sel;
+  }, [mode, sel]);
   const COLS = 4;
-  const cur = shots[Math.min(sel, Math.max(0, shots.length - 1))];
+  const n = mode === "shots" ? shots.length : videos.length;
+  const at = Math.min(sel, Math.max(0, n - 1));
+  const cur = shots[at];
   const name = (id: number) => lib.get(id)?.name ?? (id ? `App ${id}` : "Steam");
+  const switchTo = (m: "shots" | "videos") => {
+    if (m === mode) return;
+    setMode(m);
+    setSel(m === "shots" ? viewer.shot : viewer.video);
+    setFull(false);
+    playSound("tab");
+  };
 
   useModal((p) => {
-    const n = shots.length;
     const mv = (d: number) => {
-      const nx = Math.max(0, Math.min(n - 1, sel + d));
-      if (nx !== sel) (setSel(nx), playSound("move"));
+      const nx = Math.max(0, Math.min(n - 1, at + d));
+      if (nx !== at) (setSel(nx), playSound("move"));
     };
     if (p.btn === "b") {
       if (full && index === undefined) setFull(false);
       else onClose();
       playSound("back");
     } else if (p.btn === "a") {
-      if (n) setFull(!full);
+      if (!n) return true;
+      if (mode === "videos") onVideo?.(videos[at]);
+      else setFull(!full);
     } else if (p.btn === "left") mv(-1);
     else if (p.btn === "right") mv(1);
     else if (p.btn === "up" && !full) mv(-COLS);
     else if (p.btn === "down" && !full) mv(COLS);
-    else if (p.btn === "y") {setFull(false);setSel(0);}
+    else if ((p.btn === "l1" || p.btn === "r1") && !full) switchTo(mode === "shots" ? "videos" : "shots");
+    else if (p.btn === "y") {
+      setFull(false);
+      setSel(0);
+    }
     return true; // everything else is swallowed while open
   });
 
-  return (
-    <div style={{ position: "absolute", inset: 0, zIndex: 80, background: skin.bg }}>
-      <Stage background="transparent">
-        <GalleryBody shots={shots} loaded={all !== null} sel={sel} full={full} cur={cur} name={name} onPick={(i) => (setSel(i), setFull(true))} onClose={() => (full ? setFull(false) : onClose())} title={appid ? name(appid) : "Screenshots"} />
-      </Stage>
-    </div>
-  );
-}
-
-function GalleryBody({ shots, loaded, sel, full, cur, name, onPick, onClose, title }: { shots: Shot[]; loaded: boolean; sel: number; full: boolean; cur?: Shot; name: (id: number) => string; onPick: (i: number) => void; onClose: () => void; title: string }) {
-  const { W, H } = useStage();
-  const skin=storeSkin(useSettings());
-  const COLS = 4;
-  const TW = (W - 120 - (COLS - 1) * 18) / COLS;
-  const TH = TW * 0.5625;
-  const row = Math.floor(sel / COLS);
-  const visibleRows=Math.max(1,Math.floor((H-180)/(TH+48)));
-  const top = Math.max(0, row - visibleRows+1);
-  if (full && cur)
+  if (full && cur && mode === "shots")
     return (
-      <div style={{ position: "absolute", inset: 0 }} onClick={onClose}>
-        <img src={cur.url} style={{ position: "absolute", inset: 0, width: W, height: H, objectFit: "contain" }} />
-        <div style={{ position: "absolute", left: 0, right: 0, bottom: 0, padding: "18px 40px", background: "linear-gradient(180deg, transparent, rgba(0,0,0,0.75))", color: "#fff", fontSize: 18 }}>
+      <div className="dht-media" data-theme={s.theme} style={{ ...mediaVars(s), background: "#000" }} onClick={() => (index === undefined ? setFull(false) : onClose())}>
+        <style>{MEDIA_CSS}</style>
+        <img src={cur.url} style={{ position: "absolute", inset: 0, width: "100%", height: "100%", objectFit: "contain" }} />
+        <div className="dht-media-info" style={{ fontSize: 18 }}>
           {name(cur.appid)} · {cur.created ? new Date(cur.created * 1000).toLocaleString() : ""} {cur.caption ? `· ${cur.caption}` : ""}
           <span style={{ float: "right", opacity: 0.7 }}>
-            {sel + 1} / {shots.length}
+            {at + 1} / {shots.length}
           </span>
         </div>
       </div>
     );
   return (
-    <div style={{ position: "absolute", inset: 0, color: skin.text }}>
-      <div style={{ position: "absolute", left: 60, top: 36, fontSize: 28, fontWeight: 300 }}>{title}</div>
-      <div style={{ position: "absolute", right: 60, top: 44, fontSize: 15, opacity: 0.6 }}>Ⓐ view · Ⓑ close · Ⓨ All captures</div>
-      {!loaded && <div style={{ position: "absolute", left: 60, top: 120, opacity: 0.7 }}>Loading…</div>}
-      {loaded && !shots.length && <div style={{ position: "absolute", left: 60, top: 120, opacity: 0.7 }}>No screenshots yet. Take one with STEAM + R1.</div>}
-      {shots.slice(top * COLS, top * COLS + COLS * visibleRows).map((s, k) => {
+    <MediaFrame
+      s={s}
+      title={appid ? name(appid) : "Captures"}
+      tabs={[{ id: "shots", label: "Screenshots", on: mode === "shots" }, { id: "videos", label: "Videos", on: mode === "videos" }]}
+      onTab={(id) => switchTo(id as "shots" | "videos")}
+      hints={["Ⓐ View", "L1 R1 Screenshots / Videos", "Ⓨ Newest", "Ⓑ Close"]}
+    >
+      <CaptureGrid
+        loaded={mode === "shots" ? all !== null : vids !== null}
+        empty={mode === "shots" ? "No screenshots yet. Take one with STEAM + R1." : "No videos yet. Steam recordings, clips and videos in your Videos folder show up here."}
+        items={mode === "shots" ? shots.map((x) => ({ key: x.url, img: x.url, label: name(x.appid) })) : videos.map((v) => ({ key: v.id, img: v.thumb, label: videoTitle(v, lib), badge: fmtDuration(v.duration) }))}
+        sel={at}
+        onPick={(i) => {
+          setSel(i);
+          if (mode === "videos") onVideo?.(videos[i]);
+          else setFull(true);
+        }}
+      />
+    </MediaFrame>
+  );
+}
+
+function CaptureGrid({ loaded, empty, items, sel, onPick }: { loaded: boolean; empty: string; items: { key: string; img: string; label: string; badge?: string }[]; sel: number; onPick: (i: number) => void }) {
+  const { W, H } = useStage();
+  const COLS = 4;
+  const TW = (W - 112 - (COLS - 1) * 18) / COLS;
+  const TH = TW * 0.5625;
+  const row = Math.floor(sel / COLS);
+  const visibleRows = Math.max(1, Math.floor((H - 200) / (TH + 22)));
+  const top = Math.max(0, row - visibleRows + 1);
+  return (
+    <>
+      {!loaded && <div style={{ position: "absolute", left: 56, top: 110, opacity: 0.7 }}>Loading…</div>}
+      {loaded && !items.length && <div style={{ position: "absolute", left: 56, top: 110, opacity: 0.8 }}>{empty}</div>}
+      {items.slice(top * COLS, top * COLS + COLS * visibleRows).map((it, k) => {
         const i = top * COLS + k;
         const on = i === sel;
         return (
           <div
-            key={s.url}
+            key={it.key}
+            className="dht-media-tile"
+            data-on={on}
             onClick={() => onPick(i)}
             style={{
-              position: "absolute",
-              left: 60 + (i % COLS) * (TW + 18),
-              top: 100 + (Math.floor(i / COLS) - top) * (TH + 48),
+              left: 56 + (i % COLS) * (TW + 18),
+              top: 104 + (Math.floor(i / COLS) - top) * (TH + 22),
               width: TW,
               height: TH,
-              borderRadius: 6,
-              overflow: "hidden",
-              ...skin.ring(on),
+              outline: on ? "3px solid var(--m-text)" : "none",
+              boxShadow: on ? "0 0 0 6px color-mix(in srgb, var(--m-accent) 70%, transparent), 0 10px 24px #0006" : "0 2px 8px #0004",
               transform: on ? "scale(1.04)" : "none",
-              transition: "transform 140ms",
+              zIndex: on ? 2 : 1,
             }}
           >
-            <img src={s.url} style={{ width: "100%", height: "100%", objectFit: "cover" }} />
+            {it.img ? <img src={it.img} alt="" /> : null}
+            {it.badge && <span>{it.badge}</span>}
           </div>
         );
       })}
-      {cur && !full && <div style={{ position: "absolute", left: 60, bottom: 40, fontSize: 17, opacity: 0.8 }}>{name(cur.appid)}</div>}
-    </div>
+      {items[sel] && <div style={{ position: "absolute", left: 56, bottom: 54, fontSize: 17, opacity: 0.85 }}>{items[sel].label}</div>}
+    </>
   );
 }
 
 // ───────────── trailer ─────────────
 export function TrailerPlayer({ game, onClose }: { game: Game; onClose: () => void }) {
+  const s = useMediaSettings();
   const [state, setState] = useState<"loading" | "playing" | "none">("loading");
   const [showInfo, setShowInfo] = useState(true);
+  useMusicHold();
   useEffect(() => {
     if (state !== "playing") return;
     const t = setTimeout(() => setShowInfo(false), 3500);
@@ -135,11 +182,12 @@ export function TrailerPlayer({ game, onClose }: { game: Game; onClose: () => vo
     return true;
   });
   return (
-    <div style={{ position: "absolute", inset: 0, zIndex: 80, background: "#000" }} onClick={onClose}>
+    <div className="dht-media" data-theme={s.theme} style={{ ...mediaVars(s), background: "#000" }} onClick={onClose}>
+      <style>{MEDIA_CSS}</style>
       <TrailerVideo appid={game.appid} sound quality="high" loop={false} style={{ position: "absolute", inset: 0, width: "100%", height: "100%", objectFit: "contain" }} onReady={() => setState("playing")} onNone={() => setState("none")} onEnded={onClose} />
-      <div style={{ position: "absolute", left: 40, bottom: 34, color: "#fff", fontSize: 22, textShadow: "0 2px 6px #000", opacity: showInfo || state !== "playing" ? 1 : 0, transition: "opacity 600ms" }}>
-        {game.name} — {state === "loading" ? "loading trailer…" : state === "none" ? "no trailer available" : "trailer"}
-        <div style={{ fontSize: 14, opacity: 0.7, marginTop: 4 }}>Ⓑ close</div>
+      <div className="dht-media-info" style={{ opacity: showInfo || state !== "playing" ? 1 : 0 }}>
+        <div style={{ fontSize: 22 }}>{game.name} · {state === "loading" ? "loading trailer…" : state === "none" ? "no trailer available" : "Trailer"}</div>
+        <div style={{ fontSize: 14, color: "var(--m-sub)", marginTop: 6 }}>Ⓑ Close</div>
       </div>
     </div>
   );
@@ -153,10 +201,12 @@ export function videoTitle(v: LocalVideo, lib: Map<number, Game>): string {
 }
 
 export function VideoPlayer({ video, lib, onClose }: { video: LocalVideo; lib: Map<number, Game>; onClose: () => void }) {
+  const s = useMediaSettings();
   const [state, setState] = useState<"loading" | "playing" | "none">("loading");
   const [el, setEl] = useState<HTMLVideoElement | null>(null);
   const [, tick] = useState(0);
   const [showInfo, setShowInfo] = useState(true);
+  useMusicHold();
   const poke = () => setShowInfo(true);
   useEffect(() => {
     if (!el) return;
@@ -195,26 +245,27 @@ export function VideoPlayer({ video, lib, onClose }: { video: LocalVideo; lib: M
   const paused = !!el?.paused;
   const date = video.created ? new Date(video.created * 1000).toLocaleString() : "";
   return (
-    <div style={{ position: "absolute", inset: 0, zIndex: 80, background: "#000" }} onClick={() => (el ? (el.paused ? el.play().catch(() => {}) : el.pause(), poke()) : onClose())}>
+    <div className="dht-media" data-theme={s.theme} style={{ ...mediaVars(s), background: "#000" }} onClick={() => (el ? (el.paused ? el.play().catch(() => {}) : el.pause(), poke()) : onClose())}>
+      <style>{MEDIA_CSS}</style>
       <LocalVideoView video={video} sound videoRef={setEl} style={{ position: "absolute", inset: 0, width: "100%", height: "100%", objectFit: "contain" }} onReady={() => setState("playing")} onNone={() => setState("none")} onEnded={() => setShowInfo(true)} />
-      <div style={{ position: "absolute", left: 0, right: 0, bottom: 0, padding: "40px 40px 26px", color: "#fff", background: "linear-gradient(180deg, transparent, rgba(0,0,0,0.8))", opacity: showInfo || paused || state !== "playing" ? 1 : 0, transition: "opacity 600ms" }}>
-        <div style={{ fontSize: 22, textShadow: "0 2px 6px #000" }}>
+      <div className="dht-media-info" style={{ opacity: showInfo || paused || state !== "playing" ? 1 : 0 }}>
+        <div style={{ fontSize: 22 }}>
           {videoTitle(video, lib)}
-          <span style={{ fontSize: 15, opacity: 0.65, marginLeft: 12 }}>{date}</span>
+          <span style={{ fontSize: 15, color: "var(--m-sub)", marginLeft: 12 }}>{date}</span>
         </div>
         {state === "playing" ? (
           <div style={{ display: "flex", alignItems: "center", gap: 14, marginTop: 12, fontSize: 15 }}>
             <span style={{ width: 18 }}>{paused ? "▶" : "❚❚"}</span>
-            <span style={{ opacity: 0.85 }}>{fmtDuration(t) || "0:00"}</span>
-            <div style={{ flex: 1, height: 5, borderRadius: 3, background: "rgba(255,255,255,0.25)", overflow: "hidden" }}>
-              <div style={{ width: `${dur ? Math.min(100, (t / dur) * 100) : 0}%`, height: "100%", background: "#fff" }} />
+            <span>{fmtDuration(t) || "0:00"}</span>
+            <div className="dht-media-bar" style={{ flex: 1 }}>
+              <div style={{ width: `${dur ? Math.min(100, (t / dur) * 100) : 0}%` }} />
             </div>
-            <span style={{ opacity: 0.85 }}>{fmtDuration(dur)}</span>
+            <span>{fmtDuration(dur)}</span>
           </div>
         ) : (
-          <div style={{ marginTop: 10, fontSize: 16, opacity: 0.8 }}>{state === "loading" ? "Loading…" : "This video can't be played here (unsupported format)."}</div>
+          <div style={{ marginTop: 10, fontSize: 16, color: "var(--m-sub)" }}>{state === "loading" ? "Loading…" : "This video can't be played here (unsupported format)."}</div>
         )}
-        <div style={{ fontSize: 13, opacity: 0.6, marginTop: 8 }}>Ⓐ pause · ◀ ▶ 10 s · L1 R1 1 min · Ⓑ close</div>
+        <div style={{ fontSize: 13, color: "var(--m-sub)", marginTop: 8 }}>Ⓐ Pause · ◀ ▶ 10 s · L1 R1 1 min · Ⓑ Close</div>
       </div>
     </div>
   );

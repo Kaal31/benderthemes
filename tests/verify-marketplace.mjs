@@ -1,17 +1,26 @@
-import { chromium } from 'playwright';
+import { readFileSync, mkdirSync } from 'node:fs';
+import { launch } from './browser.mjs';
 import assert from 'node:assert/strict';
 import { startPreviewServer } from '../preview/server.mjs';
 const { server, url } = await startPreviewServer();
-const browser = await chromium.launch({ headless: true });
+const browser = await launch();
+// the Hub lists every catalog theme except wii/wiiu, which are built in (and added back) plus the two built-ins
+const catalog = JSON.parse(readFileSync(new URL('../theme-catalog.json', import.meta.url), 'utf8')).themes.filter(p => p.theme);
+const expectedCards = new Set([...catalog.map(p => p.theme), 'wii', 'wiiu']).size;
+mkdirSync('out/theme-previews', { recursive: true });
 try {
   const page = await browser.newPage({ viewport: { width: 1304, height: 930 } });
   const errors = [];
   page.on('pageerror', e => errors.push(String(e)));
   await page.goto(url);
   await page.locator('[data-dht-root]').waitFor();
-  await page.getByRole('button', { name: 'Hub', exact: true }).first().click();
+  await page.getByRole('button', { name: 'Hub (from this home)', exact: true }).click();
   await page.locator('.market-card').first().waitFor();
-  assert.equal(await page.locator('.market-card').count(), 16);
+  assert.equal(await page.locator('.market-card').count(), expectedCards);
+  // the Hub wears the selected theme (installed in the preview), with the decoration layer and the tokens
+  await page.locator('.dht-market.dht-hub[data-hub-styled=true][data-hub-theme=vita]').waitFor();
+  assert.equal(await page.locator('.dht-market .dht-hub-deco').count(), 1);
+  assert.ok((await page.locator('.dht-market').evaluate(el => getComputedStyle(el).getPropertyValue('--dht-hub-accent'))).trim());
   assert.ok(await page.locator('.market-card').first().evaluate(el => el.getBoundingClientRect().height >= 200));
   await page.locator('.market-card').filter({hasText:'Minecraft'}).click();
   await page.locator('.market-primary').click();
@@ -19,9 +28,14 @@ try {
   assert.equal(await page.locator('[data-dht-root]').getAttribute('data-dht-theme'), 'minecraft');
   await page.evaluate(() => window.__updateTheme({ minecraftWaitForSwipe: true }));
   await page.keyboard.press('m');
+  await page.locator('.dht-menu').getByText('Global settings', {exact:true}).click(); // the Hub entry lives there now
   await page.locator('.dht-menu').getByText('Hub', {exact:true}).waitFor();
-  await page.getByText('Delete theme', {exact:true}).click();
-  await page.getByText('Delete resources and return to Steam Home', {exact:true}).click();
+  await page.keyboard.press('Escape');
+  await page.keyboard.press('Escape');
+  await page.keyboard.press('m');
+  await page.locator('.dht-menu').getByText('Reset or delete', {exact:true}).click(); // grouped since the options-menu cleanup
+  await page.locator('.dht-menu').getByText(/^Delete Block/).click();
+  await page.getByText('Delete its resources and return to Steam Home', {exact:true}).click();
   await page.getByRole('heading',{name:'Steam Home restored'}).waitFor();
   await page.getByRole('button', {name:'Open Hub',exact:true}).click();
   await page.locator('.market-card').filter({hasText:'Minecraft'}).click();
@@ -42,5 +56,5 @@ try {
   await page.waitForTimeout(500);
   await page.locator('[data-dht-root]').screenshot({path:'out/theme-previews/marketplace.png'});
   assert.deepEqual(errors, []);
-  console.log('PASS: 16 theme cards, download/activate, context-menu deletion, Steam Home fallback, re-download, firmware accept/dismiss.');
+  console.log(`PASS: ${expectedCards} theme cards, download/activate, context-menu deletion, Steam Home fallback, re-download, firmware accept/dismiss.`);
 } finally { await browser.close(); server.close(); }

@@ -3,13 +3,15 @@
 // shell, lime pills, profile + side navigation, hero card with Play, Continue
 // Playing row, activity rail and its own footer. Drawn on a 1280×960 canvas
 // (the size of the reference) and scaled to the screen.
-import { ReactNode, useEffect, useState } from "react";
+import { CSSProperties, ReactNode, useEffect, useState } from "react";
 import { GameArt, Icon, IconName, MenuItem, MenuView, themeMenu, useHome, useMenu, useRemembered } from "../common";
 import { clamp, Press, Stage, ThemeRoot, useStage } from "../input";
 import { achievements, fmtLastPlayed, Game, openAchievements, openSteam, SteamPlace } from "../library";
 import { showTitle, THEMES } from "../settings";
 import { fmtTime, playSound, useBattery, useClock, useSteamStatus, useWallpaper } from "../steam";
-import { AERO_CSS } from "./aeroV2Styles";
+import { AERO_CSS, AERO_OPTION_CSS, aeroGlass } from "./aeroV2Styles";
+import { styleOf } from "../engine/themeStyles";
+import { useReportFocus } from "../focus";
 
 function gearPath(cx: number, cy: number, ro: number, ri: number, teeth: number) {
   const pts: string[] = [];
@@ -157,6 +159,14 @@ type Zone = "tabs" | "side" | "right" | "hero" | "row" | "grid";
 export function AeroV2Home() {
   const api = useHome();
   const s = api.settings;
+  const so = styleOf(s, "aero2");
+  const glass = aeroGlass(so<string>("windowColor"), so<string>("intensity"), so<string>("transparency"), so<string>("scheme"));
+  const gadgets = so("gadgets") !== "off";
+  const showPct = so("batteryPercent") !== "hide";
+  const anim = so<string>("windowAnim");
+  const deskClass = [glass.classes, so("orb") === "vista" && "aero-orb-vista", so("taskbarIcons") === "small" && "aero-tb-small", anim !== "none" && `aero-anim-${anim}`, so("highlight") === "explorer" && "aero-hl-explorer"]
+    .filter(Boolean)
+    .join(" ");
   const { W, H } = useStage();
   const now = useClock(15000);
   const bat = useBattery();
@@ -181,6 +191,10 @@ export function AeroV2Home() {
   const gridGame: Game | undefined = games[clamp(gsel, 0, games.length - 1)];
   const focusGame = view === "all" ? gridGame : cur;
   const heroGame = cur;
+  useReportFocus(zone === "row" || zone === "hero" || zone === "grid" ? focusGame : undefined);
+  useEffect(() => {
+    if (!gadgets && zone === "right") setZone(view === "all" ? "grid" : "row");
+  }, [gadgets, zone, view]);
 
   const go = (v: View) => {
     setView(v);
@@ -219,7 +233,7 @@ export function AeroV2Home() {
 
   const options = () => {
     const extra: MenuItem[] = [
-      { label: view === "all" ? "Home" : "All Games", action: () => go(view === "all" ? "home" : "all") },
+      { label: view === "all" ? "Home view" : "All Games", action: () => go(view === "all" ? "home" : "all") },
       { label: "Screenshots", action: () => api.openMedia() },
       { label: "Presets", sub: () => themeMenu(s.theme, api.switchTheme, THEMES) },
       { label: "Home Screen Settings", action: api.openSettings },
@@ -255,6 +269,7 @@ export function AeroV2Home() {
     setZone(z);
     playSound("tab");
   };
+  const toRight = () => gadgets && toZone("right");
 
   const onInput = (p: Press): boolean => {
     if (menu.handle(p)) return true;
@@ -297,7 +312,7 @@ export function AeroV2Home() {
         if (b === "left") {
           if (!move(setHsel, hsel, -1, 1)) toZone("side");
         } else if (b === "right") {
-          if (!move(setHsel, hsel, 1, 1)) toZone("right");
+          if (!move(setHsel, hsel, 1, 1)) toRight();
         } else if (b === "up") toZone("tabs");
         else if (b === "down") toZone("row");
         else if (b === "a" && cur) {
@@ -310,7 +325,7 @@ export function AeroV2Home() {
         if (b === "left") {
           if (!move(setSel, sel, -1, games.length - 1)) toZone("side");
         } else if (b === "right") {
-          if (!move(setSel, sel, 1, games.length - 1)) toZone("right");
+          if (!move(setSel, sel, 1, games.length - 1)) toRight();
         } else if (b === "l1" || b === "r1") move(setSel, sel, b === "l1" ? -6 : 6, games.length - 1);
         else if (b === "up") {
           setHsel(0);
@@ -325,7 +340,7 @@ export function AeroV2Home() {
           if (col === 0) toZone("side");
           else move(setGsel, gsel, -1, games.length - 1);
         } else if (b === "right") {
-          if (col === COLS - 1 || gsel === games.length - 1) toZone("right");
+          if (col === COLS - 1 || gsel === games.length - 1) toRight();
           else move(setGsel, gsel, 1, games.length - 1);
         } else if (b === "up") {
           if (gsel < COLS) toZone("tabs");
@@ -374,15 +389,15 @@ export function AeroV2Home() {
   return (
     <ThemeRoot onInput={onInput} hints={{ a: "Select", y: "Options", menu: "Options" }}>
       <Stage background="#1687f3">
-        <style>{AERO_CSS}</style>
+        <style>{AERO_CSS + AERO_OPTION_CSS}</style>
         <div
-          className="aero-desktop dht-aero-bg"
+          className={`aero-desktop dht-aero-bg ${deskClass}`}
           onKeyDown={(e) => {
             if (e.key === "Enter") e.preventDefault();
           }}
-          style={{ transform: `scale(${W / 1280},${H / 960})`, backgroundImage: wall ? `url("${wall}")` : undefined }}
+          style={{ transform: `scale(${W / 1280},${H / 960})`, backgroundImage: wall ? `url("${wall}")` : undefined, ...glass.vars } as CSSProperties}
         >
-          <AeroFrame />
+          <AeroFrame glass={glass.svg} />
           <header className="aero-header">
             <div className="aero-brand">
               <SteamBadge size={65} />
@@ -413,7 +428,7 @@ export function AeroV2Home() {
               <Icon name="wifi" size={27} color={st.online ? "white" : "#88a6cf"} />
               {bat && (
                 <>
-                  <span>{Math.round(bat.level * 100)}%</span>
+                  {showPct && <span>{Math.round(bat.level * 100)}%</span>}
                   <i className="aero-battery">
                     <i style={{ width: `${bat.level * 100}%` }} />
                   </i>
@@ -423,7 +438,7 @@ export function AeroV2Home() {
             </div>
           </header>
 
-          <svg className="aero-side-shell" viewBox="0 0 1280 960" aria-hidden="true"><path d={AERO_SIDE} fill="url(#aero-blue)" stroke="#005bb4" strokeWidth="10"/><path d={AERO_SIDE} fill="none" stroke="#8ad8ff" strokeWidth="6"/><path d={AERO_SIDE} fill="none" stroke="#e3f7ff" strokeWidth="1.8"/><path d="M8 180 C32 139 138 135 205 165 C136 150 47 162 8 207 Z" fill="url(#aero-shine)"/></svg>
+          <svg className="aero-side-shell" viewBox="0 0 1280 960" aria-hidden="true" style={glass.svg}><path d={AERO_SIDE} fill="url(#aero-blue)" stroke="#005bb4" strokeWidth="10"/><path d={AERO_SIDE} fill="none" stroke="#8ad8ff" strokeWidth="6"/><path d={AERO_SIDE} fill="none" stroke="#e3f7ff" strokeWidth="1.8"/><path className="aero-shine-fx" d="M8 180 C32 139 138 135 205 165 C136 150 47 162 8 207 Z" fill="url(#aero-shine)"/></svg>
           <aside className="aero-sidebar">
             <div className="aero-profile">
               <div className="aero-avatar">{st.avatar ? <img src={st.avatar} /> : glyph("person", 72, true)}</div>
@@ -536,8 +551,9 @@ export function AeroV2Home() {
             </section>
           )}
 
-          <aside className="aero-rail" aria-label="Steam activity">
-            <AeroActivityShell />
+          {gadgets && (
+<aside className="aero-rail" aria-label="Steam activity">
+            <AeroActivityShell glass={glass.svg} opaque={glass.opaque} />
             {RIGHT.map((it, i) => (
               <button
                 key={it.id}
@@ -566,6 +582,7 @@ export function AeroV2Home() {
               </button>
             ))}
           </aside>
+          )}
 
           <footer className="aero-footer">
             <button onClick={() => openSteam("mainmenu")}>
@@ -600,17 +617,17 @@ function HeroLogo({ g }: { g: Game }) {
 }
 
 /** Sculpted glass follows the activity rail instead of a rectangular capsule. */
-function AeroActivityShell(){
+function AeroActivityShell({ glass, opaque }: { glass?: CSSProperties; opaque: boolean }){
  const outline="M5 57 C-7 19 34 0 97 2 C157 0 211 11 219 47 C228 83 213 122 215 167 C216 228 224 279 220 329 C217 360 223 387 219 418 C216 465 196 485 154 480 C108 476 42 462 20 435 C-1 410 11 375 23 337 C50 269 45 191 21 124 C13 102 6 79 5 57 Z";
- return <svg className="aero-activity-shell" viewBox="0 0 224 490" aria-hidden="true"><defs>
- <linearGradient id="aero-rail-glass" x1="0" y1="0" x2="1" y2=".3"><stop stopColor="#003f9b"/><stop offset=".07" stopColor="#61bcff"/><stop offset=".15" stopColor="#1687e9"/><stop offset=".42" stopColor="#0967d5" stopOpacity=".83"/><stop offset=".83" stopColor="#489ced" stopOpacity=".82"/><stop offset="1" stopColor="#0050af"/></linearGradient>
+ return <svg className="aero-activity-shell" viewBox="0 0 224 490" aria-hidden="true" style={glass}><defs>
+ <linearGradient id="aero-rail-glass" x1="0" y1="0" x2="1" y2=".3"><stop stopColor="#003f9b"/><stop offset=".07" stopColor="#61bcff"/><stop offset=".15" stopColor="#1687e9"/><stop offset=".42" stopColor="#0967d5" stopOpacity={opaque ? 1 : 0.83}/><stop offset=".83" stopColor="#489ced" stopOpacity={opaque ? 1 : 0.82}/><stop offset="1" stopColor="#0050af"/></linearGradient>
  <linearGradient id="aero-rail-rim" x1="0" y1="0" x2="1" y2="1"><stop stopColor="#a3e0ff"/><stop offset=".18" stopColor="#278ce7"/><stop offset=".35" stopColor="#0062bf"/><stop offset=".54" stopColor="#8bd5ff"/><stop offset=".7" stopColor="#1678ce"/><stop offset="1" stopColor="#0751a6"/></linearGradient>
  </defs><path d={outline} fill="url(#aero-rail-glass)" stroke="#0959af" strokeWidth="8"/><path d={outline} fill="none" stroke="#8ad8ff" strokeWidth="6"/><path d={outline} fill="none" stroke="#e3f7ff" strokeWidth="1.8"/><path d="M10 82 C13 125 36 165 39 221 C43 276 31 330 18 368" fill="none" stroke="#78c9ff" strokeWidth="10" opacity=".45" filter="url(#aero-surface-soften)"/><path d="M13 82 C16 124 40 164 43 222 C47 278 35 331 22 370 C10 405 20 430 44 446" fill="none" stroke="#b3e7ff" strokeWidth="2.4" opacity=".75"/></svg>;
 }
 
 /** A single vector shell keeps the compound curves and glass rims crisp at every resolution. */
 const AERO_SIDE = "M-12 166 C25 121 137 126 204 150 C276 172 304 220 280 270 C247 335 225 419 232 513 C229 604 247 659 252 739 C270 808 239 830 169 839 C87 849 4 838 -12 806 Z";
-function AeroFrame() {
+function AeroFrame({ glass }: { glass?: CSSProperties }) {
   const top = "M-8 57 C24 20 155 24 270 30 C360 34 421 40 498 43 C666 53 819 49 958 44 C1081 39 1200 23 1288 13 L1288 78 C1148 98 1041 115 943 127 C798 141 615 130 454 126 C300 113 152 115 47 128 C8 132 -13 113 -8 57 Z";
 
   const foot = "M-10 918 C0 869 67 872 117 875 C291 878 483 910 702 912 C908 913 1091 877 1205 889 C1270 891 1287 909 1276 954 C1151 967 1034 946 856 947 C536 947 225 946 87 959 C19 969 -13 956 -10 918 Z";
@@ -645,6 +662,7 @@ function AeroFrame() {
       </defs>
       <path d="M-8 0 C71 46 233 -4 370 24 C517 66 760 54 967 46 C1034 46 1112 40 1288 8 L1288 88 C1142 114 1014 110 935 129 C801 152 587 133 431 129 C360 122 373 68 313 51 C193 27 64 47 -8 70 Z" fill="url(#aero-lime)" stroke="#edffc3" strokeWidth="2" />
       <path d="M-8 867 C108 859 249 883 408 902 C215 878 118 886 -8 920 Z M977 908 C1080 886 1171 874 1288 867 L1288 945 Z" fill="url(#aero-lime)" stroke="#e1ffaa" strokeWidth="2" />
+      <g style={glass}>
       {[top, foot].map((d, i) => (
         <g key={i} filter="url(#aero-shadow)">
           <path d={d} fill="url(#aero-blue)" stroke="#005bb4" strokeWidth="10" />
@@ -652,21 +670,22 @@ function AeroFrame() {
           <path d={d} fill="none" stroke="#e3f7ff" strokeWidth="1.8" />
         </g>
       ))}
+      </g>
       {/* The brand dome is molded into the header, with a broad curved reflection. */}
       <defs><radialGradient id="aero-brand-dome" cx=".36" cy=".03" r=".94"><stop stopColor="#48b1ff"/><stop offset=".24" stopColor="#1485ef"/><stop offset=".64" stopColor="#0055c0"/><stop offset="1" stopColor="#0045a7"/></radialGradient><linearGradient id="aero-brand-reflection" x1="0" y1="0" x2="0" y2="1"><stop stopColor="#d7f2ff" stopOpacity=".68"/><stop offset=".55" stopColor="#91d6ff" stopOpacity=".23"/><stop offset="1" stopColor="#4baaff" stopOpacity="0"/></linearGradient></defs>
-      <path d="M1 87 C-1 47 55 36 132 36 C234 34 321 36 367 58 C394 71 398 96 414 114 C294 108 165 113 54 124 C18 128 1 114 1 87Z" fill="url(#aero-brand-dome)"/>
-      <path d="M-5 104 C-3 64 17 45 67 39 C158 28 293 32 355 50 C379 57 391 73 399 88 C375 59 309 48 229 46 C146 43 69 46 39 59 C18 68 10 86 11 104 C10 115 23 123 43 125 C13 129 -3 120 -5 104Z" fill="url(#aero-brand-reflection)"/>
+      <path d="M1 87 C-1 47 55 36 132 36 C234 34 321 36 367 58 C394 71 398 96 414 114 C294 108 165 113 54 124 C18 128 1 114 1 87Z" fill="url(#aero-brand-dome)" style={glass}/>
+      <path d="M-5 104 C-3 64 17 45 67 39 C158 28 293 32 355 50 C379 57 391 73 399 88 C375 59 309 48 229 46 C146 43 69 46 39 59 C18 68 10 86 11 104 C10 115 23 123 43 125 C13 129 -3 120 -5 104Z" className="aero-shine-fx" fill="url(#aero-brand-reflection)"/>
       <path d="M-3 101 C-3 64 15 44 65 38 C153 27 291 31 355 50 C381 58 393 75 401 92" fill="none" stroke="#8cd6ff" strokeOpacity=".7" strokeWidth="2.4" strokeLinecap="round"/>
       {/* Continuous lime ribbons, with tangent curves around the blue capsules. */}
       <path d="M-8 -5 C64 36 179 9 277 16 C356 18 426 32 491 43 C457 39 426 47 414 65 C402 83 407 103 425 115 C435 122 450 125 466 127 C441 128 419 121 408 108 C394 91 399 69 379 56 C354 40 314 37 273 36 C175 30 76 34 31 48 C12 55 1 66 -8 80 Z" fill="url(#aero-lime)" stroke="#b4de55" strokeWidth="1.5" strokeLinejoin="round"/>
       <path d="M-3 0 C61 35 178 12 277 19 C354 21 418 32 472 41" fill="none" stroke="#f0ffc8" strokeWidth="2.3" strokeLinecap="round"/>
       <path d="M888 130 C924 125 937 107 944 89 C955 60 984 48 1020 43 C1101 33 1205 28 1288 10 L1288 79 C1175 98 1071 113 979 122 C945 126 917 130 888 130 Z M974 81 C955 110 994 106 1031 102 C1116 93 1203 82 1288 68 L1288 21 C1192 37 1102 41 1027 49 C1001 53 983 63 974 81 Z" fill="url(#aero-lime)" fillRule="evenodd" stroke="#b6dc58" strokeWidth="1.2" strokeLinejoin="round"/>
       <path d="M937 108 C950 64 977 49 1020 45 C1114 33 1201 31 1285 14" fill="none" stroke="#ecffb6" strokeWidth="2" strokeLinecap="round"/>
-      <path d="M8 180 C32 139 138 135 205 165 C136 150 47 162 8 207 Z M9 908 C37 879 171 890 277 900 C140 894 50 910 9 937 Z" fill="url(#aero-shine)" />
+      <path className="aero-shine-fx" d="M8 180 C32 139 138 135 205 165 C136 150 47 162 8 207 Z M9 908 C37 879 171 890 277 900 C140 894 50 910 9 937 Z" fill="url(#aero-shine)" />
       <path d="M980 79 C1002 54 1058 52 1124 44 C1178 38 1236 31 1284 23" fill="none" stroke="#88c9ed" strokeOpacity=".8" strokeWidth="2" strokeLinecap="round"/>
-      <ellipse cx="31" cy="64" rx="17" ry="10" transform="rotate(-38 31 64)" fill="url(#aero-specular)" />
-      <ellipse cx="29" cy="173" rx="23" ry="9" transform="rotate(-39 29 173)" fill="url(#aero-specular)" />
-      <ellipse cx="27" cy="903" rx="17" ry="10" transform="rotate(-36 27 903)" fill="url(#aero-specular)" />
+      <ellipse cx="31" cy="64" rx="17" ry="10" transform="rotate(-38 31 64)" className="aero-shine-fx" fill="url(#aero-specular)" />
+      <ellipse cx="29" cy="173" rx="23" ry="9" transform="rotate(-39 29 173)" className="aero-shine-fx" fill="url(#aero-specular)" />
+      <ellipse cx="27" cy="903" rx="17" ry="10" transform="rotate(-36 27 903)" className="aero-shine-fx" fill="url(#aero-specular)" />
     </svg>
   );
 }

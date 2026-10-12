@@ -4,7 +4,7 @@ import { resourcesChanged } from "./marketplaceState";
 import { refreshPresets } from "./presets";
 const remove = callable<[ident: string], { success: boolean; error?: string }>("theme_remove");
 export async function deleteTheme(theme: ThemeId) {
-  const result = await remove(theme);
+  const result = theme==="wii"||theme==="wiiu" ? {success:true} : await remove(theme);
   if (!result.success) throw new Error(result.error || "Could not delete theme");
   const settings = getSettings();
   updateSettings({ hiddenThemes: [...new Set([...(settings.hiddenThemes || []), theme])], ...(settings.theme === theme ? { enabled: false } : {}) });

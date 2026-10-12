@@ -6,6 +6,17 @@ export interface SpotlightPlugin {
   whyFeatured: string;
   projectUrl: string;
   install?: { pluginName: string; version: string; zipUrl: string };
+  /** shown as a tag in the list and the details */
+  category?: string;
+  tags?: string[];
+  /** https picture from the project (plugin.json "publish.image" or a README screenshot) */
+  image?: string;
+  /** latest release tag we saw (shown as the latest release; the install block carries the version that is installed) */
+  version?: string;
+  /** plugin.json flags contain "root" */
+  root?: boolean;
+  /** not reviewed by us: installing (when `install` exists) asks for a confirmation first, a second one with `root` */
+  unreviewed?: boolean;
   aiAssisted?: { note: string; sourceUrl: string };
 }
 
@@ -285,5 +296,108 @@ export const SPOTLIGHT_PLUGINS: SpotlightPlugin[] = [
       "version": "0.1.0",
       "zipUrl": "https://github.com/SpiderNic96/dimensions-toypad-aio/releases/download/v1.1.0/dimensions-toypad-release.zip"
     }
+  },
+  {
+    "id": "drive-label",
+    "name": "Drive Label",
+    "author": "DavidDeNicola",
+    "category": "Library",
+    "description": "Labels every game cover with the drive it is installed on.",
+    "whyFeatured": "Shows SSD, microSD or external drive on each cover in the library, home shelf and large home cover, for Steam and non-Steam games. Drives can be renamed.",
+    "projectUrl": "https://github.com/DavidDeNicola/decky-drive-label",
+    "tags": [
+      "library",
+      "storage",
+      "utility"
+    ],
+    "image": "https://raw.githubusercontent.com/DavidDeNicola/decky-drive-label/main/assets/screenshot-home.jpg",
+    "version": "v1.0.0",
+    "unreviewed": true
+  },
+  {
+    "id": "deck-media-gallery",
+    "name": "Deck Media Gallery",
+    "author": "DariLudum2217",
+    "category": "Media",
+    "description": "Full-screen gallery for Steam screenshots and recordings.",
+    "whyFeatured": "Exports Game Recording clips to MP4 without re-encoding and sends files to other devices through Syncthing, all set up from Game Mode.",
+    "projectUrl": "https://github.com/DariLudum2217/deck-media-gallery",
+    "tags": [
+      "media",
+      "screenshots",
+      "recordings",
+      "syncthing"
+    ],
+    "version": "v1.0.0",
+    "unreviewed": true
+  },
+  {
+    "id": "vban-deck",
+    "name": "VBAN Deck",
+    "author": "Talsaymaree",
+    "category": "Audio",
+    "description": "Streams Steam Deck audio to a VBAN receiver such as Voicemeeter.",
+    "whyFeatured": "The Decky plugin lives in the repository's decky/ folder (48 kHz stereo PCM over UDP). The repository also holds Flatpak, Android and macOS senders; build or install from the project page.",
+    "projectUrl": "https://github.com/Talsaymaree/vbandeck",
+    "tags": [
+      "audio",
+      "vban",
+      "streaming"
+    ],
+    "version": "v0.2.1",
+    "unreviewed": true
+  },
+  {
+    "id": "time-changer",
+    "name": "Time Changer",
+    "author": "nanwangjkl",
+    "category": "Utility",
+    "description": "Change the system time from Game Mode.",
+    "whyFeatured": "Quick offsets, a date and time picker and one-click NTP restore. It runs as root and changes the system clock, which can upset downloads, logins and cloud saves: use it knowingly.",
+    "projectUrl": "https://github.com/nanwangjkl/decky-time-changer",
+    "tags": [
+      "utility",
+      "time",
+      "system"
+    ],
+    "image": "https://raw.githubusercontent.com/nanwangjkl/decky-time-changer/main/assets/promo.png",
+    "version": "v0.1.11",
+    "root": true,
+    "unreviewed": true
+  },
+  {
+    "id": "deckyshare",
+    "name": "DeckyShare",
+    "author": "gillrajvir950-wq",
+    "category": "Network",
+    "description": "Wireless two-way file transfer between your Deck and a phone or PC.",
+    "whyFeatured": "Works in any browser on the same Wi-Fi (QR code and a 6-digit code), with resumable transfers and a Game Mode file manager. It opens a local web server on the Deck.",
+    "projectUrl": "https://github.com/gillrajvir950-wq/deckyshare",
+    "tags": [
+      "files",
+      "sharing",
+      "transfer",
+      "network"
+    ],
+    "image": "https://raw.githubusercontent.com/gillrajvir950-wq/deckyshare/main/ScreenShots/Screenshot%202026-09-13%20at%2011.03.53.png",
+    "version": "v1.2.0",
+    "unreviewed": true
+  },
+  {
+    "id": "finally-achievement-plugin",
+    "name": "Finally Achievement Plugin",
+    "author": "otisabiburada",
+    "category": "Achievements",
+    "description": "Achievement popups in 18 templates, with a browser and an on-screen tracker.",
+    "whyFeatured": "Rarity tiers with their own sounds, selectable colours and positions, an achievement browser for the running game and a pinned-achievement tracker.",
+    "projectUrl": "https://github.com/otisabiburada/finally-achievement-plugin",
+    "tags": [
+      "style",
+      "steam",
+      "achievement",
+      "notification"
+    ],
+    "version": "v1.4.0",
+    "unreviewed": true
   }
 ];

@@ -5,7 +5,7 @@ import { updateSettings, useSettings } from "./settings";
 import { useAssets } from "./assets";
 import { FIRMWARE_SKINS } from "./firmwareSkins";
 const identities: Record<string,[string,string]> = {
- vita:["System Software Update","#83dcff"],ps2:["SYSTEM CONFIGURATION","#92bfff"],ps3:["System Update","#fff"],psp:["System Software","#fce69f"],ps4:["System Software Update","#79d1ff"],ps5:["System software update","#91b9ff"],xbox:["SYSTEM UPDATE","#a8ff35"],x360:["System Update","#9cec46"],aero:["Updates are ready to install","#dcff91"],aero2:["Aero System Update","#aff1ff"],dial:["FIRMWARE TRANSMISSION","#ff493b"],castle:["SYSTEM MESSAGE","#8ddeff"],republic:["REPUBLIC SYSTEMS / FIRMWARE","#e0c58e"],minecraft:["UPDATE AVAILABLE","#a4df6d"],pain:["A NEW TRANSMISSION","#cca9ee"],nazarick:["DECREE OF THE GREAT TOMB","#dbc17b"]
+ wii:["Wii System Update","#208fb9"],wiiu:["Wii U System Update","#009ac7"], vita:["System Software Update","#83dcff"],ps2:["SYSTEM CONFIGURATION","#92bfff"],ps3:["System Update","#fff"],psp:["System Software","#fce69f"],ps4:["System Software Update","#79d1ff"],ps5:["System software update","#91b9ff"],xbox:["SYSTEM UPDATE","#a8ff35"],x360:["System Update","#9cec46"],aero:["Updates are ready to install","#dcff91"],aero2:["Aero System Update","#aff1ff"],dial:["FIRMWARE TRANSMISSION","#ff493b"],castle:["SYSTEM MESSAGE","#8ddeff"],republic:["REPUBLIC SYSTEMS / FIRMWARE","#e0c58e"],minecraft:["UPDATE AVAILABLE","#a4df6d"],pain:["A NEW TRANSMISSION","#cca9ee"],nazarick:["DECREE OF THE GREAT TOMB","#dbc17b"]
 };
 let previewStatus:Status|null=null;
 const listeners=new Set<()=>void>();
@@ -21,18 +21,52 @@ export function FirmwareNotice({paused=false}:{paused?:boolean}){
  const visible=!paused&&settings.firmwareNotifications!==false&&status?.success&&!status.stale&&status.updateAvailable&&release&&settings.dismissedFirmware!==release.version;
  const dismiss=()=>{if(release)updateSettings({dismissedFirmware:release.version});setMessage("");};
  const accept=async()=>{if(!release||busy)return;setBusy(true);try{if(!release.assetUrl){setMessage("Preview: Decky would now ask you to confirm the update.");return;}await installFirmware(release,status!.currentVersion);if(mounted.current)setMessage("Confirm the update in Decky Loader. Your themes and settings will be kept.");}catch(e){if(mounted.current)setMessage(String(e));}finally{if(mounted.current)setBusy(false);}};
- const latest=useRef({accept,dismiss,busy,selection});latest.current={accept,dismiss,busy,selection};
- useEffect(()=>{if(!visible)return;return pushModalInput(p=>{const s=latest.current;if(p.btn==="b"&&!s.busy)s.dismiss();if(["left","right","up","down"].includes(p.btn))setSelection(s.selection?0:1);if(p.btn==="a"&&!p.repeat&&!s.busy){if(s.selection)s.dismiss();else void s.accept();}return true;});},[!!visible]);
+ const latest=useRef({accept,dismiss,busy,selection,message});latest.current={accept,dismiss,busy,selection,message};
+ useEffect(()=>{if(!visible)return;return pushModalInput(p=>{const s=latest.current;if(p.btn==="b"&&!s.busy)s.dismiss();if(["left","right","up","down"].includes(p.btn))setSelection(s.selection?0:1);if(p.btn==="a"&&!p.repeat&&!s.busy){if(s.selection||s.message)s.dismiss();else void s.accept();}return true;});},[!!visible]);
  if(!visible)return null;
- const [label,color]=identities[theme];
+ if(theme==="psp")return <PspUpdateDialog from={status.currentVersion} to={release.version} selection={selection} busy={busy} message={message} onSelect={setSelection} onYes={()=>void accept()} onNo={dismiss}/>;
+ const [label,baseColor]=identities[theme];
+ const color=theme==="dial"?({classic:"#85ff00",chrome:"#85ff00",crimson:"#ff344e",arctic:"#42ddff"}[settings.dial.look]):baseColor;
  const headline:Record<string,string>={minecraft:"A new world awaits.",nazarick:"An invitation to ascend.",republic:"System upgrade authorized.",pain:"The next evolution.",dial:"New firmware detected.",castle:"A message from your system.",ps2:"Update data found.",xbox:"UPGRADE YOUR SYSTEM"};
- return <div style={{position:"absolute",inset:0,zIndex:500}}><div className="dht-firmware" data-firmware-theme={theme} role="dialog" aria-label="Firmware update" aria-modal="true" style={{"--fw-accent":color,fontFamily:["republic","nazarick"].includes(theme)?"Georgia,serif":"system-ui,sans-serif"} as CSSProperties}>
+ return <div style={{position:"absolute",inset:0,zIndex:500}}><div className="dht-firmware" data-firmware-theme={theme} data-dashboard={settings.x360.style} data-animated={settings.animations} role="dialog" aria-label="Firmware update" aria-modal="true" style={{"--fw-accent":color,fontFamily:theme==="republic"?"AurebeshEnglish,sans-serif":theme==="nazarick"?"Georgia,serif":"system-ui,sans-serif"} as CSSProperties}>
  <style>{BASE}{FIRMWARE_SKINS}</style>
  <div className="fw-top"><span className="fw-symbol">{emblem?<img src={emblem} alt=""/>:theme==="pain"?"◎":["castle","republic","nazarick"].includes(theme)?"✦":"↓"}</span><span>{label}</span></div>
- <h2>{headline[theme]||"A new version is ready."}</h2><p>Update Deck Home Themes to get the latest improvements. Your installed themes and settings stay with you.</p>
+ <h2>{headline[theme]||"A new version is ready."}</h2><p>Update ThemeHub to get the latest improvements. Your installed themes and settings stay with you.</p>
  <div className="fw-version"><span>{status.currentVersion}</span><span>→</span><strong>{release.version}</strong><span style={{marginLeft:"auto",opacity:.6}}>Plugin firmware</span></div>
  <div className="fw-actions"><button data-selected={selection===0} disabled={busy} onMouseEnter={()=>setSelection(0)} onClick={()=>void accept()}>{busy?"Preparing…":"A  Accept update"}</button><button data-selected={selection===1} disabled={busy} onMouseEnter={()=>setSelection(1)} onClick={dismiss}>B  Not now</button></div>
  {message&&<div className="fw-note" role="status">{message}</div>}
  </div></div>;
 }
 const BASE=`.dht-firmware{position:absolute;right:4%;bottom:9%;width:min(460px,86%);z-index:500;padding:25px 27px;border:1px solid var(--fw-accent);border-top:3px solid var(--fw-accent);border-radius:12px;background:#141b29f5;box-shadow:0 20px 70px #0009;backdrop-filter:blur(22px);color:white;box-sizing:border-box}.dht-firmware .fw-top{display:flex;align-items:center;gap:13px;font-size:11px;letter-spacing:1.7px;color:var(--fw-accent)}.fw-symbol{display:grid;place-items:center;width:34px;height:34px;border:1px solid var(--fw-accent);border-radius:50%;font-size:21px}.dht-firmware h2{font-size:23px;letter-spacing:-.5px;font-weight:500;margin:18px 0 8px}.dht-firmware p{font-size:13px;line-height:1.65;opacity:.8;margin:0 0 18px}.fw-version{display:flex;gap:12px;align-items:center;font-size:12px;border-top:1px solid #ffffff24;padding-top:13px;margin-bottom:18px}.fw-version strong{color:var(--fw-accent)}.fw-actions{display:flex;gap:10px}.fw-actions button{border:1px solid #ffffff50;color:white;background:transparent;font:inherit;font-size:12px;padding:11px 15px;flex:1;cursor:pointer}.fw-actions button[data-selected=true],.fw-actions button:focus-visible{background:var(--fw-accent);color:#111;outline:2px solid var(--fw-accent);outline-offset:2px}.fw-actions button:disabled{opacity:.45}.fw-note{margin-top:10px;font-size:11px;opacity:.8;line-height:1.4}`;
+
+/** The PSP's own message dialog: the XMB dims, two thin lines frame the message across the whole
+ *  screen, Yes / No sit side by side under it and the button guide is in the bottom-right corner
+ *  (✕ Enter · ○ Back). Sizes follow the PSP's 480 × 272 screen. */
+function PspUpdateDialog({from,to,selection,busy,message,onSelect,onYes,onNo}:{from:string;to:string;selection:number;busy:boolean;message:string;onSelect:(i:number)=>void;onYes:()=>void;onNo:()=>void}){
+ const lines=message?[message]:busy?["Please wait..."]:["A system software update is available.",`Update to version ${to}? (installed: ${from})`,"Your themes and settings will be kept."];
+ return <div className="dht-psp-dialog" role="dialog" aria-label="System software update" aria-modal="true" style={{position:"absolute",inset:0,zIndex:500,containerType:"size",fontFamily:"var(--dht-xmb-font, inherit)"} as CSSProperties}>
+  <style>{PSP_DIALOG}</style>
+  <div className="pd-dim"/>
+  <div className="pd-band">
+   <div className="pd-text">{lines.map((l,i)=><div key={i}>{l}</div>)}{busy&&!message&&<div className="pd-busy"><i/><i/><i/><i/></div>}</div>
+   {!busy&&!message&&<div className="pd-buttons">{["Yes","No"].map((t,i)=><button key={t} data-selected={selection===i} onMouseEnter={()=>onSelect(i)} onClick={i?onNo:onYes}>{t}</button>)}</div>}
+  </div>
+  <div className="pd-guide"><span><b className="pd-x">✕</b> {message?"OK":"Enter"}</span><span><b className="pd-o">○</b> Back</span></div>
+ </div>;
+}
+// u = one pixel of the PSP's 480 × 272 screen, scaled to the home's size
+const PSP_DIALOG=`.dht-psp-dialog{--u:min(100cqw/480,100cqh/272);color:#fff;text-shadow:0 0 calc(var(--u)*2) #0008}
+.dht-psp-dialog .pd-dim{position:absolute;inset:0;background:#000;opacity:.72;animation:pdDim .25s ease-out both}
+.dht-psp-dialog .pd-band{position:absolute;left:0;right:0;top:50%;transform:translateY(-50%);min-height:calc(var(--u)*120);display:flex;flex-direction:column;align-items:center;justify-content:center;gap:calc(var(--u)*14);padding:calc(var(--u)*14) calc(var(--u)*40);box-sizing:border-box;animation:pdIn .25s ease-out both}
+.dht-psp-dialog .pd-band::before,.dht-psp-dialog .pd-band::after{content:"";position:absolute;left:0;right:0;height:max(1px,calc(var(--u)*1));background:linear-gradient(90deg,#fff0,#fffc 12%,#fff 50%,#fffc 88%,#fff0);box-shadow:0 0 calc(var(--u)*3) #fff8}
+.dht-psp-dialog .pd-band::before{top:0}.dht-psp-dialog .pd-band::after{bottom:0}
+.dht-psp-dialog .pd-text{font-size:calc(var(--u)*12.5);line-height:1.55;text-align:center}
+.dht-psp-dialog .pd-buttons{display:flex;gap:calc(var(--u)*28)}
+.dht-psp-dialog button{font:inherit;font-size:calc(var(--u)*12.5);color:#fff;opacity:.6;background:none;border:0;min-width:calc(var(--u)*72);padding:calc(var(--u)*3) calc(var(--u)*14);border-radius:calc(var(--u)*3);cursor:pointer;text-shadow:inherit}
+.dht-psp-dialog button[data-selected=true]{opacity:1;background:linear-gradient(#ffffff40,#ffffff14);box-shadow:inset 0 0 0 max(1px,calc(var(--u)*.8)) #ffffffb0,0 0 calc(var(--u)*8) #ffffff70}
+.dht-psp-dialog .pd-guide{position:absolute;right:calc(var(--u)*14);bottom:calc(var(--u)*8);display:flex;gap:calc(var(--u)*14);font-size:calc(var(--u)*10);align-items:center}
+.dht-psp-dialog .pd-guide b{display:inline-grid;place-items:center;width:calc(var(--u)*12);height:calc(var(--u)*12);border-radius:50%;background:#fff;color:#000;font-size:calc(var(--u)*8);text-shadow:none;margin-right:calc(var(--u)*2)}
+.dht-psp-dialog .pd-busy{display:flex;gap:calc(var(--u)*4);justify-content:center;margin-top:calc(var(--u)*8)}
+.dht-psp-dialog .pd-busy i{width:calc(var(--u)*5);height:calc(var(--u)*5);border-radius:50%;background:#fff;animation:pdBusy 1s infinite}
+.dht-psp-dialog .pd-busy i:nth-child(2){animation-delay:.25s}.dht-psp-dialog .pd-busy i:nth-child(3){animation-delay:.5s}.dht-psp-dialog .pd-busy i:nth-child(4){animation-delay:.75s}
+@keyframes pdDim{from{opacity:0}}@keyframes pdIn{from{opacity:0}}@keyframes pdBusy{0%,100%{opacity:.25}50%{opacity:1}}`;

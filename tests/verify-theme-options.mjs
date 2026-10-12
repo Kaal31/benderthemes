@@ -1,10 +1,10 @@
-import { chromium } from 'playwright';
+import { launch } from './browser.mjs';
 import assert from 'node:assert/strict';
 import { mkdirSync } from 'node:fs';
 import { startPreviewServer } from '../preview/server.mjs';
 const themes = ['vita','ps2','ps3','psp','ps4','ps5','xbox','x360','aero','aero2','dial','castle','republic','minecraft','pain','nazarick'];
 const {server,url} = await startPreviewServer();
-const browser = await chromium.launch({headless:true});
+const browser = await launch();
 try {
   const page = await browser.newPage({viewport:{width:1304,height:930}});
   const errors=[]; page.on('pageerror', e=>errors.push(String(e)));
@@ -59,7 +59,7 @@ try {
   await page.locator('[data-dht-root]').screenshot({path:'out/theme-previews/hub.png'});
   await page.evaluate(()=>{window.__themeCatalog.themes.find(t=>t.id==='ps5').compatible=false;});
   await page.locator('.market-card').filter({hasText:/^PS5/}).click();
-  assert.equal(await page.locator('.market-primary').textContent(),'Coming soon');
+  assert.match(await page.locator('.market-primary').textContent(),/^Coming soon/); // followed by its button-hint chip
   assert.equal(await page.locator('.market-primary').isDisabled(),true);
   await page.locator('[data-dht-root]').screenshot({path:'out/theme-previews/hub-coming-soon.png'});
   assert.deepEqual(errors,[]);

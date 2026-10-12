@@ -26,7 +26,4 @@ export const PRESENTATION_CSS = `
 .dht-page-tabs button[aria-current=page]{outline:2px solid var(--page-sub);outline-offset:2px}
 .dht-destination-row>svg{scale:var(--dht-icon-scale);flex-shrink:0}
 .dht-themed-media{position:absolute;inset:0;z-index:90;color:var(--page-text);font-family:var(--page-font)}
-.dht-themed-media>div{background:var(--page-bg)!important;color:var(--page-text)!important;font-family:var(--page-font)!important}
-.dht-themed-media button{background:var(--page-panel)!important;color:var(--page-text)!important;border:1px solid var(--page-sub)!important;font-family:var(--page-font)!important}
-.dht-root[data-dht-theme=minecraft] .dht-themed-media button{border-radius:0!important;box-shadow:inset 3px 3px #eee,inset -3px -3px #666}
 `;

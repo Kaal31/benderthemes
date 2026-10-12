@@ -2,7 +2,7 @@
 import { build } from "esbuild";
 import { existsSync, readdirSync, readFileSync, writeFileSync } from "fs";
 import { execFileSync } from "node:child_process";
-execFileSync(process.env.PYTHON || "python", ["tools/package_themes.py"], { stdio: "inherit" });
+if (existsSync("bundle")) execFileSync(process.env.PYTHON || "python", ["tools/package_themes.py"], { stdio: "inherit" });
 const r = await build({
   entryPoints: ["preview/main.tsx"],
   bundle: true,
@@ -14,7 +14,7 @@ const r = await build({
   define: { "process.env.NODE_ENV": '"production"' },
 });
 const js = r.outputFiles[0].text.replace(/<\/script/g, "<\\/script");
-const previewCatalog = JSON.parse(readFileSync("theme-catalog.json", "utf8"));
+const previewCatalog = JSON.parse(readFileSync(existsSync("theme-catalog.json") ? "theme-catalog.json" : "asset-catalog.json", "utf8"));
 previewCatalog.themes = previewCatalog.themes.map((pack, i) => ({ ...pack, compatible: true, installedVersion: i < 3 ? pack.version : undefined, preview: `../out/theme-previews/${pack.id}.gif`, poster: `../out/theme-previews/${pack.id}.jpg` }));
 // personal builds: bundled wallpapers (./bundle/wallpapers) show up in the preview too
 const walls = {};
@@ -32,15 +32,29 @@ if (existsSync("bundle/dial")) for (const file of readdirSync("bundle/dial")) {
   if (!/\.wav$/.test(file)) continue;
   dialAssets[file] = "data:"+(file.endsWith("glb")?"model/gltf-binary":"audio/wav")+";base64,"+readFileSync(`bundle/dial/${file}`).toString("base64");
 }
-const republicPack=JSON.parse(readFileSync("bundle/sounds/DHT Verified Republic/pack.json","utf8"));
-republicPack.folder="DHT Verified Republic";republicPack.files=readdirSync("bundle/sounds/DHT Verified Republic");
-const castleAudio = {};
-for(const file of readdirSync("bundle/sounds/DHT Verified SAO")) if(file.endsWith(".wav")) castleAudio[file]="data:audio/wav;base64,"+readFileSync(`bundle/sounds/DHT Verified SAO/${file}`).toString("base64");
-const bladesAudio = {};
-for(const file of readdirSync("bundle/sounds/DHT Verified MC360 Blades 1.7.2")) if(file.endsWith(".wav")) bladesAudio[file]="data:audio/wav;base64,"+readFileSync(`bundle/sounds/DHT Verified MC360 Blades 1.7.2/${file}`).toString("base64");
+// sound folders are optional, so the preview still builds from a source-only checkout
+const soundPack = (folder) => existsSync(`bundle/sounds/${folder}/pack.json`) ? { ...JSON.parse(readFileSync(`bundle/sounds/${folder}/pack.json`, "utf8")), folder, files: readdirSync(`bundle/sounds/${folder}`) } : null;
+const wavs = (folder) => existsSync(`bundle/sounds/${folder}`) ? Object.fromEntries(readdirSync(`bundle/sounds/${folder}`).filter((f) => f.endsWith(".wav")).map((f) => [f, "data:audio/wav;base64," + readFileSync(`bundle/sounds/${folder}/${f}`).toString("base64")])) : {};
+const republicPack = soundPack("DHT Verified Republic");
+const castleAudio = wavs("DHT Verified SAO");
+const bladesAudio = wavs("DHT Verified MC360 Blades 1.7.2");
 const p3t = existsSync("preview/zengarden.json") ? JSON.parse(readFileSync("preview/zengarden.json","utf8")) : null;
-const suppliedPacks=["Minecraft Console Legacy","windows xp sounds","DHT Nazarick Music","DHT Floating Castle Music","DHT Six Paths Music"].map(folder=>({...JSON.parse(readFileSync(`bundle/sounds/${folder}/pack.json`,"utf8")),folder,files:readdirSync(`bundle/sounds/${folder}`),mappings:JSON.parse(readFileSync(`bundle/sounds/${folder}/pack.json`,"utf8")).mappings??{}}));
-const wallJs = `window.__testPacks=[${JSON.stringify(republicPack)},${suppliedPacks.map(p=>JSON.stringify(p)).join(",")}];window.__castleAudio=${JSON.stringify(castleAudio)};window.__bladesAudio=${JSON.stringify(bladesAudio)};window.__testP3t=${JSON.stringify(p3t)};window.__dialAssets=${JSON.stringify(dialAssets)};window.__testWalls=${JSON.stringify(walls)};window.__testAssets=${JSON.stringify(assets)};`;
+const suppliedPacks=["Minecraft Console Legacy","windows xp sounds","DHT Nazarick Music","DHT Floating Castle Music","DHT Six Paths Music"].map(soundPack).filter(Boolean).map(p=>({...p,mappings:p.mappings??{}}));
+// data themes (themes/<id>/theme.json), listed the way py_modules/data_themes.py lists them
+const AUDIO = /\.(wav|mp3|ogg|oga|flac|m4a|opus)$/i;
+const dataThemes = existsSync("themes") ? readdirSync("themes").filter((d) => existsSync(`themes/${d}/theme.json`)).map((d) => {
+  const m = JSON.parse(readFileSync(`themes/${d}/theme.json`, "utf8"));
+  const packs = {};
+  for (const slot of ["sounds", "music"]) {
+    const rel = m.slots?.[slot];
+    if (rel && existsSync(`themes/${d}/${rel}`)) packs[slot] = { files: readdirSync(`themes/${d}/${rel}`).filter((f) => AUDIO.test(f)).sort(), mappings: {}, ignore: [] };
+  }
+  // the same as py_modules/data_themes.py: _icons
+  const iconRel = m.slots?.icons;
+  const icons = iconRel && existsSync(`themes/${d}/${iconRel}`) ? Object.fromEntries(readdirSync(`themes/${d}/${iconRel}`).filter((f) => /^[a-z0-9][a-z0-9-]{0,40}\.(png|svg|webp|gif)$/i.test(f)).sort().map((f) => [f.replace(/\.[^.]+$/, ""), `${iconRel}/${f}`])) : undefined;
+  return { ...m, source: "bundled", packs, ...(icons ? { icons } : {}) };
+}) : [];
+const wallJs = `window.__dataThemes={base:location.origin+"/themes",wrap:location.origin+"/frame-wrap",themes:${JSON.stringify(dataThemes)}};window.__testPacks=[${[republicPack, ...suppliedPacks].filter(Boolean).map(p=>JSON.stringify(p)).join(",")}];window.__castleAudio=${JSON.stringify(castleAudio)};window.__bladesAudio=${JSON.stringify(bladesAudio)};window.__testP3t=${JSON.stringify(p3t)};window.__dialAssets=${JSON.stringify(dialAssets)};window.__testWalls=${JSON.stringify(walls)};window.__testAssets=${JSON.stringify(assets)};`;
 writeFileSync(
   "preview/preview.html",
   `<!doctype html><html><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>Deck Home Themes preview</title><style>html,body{margin:0;background:#0d0f13}</style></head><body><div id="root"></div><script>window.__themeCatalog=${JSON.stringify(previewCatalog)};window.__isThemePreview=true;</script><script>${wallJs}</script><script>${js}</script></body></html>`,
@@ -85,3 +99,14 @@ const defaultInit=`window.__referenceTitles=${JSON.stringify(allTitles)};window.
 writeFileSync("preview/preview.html",baseHtml.replace("<script>",`<script>${defaultInit}</script><script>`));
 const mcInit=`window.__themePreview="minecraft";window.__referenceTitles=${JSON.stringify(allTitles.slice(0,5))};window.__referenceArt=${JSON.stringify(referenceArt)};`;
 writeFileSync("preview/minecraft-preview.html",baseHtml.replace("<script>",`<script>${mcInit}</script><script>`));
+// Wii U page used by tests/verify-wara-plaza.mjs, verify-wiiu-intro.mjs and friends (?plaza=1 opens the Plaza)
+writeFileSync("preview/wiiu-preview.html",baseHtml.replace("<script>",`<script>window.__themePreview="wiiu";${defaultInit}</script><script>`));
+writeFileSync("preview/wii-preview.html",baseHtml.replace("<script>",`<script>window.__themePreview="wii";${defaultInit}</script><script>`));
+
+// Steam on-screen keyboard mock with the keyboard skins (preview/keyboard.ts, tests/verify-keyboard-skins.mjs)
+{
+  const kb = await build({ entryPoints: ["preview/keyboard.ts"], bundle: true, write: false, format: "iife", minify: true,
+    alias: { "@decky/ui": "./preview/stubs/ui.tsx", "@decky/api": "./preview/stubs/api.ts" }, define: { "process.env.NODE_ENV": '"production"' } });
+  writeFileSync("preview/keyboard.html", `<!doctype html><html><head><meta charset="utf-8"><title>Keyboard skins preview</title><style>html,body{margin:0;width:1280px;height:800px;background:#1b2838 linear-gradient(160deg,#2a475e,#171a21)}</style></head><body><script>window.__isThemePreview=true;</script><script>${kb.outputFiles[0].text.replace(/<\/script/g, "<\\/script")}</script></body></html>`);
+  console.log("preview/keyboard.html");
+}

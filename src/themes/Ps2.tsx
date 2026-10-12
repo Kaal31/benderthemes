@@ -9,7 +9,9 @@ import { fmtLastPlayed, fmtPlaytime, Game, openSteam } from "../library";
 import { showTitle, THEMES, updateSettings } from "../settings";
 import { currentPresetId, getPresets } from "../presets";
 import { Badges } from "../badges";
-import { fmtTime, playSound, useClock } from "../steam";
+import { fmtDate, fmtTime, playSound, useClock } from "../steam";
+import { styleOf } from "../engine/themeStyles";
+import { useReportFocus } from "../focus";
 
 type Screen = "main" | "browser" | "card" | "info" | "config";
 const BLUE = "var(--dht-ps2-text, #9fb4ff)";
@@ -33,8 +35,54 @@ const TOWERS: Tower[] = (() => {
     }
   return out;
 })();
+// A denser field for "Many" (same layout idea, lower skip chance).
+const MANY_TOWERS: Tower[] = (() => {
+  const out: Tower[] = [];
+  let seed = 11;
+  const rnd = () => ((seed = (seed * 16807) % 2147483647) / 2147483647);
+  for (let x = -9; x <= 9; x++)
+    for (let z = -9; z <= 9; z++) {
+      if (rnd() < 0.2) continue;
+      out.push({ x: x * 1.1, z: z * 1.1, h: 0.15 + rnd() * rnd() * 3.2, ph: rnd() * 6.28 });
+    }
+  return out;
+})();
+/** The boot towers: on the real PS2 their number follows the saves on the memory card. */
+function towerSet(kind: string, saves: number): Tower[] {
+  if (kind === "many") return MANY_TOWERS;
+  if (kind === "few") return TOWERS.filter((_, i) => i % 3 === 0);
+  if (kind === "saves") {
+    const n = clamp(saves, 1, MANY_TOWERS.length);
+    return MANY_TOWERS.filter((_, i) => i % Math.max(1, Math.floor(MANY_TOWERS.length / n)) === 0).slice(0, n);
+  }
+  return TOWERS;
+}
+type TowerLook = { towers: Tower[]; speed: number; fog: string };
+const FOG_FAR: Record<string, number> = { clear: 40, light: 24, heavy: 14 };
+const HAZE: Record<string, number> = { clear: 0, light: 0.08, heavy: 0.22 };
 
-function makeTowerDraw(dim: number) {
+// Browser field tint by hour, as the PS2 browser's background follows the system clock.
+function browserField(mode: string, hour: number): string {
+  if (mode !== "time") return "radial-gradient(ellipse at 30% 40%,#9b9b9d 0%,#737376 38%,#3e3f43 80%,#222329 100%)";
+  const [a, b, c, d] =
+    hour < 5 || hour >= 21 ? ["#5d6890", "#3c4670", "#1d2444", "#0e1228"]
+    : hour < 9 ? ["#b5a08a", "#8a7766", "#4a4040", "#24212a"]
+    : hour < 17 ? ["#a3a7ad", "#7a7f88", "#40444c", "#22252c"]
+    : ["#b88a6a", "#8a5f4e", "#4a3038", "#24182a"];
+  return `radial-gradient(ellipse at 30% 40%,${a} 0%,${b} 38%,${c} 80%,${d} 100%)`;
+}
+
+const JA: Record<string, string> = {
+  Browser: "ブラウザ",
+  "System Configuration": "システム設定",
+  "Memory Card (PS2) /1": "メモリーカード(PS2) /1",
+  "Memory Card (PS2) /2": "メモリーカード(PS2) /2",
+};
+
+function makeTowerDraw(dim: number, look: TowerLook = { towers: TOWERS, speed: 0.05, fog: "light" }) {
+  const far = FOG_FAR[look.fog] ?? 24;
+  const near = look.fog === "clear" ? 1.3 : 1.15;
+  const haze = HAZE[look.fog] ?? 0.08;
   return (ctx: CanvasRenderingContext2D, t: number, w: number, h: number) => {
     const sky = ctx.createLinearGradient(0, 0, 0, h);
     sky.addColorStop(0, "#000002");
@@ -42,14 +90,14 @@ function makeTowerDraw(dim: number) {
     sky.addColorStop(1, "#071030");
     ctx.fillStyle = sky;
     ctx.fillRect(0, 0, w, h);
-    const a = t * 0.05;
+    const a = t * look.speed;
     const ca = Math.cos(a);
     const sa = Math.sin(a);
     const f = w * 0.7;
     const cx = w / 2;
     const horizon = h * 0.5;
     const camY = 3.4;
-    const pts = TOWERS.map((tw) => {
+    const pts = look.towers.map((tw) => {
       const X = tw.x * ca - tw.z * sa;
       const Z = tw.x * sa + tw.z * ca + 13;
       return { tw, X, Z };
@@ -63,7 +111,7 @@ function makeTowerDraw(dim: number) {
       const base = horizon + (camY / Z) * f;
       const top = horizon + ((camY - hh) / Z) * f;
       const bw = (0.3 / Z) * f;
-      const fog = Math.max(0, Math.min(1, 1.15 - Z / 24)) * dim * Math.min(1, (Z - 4.5) / 3);
+      const fog = Math.max(0, Math.min(1, near - Z / far)) * dim * Math.min(1, (Z - 4.5) / 3);
       const g = ctx.createLinearGradient(0, top, 0, base);
       g.addColorStop(0, `rgba(200,215,255,${0.4 * fog})`);
       g.addColorStop(0.15, `rgba(120,150,255,${0.14 * fog})`);
@@ -76,11 +124,12 @@ function makeTowerDraw(dim: number) {
     }
     ctx.globalCompositeOperation = "source-over";
     // floor haze
-    const haze = ctx.createLinearGradient(0, horizon, 0, h);
-    haze.addColorStop(0, "rgba(40,70,200,0)");
-    haze.addColorStop(0.3, "rgba(40,70,200,0.08)");
-    haze.addColorStop(1, "rgba(0,0,0,0)");
-    ctx.fillStyle = haze;
+    if (!haze) return;
+    const hz = ctx.createLinearGradient(0, horizon, 0, h);
+    hz.addColorStop(0, "rgba(40,70,200,0)");
+    hz.addColorStop(0.3, `rgba(40,70,200,${haze})`);
+    hz.addColorStop(1, "rgba(0,0,0,0)");
+    ctx.fillStyle = hz;
     ctx.fillRect(0, horizon, w, h - horizon);
   };
 }
@@ -155,16 +204,16 @@ function MemoryCard({ label, color, on, kind }: { label: string; color: string; 
   );
 }
 
-function SaveIcon({ g, on, size, animate }: { g: Game; on: boolean; size: number; animate:boolean }) {
+function SaveIcon({ g, on, size, animate, motion = "sway", ratio = 1.25 }: { g: Game; on: boolean; size: number; animate:boolean; motion?: string; ratio?: number }) {
   return (
-    <div className="dht-ps2-save-model" data-selected={on} style={{ position:"relative",width: size, height: size * 1.25, perspective: 600 }}>
+    <div className="dht-ps2-save-model" data-selected={on} style={{ position:"relative",width: size, height: size * ratio, perspective: 600 }}>
       {on&&<div aria-hidden className="dht-ps2-save-light"/>}
       <div
         style={{
           width: "100%",
           height: "100%",
           transformStyle: "preserve-3d",
-          animation: !animate?"none":on ? "dhtTurn 9s linear infinite" : "dhtSway 6s ease-in-out infinite",
+          animation: !animate || motion === "still" ? "none" : on ? "dhtTurn 9s linear infinite" : motion === "selected" ? "none" : "dhtSway 6s ease-in-out infinite",
           animationDelay: on ? "0s" : `${(g.appid % 7) * -0.8}s`,
         }}
       >
@@ -198,6 +247,10 @@ export function Ps2Home() {
   const { W, H } = useStage();
   const now = useClock(15000);
   const menu = useMenu();
+  const st = styleOf(s, "ps2");
+  const lang = st<string>("language");
+  const L = (t: string) => (lang === "ja" && JA[t]) || t;
+  const iconMotion = st<string>("iconMotion");
 
   const [screen, setScreen] = useRemembered<Screen>("ps2-screen", "main");
   const [msel, setMsel] = useRemembered("ps2-main", 0);
@@ -212,14 +265,19 @@ export function Ps2Home() {
       { label: "Memory Card (PS2) /2", sub: "All games", color: "#5a6170", games: api.lib.all.slice(0, s.maxGames), kind: "card" as const },
       { label: "Steam Library", sub: "Open the library", color: "", games: [] as Game[], kind: "disc" as const },
       { label: "Online Store", sub: "Steam Store", color: "", games: [] as Game[], kind: "disc" as const },
+      { label: "Downloads", sub: "Steam download queue", color: "", games: [] as Game[], kind: "disc" as const },
     ],
     [api.lib, s.maxGames],
   );
   const dev = devices[clamp(dsel, 0, devices.length - 1)];
   const games = dev.games;
-  const COLS = 6;
+  const COLS = clamp(Number(st("columns")) || 6, 4, 8);
+  // box art: the classic memory-card icon shape, or Steam's own 600x900 capsule (2:3)
+  const portrait = st<string>("boxArt") === "portrait";
+  const RATIO = portrait ? 1.5 : 1.25;
   const gi = clamp(gsel, 0, Math.max(0, games.length - 1));
   const g = games[gi];
+  useReportFocus(screen === "card" || screen === "info" ? g : undefined);
 
   const infoOpts = g
     ? [
@@ -231,7 +289,7 @@ export function Ps2Home() {
       ]
     : [];
   const configOpts: { label: string; value?: string; run: () => void }[] = [
-    { label: "Preset", value: getPresets().find((p) => p.id === currentPresetId(s))?.label, run: () => menu.open(themeMenu(s.theme, api.switchTheme, THEMES), "Presets") },
+    { label: "Preset", value: getPresets().find((p) => p.id === currentPresetId(s))?.label, run: () => menu.open(themeMenu(s.theme, api.switchTheme, THEMES), "Presets", { page: true }) },
     { label: "Clock", value: s.clock24 ? "24-hour" : "12-hour", run: () => updateSettings({ clock24: !s.clock24 }) },
     { label: "Sound Effects", value: s.sounds ? "On" : "Off", run: () => updateSettings({ sounds: !s.sounds }) },
     { label: "Home Screen Settings", run: api.openSettings },
@@ -275,7 +333,7 @@ export function Ps2Home() {
       case "browser":
         if (b === "left" || b === "right") mv(dsel, setDsel, devices.length, b === "left" ? -1 : 1);
         else if (b === "a") {
-          if (dev.kind === "disc") (playSound("select"), openSteam(dev.label === "Online Store" ? "store" : "library"));
+          if (dev.kind === "disc") (playSound("select"), openSteam(dsel === 3 ? "store" : dsel === 4 ? "downloads" : "library"));
           else (setGsel(0), go("card"));
         } else if (b === "b") go("main");
         return true;
@@ -307,13 +365,22 @@ export function Ps2Home() {
     return false;
   };
 
-  const towerDraw = useMemo(() => makeTowerDraw(screen === "main" ? 1 : 0.55), [screen]);
+  const towerKind = st<string>("towers");
+  const towerSpeed = { still: 0, slow: 0.05, fast: 0.15 }[st<string>("towerMotion")] ?? 0.05;
+  const fog = st<string>("fog");
+  const saves = api.lib.games.length;
+  const towerDraw = useMemo(
+    () => makeTowerDraw(screen === "main" ? 1 : 0.55, { towers: towerSet(towerKind, saves), speed: towerSpeed, fog }),
+    [screen, towerKind, saves, towerSpeed, fog],
+  );
+  const backdrop = st<string>("mainBackdrop");
+  const towerOpacity = backdrop === "towers" ? 1 : backdrop === "both" ? 0.5 : 0.12;
   const text = (on: boolean, size = 24): CSSProperties => ({ color: on ? (screen === "main"?"#55caff":"#f4f4dd") : (screen === "main"?"#919295":screen === "card"||screen === "browser"?"#dedede":BLUE), fontSize: size, fontFamily: FONT, textShadow: "0 1px 2px #000,1px 0 1px #0008", transition: "all 150ms" });
 
   // card grid geometry
-  const ICON = 118;
+  const ICON = portrait ? 104 : 118;
   const GX = 168;
-  const GY = 190;
+  const GY = portrait ? 200 : 190;
   const row = Math.floor(gi / COLS);
   const firstRow = Math.max(0, row - 1);
 
@@ -324,12 +391,12 @@ export function Ps2Home() {
     <ThemeRoot onInput={onInput} hints={hints}>
       <Stage background="#000">
         <style>{PS2_CSS}</style>
-        {screen==="main"?<><div style={{position:"absolute",inset:0,opacity:.12}}><AnimCanvas width={W} height={H} animate={s.animations} fps={20} draw={towerDraw} deps={[screen]}/></div><AnimCanvas width={W} height={H} animate={s.animations} fps={30} draw={drawMenuOrbs}/></>:screen==="browser"||screen==="card"||screen==="info"?<div className="dht-ps2-browser-field" style={{position:"absolute",inset:0,background:"radial-gradient(ellipse at 30% 40%,#9b9b9d 0%,#737376 38%,#3e3f43 80%,#222329 100%)"}}/>:<AnimCanvas width={W} height={H} animate={s.animations} fps={30} draw={towerDraw} deps={[screen]}/>}
-        <div className="dht-ps2-scan"/>
+        {screen==="main"?<><div style={{position:"absolute",inset:0,opacity:towerOpacity}}><AnimCanvas width={W} height={H} animate={s.animations} fps={20} draw={towerDraw} deps={[screen,towerDraw]}/></div>{backdrop!=="towers"&&<AnimCanvas width={W} height={H} animate={s.animations} fps={30} draw={drawMenuOrbs}/>}</>:screen==="browser"||screen==="card"||screen==="info"?<div className="dht-ps2-browser-field" style={{position:"absolute",inset:0,background:browserField(st<string>("browserColor"),now.getHours()),transition:"background 2s"}}/>:<AnimCanvas width={W} height={H} animate={s.animations} fps={30} draw={towerDraw} deps={[screen,towerDraw]}/>}
+        {st<boolean>("scanlines")&&<div className="dht-ps2-scan"/>}
 
         {/* clock */}
         <div style={{ position: "absolute", right: 46, top: 30, ...text(false, 20), opacity: 0.85 }}>
-          {now.toLocaleDateString(undefined, { year: "numeric", month: "2-digit", day: "2-digit" })} {fmtTime(now, s.clock24)}
+          {fmtDate(now, true)} {fmtTime(now, s.clock24)}
         </div>
 
         {screen === "main" && (
@@ -337,7 +404,7 @@ export function Ps2Home() {
             {["Browser", "System Configuration"].map((label, i) => (
               <div key={label} className="dht-ps2-item" data-selected={msel === i} style={{ display: "flex", alignItems: "center", gap: 26 }}>
                 
-                <span style={text(msel === i, 28)}>{label}</span>
+                <span style={text(msel === i, 28)}>{L(label)}</span>
               </div>
             ))}
           </div>
@@ -345,10 +412,10 @@ export function Ps2Home() {
 
         {screen === "browser" && (
           <div style={{ position: "absolute", inset: 0, animation: "dhtIn2 300ms" }}>
-            <div style={{ position: "absolute", left: 60, top: 36, ...text(true, 26) }}>Browser</div>
+            <div style={{ position: "absolute", left: 60, top: 36, ...text(true, 26) }}>{L("Browser")}</div>
             <div style={{ position: "absolute", left: 0, right: 0, top: H * 0.33, display: "flex", justifyContent: "center", gap: 60 }}>
               {devices.map((d, i) => (
-                <MemoryCard key={d.label} label={d.label} color={d.color} on={i === dsel} kind={d.kind} />
+                <MemoryCard key={d.label} label={L(d.label)} color={d.color} on={i === dsel} kind={d.kind} />
               ))}
             </div>
             <div style={{ position: "absolute", left: 0, right: 0, top: H * 0.75, textAlign: "center", ...text(false, 18) }}>
@@ -360,7 +427,7 @@ export function Ps2Home() {
 
         {screen === "card" && (
           <div style={{ position: "absolute", inset: 0, animation: "dhtIn2 300ms" }}>
-            <div style={{ position: "absolute", left: 60, top: 36, ...text(true, 24) }}>{dev.label}</div>
+            <div style={{ position: "absolute", left: 60, top: 36, ...text(true, 24) }}>{L(dev.label)}</div>
             <div style={{ position: "absolute", left: 0, right: 0, top: 84, textAlign: "center", ...text(true, 26), whiteSpace: "nowrap", overflow: "hidden", textOverflow: "ellipsis", padding: "0 120px" }}>{g ? (showTitle(s, "ps2", true) ? g.name : "") : "No data"}</div>
             <div style={{ position: "absolute", left: (W - COLS * GX) / 2 + (GX - ICON) / 2, top: 150 }}>
               {games.slice(firstRow * COLS, firstRow * COLS + COLS * 3).map((gm, k) => {
@@ -368,27 +435,27 @@ export function Ps2Home() {
                 const on = i === gi;
                 return (
                   <div key={gm.appid} className="dht-ps2-save dht-tile" data-selected={on} data-name={gm.name} style={{ position: "absolute", left: (i % COLS) * GX, top: (Math.floor(i / COLS) - firstRow) * GY, transform: on ? "scale(1.12)" : "none", transition: "transform 150ms" }}>
-                    <SaveIcon g={gm} on={on} size={ICON} animate={s.animations}/>
+                    <SaveIcon g={gm} on={on} size={ICON} animate={s.animations} motion={iconMotion} ratio={RATIO}/>
                   </div>
                 );
               })}
             </div>
             <div style={{ position: "absolute", left: 60, bottom: 50, ...text(false, 17) }}>
-              {games.length} items · {g ? fmtPlaytime(g.playtime) : ""}
+              {games.length} items · {g ? fmtPlaytime(g.playtime, g.lastPlayed, true) : ""}
             </div>
           </div>
         )}
 
         {screen === "info" && g && (
           <div style={{ position: "absolute", inset: 0, animation: "dhtIn2 300ms" }}>
-            <div style={{ position: "absolute", left: 60, top: 36, ...text(true, 24) }}>{dev.label}</div>
+            <div style={{ position: "absolute", left: 60, top: 36, ...text(true, 24) }}>{L(dev.label)}</div>
             <div style={{ position: "absolute", left: W * 0.12, top: H * 0.22 }}>
-              <SaveIcon g={g} on size={250} animate={s.animations}/>
+              <SaveIcon g={g} on size={portrait ? 215 : 250} animate={s.animations} motion={iconMotion} ratio={RATIO}/>
             </div>
             <div style={{ position: "absolute", left: W * 0.5, top: H * 0.22, width: W * 0.42 }}>
               <div style={{ ...text(true, 30), marginBottom: 14 }}>{g.name}</div>
               <div style={{ ...text(false, 18), lineHeight: 1.7 }}>
-                {fmtPlaytime(g.playtime)}
+                {fmtPlaytime(g.playtime, g.lastPlayed, true)}
                 <br />
                 Last played: {fmtLastPlayed(g.lastPlayed)}
                 <br />
@@ -409,7 +476,7 @@ export function Ps2Home() {
 
         {screen === "config" && (
           <div style={{ position: "absolute", inset: 0, animation: "dhtIn2 300ms" }}>
-            <div style={{ position: "absolute", left: 60, top: 36, ...text(true, 26) }}>System Configuration</div>
+            <div style={{ position: "absolute", left: 60, top: 36, ...text(true, 26) }}>{L("System Configuration")}</div>
             <div style={{ position: "absolute", left: W * 0.2, top: H * 0.2, width: W * 0.6, display: "flex", flexDirection: "column", gap: 4 }}>
               {configOpts.map((o, i) => (
                 <div key={o.label} className="dht-ps2-item" data-selected={i === csel} style={{ display: "flex", justifyContent: "space-between", padding: "12px 24px", background: i === csel ? "linear-gradient(90deg, rgba(80,110,255,0.35), rgba(80,110,255,0))" : "none", borderLeft: i === csel ? "3px solid #9fb4ff" : "3px solid transparent" }}>

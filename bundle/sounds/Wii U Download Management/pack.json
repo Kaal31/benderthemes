@@ -1,0 +1,9 @@
+{
+  "name": "Wii U Download Management",
+  "author": "Haxorzz",
+  "version": "v1.0",
+  "manifest_version": 1,
+  "music": true,
+  "ignore": [],
+  "id": "54932345-213f-4e35-9e60-88e4d5694154"
+}

@@ -9,6 +9,19 @@ export function transitionPage(settings:Settings,change:()=>void,targetDoc:Docum
   const root=doc.querySelector<HTMLElement>("[data-dht-root]");
   if(!root){change();return;}
   const previous=active.get(doc);if(previous){clearTimeout(previous.timer);previous.node.remove();}
+  if(settings.theme==="nazarick"){
+    // Commit navigation immediately: cloning the whole screen and delaying the
+    // state update made every tab feel unresponsive, especially on first use.
+    change();
+    const win=doc.defaultView;
+    win?.requestAnimationFrame(()=>win.requestAnimationFrame(()=>{
+      root.querySelectorAll<HTMLElement>('.naz-content,.dht-store[data-dht-store-skin=nazarick] .dht-store-page,.naz-home .naz-feature,.naz-home .naz-recent').forEach(node=>{
+        node.getAnimations().forEach(animation=>animation.cancel());
+        node.animate([{opacity:.55,transform:'translateY(4px)'},{opacity:1,transform:'translateY(0)'}],{duration:160,easing:'ease-out'});
+      });
+    }));
+    return;
+  }
   const rect=root.getBoundingClientRect(),snapshot=root.cloneNode(true) as HTMLElement;
   const sourceCanvases=root.querySelectorAll("canvas"),clonedCanvases=snapshot.querySelectorAll("canvas");
   sourceCanvases.forEach((canvas,i)=>{try{clonedCanvases[i]?.getContext("2d")?.drawImage(canvas,0,0);}catch{}});
@@ -16,23 +29,6 @@ export function transitionPage(settings:Settings,change:()=>void,targetDoc:Docum
   snapshot.removeAttribute("data-dht-root");snapshot.setAttribute("data-page-transition","");snapshot.setAttribute("aria-hidden","true");snapshot.inert=true;
   snapshot.querySelectorAll("[id]").forEach(e=>e.removeAttribute("id"));
   Object.assign(snapshot.style,{position:"fixed",left:`${rect.left}px`,top:`${rect.top}px`,width:`${rect.width}px`,height:`${rect.height}px`,margin:"0",transform:"none",pointerEvents:"none",zIndex:"2147483000",overflow:"hidden"});
-  if(settings.theme==="nazarick"){
-    // Never dissolve two sets of text/frames over each other. Fade the old
-    // content into the theme's dark surface, commit, then reveal the new page.
-    // The header is outside this mask and stays readable throughout.
-    const curtain=doc.createElement('div');curtain.setAttribute('data-page-transition','');curtain.setAttribute('aria-hidden','true');curtain.inert=true;
-    Object.assign(curtain.style,{position:'fixed',left:`${rect.left}px`,top:`${rect.top}px`,width:`${rect.width}px`,height:`${rect.height}px`,background:'#08060c',pointerEvents:'none',zIndex:'2147483000',overflow:'hidden',clipPath:`inset(${rect.height*58/864}px 0 0)`});
-    snapshot.removeAttribute('data-page-transition');Object.assign(snapshot.style,{position:'absolute',left:'0',top:'0'});curtain.append(snapshot);doc.body.append(curtain);
-    snapshot.animate([{opacity:1},{opacity:0}],{duration:130,easing:'ease-in',fill:'forwards'});
-    const timer=setTimeout(()=>{
-      change();snapshot.remove();
-      const win=doc.defaultView;
-      win?.requestAnimationFrame(()=>win.requestAnimationFrame(()=>curtain.animate([{opacity:1},{opacity:0}],{duration:180,easing:'ease-out',fill:'forwards'})));
-      const finish=setTimeout(()=>{curtain.remove();if(active.get(doc)?.node===curtain)active.delete(doc);},230);
-      active.set(doc,{node:curtain,timer:finish});
-    },140);
-    active.set(doc,{node:curtain,timer});return;
-  }
   doc.body.append(snapshot);
   change();
   // Two paints let React commit the destination before revealing it.

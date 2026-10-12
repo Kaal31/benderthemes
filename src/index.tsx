@@ -1,22 +1,23 @@
 import { ButtonItem, DropdownItem, Navigation, PanelSection, PanelSectionRow, SliderField, staticClasses, TextField, ToggleField } from "@decky/ui";
-import { definePlugin, routerHook } from "@decky/api";
+import { definePlugin, openFilePicker, routerHook } from "@decky/api";
+import { importThemeZip, onThemesChanged, userThemes } from "./engine/registry";
 import { useEffect, useRef, useState } from "react";
 import { HomeSwitch, SafeBoundary, showThemedHomeAgain, ThemedHome } from "./Home";
-import { listCollectionsForSettings, loadLibrary } from "./library";
+import { loadLibrary } from "./library";
 import { useDiag, logInfo, reportError } from "./diag";
 const PLUGIN_VERSION = "__DHT_VERSION__";
 import { Updates } from "./Updates";
 import { retryHome, useHomeFailure } from "./compatibility";
 import { restoreFooter } from "./steam";
 import { openMarketplace } from "./marketplaceState";
-import { CASE_THEMES } from "./CaseArt";
-import { initSettings, SortMode, THEMES, ThemeId, TITLE_MODES, updateSettings, updateVita, useSettings, useSettingsLoaded, X360_STYLES, FOOTER_MODES } from "./settings";
-import { autoPack, getPacks, listWallpapers, matchKey, musicFile, PACK_MATCH, packFor, refreshPacks, restoreHeader, sfxCoverage, soundDiag, SoundPack } from "./steam";
-import { listSkins } from "./skins";
-import { MONTH_NAMES } from "./color";
+import { initSettings, resetAllSettings, resetThemeSettings, SortMode, THEMES, ThemeId, updateSettings, useSettings, useSettingsLoaded, FOOTER_MODES } from "./settings";
+import { refreshPacks, restoreHeader, soundDiag } from "./steam";
 import { getUiDocument } from "./cssvars";
-import { BUBBLE_STYLES } from "./themes/vitaBubble";
-import { applyPreset, refreshPresets, usePresets, presetPickerState } from "./presets";
+import { useOtherPlugins } from "./otherPlugins";
+import { startKeyboardSkins } from "./keyboardSkins";
+import { refreshThemeLists } from "./themeSettingsMenu";
+import { deleteCurrentTheme } from "./themeActions";
+import { applyPreset, getPresets, refreshPresets, usePresets, presetPickerState, PRESET_GROUPS } from "./presets";
 
 const ROUTE = "/deck-home-themes";
 const HOME_ROUTE = "/library/home";
@@ -48,20 +49,45 @@ function DeferredText({ label, initial, onCommit }: { label: string; initial: st
   );
 }
 
+/** Community themes (docs/THEME-FORMAT.md): pick a theme .zip; the plugin checks it and copies it into its themes folder. */
+function AddThemeRow() {
+  const [msg, setMsg] = useState("");
+  const [, setRev] = useState(0);
+  useEffect(() => onThemesChanged(() => setRev((r) => r + 1)), []); // refused zips change after a Rescan
+  const add = async () => {
+    try {
+      const picked = await openFilePicker(0 as any /* FileSelectionType.FILE */, "/home/deck/Downloads", true, true, undefined, ["zip"]);
+      if (!picked?.realpath) return;
+      setMsg("Checking…");
+      const r = await importThemeZip(picked.realpath);
+      if (r.ok) {
+        await refreshPresets();
+        const p = getPresets().find((x) => x.id === r.id);
+        if (p) applyPreset(p);
+        setMsg(`Added ${r.name || r.id}`);
+      } else setMsg(`Not added: ${r.error ?? "unknown reason"}`);
+    } catch {
+      setMsg("");
+    }
+  };
+  const refused = userThemes.errors;
+  return (
+    <PanelSectionRow>
+      <ButtonItem layout="below" description={msg || `A community theme as a .zip (theme.json inside). Or copy a theme folder / .zip into ${userThemes.dir || "the plugin's themes folder"} and Rescan.${refused.length ? ` Refused: ${refused.map((e) => `${e.file} (${e.error})`).join("; ")}` : ""}`} onClick={() => void add()}>
+        Add a theme from a file
+      </ButtonItem>
+    </PanelSectionRow>
+  );
+}
+
 function Panel() {
   const failure = useHomeFailure();
   const s = useSettings();
   const loaded = useSettingsLoaded();
-  const [packs, setPacks] = useState<SoundPack[]>(getPacks());
-  const [walls, setWalls] = useState<{ dir: string; files: string[] }>({ dir: "", files: [] });
-  const [skins, setSkins] = useState<{ p3t: string[]; vita: string[]; dir: string }>({ p3t: [], vita: [], dir: "" });
   const refresh = () => {
-    refreshPacks().then(setPacks);
-    listWallpapers().then(setWalls);
-    listSkins()
-      .then((r) => setSkins(r ?? { p3t: [], vita: [], dir: "" }))
-      .catch(() => {});
+    refreshPacks();
     refreshPresets();
+    refreshThemeLists();
   };
   useEffect(refresh, []);
   const presets = usePresets();
@@ -69,29 +95,23 @@ function Panel() {
   const th: ThemeId = s.theme;
   const themeName = THEMES.find((t) => t.id === th)?.name ?? th;
 
-  const sources = [
-    ...(s.themeCollections?.[th]?.source === "collections" ? [{ data: "collections", label: "Selected collections" }] : []),
-    { data: "installed", label: "Installed games" },
-    { data: "all", label: "All games" },
-    ...listCollectionsForSettings().map((c) => ({ data: `col:${c.id}`, label: `${c.name} (${c.count})` })),
-  ];
-
   return (
     <>
       <Updates />
       <PanelSection title="Themes"><PanelSectionRow><ButtonItem layout="below" description="Browse animated previews, download a theme and activate it." onClick={() => { openMarketplace(); Navigation.Navigate(ROUTE); Navigation.CloseSideMenus(); }}>Hub</ButtonItem></PanelSectionRow>
+      <AddThemeRow />
       <PanelSectionRow><ToggleField label="Firmware update notifications" checked={s.firmwareNotifications !== false} onChange={value => updateSettings({ firmwareNotifications: value })} /></PanelSectionRow></PanelSection>
       {failure && <PanelSection title="Steam Home restored"><PanelSectionRow><ButtonItem layout="below" description={failure} onClick={retryHome}>Retry themed home</ButtonItem></PanelSectionRow></PanelSection>}
       <PanelSection>
         <PanelSectionRow>
           <ToggleField label="Themed home screen" description="Replace Steam's home with the console theme" checked={s.enabled} onChange={(v) => updateSettings({ enabled: v })} />
         </PanelSectionRow>
-        <PanelSectionRow><DropdownItem label="Company" rgOptions={["Sony","Microsoft","Bonus"].map(data=>({data,label:data}))} selectedOption={company} onChange={o=>{if(["Sony","Microsoft","Bonus"].includes(o.data))updateSettings({presetCompany:o.data});}} /></PanelSectionRow>
+        <PanelSectionRow><DropdownItem label="Company" rgOptions={PRESET_GROUPS.filter(c=>(c!=="Community"&&c!=="My presets")||presets.some(p=>p.company===c)).map(data=>({data,label:data}))} selectedOption={company} onChange={o=>{if(PRESET_GROUPS.includes(o.data))updateSettings({presetCompany:o.data});}} /></PanelSectionRow>
         <PanelSectionRow><ToggleField label="TV mode" description="Safe screen margins and larger menu text" checked={s.tvMode} onChange={tvMode=>updateSettings({tvMode})}/></PanelSectionRow>
         <PanelSectionRow>
           <DropdownItem
             label="Preset"
-            description="Console theme + skin. On the home: L2 / R2 switch presets, △ → Presets."
+            description={`Console theme + skin. On the home: hold L1 + ▲▼ to change console, L1 + ◀▶ for that console's looks and theme files; L2 / R2 step through all presets. ${themeName}'s own options (icons, theme file, brightness, wallpaper, sounds…): △ / Y on the home → Theme options.`}
             key={company}
             rgOptions={presetOptions}
             selectedOption={selectedPreset}
@@ -134,11 +154,7 @@ function Panel() {
         </PanelSection>
       )}
 
-      <PanelSection title="Library">
-        <PanelSectionRow>
-          <DropdownItem label="Show in this theme" rgOptions={sources} selectedOption={s.themeCollections?.[th]?.source ?? s.source} onChange={(o) => updateSettings(p => ({ themeCollections: { ...p.themeCollections, [th]: { ...p.themeCollections?.[th], source: o.data as string } } }))} />
-          <SliderField label="Icon size in this theme" value={s.iconSizes?.[th] ?? 100} min={75} max={110} step={5} showValue onChange={value => updateSettings(p => ({ iconSizes: { ...p.iconSizes, [th]: value } }))} />
-        </PanelSectionRow>
+      <PanelSection title="Library · all themes">
         <PanelSectionRow>
           <DropdownItem
             label="Sort"
@@ -165,139 +181,9 @@ function Panel() {
         </PanelSectionRow>
       </PanelSection>
 
-      {CASE_THEMES.includes(th) && <PanelSection title="Game covers"><PanelSectionRow><DropdownItem label="Cover style" rgOptions={[{data:"flat",label:"Flat"},{data:"case3d",label:"3D case"}]} selectedOption={s.coverStyles?.[th]??"flat"} onChange={o=>updateSettings(v=>({coverStyles:{...v.coverStyles,[th]:o.data}}))}/></PanelSectionRow></PanelSection>}
-      {th === "vita" && (
-        <PanelSection title="PS Vita">
-          <PanelSectionRow>
-            <ToggleField label="System bubbles" description="Library, Store, Friends, Screenshots…" checked={s.vita.systemBubbles} onChange={(v) => updateVita({ systemBubbles: v })} />
-          </PanelSectionRow>
-          <PanelSectionRow>
-            <ToggleField label="Collections as folders" checked={s.vita.collectionFolders} onChange={(v) => updateVita({ collectionFolders: v })} />
-          </PanelSectionRow>
-          <PanelSectionRow>
-            <DropdownItem
-              label="Bubble art"
-              rgOptions={[
-                { data: "portrait", label: "Cover art" },
-                { data: "landscape", label: "Header art" },
-              ]}
-              selectedOption={s.vita.art}
-              onChange={(o) => updateVita({ art: o.data })}
-            />
-          </PanelSectionRow>
-          <PanelSectionRow>
-            <DropdownItem
-              label="Bubble style"
-              rgOptions={BUBBLE_STYLES.map((b) => ({ data: b.id, label: b.name }))}
-              selectedOption={s.vita.bubbleStyle}
-              onChange={(o) => updateVita({ bubbleStyle: o.data })}
-            />
-          </PanelSectionRow>
-          <PanelSectionRow>
-            <DropdownItem
-              label="Focus highlight"
-              rgOptions={[
-                { data: "vita", label: "Vita glow (soft)" },
-                { data: "ring", label: "Ring" },
-                { data: "none", label: "None (grow only)" },
-              ]}
-              selectedOption={s.vita.focus}
-              onChange={(o) => updateVita({ focus: o.data })}
-            />
-          </PanelSectionRow>
-          <PanelSectionRow>
-            <ToggleField label="3D bubbles" description="Turn the artwork and reflections inside each glass bubble when you tilt the Deck" checked={s.vita.motion} onChange={(v) => updateVita({ motion: v })} />
-          </PanelSectionRow>
-          <PanelSectionRow>
-            <DropdownItem label="Bubble sway" rgOptions={[{data:"off",label:"Off"},{data:"gentle",label:"Gentle"},{data:"lively",label:"Lively"}]} selectedOption={s.vita.sway} onChange={(o) => updateVita({sway:o.data})} />
-          </PanelSectionRow>
-          <PanelSectionRow>
-            <ToggleField label="Gyro" description="Use the Deck\u2019s motion sensor to drive the 3D bubbles" checked={s.vita.gyro} disabled={!s.vita.motion} onChange={(v) => updateVita({ gyro: v })} />
-          </PanelSectionRow>
-          <PanelSectionRow>
-            <ToggleField label="Touch controls" description="Tap to open, swipe for pages, hold to rearrange" checked={s.vita.touch} onChange={(v) => updateVita({ touch: v })} />
-          </PanelSectionRow>
-          <PanelSectionRow>
-            <DropdownItem
-              label="Custom Vita theme"
-              description={skins.dir ? `Folders or .zip files in ${skins.dir}/vita` : undefined}
-              rgOptions={[{ data: "", label: "None" }, ...skins.vita.map((n) => ({ data: n, label: n }))]}
-              selectedOption={s.vita.skin}
-              onChange={(o) => updateVita({ skin: o.data })}
-            />
-          </PanelSectionRow>
-          <PanelSectionRow>
-            <ButtonItem layout="below" description={`${s.vita.folders.length} folder(s). Folders are made with △ on the home.`} onClick={() => updateVita({ order: [] })}>
-              Reset bubble arrangement
-            </ButtonItem>
-          </PanelSectionRow>
-        </PanelSection>
-      )}
-
-      {(th === "ps3" || th === "psp") && (
-        <PanelSection title={themeName}>
-          <PanelSectionRow>
-            <DropdownItem
-              label="Background colour"
-              rgOptions={[{ data: -1, label: "By month (original)" }, ...MONTH_NAMES.map((m, i) => ({ data: i, label: m }))]}
-              selectedOption={th === "ps3" ? s.xmb.ps3Color : s.xmb.pspColor}
-              onChange={(o) => updateSettings((p) => ({ xmb: { ...p.xmb, [th === "ps3" ? "ps3Color" : "pspColor"]: o.data } }))}
-            />
-          </PanelSectionRow>
-          <PanelSectionRow>
-            <ToggleField label="Collections as folders" checked={s.xmb.collectionFolders} onChange={(v) => updateSettings((p) => ({ xmb: { ...p.xmb, collectionFolders: v } }))} />
-          </PanelSectionRow>
-          {th === "ps3" && (
-            <PanelSectionRow>
-              <DropdownItem
-                label="PS3 theme (.p3t)"
-                description={skins.dir ? `Put .p3t files in ${skins.dir}/p3t` : undefined}
-                rgOptions={[{ data: "", label: "None (wave)" }, ...skins.p3t.map((n) => ({ data: n, label: n.replace(/\.p3t$/i, "") }))]}
-                selectedOption={s.xmb.p3t}
-                onChange={(o) => updateSettings((p) => ({ xmb: { ...p.xmb, p3t: o.data } }))}
-              />
-            </PanelSectionRow>
-          )}
-        </PanelSection>
-      )}
-
-      <PanelSection title="Look">
+      <PanelSection title="Look · all themes">
         <PanelSectionRow>
-          <DropdownItem
-            label={`Game titles (${themeName})`}
-            rgOptions={TITLE_MODES.map((m) => ({ data: m.id, label: m.name }))}
-            selectedOption={s.titles[th] ?? "show"}
-            onChange={(o) => updateSettings((p) => ({ titles: { ...p.titles, [th]: o.data } }))}
-          />
-        </PanelSectionRow>
-        {(th === "ps3" || th === "psp") && (
-          <PanelSectionRow>
-            <ToggleField label="Game trailers in Video" description="Adds a Game Trailers folder to Video (needs internet). Off: Video shows only the videos stored on your Deck" checked={s.trailers.video} onChange={(v) => updateSettings((p) => ({ trailers: { ...p.trailers, video: v } }))} />
-          </PanelSectionRow>
-        )}
-        {(th === "ps3" || th === "psp") && (
-          <PanelSectionRow>
-            <ToggleField label="Animated icons" description="Rest on a game or video: it plays inside the icon (games use their store trailer) and the art becomes the background" checked={s.trailers.preview} onChange={(v) => updateSettings((p) => ({ trailers: { ...p.trailers, preview: v } }))} />
-          </PanelSectionRow>
-        )}
-        {(th === "ps3" || th === "psp") && (
-          <PanelSectionRow>
-            <ToggleField label="Trailer sound" description="Play the trailer's audio when you rest on a game (theme music fades out meanwhile)" checked={s.trailers.sound} onChange={(v) => updateSettings((p) => ({ trailers: { ...p.trailers, sound: v } }))} />
-          </PanelSectionRow>
-        )}
-        {th === "x360" && (
-          <PanelSectionRow>
-            <DropdownItem label="Xbox 360 dashboard" rgOptions={X360_STYLES.map((x) => ({ data: x.id, label: x.name }))} selectedOption={s.x360.style} onChange={(o) => updateSettings((p) => ({ x360: { ...p.x360, style: o.data } }))} />
-          </PanelSectionRow>
-        )}
-        <PanelSectionRow>
-          <DropdownItem
-            label={`Wallpaper (${themeName})`}
-            description={walls.dir ? `Images in ${walls.dir}` : undefined}
-            rgOptions={[{ data: "", label: "Theme default" }, ...walls.files.map((f) => ({ data: f, label: f }))]}
-            selectedOption={s.wallpapers[th] ?? ""}
-            onChange={(o) => updateSettings((p) => ({ wallpapers: { ...p.wallpapers, [th]: o.data } }))}
-          />
+          <ToggleField label="Themed store" description="Store entries open the Steam Store styled like this theme (off: Steam's own store)" checked={s.themedStore !== false} onChange={(v) => updateSettings({ themedStore: v })} />
         </PanelSectionRow>
         <PanelSectionRow>
           <ToggleField label="ProtonDB badges" description="Community rating on game details (needs internet)" checked={s.badges.protondb} onChange={(v) => updateSettings((p) => ({ badges: { ...p.badges, protondb: v } }))} />
@@ -309,13 +195,15 @@ function Panel() {
           <ToggleField label="Hide Steam's top bar" description="While the themed home is on screen" checked={s.hideSteamHeader} onChange={(v) => updateSettings({ hideSteamHeader: v })} />
         </PanelSectionRow>
         <PanelSectionRow>
+          <ToggleField label="Themed keyboard" description="Off by default. Steam's on-screen keyboard looks like the active console's keyboard, in every theme (a CSS Loader keyboard theme or a Points Shop keyboard wins)" checked={s.keyboardSkin === true} onChange={(v) => updateSettings({ keyboardSkin: v })} />
+        </PanelSectionRow>
+        <PanelSectionRow>
           <DropdownItem label="Steam's bottom bar" description="Steam Menu · Ⓐ Select · Ⓑ Back, while the themed home is on screen" rgOptions={FOOTER_MODES.map((f) => ({ data: f.id, label: f.name }))} selectedOption={s.footer} onChange={(o) => updateSettings({ footer: o.data })} />
         </PanelSectionRow>
         <PanelSectionRow>
           <ToggleField label="Background animations" checked={s.animations} onChange={(v) => updateSettings({ animations: v })} />
         </PanelSectionRow>
         <PanelSectionRow>
-          {s.theme==="castle"&&<ToggleField label="Weather instead of Deck status" description="Automatic IP location · Celsius · Open-Meteo · refreshes every 10 minutes" checked={s.castleWeather} onChange={v=>updateSettings({castleWeather:v})}/>}
           <ToggleField label="24-hour clock" checked={s.clock24} onChange={(v) => updateSettings({ clock24: v })} />
         </PanelSectionRow>
         <PanelSectionRow>
@@ -323,70 +211,72 @@ function Panel() {
         </PanelSectionRow>
       </PanelSection>
 
-      <PanelSection title="Sound"><PanelSectionRow><ToggleField label="Background music · all themes" description="Master switch; preserves each theme’s music setting" checked={s.backgroundMusic!==false} onChange={v=>updateSettings({backgroundMusic:v})}/></PanelSectionRow>
+      <PanelSection title="Sound · all themes"><PanelSectionRow><ToggleField label="Background music" description="Master switch; keeps each theme's own music setting" checked={s.backgroundMusic!==false} onChange={v=>updateSettings({backgroundMusic:v})}/></PanelSectionRow>
         <PanelSectionRow>
           <ToggleField label="Navigation sounds" checked={s.sounds} onChange={(v) => updateSettings({ sounds: v })} />
-        </PanelSectionRow>
-        <PanelSectionRow>
-          <DropdownItem
-            label={`Sound effects (${themeName})`}
-            description={(() => {
-              const auto = autoPack(th, "sfx");
-              const cur = packFor(th, "sfx");
-              if ((s.packs[th] ?? "") === "" && !auto) return `No matching pack installed. In AudioLoader's store, install "${(PACK_MATCH[matchKey(th)] ?? PACK_MATCH[th]).suggest}", then Rescan below. Using Steam's sounds.`;
-              return cur ? `Using "${cur.name}"` : "Using Steam's own sounds";
-            })()}
-            rgOptions={[
-              { data: "", label: `Automatic${autoPack(th, "sfx") ? ` (${autoPack(th, "sfx")!.name})` : ""}` },
-              { data: "steam", label: "Steam sounds" },
-              ...packs.filter((p) => sfxCoverage(p) > 0).map((p) => ({ data: p.folder, label: p.name })),
-            ]}
-            selectedOption={s.packs[th] ?? ""}
-            onChange={(o) => updateSettings((p) => ({ packs: { ...p.packs, [th]: o.data } }))}
-          />
         </PanelSectionRow>
         <PanelSectionRow>
           <SliderField label="Sound volume" min={0} max={100} step={5} value={s.sfxVolume} showValue onChange={(v) => updateSettings({ sfxVolume: v })} />
         </PanelSectionRow>
         <PanelSectionRow>
-          <ToggleField
-            label="Theme music"
-            description={packFor(th, "music") ? `Plays "${packFor(th, "music")!.name}" on the home` : "No music pack for this theme yet (install one, then Rescan)"}
-            checked={s.music[th] !== false}
-            onChange={(v) => updateSettings((p) => ({ music: { ...p.music, [th]: v } }))}
-          />
+          <SliderField label="Music volume" min={0} max={100} step={5} value={s.musicVolume} showValue onChange={(v) => updateSettings({ musicVolume: v })} />
         </PanelSectionRow>
-        {s.music[th] !== false && (
-          <PanelSectionRow>
-            <DropdownItem
-              label="Music from"
-              rgOptions={[
-                { data: "", label: `Automatic${autoPack(th, "music") ? ` (${autoPack(th, "music")!.name})` : " (none found)"}` },
-                ...packs.filter((p) => !!musicFile(p)).map((p) => ({ data: p.folder, label: p.name })),
-              ]}
-              selectedOption={s.musicPacks[th] ?? ""}
-              onChange={(o) => updateSettings((p) => ({ musicPacks: { ...p.musicPacks, [th]: o.data } }))}
-            />
-          </PanelSectionRow>
-        )}
-        {s.music[th] !== false && (
-          <PanelSectionRow>
-            <SliderField label="Music volume" min={0} max={100} step={5} value={s.musicVolume} showValue onChange={(v) => updateSettings({ musicVolume: v })} />
-          </PanelSectionRow>
-        )}
         <PanelSectionRow>
-          <ButtonItem layout="below" onClick={refresh}>
+          <ButtonItem layout="below" description="After adding sound packs, wallpapers or theme files" onClick={refresh}>
             Rescan packs, wallpapers and skins
           </ButtonItem>
         </PanelSectionRow>
       </PanelSection>
+      <ResetSection th={th} themeName={themeName} />
     </>
+  );
+}
+
+/** Settings are kept across reboots, plugin updates and theme deletion; these put them back to defaults. */
+function ResetSection({ th, themeName }: { th: ThemeId; themeName: string }) {
+  const [armed, setArmed] = useState<"" | "theme" | "all" | "delete">("");
+  useEffect(() => {
+    if (!armed) return;
+    const t = setTimeout(() => setArmed(""), 5000);
+    return () => clearTimeout(t);
+  }, [armed]);
+  return (
+    <PanelSection title="Reset and delete">
+      <PanelSectionRow>
+        <ButtonItem
+          layout="below"
+          description={`Look, options, icon size, sounds and theme-file tunings of ${themeName}. Your folders and chosen theme files stay.`}
+          onClick={() => (armed === "theme" ? (resetThemeSettings(th), setArmed("")) : setArmed("theme"))}
+        >
+          {armed === "theme" ? "Press again to reset" : `Reset ${themeName} settings`}
+        </ButtonItem>
+      </PanelSectionRow>
+      <PanelSectionRow>
+        <ButtonItem
+          layout="below"
+          description={`Removes ${themeName}'s downloaded resources and returns to Steam's home. Its settings are kept (Reset clears them).`}
+          onClick={() => (armed === "delete" ? (deleteCurrentTheme(), setArmed("")) : setArmed("delete"))}
+        >
+          {armed === "delete" ? "Press again to delete" : `Delete ${themeName}`}
+        </ButtonItem>
+      </PanelSectionRow>
+      <PanelSectionRow>
+        <ButtonItem
+          layout="below"
+          description="Every setting of every theme back to defaults (the current theme stays selected)."
+          onClick={() => (armed === "all" ? (resetAllSettings(), setArmed("")) : setArmed("all"))}
+        >
+          {armed === "all" ? "Press again to reset everything" : "Reset all settings"}
+        </ButtonItem>
+      </PanelSectionRow>
+    </PanelSection>
   );
 }
 
 function Diagnostics() {
   const d = useDiag();
   const lib = loadLibrary(useSettings().source, "recent", 9999);
+  const others = useOtherPlugins();
   const row = (k: string, v: string, bad?: boolean) => (
     <div style={{ display: "flex", justifyContent: "space-between", gap: 8, fontSize: 12, padding: "2px 0" }}>
       <span style={{ color: "#8b929a" }}>{k}</span>
@@ -403,6 +293,8 @@ function Diagnostics() {
           {row("Themed home shown", d.themedMounts ? `${d.themedMounts}×` : "not yet", !d.themedMounts)}
           {row("Sound", soundDiag(useSettings().theme))}
           {row("Library", `${lib.games.length} games · ${lib.apps.length} apps · ${lib.collections.length} collections`, !lib.games.length)}
+          {others.homes.length > 0 && row("Also replacing Home", `${others.homes.join(", ")}: only one home can show. Turn off its home option or this plugin.`, true)}
+          {others.music.length > 0 && row("Other music", `${others.music.join(", ")} paused while theme music plays`)}
           {row("Last error", d.lastError || "none", !!d.lastError)}
         </div>
       </PanelSectionRow>
@@ -415,10 +307,16 @@ export default definePlugin(() => {
   initSettings();
   refreshPacks();
   refreshPresets();
+  let stopKeyboardSkins: (() => void) | null = null;
+  try {
+    stopKeyboardSkins = startKeyboardSkins();
+  } catch (e) {
+    reportError("keyboard skin", e);
+  }
   routerHook.addRoute(
     ROUTE,
     () => (
-      <SafeBoundary where="page" fallback={<div style={{ padding: 48, color: "#ccc" }}>Deck Home Themes: something went wrong. See Quick Access → Diagnostics.</div>}>
+      <SafeBoundary where="page" fallback={<div style={{ padding: 48, color: "#ccc" }}>ThemeHub: something went wrong. See Quick Access → Diagnostics.</div>}>
         <ThemedHome standalone />
       </SafeBoundary>
     ),
@@ -439,8 +337,8 @@ export default definePlugin(() => {
     reportError("addPatch", e);
   }
   return {
-    name: "Deck Home Themes",
-    titleView: <div className={staticClasses.Title}>Deck Home Themes</div>,
+    name: "ThemeHub",
+    titleView: <div className={staticClasses.Title}>ThemeHub</div>,
     content: (
       <SafeBoundary fallback={<div style={{ padding: 16, color: "#ccc" }}>Settings failed to load.</div>}>
         <Panel />
@@ -451,6 +349,7 @@ export default definePlugin(() => {
     onDismount() {
       routerHook.removeRoute(ROUTE);
       if (patch) routerHook.removePatch(HOME_ROUTE, patch);
+      stopKeyboardSkins?.();
       try {
         restoreHeader(getUiDocument() ?? document);
         restoreFooter(getUiDocument() ?? document);

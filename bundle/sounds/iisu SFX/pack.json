@@ -1,0 +1,56 @@
+{
+  "name": "iisu SFX",
+  "author": "DreamerSouls",
+  "version": "v1.0",
+  "manifest_version": 2,
+  "music": false,
+  "mappings": {
+    "ui_steam_smoother_friend_online.m4a": [
+      "friend_online_sounds__fo0.wav",
+      "friend_online_sounds__fo1.wav",
+      "friend_online_sounds__fo2.wav",
+      "friend_online_sounds__fo3.wav",
+      "friend_online_sounds__fo4.wav",
+      "friend_online_sounds__fo5.wav"
+    ],
+    "ui_steam_smoother_friend_join.m4a": [
+      "friend_join_sounds__FJ0.wav",
+      "friend_join_sounds__FJ1.wav",
+      "friend_join_sounds__FJ2.wav",
+      "friend_join_sounds__FJ3.wav",
+      "friend_join_sounds__FJ4.wav",
+      "friend_join_sounds__FJ5.wav",
+      "friend_join_sounds__FJ6.wav"
+    ],
+    "ui_steam_message_old_smooth.m4a": [
+      "message_old_smooth__msg0.wav",
+      "message_old_smooth__msg1.wav",
+      "message_old_smooth__msg2.wav",
+      "message_old_smooth__msg3.wav",
+      "message_old_smooth__msg4.wav",
+      "message_old_smooth__msg5.wav",
+      "message_old_smooth__msg6.wav",
+      "message_old_smooth__msg7.wav",
+      "message_old_smooth__msg8.wav",
+      "message_old_smooth__msg9.wav",
+      "message_old_smooth__msg10.wav"
+    ]
+  },
+  "id": "db4bf996-bf29-47fb-892d-52e2fe87637d",
+  "ignore": [
+    "bumper_end.wav",
+    "confirmation_negative.wav",
+    "confirmation_positive.wav",
+    "deck_ui_message_toast.wav",
+    "deck_ui_misc_01.wav",
+    "deck_ui_misc_08.wav",
+    "deck_ui_slider_down.wav",
+    "deck_ui_slider_up.wav",
+    "deck_ui_tile_scroll.wav",
+    "deck_ui_volume.wav",
+    "pop_sound.wav",
+    "steam_at_mention.m4a",
+    "steam_chatroom_notification.m4a"
+  ],
+  "description": "Owner-supplied iiSU sounds: Steam UI cues plus random friend online, friend join and message variants. Origin unknown, check before a public release."
+}

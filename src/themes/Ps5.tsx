@@ -8,6 +8,18 @@ import { fmtLastPlayed, fmtPlaytime, Game, openSteam, SteamPlace } from "../libr
 import { showTitle, THEMES } from "../settings";
 import { Badges } from "../badges";
 import { fmtTime, playSound, useBattery, useClock, useWallpaper } from "../steam";
+import { styleOf } from "../engine/themeStyles";
+import { useReportFocus } from "../focus";
+
+// Welcome-hub style wallpaper colours (shown behind non-game tiles, or always with "Wallpaper colour").
+const WALLS: Record<string, string> = {
+  dark: "radial-gradient(ellipse at 70% 30%, #263040, #07090d 70%)",
+  black: "#000",
+  blue: "radial-gradient(ellipse at 70% 30%, #1d4f9a, #061633 70%)",
+  purple: "radial-gradient(ellipse at 70% 30%, #5a3a8c, #120a24 70%)",
+  light: "radial-gradient(ellipse at 70% 30%, #e9edf3, #9aa6b8 75%)",
+};
+const SIZES: Record<string, [number, number]> = { small: [76, 108], normal: [92, 128], large: [110, 150] };
 
 type Tile = { key: string; label: string; game?: Game; icon?: IconName; place?: SteamPlace; run?: () => void };
 type Zone = "tabs" | "tiles" | "play" | "cards";
@@ -20,8 +32,14 @@ export function Ps5Home() {
   const bat = useBattery();
   const wall = useWallpaper("ps5");
   const menu = useMenu();
+  const st = styleOf(s, "ps5");
+  const hubBg = st<string>("hubBackground");
+  const fade = st<string>("transition");
+  const labelPos = st<string>("tileLabel");
+  const showCards = st<boolean>("activityCards");
+  const wallCss = WALLS[st<string>("wallpaper")] ?? WALLS.dark;
 
-  const [tab, setTab] = useRemembered<"games" | "media">("ps5-tab", "games");
+  const [tab, setTab] = useRemembered<"games" | "media">("ps5-tab", st<string>("startTab") === "media" ? "media" : "games");
   const gamesTiles: Tile[] = [
     { key: "store", label: "Steam Store", icon: "store", place: "store" },
     ...api.lib.games.map((g) => ({ key: `g${g.appid}`, label: g.name, game: g })),
@@ -45,6 +63,7 @@ export function Ps5Home() {
   const [tsel, setTsel] = useState(0);
   const cur = tiles[sel];
   const g = cur?.game;
+  useReportFocus(g);
 
   const [bg, setBg] = useState<Game | undefined>(g);
   useEffect(() => {
@@ -52,10 +71,10 @@ export function Ps5Home() {
     return () => clearTimeout(t);
   }, [g?.appid, tab]);
 
-  const cards = g
+  const cards = g && showCards
     ? [
         { title: "Game Details", sub: "Achievements, news, properties", run: () => api.details(g) },
-        { title: "Play Time", sub: fmtPlaytime(g.playtime), run: () => api.details(g) },
+        { title: "Play Time", sub: fmtPlaytime(g.playtime, g.lastPlayed, true), run: () => api.details(g) },
         { title: "Last Played", sub: fmtLastPlayed(g.lastPlayed), run: () => api.details(g) },
       ]
     : [];
@@ -150,14 +169,13 @@ export function Ps5Home() {
   };
 
   // ───── layout ─────
-  const T = 92;
-  const TS = 128;
+  const [T, TS] = SIZES[st<string>("tileSize")] ?? SIZES.normal;
   const GAP = 14;
   const rowY = 96;
   const playY = Math.min(544,H-250);
   const cardsY = playY+92;
   const x0 = 70;
-  const labelW = Math.min(330, 14 * (cur?.label.length ?? 0) + 40);
+  const labelW = labelPos === "beside" ? Math.min(330, 14 * (cur?.label.length ?? 0) + 40) : 0;
   const xOf = (i: number) => {
     if (i < sel) return x0 - (sel - i) * (T + GAP);
     if (i === sel) return x0;
@@ -169,15 +187,15 @@ export function Ps5Home() {
     <ThemeRoot onInput={onInput} hints={{ a: g ? "Play" : "Select", y: "Options", menu: "Options" }}>
       <Stage background="#000">
         {/* background */}
-        <div className="dht-ps5-bg" style={{ position: "absolute", inset: 0, background: "var(--dht-ps5-bg, radial-gradient(ellipse at 70% 30%, #263040, #07090d 70%))" }} />
-        {wall && <img src={wall} style={{ position: "absolute", inset: 0, width: W, height: H, objectFit: "cover" }} />}
-        {bg && (
-          <div key={bg.appid} style={{ position: "absolute", inset: 0, animation: "dhtFade5 450ms ease-out" }}>
-            <GameArt g={bg} kind="hero" style={{ width: W, height: H }} />
+        <div className="dht-ps5-bg" style={{ position: "absolute", inset: 0, background: `var(--dht-ps5-bg, ${wallCss})` }} />
+        {wall && hubBg !== "solid" && <img src={wall} style={{ position: "absolute", inset: 0, width: W, height: H, objectFit: "cover" }} />}
+        {bg && hubBg !== "solid" && (
+          <div key={bg.appid} style={{ position: "absolute", inset: 0, overflow: "hidden", animation: fade === "cut" ? "none" : fade === "fade" ? "dhtFadeOnly5 450ms ease-out" : "dhtFade5 450ms ease-out" }}>
+            <GameArt g={bg} kind="hero" style={{ width: W, height: H, ...(hubBg === "blur" ? { filter: "blur(28px) saturate(1.2)", transform: "scale(1.12)" } : {}) }} />
           </div>
         )}
         <div style={{ position: "absolute", inset: 0, background: "linear-gradient(90deg, rgba(0,0,0,0.75) 0%, rgba(0,0,0,0.25) 55%, rgba(0,0,0,0.1) 100%), linear-gradient(180deg, rgba(0,0,0,0.55) 0%, rgba(0,0,0,0) 30%, rgba(0,0,0,0.0) 60%, rgba(0,0,0,0.8) 100%)" }} />
-        <style>{`@keyframes dhtFade5 { from { opacity: 0; transform: scale(1.04) } to { opacity: 1; transform: scale(1) } }`}</style>
+        <style>{`@keyframes dhtFade5 { from { opacity: 0; transform: scale(1.04) } to { opacity: 1; transform: scale(1) } } @keyframes dhtFadeOnly5 { from { opacity: 0 } to { opacity: 1 } }`}</style>
 
         <div style={{ position: "absolute", inset: 0, transform: scrolledDown ? `translateY(-${H * 0.32}px)` : "none", transition: "transform 300ms ease-out" }}>
           {/* tabs */}
@@ -190,12 +208,12 @@ export function Ps5Home() {
           </div>
           {/* top-right */}
           <div style={{ position: "absolute", right: 40, top: 26, display: "flex", alignItems: "center", gap: 22, color: "#fff" }}>
-            {topIcons.map((ic, i) => (
+            {st<string>("topBar") !== "clock" && topIcons.map((ic, i) => (
               <div key={i} onClick={topIcons[i].run} style={{ width: 40, height: 40, borderRadius: 20, display: "flex", alignItems: "center", justifyContent: "center", background: zone === "tabs" && tsel === i + 2 ? "#fff" : "transparent" }}>
                 <Icon name={ic.icon} size={24} color={zone === "tabs" && tsel === i + 2 ? "#000" : "#fff"} />
               </div>
             ))}
-            {bat && <BatteryGlyph level={bat.level} charging={bat.charging} w={28} />}
+            {bat && st<string>("topBar") !== "clock" && <BatteryGlyph level={bat.level} charging={bat.charging} w={28} />}
             <span style={{ fontSize: 22, fontWeight: 300 }}>{fmtTime(now, s.clock24)}</span>
           </div>
 
@@ -216,8 +234,8 @@ export function Ps5Home() {
               </div>
             );
           })}
-          {cur && (
-            <div style={{ position: "absolute", left: x0 + TS + 20, top: rowY + TS / 2 - 16, width: labelW, color: "#fff", fontSize: 22, fontWeight: 400, whiteSpace: "nowrap", overflow: "hidden", textOverflow: "ellipsis", textShadow: "0 2px 6px #000" }}>{!cur.game || showTitle(s, "ps5", true) ? cur.label : ""}</div>
+          {cur && labelPos !== "hidden" && (
+            <div style={{ position: "absolute", ...(labelPos === "below" ? { left: x0 - 10, top: rowY + TS + 10, width: 360 } : { left: x0 + TS + 20, top: rowY + TS / 2 - 16, width: labelW }), color: "#fff", fontSize: labelPos === "below" ? 18 : 22, fontWeight: 400, whiteSpace: "nowrap", overflow: "hidden", textOverflow: "ellipsis", textShadow: "0 2px 6px #000" }}>{!cur.game || showTitle(s, "ps5", true) ? cur.label : ""}</div>
           )}
 
           {/* logo / title */}
@@ -237,7 +255,7 @@ export function Ps5Home() {
             <div style={{ width: 56, height: 56, borderRadius: 28, background: zone === "play" && psel === 1 ? "#fff" : "rgba(60,60,60,0.8)", display: "flex", alignItems: "center", justifyContent: "center" }}>
               <Icon name="dots" size={26} color={zone === "play" && psel === 1 ? "#000" : "#fff"} />
             </div>
-            {g && <span style={{ color: "#fff", opacity: 0.75, fontSize: 17, marginLeft: 10 }}>{fmtPlaytime(g.playtime)}</span>}
+            {g && st<boolean>("playtime") && <span style={{ color: "#fff", opacity: 0.75, fontSize: 17, marginLeft: 10 }}>{fmtPlaytime(g.playtime, g.lastPlayed, true)}</span>}
             <Badges g={g} size={15} />
           </div>
 

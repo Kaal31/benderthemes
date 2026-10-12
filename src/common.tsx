@@ -1,5 +1,8 @@
 // Shared building blocks for the themes: images with fallbacks, a small
 // original icon set, an in-theme options menu, and the shared home context.
+import { DownloadBar } from "./downloadUi";
+import { PS1_MENU } from "./themes/ps1Styles";
+import { IISU_MENU } from "./themes/iisuStyles";
 import { createContext, CSSProperties, ReactNode, useContext, useEffect, useRef, useState } from "react";
 import { Btn, Press } from "./input";
 import { Game, Library, listCollectionsForSettings } from "./library";
@@ -8,8 +11,8 @@ import { playSound } from "./steam";
 import { CaseArt, CASE_THEMES } from "./CaseArt";
 import { getSettings, updateSettings, Settings, ThemeId } from "./settings";
 import { applyPreset, currentPresetId, presetGroups } from "./presets";
-import { openMarketplace } from "./marketplaceState";
-import { deleteCurrentTheme } from "./themeActions";
+import { essentialItems, globalSettingsItems, resetGroup, themeSettingsItems } from "./themeSettingsMenu";
+import { iconUrl } from "./engine/registry";
 
 // ───────────── home context ─────────────
 export interface HomeApi {
@@ -121,7 +124,8 @@ export function GameArt({
   const srcs = kind === "landscape" ? [...g.art.landscape, ...g.art.portrait] : kind === "portrait" ? [...g.art.portrait, ...g.art.landscape] : g.art[kind];
   const casing = !flat && kind === "portrait" && home && CASE_THEMES.includes(home.settings.theme) && home.settings.coverStyles?.[home.settings.theme] === "case3d";
   const image = <Img srcs={srcs} style={casing ? {width:"100%",height:"100%"} : style} position={position} fit={fit} fallback={kind === "logo" ? logoFallback : <NameArt name={g.name} style={casing ? {width:"100%",height:"100%"} : style} />} />;
-  return casing ? <CaseArt name={g.name} theme={home.settings.theme} style={style} motion={home.settings.animations}>{image}</CaseArt> : image;
+  const bar = kind === "portrait" || kind === "landscape" ? <DownloadBar appid={g.appid} /> : null;
+  return casing ? <CaseArt name={g.name} theme={home.settings.theme} style={style} motion={home.settings.animations}>{image}{bar}</CaseArt> : <>{image}{bar}</>;
 }
 
 // ───────────── icons (original, monochrome, 24×24 grid) ─────────────
@@ -158,9 +162,11 @@ export type IconName =
   | "wifi"
   | "network"
   | "tv"
-  | "psn";
+  | "psn"
+  | "plus";
 
 const P: Record<IconName, ReactNode> = {
+  plus: <path d="M11 3h2v8h8v2h-8v8h-2v-8H3v-2h8z" />,
   psn:<><circle cx="12" cy="12" r="9" fill="none" strokeWidth="1.8"/><path d="M7 5l3 5H4zM14 5h5v5h-5zM5 14l5 5M5 19l5-5" fill="none" strokeWidth="1.4"/><circle cx="16.5" cy="16.5" r="2.5" fill="none" strokeWidth="1.4"/></>,
   network:<><circle cx="12" cy="12" r="9" fill="none" strokeWidth="1.5"/><path d="M12 3v18M3 12h18M5 6l14 12M5 18L19 6" fill="none" strokeWidth="1.2"/></>,
   tv:<><rect x="2" y="5" width="20" height="14" rx="2" fill="none" strokeWidth="1.8"/><path d="M8 22h8M9 1l3 4 3-4" fill="none" strokeWidth="1.5"/></>,
@@ -261,6 +267,9 @@ const P: Record<IconName, ReactNode> = {
 };
 
 export function Icon({ name, size = 24, color = "currentColor", style }: { name: IconName; size?: number; color?: string; style?: CSSProperties }) {
+  // a theme's own picture for this spot (icon set or picked by hand, see src/engine/registry.ts)
+  const url = iconUrl(name);
+  if (url) return <img src={url} width={size} height={size} alt="" draggable={false} data-dht-icon={name} style={{ display: "block", objectFit: "contain", ...style }} />;
   return (
     <svg width={size} height={size} viewBox="0 0 24 24" fill={color} stroke={color} strokeWidth={0} style={{ display: "block", ...style }}>
       {P[name]}
@@ -319,20 +328,37 @@ export function collectionMenu(theme: ThemeId): MenuItem {
     } };
 }
 
+// entries every theme's menu has that are not the theme's own: they move behind "Global settings"
+const GLOBAL_ENTRY = /^(presets|home|steam home|hub|background music · all themes|reset theme settings|delete theme)$/i;
+// entries that only reopened these same settings
+const SETTINGS_ENTRY = /^(home screen settings|home settings|theme options|theme settings)$/i;
+const baseLabel = (l: string) => l.split(":")[0].trim().toLowerCase();
+/** The options menu (△ / Y), the same on every theme: the theme's own entries (game actions, its
+ *  unique settings), then Presets / Steam Home / Reset / Delete, then its options, then "Global settings"
+ *  with everything shared by all themes. */
+export function optionsMenu(items: MenuItem[]): MenuItem[] {
+  const own = items.filter((i) => !GLOBAL_ENTRY.test(i.label) && !SETTINGS_ENTRY.test(i.label));
+  const moved = items.filter((i) => GLOBAL_ENTRY.test(i.label)).map((i) => (/^home$/i.test(i.label) ? { ...i, label: "Steam Home" } : i));
+  const seen = new Set(own.map((i) => baseLabel(i.label)));
+  const themeOwn = themeSettingsItems().filter((i) => !seen.has(baseLabel(i.label)));
+  return [...own, ...essentialItems(moved), ...themeOwn, resetGroup(), { label: "Global settings", sub: globalSettingsItems }];
+}
+
 /** State machine for the theme's own options menu (△ / Y). Each theme draws it in its own style. */
 export function useMenu() {
   const [stack, setStack] = useState<MenuLevel[]>([]);
   const ref = useRef(stack);
   ref.current = stack;
-  const open = (items: MenuItem[], title?: string) => {
-    const theme = getSettings().theme;
-    items = [...items, { label: "Icon size", sub: () => [75, 85, 100, 110].map(size => ({ label: `${size}%${size === 100 ? " · Default" : ""}`, checked: (getSettings().iconSizes?.[theme] ?? 100) === size, action: () => updateSettings(s => ({ iconSizes: { ...s.iconSizes, [theme]: size } })) })) }];
-    items = [...items, collectionMenu(theme)];
-    if (!items.some(item => item.label === "Hub")) items = [...items, { label: "Hub", action: () => openMarketplace() }];
-    if (!items.some(item => item.label === "Delete theme")) items = [...items, { label: "Delete theme", sub: () => [{ label: "Delete resources and return to Steam Home", action: deleteCurrentTheme }, { label: "Keep theme", action: () => {} }] }];
-    const settings=getSettings();
-    if(CASE_THEMES.includes(settings.theme) && items.some(i=>/Presets|Home Screen Settings/.test(i.label)) && !items.some(i=>i.label==="Cover style")) items=[...items,{label:"Cover style",sub:()=>["flat","case3d"].map(mode=>({label:mode==="flat"?"Flat":"3D case",checked:(getSettings().coverStyles?.[settings.theme]??"flat")===mode,action:()=>updateSettings(s=>({coverStyles:{...s.coverStyles,[settings.theme]:mode as "flat"|"case3d"}}))}))}];
-    if(items.some(i=>/Presets|Home Screen Settings/.test(i.label)))items=[...items,{label:"Background music · all themes",sub:()=>[{label:"On",checked:getSettings().backgroundMusic!==false,action:()=>updateSettings({backgroundMusic:true})},{label:"Off",checked:getSettings().backgroundMusic===false,action:()=>updateSettings({backgroundMusic:false})}]}];
+  /** page: a settings picker inside the theme's own interface (Presets, Clock, Audio…) — it shows only
+   *  its own entries, not the context menu's shared extras (icon size, Hub, Delete theme…). */
+  const open = (items: MenuItem[], title?: string, opts?: { page?: boolean }) => {
+    if (opts?.page) {
+      const first = Math.max(0, items.findIndex((i) => !i.disabled));
+      setStack([{ items, title, sel: first }]);
+      playSound("menu");
+      return;
+    }
+    items = optionsMenu(items);
     const first = Math.max(0, items.findIndex((i) => !i.disabled));
     setStack([{ items, title, sel: first }]);
     playSound("menu");
@@ -390,15 +416,23 @@ export function useMenu() {
 export type MenuState = ReturnType<typeof useMenu>;
 
 /** Generic renderer; themes pass their own colours/placement. */
+/** Options menus currently open on screen (any look's own MenuView). The hold-L1 theme switcher stands down while one is open. */
+const openMenus = new Set<object>();
+export const anyMenuOpen = () => openMenus.size > 0;
 export function MenuView({
   menu,
   variant,
+  art,
 }: {
   menu: MenuState;
   variant: "xmb" | ThemeId;
+  /** PSP: the theme's options-menu panel (a 480 × 1 strip: its opacity across the panel) and item highlight */
+  art?: { panel?: string; focus?: string };
 }) {
   const panel = useRef<HTMLDivElement>(null);
   const selected = menu.stack[menu.stack.length - 1]?.sel;
+  const openKey = useRef({});
+  useEffect(() => { const k = openKey.current; if (menu.isOpen) openMenus.add(k); else openMenus.delete(k); return () => { openMenus.delete(k); }; }, [menu.isOpen]);
   useEffect(() => { panel.current?.querySelector("[data-selected=true]")?.scrollIntoView({block:"nearest"}); }, [selected, menu.stack.length]);
   const [retained,setRetained]=useState<MenuLevel|undefined>();
   const liveTop=menu.stack[menu.stack.length-1];
@@ -417,6 +451,16 @@ export function MenuView({
   if (!menu.isOpen && !(variant==="castle"&&retained)) return null;
   const top = liveTop ?? retained!;
   const styles: Record<string, { panel: CSSProperties; item: (sel: boolean, dis?: boolean) => CSSProperties; title?: CSSProperties }> = {
+    wii: {
+      panel:{position:"absolute",left:"50%",top:"50%",transform:"translate(-50%,-50%)",width:510,padding:22,background:"linear-gradient(#fff,#e8eff4)",border:"3px solid #b7cbd7",borderRadius:32,boxShadow:"0 15px 50px #44647755"},
+      item:(on,disabled)=>({fontSize:23,padding:"14px 24px",margin:"5px 0",borderRadius:20,color:disabled?"#adb6bc":"#5b7584",background:on?"#e5f7ff":"transparent",boxShadow:on?"inset 0 0 0 3px #42bde7":"none"}),
+      title:{fontSize:28,color:"#6892a7",padding:"10px 24px 18px"},
+    },
+    n3ds: {
+      panel:{position:"absolute",left:"50%",top:"50%",transform:"translate(-50%,-50%)",width:480,padding:16,background:"linear-gradient(#fbfbfc,#eceef2)",border:"3px solid #c4c8d2",borderRadius:18,boxShadow:"0 14px 44px #2b304455",fontFamily:'"Nunito","Varela Round",system-ui,sans-serif'},
+      item:(on,disabled)=>({fontSize:22,padding:"12px 22px",margin:"4px 0",borderRadius:14,color:disabled?"#aab0bb":"#4b515e",background:on?"#e3fbf3":"transparent",boxShadow:on?"inset 0 0 0 3px #3fdcb0":"none"}),
+      title:{fontSize:24,color:"#7b8494",padding:"6px 22px 14px"},
+    },
     minecraft: {
       panel:{position:"absolute",left:"50%",top:"50%",transform:"translate(-50%,-50%)",width:490,padding:14,background:"#2b2d30",border:"4px solid #121316",boxShadow:"inset 2px 2px #777,0 0 0 2px #606266",fontFamily:"BlockWorlds,monospace"},
       item:(s,d)=>({fontSize:22,color:d?"#888":"#eee",padding:"16px 20px",marginBottom:6,border:"2px solid #141619",background:s?"#356f1b":"#35373b",boxShadow:s?"inset 0 0 0 2px #b6f597":"inset 1px 1px #777",textShadow:"2px 2px #171917"}),
@@ -478,12 +522,33 @@ export function MenuView({
       title: { color: "#c8d2ff", fontSize: 18, padding: "0 30px 10px" },
     },
   };
+  styles.wiiu = styles.wii;
+  styles.ps1 = PS1_MENU;
+  styles.iisu = IISU_MENU;
+  styles.switch = {
+    panel: { position: "absolute", left: "50%", top: "50%", transform: "translate(-50%,-50%)", minWidth: 460, background: "#f2f2f2", borderRadius: 6, padding: "18px 0 10px", boxShadow: "0 12px 50px #0006", fontFamily: '"Nintendo Switch UI","Segoe UI",Roboto,Arial,sans-serif' },
+    item: (s, d) => ({ color: d ? "#aaa" : s ? "#3b4ee0" : "#2d2d2d", fontSize: 22, padding: "14px 30px", margin: "0 12px", background: s ? "#e0e0e0" : "none", boxShadow: s ? "0 0 0 4px var(--dht-switch-accent,#00c3e3),inset 0 0 0 2px #fff" : "none", borderBottom: s ? "none" : "1px solid #d6d6d6" }),
+    title: { color: "#6c6c6c", fontSize: 18, padding: "0 30px 12px" },
+  };
   styles.aero2 = styles.aero;
+  // PSP: the options menu slides in from the right edge as a tall translucent panel with a bright
+  // left edge; entries are left-aligned, the selected one sits on the theme's highlight picture
+  styles.psp = {
+    panel: { position: "absolute", top: 0, right: 0, bottom: 0, width: "34%", minWidth: 300, padding: "0 18px 0 26px", display: "flex", flexDirection: "column", justifyContent: "center", gap: 2, isolation: "isolate", animation: "dhtPspMenuIn 180ms ease-out both", fontFamily: "var(--dht-xmb-font, inherit)" },
+    item: (s, d) => ({ color: d ? "#ffffff66" : "#fff", fontSize: 19, padding: "7px 14px", textShadow: "0 1px 2px #0009", background: s ? (art?.focus ? `url("${art.focus}") center / 100% 100% no-repeat` : "linear-gradient(90deg,#ffffff38,#ffffff14)") : "none", borderRadius: art?.focus ? 0 : 4, boxShadow: s && !art?.focus ? "0 0 10px #ffffff40" : "none" }),
+    title: { color: "#ffffffb0", fontSize: 15, padding: "0 14px 10px" },
+  };
   const cinematic = variant === "castle" || variant === "republic";
   const st = cinematic ? {panel:{position:"absolute",left:"50%",top:"50%",transform:"translate(-50%,-50%)",minWidth:420,padding:18,background:variant==="castle"?"#eff8ffff":"#071019f5",border:"1px solid #e5c470",boxShadow:"0 15px 70px #0009"} as CSSProperties,item:(on:boolean)=>({fontSize:22,padding:"12px 22px",color:on?"#302400":variant==="castle"?"#30455c":"#e8d7af",background:on?"linear-gradient(100deg,#ffe579,#d4b157)":"transparent"}),title:{padding:12,fontSize:20,color:variant==="castle"?"#30455c":"#e8d7af"}} : styles[variant];
   return (
     <div className="dht-menu-backdrop" aria-hidden={!menu.isOpen} onClick={(e) => e.target === e.currentTarget && menu.handle({ btn: "b", repeat: false })} style={{ position: "absolute", inset: 0, zIndex: 50, pointerEvents:menu.isOpen?"auto":"none", background: variant === "xmb" ? "transparent" : "rgba(0,0,0,0.25)" }}>
-      <div className={`dht-menu dht-menu--${variant}`} ref={panel} style={{...st.panel, maxHeight:variant==="ps4"?"100%":"82%", overflowY:"auto", boxSizing:"border-box", justifyContent:"flex-start"}}>
+      <div className={`dht-menu dht-menu--${variant}`} ref={panel} style={{...st.panel, maxHeight:variant==="ps4"||variant==="psp"?"100%":"82%", overflowY:"auto", boxSizing:"border-box", justifyContent:variant==="psp"?"center":"flex-start"}}>
+        {variant === "psp" && <>
+          <style>{"@keyframes dhtPspMenuIn{from{transform:translateX(100%)}}"}</style>
+          {/* the panel: dark glass, its opacity profile from the theme's picture; the bright left edge */}
+          <div style={{ position: "absolute", inset: 0, zIndex: -1, background: "#000", opacity: art?.panel ? 0.95 : 0.6, ...(art?.panel ? { WebkitMaskImage: `url("${art.panel}")`, maskImage: `url("${art.panel}")`, WebkitMaskSize: "100% 100%", maskSize: "100% 100%" } : {}) }} />
+          <div style={{ position: "absolute", left: 0, top: 0, bottom: 0, width: 2, zIndex: -1, background: "linear-gradient(#fff0,#ffffffd0 15%,#ffffffd0 85%,#fff0)", boxShadow: "0 0 6px #fff8" }} />
+        </>}
         {top.title && <div style={st.title}>{top.title}</div>}
         {top.items.map((it, i) => (
           <div key={i} className="dht-menu-item" data-selected={i === top.sel} onClick={() => menu.clickItem(i)} style={{ display: "flex", alignItems: "center", justifyContent: "space-between", gap: 20, ...st.item(i === top.sel, it.disabled) }}>

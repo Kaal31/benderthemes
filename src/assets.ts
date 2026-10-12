@@ -4,7 +4,7 @@
 // set or an image is missing.
 import { callable } from "@decky/api";
 import { useEffect, useState } from "react";
-import { onResourcesChanged } from "./marketplaceState";
+import { onResourcesChanged, useResourceRevision } from "./marketplaceState";
 
 type AssetSet = Record<string, string>; // name → data URL
 const backendAssets = callable<[name: string], AssetSet>("get_assets");
@@ -32,12 +32,13 @@ export function loadAssets(name: string): Promise<AssetSet> {
 
 export function useAssets(name: string): AssetSet {
   const [set, setSet] = useState<AssetSet>(() => cache.get(name) ?? {});
+  const rev = useResourceRevision(); // files added or removed on the Deck (an imported avatar, a new pack)
   useEffect(() => {
     let alive = true;
     loadAssets(name).then((r) => alive && setSet(r));
     return () => {
       alive = false;
     };
-  }, [name]);
+  }, [name, rev]);
   return set;
 }

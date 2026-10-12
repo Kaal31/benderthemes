@@ -35,7 +35,8 @@ export interface StoreDetails {
   hasTrailer: boolean;
   platforms: string[];
 }
-export type StoreTab = "featured" | "specials" | "top" | "new" | "soon" | "search";
+/** "themes" / "plugins": the optional sections (src/storeSections.tsx), shown only when the theme turns them on. */
+export type StoreTab = "featured" | "specials" | "top" | "new" | "soon" | "themes" | "plugins" | "search";
 export const STORE_TABS: { id: StoreTab; label: string }[] = [
   { id: "featured", label: "Featured" },
   { id: "specials", label: "Specials" },
