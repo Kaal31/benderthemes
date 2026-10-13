@@ -1,3 +1,4 @@
+import { frameLoop, useThemeActive } from "../performance";
 // Xbox 360-style avatars for the NXE and Kinect dashboards. The console drew
 // avatars live with its own engine, so there is no model in the dashboard
 // archive; these are our own: one smooth skinned body on a small skeleton,
@@ -697,8 +698,14 @@ export type Placed = { spec: AvatarSpec; model?: string; x: number; z?: number; 
 /** One WebGL canvas filling its parent with any number of avatars; the camera eases to `cam`. Renders nothing if WebGL fails. */
 export function AvatarScene({ avatars, cam, motion = true, light = "dash", className }: { avatars: Placed[]; cam: Cam; motion?: boolean; light?: "dash" | "studio"; className?: string }) {
   const canvas = useRef<HTMLCanvasElement>(null);
+  const active = useThemeActive();
+  const redraw = useRef<(() => void) | null>(null);
+  const activeRef = useRef(active); activeRef.current = active;
   const live = useRef({ avatars, cam, motion });
   live.current = { avatars, cam, motion };
+  const poseKey = JSON.stringify(avatars.map(p => ({ ...p, model: p.model ? modelKey(p.model) : undefined })));
+  const cameraKey = JSON.stringify(cam);
+  useEffect(() => { redraw.current?.(); }, [poseKey, cameraKey, motion, active]);
   const [failed, setFailed] = useState(false);
 
   useEffect(() => {
@@ -734,17 +741,18 @@ export function AvatarScene({ avatars, cam, motion = true, light = "dash", class
       renderer.setSize(w, h, false);
       camera.aspect = w / h;
       camera.updateProjectionMatrix();
+      redraw.current?.();
     };
     size();
     const ro = new ResizeObserver(size);
     ro.observe(el);
 
-    let raf = 0;
+    let loop: ReturnType<typeof frameLoop>;
     const t0 = performance.now();
     let last = t0;
-    const frame = (now: number) => {
-      const { avatars: list, cam, motion: m } = live.current;
-      const still = !m || matchMedia("(prefers-reduced-motion: reduce)").matches;
+    const frame = (now: number, moving: boolean) => {
+      const { avatars: list, cam } = live.current;
+      const still = !moving;
       const t = (now - t0) / 1000;
       const dt = Math.min(0.1, (now - last) / 1000);
       last = now;
@@ -755,7 +763,7 @@ export function AvatarScene({ avatars, cam, motion = true, light = "dash", class
       list.forEach((p, i) => {
         const k = p.model ? `glb:${modelKey(p.model)}` : JSON.stringify(p.spec);
         if (built[i]?.key !== k) {
-          if (!p.model && !buildFirst && performance.now() > budget) return;
+          if (!p.model && !buildFirst && performance.now() > budget) { loop.invalidate(); return; }
           buildFirst = false;
           if (built[i]) drop(built[i]);
           if (p.model) {
@@ -768,7 +776,8 @@ export function AvatarScene({ avatars, cam, motion = true, light = "dash", class
               if (m.idle) {
                 b.mixer = new THREE.AnimationMixer(m.scene);
                 b.moves = startMoves(b.mixer, m.idle, m.emotes, m.hello);
-              } else b.proc = m.proc; // exported without animations: our own idle on the console skeleton
+              } else b.proc = m.proc;
+              loop.invalidate(); // exported without animations: our own idle on the console skeleton
             });
           } else {
             const rig = buildAvatar(p.spec);
@@ -805,17 +814,12 @@ export function AvatarScene({ avatars, cam, motion = true, light = "dash", class
       if (camera.fov !== cam.fov) ((camera.fov += (cam.fov - camera.fov) * ease), camera.updateProjectionMatrix());
       camera.lookAt(at);
       renderer.render(scene, camera);
-      raf = requestAnimationFrame(frame);
     };
-    raf = requestAnimationFrame(frame);
-    const vis = () => {
-      cancelAnimationFrame(raf);
-      if (!document.hidden) raf = requestAnimationFrame(frame);
-    };
-    document.addEventListener("visibilitychange", vis);
+    loop = frameLoop(el, frame, () => live.current.motion, () => activeRef.current);
+    redraw.current = loop.invalidate;
     return () => {
-      cancelAnimationFrame(raf);
-      document.removeEventListener("visibilitychange", vis);
+      redraw.current = null;
+      loop.dispose();
       ro.disconnect();
       built.forEach(drop);
       renderer.dispose();

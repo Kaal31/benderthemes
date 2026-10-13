@@ -1,3 +1,4 @@
+import { ThemeActivity, UiDocument } from "./performance";
 import { DOWNLOAD_CSS, DownloadStatus } from "./downloadUi";
 import { tintOf } from "./color";
 import {transitionPage} from "./pageTransition";
@@ -178,11 +179,20 @@ function ThemedHomeContent({ standalone }: { standalone?: boolean }) {
   }, [s.theme]);
   const root = useRef<HTMLDivElement>(null);
   const [doc, setDoc] = useState<Document | null>(null);
+  const [visible, setVisible] = useState(true);
+  useEffect(() => {
+    const el = root.current; if (!el || !doc) return;
+    let intersects = true;
+    const sync = () => setVisible(intersects && !doc.hidden);
+    const observer = new IntersectionObserver(entries => { intersects = entries[0]?.isIntersecting ?? false; sync(); });
+    observer.observe(el); doc.addEventListener("visibilitychange", sync); sync();
+    return () => { observer.disconnect(); doc.removeEventListener("visibilitychange", sync); };
+  }, [doc]);
   // Steam's keyboard (STEAM + X, a search box) opens under our fixed home: end the home above it while it is open
   const [kbInset, setKbInset] = useState(0);
   useEffect(() => {
     if (!doc) return;
-    const iv = setInterval(() => { const h = keyboardInset(doc); setKbInset((v) => (v === h ? v : h)); }, 250);
+    const iv = setInterval(() => { const h = doc.hidden ? 0 : keyboardInset(doc); setKbInset((v) => (v === h ? v : h)); }, 250);
     return () => clearInterval(iv);
   }, [doc]);
   useEffect(() => {
@@ -194,8 +204,10 @@ function ThemedHomeContent({ standalone }: { standalone?: boolean }) {
   // Library: re-read on mount and periodically (installs, new plays).
   const [rev, setRev] = useState(0);
   useEffect(() => {
-    const iv = setInterval(() => setRev((r) => r + 1), 30000);
-    return () => clearInterval(iv);
+    const refresh = () => { if (!root.current?.ownerDocument.hidden) setRev(r => r + 1); };
+    const iv = setInterval(refresh, 30000);
+    const owner = root.current?.ownerDocument; owner?.addEventListener("visibilitychange", refresh);
+    return () => { clearInterval(iv); owner?.removeEventListener("visibilitychange", refresh); };
   }, []);
   const collectionChoice = s.themeCollections?.[s.theme];
   const librarySource = collectionChoice?.source ?? s.source;
@@ -329,6 +341,7 @@ function ThemedHomeContent({ standalone }: { standalone?: boolean }) {
     [lib, s, overlay !== null, destination !== null, launching !== null, market.opened],
   );
 
+  const themeActive = visible && !market.opened && !launching && (!overlay || (s.theme === "minecraft" && overlay.kind === "store")) && (!destination || s.theme === "minecraft");
   const render = THEME_COMPONENTS[s.theme] ?? THEME_COMPONENTS.vita;
   // the engine theme's colour and font, for layouts that use --dht-accent / inherit the font
   const accent = tintOf(s) ?? slotAccent(s);
@@ -343,8 +356,8 @@ function ThemedHomeContent({ standalone }: { standalone?: boolean }) {
       <div className="dht-safe-area" style={{position:"absolute",inset:s.tvMode?"3%":"0",...presentationVariables(s),...themeSlotStyle}}>
       {themeFont && <style>{`@font-face{font-family:"dht-theme-font";src:url("${themeFont}")}`}</style>}
       <style>{PRESENTATION_CSS}</style>
-      <style>{`.dht-root[data-tv=true] .dht-menu-item{font-size:25px!important;min-height:44px}.dht-root[data-motion=false] *{animation:none!important;transition:none!important}@media(prefers-reduced-motion:reduce){.dht-root *{animation:none!important;transition:none!important}}`}</style>
-      <HomeCtx.Provider value={api}>
+      <style>{`.dht-root[data-tv=true] .dht-menu-item{font-size:25px!important;min-height:44px}.dht-root [data-dht-stage-active=false] *{animation-play-state:paused!important}.dht-root[data-motion=false] *{animation:none!important;transition:none!important}@media(prefers-reduced-motion:reduce){.dht-root *{animation:none!important;transition:none!important}}`}</style>
+      <UiDocument.Provider value={doc}><ThemeActivity.Provider value={themeActive}><HomeCtx.Provider value={api}>
         <SafeBoundary
           key={s.theme}
           where={`theme ${s.theme}`}
@@ -355,9 +368,9 @@ function ThemedHomeContent({ standalone }: { standalone?: boolean }) {
             </div>
           }
         >
-          <StageHost>{render()}</StageHost>
+          <div data-dht-stage-active={themeActive} style={{display:"contents"}}><StageHost>{render()}</StageHost></div>
         </SafeBoundary>
-      </HomeCtx.Provider>
+      </HomeCtx.Provider></ThemeActivity.Provider></UiDocument.Provider>
       {overlay?.kind === "shots" && <div className="dht-themed-media"><ScreenshotGallery appid={overlay.appid} index={overlay.index} tab={overlay.tab} lib={lib.byId} onClose={() => setOverlay(null)} onVideo={(v) => { playSound("open"); setOverlay({ kind: "video", video: v, back: true }); }} /></div>}
       {overlay?.kind === "trailer" && <div className="dht-themed-media"><TrailerPlayer game={overlay.game} onClose={() => setOverlay(null)} /></div>}
       {overlay?.kind === "video" && <div className="dht-themed-media"><VideoPlayer video={overlay.video} lib={lib.byId} onClose={() => setOverlay(overlay.back ? { kind: "shots", tab: "videos" } : null)} /></div>}

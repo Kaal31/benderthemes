@@ -246,7 +246,7 @@ function useMeasure(ref: { current: HTMLDivElement | null }, on: boolean): Stage
     };
     measure();
     view.addEventListener("resize", measure);
-    const iv = setInterval(measure, 2000);
+    let iv: ReturnType<typeof setInterval> | undefined;
     let ro: any = null;
     try {
       ro = view.ResizeObserver ? new view.ResizeObserver(measure) : null;
@@ -254,6 +254,7 @@ function useMeasure(ref: { current: HTMLDivElement | null }, on: boolean): Stage
     } catch {
       ro = null;
     }
+    if (!ro) iv = setInterval(measure, 2000);
     return () => {
       view.removeEventListener("resize", measure);
       clearInterval(iv);
