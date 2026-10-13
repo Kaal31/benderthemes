@@ -951,9 +951,16 @@ export function useHiddenFooter(doc: Document | null | undefined, mode: "show" |
           restoreFooter(doc); // another page is on top: leave Steam's own bar alone
           return;
         }
-        // a text field has focus, so the keyboard is opening or open: change nothing in the page meanwhile
+        // Release existing layout changes before the keyboard measures its position.
+        // Merely skipping hideFooter leaves previously hidden strips collapsed.
         const ae = doc.activeElement as HTMLElement | null;
-        if (ae && (ae.isContentEditable || /^(INPUT|TEXTAREA)$/.test(ae.tagName))) return;
+        const typing = ae && (ae.isContentEditable || /^(INPUT|TEXTAREA)$/.test(ae.tagName));
+        const keyboardOpen = Array.from(doc.querySelectorAll<HTMLElement>(KEYBOARD_SEL)).some((el) =>
+          el.getClientRects().length > 0 && doc.defaultView?.getComputedStyle(el).visibility !== "hidden");
+        if (typing || keyboardOpen) {
+          restoreFooter(doc);
+          return;
+        }
         // if the keyboard ended up inside something we hid earlier, give that back at once
         for (const el of Array.from(doc.querySelectorAll<HTMLElement>(`[${FOOT_ATTR}]`))) if (touchesKeyboard(el)) restoreOne(el);
         hideFooter(doc, mode);
@@ -962,9 +969,18 @@ export function useHiddenFooter(doc: Document | null | undefined, mode: "show" |
       }
     };
     run();
+    // Focus precedes keyboard layout; polling alone can leave the bar collapsed
+    // throughout the opening animation. Observe controller-triggered keyboards too.
+    doc.addEventListener("focusin", run);
+    doc.addEventListener("focusout", run);
+    const observer = new MutationObserver(run);
+    observer.observe(doc.body, { childList: true, subtree: true, attributes: true, attributeFilter: ["class", "style", "hidden"] });
     const ts = [200, 800].map((ms) => setTimeout(run, ms));
     const iv = setInterval(run, 1500);
     return () => {
+      observer.disconnect();
+      doc.removeEventListener("focusin", run);
+      doc.removeEventListener("focusout", run);
       ts.forEach(clearTimeout);
       clearInterval(iv);
       restoreFooter(doc);
