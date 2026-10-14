@@ -304,7 +304,7 @@ function n3dsItems(part: "file" | "look"): MenuItem[] {
     ]),
   ];
   return [
-    choice("Top screen", [{ id: "show", name: "Show (both screens)" }, { id: "hide", name: "Hide (bottom screen fills the display)" }], () => S().n3dsTop ?? "show", (v) => updateSettings({ n3dsTop: v as "show" | "hide" })),
+    choice("Top screen", [{ id: "show", name: "Show (both screens)" }, { id: "hide", name: "Hide (bottom screen fills the display)" }, { id: "split", name: "Split full screen" }], () => S().n3dsTop ?? "show", (v) => updateSettings({ n3dsTop: v as "show" | "hide" | "split" })),
     choice("Cursor", [{ id: "3ds", name: "3DS cursor (bobbing corners)" }, { id: "simple", name: "Simple focus frame" }], () => S().n3dsCursor ?? "3ds", (v) => updateSettings({ n3dsCursor: v as "3ds" | "simple" })),
     choice("Side arrows", [{ id: "show", name: "Show" }, { id: "hide", name: "Hide (L1 / R1 and swipes still turn pages)" }], () => S().n3dsArrows ?? "show", (v) => updateSettings({ n3dsArrows: v as "show" | "hide" })),
     choice("Scroll bar", [{ id: "show", name: "Show" }, { id: "hide", name: "Hide" }], () => S().n3dsHandle ?? "show", (v) => updateSettings({ n3dsHandle: v as "show" | "hide" })),

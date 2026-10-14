@@ -321,7 +321,7 @@ export interface Settings {
   wiiuTheme?: string; // Wii U custom theme (.utheme file name in skins/wiiu) or ""
   wiiSkin?: string; // Wii System Menu theme: a .mym / .csm name under skins/wii ("" = none)
   n3dsSkin?: string; // Nintendo 3DS theme: a .zip / folder / body_LZ.bin name under skins/3ds ("" = the built-in stock look)
-  n3dsTop?: "show" | "hide"; // 3DS look: "hide" shows only the bottom screen, as large as possible ("show" when unset)
+  n3dsTop?: "show" | "hide" | "split"; // 3DS look: "hide" shows only the bottom screen, as large as possible ("show" when unset)
   n3dsCursor?: "3ds" | "simple"; // 3DS look: the bobbing corner cursor, or a plain focus frame ("3ds" when unset)
   n3dsArrows?: "show" | "hide"; // 3DS look: the half-ring page arrows at the screen edges ("show" when unset; L1 / R1 and swipes still page)
   n3dsHandle?: "show" | "hide"; // 3DS look: the grey scroll bar along the bottom of the icon grid ("show" when unset)
@@ -582,7 +582,7 @@ function merge(saved: any): Settings {
   s.xboxSkin = typeof saved?.xboxSkin === "string" ? saved.xboxSkin : "";
   s.n3dsSkin = typeof saved?.n3dsSkin === "string" ? saved.n3dsSkin : "";
   s.n3dsCursor = saved?.n3dsCursor === "simple" ? "simple" : "3ds";
-  s.n3dsTop = saved?.n3dsTop === "hide" ? "hide" : "show";
+  s.n3dsTop = saved?.n3dsTop === "hide" || saved?.n3dsTop === "split" ? saved.n3dsTop : "show";
   s.n3dsArrows = saved?.n3dsArrows === "hide" ? "hide" : "show";
   s.n3dsHandle = saved?.n3dsHandle === "hide" ? "hide" : "show";
   s.n3dsLayout = cleanN3dsLayout(saved?.n3dsLayout);
