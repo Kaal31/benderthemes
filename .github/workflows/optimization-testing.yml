@@ -4,10 +4,16 @@ on:
     branches: [optimization-testing]
   workflow_dispatch:
 permissions:
-  contents: read
+  contents: write
+concurrency:
+  group: optimization-testing-release
+  cancel-in-progress: false
 jobs:
   validate:
+    if: github.ref == 'refs/heads/optimization-testing'
     runs-on: ubuntu-latest
+    env:
+      RELEASE_CHANNEL: optimization-testing
     steps:
       - uses: actions/checkout@v4
       - uses: actions/setup-node@v4
@@ -23,10 +29,28 @@ jobs:
       - run: node tests/verify-preset-company.mjs
       - run: node tests/verify-controller-compatibility.mjs
       - run: python -m unittest discover -s tests -p 'test_*.py'
+      - name: Identify numbered optimization build
+        id: channel
+        run: python tools/channel_build.py prepare >> "$GITHUB_OUTPUT"
       - run: npm run build
       - run: npx playwright install --with-deps chromium
       - run: node tests/verify-footer-keyboard.mjs
       - run: python -m pip install Pillow
       - run: npm run preview
+        env:
+          SKIP_THEME_PACK_BUILD: '1'
       - run: node tests/verify-keyboard-skins.mjs
       - run: node tests/verify-performance-ui.mjs
+      - run: node tests/verify-channel-updater.mjs
+      - run: npm run package
+        env:
+          USE_PUBLISHED_ASSETS: '1'
+      - run: python tools/channel_build.py manifest
+      - name: Publish numbered optimization build
+        env:
+          GH_TOKEN: ${{ github.token }}
+          TAG: ${{ steps.channel.outputs.tag }}
+        run: |
+          version=$(node -p "require('./package.json').version")
+          gh release create "$TAG" "out/DeckHomeThemes-v${version}.zip" asset-catalog.json out/channel-release.json --target "$GITHUB_SHA" --title "ThemeHub optimization testing v${version} (build $GITHUB_RUN_NUMBER, attempt $GITHUB_RUN_ATTEMPT)" --generate-notes --draft --prerelease
+          gh release edit "$TAG" --draft=false --prerelease --latest=false

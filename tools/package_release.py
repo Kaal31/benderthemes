@@ -64,6 +64,11 @@ with zipfile.ZipFile(target,'w',zipfile.ZIP_DEFLATED,compresslevel=6) as z:
         z.write(root/name,'DeckHomeThemes/'+name)
     if ASSET_SOURCE:
         z.writestr('DeckHomeThemes/asset-source.json', ASSET_SOURCE)
+    if os.environ.get("RELEASE_CHANNEL"):
+        from channel_build import identity
+        metadata = json.loads((root/'release-channel.json').read_text(encoding='utf-8'))
+        assert metadata == identity(version, os.environ['RELEASE_CHANNEL'], metadata['build'], metadata['attempt'], metadata['commit'])
+        z.write(root/'release-channel.json','DeckHomeThemes/release-channel.json')
     # defaults/: themes shipped inside the plugin (e.g. the PSP "Default theme", made from a PSP firmware)
     folders=[('third-party','third-party'),('py_modules','py_modules'),('defaults','defaults'),('themes','themes')]
     if OFFLINE: folders.append(('bundle','defaults'))

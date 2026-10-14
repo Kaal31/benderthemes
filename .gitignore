@@ -9,3 +9,5 @@ preview/*.html
 # Rendered promo video and poster (re-render with tools/promo/, see handoff-notes/promo-video.md)
 /promo/
 asset-source.json
+
+release-channel.json
