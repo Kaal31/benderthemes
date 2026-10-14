@@ -31,7 +31,7 @@ export const inventory = refreshInventory;
 const isBuiltIn = (id: string) => (BUILT_IN_THEMES as readonly string[]).includes(id);
 const withBuiltIns = (themes: ThemePack[], art: ThemeArt = {}): ThemePack[] => [
   ...themes.filter(p => !isBuiltIn(p.id)),
-  ...themes.filter(p => isBuiltIn(p.id)).map(p => ({ ...p, builtIn: true, compatible: true })),
+  ...themes.filter(p => isBuiltIn(p.id)).map(p => ({ ...p, builtIn: false })),
   ...THEMES.filter(t => isBuiltIn(t.id) && !themes.some(p => p.id === t.id)).map(t => ({ id: t.id, theme: t.id, name: t.name, description: t.blurb, size: 0, version: "built-in", installedVersion: "built-in", compatible: true, builtIn: true, ...art[t.id] })),
 ];
 /** A built-in theme whose optional extras are not downloaded yet. */

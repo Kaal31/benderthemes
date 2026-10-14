@@ -44,6 +44,8 @@ jobs:
       - run: npx playwright install --with-deps chromium
       - run: node tests/verify-keyboard-diagnostics.mjs
       - run: node tests/verify-keyboard-lifecycle.mjs
+      - run: node tests/verify-idle-diagnostics.mjs
+      - run: node tests/verify-required-theme-packs.mjs
       - run: node tests/verify-footer-keyboard.mjs
       - run: python tests/verify-deckthemes-audio.py
       - run: python -m pip install Pillow

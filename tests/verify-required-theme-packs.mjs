@@ -1,0 +1,7 @@
+import {build} from 'esbuild';import assert from 'node:assert/strict';
+const code=await build({stdin:{contents:'export {refreshInventory,isDownloaded} from "./src/presets";export {resolveHubTheme} from "./src/hubStyles";',resolveDir:process.cwd()},bundle:true,write:false,platform:'node',format:'esm',alias:{'@decky/api':'./preview/stubs/api.ts','@decky/ui':'./preview/stubs/ui.tsx'}});
+globalThis.window={addEventListener(){},removeEventListener(){},__inventoryFromInstalled:true,__themeCatalog:{themes:[{id:'iisu',theme:'iisu',version:'1.0.0'},{id:'wiiu',theme:'wiiu',version:'1.0.0'}]}};
+const m=await import('data:text/javascript;base64,'+Buffer.from(code.outputFiles[0].text).toString('base64'));
+let inv=await m.refreshInventory();assert.equal(m.isDownloaded('iisu'),false);assert.equal(m.isDownloaded('wiiu'),false);assert.equal(m.isDownloaded('switch'),true);assert.equal(m.resolveHubTheme('auto','iisu',inv).theme,null);assert.equal(m.resolveHubTheme('preview','switch',inv,'iisu').theme,'iisu');
+window.__themeCatalog.themes[0].installedVersion='1.0.0';inv=await m.refreshInventory();assert.equal(m.isDownloaded('iisu'),true);assert.equal(inv.iisu,'1.0.0');assert.equal(m.resolveHubTheme('auto','iisu',inv).theme,'iisu');window.__themeCatalog.themes[0].installedVersion=undefined;await m.refreshInventory();assert.equal(m.isDownloaded('iisu'),false);console.log('PASS catalog packs require installation; built-in-only themes remain ready; preview allowed; auto gated; deletion clears installation');
+

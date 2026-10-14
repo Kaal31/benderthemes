@@ -336,7 +336,6 @@ export interface Settings {
   storeSections: Partial<Record<ThemeId, StoreSections>>;
   keyboardSpacing?: number; // Key inset in px, 0–5; default 1 (global, persisted).
   keyboardSkin?: boolean; // Steam's on-screen keyboard skinned like the active look (src/keyboardSkins.ts); off unless set to true (global)
-  keyboardDiagnostics?: boolean; // opt-in layout logging; never input text
   // PSP theme files whose boot intro / game-start clip is used, "" = none. One of each at a time;
   // it stays in use while other themes are active.
   bootIntro: string;

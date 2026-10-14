@@ -14,16 +14,16 @@ export function keyboardNodeState(el: Element) {
     footerHidden: el.hasAttribute("data-dht-foot"), headerHidden: el.hasAttribute("data-dht-hidden") };
 }
 
-export function startKeyboardDiagnostics(): () => void {
+export function startKeyboardDiagnostics(automatic = false): () => void {
   let timer: ReturnType<typeof setInterval> | undefined;
-  let remaining = 600; // bounded ten-minute capture; at most one record/second
+  let remaining = 1800; // bounded thirty-minute capture; at most one record/second
   const windows = new WeakMap<Document, number>();
   let nextWindow = 1;
   const previous = new Map<number, string>();
   const watchers = new Map<Document, () => void>();
   const changes: Array<{ window: number; node: ReturnType<typeof keyboardNodeState> }> = [];
   const capture = () => {
-    if (remaining-- <= 0) { stop(); logInfo("[keyboard-diagnostics] capture limit reached; toggle off/on to restart"); return; }
+    if (remaining-- <= 0) { stop(); logInfo("[keyboard-diagnostics] capture limit reached; reload the plugin to restart"); return; }
     const { classes, from } = keyboardClasses();
     const lifecycle = drainKeyboardEvents();
     if (lifecycle.length) logInfo(`[keyboard-diagnostics] lifecycle ${JSON.stringify(lifecycle)}`);
@@ -77,11 +77,11 @@ export function startKeyboardDiagnostics(): () => void {
   };
   let enabled = false;
   const refresh = () => {
-    const next = getSettings().keyboardDiagnostics === true;
+    const next = automatic;
     if (next === enabled) return;
     enabled = next; stop();
-    logInfo(`[keyboard-diagnostics] ${next ? "enabled (ten-minute limit, no input text)" : "disabled"}`);
-    if (next) { setKeyboardRecording(true); remaining = 600; capture(); timer = setInterval(capture, 1000); }
+    logInfo(`[keyboard-diagnostics] ${next ? "enabled (thirty-minute limit, no input text)" : "disabled"}`);
+    if (next) { setKeyboardRecording(true); remaining = 1800; capture(); timer = setInterval(capture, 1000); }
   };
   refresh();
   const off = onSettingsChange(refresh);
