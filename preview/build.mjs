@@ -20,7 +20,7 @@ previewCatalog.themes = previewCatalog.themes.map((pack, i) => ({ ...pack, compa
 const walls = {};
 if (existsSync("bundle/wallpapers/aero-background.jpg")) walls["aero-background.jpg"] = "../bundle/wallpapers/aero-background.jpg";
 const assets = {};
-for (const root of ["assets", "bundle/assets"]) {
+for (const root of ["assets", "bundle/assets", "defaults/assets"]) {
   if (!existsSync(root)) continue;
   for (const set of readdirSync(root)) {
     assets[set] = assets[set] ?? {};

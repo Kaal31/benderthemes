@@ -1,3 +1,4 @@
+import {customProfilePicture} from "../profilePicture";
 import { openDestination } from "../destinations";
 // XrossMediaBar for the PS3 and PSP themes: a horizontal category bar
 // crossing a vertical item list, over a month-coloured gradient and wave.
@@ -1181,6 +1182,7 @@ export function XmbHome({ variant }: { variant: Variant }) {
     const sh = shadowPic;
     if (!sh || !(it.game || it.video || it.image)) return icon;
     const [iw, ih] = cell(it, selected);
+    if(it.key==="me"&&customProfilePicture())return <img src={customProfilePicture()} alt="Custom profile picture" style={{width:iw,height:ih,objectFit:"cover",borderRadius:8}}/>;
     return (
       <div className="dht-xmb-shadowed" style={{ position: "relative", width: iw, height: ih, flexShrink: 0 }}>
         <img src={sh} alt="" style={{ position: "absolute", left: -iw * 0.225, top: -ih * 0.225 + ih * 0.04, width: iw * 1.45, height: ih * 1.45, pointerEvents: "none" }} />
@@ -1190,6 +1192,7 @@ export function XmbHome({ variant }: { variant: Variant }) {
   };
   const renderIcon = (it: XItem, selected: boolean) => {
     const [iw, ih] = cell(it, selected);
+    if(it.key==="me"&&customProfilePicture())return <img src={customProfilePicture()} alt="Custom profile picture" style={{width:iw,height:ih,objectFit:"cover",borderRadius:8}}/>;
     if (it.game)
       return (
         <div className="dht-xmb-game-icon" data-preview={selected && previewKey === it.key} style={{ width: iw, height: ih, boxShadow: selected ? "0 6px 20px rgba(0,0,0,0.45)" : "0 3px 10px rgba(0,0,0,0.35)", overflow: "hidden", transition: "width 160ms, height 160ms", position: "relative" }}>
@@ -1325,6 +1328,7 @@ export function XmbHome({ variant }: { variant: Variant }) {
           const i = lo + k;
           const selected = i === sel;
           const [iw, ih] = cell(it, selected);
+    if(it.key==="me"&&customProfilePicture())return <img src={customProfilePicture()} alt="Custom profile picture" style={{width:iw,height:ih,objectFit:"cover",borderRadius:8}}/>;
           const y = yOf(i);
           if (y < -120 || y > H + 60) return null;
           // a turned bar (Persona 3): the rows below the selected one run down the left edge, under the bar's blue band and out past its

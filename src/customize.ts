@@ -1,3 +1,5 @@
+import {FIXED_BACKGROUND_PAGES,pageBackgroundRef} from "./pageBackgrounds";
+import {downloadableAudio,downloadAudio,refreshAudioCatalog} from "./audioDownloads";
 // Customize: the slots of the preset in use, offered only where the look draws them (LAYOUT_SLOTS in
 // src/engine/assets.ts), each with every compatible asset from every installed source, grouped by source.
 // The same controls drive the △ / Y menu (themeSettingsMenu.ts) and Quick Access (index.tsx).
@@ -12,6 +14,7 @@ import { SlotKind } from "./engine/manifest";
 let walls: string[] = [];
 /** Re-read what can be picked (wallpapers folder, Hub sets, sound packs). Theme files come from refreshPresets. */
 export function refreshCustomizeLists() {
+  void refreshAudioCatalog();
   listWallpapers().then((r) => { walls = r?.files ?? []; }).catch(() => {});
   refreshHubSets().catch(() => {});
   refreshPacks().catch(() => {});
@@ -26,7 +29,7 @@ function lists() {
     const raw = (f as any)[FILE_LIST[k]] as any[];
     files[k] = (raw ?? []).map((x: any) => (typeof x === "string" ? { id: x, name: k === "x360" ? f.x360names[x] || x : pretty(x) } : { id: x.id, name: x.name || pretty(x.id) }));
   }
-  const themes = allThemes().filter((t) => t.source !== "builtin").map((t) => ({ id: t.id, name: t.name, has: (slot: AssetSlot) => hasSlot(t, slot as SlotKind) }));
+  const themes = allThemes().filter((t) => t.source !== "builtin").map((t) => ({ id: t.id, name: t.name, wallpaper:t.slots?.wallpaper, has: (slot: AssetSlot) => hasSlot(t, slot as SlotKind) }));
   return { walls, files, themes };
 }
 
@@ -39,12 +42,13 @@ export interface SlotControl {
   /** Assets by source. */
   groups: AssetGroup[];
   get(): string;
-  set(v: string): void;
+  set(v: string): void | Promise<void>;
   /** Extra entries of the slot (Background: brightness and colour; Icons: one by one). */
   more?: "background" | "icons";
 }
 const look = () => activeTheme(getSettings());
 const layout = (): ThemeId => getSettings().theme;
+const audioSelections=new Map<string,number>();
 export const nameOf = (c: SlotControl, v = c.get()): string =>
   c.special.find((o) => o.id === v)?.name ?? c.groups.flatMap((g) => g.items.map((i) => ({ ...i, source: g.source }))).find((i) => i.ref === v)?.name ?? (v.startsWith("@wp/") ? v.slice(4) : v.split("/").pop() || v);
 
@@ -52,7 +56,7 @@ export const nameOf = (c: SlotControl, v = c.get()): string =>
 function fileHasBackground(th: ThemeId, s: Settings): boolean {
   return !!FILE_KINDS[th] && !!fileOf(s, th) && fileOf(s, th) !== "-";
 }
-function backgroundControl(): SlotControl | null {
+function backgroundControl(page?:string): SlotControl | null {
   const th = layout();
   const c = LAYOUT_SLOTS[th];
   const s = getSettings();
@@ -66,13 +70,14 @@ function backgroundControl(): SlotControl | null {
     ...(c?.gameArt || th === "ps4" ? [{ id: "@art", name: th === "ps4" ? "Game art (PS4 game backgrounds)" : "Game art · follows the focused game" }] : []),
   ];
   return {
-    id: "wallpaper",
-    label: "Background",
+    id: page?`wallpaper:${page}`:"wallpaper",
+    label: page?page[0].toUpperCase()+page.slice(1):"Background",
     special,
-    groups: c?.background ? assetGroups("wallpaper", lists(), t?.id) : [],
+    groups: c?.background ? assetGroups("wallpaper", lists(), t?.id,c.videoBackground===true) : [],
     more: "background",
     get() {
       const s = getSettings();
+      if(page)return pageBackgroundRef(s,th,page)??"";
       const ref = t ? s.mix?.[t.id]?.wallpaper : undefined;
       if (ref && ref !== "none") return ref;
       if (s.wallpapers?.[th]) return `@wp/${s.wallpapers[th]}`;
@@ -81,6 +86,10 @@ function backgroundControl(): SlotControl | null {
       return "";
     },
     set(v: string) {
+      if(page&&t){
+        updateSettings(p=>({mix:{...p.mix,[t.id]:{...p.mix[t.id],[`wallpaper:${page}`]:v||"none"}}}));
+        return;
+      }
       const raw = getRawSettings();
       updateSettings((p) => {
         const wallpapers = { ...p.wallpapers };
@@ -126,6 +135,10 @@ function soundControl(kind: "sounds" | "music"): SlotControl {
     group("Hub and AudioLoader packs", packs.filter((p) => !p.folder.startsWith("Theme - "))),
     group("Theme files", packs.filter((p) => p.folder.startsWith("Theme - "))),
     ...assetGroups(kind, lists(), t?.id),
+    ...[true,false].map(recommended=>({source:recommended?"DeckThemes · for this theme":"DeckThemes · other packs",items:downloadableAudio().filter(p=>p.kind===kind&&p.themes.some(key=>key===th||key===`${th}:${getSettings().x360.style}`)===recommended).map(p=>{
+      const installed=packs.find(pack=>pack.id===p.id);
+      return {ref:installed?`@pack/${installed.folder}`:`@deckthemes/${p.id}`,name:`${p.name}${installed?" · Installed":" · Download"}`};
+    })})),
   ].filter((g) => g.items.length);
   const special: Option[] = kind === "sounds"
     ? [{ id: "", name: `Automatic${auto ? ` (${auto.name})` : ""}` }, { id: "steam", name: "Steam sounds" }]
@@ -143,7 +156,14 @@ function soundControl(kind: "sounds" | "music"): SlotControl {
       const set = (kind === "sounds" ? s.packs[th] : s.musicPacks[th]) ?? "";
       return set === "steam" ? "steam" : set ? `@pack/${set}` : "";
     },
-    set(v: string) {
+    async set(v: string) {
+      const key=`${t?.id??th}:${kind}`,revision=(audioSelections.get(key)??0)+1;
+      audioSelections.set(key,revision);
+      if(v.startsWith("@deckthemes/")){
+        const folder=await downloadAudio(v.slice(12));
+        if(!folder||audioSelections.get(key)!==revision)return;
+        v=`@pack/${folder}`;
+      }
       const pack = v.startsWith("@pack/") ? v.slice(6) : v === "steam" ? "steam" : "";
       updateSettings((p) => {
         const mix = { ...p.mix };
@@ -184,7 +204,7 @@ function fileControl(): SlotControl | null {
 export function customizeControls(): SlotControl[] {
   const th = layout();
   return [
-    backgroundControl(),
+    ...(FIXED_BACKGROUND_PAGES[th]?.map(page=>backgroundControl(page))??[backgroundControl()]),
     assetControl("icons", "Icons", "The look's own"),
     soundControl("sounds"),
     soundControl("music"),
@@ -196,3 +216,4 @@ export function customizeControls(): SlotControl[] {
 /** For the notes and tests: which slots a layout offers. */
 export const offeredSlots = (th: ThemeId) => ({ ...LAYOUT_SLOTS[th] });
 export { isAssetRef };
+

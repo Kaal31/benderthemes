@@ -1,12 +1,15 @@
-// Every theme has an intro. Themes with a boot sequence of their own (Wii U logo, PS1 start-up screens, a PSP/PS3
-// theme file's boot intro, see bootIntro.tsx) play it when they first mount; this file adds a short own-drawn
-// reveal for all the others (and for a theme picked in the Hub after it was already booted this session):
-// the theme's colour blooms from the centre, its name settles in, then the home appears.
+// Console themes have an intro. Themes with a boot sequence of their own (Wii U logo, PS1 start-up screens, a PSP/PS3
+// theme file's boot intro, see bootIntro.tsx) play it when they first mount; this file adds a locally bundled
+// video startup for the others. The generic Hub reveal remains the fallback for
+// consoles with an existing startup when explicitly replayed.
 // Skipped with reduced motion / the animations setting; any button or tap ends it; it can never block the home.
+import { RecordedConsoleStartup } from "./recordedConsoleStartup";
+import { CONSOLE_STARTUPS } from "./consoleStartup";
 import { useEffect, useRef, useState } from "react";
 import { pushModalInput } from "./input";
 import { getSettings, Settings, ThemeId, THEMES } from "./settings";
 import { styleOf } from "./engine/themeStyles";
+import { slotUrl } from "./engine/registry";
 import { playBootIntro } from "./bootIntro";
 import { resetWiiuBoot } from "./themes/Nintendo";
 import { playSound } from "./steam";
@@ -27,13 +30,14 @@ export function hasOwnIntro(s: Settings, theme: string = s.theme): boolean {
 
 /**
  * Play a theme's intro now. `fresh` = the theme's home has not been shown yet (first run): a theme with its own
- * boot sequence plays that by itself when it mounts, so only the others get the generic reveal. Otherwise (a theme
- * activated from the Hub) a PSP/PS3 boot intro is replayed and every other theme gets the generic reveal.
+ * boot sequence plays that by itself when it mounts, so only the others get the generated startup. Otherwise (a theme
+ * activated from the Hub) a PSP/PS3 boot intro is replayed and other consoles get their startup or the fallback reveal.
  */
 export function playThemeIntro(theme: string, opts: { fresh?: boolean; switched?: boolean } = {}) {
   try {
-    if (!isConsoleTheme(theme)) return; // intros are for the console looks only
+    if (!isConsoleTheme(theme) && !CONSOLE_STARTUPS[theme]) return;
     const s = getSettings();
+    if (slotUrl("bootVideo", s)) return;
     if (opts.fresh && hasOwnIntro({ ...s, theme: theme as ThemeId }, theme)) return;
     if (!opts.fresh && (theme === "psp" || theme === "ps3") && s.bootIntro) { setTimeout(playBootIntro, 350); return; }
     // the Wii U mounts fresh after a switch and plays its own logo once more; re-activating the open one gets the reveal
@@ -43,8 +47,9 @@ export function playThemeIntro(theme: string, opts: { fresh?: boolean; switched?
   } catch { /* an intro must never break anything */ }
 }
 
-/** Mounted once in the home (and the first-run flow): plays the generic reveal when asked. */
-export function ThemeIntro() {
+/** Mounted once in the home: handles automatic startup and explicit replay requests. */
+const autoPlayed = new Set<string>();
+export function ThemeIntro({autoTheme}: {autoTheme?: string} = {}) {
   const [run, setRun] = useState<Pending | null>(null);
   useEffect(() => {
     const take = () => { if (pending) { setRun(pending); pending = null; } };
@@ -52,6 +57,11 @@ export function ThemeIntro() {
     listeners.add(take);
     return () => { listeners.delete(take); };
   }, []);
+  useEffect(() => {
+    if (!autoTheme || !CONSOLE_STARTUPS[autoTheme] || autoPlayed.has(autoTheme)) return;
+    autoPlayed.add(autoTheme);
+    playThemeIntro(autoTheme, {fresh:true});
+  }, [autoTheme]);
   if (!run) return null;
   return <Reveal key={run.n} theme={run.theme} onDone={() => setRun(null)} />;
 }
@@ -70,12 +80,16 @@ function Reveal({ theme, onDone }: { theme: string; onDone: () => void }) {
   };
   useEffect(() => {
     if (!motion) { onDone(); return; }
-    try { playSound("open"); } catch { /* no sound */ }
-    timers.current.push(setTimeout(finish, 2300), setTimeout(onDone, 5000));
+    if (!CONSOLE_STARTUPS[theme]) {
+      try { playSound("open"); } catch { /* no sound */ }
+      timers.current.push(setTimeout(finish,2300));
+    }
+    timers.current.push(setTimeout(onDone,CONSOLE_STARTUPS[theme]?30000:6500));
     const off = pushModalInput(() => { finish(); return true; });
     return () => { off(); timers.current.forEach(clearTimeout); };
   }, []);
   if (!motion) return null;
+  if (CONSOLE_STARTUPS[theme]) return <RecordedConsoleStartup theme={theme} leaving={leaving} finish={finish}/>;
   const st = hubStyle(theme, s.x360?.style);
   const name = THEMES.find((t) => t.id === theme)?.name ?? "";
   return (

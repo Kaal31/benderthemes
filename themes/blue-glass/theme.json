@@ -1,0 +1,11 @@
+{
+  "schema": 1,
+  "id": "blue-glass",
+  "name": "Blue Glass",
+  "author": "ThemeHub",
+  "description": "A glossy blue dashboard with chrome frames, tactile shortcuts, reflected game covers and an illuminated dock.",
+  "company": "Community",
+  "layout": "frame",
+  "frame": { "entry": "index.html" },
+  "slots": { "accent": "#64caff" }
+}

@@ -368,18 +368,19 @@ function steamDocuments(): Document[] {
   return [...docs];
 }
 
-const loaderSeen = new WeakMap<Element, { len: number; hit: boolean }>();
+const loaderSeen = new WeakMap<Element, { css: string; classes: string; hit: boolean }>();
 /** True when CSS Loader has a theme in this document that styles the keyboard: ours steps aside. */
 export function cssLoaderStylesKeyboard(doc: Document, c: KbClasses): boolean {
   for (const st of Array.from(doc.querySelectorAll("style.css-loader-style"))) {
     const t = st.textContent ?? "";
+    const classes = `${c.KeyboardKey}:${c.Keyboard}`;
     const seen = loaderSeen.get(st);
-    if (seen && seen.len === t.length) {
+    if (seen && seen.css === t && seen.classes === classes) {
       if (seen.hit) return true;
       continue;
     }
     const hit = t.includes(c.KeyboardKey) || t.includes(c.Keyboard) || /KeyTheme_|virtualkeyboard_|--key-[a-z-]*(background-)?color\s*:/.test(t);
-    loaderSeen.set(st, { len: t.length, hit });
+    loaderSeen.set(st, { css: t, classes, hit });
     if (hit) return true;
   }
   return false;

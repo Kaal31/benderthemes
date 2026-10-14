@@ -1,3 +1,4 @@
+import {ProfileAvatar} from "../ProfileAvatar";
 // PS4 home: a function area (top icons) above a horizontal row of square
 // tiles; the focused game is enlarged with its name and a Start button, and
 // its background art fades in behind the row.
@@ -210,7 +211,7 @@ export function Ps4Home() {
         {/* top-right status */}
         <div style={{ position: "absolute", top: 22, right: 36, display: "flex", alignItems: "center", gap: 16, color: "#fff", fontSize: 20, fontWeight: 300 }}>
           <div style={{ width: 34, height: 34, borderRadius: 4, background: "linear-gradient(135deg,#5aa0ff,#2a5bd0)", display: "flex", alignItems: "center", justifyContent: "center" }}>
-            <Icon name="user" size={24} color="#fff" />
+            <ProfileAvatar size={34} fallback={<Icon name="user" size={24} color="#fff" />}/>
           </div>
           <span>{api.user}</span>
           {bat && <BatteryGlyph level={bat.level} charging={bat.charging} w={30} />}

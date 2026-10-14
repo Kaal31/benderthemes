@@ -3,7 +3,7 @@
 // firmware layout (480 × 272 screen, centre origin, y up), scaled to the Deck's screen.
 import { CSSProperties, ReactNode, useEffect, useRef, useState } from "react";
 import { pushModalInput } from "../input";
-import { fmtClock, musicPlayer, usePlayer } from "../musicPlayer";
+import { fmtClock, musicPlayer, usePlayer, useFullMusicPlayer } from "../musicPlayer";
 import type { ThemeText } from "../skins";
 
 export interface HudArt {
@@ -139,6 +139,7 @@ export function XmbMusicScreen({ W, H, art, k = 1, accentText }: { W: number; H:
   const p = usePlayer();
   const u = pspUnit(W, H) * k;
   const open = p.open && !!p.album;
+  useFullMusicPlayer(open);
   const ref = useRef(p);
   ref.current = p;
   useEffect(() => {
@@ -166,7 +167,10 @@ export function XmbMusicScreen({ W, H, art, k = 1, accentText }: { W: number; H:
   const left = W / 2 - 200 * u, artSize = 112 * u, colX = left + artSize + 22 * u, colW = W / 2 + 216 * u - colX;
   return (
     <div className="dht-xmb-music" style={{ position: "absolute", inset: 0, zIndex: 25, animation: "dhtMusicIn 260ms ease-out both" }}>
-      <style>{"@keyframes dhtMusicIn{from{opacity:0;transform:translateX(24px)}to{opacity:1;transform:none}}"}</style>
+        <style>{`@keyframes dhtMusicIn{from{opacity:0;transform:translateX(24px)}to{opacity:1;transform:none}}
+          .dht-xmb-music-controls button{display:inline-flex;align-items:center;justify-content:center;flex-shrink:0;min-width:36px;min-height:40px;padding:4px;border:1px solid transparent;border-radius:4px;background:transparent;color:inherit;font:inherit;cursor:pointer}
+          .dht-xmb-music-controls button:hover,.dht-xmb-music-controls button:focus-visible{border-color:currentColor;background:#ffffff20;outline:none}
+        `}</style>
       <div style={{ position: "absolute", inset: 0, background: "linear-gradient(90deg, rgba(0,0,0,0.45), rgba(0,0,0,0.25))" }} />
       <div style={{ ...text, position: "absolute", left, top: H / 2 - 112 * u, fontSize: font(7), opacity: 0.8 }}>
         Music {accentText ? <>· {accentText}</> : null}
@@ -187,13 +191,18 @@ export function XmbMusicScreen({ W, H, art, k = 1, accentText }: { W: number; H:
       </div>
       {/* status and time */}
       <div style={{ position: "absolute", left: colX, top: H / 2 + 26 * u, width: colW, color: "var(--dht-xmb-text, #fff)" }}>
-        <div style={{ display: "flex", alignItems: "center", gap: 8 * u, marginBottom: 7 * u }}>
-          <Glyph d={p.playing ? G.play : G.pause} size={12 * u} />
-          <Glyph d={G.shuffle} size={10 * u} on={p.shuffle} />
-          <span style={{ display: "inline-flex", alignItems: "center", gap: 1 * u }}>
+        <div className="dht-xmb-music-controls" style={{ display: "flex", alignItems: "center", gap: 2 * u, marginBottom: 7 * u }}>
+          <button type="button" aria-label="Previous" onClick={() => musicPlayer.prev()}>⏮</button>
+          <button type="button" aria-label="Rewind 10 seconds" onClick={() => musicPlayer.seek(-10)}>⏪</button>
+          <button type="button" aria-label={p.playing ? "Pause" : "Play"} onClick={() => musicPlayer.toggle()}><Glyph d={p.playing ? G.pause : G.play} size={12 * u} /></button>
+          <button type="button" aria-label="Forward 10 seconds" onClick={() => musicPlayer.seek(10)}>⏩</button>
+          <button type="button" aria-label="Next" onClick={() => musicPlayer.next()}>⏭</button>
+          <button type="button" aria-label="Shuffle" aria-pressed={p.shuffle} onClick={() => musicPlayer.setShuffle(!p.shuffle)}><Glyph d={G.shuffle} size={10 * u} on={p.shuffle} /></button>
+          <button type="button" aria-label={`Repeat ${p.repeat}`} aria-pressed={p.repeat !== "off"} onClick={() => musicPlayer.cycleRepeat()}>
             <Glyph d={G.repeat} size={10 * u} on={p.repeat !== "off"} />
             {p.repeat === "one" && <span style={{ ...text, fontSize: font(5) }}>1</span>}
-          </span>
+          </button>
+          <button type="button" aria-label="Stop" onClick={() => musicPlayer.stop()}>■</button>
           {p.crossfade > 0 && <span style={{ ...text, fontSize: font(5.6), opacity: p.fading ? 1 : 0.7 }} title="Crossfade">⇌ {p.crossfade}s</span>}
         </div>
         <XmbBar value={p.duration ? p.time / p.duration : 0} w={colW} h={6 * u} base={art?.progressBase} fill={art?.progressBar} />

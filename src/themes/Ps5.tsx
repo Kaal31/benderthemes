@@ -1,3 +1,4 @@
+import {ProfileAvatar} from "../ProfileAvatar";
 // PS5 home: Games / Media tabs, a compact row of rounded tiles at the top
 // with the focused title written beside it, full-bleed hero art, the game's
 // logo, a Play button and activity cards underneath.
@@ -210,7 +211,7 @@ export function Ps5Home() {
           <div style={{ position: "absolute", right: 40, top: 26, display: "flex", alignItems: "center", gap: 22, color: "#fff" }}>
             {st<string>("topBar") !== "clock" && topIcons.map((ic, i) => (
               <div key={i} onClick={topIcons[i].run} style={{ width: 40, height: 40, borderRadius: 20, display: "flex", alignItems: "center", justifyContent: "center", background: zone === "tabs" && tsel === i + 2 ? "#fff" : "transparent" }}>
-                <Icon name={ic.icon} size={24} color={zone === "tabs" && tsel === i + 2 ? "#000" : "#fff"} />
+                {ic.icon==="user"?<ProfileAvatar size={30}/>:<Icon name={ic.icon} size={24} color={zone === "tabs" && tsel === i + 2 ? "#000" : "#fff"} />}
               </div>
             ))}
             {bat && st<string>("topBar") !== "clock" && <BatteryGlyph level={bat.level} charging={bat.charging} w={28} />}

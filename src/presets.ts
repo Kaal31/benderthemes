@@ -52,7 +52,7 @@ onThemesChanged(() => listeners.forEach((l) => l()));
 // and the Quick Access Look list only offer looks whose console is here: never a deleted or not yet downloaded theme. null = not read yet.
 const remoteInventory = callable<[], Record<string, string>>("theme_inventory");
 /** The themes whose look ships inside the plugin (Wii U and iiSU also have an optional pack of extras in the Hub). */
-export const BUILT_IN_THEMES = ["wii", "wiiu", "switch", "n3ds", "ps1", "iisu"] as const;
+export const BUILT_IN_THEMES = ["onyx", "silver", "wii", "wiiu", "switch", "n3ds", "ps1", "iisu"] as const;
 const BUILT_IN: Record<string, string> = Object.fromEntries(BUILT_IN_THEMES.map((id) => [id, "built-in"]));
 let downloaded: Record<string, string> | null = null;
 export async function refreshInventory(): Promise<Record<string, string>> {

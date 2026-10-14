@@ -5,7 +5,12 @@
 import { fetchNoCors } from "@decky/api";
 import { CSSProperties, useEffect, useState } from "react";
 import { Game } from "./library";
-import { getSettings } from "./settings";
+import { getSettings, Settings, ThemeId } from "./settings";
+import { Navigation } from "@decky/ui";
+import { useProtonDbPresent } from "./pluginPresence";
+
+export const protonDbThemeKey = (s: Settings) => s.activeTheme || (s.theme === "x360" ? `x360:${s.x360.style}` : s.theme);
+export const protonDbEnabled = (s: Settings, theme: ThemeId = s.theme) => (s.protondbThemes?.[theme===s.theme?protonDbThemeKey(s):theme] ?? s.protondbThemes?.[theme]) === true;
 
 export type ProtonTier = "native" | "platinum" | "gold" | "silver" | "bronze" | "borked" | "pending";
 const PROTON_COLORS: Record<ProtonTier, string> = {
@@ -47,20 +52,21 @@ async function loadTier(appid: number): Promise<ProtonTier | null> {
   return t;
 }
 
-export function useProtonTier(g: Game | undefined): ProtonTier | null {
-  const on = getSettings().badges.protondb;
+export function useProtonTier(g: Game | undefined, theme?: ThemeId): ProtonTier | null {
+  const detected = useProtonDbPresent();
+  const on = detected && protonDbEnabled(getSettings(), theme);
   const id = g && !g.shortcut ? g.appid : 0;
-  const [t, setT] = useState<ProtonTier | null>(id ? tierCache.get(id) ?? null : null);
+  const [result, setResult] = useState<{id:number; tier:ProtonTier|null}>(()=>({id,tier:id ? tierCache.get(id) ?? null : null}));
   useEffect(() => {
-    if (!on || !id) return setT(null);
+    if (!on || !id) return;
     let alive = true;
-    const timer = setTimeout(() => loadTier(id).then((v) => alive && setT(v)), 250); // only for the resting selection
+    const timer = setTimeout(() => loadTier(id).then((tier) => alive && setResult({id,tier})), 250); // only for the resting selection
     return () => {
       alive = false;
       clearTimeout(timer);
     };
   }, [id, on]);
-  return t;
+  return on && id ? (result.id === id ? result.tier : tierCache.get(id) ?? null) : null;
 }
 
 /** Steam's own Deck compatibility: 3 verified, 2 playable, 1 unsupported, 0 unknown. */
@@ -81,9 +87,9 @@ const DECK_LOOK = {
  * stable class names (dht-badge, dht-badge--deck-verified, dht-badge--protondb-gold…)
  * so CSS Loader themes can restyle it.
  */
-export function Badges({ g, size = 15, style, light }: { g: Game | undefined; size?: number; style?: CSSProperties; light?: boolean }) {
-  const tier = useProtonTier(g);
-  const deck = deckCompat(g);
+export function Badges({ g, size = 15, style, light, protonOnly = false, theme }: { g: Game | undefined; size?: number; style?: CSSProperties; light?: boolean; protonOnly?: boolean; theme?: ThemeId }) {
+  const tier = useProtonTier(g, theme);
+  const deck = protonOnly ? null : deckCompat(g);
   if (!g || (!tier && !deck)) return null;
   const pill = (color: string): CSSProperties => ({
     display: "inline-flex",
@@ -101,7 +107,7 @@ export function Badges({ g, size = 15, style, light }: { g: Game | undefined; si
     whiteSpace: "nowrap",
   });
   return (
-    <div className="dht-badges" style={{ display: "flex", gap: size * 0.5, flexWrap: "wrap", ...style }}>
+    <div className="dht-badges" data-appid={g.appid} style={{ display: "flex", gap: size * 0.5, flexWrap: "wrap", ...style }}>
       {deck && (
         <span className={`dht-badge dht-badge--deck dht-badge--deck-${deck}`} style={pill(DECK_LOOK[deck].color)}>
           <svg width={size} height={size} viewBox="0 0 16 16">
@@ -114,10 +120,10 @@ export function Badges({ g, size = 15, style, light }: { g: Game | undefined; si
         </span>
       )}
       {tier && (
-        <span className={`dht-badge dht-badge--protondb dht-badge--protondb-${tier}`} style={pill(PROTON_COLORS[tier])}>
+        <button type="button" aria-label={`ProtonDB ${tier}: open reports for ${g.name}`} className={`dht-badge dht-badge--protondb dht-badge--protondb-${tier}`} style={{...pill(PROTON_COLORS[tier]),fontFamily:"inherit",cursor:"pointer"}} onClick={e=>{e.stopPropagation();Navigation.NavigateToExternalWeb(`https://www.protondb.com/app/${g.appid}`);}}>
           <span style={{ width: size * 0.7, height: size * 0.7, borderRadius: "50%", background: PROTON_COLORS[tier], display: "inline-block" }} />
           ProtonDB {tier[0].toUpperCase() + tier.slice(1)}
-        </span>
+        </button>
       )}
     </div>
   );

@@ -63,7 +63,7 @@ A user theme with the same id as a shipped one replaces it. The built-in themes 
 
 | Slot | Value | Used by |
 |---|---|---|
-| `wallpaper` | image file | every layout that has a wallpaper (PS4, PS5, XMB, Vita, Xbox, Xbox 360, Aero, Alien Dial) and frame interfaces |
+| `wallpaper` | image / GIF; MP4 / WebM for compatible video layouts | every layout that has a wallpaper (PS4, PS5, XMB, Vita, Xbox, Xbox 360, Aero, Alien Dial) Floating Castle, Galactic Republic, Nazarick and frame interfaces |
 | `sounds` | folder of `deck_ui_*.wav` files | every layout |
 | `music` | folder with the menu music | every layout |
 | `bootVideo` | video, played once when the home opens | every layout |
@@ -142,6 +142,7 @@ Every message is `{ dht: 1, type, … }`.
 |---|---|
 | `state` | `theme {id,name}`, `user`, `settings {clock24, animations, sounds, tvMode, accent}`, `slots {wallpaper, bootVideo, launchVideo, font}` (URLs or null) and `slots.icons` (spot → URL), `games[]`, `apps[]`, `collections[] {id,name,appids}`, `saved` (what the interface last saved), `busy` |
 | `input` | `btn` (`up` `down` `left` `right` `a` `b` `x` `y` `menu` `l1` `r1`), `repeat` |
+| `audio` | `bands`: 16 integers, 0–255, at most 20 updates/second. Shared ThemeHub/ThemeDeck spectrum. Zero values mean silence or unavailable analysis; draw your own idle animation. |
 
 A game is `{ appid, name, installed, lastPlayed, playtime, kind, art: { portrait[], landscape[], hero[], logo[] } }`, with absolute art URLs.
 
@@ -158,6 +159,7 @@ A game is `{ appid, name, installed, lastPlayed, playtime, kind, art: { portrait
 | `open` | `place` (`options` `steamHome` `store` `library` `friends` `settings` `downloads` `search` `power` `mainmenu`) | opens it |
 | `hints` | `a`, `x`, `y`, `menu` (short labels) | Steam's button hints |
 | `save` | `data` (JSON, at most 64 KB) | kept in the plugin's settings, and returned as `saved` |
+| `focus` | `appid` (a game from `state.games`, or `null`) | reports selection to the shared focused-game service; clear it when entering a non-game page |
 
 L2 / R2 always switch presets, so the interface never sees them.
 
@@ -169,3 +171,22 @@ L2 / R2 always switch presets, so the interface never sees them.
 - On the Deck, check:
   - that Steam's browser applies the sandbox and the policy, which the preview test proves in Chromium;
   - that tapping inside a frame interface doesn't break controller focus.
+
+
+## Live community pages extension
+
+Hosts exposing `state.capabilities.pages === 1` accept `{dht:1,type:"pageRequest",requestId,op,args}` and reply with `{dht:1,type:"pageResult",requestId,data}` or `error`. Request IDs must be safe integers. At most four requests may run concurrently, with a 12-request-per-second limit.
+
+Supported operations: `friends`, `downloads`, `download` (queued appid and action pause/resume), `store` (tab featured/specials/top/new/soon/search; bounded query), `storeDetails` (positive integer appid), `checkout` (positive integer appid; Steam checkout), `media` (offset, 12 items per batch), `video` (existing local video id), `settings` (read, or whitelisted boolean animations/clock24/sounds/tvMode and integer volumes sfxVolume/musicVolume 0–100). The host uses the existing activity, downloads, store and media services. Frames cannot provide URLs to fetch or arbitrary client method names. Media image bytes are bounded and returned as image data URLs without changing the sandbox CSP.
+
+## Shared focused-game music and audio
+
+The host advertises `state.capabilities.focus === 1` and `state.capabilities.audio === 1`. Every frame theme receives the same `audio` messages. Native themes can use `useThemeAudio()` from `src/useThemeAudio.ts`. The host captures media only for analysis, without rerouting ThemeDeck's audible output; no microphone or system audio is captured.
+
+Native layouts already using `useReportFocus(game)` automatically participate in shared ThemeDeck assignment playback. Frame themes send `{dht:1,type:"focus",appid}` when their selection changes, and `appid:null` on non-game pages. Saving `data.lastAppid` is supported as a legacy fallback. Neither interface implements ThemeDeck playback or file access.
+
+The shared host reads the numeric game's existing assignment from ThemeDeck's `tracks.json` through a bounded, read-only backend. It preserves per-track volume, start offset, loop and ThemeDeck autoplay/master settings. Missing tracks leave ordinary theme music alone. Playback hands off via the existing compatibility layer, yields to launched games and the local music player, and returns control when leaving the themed home. Turn it off globally under Sound → ThemeDeck music for focused games. Visualizer UI remains the theme author's choice; shared levels do not add meters to existing layouts.
+
+The adapter follows [ThemeDeck v3.0.2's saved-track format and browser audio behavior](https://github.com/BrenticusMaximus/ThemeDeck). Actual Deck playback, suspend/wake, and simultaneous plugin behavior still require device verification.
+
+Audio extension: `audioLibrary` returns bounded albums and tracks with no filesystem paths or media-server tokens, plus public player state. `audio` accepts action state/play/toggle/next/prev/shuffle/repeat/seek. Play requires a known albumId and valid track index; seek requires a finite position within the active track duration. Playback uses the shared musicPlayer service.

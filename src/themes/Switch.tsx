@@ -1,3 +1,4 @@
+import {ProfileAvatar} from "../ProfileAvatar";
 // Nintendo Switch home: a row of square game tiles with a bright focus frame, the game's name below,
 // and a row of round system buttons (News, Shop, Album, Controllers, Settings, Power).
 // A .nxtheme (see switchThemes.ts) supplies the wallpaper, optional wallpapers for "All Software" and
@@ -10,6 +11,7 @@ import { showTitle, THEMES } from "../settings";
 import { playSound, useBattery, useClock, useWallpaper } from "../steam";
 import { themeSettingsItems } from "../themeSettingsMenu";
 import { switchParts, useSwitchSkin } from "../switchThemes";
+import { useReportFocus } from "../focus";
 
 type Dock = { id: string; label: string; icon: IconName; art?: string; place?: SteamPlace; action?: "settings" | "album" };
 const DOCK: Dock[] = [
@@ -116,6 +118,7 @@ export function SwitchHome() {
   const n = games.length; // tiles: the games, then "All Software"
   const cur = clamp(sel, 0, n);
   const g: Game | undefined = games[cur];
+  useReportFocus(view === "apps" ? games[asel] : view === "home" && row === "tiles" ? g : undefined);
   const COLS = 6;
 
   useEffect(() => { if (view === "set" && !menu.isOpen) setView("home"); }, [menu.isOpen, view]);
@@ -186,7 +189,7 @@ export function SwitchHome() {
           </div>
         )}
         <div className="dht-switch-status" style={{ position: "absolute", top: 34 * k, left: 60 * k, right: 50 * k, display: "flex", alignItems: "center", gap: 24 * k, color: ink, fontSize: 26 * k, textShadow: dark ? "0 1px 4px #0008" : "none" }}>
-          <div style={{ width: 60 * k, height: 60 * k, borderRadius: "50%", background: "#ffffff55", border: `2px dashed ${dark ? "#fff8" : "#aaa"}`, display: "flex", alignItems: "center", justifyContent: "center" }}><Icon name="user" size={34 * k} color={ink} /></div>
+          <div style={{ width: 60 * k, height: 60 * k, borderRadius: "50%", background: "#ffffff55", border: `2px dashed ${dark ? "#fff8" : "#aaa"}`, display: "flex", alignItems: "center", justifyContent: "center" }}><ProfileAvatar size={56*k} fallback={<Icon name="user" size={34 * k} color={ink} />}/></div>
           <span style={{ fontSize: 20 * k, opacity: 0.8 }}>{api.user}</span><span style={{ flex: 1 }} />
           <span className="dht-switch-clock" style={{ fontFamily: CLOCK_FONT, fontWeight: 600, fontSize: 29 * k, fontVariantNumeric: "tabular-nums", letterSpacing: 2, display: "inline-block", transform: "scaleX(0.84)", transformOrigin: "right center", marginLeft: -6 * k }}>{clock24h(now)}</span>
           <SwitchWifi size={34 * k} color={ink} />

@@ -250,6 +250,12 @@ export function openGamePage(g: Game) {
   }
 }
 
+/** Bypass themed destinations so plugins patched into Steam's game page can render. */
+export function openNativeGamePage(g: Game) {
+  if (previewActions.nav) return previewActions.nav(`native-game:${g.appid}`);
+  Navigation.Navigate(`/library/app/${g.appid}`);
+}
+
 export type SteamPlace =
   | "library"
   | "store"

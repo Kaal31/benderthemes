@@ -95,6 +95,17 @@ const backend: Record<string, (...a: any[]) => any> = {
   get_settings: () => (window as any).__previewSettings ?? null,
   set_settings: (s: any) => ((window as any).__previewSettings = s, true),
   list_sound_packs: () => (window as any).__testPacks ?? [],
+  deckthemes_audio_catalog: () => (window as any).__deckthemesAudio ?? [],
+  install_deckthemes_audio: async (id:string) => {
+    const w=window as any;
+    (w.__audioDownloadCalls??=[]).push(id);
+    if(w.__audioDownloadFailure)return {ok:false,error:"Preview download failure"};
+    const entry=w.__deckthemesAudio?.find((p:any)=>p.id===id);
+    if(!entry)return {ok:false,error:"Unknown preview audio"};
+    const folder=`DeckThemes-${id}`;
+    w.__testPacks=[...(w.__testPacks??[]),{id,folder,name:entry.name,music:entry.kind==="music",author:"Preview fixture",mappings:{},ignore:[],files:[entry.kind==="music"?"menu_music.mp3":"deck_ui_navigation.wav"]}];
+    return {ok:true,folder};
+  },
   media_server: () => (window as any).__testServer ?? null,
   list_data_themes: () => (window as any).__dataThemes ?? { base: null, themes: [] },
   get_dial_asset: (n: string) => (window as any).__dialAssets?.[n] ?? null,

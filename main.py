@@ -23,6 +23,7 @@ except Exception:  # pragma: no cover
 import io
 import json
 import os
+import pathlib
 import shutil
 import struct
 try:  # Decky ships a trimmed Python; never let one missing module stop the backend
@@ -44,6 +45,7 @@ except Exception:  # pragma: no cover
 import decky
 
 IMAGE_EXT = (".png", ".jpg", ".jpeg", ".webp", ".gif")
+WALLPAPER_VIDEO_EXT = (".mp4", ".webm")
 
 
 def _settings_path() -> str:
@@ -1474,6 +1476,9 @@ async def _serve(reader, writer):
                 fpath = _sound_file(seg[2], seg[3])
             elif seg[1] == "m" and len(seg) == 3:
                 fpath = _music_files.get(seg[2])
+            elif seg[1] == "td" and len(seg) == 4 and seg[2].isdigit():
+                import themedeck
+                fpath = await asyncio.to_thread(themedeck.resolve, decky.DECKY_PLUGIN_SETTINGS_DIR, int(seg[2]), seg[3])
             elif seg[1] == "k" and len(seg) == 4 and _SEG.match(seg[2]) and _SEG.match(seg[3]):
                 fpath = os.path.join(_cache_root(), seg[2], seg[3])
             elif seg[1] == "w" and len(seg) >= 4:
@@ -1581,7 +1586,17 @@ class Plugin:
 
     async def theme_install(self, ident: str):
         import theme_store
-        return await asyncio.to_thread(theme_store.install, ident)
+        result = await asyncio.to_thread(theme_store.install, ident)
+        if result.get("success"):
+            pack = next((p for p in theme_store.catalog()["themes"] if p["id"] == ident), {})
+            warnings = []
+            for audio_id in pack.get("audioPacks", []):
+                audio = await self.install_deckthemes_audio(audio_id)
+                if not audio.get("ok"):
+                    warnings.append(audio.get("error", "Audio download failed"))
+            if warnings:
+                result["audioWarning"] = "Some audio could not be downloaded. Steam sounds remain available; retry through Customize: " + "; ".join(warnings)
+        return result
 
     async def theme_remove(self, ident: str):
         import theme_store
@@ -1633,6 +1648,19 @@ class Plugin:
         return True
 
     # ───── settings ─────
+    async def read_profile_picture(self, path):
+        try:
+            target = pathlib.Path(str(path)).expanduser().resolve()
+            if target.suffix.lower() not in (".png", ".jpg", ".jpeg", ".webp") or not target.is_file():
+                return {"error": "Choose a PNG, JPEG or WebP image."}
+            if target.stat().st_size > 10 * 1024 * 1024:
+                return {"error": "Choose an image smaller than 10 MB."}
+            raw = await asyncio.to_thread(target.read_bytes)
+            mime = "image/png" if raw.startswith(b"\x89PNG\r\n\x1a\n") else "image/jpeg" if raw.startswith(b"\xff\xd8\xff") else "image/webp" if raw[:4] == b"RIFF" and raw[8:12] == b"WEBP" else None
+            return {"image": _data_url(raw, mime)} if mime else {"error": "This image could not be opened."}
+        except Exception:
+            return {"error": "This image could not be opened."}
+
     async def get_settings(self):
         try:
             with open(_settings_path(), "r", encoding="utf-8") as f:
@@ -1674,6 +1702,20 @@ class Plugin:
         (decky.logger.error if level == "error" else decky.logger.info)(f"[frontend] {msg}")
 
     # ───── AudioLoader packs ─────
+    async def deckthemes_audio_catalog(self):
+        import deckthemes_audio
+        return [{k: v for k, v in p.items() if k in ("id", "name", "kind", "themes")} for p in deckthemes_audio.catalog()]
+
+    async def install_deckthemes_audio(self, ident: str):
+        import deckthemes_audio
+        try:
+            installed = await self.list_sound_packs()
+            result = await asyncio.to_thread(deckthemes_audio.install, ident, _sounds_dir(), installed)
+            return {"ok": True, **result}
+        except Exception as error:
+            decky.logger.warning(f"DeckThemes audio install failed: {error}")
+            return {"ok": False, "error": str(error)}
+
     async def list_sound_packs(self):
         out = []
         root = _sounds_dir()
@@ -1692,6 +1734,7 @@ class Plugin:
                 out.append(
                     {
                         "name": meta.get("name") or entry,
+                        "id": meta.get("id"),
                         "folder": entry,
                         "files": [n for n in os.listdir(folder) if not n.endswith(".json")],
                         "mappings": meta.get("mappings") or {},
@@ -1708,12 +1751,22 @@ class Plugin:
     async def list_wallpapers(self):
         d = _wall_dir()
         os.makedirs(d, exist_ok=True)
-        files = sorted(n for n in set(os.listdir(d)) | set(_resource_names("wallpapers")) if n.lower().endswith(IMAGE_EXT))
+        files = sorted(n for n in set(os.listdir(d)) | set(_resource_names("wallpapers")) if n.lower().endswith(IMAGE_EXT + WALLPAPER_VIDEO_EXT))
         return {"dir": d, "files": files}
 
     async def get_wallpaper(self, name: str):
         p = _user_resource(_wall_dir(), name, "wallpapers")
         if not os.path.isfile(p):
+            return None
+        ext = os.path.splitext(p)[1].lower()
+        if ext in WALLPAPER_VIDEO_EXT:
+            if not await _ensure_server():
+                return None
+            import hashlib
+            ident = "wallpaper-" + hashlib.sha256(os.path.realpath(p).encode()).hexdigest()[:24] + ext
+            _vi.files[ident] = p
+            return f"http://127.0.0.1:{_vi.port}/{_vi.token}/f/{ident}"
+        if ext not in IMAGE_EXT:
             return None
         with open(p, "rb") as f:
             return _data_url(f.read(), _mime(p))
@@ -2155,6 +2208,15 @@ class Plugin:
             return {"ok": False, "videos": []}
 
     # ───── music on the Deck ─────
+    async def themedeck_track(self, appid: int):
+        import themedeck
+        track = await asyncio.to_thread(themedeck.assignment, decky.DECKY_PLUGIN_SETTINGS_DIR, appid)
+        if not track or not await _ensure_server():
+            return None
+        track.pop("path", None)
+        signature = track.pop("signature")
+        return {**track, "url": f"http://127.0.0.1:{_vi.port}/{_vi.token}/td/{appid}/{signature}"}
+
     async def list_music(self):
         if not await _ensure_server():
             return {"ok": False, "albums": []}

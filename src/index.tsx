@@ -1,3 +1,4 @@
+import {stopSilverPad} from "./themes/silverPad";
 import { ButtonItem, DropdownItem, Navigation, PanelSection, PanelSectionRow, SliderField, staticClasses, TextField, ToggleField } from "@decky/ui";
 import { definePlugin, openFilePicker, routerHook } from "@decky/api";
 import { importThemeZip, onThemesChanged, userThemes } from "./engine/registry";
@@ -187,7 +188,6 @@ function Panel() {
               <DropdownItem label="Ⓐ on a game" rgOptions={[{ data: "theme", label: "Like the console (LiveArea, Start…)" }, { data: "launch", label: "Launch right away" }, { data: "details", label: "Open Steam's game page" }]} selectedOption={s.aAction} onChange={(o) => updateSettings({ aAction: o.data })} />
             </PanelSectionRow>
             <PanelSectionRow><ToggleField label="Themed store" description="Store entries open the Steam Store styled like this theme (off: Steam's own store)" checked={s.themedStore !== false} onChange={(v) => updateSettings({ themedStore: v })} /></PanelSectionRow>
-            <PanelSectionRow><ToggleField label="ProtonDB badges" description="Community rating on game details (needs internet)" checked={s.badges.protondb} onChange={(v) => updateSettings((p) => ({ badges: { ...p.badges, protondb: v } }))} /></PanelSectionRow>
             <PanelSectionRow><ToggleField label="Steam Deck compatibility badges" checked={s.badges.deck} onChange={(v) => updateSettings((p) => ({ badges: { ...p.badges, deck: v } }))} /></PanelSectionRow>
             <PanelSectionRow><ToggleField label="Hide Steam's top bar" description="While the themed home is on screen" checked={s.hideSteamHeader} onChange={(v) => updateSettings({ hideSteamHeader: v })} /></PanelSectionRow>
             <PanelSectionRow><ToggleField label="Themed keyboard" description="Off by default. Steam's on-screen keyboard looks like the active console's keyboard, in every theme (a CSS Loader keyboard theme or a Points Shop keyboard wins)" checked={s.keyboardSkin === true} onChange={(v) => updateSettings({ keyboardSkin: v })} /></PanelSectionRow>
@@ -292,6 +292,7 @@ function Diagnostics() {
           {row("Library", `${lib.games.length} games · ${lib.apps.length} apps · ${lib.collections.length} collections`, !lib.games.length)}
           {others.homes.length > 0 && row("Also replacing Home", `${others.homes.join(", ")}: only one home can show. Turn off its home option or this plugin.`, true)}
           {others.music.length > 0 && row("Other music", `${others.music.join(", ")} paused while theme music plays`)}
+          {others.support.map(p => <div key={p.name}>{row(p.name, `${p.mode}: ${p.detail}`, p.mode === "conflict")}</div>)}
           {row("Last error", d.lastError || "none", !!d.lastError)}
         </div>
       </PanelSectionRow>
@@ -344,6 +345,7 @@ export default definePlugin(() => {
     ),
     icon: <HomeIcon />,
     onDismount() {
+      stopSilverPad();
       routerHook.removeRoute(ROUTE);
       if (patch) routerHook.removePatch(HOME_ROUTE, patch);
       stopKeyboardSkins?.();

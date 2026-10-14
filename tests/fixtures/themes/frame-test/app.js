@@ -64,6 +64,7 @@
     var step = cards[0] ? cards[0].getBoundingClientRect().width + 18 : 186;
     shelf.style.transform = "translateX(" + -Math.max(0, i - 2) * step + "px)";
     var g = games[i];
+    send({ type: "focus", appid: g.appid });
     title.textContent = g.name;
     meta.textContent = (g.installed ? "Installed" : "Not installed") + " · " + hours(g.playtime);
     var hero = g.art.hero[0] || g.art.landscape[0] || wallpaper;

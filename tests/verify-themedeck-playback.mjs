@@ -1,0 +1,26 @@
+import {build} from 'esbuild';
+import assert from 'node:assert/strict';
+const result=await build({entryPoints:['src/themeDeckPlayback.ts'],bundle:true,write:false,format:'esm',platform:'node'});
+const {ThemeDeckPlayback,themeDeckTarget}=await import('data:text/javascript;base64,'+Buffer.from(result.outputFiles[0].text).toString('base64'));
+const policy={active:true,present:true,autoplay:true,running:false,nativeGamePage:false,appid:10,appids:new Set([10,20])};
+assert.equal(themeDeckTarget(policy),10);
+for(const patch of [{active:false},{present:false},{autoplay:false},{running:true},{nativeGamePage:true},{appid:99},{appid:undefined}])assert.equal(themeDeckTarget({...policy,...patch}),null);
+const loads=new Map(),elements=[],calls=[];
+const player=new ThemeDeckPlayback({load:id=>new Promise(resolve=>loads.set(id,resolve)),audio:()=>{const a={paused:true,duration:8,play(){this.paused=false;return Promise.resolve();},pause(){this.paused=true;}};elements.push(a);return a;},hold:()=>{calls.push('hold');return()=>calls.push('release');},duck:on=>calls.push('duck:'+on),meter:()=>{calls.push('meter');return()=>calls.push('unmeter');}});
+const track=id=>({url:'http://localhost/td/'+id,filename:'Track',volume:.7,startOffset:12,loop:false});
+const flush=()=>new Promise(r=>setImmediate(r));
+player.focus(10);player.focus(20);loads.get(10)(track(10));await flush();assert.equal(elements.length,0);
+loads.get(20)(track(20));await flush();const a=elements[0];assert.equal(a.src,track(20).url);assert.equal(a.loop,false);assert.equal(a.volume,.7);a.onloadedmetadata();assert.equal(a.currentTime,7.99);
+player.focus(20,.4);assert.equal(a.volume,.4);assert.equal(elements.length,1);
+a.onended();assert(a.paused);assert.equal(calls.filter(c=>c==='release').length,1);player.focus(20);assert.equal(elements.length,1,'non-looping track must not restart on every poll');
+player.focus(10);player.stop();loads.get(10)(track(10));await flush();assert.equal(elements.length,1,'cancelled load must not play');
+player.focus(20);loads.get(20)(null);await flush();assert.equal(elements.length,1,'missing assignment leaves theme music untouched');
+player.focus(10);loads.get(10)(track(10));await flush();elements[1].onerror();assert(elements[1].paused);player.stop();
+assert.equal(calls.filter(c=>c==='hold').length,calls.filter(c=>c==='release').length);
+assert.equal(calls.filter(c=>c==='duck:true').length,calls.filter(c=>c==='duck:false').length);
+assert.equal(calls.filter(c=>c==='meter').length,calls.filter(c=>c==='unmeter').length);
+// A late play resolution after switching away cannot restart the cancelled song.
+let resolvePlay;const delayed={pause(){this.paused=true;},play(){return new Promise(r=>resolvePlay=r);}};
+const later=new ThemeDeckPlayback({load:async()=>track(10),audio:()=>delayed,hold:()=>()=>{},duck:()=>{},meter:()=>()=>{}});
+later.focus(10);await flush();later.stop();delayed.paused=false;resolvePlay();await flush();assert(delayed.paused);
+console.log('PASS: shared ThemeDeck policy, races, missing assignments, loop/end, offsets, master volume, cancellation, balanced handoff, errors');

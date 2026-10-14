@@ -19,7 +19,7 @@ export const VITA_LOOKS: { id: VitaLook; name: string }[] = [
   { id: "sakura", name: "Sakura" },
 ];
 
-export type ThemeId = "frame" | "wii" | "wiiu" | "switch" | "n3ds" | "vita" | "ps2" | "ps3" | "psp" | "ps4" | "ps5" | "x360" | "aero" | "aero2" | "xbox" | "dial" | "castle" | "republic" | "minecraft" | "pain" | "nazarick" | "ps1" | "iisu";
+export type ThemeId = "onyx" | "silver" | "frame" | "wii" | "wiiu" | "switch" | "n3ds" | "vita" | "ps2" | "ps3" | "psp" | "ps4" | "ps5" | "x360" | "aero" | "aero2" | "xbox" | "dial" | "castle" | "republic" | "minecraft" | "pain" | "nazarick" | "ps1" | "iisu";
 export type StyleValue = string | number | boolean;
 export type SortMode = "recent" | "alpha" | "playtime";
 export type AAction = "theme" | "launch" | "details";
@@ -37,6 +37,8 @@ export const showTitle = (s: { titles: Partial<Record<ThemeId, TitleMode>> }, th
 };
 
 export const THEMES: { id: ThemeId; name: string; blurb: string }[] = [
+  {id:"onyx",name:"Onyx Wheel (bonus)",blurb:"Black textured body, cover flow and circular touch navigation"},
+  {id:"silver",name:"Silver Wheel (bonus)",blurb:"Brushed aluminum, reflected covers and circular wheel navigation"},
   {id:"wii",name:"Wii",blurb:"Channel grid, curved system bar and channel launch banners"},
   {id:"wiiu",name:"Wii U",blurb:"Rounded software tiles and colorful system shortcuts"},
   {id:"switch",name:"Switch",blurb:"Square game tiles with a bright focus frame; .nxtheme themes"},
@@ -163,7 +165,7 @@ export const storeSectionOn = (s: Pick<Settings, "storeSections">, theme: ThemeI
  *  Everything else (clock, volume, library sorting, Ⓐ…) is the user's own. */
 export const LOOK_KEYS = [
   "theme", "activeTheme", "pages", "mix", "iconPicks", "themeOptions", "styles", "vita", "xmb", "x360", "dial", "wallpapers", "wallpaperDim", "packs", "musicPacks", "music",
-  "coverStyles", "titles", "iconSizes", "videoBackgrounds", "ps4GameBackgrounds", "castleWeather", "castleWindows",
+  "coverStyles", "titles", "iconSizes", "protondbThemes", "videoBackgrounds", "ps4GameBackgrounds", "castleWeather", "castleWindows",
   "minecraftFollowFocus", "minecraftWaitForSwipe", "minecraftSlim", "themeFx", "wiiuView", "wiiuTheme", "xboxSkin", "wiiSkin", "switchTheme", "wiiuPlazaPositions", "wiiuPlazaTips", "n3dsSkin", "n3dsCursor", "n3dsTop", "n3dsLayout", "hubStyle", "storeSections",
 ] as const;
 export type LookKey = (typeof LOOK_KEYS)[number];
@@ -205,6 +207,7 @@ export type DateFormat = "MDY" | "DMY" | "YMD";
 export type StandardOptions = Pick<Settings, StandardKey>;
 
 export interface Settings {
+  profilePictures?: Record<string,string>;
   /** The theme (engine manifest id) in use; "" = chosen the old way (layout + skin file). */
   activeTheme: string;
   /** A look's slots (presets v2): per look id, what fills each slot. A theme id (that theme's own file), "none", or an
@@ -230,6 +233,7 @@ export interface Settings {
   minecraftWaitForSwipe?: boolean;
   minecraftSlim?: boolean;
   backgroundMusic: boolean;
+  themeDeckFocusMusic: boolean;
   ps4GameBackgrounds: boolean;
   castleWeather: boolean;
   castleWindows: "replace" | "layered";
@@ -277,6 +281,7 @@ export interface Settings {
   maxGames: number; // cap for very large libraries
   animations: boolean; // background animations (waves, particles, towers)
   badges: { protondb: boolean; deck: boolean }; // compatibility badges on game details
+  protondbThemes: Record<string, boolean | undefined>; // per-look Options menu; requires detected ProtonDB plugin
   coverStyles: Partial<Record<ThemeId,"flat"|"case3d">>;
   titles: Partial<Record<ThemeId, TitleMode>>; // game name text under icons
   trailers: { preview: boolean; sound: boolean; video: boolean }; // PSP/PS3 icon videos, trailer sound, store trailers in the Video category
@@ -403,6 +408,7 @@ export const DEFAULTS: Settings = {
   userPresets: [],
   userPreset: "",
   backgroundMusic: true,
+  themeDeckFocusMusic: true,
   ps4GameBackgrounds: true,
   castleWeather: false,
   castleWindows: "replace",
@@ -441,6 +447,7 @@ export const DEFAULTS: Settings = {
   maxGames: 400,
   animations: true,
   badges: { protondb: false, deck: false },
+  protondbThemes: {},
   coverStyles: {},
   titles: {},
   trailers: { preview: true, sound: false, video: false },
@@ -475,6 +482,9 @@ export function onSettingsChange(l: () => void): () => void {
 export const cleanSettings = (saved: any): Settings => merge(saved);
 function merge(saved: any): Settings {
   const s: any = { ...DEFAULTS, ...(saved && typeof saved === "object" ? saved : {}) };
+  s.protondbThemes = Object.fromEntries(Object.entries(s.protondbThemes && typeof s.protondbThemes === "object" ? s.protondbThemes : {}).filter(([key,value])=>key.length>0&&key.length<=64&&typeof value==="boolean").slice(0,500));
+  s.themeDeckFocusMusic = s.themeDeckFocusMusic !== false;
+  s.profilePictures=Object.fromEntries(Object.entries(s.profilePictures&&typeof s.profilePictures==="object"?s.profilePictures:{}).filter(([k,v])=>k.length<128&&typeof v==="string"&&v.length<500000&&/^data:image\/png;base64,/.test(v)));
   if (typeof s.minecraftSkin !== "string" || s.minecraftSkin.length > 60000 || !s.minecraftSkin.startsWith("data:image/png;base64,")) s.minecraftSkin = "";
   s.wiiuPlazaPositions=Object.fromEntries(Object.entries(s.wiiuPlazaPositions??{}).filter(([k,v]:[string,any])=>/^\d+$/.test(k)&&Number.isFinite(v?.x)&&Number.isFinite(v?.z)).slice(0,1000).map(([k,v]:[string,any])=>[k,{x:Math.max(-17,Math.min(17,v.x)),z:Math.max(-14,Math.min(13,v.z))}]));
   if (s.wiiuView!=="plaza") s.wiiuView="grid";
@@ -708,7 +718,7 @@ export function resetThemeSettings(theme: ThemeId) {
       return r;
     };
     const out: Partial<Settings> = {
-      iconSizes: drop(p.iconSizes), titles: drop(p.titles), coverStyles: drop(p.coverStyles), packs: drop(p.packs),
+      iconSizes: drop(p.iconSizes), protondbThemes: Object.fromEntries(Object.entries(p.protondbThemes).filter(([key])=>key!==theme&&!key.startsWith(`${theme}:`)&&!(p.theme===theme&&key===p.activeTheme))), titles: drop(p.titles), coverStyles: drop(p.coverStyles), packs: drop(p.packs),
       music: drop(p.music), musicPacks: drop(p.musicPacks), wallpapers: drop(p.wallpapers), videoBackgrounds: drop(p.videoBackgrounds),
       storeSections: drop(p.storeSections),
     };

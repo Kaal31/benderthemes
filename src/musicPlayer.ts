@@ -437,6 +437,17 @@ export const musicPlayer = {
 };
 bindPrefs();
 
+// Full player pages suppress the shared floating card without changing playback.
+const fullPlayerPages=new Set<symbol>();
+export const fullMusicPlayerVisible=()=>fullPlayerPages.size>0;
+export function useFullMusicPlayer(active:boolean){
+ useEffect(()=>{
+  if(!active)return;
+  const token=Symbol("music page");fullPlayerPages.add(token);emit({});
+  return()=>{fullPlayerPages.delete(token);emit({});};
+ },[active]);
+}
+
 export function usePlayer(): PlayerState {
   const [s, setS] = useState(st);
   useEffect(() => {

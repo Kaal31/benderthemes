@@ -6,6 +6,7 @@ import { Marketplace, inventory } from "./Marketplace";
 import { openMarketplace, useMarketplace, useResourceRevision } from "./marketplaceState";
 import { FirmwareNotice } from "./FirmwareNotice";
 import { WiiuImportPrompt } from "./wiiuThemes";
+import {SilverHome} from "./themes/Silver";
 import {NazarickHome} from "./themes/Nazarick";
 import {PainHome} from "./themes/Pain";
 import {AeroV2Home} from "./themes/AeroV2";
@@ -35,6 +36,7 @@ import { bump, diag, reportError } from "./diag";
 import { setUiDocument } from "./cssvars";
 import { Overlay, ScreenshotGallery, TrailerPlayer, VideoPlayer } from "./overlays";
 import { MusicPlayerView, NowPlayingMini } from "./mediaCenter";
+import { HomePluginBadges, PLUGIN_BADGE_CSS } from "./pluginBadges";
 import { StoreView } from "./storeView";
 import { l1Held, pushModalInput, ThemeRoot, setGlobalInput, StageHost } from "./input";
 import { ThemeSwitcher } from "./themeSwitcher";
@@ -57,6 +59,7 @@ import { VideoIntro } from "./engine/VideoIntro";
 import { activeTheme, slotAccent, slotFont, slotUrl, useThemes } from "./engine/registry";
 import { LAYOUT_SLOTS } from "./engine/assets";
 import { pageSettings } from "./engine/pages";
+import { useThemeDeckIntegration } from "./themeDeckIntegration";
 
 // CSS hook: which theme file is active, as "<kind>:<file name>" (empty for looks without theme files)
 const skinHook = (s: ReturnType<typeof getSettings>) => {
@@ -65,6 +68,8 @@ const skinHook = (s: ReturnType<typeof getSettings>) => {
 };
 
 const THEME_COMPONENTS: Record<ThemeId, () => ReactNode> = {
+  onyx: () => <SilverHome dark />,
+  silver: () => <SilverHome />,
   frame: () => <FrameHome />,
   wii: () => <NintendoHome kind="wii"/>,
   wiiu: () => <NintendoHome kind="wiiu"/>,
@@ -268,6 +273,7 @@ function ThemedHomeContent({ standalone }: { standalone?: boolean }) {
     refreshPacks().then(() => setPacksRev((r) => r + 1));
   }, []);
   useHomeMusic(s.theme, !launching && (overlay === null || overlay.kind === "store"), destination?.place); // the store keeps the theme music
+  useThemeDeckIntegration(s.enabled && s.backgroundMusic !== false && s.themeDeckFocusMusic !== false && !launching && !overlay && !market.opened && (!destination || destination.place === "game"), useMemo(() => new Set(lib.games.map(g => g.appid)), [lib]), destination?.place === "game" ? destination.game?.appid : undefined);
   // every theme's "Store" entry opens the themed store (unless turned off in Quick Access)
   useEffect(() => {
     setStoreOpener(() => {
@@ -343,6 +349,8 @@ function ThemedHomeContent({ standalone }: { standalone?: boolean }) {
       <div className="dht-safe-area" style={{position:"absolute",inset:s.tvMode?"3%":"0",...presentationVariables(s),...themeSlotStyle}}>
       {themeFont && <style>{`@font-face{font-family:"dht-theme-font";src:url("${themeFont}")}`}</style>}
       <style>{PRESENTATION_CSS}</style>
+      <style>{PLUGIN_BADGE_CSS}</style>
+      {market.opened&&<style>{".dht-root .dht-badge--protondb{display:none!important}"}</style>}
       <style>{`.dht-root[data-tv=true] .dht-menu-item{font-size:25px!important;min-height:44px}.dht-root[data-motion=false] *{animation:none!important;transition:none!important}@media(prefers-reduced-motion:reduce){.dht-root *{animation:none!important;transition:none!important}}`}</style>
       <HomeCtx.Provider value={api}>
         <SafeBoundary
@@ -358,6 +366,7 @@ function ThemedHomeContent({ standalone }: { standalone?: boolean }) {
           <StageHost>{render()}</StageHost>
         </SafeBoundary>
       </HomeCtx.Provider>
+      <HomePluginBadges settings={s} hidden={!!overlay||!!destination||!!launching||market.opened||themeMenu.isOpen}/>
       {overlay?.kind === "shots" && <div className="dht-themed-media"><ScreenshotGallery appid={overlay.appid} index={overlay.index} tab={overlay.tab} lib={lib.byId} onClose={() => setOverlay(null)} onVideo={(v) => { playSound("open"); setOverlay({ kind: "video", video: v, back: true }); }} /></div>}
       {overlay?.kind === "trailer" && <div className="dht-themed-media"><TrailerPlayer game={overlay.game} onClose={() => setOverlay(null)} /></div>}
       {overlay?.kind === "video" && <div className="dht-themed-media"><VideoPlayer video={overlay.video} lib={lib.byId} onClose={() => setOverlay(overlay.back ? { kind: "shots", tab: "videos" } : null)} /></div>}
@@ -370,7 +379,7 @@ function ThemedHomeContent({ standalone }: { standalone?: boolean }) {
       <MenuView menu={themeMenu} variant={s.theme === "ps3" ? "xmb" : s.theme === "frame" ? "ps5" : s.theme} art={s.theme === "psp" ? { panel: cachedPspSkin(pspFile(s))?.visuals?.optionMenu, focus: cachedPspSkin(pspFile(s))?.visuals?.menuFocus } : undefined} />
       {launching && <LaunchView value={launching} settings={s}/>}
       <BootIntro file={s.bootIntro} />
-      <ThemeIntro />
+      <ThemeIntro autoTheme={s.onboardingDone && !market.opened && !api.busy && !slotUrl("bootVideo", s) ? s.theme : undefined} />
       <VideoIntro url={slotUrl("bootVideo", s)} />
       {market.opened && <Marketplace requested={market.requested} from={market.from} />}
       <FirmwareNotice paused={market.opened || !!overlay || !!destination || !!launching} />

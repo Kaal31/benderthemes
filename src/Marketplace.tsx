@@ -11,6 +11,13 @@ import { ensurePackInstalled, PackProgress, ThemeArt, themeCatalog, themeDownloa
 import { deleteTheme } from "./themeActions";
 import { HubLogo } from "./hubLogo";
 import { BUILT_IN_THEMES, refreshInventory } from "./presets";
+import { bonusThemeFeatures, BONUS_FEATURE_LABELS } from "./bonusThemeFeatures";
+
+function BonusFeatureBadges({id}:{id:string}) {
+  const features=bonusThemeFeatures(id);
+  if(!features.length)return null;
+  return <div className="dht-hub-feature-badges" aria-label="Bonus theme features">{features.map(feature=><span key={feature} className="dht-hub-feature-badge" data-feature={feature} title={BONUS_FEATURE_LABELS[feature].description}>{BONUS_FEATURE_LABELS[feature].label}</span>)}</div>;
+}
 
 export type ThemePack = { id: string; name: string; theme: ThemeId | null; description: string; size: number; version: string; installedVersion?: string; compatible: boolean; preview?: string; poster?: string; builtIn?: boolean };
 type Progress = PackProgress;
@@ -181,12 +188,14 @@ export function Marketplace({ requested, from }: { requested?: ThemeId; from?: T
           <div className="market-art dht-hub-art" data-theme={pack.id}>{pack.poster ? <img src={pack.poster} alt="" loading="lazy" onError={e => { e.currentTarget.style.display = "none"; }} /> : <span>{pack.name}</span>}{state && <em className="dht-hub-state" data-state={state.toLowerCase()}>{state}</em>}</div>
           <div className="market-card-title"><strong>{pack.name}</strong>{pack.size > 0 && <span>{(pack.size / 1048576).toFixed(1)} MB</span>}</div>
           <p>{THEMES.find(t => t.id === pack.theme)?.blurb || pack.description}</p>
+          <BonusFeatureBadges id={pack.id}/>
         </button>;
       })}
     </div><aside className="dht-hub-detail">{current && <>
       <div className="dht-hub-detail-scroll">
         <div className="market-detail-art" data-theme={current.id}>{current.preview || current.poster ? <img key={current.id} src={current.preview || current.poster} alt={`${current.name} animated preview`} /> : <span>Preview coming soon</span>}</div>
         <h2>{current.name}</h2><p>{current.description}</p>
+        <BonusFeatureBadges id={current.id}/>
         <dl><div><dt>Download</dt><dd>{current.size ? `${(current.size / 1048576).toFixed(1)} MB` : "Built in"}</dd></div><div><dt>Version</dt><dd>{current.version}</dd></div><div><dt>Available offline</dt><dd>{current.installedVersion ? "Ready to play" : "After download"}</dd></div></dl>
       </div>
       <div className="dht-hub-detail-actions">
@@ -235,6 +244,9 @@ const MARKET_CSS = `
 .dht-hub-state[data-state=active]{background:var(--dht-hub-accent);color:var(--dht-hub-accent-text)}.dht-hub-state[data-state=update]{background:#d39b22;color:#1d1300}
 .market-card-title{display:flex;justify-content:space-between;align-items:baseline;padding:10px 12px 0;gap:6px;min-width:0}.market-card-title strong{font-size:14px;letter-spacing:var(--dht-hub-track);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}.market-card-title span{font-size:10px;color:var(--dht-hub-card-sub);white-space:nowrap}
 .market-card p{margin:4px 12px 0;font-size:11px;color:var(--dht-hub-card-sub);white-space:nowrap;overflow:hidden;text-overflow:ellipsis;text-transform:none}
+.dht-hub-feature-badges{display:flex;gap:5px;flex-wrap:wrap;margin:8px 12px 0;text-transform:none;letter-spacing:0}
+.dht-hub-detail .dht-hub-feature-badges{margin:10px 0 0}
+.dht-hub-feature-badge{display:inline-flex;align-items:center;min-height:21px;padding:3px 7px;font:600 10px/1.2 var(--dht-hub-font);border-radius:var(--dht-hub-pill);border:1px solid var(--dht-hub-line);background:color-mix(in srgb,var(--dht-hub-accent) 12%,var(--dht-hub-panel));color:var(--dht-hub-card-text);white-space:nowrap}
 .dht-market aside.dht-hub-detail{display:flex;flex-direction:column;min-height:0;background:color-mix(in srgb,var(--dht-hub-panel) 70%,transparent);border-radius:var(--dht-hub-radius);box-shadow:var(--dht-hub-shadow);overflow:hidden}
 .dht-hub-detail-scroll{flex:1;min-height:0;overflow:auto;padding:14px 14px 4px}
 .market-detail-art{width:100%;border-radius:calc(var(--dht-hub-radius)*.7);overflow:hidden;background:#141a24;color:#fff;display:grid;place-items:center;position:relative}.market-detail-art img{position:absolute;inset:0;width:100%;height:100%;object-fit:contain}

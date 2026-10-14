@@ -1,8 +1,10 @@
+import {customProfilePicture,setProfilePicture,uploadProfilePicture} from "./profilePicture";
 // Every option that belongs to one theme, as an in-theme menu (△ / Y → Theme options, and the
 // themes' own "Home Screen Settings" entries). Quick Access keeps only the options shared by all
 // themes, plus Reset and Delete theme.
 import { openDestination } from "./destinations";
 import { musicPlaybackItems } from "./musicPlayer";
+import { protonDbEnabled, protonDbThemeKey } from "./badges";
 import { setStyle, style, StyleOption, THEME_STYLES } from "./engine/themeStyles";
 import type { MenuItem } from "./common";
 import { collectionMenu } from "./common";
@@ -421,12 +423,20 @@ export function customizeItems(): MenuItem[] {
   const th = S().theme;
   const file = th === "frame" ? [] : themeFileItems(th);
   const own = lookOptionItems(th);
+  const controls=customizeControls().filter(c=>c.id!=="file");
+  const pageBackgrounds=controls.filter(c=>c.id.startsWith("wallpaper:"));
   return [
-    ...customizeControls().filter((c) => c.id !== "file").map(slotItem),
+    group("Profile picture",()=>[
+      {label:"Upload custom picture…",action:uploadProfilePicture},
+      {label:"Use Steam / theme default picture",action:()=>setProfilePicture(undefined)},
+    ]),
+    ...(pageBackgrounds.length?[group("Background",()=>pageBackgrounds.map(slotItem))]:[]),
+    ...controls.filter(c=>!c.id.startsWith("wallpaper:")).map(slotItem),
     ...(file.length ? [group("Theme file", () => themeFileItems(S().theme))] : []),
     ...(own.length ? [group("Look options", () => lookOptionItems(S().theme))] : []),
     group(own.some((i) => i.label === "Library") ? "Games shown" : "Library", () => [
       { ...collectionMenu(th), label: "Show in this theme" },
+      toggle("ProtonDB badges (this theme)", () => protonDbEnabled(S()), (v) => updateSettings((p) => ({ protondbThemes: { ...p.protondbThemes, [protonDbThemeKey(S())]: v } }))),
       choice("Icon size", [75, 85, 100, 110].map((v) => ({ id: v, name: `${v}%${v === 100 ? " · default" : ""}` })), () => S().iconSizes?.[th] ?? 100, (v) => updateSettings((p) => ({ iconSizes: { ...p.iconSizes, [th]: v } }))),
       ...(USES.titles.includes(th) ? [choice("Game titles", TITLE_MODES, () => S().titles[th] ?? "show", (v) => updateSettings((p) => ({ titles: { ...p.titles, [th]: v } })))] : []),
       ...(CASE_THEMES.includes(th) ? [choice("Cover style", [{ id: "flat", name: "Flat" }, { id: "case3d", name: "3D case" }], () => S().coverStyles?.[th] ?? "flat", (v) => updateSettings((p) => ({ coverStyles: { ...p.coverStyles, [th]: v as "flat" | "case3d" } })))] : []),
@@ -629,6 +639,10 @@ export function globalSettingsItems(): MenuItem[] {
       choice("Ⓐ on a game", [{ id: "theme", name: "Like the console" }, { id: "launch", name: "Launch right away" }, { id: "details", name: "Steam's game page" }], () => getRawSettings().aAction, (v) => updateSettings({ aAction: v as any })),
     ]),
     group("Look · all themes", () => [
+      group("Profile picture · all themes",()=>[
+        {label:"Upload custom picture…",action:uploadProfilePicture},
+        {get label(){return customProfilePicture()?"Use Steam / theme default picture":"Steam / theme default picture (active)";},action:()=>setProfilePicture(undefined)},
+      ]),
       toggle("TV mode", () => S().tvMode, (v) => updateSettings({ tvMode: v })),
       toggle("Shortcut buttons the console never had", () => !!S().shortcutButtons, (v) => updateSettings({ shortcutButtons: v })),
       toggle("Background animations", () => getRawSettings().animations, (v) => updateSettings({ animations: v })),
@@ -640,13 +654,13 @@ export function globalSettingsItems(): MenuItem[] {
       choice("Animated background quality", [{ id: "full", name: "Full resolution" }, { id: "half", name: "Half resolution · saves battery" }], () => getRawSettings().bgQuality, (v) => updateSettings({ bgQuality: v as any })),
       choice("Hub style", [{ id: "auto", name: "Auto (theme it was opened on)" }, { id: "neutral", name: "Neutral" }, { id: "preview", name: "Preview (the theme focused in Discover)" }, ...consoleThemeIds().map((id) => ({ id, name: THEMES.find((t) => t.id === id)?.name ?? id }))], () => S().hubStyle, (v) => updateSettings({ hubStyle: v })),
       toggle("Themed store", () => S().themedStore !== false, (v) => updateSettings({ themedStore: v })),
-      toggle("ProtonDB badges", () => S().badges.protondb, (v) => updateSettings((p) => ({ badges: { ...p.badges, protondb: v } }))),
       toggle("Steam Deck compatibility badges", () => S().badges.deck, (v) => updateSettings((p) => ({ badges: { ...p.badges, deck: v } }))),
       toggle("Hide Steam's top bar", () => S().hideSteamHeader, (v) => updateSettings({ hideSteamHeader: v })),
       choice("Steam's bottom bar", FOOTER_MODES, () => S().footer, (v) => updateSettings({ footer: v })),
     ]),
     group("Sound · all themes", () => [
       toggle("Background music", () => S().backgroundMusic !== false, (v) => updateSettings({ backgroundMusic: v })),
+        toggle("ThemeDeck music for focused games", () => S().themeDeckFocusMusic !== false, (v) => updateSettings({ themeDeckFocusMusic: v })),
       toggle("Navigation sounds", () => S().sounds, (v) => updateSettings({ sounds: v })),
       choice("Sound volume", [0, 20, 40, 60, 80, 100].map((v) => ({ id: v, name: `${v}%` })), () => Math.round(S().sfxVolume / 20) * 20, (v) => updateSettings({ sfxVolume: v })),
       choice("Music volume", [0, 20, 40, 60, 80, 100].map((v) => ({ id: v, name: `${v}%` })), () => Math.round(S().musicVolume / 20) * 20, (v) => updateSettings({ musicVolume: v })),

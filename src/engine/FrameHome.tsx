@@ -22,6 +22,10 @@ import { Game, openSteam, SteamPlace } from "../library";
 import { getSettings, updateSettings } from "../settings";
 import { fmtTime, playSound, SOUND_FILES, SoundKind } from "../steam";
 import { activeTheme, iconMap, slotAccent, slotUrl, frameUrl } from "./registry";
+import { themeAudioBands } from "../themeAudio";
+import { useDownloads } from "../downloads";
+import { framePageRequest } from "./framePages";
+import { useReportFocus } from "../focus";
 
 export const FRAME_PROTOCOL = 1;
 const BUTTONS: Btn[] = ["up", "down", "left", "right", "a", "b", "x", "y", "menu", "l1", "r1"];
@@ -44,10 +48,14 @@ function publicGame(g: Game, abs: (u: string) => string) {
 
 export function FrameHome() {
   const api = useHome();
+  const downloads = useDownloads();
+  const requests = useRef({ at: 0, count: 0, pending: 0 });
   const theme = activeTheme(api.settings);
   const frame = useRef<HTMLIFrameElement>(null);
   const [ready, setReady] = useState<{ handles: Set<Btn> } | null>(null);
   const [hints, setHints] = useState<Hints>({});
+  const [focusedAppid, setFocusedAppid] = useState<number | null>(null);
+  useReportFocus(focusedAppid === null ? undefined : api.lib.byId.get(focusedAppid));
   const lastLaunch = useRef(0);
   const url = theme?.frame ? frameUrl(theme) : null; // the wrapper page, never the theme page directly
 
@@ -81,12 +89,20 @@ export function FrameHome() {
       collections: api.lib.collections.map((c) => ({ id: c.id, name: c.name, appids: c.games.map((g) => g.appid) })),
       saved: theme ? s.frameData[theme.id] ?? null : null,
       busy: api.busy,
+      capabilities: { pages: 1, audio: 1, focus: 1 },
     };
   }, [api.lib, api.settings, api.user, api.busy, theme?.id, ready]);
 
   useEffect(() => {
     if (ready) post({ type: "state", ...state });
   }, [state]);
+
+  // The same bounded spectrum is available to every frame theme.
+  useEffect(() => {
+    if (!ready) return;
+    const timer = setInterval(() => post({ type: "audio", bands: themeAudioBands() }), 50);
+    return () => clearInterval(timer);
+  }, [ready, theme?.id, url]);
 
   // Messages from the interface. Only our own iframe is listened to.
   useEffect(() => {
@@ -97,6 +113,26 @@ export function FrameHome() {
       const m = e.data;
       if (!m || typeof m !== "object" || m.dht !== FRAME_PROTOCOL || typeof m.type !== "string") return;
       switch (m.type) {
+        case "focus": {
+          if (m.appid === null) setFocusedAppid(null);
+          else if (find(m.appid)) setFocusedAppid(m.appid);
+          return;
+        }
+        case "pageRequest": {
+          if (!Number.isSafeInteger(m.requestId) || typeof m.op !== "string") return;
+          const budget = requests.current;
+          if (Date.now() - budget.at > 1000) { budget.at = Date.now(); budget.count = 0; }
+          if (++budget.count > 12 || budget.pending >= 4) {
+            post({ type: "pageResult", requestId: m.requestId, error: "Too many page requests. Try again." }); return;
+          }
+          budget.pending++;
+          const target = frame.current?.contentWindow;
+          void framePageRequest(m.op, m.args, api, downloads).then(
+            data => { if (target === frame.current?.contentWindow) post({ type: "pageResult", requestId: m.requestId, data }); },
+            () => { if (target === frame.current?.contentWindow) post({ type: "pageResult", requestId: m.requestId, error: "Could not load this data. Please try again." }); }
+          ).finally(() => { budget.pending--; });
+          return;
+        }
         case "ready": {
           const handles = new Set<Btn>((Array.isArray(m.handles) ? m.handles : []).filter((b: unknown): b is Btn => BUTTONS.includes(b as Btn)));
           setReady({ handles });
@@ -137,14 +173,17 @@ export function FrameHome() {
           } catch {
             /* not plain data */
           }
-          if (size <= MAX_SAVE) updateSettings((p) => ({ frameData: { ...p.frameData, [theme.id]: m.data ?? null } }));
+          if (size <= MAX_SAVE) {
+            if (find(m.data?.lastAppid)) setFocusedAppid(m.data.lastAppid);
+            updateSettings((p) => ({ frameData: { ...p.frameData, [theme.id]: m.data ?? null } }));
+          }
           return;
         }
       }
     };
     view.addEventListener("message", onMessage);
     return () => view.removeEventListener("message", onMessage);
-  }, [api, state, theme?.id]);
+  }, [api, state, theme?.id, downloads]);
 
   // A tap inside the frame must not take keyboard/controller focus away from the home.
   useEffect(() => {
@@ -158,7 +197,7 @@ export function FrameHome() {
     return () => view.removeEventListener("blur", onBlur);
   }, [url]);
 
-  useEffect(() => setReady(null), [url]);
+  useEffect(() => { setReady(null); setFocusedAppid(null); }, [url]);
 
   const onInput = (p: Press) => {
     if (ready?.handles.has(p.btn)) {

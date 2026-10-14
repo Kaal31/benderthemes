@@ -1,0 +1,98 @@
+{
+  "ps2": {
+    "url": "https://www.youtube.com/watch?v=i5mBc7O_VHk",
+    "title": "All PlayStation Startups (PS1, PS2, PSX, PSP, PS3, PS Vita, PS4, PS5)",
+    "uploader": "ChaoticWolf",
+    "start": 49,
+    "duration": 16,
+    "file": "ps2.mp4"
+  },
+  "ps4": {
+    "url": "https://www.youtube.com/watch?v=i5mBc7O_VHk",
+    "title": "All PlayStation Startups (PS1, PS2, PSX, PSP, PS3, PS Vita, PS4, PS5)",
+    "uploader": "ChaoticWolf",
+    "start": 245,
+    "duration": 15,
+    "file": "ps4.mp4"
+  },
+  "ps5": {
+    "url": "https://www.youtube.com/watch?v=i5mBc7O_VHk",
+    "title": "All PlayStation Startups (PS1, PS2, PSX, PSP, PS3, PS Vita, PS4, PS5)",
+    "uploader": "ChaoticWolf",
+    "start": 267,
+    "duration": 12,
+    "file": "ps5.mp4"
+  },
+  "xbox": {
+    "url": "https://www.youtube.com/watch?v=HbdCKo9oa3o",
+    "title": "Original Xbox Startup",
+    "uploader": "SenorPoncho92",
+    "start": 0,
+    "duration": 12,
+    "file": "xbox.mp4"
+  },
+  "x360": {
+    "url": "https://www.youtube.com/watch?v=92coix3E_vY",
+    "title": "Original Xbox 360 Startup (1080p)",
+    "uploader": "Patexi",
+    "start": 0,
+    "duration": 11,
+    "file": "x360.mp4"
+  },
+  "switch": {
+    "url": "https://www.youtube.com/watch?v=tmRNnOMdOvU",
+    "title": "Nintendo Switch startup",
+    "uploader": "DiegoDj DiToro",
+    "start": 0,
+    "duration": 8,
+    "file": "switch.mp4"
+  },
+  "n3ds": {
+    "url": "https://www.youtube.com/watch?v=pazC03LiEAw",
+    "title": "Nintendo 3DS - Startup Intro",
+    "uploader": "Geocax - Longplays & 100%-Runs",
+    "start": 0,
+    "duration": 6,
+    "file": "n3ds.mp4"
+  },
+  "wii": {
+    "url": "https://www.youtube.com/watch?v=3lJ6HUTCt1U",
+    "title": "Nintendo Wii - Startup Intro",
+    "uploader": "Geocax - Longplays & 100%-Runs",
+    "start": 0,
+    "duration": 5.3,
+    "file": "wii.mp4"
+  },
+  "psp": {
+    "url": "https://www.youtube.com/watch?v=7LpMZrn_ay4",
+    "title": "PSP / PlayStation Portable - Boot Screen / Startup 1080p \u1d34\u1d30",
+    "uploader": "PlayStationGeneration.it",
+    "start": 0,
+    "duration": 9.5,
+    "file": "psp.mp4"
+  },
+  "ps3": {
+    "url": "https://www.youtube.com/watch?v=TAiA-crnct0",
+    "title": "PlayStation 3 Startup Intro 1080P 2K 4K 8K ULTRA HD 60\u1da0\u1d56\u02e2\u2743",
+    "uploader": "+ONS- CHANNEL",
+    "start": 0,
+    "duration": 5,
+    "file": "ps3.mp4"
+  },
+  "vita": {
+    "url": "https://www.youtube.com/watch?v=AWkrgOJpWDk",
+    "title": "PlayStation Vita (PS Vita) Startup 2012",
+    "uploader": "PlayStation 3",
+    "start": 0,
+    "duration": 14,
+    "file": "vita.mp4"
+  },
+  "iisu": {
+    "url": "https://www.youtube.com/watch?v=OH8-nyusTW0",
+    "title": "iiSU Alpha 7.4 - Mizu and Media",
+    "uploader": "iiSU",
+    "start": 23.7,
+    "duration": 3.6,
+    "file": "iisu.mp4"
+  }
+}

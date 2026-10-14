@@ -14,8 +14,8 @@ export const COMPANIES: Company[] = ["Sony", "Microsoft", "Nintendo", "Bonus", "
 
 /** Everything a theme can supply, and so everything that can be swapped between themes. */
 export type SlotKind = "wallpaper" | "sounds" | "music" | "bootVideo" | "launchVideo" | "accent" | "font" | "icons";
-export const SLOTS: { id: SlotKind; name: string; kind: "image" | "pack" | "video" | "color" | "font" | "icons" }[] = [
-  { id: "wallpaper", name: "Wallpaper", kind: "image" },
+export const SLOTS: { id: SlotKind; name: string; kind: "media" | "image" | "pack" | "video" | "color" | "font" | "icons" }[] = [
+  { id: "wallpaper", name: "Background (image / GIF / video)", kind: "media" },
   { id: "sounds", name: "Navigation sounds", kind: "pack" },
   { id: "music", name: "Music", kind: "pack" },
   { id: "bootVideo", name: "Boot intro video", kind: "video" },

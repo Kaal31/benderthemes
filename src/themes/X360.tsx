@@ -1,3 +1,4 @@
+import {ProfileAvatar} from "../ProfileAvatar";
 // Xbox 360 Metro-era dashboard (2011): lowercase pivots across the top and a
 // horizontally scrolling field of flat tiles on the grey V2 background. The
 // background, the XboxLogoHoriz at (1012,42), the tile icons and the legend at
@@ -213,7 +214,7 @@ function X360MetroHome() {
             <div style={{ fontSize: 15, opacity: 0.7 }}>{fmtTime(now, s.clock24)}</div>
           </div>
           <div style={{ width: 54, height: 54, background: GREEN, display: "flex", alignItems: "center", justifyContent: "center" }}>
-            <Icon name="user" size={38} color="#fff" />
+            <ProfileAvatar size={44} fallback={<Icon name="user" size={38} color="#fff" />}/>
           </div>
         </div>
 

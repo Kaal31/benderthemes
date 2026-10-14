@@ -247,8 +247,8 @@ setEngineHooks({
     if (from === t && t.source === "builtin") return undefined; // the layout's usual rules
     return themePack(from, kind);
   },
-  background(theme: ThemeId, folder: string | undefined) {
-    const s = getSettings();
+  background(theme: ThemeId, folder: string | undefined, settings?:Settings) {
+    const s = settings??getSettings();
     const t = activeTheme(s);
     if (!t || t.layout !== theme) return undefined;
     const ref = s.mix?.[t.id]?.wallpaper;

@@ -7,7 +7,6 @@ import { Press, setModalInput, useStage } from "./input";
 import { Game } from "./library";
 import { fmtDuration, LocalVideo, LocalVideoView, loadScreenshots, Shot, TrailerVideo, useVideos } from "./media";
 import { MediaFrame, mediaVars, MEDIA_CSS, useMediaSettings } from "./mediaCenter";
-import { musicPlayer } from "./musicPlayer";
 import { playSound } from "./steam";
 
 export type Overlay = { kind: "shots"; appid?: number; index?: number; tab?: "shots" | "videos" } | { kind: "trailer"; game: Game } | { kind: "video"; video: LocalVideo; back?: boolean } | { kind: "music" } | { kind: "store" } | null;
@@ -19,11 +18,6 @@ function useModal(handler: (p: Press) => boolean) {
     setModalInput((p) => ref.current(p));
     return () => setModalInput(null);
   }, []);
-}
-
-/** A video with sound is playing: hold the shared music player until it closes. */
-function useMusicHold() {
-  useEffect(() => musicPlayer.hold(), []);
 }
 
 // The viewer's place survives closing it and switching themes.
@@ -168,7 +162,6 @@ export function TrailerPlayer({ game, onClose }: { game: Game; onClose: () => vo
   const s = useMediaSettings();
   const [state, setState] = useState<"loading" | "playing" | "none">("loading");
   const [showInfo, setShowInfo] = useState(true);
-  useMusicHold();
   useEffect(() => {
     if (state !== "playing") return;
     const t = setTimeout(() => setShowInfo(false), 3500);
@@ -206,7 +199,6 @@ export function VideoPlayer({ video, lib, onClose }: { video: LocalVideo; lib: M
   const [el, setEl] = useState<HTMLVideoElement | null>(null);
   const [, tick] = useState(0);
   const [showInfo, setShowInfo] = useState(true);
-  useMusicHold();
   const poke = () => setShowInfo(true);
   useEffect(() => {
     if (!el) return;

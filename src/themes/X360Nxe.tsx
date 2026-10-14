@@ -1,3 +1,4 @@
+import {customProfilePicture} from "../profilePicture";
 // Xbox 360 New Xbox Experience (2008), rebuilt from the 9199 dashboard in
 // thedev0ps/Xbox-360-Dashboard-Archive. Measurements come from its XUI scenes
 // (controlp: MobyChannelScene, PanelScene, LegendScene, AuraScene) on a
@@ -211,7 +212,7 @@ export function NxeHome() {
           {/* your avatar, standing on the floor in front of the far panels */}
           <div aria-hidden="true" style={{ position: "absolute", left: 930, top: 236, width: 220, height: 360, zIndex: 50, pointerEvents: "none" }}>
             <div style={{ position: "absolute", left: 50, top: 316, width: 120, height: 22, borderRadius: "50%", background: "radial-gradient(closest-side, rgba(0,0,0,.35), transparent)" }} />
-            <X360Avatar spec={mine} model={model} motion={s.animations} faceX={-0.6} />
+            {customProfilePicture()?<img src={customProfilePicture()} alt="Custom profile picture" style={{width:"100%",height:"100%",objectFit:"contain"}}/>:<X360Avatar spec={mine} model={model} motion={s.animations} faceX={-0.6} />}
           </div>
           {/* Xbox LIVE sphere, bottom right */}
           {a.xboxlive && <img src={a.xboxlive} aria-hidden="true" style={{ position: "absolute", left: 1126, top: 604, width: 58, height: 58, opacity: st.online ? 1 : 0.55 }} />}

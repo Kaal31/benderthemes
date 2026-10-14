@@ -1,0 +1,37 @@
+{
+  "source": "https://www.soundsnap.com/tags/ipod",
+  "usage": "Local personal preview pack; licensed source downloads required before public distribution",
+  "clips": {
+    "confirm-press": [
+      "Button-Presses/ipod-touch-volume-press-01.mp3",
+      0,
+      0.22
+    ],
+    "back-release": [
+      "Button-Presses/ipod-touch-volume-press-04.mp3",
+      0,
+      0.22
+    ],
+    "menu-press": [
+      "Clip-Attachments/ipod-touch-clip-attach-03.mp3",
+      0,
+      0.2
+    ],
+    "toggle-press": [
+      "Button-Presses/ipod-touch-volume-press-02.mp3",
+      0,
+      0.23
+    ],
+    "wheel-press": [
+      "Button-Presses/ipod-touch-volume-press-03.mp3",
+      0.10658049886621315,
+      0.13
+    ],
+    "rotation-click": {
+      "source": "C:\\Users\\levmi\\Downloads\\\u0424\u0438\u043d\u0430\u043d\u0441\u043e\u0432\u044b\u0439 \u043f\u0430\u0440\u0442\u043d\u0435\u0440 \u0432 \u0434\u0435\u0439\u0441\u0442\u0432\u0443\u044e\u0449\u0438\u0439 \u043f\u0440\u043e\u0435\u043a\u0442\\victorabdo-spin-232536.mp3",
+      "start": 1.98,
+      "duration": 0.15,
+      "description": "User-supplied spin recording; isolated tick for each wheel detent"
+    }
+  }
+}

@@ -38,8 +38,11 @@ jobs:
       - run: npm run build
       - run: npx playwright install --with-deps chromium
       - run: node tests/verify-footer-keyboard.mjs
+      - run: python tests/verify-deckthemes-audio.py
       - run: python -m pip install Pillow
       - run: npm run preview
+      - run: node tests/verify-audio-downloads-browser.mjs
+      - run: python tests/verify-audio-packaging.py
       - run: node tools/capture_theme_previews.mjs
       - run: python tools/make_theme_gifs.py
       - run: node tests/verify-spotlight-install.mjs

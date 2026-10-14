@@ -1,0 +1,30 @@
+import {build} from 'esbuild';
+import assert from 'node:assert/strict';
+import {launch} from './browser.mjs';
+const pure=await build({entryPoints:['src/backgroundMedia.ts'],bundle:true,write:false,format:'esm'});
+const {backgroundMediaKind:kind}=await import('data:text/javascript;base64,'+Buffer.from(pure.outputFiles[0].text).toString('base64'));
+for(const src of ['movie.MP4','https://local/a.webm?token=1','data:video/webm;base64,AA'])assert.equal(kind(src),'video');
+for(const src of ['a.gif#x','data:image/gif;base64,AA'])assert.equal(kind(src),'gif');
+assert.equal(kind('poster.png'),'image');
+const script=await build({stdin:{contents:`import React from 'react';import {createRoot} from 'react-dom/client';import {BackgroundMedia} from './src/WallpaperMedia';const root=createRoot(document.getElementById('root'));window.show=(src,paused=false)=>root.render(React.createElement(BackgroundMedia,{src,paused}));window.clear=()=>root.unmount();`,resolveDir:process.cwd(),loader:'tsx'},bundle:true,write:false,format:'iife',jsx:'automatic'});
+const browser=await launch();
+try {
+ const page=await browser.newPage();
+ await page.setContent('<div id="root" style="position:relative;width:400px;height:300px"></div>');
+ await page.evaluate(()=>{window.plays=0;window.pauses=0;HTMLMediaElement.prototype.play=function(){window.plays++;return Promise.resolve();};HTMLMediaElement.prototype.pause=function(){window.pauses++;};});
+ await page.addScriptTag({content:script.outputFiles[0].text});
+ await page.evaluate(()=>window.show('test.webm'));
+ await page.waitForFunction(()=>window.plays>0);
+ assert.deepEqual(await page.locator('video').evaluate(v=>[v.muted,v.loop,v.playsInline]),[true,true,true]);
+ const before=await page.evaluate(()=>window.pauses);
+ await page.evaluate(()=>window.show('test.webm',true));
+ await page.waitForFunction(n=>window.pauses>n,before);
+ await page.evaluate(()=>window.show('data:image/gif;base64,R0lGODlhAQABAIAAAAAAAP///yH5BAEAAAAALAAAAAABAAEAAAIBRAA7'));
+ await page.waitForSelector('img');assert.equal(await page.locator('video').count(),0);
+ assert.match(await page.locator('img').getAttribute('src'),/^data:image\/gif/);
+ await page.evaluate(()=>window.show('test.webm'));
+ await page.waitForSelector('video');
+ const active=await page.evaluate(()=>window.pauses);await page.evaluate(()=>window.clear());
+ assert.ok(await page.evaluate(n=>window.pauses>n,active));
+ console.log('PASS media types, muted looping video, pause on disabled motion, GIF preservation, source switching and cleanup');
+} finally {await browser.close();}
