@@ -41,6 +41,17 @@ class UninstallTests(unittest.TestCase):
         self.assertFalse(self.runtime.exists())
         cleanup.cleanup()  # repeated uninstall is harmless
 
+    def test_preserves_plugin_logs_across_repeated_cleanup(self):
+        logs = self.home / "logs/ThemeHub"
+        logs.mkdir(parents=True)
+        cleanup.decky.DECKY_PLUGIN_LOG_DIR = str(logs)
+        expected = {"plugin.log": b"update failed\n", "plugin.log.1": b"previous run\n"}
+        for name, content in expected.items():
+            (logs / name).write_bytes(content)
+        cleanup.cleanup()
+        cleanup.cleanup()
+        self.assertEqual({p.name: p.read_bytes() for p in logs.iterdir()}, expected)
+
     def test_only_recorded_shared_resources_removed(self):
         for name in ("owned", "other-plugin"):
             (self.home / "sounds" / name).mkdir(parents=True)

@@ -63,8 +63,4 @@ def cleanup():
         for path in settings.iterdir():
             if path.name != "settings.json":
                 _remove(path)
-    log_dir = getattr(decky, "DECKY_PLUGIN_LOG_DIR", None)
-    if log_dir:
-        logs = Path(log_dir)
-        if not logs.is_symlink() and (home / "logs").resolve() in logs.resolve().parents:
-            _remove(logs)
+    # Keep Decky plugin logs for diagnosing uninstall/reinstall and update failures.
