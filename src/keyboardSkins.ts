@@ -24,6 +24,7 @@
 import { findClassModule } from "@decky/ui";
 import { getSettings, onSettingsChange, type Settings } from "./settings";
 import { getUiDocument } from "./cssvars";
+import { recordKeyboardEvent } from "./keyboardLifecycle";
 
 // ───────────── Steam's keyboard class names ─────────────
 const NAMES = ["Keyboard", "KeyboardKey", "Touched", "Focused", "ToggleOn", "ToggleOneShot", "ShiftedLabel", "KeyboardKeyHitArea", "KeyboardRow",
@@ -485,6 +486,7 @@ function apply(doc: Document, css: string | null, look: KbLook | null, c: KbClas
   let el = doc.getElementById(STYLE_ID) as HTMLStyleElement | null;
   const yieldTo = css && cssLoaderStylesKeyboard(doc, c) ? "css-loader" : "";
   if (!css || yieldTo) {
+    if (el) recordKeyboardEvent({ event: "skin-removed" });
     el?.remove();
     html.removeAttribute("data-dht-kb");
     if (yieldTo) html.setAttribute("data-dht-kb-yield", yieldTo);
@@ -512,7 +514,7 @@ function refresh() {
   if (look !== state.look || spacing !== state.spacing) {
     state = { look, spacing, css: look ? buildKeyboardCss(look, classes) + `\n:root .${classes.Keyboard}.DefaultTheme{--dht-kb-gap:${spacing}px}` : null };
   }
-  for (const doc of steamDocuments()) {
+  for (const doc of new Set([...steamDocuments(), ...(!look ? touched : [])])) {
     try {
       apply(doc, state.css, state.look, classes);
       touched.add(doc);
@@ -520,6 +522,7 @@ function refresh() {
       /* a window that is closing */
     }
   }
+  if (!look) touched.clear();
 }
 
 /** Starts the keyboard skin; returns the function that removes it from every window again. */
@@ -535,6 +538,7 @@ export function startKeyboardSkins(): () => void {
   const off = onSettingsChange(run);
   const iv = setInterval(run, 2000); // new windows (Quick Access, Steam menu) and CSS Loader changes
   return () => {
+    recordKeyboardEvent({ event: "skin-service-unload" });
     off();
     clearInterval(iv);
     for (const doc of [...touched, ...steamDocuments()]) {

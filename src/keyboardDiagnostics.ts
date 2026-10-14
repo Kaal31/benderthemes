@@ -1,6 +1,7 @@
 import { logInfo } from "./diag";
 import { keyboardClasses, steamDocuments } from "./keyboardSkins";
 import { getSettings, onSettingsChange } from "./settings";
+import { drainKeyboardEvents, setKeyboardRecording } from "./keyboardLifecycle";
 
 // No text, field values, labels, IDs, URLs or HTML enter these records.
 export function keyboardNodeState(el: Element) {
@@ -24,12 +25,17 @@ export function startKeyboardDiagnostics(): () => void {
   const capture = () => {
     if (remaining-- <= 0) { stop(); logInfo("[keyboard-diagnostics] capture limit reached; toggle off/on to restart"); return; }
     const { classes, from } = keyboardClasses();
+    const lifecycle = drainKeyboardEvents();
+    if (lifecycle.length) logInfo(`[keyboard-diagnostics] lifecycle ${JSON.stringify(lifecycle)}`);
     const docs = new Set(steamDocuments());
-    for (const [doc, off] of watchers) if (!docs.has(doc)) { off(); watchers.delete(doc); }
+    for (const [doc, off] of watchers) if (!docs.has(doc)) {
+      logInfo(`[keyboard-diagnostics] window-removed ${windows.get(doc)}`);
+      off(); watchers.delete(doc);
+    }
     for (const doc of docs) {
       try {
         let id = windows.get(doc);
-        if (!id) { id = nextWindow++; windows.set(doc, id); }
+        if (!id) { id = nextWindow++; windows.set(doc, id); logInfo(`[keyboard-diagnostics] window-discovered ${id}`); }
         if (!watchers.has(doc) && doc.body) {
           const windowId = id;
           const observer = new (doc.defaultView as any).MutationObserver((records: MutationRecord[]) => {
@@ -54,7 +60,10 @@ export function startKeyboardDiagnostics(): () => void {
         const settings = getSettings();
         const snapshot = JSON.stringify({ window: id, viewport: [doc.defaultView?.innerWidth, doc.defaultView?.innerHeight],
           classSource: from, footer: settings.footer, hideHeader: settings.hideSteamHeader, skin: settings.keyboardSkin === true,
-          theme: settings.theme, keyboards,
+          theme: settings.theme, enabled: settings.enabled,
+          runningApps: Array.isArray((globalThis as any).SteamUIStore?.RunningApps) ? (globalThis as any).SteamUIStore.RunningApps.length : null,
+          inputFocused: /^(INPUT|TEXTAREA)$/.test(doc.activeElement?.tagName ?? "") || (doc.activeElement as HTMLElement)?.isContentEditable === true,
+          keyboards,
           marked: Array.from(doc.querySelectorAll("[data-dht-foot],[data-dht-hidden]")).slice(0, 16).map(keyboardNodeState) });
         if (snapshot !== previous.get(id)) { previous.set(id, snapshot); logInfo(`[keyboard-diagnostics] ${snapshot}`); }
       } catch { /* closing Steam window */ }
@@ -62,6 +71,7 @@ export function startKeyboardDiagnostics(): () => void {
     if (changes.length) logInfo(`[keyboard-diagnostics] chrome transitions ${JSON.stringify(changes.splice(0))}`);
   };
   const stop = () => {
+    setKeyboardRecording(false);
     clearInterval(timer); timer = undefined;
     watchers.forEach(off => off()); watchers.clear(); previous.clear(); changes.length = 0;
   };
@@ -71,7 +81,7 @@ export function startKeyboardDiagnostics(): () => void {
     if (next === enabled) return;
     enabled = next; stop();
     logInfo(`[keyboard-diagnostics] ${next ? "enabled (ten-minute limit, no input text)" : "disabled"}`);
-    if (next) { remaining = 600; capture(); timer = setInterval(capture, 1000); }
+    if (next) { setKeyboardRecording(true); remaining = 600; capture(); timer = setInterval(capture, 1000); }
   };
   refresh();
   const off = onSettingsChange(refresh);
