@@ -1606,6 +1606,11 @@ class Plugin:
         import theme_store
         return theme_store.progress()
 
+    async def achievement_popup_status(self):
+        import achievement_popups
+        return await asyncio.to_thread(achievement_popups.installed_finally,
+                                       os.path.dirname(decky.DECKY_PLUGIN_DIR))
+
     async def plugin_catalog(self, refresh: bool = False):
         # Plugin Spotlight search: Decky Plugins Explorer data, cached 24 h (py_modules/plugin_catalog.py)
         import plugin_catalog

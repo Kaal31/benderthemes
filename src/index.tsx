@@ -1,3 +1,4 @@
+import { startAchievementPopups } from "./achievementPopups";
 import {stopSilverPad} from "./themes/silverPad";
 import { ButtonItem, DropdownItem, Navigation, PanelSection, PanelSectionRow, SliderField, staticClasses, TextField, ToggleField } from "@decky/ui";
 import { definePlugin, openFilePicker, routerHook } from "@decky/api";
@@ -313,6 +314,7 @@ export default definePlugin(() => {
   logInfo(`frontend loaded v${PLUGIN_VERSION}`);
   initSettings();
   const stopDiagnostics = startExperimentalDiagnostics();
+  const stopAchievementPopups = startAchievementPopups();
   refreshPacks();
   refreshPresets();
   let stopKeyboardSkins: (() => void) | null = null;
@@ -356,6 +358,7 @@ export default definePlugin(() => {
     icon: <HomeIcon />,
     onDismount() {
       stopDiagnostics();
+      stopAchievementPopups();
       stopSilverPad();
       routerHook.removeRoute(ROUTE);
       if (patch) routerHook.removePatch(HOME_ROUTE, patch);

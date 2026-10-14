@@ -1,0 +1,12 @@
+import assert from "node:assert/strict";
+import {build} from "esbuild";
+const result=await build({entryPoints:["src/achievementUnlocks.ts"],bundle:true,write:false,format:"esm"});
+const {UnlockTracker,parseUnlocks}=await import("data:text/javascript;base64,"+Buffer.from(result.outputFiles[0].text).toString("base64"));
+const t=new UnlockTracker();const rows=(achieved)=>parseUnlocks({rgAchievements:[{strID:"first",strName:"First",bAchieved:achieved},{strID:"old",bAchieved:true}]});
+assert.deepEqual(t.observe(1,rows(false)),[]);assert.equal(t.observe(1,rows(true)).length,1);assert.deepEqual(t.observe(1,rows(true)),[]);
+assert.deepEqual(t.observe(2,rows(true)),[]);assert.deepEqual(t.observe(1,null),[]);
+assert.deepEqual(t.observe(1,rows(false)),[]);assert.deepEqual(t.observe(1,rows(true)),[]);
+t.clear();assert.deepEqual(t.observe(1,rows(true)),[]);
+assert.equal(parseUnlocks({achievements:[{id:"a",achieved:"0"} ]})[0].achieved,false);
+assert.deepEqual(parseUnlocks({achievements:[{name:"Missing ID",achieved:true}]}),[]);
+console.log("PASS first-read baseline, transitions, deduplication, no historical unlocks, failure isolation, rebaseline after suppression");

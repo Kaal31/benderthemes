@@ -1,3 +1,4 @@
+import { createRoot } from "react-dom/client";
 // Browser stand-ins for @decky/api.
 const R = (): any => (window as any).__real;
 const realSkin = (kind: string, n: string, fallback: any) => (R() ? R().skins?.[kind]?.[n] ?? null : fallback);
@@ -63,6 +64,7 @@ const backend: Record<string, (...a: any[]) => any> = {
   theme_remove: (id: string) => { const pack = (window as any).__themeCatalog?.themes.find((p: any) => p.id === id); if (pack) delete pack.installedVersion; return { success: true }; },
   // Plugin Spotlight search (py_modules/plugin_catalog.py). A small invented fixture, not the real 4 MB list;
   // window.__pluginCatalog replaces it (e.g. { entries: [], installed: [], error: "…" } for the offline note).
+  achievement_popup_status: () => ({verified:true,finallyInstalled:!!(window as any).__finallyInstalled}),
   plugin_catalog: () => (window as any).__pluginCatalog ?? PLUGIN_CATALOG_FIXTURE,
   // Hub > Theme files (py_modules/theme_sources.py). Invented entries; window.__themeSources = { "<kind>:<source>": page }
   // replaces a page (tests inject real backend output with local pictures). Downloads are recorded in __themeSourceDownloads.
@@ -150,5 +152,14 @@ export const callable =
 export const definePlugin = (f: any) => f;
 export const routerHook = { addRoute() {}, removeRoute() {}, addPatch() { return {}; }, removePatch() {} };
 export const fetchNoCors = (u: string, init?: any) => fetch(u, init);
-export const toaster = { toast() {} };
+export const toaster = { toast(data: any) {
+  if (data?.className !== "dht-achievement-toast") return {data,dismiss() {}};
+  const node = document.createElement("div"); node.dataset.achievementPreview = "true";
+  Object.assign(node.style, {position:"fixed",right:"38px",bottom:"32px",zIndex:"999999"});
+  document.body.appendChild(node); const root = createRoot(node); root.render(data.body);
+  let closed=false;
+  const dismiss=()=>{if(closed)return;closed=true;root.unmount();node.remove();};
+  const timer=setTimeout(dismiss,data.duration??5500);
+  return {data,dismiss:()=>{clearTimeout(timer);dismiss();}};
+} };
 export const openFilePicker = async () => ({ path: "", realpath: "" });

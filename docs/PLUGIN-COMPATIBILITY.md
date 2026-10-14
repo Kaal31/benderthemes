@@ -4,6 +4,7 @@ ThemeHub replaces Steam's home and optionally its destination pages. Plugins tha
 
 | Integration | Current behavior |
 | --- | --- |
+| Finally Achievement Plugin | ThemeHub’s achievement popups disable when Finally is installed or loaded. Its settings and assets are untouched. |
 | CSS Loader | Steam-targeted styles remain on Steam pages. ThemeHub provides `dht-*` classes for custom pages. Keyboard skins yield to detected CSS Loader keyboard styles; equipped Points Shop keyboards retain their look. Broad global CSS can still affect custom pages. |
 | ProtonDB | Requires detection of the loaded ProtonDB Badges plugin. Each theme's **Options → Customize → Library** menu has its own **ProtonDB badges (this theme)** toggle; Quick Access has no ProtonDB toggle. Existing badge slots retain their placement; other layouts have distinct fallback slots and styling. Shared game details include a controller report action. Theme Hub and all Hub styles exclude ProtonDB badges. Ratings disappear when the plugin unloads or the theme option is off. This does not import the other plugin's settings or React component. |
 | SteamGridDB | Themes read custom Steam artwork before CDN artwork. Use Steam's page for artwork-editing plugin menus. |

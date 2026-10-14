@@ -1,3 +1,4 @@
+import { achievementPopupStatus, achievementPopupsBlocked, previewAchievementPopup } from "./achievementPopups";
 import {customProfilePicture,setProfilePicture,uploadProfilePicture} from "./profilePicture";
 // Every option that belongs to one theme, as an in-theme menu (△ / Y → Theme options, and the
 // themes' own "Home Screen Settings" entries). Quick Access keeps only the options shared by all
@@ -384,6 +385,11 @@ function lookOptionItems(th: ThemeId): MenuItem[] {
       choice("Dial sound effects", [{ id: "reference", name: "Sounds from your video" }, { id: "pack", name: "AudioLoader / Steam sounds" }, { id: "off", name: "Off" }], () => d().sound, (v) => updateDial({ sound: v as any })),
     );
   }
+  items.push(group("Achievements", () => [
+    toggle("ThemeHub achievement popups", () => S().achievementPopups !== false, (v) => updateSettings({ achievementPopups: v })),
+    { label: achievementPopupStatus(), disabled: true },
+    { label: "Preview achievement popup", disabled: achievementPopupsBlocked() || S().achievementPopups === false, action: previewAchievementPopup },
+  ]));
   const own = THEME_STYLES[th];
   if (own?.length) items.push(...styleItems(th, own));
   return items;

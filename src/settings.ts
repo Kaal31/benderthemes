@@ -226,6 +226,7 @@ export interface Settings {
   userPreset: string;
   hiddenThemes?: ThemeId[];
   dismissedFirmware?: string;
+  achievementPopups?: boolean;
   firmwareNotifications?: boolean;
   presetCompany?: "Sony" | "Microsoft" | "Nintendo" | "Bonus" | "Community" | "My presets";
   minecraftSkin?: string;

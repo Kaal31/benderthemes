@@ -1,3 +1,4 @@
+import { startAchievementPopups, previewAchievementPopup, achievementPopupStatus } from "../src/achievementPopups";
 import {SILVER_REFERENCE as PREVIEW_REFERENCE} from "../src/themes/silverReference";
 import {openThemeSettings} from "../src/themeSettingsMenu";
 import {ONYX_SOUND_PACK,ONYX_PREVIEW_CUES} from "./onyxSoundPack";
@@ -200,6 +201,8 @@ seedSettings({
 (globalThis as any).__previewSettings = null;
 
 Object.assign(window,{__openThemeSettings:openThemeSettings,__themeStyles:THEME_STYLES,__getThemeSettings:getSettings,__getThemeLibrary:()=>{const s=getSettings(),c=s.themeCollections?.[s.theme];return loadLibraryPreview(c?.source??s.source,s.sort,s.maxGames,c?.ids);},__beginNativeLaunch:beginLaunch,__dismissLaunch:dismissLaunch,__launchState:launchState,__autoPack:autoPack,__packFile:packFile,__refreshPacks:refreshPacks,__openPlace:openSteamPreview,__updateTheme:updateSettings,__openGame:(id:number)=>openGamePage((window as any).__libraryGame(id)),__openAchievements:()=>openAchievements(loadLibraryPreview("all","recent",400).games[0]),__launchGame:launchGame});
+const stopAchievementPreview = startAchievementPopups();
+Object.assign(window,{__previewAchievementPopup:previewAchievementPopup,__achievementPopupStatus:achievementPopupStatus,__stopAchievementPopups:stopAchievementPreview});
 (window as any).__libraryGame=(id:number)=>loadLibraryPreview("all","recent",400).byId.get(id);
 function Toast() {
   const [msg, setMsg] = useState("");

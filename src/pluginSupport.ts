@@ -9,6 +9,7 @@ export interface PluginSupport {
   detail: string;
 }
 const policies: { match: RegExp; support: PluginSupport }[] = [
+  { match: /finally.*achievement/i, support: { id: "finally", name: "Finally Achievement Plugin", mode: "shared", detail: "ThemeHub achievement popups disable while Finally is installed; Finally settings are untouched." } },
   { match: /^(CSS Loader|CSSLoader)$/i, support: { id: "css-loader", name: "CSS Loader", mode: "shared", detail: "Keyboard themes take priority; custom home uses dht-* style hooks." } },
   { match: /^(ProtonDB Badges|protondb-decky)$/i, support: { id: "protondb", name: "ProtonDB Badges", mode: "shared", detail: "Shared ProtonDB ratings and report actions; plugin badge settings remain on Steam's game page." } },
   { match: /^(SteamGridDB|steamgriddb)$/i, support: { id: "steamgriddb", name: "SteamGridDB", mode: "shared", detail: "Custom Steam artwork is read by all themes; edit artwork through Steam's game page." } },
