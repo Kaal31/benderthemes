@@ -1,22 +1,9 @@
-# Community Theme · Annotated Starter
+# Community Theme · Interface Showcase
 
-An installable, dependency-free external-theme template. Its dashboard labels each working area with the API that powers it and lets you exercise library actions, saved data, read-only services, controller focus, capped animation and separate HTML pages. It uses the experimental multi-page SDK.
+An explanation theme showing seven interface examples: tabs/sidebar, game cards, lists/detail panels, forms/settings, media players, 3D editor composition, and dialogs/multiple pages.
 
-## Use
+Each example is labeled with its purpose and the related SDK/data source. The content and controls are illustrative, not live Steam actions. Browse by touch, mouse wheel, D-pad or arrows. There are no lessons, requests or game-launch demos.
 
-Install `CommunityTheme-Starter.zip` with Quick Access → Add a theme from a file. Activate **Community Theme · Annotated Starter** in Presets. Use the dashboard controls and read the small labels beside each area. The Play demo asks for confirmation before sending a real launch request; service buttons only read data.
+Edit index.html to change the examples, style.css for their appearance and app.js for scrolling input. Copy theme-bridge.js from the SDK. To build your own functional theme, use docs/CUSTOM-THEMES.md and docs/FRAME-SDK.md; these illustrations intentionally are not working widgets.
 
-For your own theme, copy this folder, change its ID/name/author in theme.json, then replace dashboard behavior in app.js and edit index.html/style.css. Comments label entry points. Keep theme-bridge.js copied from the SDK, include it on every document, and bundle assets/dependencies locally. Never reuse community-starter as your published theme ID.
-
-| File | Purpose |
-| --- | --- |
-| theme.json | Identity, frame entry and accent slot |
-| index.html | Working dashboard with annotated regions |
-| style.css | Responsive design and focus states |
-| app.js | Library, preferences, services, live state/input/lifecycle handling |
-| theme-bridge.js | Copy of the supported SDK; avoid editing it |
-| pages/playground.html/js | Separate-page example with shared storage and Back/replace |
-
-From the repository root, run `python tools/package_community_starter.py` to refresh the SDK and generate `out/CommunityTheme-Starter.zip`. Run `npm run preview`, then `node tests/verify-community-starter.mjs` for the real sandbox preview check. A standalone file page has no host bridge.
-
-See docs/CUSTOM-THEMES.md for authoring and services, and docs/FRAME-SDK.md for API details. Imported themes appear in Presets; automatic Hub catalog registration is not implemented. Browser tests do not replace Steam Deck keyboard/controller/rendering validation.
+Build with `python tools/package_community_starter.py`. Install out/CommunityTheme-Starter.zip using Add a theme from a file, then choose Community Theme · Interface Showcase under Presets. Rename the manifest ID before publishing a derivative.

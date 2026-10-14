@@ -1,9 +1,9 @@
 {
   "schema": 1,
   "id": "community-starter",
-  "name": "Community Theme · Annotated Starter",
+  "name": "Community Theme · Interface Showcase",
   "author": "ThemeHub",
-  "description": "A working dashboard with labeled navigation, library, saved preferences, services, animation and a separate page.",
+  "description": "An explanation theme displaying interface examples with labels: navigation, cards, lists, forms, media, 3D editors and multiple pages.",
   "company": "Community",
   "layout": "frame",
   "frame": { "entry": "index.html" },

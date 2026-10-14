@@ -8,9 +8,9 @@ A theme can reuse a built-in layout with replacement assets, or provide its own 
 
 The theme runs inside two sandboxed frames. It has an opaque origin, cannot read Steam's document or SteamClient, and cannot freely fetch network resources. Bundle dependencies locally. Saved settings use ThemeHub rather than localStorage. Hardware behavior still needs testing on a Steam Deck.
 
-## Interactive installable template
+## Installable interface showcase
 
-Start from [Community Theme · Interactive Starter](../themes/community-starter/README.md). Its actual theme interface includes labeled dashboard regions, editable source comments, labeled controls and working controls for library actions, saved state, read-only services, controller focus, animation and separate HTML pages. Build an importable ZIP with `python tools/package_community_starter.py`. Rename its manifest ID before publishing your own derivative.
+[Community Theme · Interface Showcase](../themes/community-starter/README.md) displays seven annotated interface examples: navigation, cards, lists, forms, media players, 3D editor composition and multiple pages. It explains what each area is for and which SDK/data source would power it. The examples are illustrative rather than live widgets. Build its ZIP with `python tools/package_community_starter.py`.
 
 ## Minimal working theme
 
