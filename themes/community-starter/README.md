@@ -1,19 +1,19 @@
-# Community Theme · Interactive Starter
+# Community Theme · Annotated Starter
 
-An installable, dependency-free external-theme template. Its interface labels each file and concept and lets you exercise library actions, saved data, read-only services, controller focus, capped animation and separate HTML pages. It uses the experimental multi-page SDK.
+An installable, dependency-free external-theme template. Its dashboard labels each working area with the API that powers it and lets you exercise library actions, saved data, read-only services, controller focus, capped animation and separate HTML pages. It uses the experimental multi-page SDK.
 
 ## Use
 
-Install `CommunityTheme-Starter.zip` with Quick Access → Add a theme from a file. Activate **Community Theme · Interactive Starter** in Presets. Read the lessons and try each demo. The Play demo asks for confirmation before sending a real launch request; service buttons only read data.
+Install `CommunityTheme-Starter.zip` with Quick Access → Add a theme from a file. Activate **Community Theme · Annotated Starter** in Presets. Use the dashboard controls and read the small labels beside each area. The Play demo asks for confirmation before sending a real launch request; service buttons only read data.
 
-For your own theme, copy this folder, change its ID/name/author in theme.json, then replace lesson content in app.js and edit index.html/style.css. Comments label entry points. Keep theme-bridge.js copied from the SDK, include it on every document, and bundle assets/dependencies locally. Never reuse community-starter as your published theme ID.
+For your own theme, copy this folder, change its ID/name/author in theme.json, then replace dashboard behavior in app.js and edit index.html/style.css. Comments label entry points. Keep theme-bridge.js copied from the SDK, include it on every document, and bundle assets/dependencies locally. Never reuse community-starter as your published theme ID.
 
 | File | Purpose |
 | --- | --- |
 | theme.json | Identity, frame entry and accent slot |
-| index.html | Annotated home shell, navigation and bridge inspector |
+| index.html | Working dashboard with annotated regions |
 | style.css | Responsive design and focus states |
-| app.js | Lessons, interactive examples, live state/input/lifecycle handling |
+| app.js | Library, preferences, services, live state/input/lifecycle handling |
 | theme-bridge.js | Copy of the supported SDK; avoid editing it |
 | pages/playground.html/js | Separate-page example with shared storage and Back/replace |
 

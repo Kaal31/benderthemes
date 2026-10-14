@@ -1,9 +1,9 @@
 {
   "schema": 1,
   "id": "community-starter",
-  "name": "Community Theme · Interactive Starter",
+  "name": "Community Theme · Annotated Starter",
   "author": "ThemeHub",
-  "description": "An annotated, interactive template: learn the bridge, library, controller input, saved data, local pages and animation lifecycle inside the theme itself.",
+  "description": "A working dashboard with labeled navigation, library, saved preferences, services, animation and a separate page.",
   "company": "Community",
   "layout": "frame",
   "frame": { "entry": "index.html" },

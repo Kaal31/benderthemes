@@ -1,50 +1,66 @@
-/* EDIT HERE: lesson UI and demo actions. Host access stays inside ThemeHub SDK. */
+/* Navigation, library, preferences and service examples. Edit each labeled section. */
 (() => {
-  const hub=window.ThemeHub, $=id=>document.getElementById(id);
-  let state=null, lesson='overview', cleanup=()=>{}, savesReady=false;
-  const events=[];
-  const log=text=>{events.unshift(text);events.length=Math.min(events.length,7);$('event-log').textContent=events.join('\n');};
-  const feedback=text=>{$('feedback').textContent=text;};
-  const code=text=>{const pre=document.createElement('pre');pre.textContent=text;return pre;};
-  const label=(n,title,description)=>`<span class="eyebrow">LESSON ${n}</span><h2>${title}</h2><p>${description}</p>`;
-  function render(name){
-    cleanup();cleanup=()=>{};lesson=name;
-    const root=$('lesson');
-    document.querySelectorAll('[data-lesson]').forEach(b=>b.setAttribute('aria-current',String(b.dataset.lesson===name)));
-    if(name==='overview'){
-      root.innerHTML=label('01','Your UI. ThemeHub’s data.','This entire screen is a community theme: HTML, CSS and JavaScript in an isolated iframe.')+`<div class="cards"><div class="card"><strong>1 · theme.json</strong><p>Names the theme, selects layout: frame, points to index.html and supplies optional asset slots.</p></div><div class="card"><strong>2 · index.html + style.css</strong><p>Define your interface. Replace this tutorial with a dashboard, editor, game shelf or 3D scene.</p></div><div class="card"><strong>3 · app.js</strong><p>Renders screens and handles interactions. Bundle React or other libraries locally if you prefer.</p></div><div class="card"><strong>4 · theme-bridge.js</strong><p>Connects to the plugin. Copy the SDK rather than editing host internals.</p></div></div><div class="callout">The inspector on the right shows actual host state. Preview data is sample content; Steam Deck data comes from Steam.</div><p>No parent.document, SteamClient, localStorage or CDN dependencies are needed. Use the bridge for Steam actions and persistence.</p><div class="controls"><button id="first-demo">Try the library demo →</button><button id="isolation">Check sandbox isolation</button></div><p class="result" id="isolation-result"></p>`;
-      $('first-demo').onclick=()=>render('library');$('isolation').onclick=()=>{let parentReadable=false,storage=false;try{void parent.document.body;parentReadable=true;}catch{}try{localStorage.setItem('starter-check','1');localStorage.removeItem('starter-check');storage=true;}catch{}$('isolation-result').textContent=`Parent document: ${parentReadable?'accessible':'blocked'} · browser storage: ${storage?'available':'blocked'}`;};
-    }else if(name==='library'){
-      root.innerHTML=label('02','Render the library, then choose an action','Games arrive in state.games. Treat names as text and handle empty libraries and missing artwork.')+`<div class="demo"><div class="game-list" id="library-demo"></div><p class="badge">Showing at most four games to keep this example small.</p><div id="launch-confirm" class="confirm" hidden></div></div><p>Details opens a host game page. Play below asks for confirmation before sending a real launch request. The user’s configured A-action still applies.</p>`;
-      root.append(code("hub.on('state', state => renderGames(state.games));\nhub.send({type:'details', appid:game.appid});\nhub.launch(game.appid);"));drawLibrary();
-    }else if(name==='saved'){
-      root.innerHTML=label('03','Save a value across pages','ThemeHub saves one shared object per theme. Patch top-level keys with hub.save and read the confirmed result from state.saved.')+`<div class="demo"><label>Starter note <input id="saved-note" type="text" maxlength="240" placeholder="Write a test note"></label><div class="controls"><button id="save-note">Save note</button><button id="increment">Increment saved counter</button><a data-theme-page href="pages/playground.html">Read it on another page →</a></div><p class="result" id="saved-result"></p></div><p>Nested values are replaced. Keep the complete saved object below the host’s 64 KiB JSON-length limit. Flush delayed saves before changing pages.</p>`;
-      $('saved-note').value=state?.saved?.starterNote??'';
-      $('save-note').onclick=()=>{hub.save({starterNote:$('saved-note').value});feedback('Save sent; waiting for host confirmation.');};
-      $('increment').onclick=()=>hub.save({starterCounter:(Number(state?.saved?.starterCounter)||0)+1});root.append(code("hub.save({starterNote: 'Hello'});\nhub.on('state', s => showNote(s.saved?.starterNote ?? ''));"));syncSaved();
-    }else if(name==='services'){
-      root.innerHTML=label('04','Request live services explicitly','An iframe cannot choose arbitrary Steam APIs or fetch URLs. The host exposes a bounded list of operations.')+`<div class="demo"><div class="controls"><button data-service="friends">Read friends</button><button data-service="downloads">Read downloads</button><button data-service="settings">Read allowed settings</button><button data-service="audioLibrary">Read music library</button></div><pre id="service-result">Choose a read-only operation.</pre></div><p>These buttons only read data. The bridge also supports store/media and explicitly allowed controls. Handle timeouts, offline responses and empty lists; pause polling when inactive.</p><div class="callout">Limit: 12 requests per second, four pending host calls. Debounce search and avoid requesting on every animation frame.</div>`;
-      root.append(code("try {\n  const result = await hub.request('friends');\n  renderFriends(result.items);\n} catch (error) {\n  showError(error.message);\n}"));
-      root.querySelectorAll('[data-service]').forEach(b=>b.onclick=async()=>{b.disabled=true;const output=$('service-result');output.textContent='Waiting for '+b.dataset.service+'…';try{const result=await hub.request(b.dataset.service);if(output.isConnected)output.textContent=JSON.stringify(result,null,2).slice(0,5000);}catch(e){if(output.isConnected)output.textContent=e.message;}finally{b.disabled=false;}});
-    }else if(name==='motion'){
-      root.innerHTML=label('05','Move only when you need to','This local canvas uses the same SDK lifecycle available to a 3D renderer. No GPU library is required for this starter.')+`<div class="demo"><canvas id="animation" width="600" height="160" aria-label="Lifecycle animation demo"></canvas><div class="controls"><button id="motion-toggle">Pause this demo</button><button id="change-color">Change static color</button></div><p class="result" id="draw-count">Waiting for first draw…</p></div><p>Moving frames are capped at 30 FPS. Reduced motion and host activity can pause motion. Static changes explicitly invalidate the renderer. Dispose loops, observers, textures and models when leaving a page.</p>`;
-      root.append(code("const loop = hub.animation((now, moving) => {\n  if (moving) updateScene(now);\n  renderScene();\n}, {fps:30, moving:() => animationsEnabled});\nloop.invalidate(); // resize, assets, controls\nhub.on('dispose', () => loop.dispose());"));
-      const canvas=$('animation'),ctx=canvas.getContext('2d');let moving=true,count=0,color=0,x=50;
-      const loop=hub.animation((now,animate)=>{if(animate)x=50+(Math.sin(now/800)+1)*240;ctx.clearRect(0,0,600,160);ctx.fillStyle=['#75dbb4','#dfb8fc','#f5c46a'][color];ctx.fillRect(x,55,50,50);$('draw-count').textContent=`Draws: ${++count} · ${animate?'moving':'static'} · host ${hub.active?'active':'paused'}`;},{fps:30,moving:()=>moving&&state?.settings?.animations!==false});
-      $('motion-toggle').onclick=()=>{moving=!moving;$('motion-toggle').textContent=moving?'Pause this demo':'Resume this demo';loop.invalidate();};$('change-color').onclick=()=>{color=(color+1)%3;loop.invalidate();};cleanup=()=>loop.dispose();
-    }else{
-      root.innerHTML=label('06','Make this starter yours','The explanations live in the theme so you can test each feature before replacing it.')+`<ol><li>Rename the folder and change <code>id</code>, <code>name</code>, <code>author</code> and <code>description</code> in theme.json. Use a unique ID so saves and presets do not collide.</li><li>Edit index.html/style.css for your layout. Edit app.js for state, controller and page behavior.</li><li>Add local images, fonts, scripts and HTML pages. Keep the SDK included in every document.</li><li>Keep the source readable; bundle dependencies locally and include their license notices.</li><li>ZIP the folder contents with theme.json at the root. Install with Quick Access → Add a theme from a file; activate it under Presets.</li><li>Test 1280×800 and 1280×720, touch, controller, keyboard fields, missing data, saves, Back and reduced motion on a Deck.</li></ol><pre>my-theme/\n  theme.json       ← identity + frame entry\n  index.html       ← home UI\n  style.css        ← visual design\n  app.js           ← demos / your behavior\n  theme-bridge.js  ← copied SDK\n  pages/\n    playground.html\n    playground.js</pre><div class="callout">Imported themes currently appear in Presets. Automatic Hub catalog listing is a separate feature.</div><p>Source documentation: docs/CUSTOM-THEMES.md and docs/FRAME-SDK.md in the experimental repository.</p>`;
+  const hub = window.ThemeHub, $ = id => document.getElementById(id);
+  let state = null, signature = '', moving = true, color = 0, x = 50;
+  const feedback = text => { $('feedback').textContent = text; };
+  // LIBRARY: names are text, actions stay behind the host bridge.
+  function renderGames() {
+    const root = $('games'); root.replaceChildren();
+    const query = $('search').value.toLowerCase();
+    const games = (state?.games ?? []).filter(g => g.name.toLowerCase().includes(query));
+    $('game-count').textContent = `${games.length} games`;
+    for (const game of games) {
+      const row = document.createElement('article'); row.className = 'game-row';
+      const image = document.createElement('img'); image.alt = ''; image.loading = 'lazy';
+      const art = game.art?.landscape?.[0] || game.art?.portrait?.[0]; if (art) image.src = art;
+      image.onerror = () => { image.removeAttribute('src'); image.onerror = null; };
+      const copy = document.createElement('div'), title = document.createElement('strong'), meta = document.createElement('small');
+      title.textContent = game.name; meta.textContent = game.installed ? 'Ready to play' : 'In library'; copy.append(title, meta);
+      const details = document.createElement('button'); details.textContent = 'Details'; details.onclick = () => hub.send({type:'details',appid:game.appid});
+      const play = document.createElement('button'); play.textContent = 'Play'; play.onclick = () => confirmLaunch(game);
+      row.append(image, copy, details, play); root.append(row);
     }
-    log('lesson → '+name);hub.sound('tab');
+    if (!games.length) root.textContent = 'No games match this view.';
   }
-  function drawLibrary(){const root=$('library-demo');if(!root)return;root.replaceChildren();const games=state?.games?.slice(0,4)??[];if(!games.length){root.textContent='No games were supplied by this host.';return;}games.forEach(g=>{const row=document.createElement('div');row.className='game-row';const name=document.createElement('strong');name.textContent=g.name;const details=document.createElement('button');details.textContent='Details';details.onclick=()=>hub.send({type:'details',appid:g.appid});const play=document.createElement('button');play.textContent='Play…';play.onclick=()=>{const box=$('launch-confirm');box.hidden=false;box.replaceChildren();const title=document.createElement('p');title.textContent=`Launch ${g.name}? This sends a real game action to ThemeHub.`;const yes=document.createElement('button');yes.textContent='Confirm launch';yes.onclick=()=>{hub.launch(g.appid);box.hidden=true;};const no=document.createElement('button');no.textContent='Cancel';no.onclick=()=>box.hidden=true;box.append(title,yes,no);};row.append(name,details,play);root.append(row);});}
-  function syncSaved(){const result=$('saved-result');if(result)result.textContent=`Confirmed note: ${state?.saved?.starterNote||'(empty)'} · counter: ${Number(state?.saved?.starterCounter)||0}`;}
-  document.querySelectorAll('[data-lesson]').forEach(b=>b.onclick=()=>{hub.navigate('#'+b.dataset.lesson);});
-  $('host-options').onclick=()=>hub.open('options');
-  hub.on('state',s=>{state=s;$('player').textContent=s.user;$('theme-id').textContent=s.theme?.id;$('game-count').textContent=`${s.games.length} games / ${s.collections.length} collections`;$('route').textContent=s.route?.path+'#'+(s.route?.fragment||'overview');$('activity').textContent=hub.active?'Active':'Paused';syncSaved();if(!savesReady){savesReady=true;log('state ← library/settings/saved');}if(lesson==='library'&&!$('library-demo')?.children.length)drawLibrary();});
-  hub.on('route',r=>{const name=['overview','library','saved','services','motion','files'].includes(r?.fragment)?r.fragment:'overview';render(name);});
-  hub.on('input',m=>{$('input').textContent=m.btn+(m.repeat?' (repeat)':'');log('input ← '+m.btn);if(m.btn==='x')hub.open('options');});
-  hub.on('activity',active=>{$('activity').textContent=active?'Active':'Paused';log('activity ← '+active);});
-  hub.on('error',e=>{feedback(e);log('error ← '+e);});hub.on('dispose',()=>cleanup());
-  render('overview');hub.connect({keyboard:true,focusNavigation:true});
+  function confirmLaunch(game) {
+    const box = $('launch-confirm'); box.hidden = false; box.replaceChildren();
+    const text = document.createElement('p'); text.textContent = `Launch ${game.name}?`;
+    const yes = document.createElement('button'); yes.textContent = 'Confirm launch'; yes.onclick = () => { hub.launch(game.appid); box.hidden = true; };
+    const no = document.createElement('button'); no.textContent = 'Cancel'; no.onclick = () => { box.hidden = true; }; box.append(text,yes,no);
+  }
+  $('search').oninput = renderGames;
+  // NAVIGATION: every external page includes the same SDK.
+  $('home').onclick = () => { $('games').scrollTop = 0; feedback('Home'); };
+  $('host-options').onclick = () => hub.open('options');
+  // SAVED DATA: these keys are shared with pages/playground.html.
+  $('save-note').onclick = () => { hub.save({starterNote:$('saved-note').value}); feedback('Save sent'); };
+  $('increment').onclick = () => hub.save({starterCounter:(Number(state?.saved?.starterCounter)||0)+1});
+  // SERVICES: read-only demos; adapt responses into your own UI.
+  document.querySelectorAll('[data-service]').forEach(button => { button.onclick = async () => {
+    button.disabled = true; $('service-result').textContent = 'Loading…';
+    try { $('service-result').textContent = JSON.stringify(await hub.request(button.dataset.service),null,2).slice(0,4000); }
+    catch(error) { $('service-result').textContent = error.message; } finally { button.disabled = false; }
+  }; });
+  // ANIMATION: invalidate for static changes, dispose when this page closes.
+  const ctx = $('animation').getContext('2d');
+  const loop = hub.animation((now,animate) => {
+    if (animate) x = 50 + (Math.sin(now/1200)+1)*230;
+    ctx.clearRect(0,0,600,140);
+    ctx.strokeStyle = '#294a51'; ctx.lineWidth = 1;
+    for(let i=0;i<600;i+=30){ctx.beginPath();ctx.moveTo(i,0);ctx.lineTo(i,140);ctx.stroke();}
+    for(let i=0;i<140;i+=30){ctx.beginPath();ctx.moveTo(0,i);ctx.lineTo(600,i);ctx.stroke();}
+    ctx.fillStyle = ['#8ee5c2','#dfb8fc','#f5c46a'][color]; ctx.fillRect(x,48,44,44);
+  },{fps:30,moving:() => moving && state?.settings?.animations !== false});
+  $('motion-toggle').onclick = () => { moving = !moving; $('motion-toggle').textContent = moving ? 'Pause' : 'Resume'; loop.invalidate(); };
+  $('change-color').onclick = () => { color = (color+1)%3; loop.invalidate(); };
+  hub.on('state',s => {
+    state = s; $('player').textContent = s.user;
+    const next = JSON.stringify(s.games); if(next !== signature){signature = next;renderGames();}
+    if(document.activeElement !== $('saved-note')) $('saved-note').value = s.saved?.starterNote ?? '';
+    $('saved-result').textContent = `Saved counter: ${Number(s.saved?.starterCounter)||0}`;
+  });
+  hub.on('activity',active => { $('activity').textContent = active ? 'Active' : 'Paused'; });
+  hub.on('input',input => { $('input').textContent = `Input: ${input.btn}`; if(input.btn === 'x') hub.open('options'); });
+  hub.on('error',feedback); hub.on('dispose',() => loop.dispose());
+  hub.connect({keyboard:true,focusNavigation:true});
 })();

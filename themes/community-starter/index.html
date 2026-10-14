@@ -1,22 +1,19 @@
 <!doctype html>
 <html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>Community Theme Starter</title><link rel="stylesheet" href="style.css"></head>
 <body>
-  <!-- Region 1: these labels are real theme HTML, independent of Steam's UI. -->
-  <header><div><small>THEMEHUB / BUILD YOUR OWN</small><h1>Community theme starter</h1></div><div class="header-note"><span>LEARN BY BUILDING</span><small>7 interactive lessons</small></div></header>
-  <div class="layout">
-    <nav aria-label="Lessons"><div class="nav-caption">YOUR WORKSPACE</div>
-      <button data-lesson="overview">01 · How it fits together</button>
-      <button data-lesson="library">02 · Library & actions</button>
-      <button data-lesson="saved">03 · Shared saved data</button>
-      <button data-lesson="services">04 · Live service bridge</button>
-      <button data-lesson="motion">05 · Animation lifecycle</button>
-      <button data-lesson="files">06 · Customize & package</button>
-      <a data-theme-page href="pages/playground.html">07 · Another HTML page →</a>
-    </nav>
-    <!-- Region 2: all lesson content is local; only the demos talk to the host. -->
-    <main id="lesson" tabindex="-1"></main>
-    <aside><small>LIVE BRIDGE INSPECTOR</small><h2 id="player">Your profile</h2><dl><dt>Theme</dt><dd id="theme-id">Waiting…</dd><dt>Library</dt><dd id="game-count">—</dd><dt>Route</dt><dd id="route">—</dd><dt>Activity</dt><dd id="activity">—</dd><dt>Last input</dt><dd id="input">Press a controller button</dd></dl><h3>Try it</h3><p>Use the D-pad to move between controls. A activates. B returns from another page. X opens host options. You can also use mouse and touch.</p><pre id="event-log" aria-label="Recent bridge events">Waiting for state…</pre><button id="host-options">Open ThemeHub options</button></aside>
-  </div>
-  <footer><span>A · Activate</span><span>B · Page back</span><span>X · Host options</span><span>L2 / R2 · Host presets</span><span id="feedback" role="status"></span></footer>
-  <script src="theme-bridge.js"></script><script src="app.js"></script>
+<header><div><small>THEMEHUB / COMMUNITY TEMPLATE</small><h1>Your dashboard</h1></div><div class="header-profile"><span class="marker">PROFILE · state.user</span><strong id="player">Player</strong></div></header>
+<div class="dashboard">
+<nav><span class="marker">NAVIGATION · page routes</span><button id="home" aria-current="page">⌂ Home</button><a data-theme-page href="pages/playground.html">▤ Custom page →</a><button id="host-options">⚙ ThemeHub options</button><p class="annotation">Edit index.html for navigation items. Links use the SDK; options opens the host menu.</p></nav>
+<main>
+<section class="panel games-panel"><div class="section-head"><div><span class="marker">GAME LIBRARY · state.games</span><h2>My games</h2></div><span id="game-count" class="count">—</span></div><input id="search" type="search" aria-label="Search games" placeholder="Search your library"><span class="annotation">Search filters locally. Play sends a launch action; Details opens the host game page.</span><div id="games"></div><div id="launch-confirm" class="confirm" hidden></div></section>
+<section class="panel animation-panel"><div class="section-head"><div><span class="marker">ANIMATED SURFACE · hub.animation()</span><h2>Ambient canvas</h2></div><button id="motion-toggle">Pause</button></div><canvas id="animation" width="600" height="140" aria-label="Ambient animation"></canvas><div class="panel-bottom"><span class="annotation">Replace this canvas with your scene. Pauses when hidden; respects reduced motion.</span><button id="change-color">Change color</button></div></section>
+</main>
+<aside>
+<section class="panel"><span class="marker">PERSISTENCE · state.saved</span><h2>Your preferences</h2><label for="saved-note">Display note</label><input id="saved-note" type="text" maxlength="240" placeholder="Write something"><div class="actions"><button id="save-note">Save</button><button id="increment">Counter +1</button></div><p id="saved-result" class="result"></p><p class="annotation">Saved per theme and shared with custom pages. Edit app.js to change the fields.</p></section>
+<section class="panel"><span class="marker">LIVE DATA · hub.request()</span><h2>Services</h2><div class="actions"><button data-service="friends">Friends</button><button data-service="downloads">Downloads</button><button data-service="settings">Settings</button></div><pre id="service-result">Choose a service to read its data.</pre><p class="annotation">These buttons read host data. Render the response however your theme needs.</p></section>
+<section class="runtime"><span class="marker">INPUT & LIFECYCLE · SDK events</span><div><span id="activity">Active</span><span id="input">D-pad / touch</span></div></section>
+</aside>
+</div>
+<footer><span>A · Activate</span><span>B · Back</span><span>X · Options</span><span>L2 / R2 · Presets</span><span id="feedback" role="status"></span></footer>
+<script src="theme-bridge.js"></script><script src="app.js"></script>
 </body></html>

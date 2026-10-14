@@ -10,7 +10,7 @@ The theme runs inside two sandboxed frames. It has an opaque origin, cannot read
 
 ## Interactive installable template
 
-Start from [Community Theme · Interactive Starter](../themes/community-starter/README.md). Its actual theme interface includes labeled lessons, editable source comments, a bridge inspector and interactive examples for library actions, saved state, read-only services, controller focus, animation and separate HTML pages. Build an importable ZIP with `python tools/package_community_starter.py`. Rename its manifest ID before publishing your own derivative.
+Start from [Community Theme · Interactive Starter](../themes/community-starter/README.md). Its actual theme interface includes labeled dashboard regions, editable source comments, labeled controls and working controls for library actions, saved state, read-only services, controller focus, animation and separate HTML pages. Build an importable ZIP with `python tools/package_community_starter.py`. Rename its manifest ID before publishing your own derivative.
 
 ## Minimal working theme
 
