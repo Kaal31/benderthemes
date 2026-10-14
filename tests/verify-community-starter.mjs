@@ -8,7 +8,8 @@ try{
   page.on('pageerror',e=>errors.push(e.message));await page.emulateMedia({reducedMotion:'reduce'});
   await page.goto(url);await page.waitForFunction(()=>window.__applyPreset?.('community-starter'));
   const outer=page.locator('[data-dht-root] iframe'), f=()=>page.frameLocator('[data-dht-root] iframe').frameLocator('iframe');
-  await f().getByText('Connected · SDK 1',{exact:true}).waitFor();
+  await f().locator('#theme-id').getByText('community-starter',{exact:true}).waitFor();
+  assert.equal(await f().locator('#connection').count(),0);
   assert.equal(await outer.getAttribute('sandbox'),'allow-scripts');
   await f().getByRole('button',{name:'Check sandbox isolation'}).click();
   assert.match(await f().locator('#isolation-result').textContent(),/Parent document: blocked/);
@@ -32,6 +33,6 @@ try{
   await f().getByRole('button',{name:'Check sandbox isolation'}).focus();await page.keyboard.press('ArrowDown');
   assert.notEqual(await f().locator('#lesson').evaluate(()=>document.activeElement?.textContent),'Check sandbox isolation');
   mkdirSync('out/community-starter',{recursive:true});
-  for(const height of [800,720]){await outer.evaluate((n,h)=>{n.style.width='1280px';n.style.height=h+'px';},height);await page.waitForTimeout(150);assert.ok(await f().locator('body').evaluate(()=>document.documentElement.scrollWidth<=innerWidth+1));await outer.screenshot({path:`out/community-starter/home-${height}.png`});}
+  for(const height of [800,720]){await outer.evaluate((n,h)=>{n.style.width='1280px';n.style.height=h+'px';},height);await page.waitForTimeout(150);assert.ok(await f().locator('body').evaluate(()=>document.documentElement.scrollWidth<=innerWidth+1));await f().locator('aside').evaluate(n=>n.scrollTop=0);await outer.screenshot({path:`out/community-starter/home-${height}.png`});}
   assert.deepEqual(errors,[]);console.log('PASS: annotated lessons, real sandbox, library confirmation, saved data, separate page/back, read services, static animation, controller focus and 800/720 layouts.');
 }finally{await browser.close();server.close();}

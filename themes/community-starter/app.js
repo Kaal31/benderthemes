@@ -41,7 +41,7 @@
   function syncSaved(){const result=$('saved-result');if(result)result.textContent=`Confirmed note: ${state?.saved?.starterNote||'(empty)'} · counter: ${Number(state?.saved?.starterCounter)||0}`;}
   document.querySelectorAll('[data-lesson]').forEach(b=>b.onclick=()=>{hub.navigate('#'+b.dataset.lesson);});
   $('host-options').onclick=()=>hub.open('options');
-  hub.on('state',s=>{state=s;$('connection').textContent='Connected · SDK '+hub.version;$('player').textContent=s.user;$('theme-id').textContent=s.theme?.id;$('game-count').textContent=`${s.games.length} games / ${s.collections.length} collections`;$('route').textContent=s.route?.path+'#'+(s.route?.fragment||'overview');$('activity').textContent=hub.active?'Active':'Paused';syncSaved();if(!savesReady){savesReady=true;log('state ← library/settings/saved');}if(lesson==='library'&&!$('library-demo')?.children.length)drawLibrary();});
+  hub.on('state',s=>{state=s;$('player').textContent=s.user;$('theme-id').textContent=s.theme?.id;$('game-count').textContent=`${s.games.length} games / ${s.collections.length} collections`;$('route').textContent=s.route?.path+'#'+(s.route?.fragment||'overview');$('activity').textContent=hub.active?'Active':'Paused';syncSaved();if(!savesReady){savesReady=true;log('state ← library/settings/saved');}if(lesson==='library'&&!$('library-demo')?.children.length)drawLibrary();});
   hub.on('route',r=>{const name=['overview','library','saved','services','motion','files'].includes(r?.fragment)?r.fragment:'overview';render(name);});
   hub.on('input',m=>{$('input').textContent=m.btn+(m.repeat?' (repeat)':'');log('input ← '+m.btn);if(m.btn==='x')hub.open('options');});
   hub.on('activity',active=>{$('activity').textContent=active?'Active':'Paused';log('activity ← '+active);});
