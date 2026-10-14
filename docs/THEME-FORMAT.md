@@ -190,3 +190,8 @@ The shared host reads the numeric game's existing assignment from ThemeDeck's `t
 The adapter follows [ThemeDeck v3.0.2's saved-track format and browser audio behavior](https://github.com/BrenticusMaximus/ThemeDeck). Actual Deck playback, suspend/wake, and simultaneous plugin behavior still require device verification.
 
 Audio extension: `audioLibrary` returns bounded albums and tracks with no filesystem paths or media-server tokens, plus public player state. `audio` accepts action state/play/toggle/next/prev/shuffle/repeat/seek. Play requires a known albumId and valid track index; seek requires a finite position within the active track duration. Playback uses the shared musicPlayer service.
+
+
+## Experimental multi-page interfaces
+
+Frame themes may navigate to arbitrary local HTML pages and same-page routes using the bundled ThemeHub SDK. See [FRAME-SDK.md](FRAME-SDK.md) for navigation/back/replace, shared saved data, controller/keyboard handling and animation lifecycle. The sandbox and theme-folder restrictions remain in place. The Block Worlds frame test includes a separate 3D workshop and shared-state preview page.

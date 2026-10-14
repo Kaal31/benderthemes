@@ -1,3 +1,4 @@
+import { frameRoute, FrameRoute } from "./frameNavigation";
 // The "frame" layout: a community theme's own interface, sealed off from Steam.
 //
 // The interface is an HTML page from the theme's folder. It runs in an iframe
@@ -52,16 +53,34 @@ export function FrameHome() {
   const requests = useRef({ at: 0, count: 0, pending: 0 });
   const theme = activeTheme(api.settings);
   const frame = useRef<HTMLIFrameElement>(null);
-  const [ready, setReady] = useState<{ handles: Set<Btn> } | null>(null);
+  const [ready, setReady] = useState<{ handles: Set<Btn>; textInput: boolean } | null>(null);
   const [hints, setHints] = useState<Hints>({});
   const [focusedAppid, setFocusedAppid] = useState<number | null>(null);
   useReportFocus(focusedAppid === null ? undefined : api.lib.byId.get(focusedAppid));
   const lastLaunch = useRef(0);
-  const url = theme?.frame ? frameUrl(theme) : null; // the wrapper page, never the theme page directly
+  const entry = theme?.frame?.entry ?? "index.html";
+  const [routes, setRoutes] = useState<FrameRoute[]>([]);
+  const route = routes[routes.length - 1] ?? { path: entry, fragment: "", params: {} };
+  const generation = useRef(0), client = useRef<string | null>(null);
+  const [pageError, setPageError] = useState(false);
+  const [reload, setReload] = useState(0);
+  const changeRoute = (next: FrameRoute | null, replace = false) => {
+    if (!next) return;
+    generation.current++; setPageError(false);
+    if (next.path !== route.path) { setReady(null); setHints({}); setFocusedAppid(null); client.current = null; }
+    setRoutes(prev => replace ? [...prev.slice(0, -1), next] : [...(prev.length ? prev : [{ path: entry, fragment: "", params: {} }]), next].slice(-32));
+  };
+  const back = () => {
+    if (routes.length <= 1) return false;
+    generation.current++; setPageError(false);
+    if (routes[routes.length - 2]?.path !== route.path) { setReady(null); setHints({}); setFocusedAppid(null); client.current = null; }
+    setRoutes(prev => prev.slice(0, -1)); return true;
+  };
+  const url = theme?.frame ? frameUrl(theme, route.path) : null; // the wrapper page, never the theme page directly
 
   const post = (msg: Record<string, unknown>) => {
     try {
-      frame.current?.contentWindow?.postMessage({ dht: FRAME_PROTOCOL, ...msg }, "*");
+      frame.current?.contentWindow?.postMessage({ dht: FRAME_PROTOCOL, ...msg, ...(msg.type === "state" ? { active: !(frame.current?.ownerDocument.hidden ?? false) && !api.busy } : {}), clientId: client.current }, "*");
     } catch {
       /* the frame went away */
     }
@@ -89,9 +108,11 @@ export function FrameHome() {
       collections: api.lib.collections.map((c) => ({ id: c.id, name: c.name, appids: c.games.map((g) => g.appid) })),
       saved: theme ? s.frameData[theme.id] ?? null : null,
       busy: api.busy,
-      capabilities: { pages: 1, audio: 1, focus: 1 },
+      route: { ...route, canGoBack: routes.length > 1 },
+      active: !(frame.current?.ownerDocument.hidden ?? false) && !api.busy,
+      capabilities: { pages: 1, audio: 1, focus: 1, navigation: 1, lifecycle: 1, savePatch: 1 },
     };
-  }, [api.lib, api.settings, api.user, api.busy, theme?.id, ready]);
+  }, [api.lib, api.settings, api.user, api.busy, theme?.id, ready, routes]);
 
   useEffect(() => {
     if (ready) post({ type: "state", ...state });
@@ -100,9 +121,17 @@ export function FrameHome() {
   // The same bounded spectrum is available to every frame theme.
   useEffect(() => {
     if (!ready) return;
-    const timer = setInterval(() => post({ type: "audio", bands: themeAudioBands() }), 50);
-    return () => clearInterval(timer);
-  }, [ready, theme?.id, url]);
+    const doc = frame.current?.ownerDocument ?? document;
+    let timer: ReturnType<typeof setInterval> | undefined;
+    const sync = () => {
+      clearInterval(timer); timer = undefined;
+      const active = !doc.hidden && !api.busy;
+      post({ type: "lifecycle", active });
+      if (active) timer = setInterval(() => post({ type: "audio", bands: themeAudioBands() }), 50);
+    };
+    sync(); doc.addEventListener("visibilitychange", sync);
+    return () => { clearInterval(timer); doc.removeEventListener("visibilitychange", sync); };
+  }, [ready, theme?.id, url, api.busy]);
 
   // Messages from the interface. Only our own iframe is listened to.
   useEffect(() => {
@@ -112,7 +141,22 @@ export function FrameHome() {
       if (!frame.current || e.source !== frame.current.contentWindow) return;
       const m = e.data;
       if (!m || typeof m !== "object" || m.dht !== FRAME_PROTOCOL || typeof m.type !== "string") return;
+      if (m.type !== "ready" && client.current && m.clientId !== client.current) return;
       switch (m.type) {
+        case "navigate": {
+          const next = frameRoute(m.path, route.path, m.params ?? {});
+          if (!next) { post({ type: "navigationError", error: "Choose an HTML page inside this theme." }); return; }
+          changeRoute(next, m.replace === true); return;
+        }
+        case "back": { back(); return; }
+        case "savePatch": {
+          if (!theme || !m.data || typeof m.data !== "object" || Array.isArray(m.data)) return;
+          updateSettings(p => {
+            const data = { ...(p.frameData[theme.id] ?? {}), ...m.data };
+            try { if (JSON.stringify(data).length > MAX_SAVE) return {}; } catch { return {}; }
+            return { frameData: { ...p.frameData, [theme.id]: data } };
+          }); return;
+        }
         case "focus": {
           if (m.appid === null) setFocusedAppid(null);
           else if (find(m.appid)) setFocusedAppid(m.appid);
@@ -126,16 +170,20 @@ export function FrameHome() {
             post({ type: "pageResult", requestId: m.requestId, error: "Too many page requests. Try again." }); return;
           }
           budget.pending++;
-          const target = frame.current?.contentWindow;
+          const target = frame.current?.contentWindow, requestGeneration = generation.current;
           void framePageRequest(m.op, m.args, api, downloads).then(
-            data => { if (target === frame.current?.contentWindow) post({ type: "pageResult", requestId: m.requestId, data }); },
-            () => { if (target === frame.current?.contentWindow) post({ type: "pageResult", requestId: m.requestId, error: "Could not load this data. Please try again." }); }
+            data => { if (target === frame.current?.contentWindow && requestGeneration === generation.current) post({ type: "pageResult", requestId: m.requestId, data }); },
+            () => { if (target === frame.current?.contentWindow && requestGeneration === generation.current) post({ type: "pageResult", requestId: m.requestId, error: "Could not load this data. Please try again." }); }
           ).finally(() => { budget.pending--; });
           return;
         }
         case "ready": {
+          const id = typeof m.clientId === "string" ? m.clientId.slice(0, 100) : null;
+          if (client.current !== id) generation.current++;
+          client.current = id;
+          setPageError(false);
           const handles = new Set<Btn>((Array.isArray(m.handles) ? m.handles : []).filter((b: unknown): b is Btn => BUTTONS.includes(b as Btn)));
-          setReady({ handles });
+          setReady({ handles, textInput: m.textInput === true });
           post({ type: "state", ...state });
           return;
         }
@@ -183,23 +231,31 @@ export function FrameHome() {
     };
     view.addEventListener("message", onMessage);
     return () => view.removeEventListener("message", onMessage);
-  }, [api, state, theme?.id, downloads]);
+  }, [api, state, theme?.id, downloads, routes]);
 
-  // A tap inside the frame must not take keyboard/controller focus away from the home.
+  // Legacy interfaces return focus to the host. Interfaces with their own DOM
+  // keyboard handler opt in to textInput so search/editor fields keep focus.
   useEffect(() => {
     const el = frame.current;
     const view = el?.ownerDocument?.defaultView;
-    if (!el || !view) return;
+    if (!el || !view || ready?.textInput) return;
     const onBlur = () => setTimeout(() => {
       if (el.ownerDocument.activeElement === el) el.blur();
     }, 0);
     view.addEventListener("blur", onBlur);
     return () => view.removeEventListener("blur", onBlur);
-  }, [url]);
+  }, [url, ready?.textInput]);
 
   useEffect(() => { setReady(null); setFocusedAppid(null); }, [url]);
+  useEffect(() => { setRoutes([]); client.current = null; generation.current++; }, [theme?.id]);
+  useEffect(() => {
+    if (ready || !url) return;
+    const timer = setTimeout(() => setPageError(true), 8000);
+    return () => clearTimeout(timer);
+  }, [url, ready, reload]);
 
   const onInput = (p: Press) => {
+    if (p.btn === "b" && (!ready || pageError) && back()) return true;
     if (ready?.handles.has(p.btn)) {
       post({ type: "input", btn: p.btn, repeat: p.repeat });
       return true;
@@ -213,10 +269,11 @@ export function FrameHome() {
 
   return (
     <ThemeRoot onInput={onInput} hints={{ y: "Options", ...hints }}>
+      {pageError && <div role="alert" style={{position:"absolute",inset:0,zIndex:5,background:"#16202bf2",padding:48,color:"white"}}>This page did not connect to ThemeHub.<button onClick={() => { if (!back()) { setPageError(false); setReady(null); client.current = null; generation.current++; setReload(n => n + 1); } }}>Back to a working page</button></div>}
       {url ? (
         <iframe
           ref={frame}
-          key={url}
+          key={`${url}:${reload}`}
           src={url}
           title={theme?.name ?? "Community theme"}
           // allow-scripts only: an opaque origin, no forms, popups, navigation of the top page, or storage

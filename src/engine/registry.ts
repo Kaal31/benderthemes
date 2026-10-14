@@ -108,9 +108,9 @@ export function themeFileUrl(theme: ThemeEntry, rel: string): string | null {
  * URL a community interface (layout "frame") is opened at: the plugin's wrapper page for it (py_modules/data_themes.py:
  * frame_wrapper), never the theme's page itself, so the interface can't navigate its frame elsewhere. null = can't open.
  */
-export function frameUrl(theme: ThemeEntry): string | null {
+export function frameUrl(theme: ThemeEntry, entry: string = theme.frame?.entry ?? ""): string | null {
   if (theme.source === "builtin" || !wrap || !theme.frame) return null;
-  return `${wrap}/${encodeURIComponent(theme.id)}/${theme.frame.entry.split("/").map(encodeURIComponent).join("/")}`;
+  return `${wrap}/${encodeURIComponent(theme.id)}/${entry.split("/").map(encodeURIComponent).join("/")}`;
 }
 
 // ───────────── slots ─────────────

@@ -48,6 +48,8 @@ jobs:
       - run: npm run preview
         env:
           SKIP_THEME_PACK_BUILD: '1'
+      - run: node tests/verify-block-worlds-frame.mjs
+      - run: node tests/verify-frame-navigation.mjs
       - run: node tests/verify-channel-updater.mjs
       - run: node tests/verify-audio-downloads-browser.mjs
       - run: node tools/capture_theme_previews.mjs

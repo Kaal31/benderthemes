@@ -70,7 +70,7 @@ with zipfile.ZipFile(target,'w',zipfile.ZIP_DEFLATED,compresslevel=6) as z:
         assert metadata == identity(version, os.environ['RELEASE_CHANNEL'], metadata['build'], metadata['attempt'], metadata['commit'])
         z.write(root/'release-channel.json','DeckHomeThemes/release-channel.json')
     # defaults/: themes shipped inside the plugin (e.g. the PSP "Default theme", made from a PSP firmware)
-    folders=[('third-party','third-party'),('py_modules','py_modules'),('defaults','defaults'),('themes','themes')]
+    folders=[('third-party','third-party'),('py_modules','py_modules'),('defaults','defaults'),('themes','themes'),('sdk','sdk')]
     if OFFLINE: folders.append(('bundle','defaults'))
     if TEST_STOCK: folders.append(('local-material/wiiu-stock','defaults/skins/wiiu-stock'))
     if TEST_THEMES:
