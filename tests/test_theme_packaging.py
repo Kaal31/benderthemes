@@ -32,7 +32,7 @@ class ThemePackagingTests(unittest.TestCase):
                 path.parent.mkdir(parents=True, exist_ok=True)
                 path.write_bytes(content)
             (root / 'package.json').write_text('{"version":"1.10.7"}')
-            with patch.object(packaging, 'ROOT', root):
+            with patch.object(packaging, 'ROOT', root), patch.object(packaging, 'audio_catalog', return_value=[]):
                 packaging.build()
                 catalog = json.loads((root / 'theme-catalog.json').read_text())
                 pack, = catalog['themes']
