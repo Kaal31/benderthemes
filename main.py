@@ -2264,6 +2264,8 @@ class Plugin:
                     dst = os.path.join(_sounds_dir(), n)
                     if not os.path.exists(dst):
                         shutil.copytree(os.path.join(ssrc, n), dst)
+                        import theme_uninstall
+                        theme_uninstall.record_shared("sounds", n)
         except Exception as e:
             decky.logger.warning(f"could not install bundled sound packs: {e}")
         # Example CSS Loader themes shipped in the zip → ~/homebrew/themes (never overwrites).
@@ -2276,6 +2278,8 @@ class Plugin:
                     dst = os.path.join(dst_root, n)
                     if not os.path.exists(dst):
                         shutil.copytree(os.path.join(src_root, n), dst)
+                        import theme_uninstall
+                        theme_uninstall.record_shared("themes", n)
         except Exception as e:
             decky.logger.warning(f"could not install example CSS themes: {e}")
         # Same link AudioLoader makes, so pack sounds are reachable from Steam's UI
@@ -2297,6 +2301,9 @@ class Plugin:
             pass
 
     async def _uninstall(self):
-        # Decky also invokes this for manual ZIP reinstalls. User preferences and
-        # installed theme resources deliberately outlive the plugin directory.
         await self._unload()
+        import theme_updates
+        if theme_updates.replacement_pending():
+            return  # Preserve resources during a ThemeHub update/channel switch.
+        import theme_uninstall
+        theme_uninstall.cleanup()

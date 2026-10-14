@@ -30,6 +30,8 @@ class UpdateTests(unittest.TestCase):
         self.root = Path(self.temp.name)
         updates.decky.DECKY_PLUGIN_DIR = str(self.root)
         updates.decky.DECKY_PLUGIN_SETTINGS_DIR = str(self.root / "settings")
+        updates.decky.DECKY_HOME = str(self.root)
+        updates.decky.DECKY_PLUGIN_RUNTIME_DIR = str(self.root / "runtime")
         (self.root / "package.json").write_text('{"version":"1.9.9"}')
 
     def test_numeric_sort_and_only_real_numbered_packages(self):
@@ -113,10 +115,14 @@ class UpdateTests(unittest.TestCase):
         settings.parent.mkdir()
         settings.write_text('{"theme":"minecraft"}')
         updates.prepare_replacement("1.9.10", updates.asset_url("1.9.10"))
-        asyncio.run(module.Plugin()._uninstall())
+        import theme_uninstall
+        with patch.object(theme_uninstall, "decky", updates.decky):
+            asyncio.run(module.Plugin()._uninstall())
         self.assertEqual(json.loads(settings.read_text()), {"theme": "minecraft"})
         updates.clear_replacement()
-        asyncio.run(module.Plugin()._uninstall())
+        import theme_uninstall
+        with patch.object(theme_uninstall, "decky", updates.decky):
+            asyncio.run(module.Plugin()._uninstall())
         self.assertEqual(json.loads(settings.read_text()), {"theme": "minecraft"})
 
 

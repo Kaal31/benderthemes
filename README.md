@@ -184,3 +184,6 @@ No project-wide license is added by this repository.
 See the [custom theme author guide](docs/CUSTOM-THEMES.md) for a working starter, multi-page navigation, 3D interfaces, saved data, controller input, live Steam services, packaging and Hub publishing status. The [frame SDK reference](docs/FRAME-SDK.md) describes the experimental bridge API.
 
 Try the [community interface showcase](themes/community-starter/README.md) for labeled examples of different interfaces inside an installable explanation theme.
+
+
+Uninstalling ThemeHub through Decky keeps only `settings.json`. Downloaded packs, imported skins, wallpapers, caches, tools and plugin logs are removed. Shared sound/CSS packs are removed only when recorded as installed by ThemeHub. Updates and channel switches initiated through ThemeHub preserve resources; manual Decky ZIP reinstalls clear resources while keeping settings.
