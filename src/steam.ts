@@ -912,7 +912,11 @@ function watchSteamChrome(doc: Document, run: () => void): () => void {
     for (const d of docs) {
       if (watched.has(d) || !d.body || !d.defaultView) continue;
       try {
-        const observer = new (d.defaultView as any).MutationObserver(run);
+        const observer = new (d.defaultView as any).MutationObserver((records: MutationRecord[]) => {
+          // Theme animations mutate every frame; only native UI changes and the
+          // home root's own visibility can affect Steam chrome or its keyboard.
+          if (records.some(({ target }) => !target.parentElement?.closest("[data-dht-root]"))) run();
+        });
         observer.observe(d.body, { childList: true, subtree: true, attributes: true, attributeFilter: ["class", "style", "hidden"] });
         d.addEventListener("focusin", run);
         d.addEventListener("focusout", run);
