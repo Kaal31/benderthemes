@@ -94,6 +94,7 @@ ThemeHub is built on the work, art, sounds and research of many people. Thank yo
 
 ### Inspiration
 
+- **[otisabiburada — Finally Achievement Plugin](https://github.com/otisabiburada/finally-achievement-plugin)**, which inspired ThemeHub’s theme-styled achievement notifications in the experimental branch. ThemeHub implements its own popup system and disables it when Finally is installed.
 - **[justinca92 — SpinDeck](https://github.com/justinca92/spindeck)**, which inspired this plugin and was a reference during development.
 - **SLSDeck**'s numbered-release updater, which ThemeHub's own updater was adapted from.
 - The original **Deck Home Themes** plugin: its BSD-3-Clause notice is kept in [third-party/Original-Deck-Home-Themes-BSD.txt](third-party/Original-Deck-Home-Themes-BSD.txt).
