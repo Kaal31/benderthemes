@@ -1,5 +1,7 @@
 # External theme pages and SDK
 
+Theme authors can use the [standalone SDK viewer](../sdk/viewer/README.md) with `npm run theme:viewer`, or open a compiled theme folder with `node sdk/viewer/server.mjs --theme /path/to/theme`. It supports code-heavy HTML/JavaScript, bundled React, canvas and Three.js themes with sample host data, controller input, multiple pages and saved state.
+
 Experimental now supports arbitrary **local HTML pages** and **single-page routes** inside a frame theme. No page list or layout registration is needed. All pages keep the existing opaque-origin iframe sandbox and theme-folder restrictions. They use the bridge for Steam data/actions; no arbitrary Steam APIs or external pages are enabled.
 
 ```

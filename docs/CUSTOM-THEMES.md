@@ -1,5 +1,7 @@
 # Custom theme author guide
 
+Theme authors can use the [standalone SDK viewer](../sdk/viewer/README.md) with `npm run theme:viewer`, or open a compiled theme folder with `node sdk/viewer/server.mjs --theme /path/to/theme`. It supports code-heavy HTML/JavaScript, bundled React, canvas and Three.js themes with sample host data, controller input, multiple pages and saved state.
+
 This guide covers the external theme framework on the **experimental** branch. Start here to build an interface; use [FRAME-SDK.md](FRAME-SDK.md) for the SDK details and [THEME-FORMAT.md](THEME-FORMAT.md) for manifests and asset slots.
 
 ## What you can build

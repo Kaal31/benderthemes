@@ -1,5 +1,7 @@
 <p align="center"><img src="docs/logo.svg" width="128" height="128" alt="ThemeHub logo"></p>
 
+Theme authors can use the [standalone SDK viewer](sdk/viewer/README.md) with `npm run theme:viewer`, or open a compiled theme folder with `node sdk/viewer/server.mjs --theme /path/to/theme`. It supports code-heavy HTML/JavaScript, bundled React, canvas and Three.js themes with sample host data, controller input, multiple pages and saved state.
+
 <h1 align="center">ThemeHub</h1>
 
 <p align="center">Console-style home screens for the Steam Deck: PlayStation, Xbox and Nintendo looks, a theme Hub, theme-file importers and Plugin Spotlight. A <a href="https://github.com/SteamDeckHomebrew/decky-loader">Decky Loader</a> plugin.</p>
