@@ -334,6 +334,7 @@ export interface Settings {
   themedStore: boolean; // Store entries open the store styled like the current theme
   /** Extra sections of the themed store, per home theme: Themes (packs + theme files) and Plugins (Spotlight). Hidden unless turned on. */
   storeSections: Partial<Record<ThemeId, StoreSections>>;
+  keyboardSpacing?: number; // Key inset in px, 0–5; default 1 (global, persisted).
   keyboardSkin?: boolean; // Steam's on-screen keyboard skinned like the active look (src/keyboardSkins.ts); off unless set to true (global)
   // PSP theme files whose boot intro / game-start clip is used, "" = none. One of each at a time;
   // it stays in use while other themes are active.

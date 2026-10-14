@@ -191,6 +191,13 @@ function Panel() {
             <PanelSectionRow><ToggleField label="Steam Deck compatibility badges" checked={s.badges.deck} onChange={(v) => updateSettings((p) => ({ badges: { ...p.badges, deck: v } }))} /></PanelSectionRow>
             <PanelSectionRow><ToggleField label="Hide Steam's top bar" description="While the themed home is on screen" checked={s.hideSteamHeader} onChange={(v) => updateSettings({ hideSteamHeader: v })} /></PanelSectionRow>
             <PanelSectionRow><ToggleField label="Themed keyboard" description="Off by default. Steam's on-screen keyboard looks like the active console's keyboard, in every theme (a CSS Loader keyboard theme or a Points Shop keyboard wins)" checked={s.keyboardSkin === true} onChange={(v) => updateSettings({ keyboardSkin: v })} /></PanelSectionRow>
+            {s.keyboardSkin === true && (
+              <PanelSectionRow>
+                <div style={{ paddingLeft: 12 }}>
+                  <SliderField label="Keyboard spacing (px)" description="Gap around each key · default 1 px" min={0} max={5} step={0.5} value={Math.max(0, Math.min(5, Number.isFinite(s.keyboardSpacing) ? s.keyboardSpacing! : 1))} showValue onChange={(value) => updateSettings({ keyboardSpacing: value })} />
+                </div>
+              </PanelSectionRow>
+            )}
             <PanelSectionRow><DropdownItem label="Steam's bottom bar" description="Steam Menu · Ⓐ Select · Ⓑ Back, while the themed home is on screen" rgOptions={FOOTER_MODES.map((f) => ({ data: f.id, label: f.name }))} selectedOption={s.footer} onChange={(o) => updateSettings({ footer: o.data })} /></PanelSectionRow>
             <PanelSectionRow><ToggleField label="Background animations" checked={s.animations} onChange={(v) => updateSettings({ animations: v })} /></PanelSectionRow>
             <PanelSectionRow><ToggleField label="24-hour clock" checked={s.clock24} onChange={(v) => updateSettings({ clock24: v })} /></PanelSectionRow>

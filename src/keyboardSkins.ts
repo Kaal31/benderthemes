@@ -502,12 +502,16 @@ function apply(doc: Document, css: string | null, look: KbLook | null, c: KbClas
   if (el.parentNode !== doc.head || el !== doc.head.lastElementChild) doc.head.appendChild(el);
 }
 
-let state: { look: KbLook | null; css: string | null } = { look: null, css: null };
+let state: { look: KbLook | null; css: string | null; spacing?: number } = { look: null, css: null };
 const touched = new Set<Document>();
 function refresh() {
   const { classes } = keyboardClasses();
   const look = keyboardLookFor(getSettings() as any);
-  if (look !== state.look) state = { look, css: look ? buildKeyboardCss(look, classes) : null };
+  const savedSpacing = getSettings().keyboardSpacing;
+  const spacing = Math.max(0, Math.min(5, typeof savedSpacing === "number" && Number.isFinite(savedSpacing) ? savedSpacing : 1));
+  if (look !== state.look || spacing !== state.spacing) {
+    state = { look, spacing, css: look ? buildKeyboardCss(look, classes) + `\n:root .${classes.Keyboard}.DefaultTheme{--dht-kb-gap:${spacing}px}` : null };
+  }
   for (const doc of steamDocuments()) {
     try {
       apply(doc, state.css, state.look, classes);
