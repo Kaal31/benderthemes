@@ -348,3 +348,11 @@ Plugins such as **ProtonDB Badges** or **HLTB for Deck** add their badges to Ste
 Deck Home Themes also shows its own badges inside the themes. The Steam Deck rating comes from Steam, and the ProtonDB tier from protondb.com. Both can be switched off in Quick Access, or hidden with CSS (`.dht-badges { display: none !important; }`).
 
 **Hub styling and intros are for console looks only:** `.dht-hub[data-hub-styled]` / `data-hub-theme` are set only for the Sony, Microsoft and Nintendo looks; bonus looks, community interfaces and the Community interface keep the neutral Hub (`data-hub-theme="default"`) and get no generic intro reveal.
+
+## Game artwork scaling
+
+PS4, PS5, PS3, PSP and Vita expose **Game artwork scaling** in their own Background options. Each saves its own selection: Fill screen (default), Show full artwork, or Full artwork + blurred backdrop. PS4 requires its game-background toggle; PS3/PSP require an active game backdrop; Vita applies this to LiveArea. The setting does not resize covers, icons or console wallpapers.
+
+`.dht-game-hero[data-scaling="cover|contain|blur"]` identifies the game-background layer. CSS Loader themes can set `--dht-hero-fit: contain` and `--dht-hero-position: center` on a theme root to override the foreground image's fit and alignment. Steam-only themes such as Proper Hero Scaling target different elements and require an adapter or ThemeHub-specific rules.
+
+Full-artwork modes suppress PS5's transition zoom so the image stays uncropped. The existing PS5 Blurred art background option still controls foreground blur independently.

@@ -1,3 +1,4 @@
+import { GameHero } from "../common";
 import {customProfilePicture} from "../profilePicture";
 import { openDestination } from "../destinations";
 // XrossMediaBar for the PS3 and PSP themes: a horizontal category bar
@@ -1246,7 +1247,7 @@ export function XmbHome({ variant }: { variant: Variant }) {
         {/* the selected game's own backdrop fades in after a moment, like PIC1 on the console */}
         {backdrop && (
           <div className="dht-xmb-game-backdrop" key={backdrop.appid} style={{ position: "absolute", inset: 0, animation: "dhtPic1 900ms ease-out both" }}>
-            <GameArt g={backdrop} kind="hero" style={{ width: W, height: H }} />
+            <GameHero g={backdrop} theme={variant} />
             <div style={{ position: "absolute", inset: 0, background: "linear-gradient(90deg, rgba(0,0,0,0.55), rgba(0,0,0,0.25) 60%, rgba(0,0,0,0.15))" }} />
           </div>
         )}

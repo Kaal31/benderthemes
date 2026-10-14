@@ -1,3 +1,4 @@
+import { GameHero } from "../common";
 import {ProfileAvatar} from "../ProfileAvatar";
 // PS4 home: a function area (top icons) above a horizontal row of square
 // tiles; the focused game is enlarged with its name and a Start button, and
@@ -202,7 +203,7 @@ export function Ps4Home() {
         {!wall && <AnimCanvas width={W} height={H} animate={s.animations} draw={drawPs4Bg} fps={24} />}
         {s.ps4GameBackgrounds && bgGame && (
           <div className="dht-ps4-game-background" key={bgGame.appid} style={{ position: "absolute", inset: 0, animation: "dhtFade 500ms ease-out" }}>
-            <GameArt g={bgGame} kind="hero" style={{ width: W, height: H }} />
+            <GameHero g={bgGame} theme="ps4" />
             <div style={{ position: "absolute", inset: 0, background: "linear-gradient(180deg, rgba(5,15,40,0.55) 0%, rgba(5,15,40,0.25) 40%, rgba(5,15,40,0.85) 100%)" }} />
           </div>
         )}

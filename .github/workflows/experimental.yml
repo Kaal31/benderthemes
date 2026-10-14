@@ -50,6 +50,7 @@ jobs:
       - run: npm run preview
         env:
           SKIP_THEME_PACK_BUILD: '1'
+      - run: node tests/verify-hero-scaling.mjs
       - run: node tests/verify-block-worlds-frame.mjs
       - run: node tests/verify-frame-navigation.mjs
       - run: node tests/verify-community-starter.mjs

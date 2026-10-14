@@ -29,6 +29,21 @@ export type StyleOption = {
 
 export const THEME_STYLES: Partial<Record<ThemeId, StyleOption[]>> = { onyx, silver, wii, wiiu, ps2, ps5, xbox, aero, aero2, pain, nazarick, ps1, iisu };
 
+// Only layouts with game hero backgrounds expose this control. Cover tiles and
+// console wallpapers keep their own sizing.
+export const HERO_SCALING_THEMES: ThemeId[] = ["ps4", "ps5", "ps3", "psp", "vita"];
+for (const theme of HERO_SCALING_THEMES) {
+  THEME_STYLES[theme] = [...(THEME_STYLES[theme] ?? []), {
+    key: "heroScaling", label: "Game artwork scaling", group: "Background",
+    choices: [
+      { id: "cover", name: "Fill screen" },
+      { id: "contain", name: "Show full artwork" },
+      { id: "blur", name: "Full artwork + blurred backdrop" },
+    ],
+    def: "cover",
+  }];
+}
+
 /** A theme's own option, or its default. */
 export function style<T extends StyleValue>(s: Settings, theme: ThemeId, key: string): T {
   const own = s.styles?.[theme]?.[key];
