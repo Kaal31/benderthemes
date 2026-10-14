@@ -131,6 +131,13 @@ function useSteamHomeShown() {
 }
 export const showThemedHomeAgain = () => setSteamHomeShown(false);
 
+/** Bypass the themed home until the user leaves Steam's home route. */
+export function showNativeSteamHome() {
+  setSteamHomeShown(true);
+  Navigation.CloseSideMenus();
+  Navigation.Navigate("/library/home");
+}
+
 /** Rendered in place of Steam's home route. */
 export function HomeSwitch({ original }: { original: ReactNode }) {
   const s = useSettings();
@@ -302,17 +309,7 @@ function ThemedHomeContent({ standalone }: { standalone?: boolean }) {
         playSound("tab");
         updateSettings({ theme: id });
       },
-      showSteamHome: () => {
-        if (s.theme !== "ps2") {setDestination({place:"mainmenu"});return;}
-        if (standalone) {
-          try {
-            Navigation.Navigate("/library/home");
-          } catch {
-            /* ignore */
-          }
-        }
-        setSteamHomeShown(true);
-      },
+      showSteamHome: showNativeSteamHome,
       openSettings: openThemeSettings,
       openMedia: (appid?: number, index?: number) => {
         playSound("open");

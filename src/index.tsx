@@ -3,7 +3,7 @@ import { ButtonItem, DropdownItem, Navigation, PanelSection, PanelSectionRow, Sl
 import { definePlugin, openFilePicker, routerHook } from "@decky/api";
 import { importThemeZip, onThemesChanged, userThemes } from "./engine/registry";
 import { useEffect, useRef, useState } from "react";
-import { HomeSwitch, SafeBoundary, showThemedHomeAgain, ThemedHome } from "./Home";
+import { HomeSwitch, SafeBoundary, showNativeSteamHome, showThemedHomeAgain, ThemedHome } from "./Home";
 import { loadLibrary } from "./library";
 import { useDiag, logInfo, reportError } from "./diag";
 const PLUGIN_VERSION = "__DHT_VERSION__";
@@ -175,7 +175,7 @@ function Panel() {
           <>
             {s.enabled && (
               <PanelSectionRow>
-                <ButtonItem layout="below" description="Steam's Home button / Library → Home shows the theme" onClick={() => { showThemedHomeAgain(); Navigation.CloseSideMenus(); setTimeout(() => Navigation.Navigate(HOME_ROUTE), 80); }}>
+                <ButtonItem layout="below" description="Open the native Steam home screen" onClick={showNativeSteamHome}>
                   Go to Steam Home
                 </ButtonItem>
               </PanelSectionRow>
