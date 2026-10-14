@@ -38,6 +38,7 @@ jobs:
       - run: npm run build
       - run: npx playwright install --with-deps chromium
       - run: node tests/verify-footer-keyboard.mjs
+      - run: node tests/verify-quick-access-keyboard.mjs
       - run: python -m pip install Pillow
       - run: npm run preview
       - run: node tools/capture_theme_previews.mjs
