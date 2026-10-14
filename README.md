@@ -178,3 +178,6 @@ Plugin Spotlight credits each plugin's author on its own page.
 Bundled third-party notices are kept in [third-party/](third-party/) and next to the resources (`SOURCES.txt`, `SOURCE.txt`, `Copyright`). The Nazarick category wallpapers were generated from a supplied visual reference; Overlord characters and setting belong to their rights holders. PlayStation, Xbox, Nintendo, Wii, Steam and the other console and product names are trademarks of their owners; ThemeHub is a fan project and is not affiliated with or endorsed by them.
 
 No project-wide license is added by this repository.
+
+
+Uninstalling ThemeHub through Decky keeps only `settings.json`. Downloaded packs, imported skins, wallpapers, caches, tools and plugin logs are removed. Shared sound/CSS packs are removed only when recorded as installed by ThemeHub. Updates and channel switches initiated through ThemeHub preserve resources; manual Decky ZIP reinstalls clear resources while keeping settings.
