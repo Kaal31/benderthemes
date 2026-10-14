@@ -1,0 +1,22 @@
+<!doctype html>
+<html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>Community Theme Starter</title><link rel="stylesheet" href="style.css"></head>
+<body>
+  <!-- Region 1: these labels are real theme HTML, independent of Steam's UI. -->
+  <header><div><small>THEMEHUB / BUILD YOUR OWN</small><h1>Community theme starter</h1></div><span id="connection" role="status">Connecting to host…</span></header>
+  <div class="layout">
+    <nav aria-label="Lessons">
+      <button data-lesson="overview">01 · How it fits together</button>
+      <button data-lesson="library">02 · Library & actions</button>
+      <button data-lesson="saved">03 · Shared saved data</button>
+      <button data-lesson="services">04 · Live service bridge</button>
+      <button data-lesson="motion">05 · Animation lifecycle</button>
+      <button data-lesson="files">06 · Customize & package</button>
+      <a data-theme-page href="pages/playground.html">07 · Another HTML page →</a>
+    </nav>
+    <!-- Region 2: all lesson content is local; only the demos talk to the host. -->
+    <main id="lesson" tabindex="-1"></main>
+    <aside><small>LIVE BRIDGE INSPECTOR</small><h2 id="player">Your profile</h2><dl><dt>Theme</dt><dd id="theme-id">Waiting…</dd><dt>Library</dt><dd id="game-count">—</dd><dt>Route</dt><dd id="route">—</dd><dt>Activity</dt><dd id="activity">—</dd><dt>Last input</dt><dd id="input">Press a controller button</dd></dl><h3>Try it</h3><p>Use the D-pad to move between controls. A activates. B returns from another page. X opens host options. You can also use mouse and touch.</p><pre id="event-log" aria-label="Recent bridge events">Waiting for state…</pre><button id="host-options">Open ThemeHub options</button></aside>
+  </div>
+  <footer><span>A · Activate</span><span>B · Page back</span><span>X · Host options</span><span>L2 / R2 · Host presets</span><span id="feedback" role="status"></span></footer>
+  <script src="theme-bridge.js"></script><script src="app.js"></script>
+</body></html>

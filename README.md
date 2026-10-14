@@ -182,3 +182,5 @@ No project-wide license is added by this repository.
 ## Build a community theme
 
 See the [custom theme author guide](docs/CUSTOM-THEMES.md) for a working starter, multi-page navigation, 3D interfaces, saved data, controller input, live Steam services, packaging and Hub publishing status. The [frame SDK reference](docs/FRAME-SDK.md) describes the experimental bridge API.
+
+Try the [interactive community-theme starter](themes/community-starter/README.md) for labeled lessons and working demos inside an installable theme.
