@@ -10,7 +10,7 @@ The backend resolves the curated ID through the DeckThemes metadata and blob end
 
 ## Theme packages
 
-New online theme ZIPs omit only the local folders with confirmed DeckThemes source IDs. Their catalogue entries declare `audioPacks`; the plugin installs or reuses those dependencies when installing the theme. Audio failures leave artwork installed and show a warning; audio can be retried through Customize. Older published theme packs without dependencies continue to work as before. New packs require plugin version 1.10.8 or later.
+The experimental prerelease workflow reuses the existing published packs and catalogue and does not publish or replace their audio. The standalone theme pack builder can generate reduced online theme ZIPs that omit only the local folders with confirmed DeckThemes source IDs. Their catalogue entries declare `audioPacks`; the plugin installs or reuses those dependencies when installing the theme. Audio failures leave artwork installed and show a warning; audio can be retried through Customize. Older published theme packs without dependencies continue to work as before. New packs require plugin version 1.10.8 or later.
 
 Unmatched/custom audio remains bundled, including Alien Dial, Republic, Floating Castle/Nazarick/Six Paths music, MC360/Theseus conversions and extracted Xbox dashboard packs. Local source files have not been deleted. Offline builds retain all bundled copies and do not require audio downloads for their existing content. Optional new site packs still need a first download.
 

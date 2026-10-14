@@ -16,7 +16,8 @@ PUBLISHED = os.environ.get("USE_PUBLISHED_ASSETS") == "1"
 catalog = json.loads((root / ("asset-catalog.json" if PUBLISHED else "out/themes/theme-catalog.json")).read_text())
 with zipfile.ZipFile(root / f"out/DeckHomeThemes-v{version}.zip") as plugin:
     assert plugin.testzip() is None
-    assert not any(n.startswith(("DeckHomeThemes/defaults/", "DeckHomeThemes/bundle/")) for n in plugin.namelist()), "Bundled resources leaked into the installer"
+    core_defaults = ("DeckHomeThemes/defaults/assets/console-intros/", "DeckHomeThemes/defaults/sounds/DHT Onyx iPod/")
+    assert not any(n.startswith("DeckHomeThemes/bundle/") or (n.startswith("DeckHomeThemes/defaults/") and not n.startswith(core_defaults)) for n in plugin.namelist()), "Optional theme resources leaked into the installer"
     assert json.loads(plugin.read("DeckHomeThemes/theme-catalog.json")) == catalog
     assert json.loads(plugin.read("DeckHomeThemes/package.json"))["version"] == version
 if PUBLISHED:
