@@ -435,7 +435,7 @@ font-family:${v("font", k.font)};${k.panelEdge ? `box-shadow:${k.panelEdge};` : 
 // ───────────── injection ─────────────
 const STYLE_ID = "dht-kb-skin";
 /** Every Steam UI document we can reach: the windows of SteamUIStore and the documents of the gamepad navigation trees. */
-function steamDocuments(): Document[] {
+export function steamDocuments(): Document[] {
   const docs = new Set<Document>();
   const add = (d: any) => {
     try {

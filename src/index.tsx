@@ -16,6 +16,7 @@ import { refreshPacks, restoreHeader, soundDiag } from "./steam";
 import { getUiDocument } from "./cssvars";
 import { useOtherPlugins } from "./otherPlugins";
 import { startKeyboardSkins } from "./keyboardSkins";
+import { startKeyboardDiagnostics } from "./keyboardDiagnostics";
 import { refreshThemeLists } from "./themeSettingsMenu";
 import { deleteCurrentTheme } from "./themeActions";
 import { applyPreset, currentLook, currentPresetId, deleteUserPreset, getPresets, isDownloaded, refreshPresets, renamePreset, saveUserPreset, usePresets, PRESET_GROUPS } from "./presets";
@@ -278,6 +279,7 @@ function ResetSection({ th, themeName }: { th: ThemeId; themeName: string }) {
 }
 
 function Diagnostics() {
+  const settings = useSettings();
   const d = useDiag();
   const lib = loadLibrary(useSettings().source, "recent", 9999);
   const others = useOtherPlugins();
@@ -289,6 +291,7 @@ function Diagnostics() {
   );
   return (
     <PanelSection title="Diagnostics">
+      <PanelSectionRow><ToggleField label="Keyboard diagnostics" description="Log keyboard layout, visibility and ThemeHub bar changes for up to ten minutes. No messages or typed text. Logs: ~/homebrew/logs/DeckHomeThemes. Toggle off/on to restart capture." checked={settings.keyboardDiagnostics === true} onChange={v => updateSettings({ keyboardDiagnostics: v })} /></PanelSectionRow>
       <PanelSectionRow>
         <div>
           {row("Version", PLUGIN_VERSION)}
@@ -310,6 +313,7 @@ function Diagnostics() {
 export default definePlugin(() => {
   logInfo(`frontend loaded v${PLUGIN_VERSION}`);
   initSettings();
+  const stopKeyboardDiagnostics = startKeyboardDiagnostics();
   refreshPacks();
   refreshPresets();
   let stopKeyboardSkins: (() => void) | null = null;
@@ -352,6 +356,7 @@ export default definePlugin(() => {
     ),
     icon: <HomeIcon />,
     onDismount() {
+      stopKeyboardDiagnostics();
       stopSilverPad();
       routerHook.removeRoute(ROUTE);
       if (patch) routerHook.removePatch(HOME_ROUTE, patch);
