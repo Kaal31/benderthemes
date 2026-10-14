@@ -27,10 +27,15 @@ const statusListeners = new Set<(status: Status) => void>();
 export function onFirmwareStatus(fn: (status: Status) => void) { statusListeners.add(fn); return () => { statusListeners.delete(fn); }; }
 export function checkFirmware(force = false): Promise<Status> {
   if (!force && latestCheck && Date.now() - latestCheck.at < 30 * 60 * 1000) return latestCheck.promise;
-  const promise = checkUpdates();
+  const promise = new Promise<Status>((resolve, reject) => {
+    const timer = setTimeout(() => reject(new Error("Update check timed out. Check your connection and try again.")), 30000);
+    Promise.resolve().then(checkUpdates).then(resolve, reject).finally(() => clearTimeout(timer));
+  });
   promise.then((status) => statusListeners.forEach((fn) => fn(status))).catch(() => {});
   latestCheck = { at: Date.now(), promise };
-  promise.catch(() => { latestCheck = null; });
+  promise.then(status => {
+    if (!status.success && latestCheck?.promise === promise) latestCheck = null;
+  }, () => { if (latestCheck?.promise === promise) latestCheck = null; });
   return promise;
 }
 export async function installFirmware(release: Release, current: string) {
@@ -48,6 +53,7 @@ export function Updates() {
   const [status, setStatus] = useState<Status | null>(null);
   const [tag, setTag] = useState("");
   const [channel,setChannel]=useState("");
+  const [checkError, setCheckError] = useState("");
   const [checking, setChecking] = useState(false);
   const [busy, setBusy] = useState(false);
   const [progress, setProgress] = useState(0);
@@ -57,6 +63,7 @@ export function Updates() {
   const timer = useRef<ReturnType<typeof setTimeout> | undefined>(undefined);
   const load = async () => {
     setChecking(true);
+    setCheckError("");
     try {
       const value = await checkFirmware(true);
       if (active.current) {
@@ -64,7 +71,7 @@ export function Updates() {
         setChannel(previous=>value.releases.some(r=>channelOf(r)===previous)?previous:value.releases.some(r=>channelOf(r)===(value.currentChannel??"stable"))?(value.currentChannel??"stable"):channelOf(value.releases[0]??{channel:"stable"} as Release));
       }
     } catch (error) {
-      if (active.current) setMessage(`Update check failed: ${error}`);
+      if (active.current) setCheckError(`Update check failed: ${error instanceof Error ? error.message : String(error)}`);
     } finally { if (active.current) setChecking(false); }
   };
   useEffect(() => {
@@ -123,10 +130,11 @@ export function Updates() {
   const order = selected && status ? releaseOrder(selected,status) : 0;
   return <PanelSection title="Plugin updates">
     <PanelSectionRow><div style={{ fontSize: 12, lineHeight: 1.5 }}>
-      <div>Installed: {status?.currentVersion || "Checking…"}</div>
-      <div>{status?.stale ? `${status.error}. Showing saved releases; latest version is unverified.`
+      <div>Installed: {status ? releaseLabel({tag:"",version:status.currentVersion,assetUrl:"",notes:"",build:status.currentBuild,attempt:status.currentAttempt}) : checking ? "Checking..." : "Unavailable"}</div>
+      <div>{checkError || (checking ? "Checking GitHub releases..." : status?.stale ? `${status.error}. Showing saved releases; latest version is unverified.`
         : status?.updateAvailable ? `Update available: ${status.latest?releaseLabel(status.latest):""}`
-        : status?.success ? (status.latest ? "This channel is up to date." : "No installable releases found for the installed channel.") : "Checking GitHub releases…"}</div>
+        : status?.success ? (status.latest ? "This channel is up to date." : "No installable releases found for the installed channel.") : "Update status unavailable. Try checking again.")}</div>
+      {status?.channelKnown === false && <div>Installed release channel is unknown. Select your intended channel and reinstall a numbered release to restore build detection.</div>}
     </div></PanelSectionRow>
     {status?.updateAvailable && status.latest && <PanelSectionRow>
       <ButtonItem layout="below" disabled={busy || checking} onClick={() => void install(status.latest!)}>Update to {releaseLabel(status.latest)}</ButtonItem>

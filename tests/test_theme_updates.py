@@ -33,6 +33,7 @@ class UpdateTests(unittest.TestCase):
         updates.decky.DECKY_HOME = str(self.root)
         updates.decky.DECKY_PLUGIN_RUNTIME_DIR = str(self.root / "runtime")
         (self.root / "package.json").write_text('{"version":"1.9.9"}')
+        (self.root / "release-channel.json").write_text('{"tag":"v1.9.9","channel":"stable"}')
 
     def test_numeric_sort_and_only_real_numbered_packages(self):
         raw = [release("1.9.9"), release("1.10.0"), release("1.9.10"),
@@ -58,6 +59,15 @@ class UpdateTests(unittest.TestCase):
         for version in ("1.9.9", "1.9.8"):
             with patch.object(updates, "urlopen", return_value=io.BytesIO(json.dumps([release(version)]).encode())):
                 self.assertFalse(updates.status()["updateAvailable"])
+
+    def test_missing_identity_does_not_guess_stable_channel(self):
+        (self.root / "release-channel.json").unlink()
+        with patch.object(updates, "urlopen", return_value=io.BytesIO(json.dumps([release("1.9.10"), self.channel_release("experimental", "1.9.9", 21)]).encode())):
+            result = updates.status()
+        self.assertEqual(result["currentChannel"], "unknown")
+        self.assertFalse(result["channelKnown"])
+        self.assertFalse(result["updateAvailable"])
+        self.assertEqual(len(result["releases"]), 2)
 
     def test_pagination(self):
         first = [release("1.9.9")] * 100

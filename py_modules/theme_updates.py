@@ -81,7 +81,7 @@ def installed_identity():
             return {**parsed, "known": True}
     except (KeyError, TypeError, ValueError):
         pass
-    return {"channel": "stable", "version": current_version(), "build": 0, "attempt": 0, "known": False}
+    return {"channel": "unknown", "version": current_version(), "build": 0, "attempt": 0, "known": False}
 
 
 def release_key(release):
