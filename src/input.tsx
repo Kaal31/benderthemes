@@ -44,51 +44,28 @@ const consume = (e: any) => {
  * a ref so Steam's Focusable (which may keep the first render's callbacks)
  * always calls the latest ones.
  */
-/** Buttons handled the same on every theme (L2 / R2 = previous / next preset). */
+/** Buttons handled the same on every theme (L2 / R2 = theme / skin switching). */
 let globalInput: InputHandler | null = null;
 
-// ───────────── Hold L1 + direction: theme switcher ─────────────
-// While L1 is held on the home, the D-pad / left stick step through the themes (up/down = console, left/right =
-// that console's variants) instead of moving the theme's focus. L1's own action (tabs, pages…) still works: it
-// fires when L1 is released without a direction in between, or right away when another button is pressed while
-// L1 is down (so quick L1→R1 rolls keep their order). See handoff-notes/theme-switching.md.
+// L2 / R2 plus vertical direction selects themes; horizontal selects skins.
 export type SwitchAxis = "console" | "variant";
 export interface L1Switcher {
-  /** May the switcher take over L1 now (home on screen, nothing open over it)? */
-  available(): boolean;
-  /** L1 went down (the switcher may show its HUD after a moment). */
-  begin(): void;
-  step(axis: SwitchAxis, dir: -1 | 1, repeat: boolean): void;
-  /** L1 released (or the hold was cut short). `stepped`: a direction was pressed during the hold. */
-  end(stepped: boolean): void;
+ available(): boolean;
+ begin(): void;
+ step(axis: SwitchAxis, dir: -1 | 1, repeat: boolean): void;
+ end(stepped: boolean): void;
 }
 let l1Switcher: L1Switcher | null = null;
-export function setL1Switcher(h: L1Switcher | null) {
-  l1Switcher = h;
-}
-const hold = { on: false, used: false, guard: 0 as any, upSeen: false, upBroken: false };
-/** True while L1 is held for the switcher (tests). */
+export function setL1Switcher(h: L1Switcher | null) { l1Switcher = h; }
+const hold = { on: false, trigger: "" as Btn | "", used: false, guard: 0 as any };
 export const l1Held = () => hold.on;
 const DIR_AXIS: Partial<Record<Btn, [SwitchAxis, -1 | 1]>> = { up: ["console", -1], down: ["console", 1], left: ["variant", -1], right: ["variant", 1] };
-/** Ends the hold. True when it was L1 alone (no direction), i.e. L1's own action is still owed. */
-function stopHold(): boolean {
-  clearTimeout(hold.guard);
-  const was = hold.on, used = hold.used;
-  hold.on = false;
-  hold.used = false;
-  if (was) {
-    try { l1Switcher?.end(used); } catch (e) { console.warn("[DeckHomeThemes] switcher end", e); }
-  }
-  return was && !used;
-}
-/** If Steam never reports L1's release, give up on the hold rather than keep swallowing the D-pad. */
-function armGuard(onTimeout: () => void) {
-  clearTimeout(hold.guard);
-  hold.guard = setTimeout(() => {
-    if (!hold.on) return;
-    if (!hold.upSeen) hold.upBroken = true; // no release events here: L1 behaves as before from now on
-    if (stopHold()) onTimeout();
-  }, hold.upSeen ? 10000 : 4000);
+function stopHold() {
+ clearTimeout(hold.guard);
+ if (hold.on) {
+  if (!hold.used) l1Switcher?.step("console", hold.trigger === "l2" ? -1 : 1, false);
+  hold.on = false; hold.trigger = ""; hold.used = false; l1Switcher?.end(true);
+ }
 }
 export function setGlobalInput(h: InputHandler | null) {
   globalInput = h;
@@ -114,6 +91,7 @@ export function ThemeRoot({
   children: ReactNode;
   style?: CSSProperties;
 }) {
+  const direction = useRef<Btn | null>(null);
   const latest = useRef(onInput);
   latest.current = onInput;
   const gate=useRef(activationGate);gate.current=activationGate;
@@ -121,33 +99,27 @@ export function ThemeRoot({
     const press = { btn, repeat: !!e?.detail?.is_repeat };
     if (!direct) {
       const modalOpen = modalLayers.length > 0 || !!modalInput;
-      if (btn === "l1") {
-        if (hold.on) return true; // Steam's repeat while held
-        if (!hold.upBroken && !modalOpen && l1Switcher?.available()) {
-          hold.on = true;
-          hold.used = false;
-          armGuard(() => fire("l1", null, true));
-          try { l1Switcher.begin(); } catch (err) { console.warn("[DeckHomeThemes] switcher begin", err); }
-          return true; // L1's own action waits for the release
+      if (modalOpen || !l1Switcher?.available()) stopHold();
+      if (!modalOpen && l1Switcher?.available()) {
+        if (btn === "l2" || btn === "r2") {
+          if (press.repeat) return true;
+          if (!hold.on) { hold.on = true; l1Switcher.begin(); }
+          hold.trigger = btn;
+          const axis = direction.current ? DIR_AXIS[direction.current] : undefined;
+          if (axis) { hold.used = true; l1Switcher.step(axis[0], axis[1], false); }
+          clearTimeout(hold.guard);
+          hold.guard = setTimeout(stopHold, 4000);
+          return true;
         }
-      } else if (hold.on) {
         const axis = DIR_AXIS[btn];
-        if (axis) {
+        if (hold.on && axis) {
           hold.used = true;
-          armGuard(() => fire("l1", null, true));
-          try { l1Switcher?.step(axis[0], axis[1], press.repeat); } catch (err) { console.warn("[DeckHomeThemes] switcher step", err); }
-          return true; // the theme's focus stays put
+          l1Switcher.step(axis[0], axis[1], press.repeat);
+          clearTimeout(hold.guard);
+          hold.guard = setTimeout(stopHold, 4000);
+          return true;
         }
-        // another button while L1 is down: L1 counts as pressed first, then this button as usual
-        if (stopHold()) {
-          fire("l1", null, true);
-          // the look's handler sees L1's result only after it re-renders: run this button a moment later
-          // (Ⓑ stays immediate so an unhandled Ⓑ still reaches Steam)
-          if (btn !== "b") {
-            setTimeout(() => fire(btn, { detail: { is_repeat: press.repeat } }, true), 40);
-            return true;
-          }
-        }
+        if (hold.on) stopHold();
       }
     }
     const run=()=>{
@@ -165,6 +137,7 @@ export function ThemeRoot({
     () => ({
       dir: (e: any) => {
         const b = DIRS[e?.detail?.button];
+        if (b) direction.current = b;
         if (b && fire(b, e)) consume(e);
       },
       down: (e: any) => {
@@ -172,12 +145,10 @@ export function ThemeRoot({
         if (b && fire(b, e)) consume(e);
       },
       up: (e: any) => {
-        if (e?.detail?.button !== GamepadButton.BUMPER_LEFT) return;
-        hold.upSeen = true;
-        hold.upBroken = false; // releases do arrive after all
-        if (!hold.on) return;
-        consume(e);
-        if (stopHold()) fire("l1", null, true); // L1 alone: its own action, now
+        const button = e?.detail?.button;
+        const dir = DIRS[button];
+        if (dir && direction.current === dir) direction.current = null;
+        if (hold.on && OTHER[button] === hold.trigger) { consume(e); stopHold(); }
       },
       ok:(e: any) => {
         if (fire("a", e)) consume(e);

@@ -574,7 +574,7 @@ function iconItems(): MenuItem[] {
   ];
 }
 
-/** Presets: this look's presets (L1 left / right steps through them), every other look's, then save / rename / delete. */
+/** Presets: this look's presets (L2 / R2 + left / right steps through them), every other look's, then save / rename / delete. */
 export function presetItems(): MenuItem[] {
   const cur = currentPresetId(S());
   const look = currentLook(S());

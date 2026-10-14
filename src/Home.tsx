@@ -31,7 +31,7 @@ import { Game, launchGame, loadLibrary, openGamePage, setStoreOpener } from "./l
 import { presentationVariables, PRESENTATION_CSS } from "./themePresentation";
 import { getSettings, pspFile, ThemeId, THEMES, updateSettings, useSettings, useSettingsLoaded } from "./settings";
 import { playSound, refreshPacks, restoreFooter, restoreHeader, useHiddenFooter, useHiddenHeader, useHomeMusic, userName } from "./steam";
-import { currentPresetId, cyclePreset, refreshPresets } from "./presets";
+import { currentPresetId, refreshPresets } from "./presets";
 import { bump, diag, reportError } from "./diag";
 import { setUiDocument } from "./cssvars";
 import { Overlay, ScreenshotGallery, TrailerPlayer, VideoPlayer } from "./overlays";
@@ -247,17 +247,14 @@ function ThemedHomeContent({ standalone }: { standalone?: boolean }) {
   useEffect(()=>()=>dismissLaunch(),[]);
   useEffect(()=>{if(overlay)setDestination(null);},[overlay]);
 
-  // L2 / R2 anywhere: previous / next preset in one flat list, with a banner naming it.
-  // (Hold L1 + direction is the console / variant switcher: themeSwitcher.tsx, rendered below.)
+  // ThemeRoot routes L2 / R2 through the theme / skin switcher.
+  // Consume triggers when switching is unavailable so they do not change a hidden home.
   const [banner, setBanner] = useState<{ text: string; at: number } | null>(null);
   useEffect(() => {
     refreshPresets();
     setGlobalInput((p) => {
       if (p.btn !== "l2" && p.btn !== "r2") return false;
       if (p.repeat) return true;
-      const next = cyclePreset(p.btn === "l2" ? -1 : 1);
-      playSound("tab");
-      setBanner({ text: next.label, at: Date.now() });
       return true;
     });
     return () => setGlobalInput(null);

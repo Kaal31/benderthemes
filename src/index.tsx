@@ -138,7 +138,7 @@ function Panel() {
         <PanelSectionRow>
           <DropdownItem
             label="Preset"
-            description={`${themeName}'s presets: its own look, its imported theme files and the ones you saved. Changes are kept in the preset in use. On the home: hold L1 + ▲▼ to change console, L1 + ◀▶ for its presets; L2 / R2 every preset; △ / Y → Presets.`}
+            description={`${themeName}'s presets: its own look, its imported theme files and the ones you saved. Changes are kept in the preset in use. On the home: hold L2 / R2 + ▲▼ to change console, L2 / R2 + ◀▶ for its presets; L2 / R2 previous / next theme; △ / Y → Presets.`}
             key={look}
             rgOptions={mine.map((p) => ({ data: p.id, label: p.label }))}
             selectedOption={current}
