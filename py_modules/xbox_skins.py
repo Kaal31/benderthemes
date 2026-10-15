@@ -11,14 +11,17 @@ import io
 import os
 import re
 import struct
-import xml.etree.ElementTree as ET
+try:
+    import xml.etree.ElementTree as ET
+except ImportError:  # Decky's trimmed Python does not include xml.etree.
+    ET = None
 from html.parser import HTMLParser
 import time
 import zipfile
 
 import xbox_textures as XT
 
-READER_VERSION = 2  # 2: texture archives (Textures.xpr / .xbt / UnleashX .xpr pictures) are decoded
+READER_VERSION = 3  # 3: skin XML also works without xml.etree in Decky's Python
 
 _PIC = (".png", ".jpg", ".jpeg", ".bmp", ".gif", ".tga")
 _MIME = {".png": "image/png", ".jpg": "image/jpeg", ".jpeg": "image/jpeg", ".gif": "image/gif"}
@@ -112,12 +115,34 @@ class _Src:
         return real[len(self.root):] if real else None
 
 
+class _Element:
+    """Only the tree operations used by this skin reader; no XML dependency."""
+    def __init__(self, tag):
+        self.tag = tag
+        self.attrib = {}
+        self.text = None
+        self.children = []
+
+    def set(self, name, value):
+        self.attrib[name] = value
+
+    def __iter__(self):
+        return iter(self.children)
+
+    def iter(self):
+        pending = [self]
+        while pending:
+            node = pending.pop()
+            yield node
+            pending.extend(reversed(node.children))
+
+
 class _Lenient(HTMLParser):
     """Builds an element tree from sloppy skin XML (stray ampersands, unmatched or missing end tags)."""
 
     def __init__(self):
         super().__init__(convert_charrefs=True)
-        self.root = ET.Element("_top")
+        self.root = _Element("_top")
         self.stack = [self.root]
         self.count = 0
 
@@ -125,7 +150,10 @@ class _Lenient(HTMLParser):
         self.count += 1
         if self.count > 50000:
             raise ValueError("too many elements")
-        e = ET.SubElement(self.stack[-1], tag)
+        if len(self.stack) > 128:
+            raise ValueError("skin XML is too deeply nested")
+        e = _Element(tag)
+        self.stack[-1].children.append(e)
         for k, v in attrs:
             e.set(k, v or "")
         self.stack.append(e)
@@ -147,10 +175,11 @@ class _Lenient(HTMLParser):
 
 def _parse(text):
     """Strict XML first, the lenient reader when the file is not well formed."""
-    try:
-        return ET.fromstring(text)
-    except ET.ParseError:
-        pass
+    if ET is not None:
+        try:
+            return ET.fromstring(text)
+        except ET.ParseError:
+            pass
     p = _Lenient()
     p.feed(text)
     p.close()
