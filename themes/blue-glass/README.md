@@ -4,6 +4,10 @@ A full ThemeHub dashboard with chrome-and-glass cover icons, a game grid, Recent
 
 ## Install
 
+Blue Glass is included on the `experimental` branch. A versioned standalone package and browser showcase are published in [the assets repository](https://github.com/Kaal31/deckthemes-assets/releases/tag/blue-glass-v1.0.0). The showcase uses sample library data. Standalone imports require a current experimental ThemeHub build with live frame-page services.
+
+To reproduce the standalone package, run `python tools/package_blue_glass.py --version 1.0.0`. Optional `--showcase` and `--poster` paths add preview files and their checksums to the asset manifest. This does not rebuild or republish unrelated theme packs.
+
 Install the companion `ThemeHub-BlueGlass-live-pages.zip` through Decky → Developer → Install Plugin from ZIP, then select Blue Glass in ThemeHub. The updated plugin includes the theme and the new live-page bridge. `BlueGlass-theme.zip` contains only the theme files and requires that updated host; older hosts cannot supply live page data.
 
 ## Pages
