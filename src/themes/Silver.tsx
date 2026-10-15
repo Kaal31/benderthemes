@@ -99,7 +99,12 @@ export function SilverHome({dark=false}:{dark?:boolean}={}){
   if(p.btn==="a"){zone==="nav"?openSteam(NAV[nav].action):launch();return true;}
   if(p.btn==="up"||p.btn==="down"){if(zone!=="nav")return true;else setNav(i=>Math.max(0,Math.min(NAV.length-1,i+(p.btn==="up"?-1:1))));return true;}
   if(p.btn==="left"||p.btn==="right"){if(zone==="nav"&&p.btn==="right")setZone("games");else step(p.btn==="left"?-1:1);return true;}
-  if(p.btn==="r1"){step(1);return true;}if(p.btn==="l1"){step(-1);return true;}return false;
+  if(p.btn==="r1"||p.btn==="l1"){
+   const direction=p.btn==="r1"?1:-1;
+   if(dark){playSound("tab");setPage(current=>ONYX_PAGES[(ONYX_PAGES.indexOf(current)+direction+ONYX_PAGES.length)%ONYX_PAGES.length]);}
+   else step(direction);
+   return true;
+  }return false;
  };
  const reset=()=>{setPressed(null);drag.current=null;gesture.current={angle:null,remainder:0};};
  const point=(e:PointerEvent<HTMLDivElement>)=>{
