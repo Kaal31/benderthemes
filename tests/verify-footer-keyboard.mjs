@@ -8,6 +8,8 @@ const source = await readFile(new URL('../src/steam.ts', import.meta.url), 'utf8
 const section = source.slice(source.indexOf('const FOOT_ATTR'), source.indexOf('// ───────────── live status'));
 const { code } = await transform(`
 const findClassModule = () => ({ FooterLegend: 'steam-footer-legend' });
+const steamDocuments = () => [];
+const keyboardClasses = () => ({ classes: { Keyboard: 'hashed-keyboard', VirtualKeyboardContainer: 'hashed-container' } });
 const useEffect = (effect) => { window.cleanup = effect(); };
 ${section.replaceAll('export ', '')}
 window.start = (mode) => useHiddenFooter(document, mode);
@@ -21,14 +23,14 @@ try {
   await page.addScriptTag({ content: code });
   const footer = page.locator('#footer');
   await page.evaluate(() => window.start('hide'));
-  assert.equal(await footer.evaluate(el => el.style.display), 'none');
+  assert.equal(await footer.evaluate(el => el.style.visibility), 'hidden');
   // Focus must restore synchronously, before the keyboard even mounts.
   assert.equal(await page.evaluate(() => {
     document.querySelector('#dm').focus();
-    return document.querySelector('#footer').style.display;
+    return document.querySelector('#footer').style.visibility;
   }), '');
   await page.evaluate(() => document.querySelector('#dm').blur());
-  await page.waitForFunction(() => document.querySelector('#footer').style.display === 'none');
+  await page.waitForFunction(() => document.querySelector('#footer').style.visibility === 'hidden');
   // Controller opens a keyboard without a focused input, inside a hidden strip.
   await page.evaluate(() => {
     const keyboard = document.createElement('div');
@@ -36,12 +38,12 @@ try {
     keyboard.textContent = 'Keyboard';
     document.querySelector('#footer').append(keyboard);
   });
-  await page.waitForFunction(() => document.querySelector('#footer').style.display === '');
+  await page.waitForFunction(() => document.querySelector('#footer').style.visibility === '');
   await page.evaluate(() => document.querySelector('.virtualkeyboard_Keyboard').remove());
-  await page.waitForFunction(() => document.querySelector('#footer').style.display === 'none');
+  await page.waitForFunction(() => document.querySelector('#footer').style.visibility === 'hidden');
   // Steam pages can hide the home while keeping the hook mounted.
   await page.evaluate(() => document.querySelector('[data-dht-root]').style.display = 'none');
-  await page.waitForFunction(() => document.querySelector('#footer').style.display === '');
+  await page.waitForFunction(() => document.querySelector('#footer').style.visibility === '');
   await page.evaluate(() => {
     window.cleanup();
     document.querySelector('[data-dht-root]').style.display = '';
@@ -102,7 +104,7 @@ try {
       await deck.screenshot({ path: new URL(`../out/footer-keyboard/${destination}-${mode}.png`, import.meta.url).pathname.replace(/^\/([A-Za-z]:)/, '$1') });
       await deck.evaluate(() => { document.querySelector('#keyboard').remove(); document.querySelector('#dm').blur(); });
       if (destination === 'themed-search' && mode === 'hide') {
-        await deck.waitForFunction(() => document.querySelector('#footer').style.display === 'none');
+        await deck.waitForFunction(() => document.querySelector('#footer').style.visibility === 'hidden');
       }
       await deck.evaluate(() => window.cleanup?.());
       await deck.close();

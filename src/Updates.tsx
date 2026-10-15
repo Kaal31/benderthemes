@@ -1,5 +1,6 @@
 import { ButtonItem, DropdownItem, PanelSection, PanelSectionRow, ProgressBarWithInfo } from "@decky/ui";
 import { callable } from "@decky/api";
+import { logInfo } from "./diag";
 import { useEffect, useRef, useState } from "react";
 
 export type Release = { tag: string; version: string; assetUrl: string; notes: string; channel?:string; build?:number; attempt?:number };
@@ -8,9 +9,23 @@ export type Status = {
   currentChannel?:string; channelKnown?:boolean; currentBuild?:number; currentAttempt?:number;
   latest: Release | null; updateAvailable: boolean; stale: boolean; error?: string;
 };
-const checkUpdates = callable<[], Status>("plugin_update_status");
+const rawCheckUpdates = callable<[], Status>("plugin_update_status");
+const checkUpdates = async (): Promise<Status> => {
+  logInfo("[updater] release check started");
+  try {
+    const status = await rawCheckUpdates();
+    logInfo(`[updater] release check complete ${JSON.stringify({success:status.success,currentVersion:status.currentVersion,currentChannel:status.currentChannel,currentBuild:status.currentBuild,currentAttempt:status.currentAttempt,channelKnown:status.channelKnown,latest:status.latest?.tag,stale:status.stale,error:status.error})}`);
+    return status;
+  } catch { logInfo("[updater] release check rejected before receiving status"); throw new Error("Release check failed; see updater diagnostics in Decky logs."); }
+};
 const prepare = callable<[version: string, url: string], { success: boolean; error?: string }>("plugin_prepare_replacement");
 const cancel = callable<[], boolean>("plugin_cancel_replacement");
+const tracedPrepare = async (release: Release) => {
+  logInfo(`[updater] preparing ${release.tag}`);
+  const result = await prepare(release.version, release.assetUrl);
+  logInfo(`[updater] prepare completed success=${result.success}`);
+  return result;
+};
 const NAME = "ThemeHub";
 const backend = (): any => (window as any).DeckyBackend ?? (window.opener as any)?.DeckyBackend;
 const compare = (a: string, b: string) => {
@@ -41,10 +56,11 @@ export function checkFirmware(force = false): Promise<Status> {
 export async function installFirmware(release: Release, current: string) {
   const api = backend();
   if (!api?.call) throw new Error("Open this notification in Decky Loader to install updates.");
-  const result = await prepare(release.version, release.assetUrl);
+  const result = await tracedPrepare(release);
   if (!result.success) throw new Error(result.error || "Could not prepare installation");
   try {
     const order = compare(release.version, current);
+    logInfo(`[updater] requesting Decky install prompt for ${release.tag}`);
     await api.call("utilities/install_plugin", release.assetUrl, NAME, release.version, "", order > 0 ? 2 : order < 0 ? 3 : 1);
   } catch (error) { await cancel().catch(() => {}); throw error; }
 }
@@ -71,6 +87,7 @@ export function Updates() {
         setChannel(previous=>value.releases.some(r=>channelOf(r)===previous)?previous:value.releases.some(r=>channelOf(r)===(value.currentChannel??"stable"))?(value.currentChannel??"stable"):channelOf(value.releases[0]??{channel:"stable"} as Release));
       }
     } catch (error) {
+      logInfo("[updater] installation handoff failed; cancelling replacement marker");
       if (active.current) setCheckError(`Update check failed: ${error instanceof Error ? error.message : String(error)}`);
     } finally { if (active.current) setChecking(false); }
   };
@@ -116,13 +133,16 @@ export function Updates() {
     if (!api?.call) { setMessage("Open this panel in Decky Loader to install updates."); return; }
     setBusy(true); setMessage("Preparing Decky installer…");
     try {
-      const result = await prepare(release.version, release.assetUrl);
+      const result = await tracedPrepare(release);
       if (!result.success) throw new Error(result.error || "Could not prepare installation");
-      await api.call("utilities/install_plugin", release.assetUrl, NAME, release.version, "", installType(release,status));
+      logInfo(`[updater] requesting Decky install prompt for ${release.tag}`);
+    await api.call("utilities/install_plugin", release.assetUrl, NAME, release.version, "", installType(release,status));
       if (!active.current) return;
+      logInfo(`[updater] Decky install prompt requested for ${release.tag}`);
       setMessage("Confirm installation in Decky. If you cancel, you can try again.");
       timer.current = setTimeout(() => { if (!downloading.current) setBusy(false); }, 5000);
     } catch (error) {
+      logInfo("[updater] installation handoff failed; cancelling replacement marker");
       await cancel().catch(() => {});
       if (active.current) { setBusy(false); setMessage(`Installation failed: ${error}`); }
     }
