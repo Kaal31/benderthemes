@@ -32,13 +32,13 @@ import { presentationVariables, PRESENTATION_CSS } from "./themePresentation";
 import { getSettings, pspFile, ThemeId, THEMES, updateSettings, useSettings, useSettingsLoaded } from "./settings";
 import { playSound, refreshPacks, restoreFooter, restoreHeader, useHiddenFooter, useHiddenHeader, useHomeMusic, userName } from "./steam";
 import { currentPresetId, refreshPresets } from "./presets";
-import { bump, diag, reportError } from "./diag";
+import { bump, diag, logInfo, reportError } from "./diag";
 import { setUiDocument } from "./cssvars";
 import { Overlay, ScreenshotGallery, TrailerPlayer, VideoPlayer } from "./overlays";
 import { MusicPlayerView, NowPlayingMini } from "./mediaCenter";
 import { HomePluginBadges, PLUGIN_BADGE_CSS } from "./pluginBadges";
 import { StoreView } from "./storeView";
-import { l1Held, pushModalInput, ThemeRoot, setGlobalInput, StageHost } from "./input";
+import { pushModalInput, ThemeRoot, setGlobalInput, StageHost } from "./input";
 import { ThemeSwitcher } from "./themeSwitcher";
 import { keyboardInset } from "./keyboardSkins";
 import { VitaHome } from "./themes/Vita";
@@ -172,22 +172,58 @@ function ErrorBanner() {
 
 export function ThemedHome({ standalone }: { standalone?: boolean }) {
   const revision = useResourceRevision();
-  const first = !useSettings().onboardingDone;
+  const settings = useSettings();
+  const first = !settings.onboardingDone;
   if (first) return <div data-dht-root="" className="dht-root dht-first-run" style={{ position: "fixed", inset: 0, zIndex: standalone ? 900 : 1, background: "#000", overflow: "hidden", userSelect: "none" }}><ThemeRoot onInput={() => false}><Onboarding /></ThemeRoot></div>;
-  return <ThemedHomeContent key={revision} standalone={standalone} />;
+  return <VerifiedThemedHome key={`${settings.theme}:${revision}`} standalone={standalone} />;
+}
+
+// Every activation path (saved settings, onboarding, direct theme changes and
+// presets) passes here before mounting a renderer that depends on asset packs.
+function VerifiedThemedHome({ standalone }: { standalone?: boolean }) {
+  const settings = useSettings();
+  const market = useMarketplace();
+  const [state, setState] = useState<"checking" | "ready" | "missing" | "error">("checking");
+  const [retry, setRetry] = useState(0);
+  useEffect(() => {
+    let alive = true;
+    setState("checking");
+    if (settings.theme === "frame") { setState("ready"); return; }
+    inventory().then(installed => {
+      if (!alive) return;
+      const ready = !!installed[settings.theme];
+      setState(ready ? "ready" : "missing");
+      logInfo(`[theme-availability] theme=${settings.theme} installed=${ready}`);
+      if (!ready) openMarketplace(settings.theme, { from: settings.theme });
+    }).catch(() => { if (alive) { setState("error"); logInfo(`[theme-availability] inventory check failed theme=${settings.theme}`); } });
+    return () => { alive = false; };
+  }, [settings.theme, retry]);
+  if (state === "ready") return <ThemedHomeContent standalone={standalone} />;
+  return <div data-dht-root="" data-theme-availability={state} style={{position:"fixed",inset:0,zIndex:standalone?900:1,background:"#10151d",color:"#fff",display:"grid",placeItems:"center"}}>
+    <ThemeRoot onInput={p => {
+      if (market.opened) return false;
+      if (p.btn === "b" && !p.repeat) { showNativeSteamHome(); return true; }
+      if (p.btn === "a" && !p.repeat && state !== "checking") {
+        if (state === "missing") openMarketplace(settings.theme, {from:settings.theme});
+        else setRetry(n=>n+1);
+        return true;
+      }
+      return false;
+    }}>
+    <div style={{textAlign:"center",maxWidth:520,padding:32}}>
+      <h2>{state === "checking" ? "Checking theme files…" : state === "error" ? "Couldn’t check theme files" : "Download this theme to continue"}</h2>
+      {state === "missing" && <p>The theme’s artwork and resources haven’t been installed yet.</p>}
+      {state !== "checking" && <button onClick={() => state === "missing" ? openMarketplace(settings.theme, {from:settings.theme}) : setRetry(n=>n+1)}>{state === "missing" ? "Open theme downloads" : "Try again"}</button>}
+      <button onClick={showNativeSteamHome}>Steam Home</button>
+    </div>
+    {market.opened && <Marketplace requested={market.requested} from={market.from} />}
+    </ThemeRoot>
+  </div>;
 }
 
 function ThemedHomeContent({ standalone }: { standalone?: boolean }) {
   const s = useSettings();
   const market = useMarketplace();
-  useEffect(() => {
-    let alive = true, wait: any = 0;
-    // a theme still to download opens the Hub on it; while L1 is held the switcher is still browsing, so only the theme
-    // it stops on asks (switching again cancels this one)
-    const offer = () => { if (!alive) return; if (l1Held()) { wait = setTimeout(offer, 250); return; } openMarketplace(s.theme, { from: s.theme }); };
-    if (s.theme !== "frame") inventory().then(installed => { if (alive && installed && !installed[s.theme]) offer(); }).catch(() => {});
-    return () => { alive = false; clearTimeout(wait); };
-  }, [s.theme]);
   const root = useRef<HTMLDivElement>(null);
   const [doc, setDoc] = useState<Document | null>(null);
   // Steam's keyboard (STEAM + X, a search box) opens under our fixed home: end the home above it while it is open

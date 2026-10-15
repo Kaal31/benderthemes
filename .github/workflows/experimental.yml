@@ -69,6 +69,7 @@ jobs:
       - run: node tests/verify-spotlight-install.mjs
       - run: node tests/verify-spotlight-ui.mjs
       - run: node tests/verify-marketplace.mjs
+      - run: node tests/verify-theme-availability.mjs
       - run: node tests/verify-theme-options.mjs
       - run: node tests/verify-block-panels.mjs
       - run: node tests/verify-firmware-looks.mjs
