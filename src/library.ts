@@ -256,6 +256,12 @@ export function openNativeGamePage(g: Game) {
   Navigation.Navigate(`/library/app/${g.appid}`);
 }
 
+/** Open Steam's native overlay without passing through themed destinations. */
+export function openNativeSteamMenu(){
+  if(previewActions.nav)return previewActions.nav("native-mainmenu");
+  try{Navigation.OpenMainMenu();}catch{/* Steam may be shutting down */}
+}
+
 export type SteamPlace =
   | "library"
   | "store"

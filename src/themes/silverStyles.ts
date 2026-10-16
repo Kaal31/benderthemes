@@ -84,15 +84,14 @@ export const SILVER_CSS=String.raw`
 .silver-cover-floor{position:absolute;left:-24px;top:326px;width:1328px;height:59px;pointer-events:none;overflow:hidden}
 .silver-cover-floor:before{content:"";position:absolute;left:-8%;top:0;width:116%;height:195px;transform-origin:50% 0;transform:perspective(500px) rotateX(69deg);background:var(--silver-panelMetal) center/180px 150px repeat-x;filter:none;opacity:1}
 .silver-panel-dock{position:absolute;left:0;top:82px;width:150px;height:607px;z-index:20;pointer-events:none;background:var(--silver-rightHousing) center/100% 100% no-repeat;transform:scaleX(-1);filter:brightness(.94)}
-.silver-menu-edge{position:absolute;left:0;top:84px;width:18px;height:603px;z-index:30;background:transparent!important}
-.silver-home:not([data-dark=true]) .silver-nav{transform:translateX(calc(-100% - 8px));opacity:0;visibility:hidden;transition:transform .34s cubic-bezier(.22,1,.36,1),opacity .22s ease,visibility 0s .34s}
-.silver-home:not([data-dark=true]) .silver-nav[data-open=true]{transform:translateX(0);opacity:1;visibility:visible;transition-delay:0s}
-@media(prefers-reduced-motion:reduce){.silver-nav{transition:none!important}}
+.silver-home:not([data-dark=true]) .silver-nav{transform:none;opacity:1;visibility:visible}
 .silver-home:not([data-dark=true]) .silver-avatar{width:46px;height:46px;border-radius:13px!important;overflow:hidden;background:transparent!important;box-shadow:0 1px 2px #0003}
 .silver-avatar img{display:block;width:100%;height:100%;object-fit:cover}
 .silver-right>.silver-device{padding:9px 5px 12px;gap:5px;background:var(--silver-rightDeviceFrame) center/100% 100% no-repeat}
 .silver-right>.silver-tip{padding:20px 8px;font-size:12px;background:var(--silver-rightTipFrame) center/100% 100% no-repeat}
 .silver-right>button{height:57px;letter-spacing:.1px}
 
+/* Anchor every cover to the same contact line, slightly inside the floor. */
+.silver-home:not([data-dark=true]) .silver-cover{top:auto;bottom:35px}
 .silver-right{isolation:isolate}
 `;
