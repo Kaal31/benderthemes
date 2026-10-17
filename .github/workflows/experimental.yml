@@ -42,6 +42,7 @@ jobs:
         run: python tools/channel_build.py prepare >> "$GITHUB_OUTPUT"
       - run: npm run build
       - run: npx playwright install --with-deps chromium
+      - run: node tests/verify-screensaver.mjs
       - run: node tests/verify-performance.mjs
       - run: node tests/verify-keyboard-diagnostics.mjs
       - run: node tests/verify-keyboard-lifecycle.mjs

@@ -1,3 +1,4 @@
+import { useSteamScreensaver } from "./screensaver";
 import { ThemeActivity, UiDocument } from "./performance";
 import { DOWNLOAD_CSS, DownloadStatus } from "./downloadUi";
 import { tintOf } from "./color";
@@ -265,8 +266,9 @@ function ThemedHomeContent({ standalone }: { standalone?: boolean }) {
   // Empty libraries are valid; a missing/changed Steam API is a compatibility failure.
   if (lib.error) throw new Error(lib.error);
 
-  useHiddenHeader(doc, s.hideSteamHeader);
-  useHiddenFooter(doc, s.footer);
+  const screensaver = useSteamScreensaver();
+  useHiddenHeader(doc, !screensaver && s.hideSteamHeader);
+  useHiddenFooter(doc, screensaver ? "show" : s.footer);
   useEffect(() => () => { restoreHeader(doc); restoreFooter(doc); }, [doc]);
   const [overlay, setOverlay] = useState<Overlay>(null);
   const [destination,setDestination] = useState<Destination|null>(null);
@@ -326,8 +328,8 @@ function ThemedHomeContent({ standalone }: { standalone?: boolean }) {
   useEffect(() => {
     refreshPacks().then(() => setPacksRev((r) => r + 1));
   }, []);
-  useHomeMusic(s.theme, !launching && (overlay === null || overlay.kind === "store"), destination?.place); // the store keeps the theme music
-  useThemeDeckIntegration(s.enabled && s.backgroundMusic !== false && s.themeDeckFocusMusic !== false && !launching && !overlay && !market.opened && (!destination || destination.place === "game"), useMemo(() => new Set(lib.games.map(g => g.appid)), [lib]), destination?.place === "game" ? destination.game?.appid : undefined);
+  useHomeMusic(s.theme, !screensaver && !launching && (overlay === null || overlay.kind === "store"), destination?.place); // the store keeps the theme music
+  useThemeDeckIntegration(!screensaver && s.enabled && s.backgroundMusic !== false && s.themeDeckFocusMusic !== false && !launching && !overlay && !market.opened && (!destination || destination.place === "game"), useMemo(() => new Set(lib.games.map(g => g.appid)), [lib]), destination?.place === "game" ? destination.game?.appid : undefined);
   // every theme's "Store" entry opens the themed store (unless turned off in Quick Access)
   useEffect(() => {
     setStoreOpener(() => {
@@ -379,7 +381,7 @@ function ThemedHomeContent({ standalone }: { standalone?: boolean }) {
     [lib, s, overlay !== null, destination !== null, launching !== null, market.opened],
   );
 
-  const themeActive = visible && !market.opened && !launching && (!overlay || (s.theme === "minecraft" && overlay.kind === "store")) && (!destination || s.theme === "minecraft");
+  const themeActive = !screensaver && visible && !market.opened && !launching && (!overlay || (s.theme === "minecraft" && overlay.kind === "store")) && (!destination || s.theme === "minecraft");
   const render = THEME_COMPONENTS[s.theme] ?? THEME_COMPONENTS.vita;
   // the engine theme's colour and font, for layouts that use --dht-accent / inherit the font
   const accent = tintOf(s) ?? slotAccent(s);
@@ -390,7 +392,7 @@ function ThemedHomeContent({ standalone }: { standalone?: boolean }) {
   const themeSlotStyle = { ...(accent ? { "--dht-accent": accent } : {}), ...lookAccent, ...(themeFont ? { "--dht-font": '"dht-theme-font", "Motiva Sans", sans-serif', fontFamily: "var(--dht-font)" } : {}) } as CSSProperties;
   return (
     // zIndex 1: Steam's own popups (context menus, modals) must paint above us.
-    <div ref={root} data-dht-root="" data-tv={s.tvMode} data-motion={s.animations} data-dht-theme={s.theme} data-dht-preset={currentPresetId(s)} data-dht-skin={skinHook(s) || undefined} className={`dht-root dht-theme-${s.theme}`} style={{ position: "fixed", inset: 0, bottom: kbInset, zIndex: standalone ? 900 : 1, background: "#000", overflow: "hidden", fontFamily: "var(--dht-font, inherit)", userSelect: "none", WebkitUserSelect: "none" }}>
+    <div ref={root} data-dht-root="" data-tv={s.tvMode} data-motion={s.animations} data-dht-theme={s.theme} data-dht-preset={currentPresetId(s)} data-dht-skin={skinHook(s) || undefined} data-dht-screensaver={screensaver || undefined} className={`dht-root dht-theme-${s.theme}`} style={{ position: "fixed", inset: 0, bottom: kbInset, zIndex: standalone ? 900 : 1, visibility: screensaver ? "hidden" : undefined, pointerEvents: screensaver ? "none" : undefined, background: "#000", overflow: "hidden", fontFamily: "var(--dht-font, inherit)", userSelect: "none", WebkitUserSelect: "none" }}>
       <div className="dht-safe-area" style={{position:"absolute",inset:s.tvMode?"3%":"0",...presentationVariables(s),...themeSlotStyle}}>
       {themeFont && <style>{`@font-face{font-family:"dht-theme-font";src:url("${themeFont}")}`}</style>}
       <style>{PRESENTATION_CSS}</style>
