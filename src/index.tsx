@@ -8,7 +8,6 @@ import { HomeSwitch, SafeBoundary, showNativeSteamHome, showThemedHomeAgain, The
 import { loadLibrary } from "./library";
 import { useDiag, logInfo, reportError } from "./diag";
 const PLUGIN_VERSION = "__DHT_VERSION__";
-import { Updates } from "./Updates";
 import { retryHome, useHomeFailure } from "./compatibility";
 import { restoreFooter } from "./steam";
 import { openMarketplace } from "./marketplaceState";
@@ -109,7 +108,6 @@ function Panel() {
 
   return (
     <>
-      <Updates />
       <PanelSection title="Themes">
         <PanelSectionRow><ButtonItem layout="below" description="Browse animated previews, download a theme and activate it." onClick={() => { openMarketplace(); Navigation.Navigate(ROUTE); Navigation.CloseSideMenus(); }}>Hub</ButtonItem></PanelSectionRow>
         <AddThemeRow />

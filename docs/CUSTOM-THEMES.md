@@ -10,6 +10,18 @@ A theme can reuse a built-in layout with replacement assets, or provide its own 
 
 The theme runs inside two sandboxed frames. It has an opaque origin, cannot read Steam's document or SteamClient, and cannot freely fetch network resources. Bundle dependencies locally. Saved settings use ThemeHub rather than localStorage. Hardware behavior still needs testing on a Steam Deck.
 
+## Native layouts versus external React themes
+
+React/TypeScript can be used for either approach; the difference is how the theme integrates with ThemeHub.
+
+- **Built-in native layout:** React components are compiled into the plugin. Adding a layout this way requires registration/rendering changes and a rebuilt plugin.
+- **Downloadable native layout:** a `layout: native` manifest registers a compiled React package through [Native API v1](NATIVE-THEMES.md). It runs inside ThemeHub with a UI overhaul badge, without per-theme source registration edits.
+- **External theme:** a `theme.json` manifest selects an existing layout or `layout: frame`. A frame theme bundles its compiled React application as local HTML/JavaScript and uses the SDK bridge for host data and actions. ThemeHub discovers its manifest without adding its ID to the plugin's native registries.
+
+For example, Neon Drive's author registered a native layout by editing `src/settings.ts`, `src/Home.tsx`, `src/engine/builtin.ts`, `src/engine/assets.ts`, `src/hubStyles.ts` and `src/presets.ts`. Those changes were necessary for that implementation. A successful plugin build alone does not ensure a new native layout is registered or selectable; registration, rendering and preset selection must agree. The exact files depend on the ThemeHub version and the features being added.
+
+The [GitHub repository installer](COMMUNITY-REPOSITORIES.md) supports both sandboxed frame themes and installed Native API v1 layouts. It does not automatically convert a plugin fork. Adapt the fork to either the frame SDK or the [native package contract](NATIVE-THEMES.md), then publish its compiled theme ZIP. Adding a catalog alone does not perform this adaptation. Native layout packages can supply custom Home and secondary-screen React components; unsupported internal service calls still need host API additions.
+
 ## Installable interface showcase
 
 [Community Theme · Interface Showcase](../themes/community-starter/README.md) displays seven annotated interface examples: navigation, cards, lists, forms, media players, 3D editor composition and multiple pages. It explains what each area is for and which SDK/data source would power it. The examples are illustrative rather than live widgets. Build its ZIP with `python tools/package_community_starter.py`.
@@ -163,13 +175,13 @@ Test controller input after touch and typing, search/keyboard behavior, empty/of
 
 ## Community themes in the Hub
 
-**Current behavior:** imported frame/data themes appear in Presets. They are not automatically merged into the Hub's Discover or Your themes cards. Those cards are built from the host catalog and built-in entries. There is no public self-service community upload flow.
+Imported frame/data themes appear in Presets. **Hub → Community** lets users add public GitHub repositories, browse their themes, install/update/uninstall them, restore a previous version, and activate a theme. Creator files remain hosted in their own repositories. Local ZIP imports are still available.
 
 The current Hub catalog distributes versioned resource packs, with URLs/checksums/sizes and compatibility metadata. Its installer is distinct from the checked `data_themes.import_file` theme ZIP importer. Adding a manifest or raw theme ZIP URL to that catalog alone is not a supported end-to-end community-theme publishing path.
 
-A future Hub integration should add a community catalog entry type, theme ID/author/version/minimum SDK version, screenshot/preview metadata, ZIP URL/hash/size, and an installation path through the theme importer. It also needs explicit activation by preset ID, update/remove handling, and local imported-theme cards. A curated catalog can be the first publishing workflow; self-service submissions can follow. These are proposed changes, not features implemented by this documentation update.
+See [Community repositories](COMMUNITY-REPOSITORIES.md) for the catalog schema, separate asset dependencies, and installation lifecycle. Without a catalog, a repository is treated as one theme: a release ZIP or a ready-to-run theme at its root. Native plugin forks must be adapted to the frame SDK before publishing as external themes.
 
-Until that exists, distribute an importable theme ZIP with screenshots, compatibility requirements and installation instructions. Users install it through Add a theme from a file and activate it under Presets.
+Community repositories are browsed in their own Hub tab. Installed community themes also appear in Your themes, where Update theme installs and immediately activates an available update; otherwise Activate theme is shown. They also remain available under Presets.
 
 ## Troubleshooting
 

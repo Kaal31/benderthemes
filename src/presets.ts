@@ -64,7 +64,7 @@ export async function refreshInventory(): Promise<Record<string, string>> {
 }
 /** A console (layout) whose pack is downloaded or built in; true until the inventory has been read. */
 export const isDownloaded = (layout: string) => !!downloaded?.[layout];
-const switchable = (list: Preset[]) => list.filter((p) => isDownloaded(p.theme));
+const switchable = (list: Preset[]) => list.filter((p) => p.theme === "native" || p.theme === "frame" || isDownloaded(p.theme));
 /** The presets the switchers step through: getPresets() without the consoles that are not downloaded. */
 export const switchPresets = (s: Settings = getSettings()) => switchable(getPresets(s));
 

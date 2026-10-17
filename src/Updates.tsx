@@ -2,6 +2,7 @@ import { ButtonItem, DropdownItem, PanelSection, PanelSectionRow, ProgressBarWit
 import { callable } from "@decky/api";
 import { logInfo } from "./diag";
 import { useEffect, useRef, useState } from "react";
+import { checkCommunityUpdates, useCommunityUpdates } from "./communityUpdates";
 
 export type Release = { tag: string; version: string; assetUrl: string; notes: string; channel?:string; build?:number; attempt?:number };
 export type Status = {
@@ -65,7 +66,10 @@ export async function installFirmware(release: Release, current: string) {
   } catch (error) { await cancel().catch(() => {}); throw error; }
 }
 
-export function Updates() {
+export function Updates({ onManageThemes }: { onManageThemes: () => void }) {
+  const community = useCommunityUpdates();
+  const [themeChecking, setThemeChecking] = useState(false);
+  const [themeError, setThemeError] = useState("");
   const [status, setStatus] = useState<Status | null>(null);
   const [tag, setTag] = useState("");
   const [channel,setChannel]=useState("");
@@ -148,7 +152,27 @@ export function Updates() {
     }
   };
   const order = selected && status ? releaseOrder(selected,status) : 0;
-  return <PanelSection title="Plugin updates">
+  return <><PanelSection title="Community theme updates">
+    <style>{COMMUNITY_UPDATE_CSS}</style>
+    <PanelSectionRow><section className="dht-theme-updates" aria-label="Community update summary" aria-busy={themeChecking}>
+      <div className="dht-tu-summary">
+        <div className="dht-tu-symbol" aria-hidden="true">{themeChecking ? "↻" : community.updateCount ? "↓" : "✓"}</div>
+        <div><span className="dht-tu-eyebrow">COMMUNITY THEMES</span><h3>{themeChecking ? "Checking for updates…" : community.updateCount ? `${community.updateCount} update${community.updateCount === 1 ? "" : "s"} available` : "You’re up to date"}</h3><p>{themeChecking ? "Looking for new themes and assets" : community.updateCount ? "Fresh looks, ready when you are" : "No known theme updates"}</p></div>
+      </div>
+      <span className="dht-tu-accessible" role="status">{community.updateCount ? `${community.updateCount} community theme update${community.updateCount === 1 ? "" : "s"} available` : "No known community theme updates"}</span>
+      {!!community.updates.length && <div className="dht-tu-list">{community.updates.map(theme => <article className="dht-tu-theme" key={theme.repo + "/" + theme.id}>
+        <div className="dht-tu-title"><strong>{theme.name}</strong><span className="dht-tu-kind">{theme.installedVersion === theme.version ? "Assets" : "Theme"}</span></div>
+        <span className="dht-tu-repo">{theme.repo}</span>
+        <div className="dht-tu-versions"><span>{theme.installedVersion}</span><span aria-hidden="true">→</span><strong>{theme.installedVersion === theme.version ? "Updated assets" : theme.version}</strong></div>
+        {!theme.compatible && <p className="dht-tu-warning">Update ThemeHub first</p>}
+      </article>)}</div>}
+      {!!community.errors.length && <div className="dht-tu-notice" role="status"><span aria-hidden="true">!</span><div><strong>Some sources are offline</strong><p>Showing saved results. Installed themes still work.</p></div></div>}
+      <div className="dht-tu-schedule"><span className="dht-tu-dot" aria-hidden="true"/>Automatic checks every 6 hours</div>
+    </section></PanelSectionRow>
+    <PanelSectionRow><div className="dht-tu-action dht-tu-primary"><ButtonItem layout="below" onClick={onManageThemes}>{community.updateCount ? "Review theme updates" : "Browse community themes"}</ButtonItem></div></PanelSectionRow>
+    <PanelSectionRow><div className="dht-tu-action dht-tu-secondary"><ButtonItem layout="below" disabled={themeChecking} onClick={() => { setThemeChecking(true); setThemeError(""); void checkCommunityUpdates(true).catch(e => setThemeError(String(e))).finally(() => setThemeChecking(false)); }}>{themeChecking ? "Checking themes…" : "Check community theme updates"}</ButtonItem></div></PanelSectionRow>
+    {themeError && <PanelSectionRow><div className="dht-tu-error" role="alert">{themeError}</div></PanelSectionRow>}
+  </PanelSection><PanelSection title="Plugin updates">
     <PanelSectionRow><div style={{ fontSize: 12, lineHeight: 1.5 }}>
       <div>Installed: {status ? releaseLabel({tag:"",version:status.currentVersion,assetUrl:"",notes:"",build:status.currentBuild,attempt:status.currentAttempt}) : checking ? "Checking..." : "Unavailable"}</div>
       <div>{checkError || (checking ? "Checking GitHub releases..." : status?.stale ? `${status.error}. Showing saved releases; latest version is unverified.`
@@ -174,5 +198,12 @@ export function Updates() {
     <PanelSectionRow><ButtonItem layout="below" disabled={busy || checking} onClick={() => void load()}>{checking ? "Checking…" : "Check for updates"}</ButtonItem></PanelSectionRow>
     {busy && downloading.current && <PanelSectionRow><ProgressBarWithInfo layout="inline" nProgress={progress} sOperationText={message} /></PanelSectionRow>}
     {message && <PanelSectionRow><div style={{ fontSize: 12, overflowWrap: "anywhere" }}>{message}</div></PanelSectionRow>}
-  </PanelSection>;
+  </PanelSection></>;
 }
+
+const COMMUNITY_UPDATE_CSS = `
+.dht-theme-updates{background:linear-gradient(145deg,#202c40,#172131);border:1px solid #ffffff14;border-radius:12px;color:#eef3fb;padding:16px;box-sizing:border-box;width:100%;font-family:inherit}
+.dht-tu-summary{display:flex;align-items:center;gap:12px}.dht-tu-symbol{display:grid;place-items:center;flex:0 0 40px;height:40px;border-radius:11px;background:#83b9ff1c;color:#a9d1ff;font-size:25px}.dht-tu-eyebrow{font-size:10px;letter-spacing:.13em;font-weight:700;color:#9aafca}.dht-tu-summary h3{margin:4px 0;font-size:18px;font-weight:700;line-height:1.25}.dht-tu-summary p{margin:0;color:#b2c0d3;font-size:12px;line-height:1.4}
+.dht-tu-list{margin-top:16px;display:grid;gap:8px}.dht-tu-theme{background:#0d152565;border:1px solid #ffffff0a;border-radius:8px;padding:12px;min-width:0}.dht-tu-title{display:flex;justify-content:space-between;align-items:flex-start;gap:8px}.dht-tu-title strong{font-size:13px;line-height:1.4;overflow-wrap:anywhere}.dht-tu-kind{font-size:10px;color:#b9d4f7;background:#36537a66;padding:3px 7px;border-radius:5px;flex-shrink:0}.dht-tu-repo{display:block;font-size:11px;color:#91a3ba;margin-top:3px;overflow-wrap:anywhere}.dht-tu-versions{display:flex;gap:9px;align-items:center;margin-top:10px;font-size:12px;font-variant-numeric:tabular-nums;color:#91a3ba}.dht-tu-versions strong{color:#c1e2ff;font-weight:600}.dht-tu-warning{font-size:11px;color:#f4c987;margin:8px 0 0}
+.dht-tu-notice{display:flex;gap:9px;margin-top:12px;padding:10px;border-radius:7px;background:#dab56a12;color:#e1c690;font-size:12px}.dht-tu-notice>span{display:grid;place-items:center;border:1px solid #d4b47777;border-radius:50%;width:17px;height:17px;flex-shrink:0}.dht-tu-notice strong{font-weight:600}.dht-tu-notice p{margin:4px 0 0;color:#c6bda9;font-size:11px;line-height:1.5}.dht-tu-schedule{display:flex;gap:7px;align-items:center;margin-top:14px;color:#91a3ba;font-size:11px}.dht-tu-dot{width:5px;height:5px;background:#83adcd;border-radius:50%}.dht-tu-action{width:100%}.dht-tu-action button{width:100%;border-radius:8px;padding:12px 14px;font:inherit;font-size:13px;font-weight:600;box-sizing:border-box;cursor:pointer}.dht-tu-primary button{background:#b7d9ff;color:#132439;border:1px solid transparent}.dht-tu-secondary button{background:#233147;color:#d4e0ef;border:1px solid #ffffff15}.dht-tu-action button:focus-visible{outline:3px solid #fff;outline-offset:2px}.dht-tu-action button:disabled{opacity:.55}.dht-tu-error{padding:10px;border-radius:7px;background:#782c3433;color:#ffc0c0;font-size:12px;overflow-wrap:anywhere}.dht-tu-accessible{position:absolute;width:1px;height:1px;padding:0;margin:-1px;overflow:hidden;clip:rect(0,0,0,0);white-space:nowrap;border:0}
+`;

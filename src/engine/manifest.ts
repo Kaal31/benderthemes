@@ -61,11 +61,13 @@ export interface ThemeManifest {
   slots?: Partial<Record<SlotKind, string>>;
   /** Only for layout "frame": the interface's HTML file inside the theme folder. */
   frame?: { entry: string };
+  native?: { api: 1; entry: string; sha256: string };
 }
 
 /** A manifest as the engine uses it: where it came from. */
 export interface ThemeEntry extends ThemeManifest {
   source: "builtin" | "bundled" | "user";
+  revision?: string;
 }
 
 const ID = /^[a-z0-9][a-z0-9:-]{0,63}$/;
@@ -106,6 +108,10 @@ export function validateManifest(raw: unknown, layouts: readonly string[]): { ok
   if (m.layout === "frame") {
     if (typeof m.frame?.entry !== "string" || !PATH.test(m.frame.entry) || !/\.html?$/i.test(m.frame.entry)) return { ok: false, reason: "frame theme without an .html entry" };
     theme.frame = { entry: m.frame.entry };
+  }
+  if (m.layout === "native") {
+    if (m.nativeInstalled !== true || m.native?.api !== 1 || typeof m.native.entry !== "string" || !PATH.test(m.native.entry) || !/\.js$/i.test(m.native.entry) || !/^[a-f0-9]{64}$/.test(m.nativeSha256)) return { ok: false, reason: "native theme requires a verified entry from the repository installer" };
+    theme.native = { api: 1, entry: m.native.entry, sha256: m.nativeSha256 };
   }
   return { ok: true, theme };
 }

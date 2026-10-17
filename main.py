@@ -2195,6 +2195,41 @@ class Plugin:
             decky.logger.error(f"import theme: {e}")
             return {"ok": False, "error": str(e)[:200]}
 
+    async def community_themes(self):
+        import community_themes
+        return await asyncio.to_thread(community_themes.listing)
+
+    async def community_source(self, repo: str, action: str):
+        import community_themes
+        try:
+            return {"ok": True, **await asyncio.to_thread(community_themes.source_action, repo, action)}
+        except Exception as e:
+            return {"ok": False, "error": str(e)[:250]}
+
+    async def community_package(self, repo: str, ident: str, action: str):
+        import community_themes
+        try:
+            return await asyncio.to_thread(community_themes.package_action, repo, ident, action)
+        except Exception as e:
+            return {"ok": False, "error": str(e)[:250]}
+
+    async def community_progress(self):
+        import community_themes
+        return community_themes.progress()
+
+    async def community_update_status(self, force: bool = False):
+        import community_themes
+        return await asyncio.to_thread(community_themes.check_updates, bool(force))
+
+    async def _community_update_loop(self):
+        import community_themes
+        while True:
+            try:
+                await asyncio.to_thread(community_themes.check_updates)
+            except Exception as e:
+                decky.logger.warning(f"community update check: {e}")
+            await asyncio.sleep(30 * 60)
+
     async def media_server(self):
         if not await _ensure_server():
             return None
@@ -2238,6 +2273,9 @@ class Plugin:
         theme_updates.clear_replacement()
         import theme_store
         theme_store.recover()
+        import community_themes
+        community_themes.recover()
+        self._community_updates = asyncio.create_task(self._community_update_loop())
         theme_store.migrate_legacy_resources()
         os.makedirs(_wall_dir(), exist_ok=True)
         os.makedirs(os.path.join(_skin_dir(), "p3t"), exist_ok=True)
@@ -2298,6 +2336,13 @@ class Plugin:
             decky.logger.warning(f"could not link sounds: {e}")
 
     async def _unload(self):
+        task = getattr(self, "_community_updates", None)
+        if task is not None:
+            task.cancel()
+            try:
+                await task
+            except asyncio.CancelledError:
+                pass
         try:
             if _vi.server is not None:
                 _vi.server.close()

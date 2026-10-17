@@ -19,7 +19,7 @@ export const VITA_LOOKS: { id: VitaLook; name: string }[] = [
   { id: "sakura", name: "Sakura" },
 ];
 
-export type ThemeId = "onyx" | "silver" | "frame" | "wii" | "wiiu" | "switch" | "n3ds" | "vita" | "ps2" | "ps3" | "psp" | "ps4" | "ps5" | "x360" | "aero" | "aero2" | "xbox" | "dial" | "castle" | "republic" | "minecraft" | "pain" | "nazarick" | "ps1" | "iisu";
+export type ThemeId = "native" | "onyx" | "silver" | "frame" | "wii" | "wiiu" | "switch" | "n3ds" | "vita" | "ps2" | "ps3" | "psp" | "ps4" | "ps5" | "x360" | "aero" | "aero2" | "xbox" | "dial" | "castle" | "republic" | "minecraft" | "pain" | "nazarick" | "ps1" | "iisu";
 export type StyleValue = string | number | boolean;
 export type SortMode = "recent" | "alpha" | "playtime";
 export type AAction = "theme" | "launch" | "details";
@@ -61,6 +61,7 @@ export const THEMES: { id: ThemeId; name: string; blurb: string }[] = [
   {id:"minecraft",name:"Block Worlds (bonus)",blurb:"Voxel sunset, block panels and a customizable 3D player"},
   {id:"ps1",name:"PS1",blurb:"BIOS menu, memory cards of pixel save icons and the CD Player"},
   {id:"iisu",name:"iiSU style (bonus)",blurb:"Glass icon grid over game art, pill bars and a colourful dock"},
+  {id:"native",name:"Community native layout",blurb:"A trusted community React layout running inside ThemeHub"},
   {id:"frame",name:"Community interface",blurb:"A community theme's own interface, running sealed off from Steam"},
 ];
 

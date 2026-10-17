@@ -47,7 +47,7 @@ export async function refreshThemes() {
         continue;
       }
       if (BUILTIN_THEMES.some((b) => b.id === v.theme.id)) continue; // built-in ids are reserved
-      next.push({ ...v.theme, company: v.theme.company ?? "Community", source: raw.source === "bundled" ? "bundled" : "user" });
+      next.push({ ...v.theme, company: v.theme.company ?? "Community", source: raw.source === "bundled" ? "bundled" : "user", revision: typeof raw.communityRevision === "string" ? raw.communityRevision : undefined });
       if (raw.packs) nextPacks.set(v.theme.id, raw.packs);
       if (raw.icons && typeof raw.icons === "object") {
         const own = Object.fromEntries(Object.entries(raw.icons).filter(([n, f]) => ICON_NAME.test(n) && typeof f === "string" && !f.includes("..")).slice(0, 300));

@@ -4,6 +4,8 @@ Theme authors can use the [standalone SDK viewer](../sdk/viewer/README.md) with 
 
 Experimental now supports arbitrary **local HTML pages** and **single-page routes** inside a frame theme. No page list or layout registration is needed. All pages keep the existing opaque-origin iframe sandbox and theme-folder restrictions. They use the bridge for Steam data/actions; no arbitrary Steam APIs or external pages are enabled.
 
+“No layout registration” applies to external themes using the existing `frame` layout. A new native React layout compiled into ThemeHub still requires edits to the plugin's registration/rendering/preset code and a rebuilt plugin. Downloadable native components can instead use the [Native API v1 package format](NATIVE-THEMES.md), without per-theme registration edits. Arbitrary native fork source is not automatically loadable; see [Native layouts versus external React themes](CUSTOM-THEMES.md#native-layouts-versus-external-react-themes) for the distinction and porting requirements.
+
 ```
 my-theme/
   theme.json

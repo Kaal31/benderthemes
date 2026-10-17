@@ -1,5 +1,12 @@
 import { PluginSpotlight } from "./PluginSpotlight";
 import { ThemeFiles } from "./ThemeFiles";
+import { CommunityThemes } from "./CommunityThemes";
+import { Updates } from "./Updates";
+import { useCommunityUpdates } from "./communityUpdates";
+import { checkCommunityUpdates, invalidateCommunityUpdates } from "./communityUpdates";
+import { callable } from "@decky/api";
+import { refreshThemes } from "./engine/registry";
+import { applyPreset, getPresets } from "./presets";
 import { useEffect, useRef, useState } from "react";
 import { InputHandler, pushModalInput } from "./input";
 import { getSettings, THEMES, ThemeId, updateSettings, useSettings } from "./settings";
@@ -19,7 +26,11 @@ function BonusFeatureBadges({id}:{id:string}) {
   return <div className="dht-hub-feature-badges" aria-label="Bonus theme features">{features.map(feature=><span key={feature} className="dht-hub-feature-badge" data-feature={feature} title={BONUS_FEATURE_LABELS[feature].description}>{BONUS_FEATURE_LABELS[feature].label}</span>)}</div>;
 }
 
-export type ThemePack = { id: string; name: string; theme: ThemeId | null; description: string; size: number; version: string; installedVersion?: string; compatible: boolean; preview?: string; poster?: string; builtIn?: boolean };
+export type ThemePack = { id: string; name: string; theme: ThemeId | null; description: string; size: number; version: string; installedVersion?: string; compatible: boolean; preview?: string; poster?: string; builtIn?: boolean; uiOverhaul?: boolean; community?: { repo: string; id: string; themeId?: string; updateAvailable: boolean } };
+type CommunitySource = { repo: string; themes: { id: string; themeId?: string; name: string; description: string; size?: number; version: string; installedVersion?: string; compatible: boolean; preview?: string; uiOverhaul?: boolean; updateAvailable: boolean; layout?: ThemeId }[] };
+const communityList = callable<[], { sources: CommunitySource[] }>("community_themes");
+const communityPackage = callable<[repo: string, id: string, action: string], { ok: boolean; error?: string; themeId?: string }>("community_package");
+const communityProgress = callable<[], PackProgress>("community_progress");
 type Progress = PackProgress;
 // catalog, download and progress calls are shared with the themed store's Themes section (themePacks.ts)
 const catalog = themeCatalog, downloadProgress = themeDownloadProgress;
@@ -37,12 +48,15 @@ const withBuiltIns = (themes: ThemePack[], art: ThemeArt = {}): ThemePack[] => [
 /** A built-in theme whose optional extras are not downloaded yet. */
 const extrasMissing = (p: ThemePack) => !!p.builtIn && !p.installedVersion;
 
-type Tab = "discover" | "yours" | "files" | "spotlight";
-const TABS: { id: Tab; name: string }[] = [{ id: "discover", name: "Discover" }, { id: "yours", name: "Your themes" }, { id: "files", name: "Theme files" }, { id: "spotlight", name: "Plugin Spotlight" }];
-const upToDate = (p: ThemePack) => p.installedVersion === "legacy" || p.installedVersion === p.version;
+type Tab = "discover" | "yours" | "community" | "files" | "spotlight";
+const TABS: { id: Tab; name: string }[] = [{ id: "discover", name: "Discover" }, { id: "yours", name: "Your themes" }, { id: "community", name: "Community" }, { id: "files", name: "Theme files" }, { id: "spotlight", name: "Plugin Spotlight" }];
+const upToDate = (p: ThemePack) => p.community ? !p.community.updateAvailable : p.installedVersion === "legacy" || p.installedVersion === p.version;
 
-export function Marketplace({ requested, from }: { requested?: ThemeId; from?: ThemeId }) {
-  const [tab, setTab] = useState<Tab>("discover");
+export function Marketplace({ requested, from, initialTab }: { requested?: ThemeId; from?: ThemeId; initialTab?: "community" }) {
+  const communityUpdates = useCommunityUpdates();
+  const [tab, setTab] = useState<Tab>(initialTab ?? "discover");
+  const [updatesOpen, setUpdatesOpen] = useState(false);
+  const updatesRoot = useRef<HTMLElement>(null);
   const tabInput = useRef<InputHandler | null>(null); // Theme files and Plugin Spotlight take the D-pad, A, X, ☰ and (when open) B
   const [packs, setPacks] = useState<ThemePack[]>([]);
   const [selected, setSelected] = useState(0);
@@ -61,7 +75,7 @@ export function Marketplace({ requested, from }: { requested?: ThemeId; from?: T
   const reloadInventory = () => inventory().then(i => { if (alive.current) setInv(i || {}); }).catch(() => {});
   useEffect(() => { void reloadInventory(); }, [revision]);
   // Hub style "Preview": the theme of the card focused in Discover (cards with a theme, as `filtered` below)
-  const discoverFocus = tab === "discover" ? packs.filter(p => !!p.theme)[selected]?.theme ?? null : null;
+  const discoverFocus = tab === "discover" ? packs.filter(p => !!p.theme && !p.community)[selected]?.theme ?? null : null;
   const resolved = resolveHubTheme(s.hubStyle, from ? s.theme : undefined, inv, discoverFocus);
   const styled = resolved.theme ? { theme: resolved.theme, x360: s.x360?.style } : null;
   const source = resolved.source;
@@ -76,14 +90,20 @@ export function Marketplace({ requested, from }: { requested?: ThemeId; from?: T
   const alive = useRef(true);
   const listRef = useRef<HTMLDivElement>(null);
   const installedOnly = tab === "yours";
-  const filtered = packs.filter(p => !!p.theme && (!installedOnly || !!p.installedVersion || (!!p.builtIn && !s.hiddenThemes?.includes(p.theme))));
+  const filtered = packs.filter(p => !!p.theme && (!p.community || installedOnly) && (!installedOnly || !!p.installedVersion || (!!p.builtIn && !s.hiddenThemes?.includes(p.theme))));
   const current = filtered[Math.min(selected, Math.max(0, filtered.length - 1))];
   const load = async (refresh = false) => {
     setLoading(true);
     try {
-      const result = await catalog(refresh);
+      if (refresh) await checkCommunityUpdates(true).catch(() => {});
+      const [result, community] = await Promise.all([catalog(refresh), communityList().catch(() => ({ sources: [] as CommunitySource[] }))]);
       if (!alive.current) return;
-      setPacks(withBuiltIns(result.themes, result.art)); setError(result.error || "");
+      const installed = community.sources.flatMap(source => source.themes.filter(t => !!t.installedVersion).map(t => ({
+        id: `community:${source.repo}:${t.id}`, name: t.name, theme: t.layout ?? (t.uiOverhaul ? "native" : "frame"), description: t.description,
+        size: t.size ?? 0, version: t.version, installedVersion: t.installedVersion, compatible: t.compatible, preview: t.preview, poster: t.preview, uiOverhaul: t.uiOverhaul,
+        community: { repo: source.repo, id: t.id, themeId: t.themeId, updateAvailable: t.updateAvailable }
+      } satisfies ThemePack)));
+      setPacks([...withBuiltIns(result.themes, result.art), ...installed]); setError(result.error || "");
       setProgress(result.progress); setBusy(result.progress.busy);
     } catch (e) { if (alive.current) setError(`Cannot load themes: ${e}`); }
     finally { if (alive.current) setLoading(false); }
@@ -92,6 +112,7 @@ export function Marketplace({ requested, from }: { requested?: ThemeId; from?: T
     alive.current = true; void load();
     return () => { alive.current = false; };
   }, []);
+  useEffect(() => { if (alive.current && !busy) void load(); }, [communityUpdates]);
   useEffect(() => {
     if (requested) { const i = packs.filter(p => p.theme).findIndex(p => p.theme === requested); if (i >= 0) setSelected(i); }
   }, [requested, packs.length]);
@@ -104,7 +125,7 @@ export function Marketplace({ requested, from }: { requested?: ThemeId; from?: T
     const timer = setInterval(async () => {
       if (pending) return;
       pending = true;
-      try { const value = await downloadProgress(); if (alive.current) { setProgress(value); if (!value.busy && value.percent === 100) { setBusy(false); void load(); void reloadInventory(); } } }
+      try { const value = await (current?.community ? communityProgress() : downloadProgress()); if (alive.current) setProgress(value); }
       catch { /* The install response carries actionable errors. */ }
       finally { pending = false; }
     }, 600);
@@ -114,6 +135,19 @@ export function Marketplace({ requested, from }: { requested?: ThemeId; from?: T
     if (!current || busy || loading || !current.compatible) return;
     setBusy(true); setMessage(""); const before = getSettings().theme;
     try {
+      if (current.community) {
+        let themeId = current.community.themeId;
+        if (current.community.updateAvailable) {
+          const result = await communityPackage(current.community.repo, current.community.id, "install");
+          if (!result.ok) throw new Error(result.error || "Theme update failed");
+          themeId = result.themeId ?? themeId;
+        }
+        await refreshThemes();
+        const preset = getPresets().find(p => p.dataTheme === themeId && p.origin === "default");
+        if (!preset) throw new Error("Theme could not be loaded. Check its manifest.");
+        applyPreset(preset); invalidateCommunityUpdates(); closeMarketplace(); resourcesChanged();
+        return;
+      }
       await ensurePackInstalled(current);
       if (current.theme) updateSettings(s => ({ theme: current.theme!, enabled: true, hiddenThemes: (s.hiddenThemes || []).filter(t => t !== current.theme) }));
       closeMarketplace(); resourcesChanged();
@@ -125,6 +159,11 @@ export function Marketplace({ requested, from }: { requested?: ThemeId; from?: T
     if (!(current?.installedVersion || current?.builtIn) || busy || !current.theme) return;
     setBusy(true);
     try {
+      if (current.community) {
+        const result = await communityPackage(current.community.repo, current.community.id, "remove");
+        if (!result.ok) throw new Error(result.error || "Uninstall failed");
+        await refreshThemes(); invalidateCommunityUpdates(); await load(); setMessage("Theme uninstalled."); return;
+      }
       await deleteTheme(current.theme);
       await load(); void reloadInventory(); setMessage("Theme deleted and hidden. You can download it again anytime.");
     } catch (e) { if (alive.current) setMessage(String(e)); }
@@ -136,12 +175,23 @@ export function Marketplace({ requested, from }: { requested?: ThemeId; from?: T
     const n = cells.findIndex(c => c.offsetTop !== cells[0].offsetTop);
     return n < 0 ? cells.length : n;
   };
-  const goTab = (t: Tab) => { setTab(t); setSelected(0); };
-  const actions = useRef({ cycleStyle, activate, busy, filtered, selected, tab, columns });
-  actions.current = { cycleStyle, activate, busy, filtered, selected, tab, columns };
+  const goTab = (t: Tab) => { setUpdatesOpen(false); setTab(t); setSelected(0); };
+  const actions = useRef({ cycleStyle, activate, busy, filtered, selected, tab, columns, updatesOpen });
+  actions.current = { cycleStyle, activate, busy, filtered, selected, tab, columns, updatesOpen };
   useEffect(() => pushModalInput(p => {
     const a = actions.current;
-    const routed = a.tab === "spotlight" || a.tab === "files";
+    if (a.updatesOpen) {
+      if (p.btn === "b") { setUpdatesOpen(false); return true; }
+      const controls = Array.from(updatesRoot.current?.querySelectorAll<HTMLElement>('button:not(:disabled),select,input,[tabindex="0"]') ?? []);
+      const focused = document.activeElement as HTMLElement;
+      if (p.btn === "a" && !p.repeat) { if (controls.includes(focused)) focused.click(); else controls[0]?.focus(); return true; }
+      if (["up", "down", "left", "right"].includes(p.btn)) {
+        const i = controls.indexOf(focused), delta = p.btn === "up" || p.btn === "left" ? -1 : 1;
+        const next = controls[Math.max(0, Math.min(controls.length - 1, i < 0 ? 0 : i + delta))];
+        next?.focus(); next?.scrollIntoView({block:"nearest"}); return true;
+      }
+    }
+    const routed = a.tab === "spotlight" || a.tab === "files" || a.tab === "community";
     if (p.btn === "b" && routed && tabInput.current?.(p)) { playSound("back"); return true; } // close a confirmation / search box first
     if (p.btn === "b") { playSound("back"); closeMarketplace(); return true; }
     if (a.busy) return true;
@@ -162,7 +212,7 @@ export function Marketplace({ requested, from }: { requested?: ThemeId; from?: T
     return true;
   }), []);
   const installed = packs.filter(p => p.installedVersion && p.theme).length;
-  const count: Record<Tab, number | undefined> = { discover: packs.filter(p => p.theme).length, yours: installed, files: undefined, spotlight: undefined };
+  const count: Record<Tab, number | undefined> = { discover: packs.filter(p => p.theme && !p.community).length, yours: installed, community: communityUpdates.updateCount || undefined, files: undefined, spotlight: undefined };
   const styleName = styleOptions.find(o => o.id === styleChoice)?.name ?? "Auto";
   return <div className="dht-market dht-hub" data-hub-theme={hubThemeKey(styled?.theme, styled?.x360)} data-hub-styled={styled ? "true" : "false"} data-hub-source={source} data-hub-tab={tab} data-motion={s.animations} role="dialog" aria-modal="true" aria-label="Hub">
     <style>{hubVarsCss()}{HUB_DECO_CSS}{MARKET_CSS}</style><div className="dht-hub-deco" data-deco={styled ? hs.deco : "none"} aria-hidden="true"/>
@@ -174,35 +224,36 @@ export function Marketplace({ requested, from }: { requested?: ThemeId; from?: T
         <kbd className="dht-hub-glyph" aria-hidden="true">RB</kbd>
       </nav>
       <div className="dht-hub-headright">
+        <button className="market-style" aria-pressed={updatesOpen} onClick={() => setUpdatesOpen(v => !v)}>Updates{communityUpdates.updateCount ? ` · ${communityUpdates.updateCount}` : ""}</button>
         <button className="market-style" onClick={cycleStyle} aria-label={`Hub style: ${styleName}`}><kbd>Y</kbd> Style <strong>{styleName}</strong></button>
         {(tab === "discover" || tab === "yours") && <button className="market-refresh" disabled={busy || loading} onClick={() => void load(true)} aria-label="Refresh">{loading ? "…" : "↻"}</button>}
-        <button className="market-close" onClick={closeMarketplace} aria-label="Back"><kbd>B</kbd> Back</button>
+        <button className="market-close" onClick={() => updatesOpen ? setUpdatesOpen(false) : closeMarketplace()} aria-label="Back"><kbd>B</kbd> Back</button>
       </div>
     </header>
     {error && (tab === "discover" || tab === "yours") && <div className="market-notice">{error} · Showing saved catalog. Installed themes still work offline.</div>}
-    {tab === "spotlight" ? <PluginSpotlight inputRef={tabInput}/> : tab === "files" ? <ThemeFiles inputRef={tabInput}/> : <main className="dht-hub-body"><div className="market-grid dht-hub-grid" ref={listRef}>
+    {updatesOpen ? <section ref={updatesRoot} className="dht-hub-updates" aria-label="Hub updates"><h2>Updates</h2><Updates onManageThemes={() => goTab("yours")}/></section> : tab === "community" ? <CommunityThemes inputRef={tabInput}/> : tab === "spotlight" ? <PluginSpotlight inputRef={tabInput}/> : tab === "files" ? <ThemeFiles inputRef={tabInput}/> : <main className="dht-hub-body"><div className="market-grid dht-hub-grid" ref={listRef}>
       {!filtered.length && <p className="dht-hub-empty">{loading ? "Loading your next home…" : installedOnly ? "Your collection starts here. Browse Discover to download a theme." : "No themes are available yet. Try Refresh."}</p>}
       {filtered.map((pack, i) => {
-        const state = pack.theme === s.theme && (pack.installedVersion || pack.builtIn) ? "Active" : pack.installedVersion ? (upToDate(pack) || pack.installedVersion === "built-in" ? "Installed" : "Update") : extrasMissing(pack) ? "Built in" : "";
+        const state = pack.community?.updateAvailable ? "Update" : (pack.community ? pack.community.themeId === s.activeTheme : pack.theme === s.theme) && (pack.installedVersion || pack.builtIn) ? "Active" : pack.installedVersion ? (upToDate(pack) || pack.installedVersion === "built-in" ? "Installed" : "Update") : extrasMissing(pack) ? "Built in" : "";
         return <button key={pack.id} className="market-card dht-hub-card" data-selected={i === selected} onClick={() => setSelected(i)} onFocus={() => setSelected(i)}>
           <div className="market-art dht-hub-art" data-theme={pack.id}>{pack.poster ? <img src={pack.poster} alt="" loading="lazy" onError={e => { e.currentTarget.style.display = "none"; }} /> : <span>{pack.name}</span>}{state && <em className="dht-hub-state" data-state={state.toLowerCase()}>{state}</em>}</div>
           <div className="market-card-title"><strong>{pack.name}</strong>{pack.size > 0 && <span>{(pack.size / 1048576).toFixed(1)} MB</span>}</div>
           <p>{THEMES.find(t => t.id === pack.theme)?.blurb || pack.description}</p>
-          <BonusFeatureBadges id={pack.id}/>
+          <BonusFeatureBadges id={pack.id}/>{pack.uiOverhaul && <small className="dht-hub-overhaul">UI overhaul</small>}
         </button>;
       })}
     </div><aside className="dht-hub-detail">{current && <>
       <div className="dht-hub-detail-scroll">
         <div className="market-detail-art" data-theme={current.id}>{current.preview || current.poster ? <img key={current.id} src={current.preview || current.poster} alt={`${current.name} animated preview`} /> : <span>Preview coming soon</span>}</div>
         <h2>{current.name}</h2><p>{current.description}</p>
-        <BonusFeatureBadges id={current.id}/>
+        <BonusFeatureBadges id={current.id}/>{current.uiOverhaul && <small className="dht-hub-overhaul">UI overhaul</small>}
         <dl><div><dt>Download</dt><dd>{current.size ? `${(current.size / 1048576).toFixed(1)} MB` : "Built in"}</dd></div><div><dt>Version</dt><dd>{current.version}</dd></div><div><dt>Available offline</dt><dd>{current.installedVersion ? "Ready to play" : "After download"}</dd></div></dl>
       </div>
       <div className="dht-hub-detail-actions">
-        <button className="market-primary dht-hub-primary" disabled={busy || loading || !current.compatible} onClick={() => void activate()}>{busy ? `${progress?.percent || 0}% · ${progress?.message || "Preparing…"}` : !current.compatible ? "Coming soon" : upToDate(current) ? "Activate theme" : current.installedVersion ? "Update & activate" : extrasMissing(current) ? "Download extras & activate" : "Download theme"}<kbd>A</kbd></button>
+        <button className="market-primary dht-hub-primary" disabled={busy || loading || !current.compatible} onClick={() => void activate()}>{busy ? `${progress?.percent || 0}% · ${progress?.message || "Preparing…"}` : !current.compatible ? "Coming soon" : upToDate(current) ? "Activate theme" : current.installedVersion ? "Update theme" : extrasMissing(current) ? "Download extras & activate" : "Download theme"}<kbd>A</kbd></button>
         {busy && <progress max={100} value={progress?.percent || 0} />}
-        {(current.installedVersion || current.builtIn) && <button className="market-remove dht-hub-remove" disabled={busy || current.theme === s.theme} onClick={() => void deletePack()}>Delete theme</button>}
-        <small>Your settings are kept when you switch themes.</small>
+        {(current.installedVersion || current.builtIn) && <button className="market-remove dht-hub-remove" disabled={busy || (current.community ? current.community.themeId === s.activeTheme : current.theme === s.theme)} onClick={() => void deletePack()}>Delete theme</button>}
+        <small>Updates activate immediately. Your settings are kept.</small>
       </div>
     </>}</aside></main>}
     {message && <div className="market-notice" role="status">{message}</div>}
@@ -215,7 +266,7 @@ export function Marketplace({ requested, from }: { requested?: ThemeId; from?: T
 // TV-sized Big Picture (>= 1600 px) zooms the whole page. Posters and previews are 16:10 and are never cropped
 // (16:10 boxes + object-fit: contain). The boxes take their height from a ::before spacer (padding-top: 62.5% of the
 // width), not aspect-ratio: in a flex <button> the Deck's Steam browser collapsed aspect-ratio boxes to a thin strip. The selected card's ring stays inside the grid's padding.
-const MARKET_CSS = `
+const MARKET_CSS = `.dht-hub-updates{flex:1;min-height:0;overflow:auto;padding:12px 0 24px}.dht-hub-updates>h2{margin:0 0 16px}.dht-hub-updates>div{max-width:700px;margin:0 auto}.dht-hub-updates button:focus-visible{outline:3px solid #b7d9ff;outline-offset:2px}.dht-hub-updates .dht-tu-action{margin:8px 0}.dht-hub-headright{flex-wrap:wrap}.dht-hub-overhaul{display:inline-block;margin:6px 10px;padding:3px 8px;border-radius:12px;background:#7460bd33;color:#d9d1ff;font-size:11px}
 .dht-market{position:absolute;inset:0;z-index:400;background:var(--dht-hub-bg);color:var(--dht-hub-text);display:flex;flex-direction:column;padding:20px 0 12px;box-sizing:border-box;font:15px var(--dht-hub-font);letter-spacing:0;color-scheme:var(--dht-hub-scheme);overflow:hidden;text-transform:var(--dht-hub-case);container:dht-hub / size;transition:background-color .3s,color .3s}
 .dht-market>*:not(.dht-hub-deco){position:relative;z-index:1;margin-inline:32px}
 .dht-market *{box-sizing:border-box}.dht-market button{font:inherit;color:inherit;cursor:pointer;border:0;text-transform:inherit}.dht-market button:disabled{opacity:.45;cursor:default}.dht-market button:focus-visible{outline:3px solid var(--dht-hub-accent);outline-offset:3px}

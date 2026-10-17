@@ -54,6 +54,7 @@ import { X360Home } from "./themes/X360";
 import { Ps2Home } from "./themes/Ps2";
 import { Ps1Home } from "./themes/Ps1";
 import { IisuHome } from "./themes/Iisu";
+import { NativeLayout } from "./engine/NativeLayout";
 import { FrameHome } from "./engine/FrameHome";
 import { VideoIntro } from "./engine/VideoIntro";
 import { activeTheme, slotAccent, slotFont, slotUrl, useThemes } from "./engine/registry";
@@ -68,6 +69,7 @@ const skinHook = (s: ReturnType<typeof getSettings>) => {
 };
 
 const THEME_COMPONENTS: Record<ThemeId, () => ReactNode> = {
+  native: () => <NativeLayout />,
   onyx: () => <SilverHome dark />,
   silver: () => <SilverHome />,
   frame: () => <FrameHome />,
@@ -188,7 +190,7 @@ function VerifiedThemedHome({ standalone }: { standalone?: boolean }) {
   useEffect(() => {
     let alive = true;
     setState("checking");
-    if (settings.theme === "frame") { setState("ready"); return; }
+    if ((settings.theme === "frame" || settings.theme === "native")) { setState("ready"); return; }
     inventory().then(installed => {
       if (!alive) return;
       const ready = !!installed[settings.theme];
@@ -384,7 +386,7 @@ function ThemedHomeContent({ standalone }: { standalone?: boolean }) {
       <style>{`.dht-root[data-tv=true] .dht-menu-item{font-size:25px!important;min-height:44px}.dht-root[data-motion=false] *{animation:none!important;transition:none!important}@media(prefers-reduced-motion:reduce){.dht-root *{animation:none!important;transition:none!important}}`}</style>
       <HomeCtx.Provider value={api}>
         <SafeBoundary
-          key={s.theme}
+          key={`${s.theme}:${engineTheme?.id}:${engineTheme?.revision}`}
           where={`theme ${s.theme}`}
           fallback={
             <div style={{ color: "#ddd", padding: 60, fontSize: 20, lineHeight: 1.5 }}>
@@ -402,16 +404,16 @@ function ThemedHomeContent({ standalone }: { standalone?: boolean }) {
       {overlay?.kind === "video" && <div className="dht-themed-media"><VideoPlayer video={overlay.video} lib={lib.byId} onClose={() => setOverlay(overlay.back ? { kind: "shots", tab: "videos" } : null)} /></div>}
       {overlay?.kind === "music" && <div className="dht-themed-media"><MusicPlayerView onClose={() => setOverlay(null)} /></div>}
       {!overlay && !destination && !launching && s.theme !== "ps3" && s.theme !== "psp" && <NowPlayingMini onOpen={() => { playSound("open"); setOverlay({ kind: "music" }); }} />}
-      {overlay?.kind === "store" && inBlockPanel(<StoreView settings={pageSettings(s, "store")} lib={lib} onClose={() => transitionPage(s,()=>setOverlay(null),doc)} onLaunch={(g) => launchGame(g)} />)}
-      {destination && inBlockPanel(<DestinationView destination={destination} settings={s} lib={lib} onClose={()=>transitionPage(s,()=>setDestination(null),doc)} onLaunch={launchGame} onMedia={()=>setOverlay({kind:"shots",appid:destination.game?.appid})} onTrailer={g=>setOverlay({kind:"trailer",game:g})}/>)}
+      {overlay?.kind === "store" && inBlockPanel(<HomeCtx.Provider value={api}><NativeLayout destination={{place:"store"}} onClose={()=>setOverlay(null)} fallback={<StoreView settings={pageSettings(s, "store")} lib={lib} onClose={() => transitionPage(s,()=>setOverlay(null),doc)} onLaunch={(g) => launchGame(g)} />}/></HomeCtx.Provider>)}
+      {destination && inBlockPanel(<HomeCtx.Provider value={api}><NativeLayout destination={destination} onClose={()=>setDestination(null)} fallback={<DestinationView destination={destination} settings={s} lib={lib} onClose={()=>transitionPage(s,()=>setDestination(null),doc)} onLaunch={launchGame} onMedia={()=>setOverlay({kind:"shots",appid:destination.game?.appid})} onTrailer={g=>setOverlay({kind:"trailer",game:g})}/>}/></HomeCtx.Provider>)}
       <style>{DOWNLOAD_CSS}</style>
       <DownloadStatus settings={s} hidden={!!overlay || !!destination || !!launching || market.opened} />
-      <MenuView menu={themeMenu} variant={s.theme === "ps3" ? "xmb" : s.theme === "frame" ? "ps5" : s.theme} art={s.theme === "psp" ? { panel: cachedPspSkin(pspFile(s))?.visuals?.optionMenu, focus: cachedPspSkin(pspFile(s))?.visuals?.menuFocus } : undefined} />
+      <MenuView menu={themeMenu} variant={s.theme === "ps3" ? "xmb" : (s.theme === "frame" || s.theme === "native") ? "ps5" : s.theme} art={s.theme === "psp" ? { panel: cachedPspSkin(pspFile(s))?.visuals?.optionMenu, focus: cachedPspSkin(pspFile(s))?.visuals?.menuFocus } : undefined} />
       {launching && <LaunchView value={launching} settings={s}/>}
       <BootIntro file={s.bootIntro} />
       <ThemeIntro autoTheme={s.onboardingDone && !market.opened && !api.busy && !slotUrl("bootVideo", s) ? s.theme : undefined} />
       <VideoIntro url={slotUrl("bootVideo", s)} />
-      {market.opened && <Marketplace requested={market.requested} from={market.from} />}
+      {market.opened && <Marketplace requested={market.requested} from={market.from} initialTab={market.initialTab} />}
       <FirmwareNotice paused={market.opened || !!overlay || !!destination || !!launching} />
       <WiiuImportPrompt paused={market.opened || !!overlay || !!destination || !!launching} />
       <ThemeSwitcher available={() => !overlay && !destination && !launching && !market.opened && !themeMenu.isOpen && !anyMenuOpen()} />

@@ -247,7 +247,7 @@ export function FrameHome() {
   }, [url, ready?.textInput]);
 
   useEffect(() => { setReady(null); setFocusedAppid(null); }, [url]);
-  useEffect(() => { setRoutes([]); client.current = null; generation.current++; }, [theme?.id]);
+  useEffect(() => { setRoutes([]); setReady(null); setHints({}); setPageError(false); client.current = null; generation.current++; }, [theme?.id, theme?.revision]);
   useEffect(() => {
     if (ready || !url) return;
     const timer = setTimeout(() => setPageError(true), 8000);
@@ -273,7 +273,7 @@ export function FrameHome() {
       {url ? (
         <iframe
           ref={frame}
-          key={`${url}:${reload}`}
+          key={`${url}:${reload}:${theme?.revision ?? ""}`}
           src={url}
           title={theme?.name ?? "Community theme"}
           // allow-scripts only: an opaque origin, no forms, popups, navigation of the top page, or storage

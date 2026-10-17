@@ -35,6 +35,7 @@ export const POPUP_STYLES: Record<ThemeId, PopupStyle> = {
   minecraft: { name: "Block Worlds", accent: "#8fd65a", background: "linear-gradient(#504331,#2e271d)", color: "#fff", radius: 0, badgeRadius: "0", border: "4px ridge #958774", font: "monospace", pattern: "repeating-linear-gradient(90deg,#ffffff03 0 8px,transparent 8px 16px)", shadow: "4px 4px 0 #0009" },
   iisu: { name: "iiSU", accent: "#83d8f6", background: "linear-gradient(125deg,#252e46,#111a2f)", color: "#e3f2ff", radius: 22, badgeRadius: "12px", border: "2px solid #83d8f650", pattern: "radial-gradient(circle at 90% 25%,#a49dfa20,transparent 40%)" },
   frame: { name: "Community", accent: "#62b6ff", background: "linear-gradient(130deg,#202e42,#0f1724)", color: "#e4efff", radius: 12, badgeRadius: "8px", border: "1px solid #62b6ff80", layout: "standard" },
+  native: { name: "Community native layout", accent: "#62b6ff", background: "linear-gradient(130deg,#202e42,#0f1724)", color: "#e4efff", radius: 12, badgeRadius: "8px", border: "1px solid #62b6ff80", layout: "standard" },
 };
 export const COMMUNITY_POPUP_STYLES: Record<string, PopupStyle> = {
   "blue-glass": { name: "Blue Glass", accent: "#73e8ff", background: "linear-gradient(#3e8fcec9,#064777ef)", color: "#e7faff", radius: 7, badgeRadius: "7px", border: "2px solid #99ddff90", layout: "desktop", shadow: "0 8px 28px #00385899, inset 0 1px #fff8" },
