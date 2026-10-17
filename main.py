@@ -1659,6 +1659,26 @@ class Plugin:
         return True
 
     # ───── settings ─────
+    async def import_screensaver_media(self, path):
+        import theme_screensavers
+        try:
+            return await asyncio.to_thread(theme_screensavers.import_media, _data_dir(), path)
+        except Exception as e:
+            return {"error": str(e)}
+
+    async def export_screensaver(self, files, options):
+        import theme_screensavers
+        try:
+            ui = _steamui_dir()
+            if not ui:
+                return {"error": "Steam installation could not be found."}
+            if not hasattr(self, "_screensaver_export_lock"):
+                self._screensaver_export_lock = asyncio.Lock()
+            async with self._screensaver_export_lock:
+                return await asyncio.to_thread(theme_screensavers.export, _data_dir(), os.path.dirname(ui), decky.DECKY_PLUGIN_DIR, files, options)
+        except Exception as e:
+            return {"error": str(e)}
+
     async def read_profile_picture(self, path):
         try:
             target = pathlib.Path(str(path)).expanduser().resolve()
@@ -2364,4 +2384,8 @@ class Plugin:
         if theme_updates.replacement_pending():
             return  # Preserve resources during a ThemeHub update/channel switch.
         import theme_uninstall
+        import theme_screensavers
+        ui = _steamui_dir()
+        if ui:
+            await asyncio.to_thread(theme_screensavers.cleanup, os.path.dirname(ui))
         theme_uninstall.cleanup()

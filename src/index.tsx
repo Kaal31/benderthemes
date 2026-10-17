@@ -1,3 +1,4 @@
+import { startThemeScreensavers, useScreensaverStatus } from "./themeScreensavers";
 import { startAchievementPopups } from "./achievementPopups";
 import {stopSilverPad} from "./themes/silverPad";
 import { ButtonItem, DropdownItem, Navigation, PanelSection, PanelSectionRow, SliderField, staticClasses, TextField, ToggleField } from "@decky/ui";
@@ -108,6 +109,10 @@ function Panel() {
 
   return (
     <>
+      <PanelSection title="Screensavers">
+        <PanelSectionRow><ScreensaverStatus /></PanelSectionRow>
+        <PanelSectionRow><ToggleField label="Disable screensavers" description="Disable all Steam screensavers while ThemeHub is loaded. Overrides every theme’s screensaver." checked={s.screensaversDisabled===true} onChange={screensaversDisabled=>updateSettings({screensaversDisabled})}/></PanelSectionRow>
+      </PanelSection>
       <PanelSection title="Themes">
         <PanelSectionRow><ButtonItem layout="below" description="Browse animated previews, download a theme and activate it." onClick={() => { openMarketplace(); Navigation.Navigate(ROUTE); Navigation.CloseSideMenus(); }}>Hub</ButtonItem></PanelSectionRow>
         <AddThemeRow />
@@ -308,9 +313,12 @@ function Diagnostics() {
   );
 }
 
+function ScreensaverStatus(){const status=useScreensaverStatus();return <div style={{fontSize:12,opacity:.8}}>{status}</div>;}
+
 export default definePlugin(() => {
   logInfo(`frontend loaded v${PLUGIN_VERSION}`);
   initSettings();
+  const stopScreensavers = startThemeScreensavers();
   const stopDiagnostics = startExperimentalDiagnostics();
   const stopAchievementPopups = startAchievementPopups();
   refreshPacks();
@@ -355,6 +363,7 @@ export default definePlugin(() => {
     ),
     icon: <HomeIcon />,
     onDismount() {
+      stopScreensavers();
       stopDiagnostics();
       stopAchievementPopups();
       stopSilverPad();

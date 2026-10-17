@@ -23,6 +23,8 @@ builtins = set(json.loads(re.search(r'export const BUILT_IN_THEMES = (\[[^;]+?\]
 available = {theme.get("theme") for theme in catalog["themes"]} | builtins
 assert not layouts - available, f"Themes missing from the release Hub: {sorted(layouts - available)}"
 with zipfile.ZipFile(root / f"out/DeckHomeThemes-v{version}.zip") as plugin:
+    for name in ("screensaver-player/index.html", "screensaver-player/player.js", "py_modules/theme_screensavers.py"):
+        assert "DeckHomeThemes/" + name in plugin.namelist(), f"Missing screensaver runtime: {name}"
     assert plugin.testzip() is None
     core_defaults = ("DeckHomeThemes/defaults/assets/console-intros/", "DeckHomeThemes/defaults/sounds/DHT Onyx iPod/")
     assert not any(n.startswith("DeckHomeThemes/bundle/") or (n.startswith("DeckHomeThemes/defaults/") and not n.startswith(core_defaults)) for n in plugin.namelist()), "Optional theme resources leaked into the installer"

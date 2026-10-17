@@ -207,7 +207,20 @@ export type StandardKey = (typeof STANDARD_KEYS)[number];
 export type DateFormat = "MDY" | "DMY" | "YMD";
 export type StandardOptions = Pick<Settings, StandardKey>;
 
+export interface ThemeScreensaver {
+  mode: "steam" | "custom" | "disabled";
+  media: string[];
+  labels?: Record<string,string>;
+  duration: number;
+  shuffle: boolean;
+  fit: "contain" | "cover";
+  transition: "fade" | "none";
+}
 export interface Settings {
+  screensaversDisabled?: boolean;
+  themeScreensavers?: Record<string, ThemeScreensaver>;
+  screensaverSteamBackup?: Record<string, string | number>;
+
   profilePictures?: Record<string,string>;
   /** The theme (engine manifest id) in use; "" = chosen the old way (layout + skin file). */
   activeTheme: string;
@@ -562,6 +575,15 @@ function merge(saved: any): Settings {
   // the old on/off switch: on stays the console's size; off (also the old default) becomes Auto, so theme files line up with their art
   if (!["auto", "console", "compact"].includes(s.xmb.pspSize as string)) s.xmb.pspSize = s.xmb.pspAccurate ? "console" : "auto";
   s.coverStyles = Object.fromEntries(Object.entries(saved?.coverStyles ?? {}).filter(([theme,value]) => THEMES.some(t=>t.id===theme) && ["flat","case3d"].includes(String(value))));
+  s.screensaversDisabled = saved?.screensaversDisabled === true;
+  s.themeScreensavers = Object.fromEntries(Object.entries(saved?.themeScreensavers ?? {}).filter(([key,v]) => key.length<=160 && v && typeof v==="object").map(([key,v]:[string,any])=>[key,{
+    mode: ["steam","custom","disabled"].includes(v.mode)?v.mode:"steam",
+    media: Array.isArray(v.media)?[...new Set(v.media.filter((x:any)=>typeof x==="string"&&/^[a-f0-9]{64}\.(gif|mp4|webm|png|jpe?g|webp)$/.test(x)))].slice(0,100):[],
+    labels: v.labels && typeof v.labels==="object" ? Object.fromEntries(Object.entries(v.labels).filter(([k,x])=>/^[a-f0-9]{64}\.(gif|mp4|webm|png|jpe?g|webp)$/.test(k)&&typeof x==="string").map(([k,x])=>[k,String(x).slice(0,160)])) : {},
+    duration: Number.isFinite(v.duration)?Math.max(3,Math.min(300,Math.round(v.duration))):15,
+    shuffle:v.shuffle===true, fit:v.fit==="cover"?"cover":"contain",transition:v.transition==="none"?"none":"fade",
+  }]));
+  s.screensaverSteamBackup = Object.fromEntries(Object.entries(saved?.screensaverSteamBackup??{}).filter(([k,v])=>k==="screensaver_current_id"?typeof v==="string":["system_idle_screensaver_ac_sec","system_idle_screensaver_battery_sec"].includes(k)&&typeof v==="number"&&Number.isFinite(v)&&v>=0));
   s.backgroundMusic = saved?.backgroundMusic !== false;
   s.musicShuffle = saved?.musicShuffle === true;
   s.musicRepeat = saved?.musicRepeat === "all" || saved?.musicRepeat === "one" ? saved.musicRepeat : "off";
