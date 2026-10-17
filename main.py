@@ -1505,7 +1505,13 @@ async def _serve(reader, writer):
         if method not in ("GET", "HEAD") or not fpath or not os.path.isfile(fpath):
             await _send(writer, "404 Not Found", {**base, "Content-Length": "0"})
             return
-        size = os.path.getsize(fpath)
+        stat = await asyncio.to_thread(os.stat, fpath)
+        size = stat.st_size
+        etag = f'"{stat.st_mtime_ns:x}-{size:x}"'
+        base.update({"Cache-Control": "private, no-cache", "ETag": etag})
+        if req_headers.get("if-none-match") == etag:
+            await _send(writer, "304 Not Modified", base)
+            return
         ext = os.path.splitext(fpath)[1].lower()
         ctype = VIDEO_EXT.get(ext) or AUDIO_EXT.get(ext) or WEB_EXT.get(ext) or {".m4s": "video/iso.segment", ".json": "application/json", ".bin": "application/octet-stream"}.get(ext) or _mime(fpath)
         start, end = 0, size - 1
@@ -1528,11 +1534,11 @@ async def _serve(reader, writer):
         await _send(writer, status, hdr)
         if method == "HEAD":
             return
-        with open(fpath, "rb") as f:
-            f.seek(start)
+        with await asyncio.to_thread(open, fpath, "rb") as f:
+            await asyncio.to_thread(f.seek, start)
             left = end - start + 1
             while left > 0:
-                buf = f.read(min(262144, left))
+                buf = await asyncio.to_thread(f.read, min(262144, left))
                 if not buf:
                     break
                 writer.write(buf)
@@ -1773,8 +1779,10 @@ class Plugin:
             return f"http://127.0.0.1:{_vi.port}/{_vi.token}/f/{ident}"
         if ext not in IMAGE_EXT:
             return None
-        with open(p, "rb") as f:
-            return _data_url(f.read(), _mime(p))
+        def read_wallpaper():
+            with open(p, "rb") as f:
+                return _data_url(f.read(), _mime(p))
+        return await asyncio.to_thread(read_wallpaper)
 
     # ───── console skins ─────
     async def list_skins(self):

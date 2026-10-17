@@ -1,5 +1,6 @@
 import { GameHero } from "../common";
 import {customProfilePicture} from "../profilePicture";
+import { frameLoop, useThemeActive } from "../performance";
 import { openDestination } from "../destinations";
 // XrossMediaBar for the PS3 and PSP themes: a horizontal category bar
 // crossing a vertical item list, over a month-coloured gradient and wave.
@@ -304,6 +305,9 @@ function XmbBackground({ variant, color, animate, now, skin, fx, month = now.get
 /** A .ctf's own background: its layout (pictures + animation scripts) and its 3D wave model. */
 function PspThemeBg({ fps = 30, scene, background, wallpaper, animate, wave, level, tint, waveTint }: { fps?: number; scene: PspSceneData; background: string | null; wallpaper: string | null; animate: boolean; wave: boolean; level: number; tint?: number[] | null; waveTint?: number[] | null }) {
   const { W, H } = useStage();
+  const active = useThemeActive(), activeRef = useRef(active); activeRef.current = active;
+  const redraw = useRef<(() => void) | null>(null);
+  useEffect(() => { redraw.current?.(); }, [active]);
   const sceneRef = useRef<HTMLCanvasElement>(null);
   const waveRef = useRef<HTMLCanvasElement>(null);
   useEffect(() => {
@@ -311,7 +315,7 @@ function PspThemeBg({ fps = 30, scene, background, wallpaper, animate, wave, lev
     const sc = sceneRef.current ? createPspScene(sceneRef.current, scene, { background, wallpaper, pages, tint }) : null;
     // every 3D model object of the layout gets its own wave, following the object as its scripts
     // move, fade and turn it; a model started by the firmware itself sits where the stock wave sits
-    const waves: { draw: (t: number) => void }[] = [];
+    const waves: { draw: (t: number) => void; dispose: () => void; image: HTMLImageElement }[] = [];
     if (wave && waveRef.current) {
       const models = sceneModels(scene, pages);
       // on the wallpaper page the console draws no wave of its own (real shots of themes with a wallpaper: Midnight Black, Organ,
@@ -323,28 +327,21 @@ function PspThemeBg({ fps = 30, scene, background, wallpaper, animate, wave, lev
         const wv = createPspWave(waveRef.current, { ...data, obj: native ? null : n }, { yOffset: native ? PSP_NATIVE_Y : 0, intensity: level / 100, tint: waveTint ?? undefined });
         if (!wv) continue;
         const first = !waves.length;
-        waves.push({ draw: (t) => wv.draw(t, native || !n ? undefined : sc?.objs[n.n], first) });
+        waves.push({ draw: (t) => wv.draw(t, native || !n ? undefined : sc?.objs[n.n], first), dispose: wv.dispose, image: wv.image });
       }
     }
     const wv = waves.length ? { draw: (t: number) => waves.forEach((x) => x.draw(t)) } : null;
-    let raf = 0, last = -1;
     const t0 = performance.now();
-    const tick = (now: number) => {
-      raf = requestAnimationFrame(tick);
-      if (now - last < 1000 / fps - 2) return; // ~30 fps, like the PSP
-      last = now;
-      const t = now - t0;
-      sc?.frame(t);
-      wv?.draw(t);
-    };
-    if (animate) raf = requestAnimationFrame(tick);
-    else {
-      // still picture: let the scripts settle for a moment, then hold
-      let n = 0;
-      const still = () => { const t = n * 100; sc?.frame(t); wv?.draw(4000); if (++n < 30) raf = requestAnimationFrame(still); };
-      raf = requestAnimationFrame(still);
-    }
-    return () => cancelAnimationFrame(raf);
+    let settled = false;
+    const loop = frameLoop(sceneRef.current!, (now, moving) => {
+      if (!moving && !settled) { for (let n = 0; n < 30; n++) sc?.frame(n * 100); settled = true; }
+      sc?.frame(moving ? now - t0 : 2900);
+      wv?.draw(moving ? now - t0 : 4000);
+    }, () => animate, () => activeRef.current, fps);
+    redraw.current = loop.invalidate;
+    const images = [...(sc?.loaded ?? []), ...waves.map(w => w.image)];
+    images.forEach(img => img.addEventListener("load", loop.invalidate));
+    return () => { redraw.current = null; loop.dispose(); images.forEach(img => img.removeEventListener("load", loop.invalidate)); waves.forEach(w => w.dispose()); };
   }, [scene, background, wallpaper, animate, wave, level, fps, tint?.join(","), waveTint?.join(",")]);
   const box: CSSProperties = { position: "absolute", inset: 0, width: "100%", height: "100%" };
   return (

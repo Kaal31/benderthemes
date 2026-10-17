@@ -1,6 +1,7 @@
 // A canvas that redraws itself at a capped frame rate (background waves,
 // particles, towers). When animations are off it draws one still frame.
 import { CSSProperties, useEffect, useRef } from "react";
+import { frameLoop, useThemeActive } from "./performance";
 import { getSettings } from "./settings";
 import { tintOf } from "./color";
 import { tintCanvas } from "./steam";
@@ -26,6 +27,7 @@ export function AnimCanvas({
   deps?: any[];
   className?: string;
 }) {
+  const active = useThemeActive();
   const ref = useRef<HTMLCanvasElement>(null);
   const drawRef = useRef(draw);
   drawRef.current = draw;
@@ -39,25 +41,13 @@ export function AnimCanvas({
     const ctx = cv?.getContext("2d");
     if (!cv || !ctx) return;
     ctx.setTransform(k, 0, 0, k, 0, 0);
-    const view: any = cv.ownerDocument?.defaultView ?? window;
     const start = performance.now();
-    let raf = 0;
-    let last = 0;
-    const frame = (now: number) => {
-      raf = view.requestAnimationFrame(frame);
-      if (ref.current?.ownerDocument.hidden || now - last < 1000 / fps - 2) return;
-      last = now;
+    const loop = frameLoop(cv, (now, moving) => {
       ctx.clearRect(0, 0, width, height);
-      drawRef.current(ctx, (now - start) / 1000, width, height);
+      drawRef.current(ctx, moving ? (now - start) / 1000 : 12.3, width, height);
       if (tint) tintCanvas(ctx, cv.width, cv.height, tint);
-    };
-    if (animate && !view.matchMedia("(prefers-reduced-motion: reduce)").matches) raf = view.requestAnimationFrame(frame);
-    else {
-      ctx.clearRect(0, 0, width, height);
-      drawRef.current(ctx, 12.3, width, height);
-      if (tint) tintCanvas(ctx, cv.width, cv.height, tint);
-    }
-    return () => view.cancelAnimationFrame(raf);
-  }, [width, height, fps, animate, k, tint, ...deps]);
+    }, () => animate, () => active, fps);
+    return () => loop.dispose();
+  }, [width, height, fps, animate, active, k, tint, ...deps]);
   return <canvas ref={ref} className={className} width={Math.round(width * k)} height={Math.round(height * k)} data-dht-quality={k < 1 ? "half" : "full"} style={{ position: "absolute", left: 0, top: 0, width, height, pointerEvents: "none", ...style, ...(dim ? { filter: [style?.filter, dim].filter(Boolean).join(" ") } : {}) }} />;
 }
