@@ -10,7 +10,7 @@ const presetsSource = readFileSync(new URL('../src/presets.ts', import.meta.url)
 const builtInDeclaration = presetsSource.match(/export const BUILT_IN_THEMES = (\[[^;]+?\]) as const;/);
 assert.ok(builtInDeclaration, 'built-in theme declaration found');
 const BUILT_IN = JSON.parse(builtInDeclaration[1]);
-const expectedCards = new Set([...catalog.map(p => p.theme), ...BUILT_IN]).size;
+const baseCards = new Set([...catalog.map(p => p.theme), ...BUILT_IN]).size;
 mkdirSync('out/theme-previews', { recursive: true });
 try {
   const page = await browser.newPage({ viewport: { width: 1304, height: 930 } });
@@ -20,7 +20,10 @@ try {
   await page.locator('[data-dht-root]').waitFor();
   await page.getByRole('button', { name: 'Hub (from this home)', exact: true }).click();
   await page.locator('.market-card').first().waitFor();
+  const bundled = await page.evaluate(() => window.__dataThemes.themes.filter(t => !/test/i.test(t.name)).length);
+  const expectedCards = baseCards + bundled;
   assert.equal(await page.locator('.market-card').count(), expectedCards);
+  for (const name of ['Blue Glass','GameAmp']) assert.equal(await page.locator('.market-card').filter({hasText:name}).count(),1);
   // Your themes: every built-in theme is yours without a download (Switch, 3DS and PS1 were missing; iiSU only counted once its pack was downloaded)
   await page.locator('.dht-hub-tabs button', { hasText: 'Your themes' }).click(); await page.waitForTimeout(300);
   for (const name of ['Switch', 'Nintendo 3DS', 'PS1']) assert.ok(await page.locator('.market-card', { hasText: name }).count(), name + ' is in Your themes');

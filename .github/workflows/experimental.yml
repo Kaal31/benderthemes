@@ -64,6 +64,10 @@ jobs:
       - run: node tests/verify-frame-navigation.mjs
       - run: node tests/verify-community-starter.mjs
       - run: node tests/verify-sdk-viewer.mjs
+      - run: node tests/verify-native-builder.mjs
+      - run: node tests/verify-native-layout.mjs
+      - run: node tools/preview_community_updates.mjs --build-only
+      - run: node tests/verify-community-updates.mjs
       - run: node tests/verify-channel-updater.mjs
       - run: node tests/verify-audio-downloads-browser.mjs
       - run: node tools/capture_theme_previews.mjs

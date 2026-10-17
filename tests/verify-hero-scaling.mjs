@@ -9,6 +9,7 @@ for(const theme of ['ps4','ps5','ps3','psp','vita']){
  const page=await browser.newPage({viewport:{width:1304,height:960}});
  page.on('pageerror',e=>errors.push(`${theme}: ${e.message}`));
  await page.goto(`${previewUrl}?theme=${theme}&still=1`);
+ await page.locator(`[data-dht-root][data-dht-theme="${theme}"]`).waitFor();
  await page.evaluate(()=>{const s=window.__getThemeSettings();window.__updateTheme({ps4GameBackgrounds:true,aAction:'theme',trailers:{...s.trailers,preview:true}});});
  if(theme==='vita') { await page.locator('.dht-bubble').first().waitFor(); await page.keyboard.press('e'); await page.waitForTimeout(400); await page.keyboard.press('ArrowRight'); await page.keyboard.press('Enter'); }
  if(theme==='ps3'||theme==='psp') for(let i=0;i<3;i++) await page.keyboard.press('ArrowDown');
@@ -38,6 +39,7 @@ for(const theme of ['ps4','ps5','ps3','psp','vita']){
 for (const h of [720,960]) {
  const page=await browser.newPage({viewport:{width:1048,height:900}});
  await page.goto(`${previewUrl}?theme=ps5&h=${h}&still=1`);
+ await page.locator('[data-dht-root][data-dht-theme="ps5"]').waitFor();
  await page.locator('.dht-game-hero').waitFor();
  for (const mode of ['contain','blur']) {
   await page.evaluate(mode=>{const s=window.__getThemeSettings();window.__updateTheme({styles:{...s.styles,ps5:{...s.styles?.ps5,heroScaling:mode}}});},mode);

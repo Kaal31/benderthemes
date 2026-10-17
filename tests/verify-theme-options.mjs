@@ -13,6 +13,7 @@ try {
   mkdirSync('out/theme-previews/pages',{recursive:true});
   for (const theme of themes) {
     await page.evaluate(theme=>window.__updateTheme({theme,animations:false}),theme);
+    await page.locator(`[data-dht-root][data-dht-theme="${theme}"]`).waitFor();
     await page.evaluate(()=>window.__openPlace('settings'));
     await page.locator('.dht-destination[data-place=settings]').waitFor();
     await page.locator('.dht-destination-row').filter({hasText:/^Collections$/}).click();
