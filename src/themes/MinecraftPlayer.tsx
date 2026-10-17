@@ -1,3 +1,4 @@
+import { frameLoop, useThemeActive } from "../performance";
 import {MINECRAFT_SWIPE_MS} from "./minecraftActivation";
 import {useEffect,useRef,useState} from "react";
 import {SkinViewer,IdleAnimation} from "skinview3d";
@@ -21,14 +22,19 @@ export function defaultSkin(random=false){
  return c.toDataURL("image/png");
 }
 export function MinecraftPlayer({skin,slim=false,motion=true,followFocus=false,focusKey=""}:{skin:string;slim?:boolean;motion?:boolean;followFocus?:boolean;focusKey?:string}){
+ const active=useThemeActive(),live=useRef({active,motion,followFocus});live.current={active,motion,followFocus};
+ const redraw=useRef<(()=>void)|null>(null);
+ useEffect(()=>{redraw.current?.();},[active,motion,followFocus,focusKey]);
  const dragging=useRef(false);
  const canvas=useRef<HTMLCanvasElement>(null), viewer=useRef<SkinViewer | undefined>(undefined);const [failed,setFailed]=useState(false);
- useEffect(()=>{let v:SkinViewer;try{v=new SkinViewer({canvas:canvas.current!,width:280,height:330,pixelRatio:Math.min(devicePixelRatio,1.5),model:slim?"slim":"default"});viewer.current=v;v.playerObject.rotation.y=-.35;v.camera.position.set(23,9,48);v.zoom=1.04;v.controls.enableZoom=false;v.controls.enablePan=false;v.controls.enableRotate=true;v.controls.rotateSpeed=.7;
+ useEffect(()=>{let v:SkinViewer;try{v=new SkinViewer({canvas:canvas.current!,width:280,height:330,renderPaused:true,pixelRatio:Math.min(devicePixelRatio,1.5),model:slim?"slim":"default"});viewer.current=v;v.playerObject.rotation.y=-.35;v.camera.position.set(23,9,48);v.zoom=1.04;v.controls.enableDamping=false;v.controls.enableZoom=false;v.controls.enablePan=false;v.controls.enableRotate=true;v.controls.rotateSpeed=.7;
  v.controls.addEventListener('start',()=>{dragging.current=true;});v.controls.addEventListener('end',()=>{dragging.current=false;});v.globalLight.intensity=2;v.cameraLight.intensity=.8;
- const resize=new ResizeObserver(()=>{const parent=canvas.current?.parentElement;if(parent&&parent.clientWidth&&parent.clientHeight){v.width=parent.clientWidth;v.height=parent.clientHeight;}});resize.observe(canvas.current!.parentElement!);
- const visibility=()=>{v.renderPaused=document.hidden;};document.addEventListener('visibilitychange',visibility);
- return()=>{resize.disconnect();document.removeEventListener('visibilitychange',visibility);v.dispose();viewer.current=undefined;};}catch{setFailed(true);return()=>v?.dispose();}},[]);
- useEffect(()=>{viewer.current?.loadSkin(skin,{model:slim?"slim":"default"}).catch(()=>setFailed(true));},[skin,slim]);
+ const resize=new ResizeObserver(()=>{const parent=canvas.current?.parentElement;if(parent&&parent.clientWidth&&parent.clientHeight){v.width=parent.clientWidth;v.height=parent.clientHeight;redraw.current?.();}});resize.observe(canvas.current!.parentElement!);
+ let previous=performance.now();
+ const loop=frameLoop(canvas.current!,(now,moving)=>{const dt=Math.min(.1,(now-previous)/1000);previous=now;if(v.animation)v.animation.update(v.playerObject,moving?dt:0);v.controls.update();v.render();},()=>live.current.motion,()=>live.current.active);
+ redraw.current=loop.invalidate;v.controls.addEventListener('change',loop.invalidate);
+ return()=>{redraw.current=null;loop.dispose();resize.disconnect();v.controls.removeEventListener('change',loop.invalidate);v.dispose();viewer.current=undefined;};}catch{setFailed(true);return()=>v?.dispose();}},[]);
+ useEffect(()=>{viewer.current?.loadSkin(skin,{model:slim?"slim":"default"}).then(()=>redraw.current?.()).catch(()=>setFailed(true));},[skin,slim]);
  const strikeAt=useRef(-10000);
  useEffect(()=>{const strike=()=>{if(motion&&!matchMedia('(prefers-reduced-motion: reduce)').matches)strikeAt.current=performance.now();};const click=(e:MouseEvent)=>{if((e as MouseEvent&{minecraftAfterSwipe?:boolean}).minecraftAfterSwipe)return;if((e.target as Element|null)?.nodeType===1&&(e.target as Element).closest('.mc-home button,.dht-menu--minecraft .dht-menu-item'))strike();};const doc=canvas.current?.ownerDocument??document;doc.addEventListener('click',click);window.addEventListener('dht-minecraft-strike',strike);return()=>{doc.removeEventListener('click',click);window.removeEventListener('dht-minecraft-strike',strike);};},[motion]);
  const focusTarget=useRef({x:0,y:0});
@@ -41,7 +47,7 @@ export function MinecraftPlayer({skin,slim=false,motion=true,followFocus=false,f
    if(hovered&&!root.contains(hovered))return;
    const target=hovered??root.querySelector('.dht-menu--minecraft [data-selected=true]')??root.querySelector('.mc-content-slot [data-selected=true]')??root.querySelector('.mc-home [data-focus=true]');
    const r=target?.getBoundingClientRect(),c=node.getBoundingClientRect(),stage=root.getBoundingClientRect();
-   if(r&&c.width&&stage.width){focusTarget.current={x:Math.max(-1,Math.min(1,(r.x+r.width/2-c.x-c.width/2)/(stage.width*.8))),y:Math.max(-1,Math.min(1,(r.y+r.height/2-c.y-c.height*.28)/(stage.height*.6)))};node.dataset.lookTarget=`${focusTarget.current.x.toFixed(3)},${focusTarget.current.y.toFixed(3)}`;}
+   if(r&&c.width&&stage.width){focusTarget.current={x:Math.max(-1,Math.min(1,(r.x+r.width/2-c.x-c.width/2)/(stage.width*.8))),y:Math.max(-1,Math.min(1,(r.y+r.height/2-c.y-c.height*.28)/(stage.height*.6)))};redraw.current?.();node.dataset.lookTarget=`${focusTarget.current.x.toFixed(3)},${focusTarget.current.y.toFixed(3)}`;}
   };
   update();const observer=new MutationObserver(()=>update());observer.observe(root,{subtree:true,attributes:true,attributeFilter:['data-focus','data-selected']});
   doc.addEventListener('pointerover',update);doc.addEventListener('focusin',update);win.addEventListener('resize',update);
@@ -50,7 +56,7 @@ export function MinecraftPlayer({skin,slim=false,motion=true,followFocus=false,f
  useEffect(()=>{const v=viewer.current;if(!v)return;const animate=motion&&!matchMedia('(prefers-reduced-motion: reduce)').matches;
   const idle=new IdleAnimation();if(!animate&&!followFocus){v.animation=null;return;}
   idle.speed=animate?.35:0;
-  let yaw=0,pitch=0,lean=0;idle.addAnimation((player)=>{const swing=(performance.now()-strikeAt.current)/MINECRAFT_SWIPE_MS;if(animate&&swing>=0&&swing<1){const hit=Math.sin(Math.PI*swing);player.skin.rightArm.rotation.x=-hit*1.65;player.skin.rightArm.rotation.z=-hit*.18;player.skin.body.rotation.y=hit*.13;}if(!followFocus||dragging.current)return;const t=focusTarget.current;const blend=animate?.08:1;yaw+=(t.x*.95-yaw)*blend;pitch+=(t.y*.65-pitch)*blend;lean+=(-t.x*.075-lean)*blend;player.skin.head.rotation.y=yaw;player.skin.head.rotation.x=pitch;player.skin.body.rotation.z=lean;player.skin.body.rotation.y=yaw*.16+(animate&&swing>=0&&swing<1?Math.sin(Math.PI*swing)*.13:0);});v.animation=idle;
+  let yaw=0,pitch=0,lean=0;idle.addAnimation((player)=>{const swing=(performance.now()-strikeAt.current)/MINECRAFT_SWIPE_MS;if(animate&&swing>=0&&swing<1){const hit=Math.sin(Math.PI*swing);player.skin.rightArm.rotation.x=-hit*1.65;player.skin.rightArm.rotation.z=-hit*.18;player.skin.body.rotation.y=hit*.13;}if(!followFocus||dragging.current)return;const t=focusTarget.current;const blend=animate?.08:1;yaw+=(t.x*.95-yaw)*blend;pitch+=(t.y*.65-pitch)*blend;lean+=(-t.x*.075-lean)*blend;player.skin.head.rotation.y=yaw;player.skin.head.rotation.x=pitch;player.skin.body.rotation.z=lean;player.skin.body.rotation.y=yaw*.16+(animate&&swing>=0&&swing<1?Math.sin(Math.PI*swing)*.13:0);});v.animation=idle;redraw.current?.();
   return()=>{v.animation=null;};
  },[motion,followFocus]);
  return <>{failed?<div className="mc-player-error">3D preview unavailable on this renderer.<br/>Your skin is still saved.</div>:null}<canvas ref={canvas} aria-label="3D player — swipe or drag to rotate" onPointerDown={e=>e.stopPropagation()} style={{touchAction:"none",cursor:"grab",width:"100%",height:"100%",display:failed?"none":"block"}}/></>;

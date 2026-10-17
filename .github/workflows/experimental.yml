@@ -42,6 +42,7 @@ jobs:
         run: python tools/channel_build.py prepare >> "$GITHUB_OUTPUT"
       - run: npm run build
       - run: npx playwright install --with-deps chromium
+      - run: node tests/verify-performance.mjs
       - run: node tests/verify-keyboard-diagnostics.mjs
       - run: node tests/verify-keyboard-lifecycle.mjs
       - run: node tests/verify-idle-diagnostics.mjs
@@ -53,6 +54,7 @@ jobs:
       - run: npm run preview
         env:
           SKIP_THEME_PACK_BUILD: '1'
+      - run: node tests/verify-performance-ui.mjs
       - run: node tests/verify-hero-scaling.mjs
       - run: node tests/verify-n3ds-split.mjs
       - run: node tests/verify-achievement-unlocks.mjs

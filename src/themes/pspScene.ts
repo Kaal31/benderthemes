@@ -261,7 +261,8 @@ export function createPspScene(canvas: HTMLCanvasElement, scene: PspSceneData, o
   const run = (name: string) => start(name, null);
   /** Is a script with this name (or, without a name, any script) still running? */
   const busy = (name?: string) => runs.some((r) => !name || r.name === name);
-  return { frame, objs, model, start: run, busy };
+  const loaded = [...Object.values(imgs), wall, bgImg].filter(Boolean) as HTMLImageElement[];
+  return { frame, objs, model, start: run, busy, loaded };
 }
 
 
@@ -328,7 +329,8 @@ export function createPspWave(canvas: HTMLCanvasElement, w: PspWaveData, opts: W
   const gl0 = canvas.getContext("webgl", { premultipliedAlpha: true, alpha: true, antialias: true });
   if (!gl0) return null;
   const gl: WebGLRenderingContext = gl0;
-  const sh = (t: number, s: string) => { const o = gl.createShader(t)!; gl.shaderSource(o, s); gl.compileShader(o); return o; };
+  const shaders: WebGLShader[] = [];
+  const sh = (t: number, s: string) => { const o = gl.createShader(t)!; shaders.push(o); gl.shaderSource(o, s); gl.compileShader(o); return o; };
   const pr = gl.createProgram();
   gl.attachShader(pr, sh(gl.VERTEX_SHADER, VS));
   gl.attachShader(pr, sh(gl.FRAGMENT_SHADER, FS));
@@ -470,5 +472,5 @@ export function createPspWave(canvas: HTMLCanvasElement, w: PspWaveData, opts: W
     gl.bindTexture(gl.TEXTURE_2D, tx);
     gl.drawElements(gl.TRIANGLES, idx.length, gl.UNSIGNED_SHORT, 0);
   }
-  return { draw, ready: () => texReady };
+  return { draw, image: img, ready: () => texReady, dispose: () => { img.onload = null; gl.deleteBuffer(ib); gl.deleteBuffer(vb); gl.deleteTexture(tx); shaders.forEach(s => gl.deleteShader(s)); gl.deleteProgram(pr); } };
 }

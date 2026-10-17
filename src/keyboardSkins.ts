@@ -534,9 +534,15 @@ export function startKeyboardSkins(): () => void {
       /* never break the plugin over a keyboard skin */
     }
   };
-  run();
-  const off = onSettingsChange(run);
-  const iv = setInterval(run, 2000); // new windows (Quick Access, Steam menu) and CSS Loader changes
+  let iv: ReturnType<typeof setInterval> | undefined;
+  const sync = () => {
+    run();
+    clearInterval(iv); iv = undefined;
+    if (keyboardLookFor(getSettings() as any)) iv = setInterval(run, 2000);
+  };
+  sync();
+  const off = onSettingsChange(sync);
+  // Enabled skins discover new Steam windows.
   return () => {
     recordKeyboardEvent({ event: "skin-service-unload" });
     off();

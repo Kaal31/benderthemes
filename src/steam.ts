@@ -1,6 +1,8 @@
 import {customProfilePicture} from "./profilePicture";
 import {FIXED_BACKGROUND_PAGES,pageBackgroundRef} from "./pageBackgrounds";
 import { connectThemeAudio, monitorThemeAudioElement } from './themeAudio';
+import { useActiveInterval } from "./performance";
+import { BoundedCache } from "./boundedCache";
 import { useFocusedGame } from "./focus";
 import { tintOf } from "./color";
 import { loadDialAsset } from "./themes/dialAssets";
@@ -76,7 +78,7 @@ export async function listWallpapers() {
   }
 }
 
-const wallCache = new Map<string, string | null>();
+const wallCache = new BoundedCache<string, string | null>();
 onResourcesChanged(() => { wallCache.clear(); void refreshPacks(); });
 let wallpaperOverride: ((name: string) => string | null) | null = null;
 export function setWallpaperOverride(f: typeof wallpaperOverride) {
@@ -376,7 +378,8 @@ function audioCtx(): AudioContext | null {
     return null;
   }
 }
-const buffers = new Map<string, Promise<AudioBuffer | null>>();
+const bufferBytes = new WeakMap<Promise<AudioBuffer | null>, number>();
+const buffers = new BoundedCache<string, Promise<AudioBuffer | null>>(48, 32 * 1024 * 1024, p => bufferBytes.get(p) ?? 0);
 function loadBuffer(url: string): Promise<AudioBuffer | null> {
   let p = buffers.get(url);
   if (!p) {
@@ -390,6 +393,11 @@ function loadBuffer(url: string): Promise<AudioBuffer | null> {
       return await c.decodeAudioData(data).catch(() => null);
     })().catch(() => null);
     buffers.set(url, p);
+    const pending = p;
+    pending.then(buffer => {
+      bufferBytes.set(pending, buffer ? buffer.length * buffer.numberOfChannels * 4 : 0);
+      if (buffers.get(url) === pending) buffers.set(url, pending);
+    });
   }
   return p;
 }
@@ -562,6 +570,8 @@ export function useHomeMusic(theme: ThemeId, active: boolean, page?: string) {
   const key = pack && file ? `${pack.folder}/${file}` : "";
   const targetVolume = useRef(vol);
   targetVolume.current = vol;
+  const wakeFade = useRef<(() => void) | null>(null);
+  useEffect(() => { wakeFade.current?.(); }, [vol]);
   useEffect(() => {
     preloadSounds(theme);
   }, [theme, pack?.folder]);
@@ -588,12 +598,14 @@ export function useHomeMusic(theme: ThemeId, active: boolean, page?: string) {
         release = holdOtherMusic();
         // One envelope follows current volume/ducking, including changes while
         // the file is loading. Competing fades must not restore stale volume.
-        fade = setInterval(() => {
-          if (!a) return;
-          const target = targetVolume.current;
-          const delta = target - a.volume;
+        const step = () => {
+          clearTimeout(fade);
+          if (!a || dead) return;
+          const target = targetVolume.current, delta = target - a.volume;
           a.volume = Math.abs(delta) <= .02 ? target : Math.max(0, Math.min(1, a.volume + Math.sign(delta) * .02));
-        }, 60);
+          if (a.volume !== target) fade = setTimeout(step, 60);
+        };
+        wakeFade.current = step; step();
       } catch {
         unmeter?.();
         /* blocked or missing */
@@ -601,7 +613,8 @@ export function useHomeMusic(theme: ThemeId, active: boolean, page?: string) {
     })();
     return () => {
       dead = true;
-      clearInterval(fade);
+      wakeFade.current = null;
+      clearTimeout(fade);
       const el = a;
       if (!el) return;
       const done = release;
@@ -1096,11 +1109,7 @@ function readStatus(): SteamStatus {
 export function useSteamStatus(): SteamStatus {
   useSettings();
   const [st, setSt] = useState<SteamStatus>(() => previewStatus ?? readStatus());
-  useEffect(() => {
-    if (previewStatus) return;
-    const iv = setInterval(() => setSt(readStatus()), 5000);
-    return () => clearInterval(iv);
-  }, []);
+  useActiveInterval(() => { const next = readStatus(); setSt(prev => JSON.stringify(prev) === JSON.stringify(next) ? prev : next); }, 5000, !previewStatus);
   return {...st,avatar:customProfilePicture()??st.avatar};
 }
 

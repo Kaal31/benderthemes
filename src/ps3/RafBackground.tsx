@@ -1,3 +1,4 @@
+import { frameLoop, useThemeActive } from "../performance";
 // PS3 dynamic theme background: runs the theme's .raf scene (script + 3D models + animations)
 // on a WebGL canvas. The backend builds the scene once into the theme cache (scene JSON + raw
 // texture files); anything that cannot be shown faithfully falls back to the slideshow.
@@ -33,48 +34,36 @@ export function sceneDrawable(s: RafSceneData): boolean {
 }
 
 export function RafBackground({ url, animate, fallback, fps = 30, dim = 0 }: { url: string; animate: boolean; fallback: ReactNode; fps?: number; dim?: number }) {
+  const active = useThemeActive(), activeRef = useRef(active); activeRef.current = active;
+  const redraw = useRef<(() => void) | null>(null);
+  useEffect(() => { redraw.current?.(); }, [active]);
   const ref = useRef<HTMLCanvasElement>(null);
   const [state, setState] = useState<"loading" | "ok" | "failed">("loading");
   useEffect(() => {
-    let dead = false, raf = 0, r: RafRenderer | null = null;
+    let dead = false, loop: ReturnType<typeof frameLoop> | undefined, r: RafRenderer | null = null;
     const cv = ref.current;
     if (!cv) return;
-    const view: any = cv.ownerDocument?.defaultView ?? window;
     const base = url.slice(0, url.lastIndexOf("/") + 1);
     loadScene(url).then((scene) => {
       if (dead) return;
       if (!sceneDrawable(scene)) { setState("failed"); return; }
       const rt = new RafRuntime(scene);
       rt.log = () => {};
-      let drawn = false;
       const size = () => [Math.max(1, cv.clientWidth), Math.max(1, cv.clientHeight)] as const;
-      const still = () => { if (!dead && r) { const [w, h] = size(); r.draw(rt, w, h); drawn = true; } };
-      const moving = animate && !view.matchMedia("(prefers-reduced-motion: reduce)").matches;
-      r = new RafRenderer(cv, scene, () => { if (!moving) still(); }, base);
+      const still = () => { if (!dead && r) { const [w, h] = size(); r.draw(rt, w, h); } };
+      let last = performance.now(), settled = false;
+      r = new RafRenderer(cv, scene, () => loop?.invalidate(), base);
       rt.start();
-      if (moving) {
-        let last = performance.now();
-        const frame = (now: number) => {
-          raf = view.requestAnimationFrame(frame);
-          if (cv.ownerDocument.hidden || now - last < 1000 / fps - 2) return;
-          const dt = Math.min(0.25, (now - last) / 1000);
-          last = now;
-          rt.update(dt);
-          const [w, h] = size();
-          r!.draw(rt, w, h);
-          if (!drawn) { drawn = true; setState("ok"); }
-        };
-        raf = view.requestAnimationFrame(frame);
-      } else {
-        // a still: let the intro settle, then draw once (again as textures arrive)
-        for (let i = 0; i < 90; i++) rt.update(1 / 30);
-        still();
-        setState("ok");
-      }
+      loop = frameLoop(cv, (now, moving) => {
+        if (!moving && !settled) { for (let i = 0; i < 90; i++) rt.update(1 / 30); settled = true; }
+        else if (moving) rt.update(Math.min(0.25, (now - last) / 1000));
+        last = now; still(); setState("ok");
+      }, () => animate, () => activeRef.current, fps);
+      redraw.current = loop.invalidate;
     }).catch(() => { if (!dead) setState("failed"); });
     return () => {
       dead = true;
-      view.cancelAnimationFrame(raf);
+      redraw.current = null; loop?.dispose();
       r?.dispose();
     };
   }, [url, animate, fps]);

@@ -1,3 +1,4 @@
+import { useThemeActive } from "../performance";
 import {CSSProperties,useEffect,useRef,useState} from "react";
 import * as THREE from "three";
 import {GameArt,Icon} from "../common";
@@ -75,6 +76,8 @@ const SPARKLES=Array.from({length:18},(_,i)=>({left:`${(i*37)%100}%`,delay:`${-(
 function IconArt({g}:{g:Game}){return <><GameArt flat g={g} kind="hero" fit="cover" style={{width:'100%',height:'100%'}}/><GameArt flat g={g} kind="logo" fit="contain" style={{position:'absolute',left:'9%',top:'14%',width:'82%',height:'72%',filter:'drop-shadow(0 1px 2px #000a)'}}/></>;}
 
 export function WaraWaraPlaza({iconGlass=false,posts:postsOn=true,postEvery=4200,drawings=true,crowd:crowdSize=1,games,selected,active,motion,hold=false,floorTexture,flatFloor=false,positions,tips,editing,onMove,onFocus,onPick,view:viewProp="console",marks="rings",feed=[]}:{iconGlass?:boolean;feed?:FeedPost[];posts?:boolean;postEvery?:number;drawings?:boolean;crowd?:number;view?:PlazaView;marks?:"rings"|"shadows"|"both";games:Game[];selected:number;active:boolean;motion:boolean;hold?:boolean;flatFloor?:boolean;floorTexture?:string;positions:Record<string,Spot>;tips:boolean;editing:boolean;onMove:(id:number,pos:Spot)=>void;onFocus:(i:number)=>void;onPick:(i:number)=>void}){
+ const themeActive=useThemeActive(),themeLive=useRef(themeActive);themeLive.current=themeActive;
+ const resume=useRef<(()=>void)|null>(null);useEffect(()=>{resume.current?.();},[themeActive]);
  const [drag,setDrag]=useState<{id:number;pos:Spot}|null>(null),[posts,setPosts]=useState<Post[]>([]);
  const dragState=useRef<{id:number;startX:number;startY:number;moved:boolean}|null>(null),suppress=useRef(false);
  viewMode=viewProp;const liveMarks=useRef(marks);liveMarks.current=marks;
@@ -262,7 +265,7 @@ export function WaraWaraPlaza({iconGlass=false,posts:postsOn=true,postEvery=4200
    members.forEach((p,i)=>{const a=a0+i*Math.PI*2/members.length;p.huddle={x:cx,z:cz,until};p.goalX=cx+Math.cos(a)*r;p.goalZ=cz+Math.sin(a)*r;p.wait=0;p.running=false;});
   };
 
-  const draw=(now:number)=>{raf=requestAnimationFrame(draw);if(document.hidden||now-last<33)return;if(hook.dirty){hook.dirty=false;dirty=true;}if(liveMarks.current!==drawnMarks||viewMode!==drawnView){drawnMarks=liveMarks.current;drawnView=viewMode;dirty=true;}
+  const draw=(now:number)=>{raf=0;if(el.ownerDocument.hidden||!themeLive.current)return;raf=requestAnimationFrame(draw);if(now-last<33)return;if(hook.dirty){hook.dirty=false;dirty=true;}if(liveMarks.current!==drawnMarks||viewMode!==drawnView){drawnMarks=liveMarks.current;drawnView=viewMode;dirty=true;}
    // The launch panel stops the crowd; give the Miis by that title a moment to cheer first.
    if(!liveMotion.current&&wasMoving&&reactLeft<0&&liveActive.current&&!reduce.matches&&document.querySelector('.nt-banner')){reactLeft=3;react(liveSelected.current,true);}
    const reacting=reactLeft>0;if(liveMotion.current)reactLeft=-1;
@@ -368,8 +371,8 @@ export function WaraWaraPlaza({iconGlass=false,posts:postsOn=true,postEvery=4200
     for(const o of placed){if(left<o.r+12&&left+width>o.l-12&&top-height-40<o.t&&top>o.t-o.h-40){const opts=[o.l-12-width,o.r+12].filter(x=>x>=14&&x<=1266-width).sort((x,y)=>Math.abs(x-left)-Math.abs(y-left));if(opts.length&&Math.abs(opts[0]-left)<width*.8)left=opts[0];else top=Math.max(height+60,o.t-o.h-44);}}
     placed.push({l:left,r:left+width,t:top,h:height});el.style.left=`${left}px`;el.style.top=`${top}px`;el.style.setProperty('--speaker-x',`${Math.max(28,Math.min(width-28,s.x-left))}px`);});
    fill();renderer.render(scene,view);el.dataset.calls=String(renderer.info.render.calls);el.dataset.tris=String(renderer.info.render.triangles);hook.frame=++frame;
-  };draw(performance.now());setReady(true);
-  return()=>{disposed=true;cancelAnimationFrame(raf);shades.dispose();rings.dispose();coverShadows.dispose();batches.forEach(b=>b.m.dispose());people.current=[];floorMap?.dispose();textures.forEach(t=>t.dispose());geometries.forEach(g=>g.dispose());materials.forEach(m=>m.dispose());el.removeEventListener("webglcontextlost",lost);renderer.dispose();};
+  };const restart=()=>{cancelAnimationFrame(raf);draw(performance.now());};resume.current=restart;el.ownerDocument.addEventListener("visibilitychange",restart);restart();setReady(true);
+  return()=>{resume.current=null;el.ownerDocument.removeEventListener("visibilitychange",restart);disposed=true;cancelAnimationFrame(raf);shades.dispose();rings.dispose();coverShadows.dispose();batches.forEach(b=>b.m.dispose());people.current=[];floorMap?.dispose();textures.forEach(t=>t.dispose());geometries.forEach(g=>g.dispose());materials.forEach(m=>m.dispose());el.removeEventListener("webglcontextlost",lost);renderer.dispose();};
  },[games.length,floorTexture,flatFloor,crowdSize]);
  return <section className="nt-plaza dht-wiiu-plaza" aria-label="WaraWara Plaza" data-view={viewProp} data-ready={ready&&!failed} data-hold={hold} data-opening={opening}>
   <canvas ref={canvas} className="dht-wiiu-plaza-canvas" aria-hidden="true"/>
