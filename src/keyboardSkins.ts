@@ -24,6 +24,7 @@
 import { findClassModule } from "@decky/ui";
 import { getSettings, onSettingsChange, type Settings } from "./settings";
 import { getUiDocument } from "./cssvars";
+import { recordKeyboardEvent } from "./keyboardLifecycle";
 
 // ───────────── Steam's keyboard class names ─────────────
 const NAMES = ["Keyboard", "KeyboardKey", "Touched", "Focused", "ToggleOn", "ToggleOneShot", "ShiftedLabel", "KeyboardKeyHitArea", "KeyboardRow",
@@ -341,7 +342,7 @@ font-family:${v("font", k.font)};${k.panelEdge ? `box-shadow:${k.panelEdge};` : 
 // ───────────── injection ─────────────
 const STYLE_ID = "dht-kb-skin";
 /** Every Steam UI document we can reach: the windows of SteamUIStore and the documents of the gamepad navigation trees. */
-function steamDocuments(): Document[] {
+export function steamDocuments(): Document[] {
   const docs = new Set<Document>();
   const add = (d: any) => {
     try {
@@ -390,6 +391,7 @@ function apply(doc: Document, css: string | null, look: KbLook | null, c: KbClas
   let el = doc.getElementById(STYLE_ID) as HTMLStyleElement | null;
   const yieldTo = css && cssLoaderStylesKeyboard(doc, c) ? "css-loader" : "";
   if (!css || yieldTo) {
+    if (el) recordKeyboardEvent({ event: "skin-removed" });
     el?.remove();
     html.removeAttribute("data-dht-kb");
     if (yieldTo) html.setAttribute("data-dht-kb-yield", yieldTo);
@@ -436,6 +438,7 @@ export function startKeyboardSkins(): () => void {
   const off = onSettingsChange(run);
   const iv = setInterval(run, 2000); // new windows (Quick Access, Steam menu) and CSS Loader changes
   return () => {
+    recordKeyboardEvent({ event: "skin-service-unload" });
     off();
     clearInterval(iv);
     for (const doc of [...touched, ...steamDocuments()]) {

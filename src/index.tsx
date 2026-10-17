@@ -15,6 +15,7 @@ import { refreshPacks, restoreHeader, soundDiag } from "./steam";
 import { getUiDocument } from "./cssvars";
 import { useOtherPlugins } from "./otherPlugins";
 import { startKeyboardSkins } from "./keyboardSkins";
+import { startRuntimeDiagnostics } from "./runtimeDiagnostics";
 import { refreshThemeLists } from "./themeSettingsMenu";
 import { deleteCurrentTheme } from "./themeActions";
 import { applyPreset, currentLook, currentPresetId, deleteUserPreset, getPresets, isDownloaded, refreshPresets, renamePreset, saveUserPreset, usePresets, PRESET_GROUPS } from "./presets";
@@ -282,6 +283,7 @@ function Diagnostics() {
   );
   return (
     <PanelSection title="Diagnostics">
+      <PanelSectionRow><div style={{fontSize:12}}>Automatic keyboard, input lifecycle and idle-overlay diagnostics run for thirty minutes after plugin load. Logs: ~/homebrew/logs/DeckHomeThemes. Messages and typed text are excluded.</div></PanelSectionRow>
       <PanelSectionRow>
         <div>
           {row("Version", PLUGIN_VERSION)}
@@ -302,6 +304,7 @@ function Diagnostics() {
 export default definePlugin(() => {
   logInfo(`frontend loaded v${PLUGIN_VERSION}`);
   initSettings();
+  const stopDiagnostics = startRuntimeDiagnostics();
   refreshPacks();
   refreshPresets();
   let stopKeyboardSkins: (() => void) | null = null;
@@ -344,6 +347,7 @@ export default definePlugin(() => {
     ),
     icon: <HomeIcon />,
     onDismount() {
+      stopDiagnostics();
       routerHook.removeRoute(ROUTE);
       if (patch) routerHook.removePatch(HOME_ROUTE, patch);
       stopKeyboardSkins?.();

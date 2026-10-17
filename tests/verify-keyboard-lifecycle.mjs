@@ -1,0 +1,11 @@
+import {readFile} from 'node:fs/promises';
+import {transform} from 'esbuild';
+import assert from 'node:assert/strict';
+const source=await readFile('src/keyboardLifecycle.ts','utf8');
+const {code}=await transform(source,{loader:'ts',format:'esm'});
+const m=await import('data:text/javascript;base64,'+Buffer.from(code).toString('base64'));
+m.recordKeyboardEvent({event:'off'});assert.equal(m.drainKeyboardEvents().length,0);
+m.setKeyboardRecording(true);for(let i=0;i<100;i++)m.recordKeyboardEvent({event:'show-request'});
+assert.equal(m.drainKeyboardEvents().length,32);assert.equal(m.drainKeyboardEvents().length,0);
+m.recordKeyboardEvent({event:'show-called'});m.setKeyboardRecording(false);assert.equal(m.drainKeyboardEvents().length,0);
+console.log('PASS lifecycle recording off by default, bounded queue, draining and cleanup');
