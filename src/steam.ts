@@ -1,3 +1,4 @@
+import { keyboardClasses, steamDocuments } from "./keyboardSkins";
 import { useFocusedGame } from "./focus";
 import { tintOf } from "./color";
 import { loadDialAsset } from "./themes/dialAssets";
@@ -817,20 +818,23 @@ function hideHeader(doc: Document) {
   if (!view) return;
   const W = view.innerWidth || 1280;
   for (const el of Array.from(doc.querySelectorAll<HTMLElement>("body *"))) {
-    if (el.hasAttribute(HIDDEN_ATTR) || el.closest("[data-dht-root]") || el.querySelector("[data-dht-root]")) continue;
+    if (el.hasAttribute(HIDDEN_ATTR) || ours(el) || touchesKeyboard(el) || el.closest('[role="dialog"],[role="menu"]') || el.querySelector('[role="dialog"],[role="menu"]')) continue;
     const r = el.getBoundingClientRect();
     if (r.top > 2 || r.top < -4 || r.height < 24 || r.height > 90 || r.width < W * 0.8) continue;
     // Only the outermost strip: skip if an ancestor is already hidden.
     if (el.parentElement?.closest(`[${HIDDEN_ATTR}]`)) continue;
-    el.setAttribute(HIDDEN_ATTR, el.style.visibility || "-");
+    el.setAttribute(HIDDEN_ATTR, JSON.stringify({ value: el.style.visibility, priority: el.style.getPropertyPriority("visibility") }));
     el.style.visibility = "hidden";
   }
 }
 export function restoreHeader(doc: Document | null | undefined) {
   if (!doc) return;
   for (const el of Array.from(doc.querySelectorAll<HTMLElement>(`[${HIDDEN_ATTR}]`))) {
-    const prev = el.getAttribute(HIDDEN_ATTR);
-    el.style.visibility = prev === "-" ? "" : prev ?? "";
+    const prev = JSON.parse(el.getAttribute(HIDDEN_ATTR)!) as { value: string; priority: string };
+    if (el.style.visibility === "hidden" && !el.style.getPropertyPriority("visibility")) {
+      if (prev.value) el.style.setProperty("visibility", prev.value, prev.priority);
+      else el.style.removeProperty("visibility");
+    }
     el.removeAttribute(HIDDEN_ATTR);
   }
 }
@@ -839,17 +843,18 @@ export function useHiddenHeader(doc: Document | null | undefined, on: boolean) {
     if (!doc || !on) return;
     const run = () => {
       try {
+        if (!homeVisible(doc) || steamKeyboardBusy(doc)) {
+          restoreHeader(doc);
+          return;
+        }
         hideHeader(doc);
       } catch {
         /* ignore */
       }
     };
-    run();
-    const ts = [200, 800].map((ms) => setTimeout(run, ms));
-    const iv = setInterval(run, 1500);
+    const stop = watchSteamChrome(doc, run);
     return () => {
-      ts.forEach(clearTimeout);
-      clearInterval(iv);
+      stop();
       restoreHeader(doc);
     };
   }, [doc, on]);
@@ -858,9 +863,9 @@ export function useHiddenHeader(doc: Document | null | undefined, on: boolean) {
 // ───────────── Steam's bottom bar ─────────────
 // The footer strip with "STEAM Menu · Ⓐ Select · Ⓑ Back". "hints" hides only
 // the button legend (like CSS Loader's Icon Hider, which targets
-// footer_FooterLegend), "hide" removes the whole strip so the theme gets the
-// full height. Found through Steam's class map, with a geometry fallback for
-// builds where the class name changed. Everything is restored when the home
+// footer_FooterLegend), "hide" makes the whole strip invisible. Preserve Steam's
+// layout: its keyboard manager can measure it even from a different UI window.
+// Only positively identified footer legends are hidden. Everything is restored when the home
 // closes or the setting is switched back.
 const FOOT_ATTR = "data-dht-foot";
 let legendClass: string | null | undefined;
@@ -879,32 +884,67 @@ const ours = (el: Element) => !!(el.closest("[data-dht-root]") || el.querySelect
 // Its own bottom row / button legend looks exactly like the footer strip, and hiding it (or a parent that holds
 // it) collapses the keyboard's height, so it slides down while it opens. Nothing in or around it is ever touched.
 const KEYBOARD_SEL = '[class*="eyboard"],[class*="KEYBOARD"],[data-keyboard],[aria-label*="eyboard"]';
-export const touchesKeyboard = (el: Element) => !!(el.closest(KEYBOARD_SEL) || el.querySelector(KEYBOARD_SEL));
+function keyboardSelector(): string {
+  const { classes } = keyboardClasses();
+  return `${KEYBOARD_SEL},.${classes.Keyboard},.${classes.VirtualKeyboardContainer}`;
+}
+export const touchesKeyboard = (el: Element) => {
+  const selector = keyboardSelector();
+  return !!(el.closest(selector) || el.querySelector(selector));
+};
+function uiDocuments(doc: Document): Document[] {
+  return [...new Set([doc, ...steamDocuments()])];
+}
+function steamKeyboardBusy(doc: Document): boolean {
+  return uiDocuments(doc).some((d) => {
+    try {
+      const ae = d.activeElement as HTMLElement | null;
+      if (ae && (ae.isContentEditable || /^(INPUT|TEXTAREA)$/.test(ae.tagName))) return true;
+      return Array.from(d.querySelectorAll<HTMLElement>(keyboardSelector())).some((el) =>
+        el.getClientRects().length > 0 || !!el.closest('[data-dht-foot],[data-dht-hidden]'));
+    } catch { return false; } // a Steam window may be closing
+  });
+}
+// Focus restores synchronously, before Steam positions its keyboard. Mutation
+// observers cover controller opening, hashed keyboard nodes and window cleanup.
+function watchSteamChrome(doc: Document, run: () => void): () => void {
+  const watched = new Map<Document, () => void>();
+  const refresh = () => {
+    const docs = new Set(uiDocuments(doc));
+    for (const [d, stop] of watched) if (!docs.has(d)) { stop(); watched.delete(d); }
+    for (const d of docs) {
+      if (watched.has(d) || !d.body || !d.defaultView) continue;
+      try {
+        const observer = new (d.defaultView as any).MutationObserver((records: MutationRecord[]) => {
+          // Theme animations mutate every frame; only native UI changes and the
+          // home root's own visibility can affect Steam chrome or its keyboard.
+          if (records.some(({ target }) => !target.parentElement?.closest("[data-dht-root]"))) run();
+        });
+        observer.observe(d.body, { childList: true, subtree: true, attributes: true, attributeFilter: ["class", "style", "hidden"] });
+        d.addEventListener("focusin", run);
+        d.addEventListener("focusout", run);
+        watched.set(d, () => {
+          observer.disconnect();
+          d.removeEventListener("focusin", run);
+          d.removeEventListener("focusout", run);
+        });
+      } catch { /* a Steam window may be closing */ }
+    }
+    run();
+  };
+  refresh();
+  const iv = setInterval(refresh, 250); // discover newly opened Quick Access windows
+  return () => { clearInterval(iv); for (const stop of watched.values()) stop(); watched.clear(); };
+}
+
 // The themed home stays mounted under other pages (chat, settings): the bar is only ours to hide while it is on screen.
 const homeVisible = (doc: Document) => {
   const r = doc.querySelector<HTMLElement>("[data-dht-root]");
   return !!r && r.getClientRects().length > 0 && getComputedStyle(r).visibility !== "hidden";
 };
-function bottomStrips(doc: Document): HTMLElement[] {
-  const view = doc.defaultView;
-  if (!view) return [];
-  const W = view.innerWidth || 1280;
-  const Hh = view.innerHeight || 800;
-  const out: HTMLElement[] = [];
-  for (const el of Array.from(doc.querySelectorAll<HTMLElement>("body *"))) {
-    if (el.hasAttribute(FOOT_ATTR) || ours(el) || touchesKeyboard(el)) continue;
-    const r = el.getBoundingClientRect();
-    if (r.bottom < Hh - 3 || r.bottom > Hh + 4 || r.height < 24 || r.height > 90 || r.width < W * 0.8) continue;
-    if (el.parentElement?.closest(`[${FOOT_ATTR}]`)) continue;
-    // A footer strip shows button glyphs/labels, not just an empty layer.
-    if (!(el.textContent ?? "").trim() && !el.querySelector("svg,img")) continue;
-    out.push(el);
-  }
-  return out;
-}
 function markFooter(el: HTMLElement, how: "display" | "visibility") {
   if (el.hasAttribute(FOOT_ATTR) || ours(el) || touchesKeyboard(el)) return;
-  el.setAttribute(FOOT_ATTR, `${how}:${el.style.getPropertyValue(how) || "-"}`);
+  el.setAttribute(FOOT_ATTR, JSON.stringify({ how, value: el.style.getPropertyValue(how), priority: el.style.getPropertyPriority(how) }));
   el.style.setProperty(how, how === "display" ? "none" : "hidden", "important");
 }
 function hideFooter(doc: Document, mode: "hints" | "hide") {
@@ -914,7 +954,7 @@ function hideFooter(doc: Document, mode: "hints" | "hide") {
   const legends = cls ? Array.from(doc.querySelectorAll<HTMLElement>(`.${cls}`)).filter((e) => !ours(e) && !touchesKeyboard(e)) : [];
   if (mode === "hints") {
     if (legends.length) legends.forEach((e) => markFooter(e, "visibility"));
-    else bottomStrips(doc).forEach((e) => markFooter(e, "visibility"));
+
     return;
   }
   // Whole bar: climb from the legend to the outermost full-width strip.
@@ -929,13 +969,16 @@ function hideFooter(doc: Document, mode: "hints" | "hide") {
     }
     bars.add(bar);
   }
-  if (!bars.size) bottomStrips(doc).forEach((e) => bars.add(e));
-  bars.forEach((e) => markFooter(e, "display"));
+
+  bars.forEach((e) => markFooter(e, "visibility"));
 }
 function restoreOne(el: HTMLElement) {
-  const [how, prev] = (el.getAttribute(FOOT_ATTR) ?? "display:-").split(":");
-  if (prev === "-" || !prev) el.style.removeProperty(how);
-  else el.style.setProperty(how, prev);
+  const { how, value, priority } = JSON.parse(el.getAttribute(FOOT_ATTR)!) as { how: string; value: string; priority: string };
+  // Another plugin may have changed this property while we held it.
+  if (el.style.getPropertyValue(how) === (how === "display" ? "none" : "hidden") && el.style.getPropertyPriority(how) === "important") {
+    if (!value) el.style.removeProperty(how);
+    else el.style.setProperty(how, value, priority);
+  }
   el.removeAttribute(FOOT_ATTR);
 }
 export function restoreFooter(doc: Document | null | undefined) {
@@ -951,9 +994,10 @@ export function useHiddenFooter(doc: Document | null | undefined, mode: "show" |
           restoreFooter(doc); // another page is on top: leave Steam's own bar alone
           return;
         }
-        // a text field has focus, so the keyboard is opening or open: change nothing in the page meanwhile
-        const ae = doc.activeElement as HTMLElement | null;
-        if (ae && (ae.isContentEditable || /^(INPUT|TEXTAREA)$/.test(ae.tagName))) return;
+        if (steamKeyboardBusy(doc)) {
+          restoreFooter(doc);
+          return;
+        }
         // if the keyboard ended up inside something we hid earlier, give that back at once
         for (const el of Array.from(doc.querySelectorAll<HTMLElement>(`[${FOOT_ATTR}]`))) if (touchesKeyboard(el)) restoreOne(el);
         hideFooter(doc, mode);
@@ -961,12 +1005,9 @@ export function useHiddenFooter(doc: Document | null | undefined, mode: "show" |
         /* ignore */
       }
     };
-    run();
-    const ts = [200, 800].map((ms) => setTimeout(run, ms));
-    const iv = setInterval(run, 1500);
+    const stop = watchSteamChrome(doc, run);
     return () => {
-      ts.forEach(clearTimeout);
-      clearInterval(iv);
+      stop();
       restoreFooter(doc);
     };
   }, [doc, mode]);
