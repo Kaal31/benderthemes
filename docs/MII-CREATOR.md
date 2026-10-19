@@ -57,3 +57,6 @@ Imported Fortnite animations have been removed. Preview poses are Standing, Wave
 
 
 Original customization now includes full beard, goatee, chin strap, sideburns and long beard; classic, pencil, handlebar and horseshoe moustaches; round, thick, dark and oval glasses; studs/hoops earrings; and five head proportions. Cycle controls save independent style selections, with legacy boolean settings mapped to the first style. Head proportions also transform attached features, hair, headwear and branding.
+
+
+Achievement posts choose stable varied wording by game/achievement, append valid global rarity at 10% or lower, and mark first/25/50/75/100% progress. Historical progress is derived from a complete cached achievement list with dated unlocks; missing dates suppress milestone claims. The event key and existing activity spacing remain unchanged. The preview panel now allocates remaining space to the canvas and refits its camera with ResizeObserver, keeping controls and the character name inside the frame.

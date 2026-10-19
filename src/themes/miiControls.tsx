@@ -9,6 +9,11 @@ export function MiiCycle({label,value,options,onChange}:{label:string;value:stri
  return <div className="mii-cycle" role="group" aria-label={label} onKeyDown={e=>{if(e.key==="ArrowLeft"||e.key==="ArrowRight"){e.preventDefault();e.stopPropagation();cycle(e.key==="ArrowRight"?1:-1);}}}><span>{label}<small className="mii-cycle-count">{index+1} / {options.length}</small></span><div><button type="button" aria-label={`Previous ${label.toLowerCase()}`} onClick={()=>cycle(-1)}>‹</button><button type="button" aria-label={`${label}: ${options[index]?.name}`} onClick={()=>cycle(1)}>{options[index]?.name}</button><button type="button" aria-label={`Next ${label.toLowerCase()}`} onClick={()=>cycle(1)}>›</button></div></div>;
 }
 export const MII_CONTROLS_CSS=`
+.personal-mii figure{display:flex!important;flex-direction:column;align-items:center;min-height:0;justify-content:flex-start}
+.personal-mii .mii-3d{display:flex;flex-direction:column;flex:1;min-height:0;width:100%;gap:4px}
+.personal-mii .mii-3d canvas{display:block;flex:1;min-height:0;height:0!important;width:100%;object-fit:contain}
+.personal-mii .mii-3d>.mii-cycle{width:100%;box-sizing:border-box}.personal-mii .mii-3d>.mii-cycle,.personal-mii .mii-3d>button,.personal-mii .mii-3d>small,.personal-mii figcaption{flex-shrink:0}
+
 .personal-mii button{transition:background .15s,border-color .15s,box-shadow .15s,transform .15s;cursor:pointer;background:linear-gradient(#fff,#edf6fa);box-shadow:0 2px 0 #b8d2de,inset 0 1px 0 #fff}
 .personal-mii button:hover:not(:disabled){border-color:#5bc6e4;background:linear-gradient(#fff,#def5fc);box-shadow:0 3px 0 #92c6d9,0 0 0 2px #71d8f122}
 .personal-mii button:active:not(:disabled){transform:translateY(2px);box-shadow:inset 0 2px 5px #40789125}

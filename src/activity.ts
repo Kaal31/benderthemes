@@ -105,8 +105,8 @@ export function useAchievementList(g:Game|undefined,delay=350):AchList{
   return {unlocked,total,percent:total?Math.round(unlocked/total*100):0,items,recent,loaded:items.length>0};
 }
 /** Recently unlocked achievements across a few games (for posts); only what is already cached. */
-export function cachedRecentUnlocks(games:Game[]):{game:Game;ach:Ach}[]{
-  return games.flatMap(game=>(cache.get(game.appid)?.list??[]).filter(a=>a.achieved&&a.time).map(ach=>({game,ach}))).sort((a,b)=>b.ach.time-a.ach.time).slice(0,6);
+export function cachedRecentUnlocks(games:Game[]):{game:Game;ach:Ach;progress?:{unlocked:number;total:number}}[]{
+  return games.flatMap(game=>{const items=cache.get(game.appid)?.list??[],earned=items.filter(a=>a.achieved).sort((a,b)=>a.time-b.time||a.id.localeCompare(b.id)),dated=earned.every(a=>a.time>0);return earned.filter(a=>a.time>0).map(ach=>({game,ach,progress:dated?{unlocked:earned.indexOf(ach)+1,total:items.length}:undefined}));}).sort((a,b)=>b.ach.time-a.ach.time).slice(0,6);
 }
 
 // ───────────── details ─────────────
