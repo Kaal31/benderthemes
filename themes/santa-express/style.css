@@ -1,0 +1,96 @@
+*{box-sizing:border-box}:root{color-scheme:dark}body{margin:0;background:#1d0808;color:#ffefd5;font:18px "Segoe UI",sans-serif;overflow:hidden}#stage{position:absolute;width:1536px;height:864px;transform-origin:top left;background:#630b0b url(background.png) center/cover no-repeat;overflow:hidden}button{cursor:pointer;font:inherit;color:inherit}button:focus-visible,input:focus-visible{outline:4px solid #fff1b5;outline-offset:5px}svg{width:45%;height:55%;fill:currentColor;filter:drop-shadow(0 2px 3px #400000)}.side{position:absolute;left:29px;top:102px;width:111px;display:flex;flex-direction:column;align-items:center;gap:22px}.metal{position:relative;isolation:isolate;display:grid;place-items:center;flex-shrink:0;width:112px;height:86px;padding:0;border:0;border-radius:48%;background:transparent url(button-glass.png) center/100% 100% no-repeat;color:#f8e4ca;filter:drop-shadow(0 4px 3px #23030099);transition:transform .12s,filter .12s}.metal:before,.metal:after{display:none}.metal svg{position:relative;width:37px;height:37px;z-index:1;fill:currentColor;filter:drop-shadow(0 1px 0 #fff6dc77) drop-shadow(0 2px 2px #270402c0);opacity:.95}.metal:hover:not(:disabled){filter:brightness(1.12) drop-shadow(0 4px 4px #240200b3)}.metal:focus-visible{outline:2px solid #fff0d0;outline-offset:1px;filter:brightness(1.15) drop-shadow(0 0 8px #ff472d);box-shadow:0 0 0 3px #e6342388}.metal:active:not(:disabled){transform:translateY(2px) scale(.98);filter:brightness(.88) drop-shadow(0 1px 1px #23030099)}.metal:disabled{opacity:.45;filter:saturate(.35);cursor:default}.side{gap:18px}.side .metal:not(.home){background-size:100% 135%}.side .home{width:148px;height:148px;margin:-6px 0 10px;border:0;border-radius:50%;background:transparent url(button-home.png) center/100% 100% no-repeat;box-shadow:none}.side .home svg{width:70px;height:70px;filter:drop-shadow(0 1px 0 #fff2ce99) drop-shadow(0 3px 3px #70040099)}.top{position:absolute;top:37px;right:120px;display:flex;align-items:center;gap:22px;padding:12px 24px;background:linear-gradient(#8e211ee8,#490805eb);border:2px solid #f3916966;border-radius:40px;box-shadow:inset 0 2px 8px #ffba8b55,0 4px 16px #35150955;font-size:17px}.shelf{position:absolute;left:177px;right:166px;top:365px;height:330px}.caption{position:absolute;top:-33px;left:16px;right:4px;display:flex;justify-content:space-between;align-items:center;text-shadow:0 2px 6px #000,0 0 15px #310000;background:linear-gradient(90deg,#5e0909c9,transparent);padding:5px 13px;border-radius:10px;font-size:16px}.caption #selection{max-width:85%;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}#position{font-size:12px}#carousel{display:flex;align-items:center;gap:17px;height:292px;overflow-x:auto;scrollbar-width:none;padding:15px 10px 13px;scroll-behavior:smooth}#carousel::-webkit-scrollbar{display:none}.card{position:relative;flex:0 0 174px;height:267px;padding:0;border:4px ridge #ded8c7;border-radius:24px;overflow:visible;background:linear-gradient(145deg,#ba3b1d,#44100c);box-shadow:0 6px 12px #270000b0;transition:transform .17s,box-shadow .17s}.card img{width:100%;height:100%;object-fit:cover;border-radius:19px}.card .name{position:absolute;bottom:0;left:0;right:0;padding:30px 9px 13px;background:linear-gradient(transparent,#190600f0);border-radius:0 0 19px 19px;font-weight:600;font-size:15px;text-shadow:0 2px 4px #000}.card:before{content:"";position:absolute;inset:2px;border-radius:17px;background:linear-gradient(115deg,#fff5,transparent 26%,transparent 80%,#ffe5b51a);pointer-events:none;z-index:1}.card[aria-current=true]{transform:scale(1.045);border-color:#fff2cc;box-shadow:0 0 0 5px #fd2b16,0 0 0 8px #ffb488,0 0 28px 10px #ff2918}.card[aria-current=true]:after{content:"";position:absolute;inset:-12px;border:5px dotted #fff2d0;border-radius:32px;pointer-events:none;filter:drop-shadow(0 0 5px #fffbab)}.card:focus-visible{outline:0}.pager{height:35px;display:flex;align-items:center;justify-content:center;gap:15px}.pager button{border:0;background:#5d0909a0;border-radius:50%;width:28px;height:28px;font-size:24px;line-height:20px}.pager button:disabled{opacity:.35;cursor:default}#dots{display:flex;gap:15px;align-items:center}.dot{width:7px;height:7px;border-radius:50%;background:#eaaa8e66}.dot.active{background:#fff1cf;box-shadow:0 0 10px 4px #ff302a}.dock{position:absolute;left:383px;right:345px;top:731px;display:flex;align-items:center;justify-content:space-between;gap:18px}.dock{left:369px;right:335px;gap:8px;top:723px}.dock .metal{width:125px;height:80px;border-radius:48%;background-size:100% 115%}.dock .metal svg{width:34px;height:34px}.dock .play svg{width:33px;height:33px;transform:translateX(2px)}.dock .play{filter:brightness(1.17) saturate(1.35) drop-shadow(0 3px 3px #23030099)}#status{position:absolute;bottom:13px;left:205px;right:200px;text-align:center;font-size:12px;text-shadow:0 2px 3px #000;background:#3a0808b3;border-radius:20px;padding:4px;margin:0}#empty{position:absolute;top:90px;left:100px;right:100px;text-align:center;padding:30px;background:#500c0cf2;border:1px solid #e9b18c;border-radius:20px}dialog{position:fixed;inset:0;width:640px;max-width:85%;margin:auto;padding:40px;border:7px ridge #d9bea3;border-radius:26px;background:radial-gradient(ellipse at top,#a83724,#490b09 80%);color:#ffefd5;box-shadow:0 0 35px #ff2d2288}dialog::backdrop{background:#210300b9;backdrop-filter:blur(9px)}dialog h1{font:34px Georgia}dialog p{line-height:1.6}dialog button{border:2px solid #f2d1aa;border-radius:25px;padding:13px 22px;margin:12px 8px 0 0;background:linear-gradient(#d56644 0%,#a62b1c 12%,#570d08 55%,#9c2514 100%);box-shadow:0 3px 5px #210000aa,inset 0 2px 1px #ffe6b38c,inset 0 -2px 3px #270000;transition:filter .14s,transform .14s}dialog button:hover{filter:brightness(1.2)}dialog button:active{transform:translateY(2px)}#launch{background:linear-gradient(#ff9060,#da2815 20%,#8c1008 70%,#db3b1b)}.eyebrow{font-size:12px;letter-spacing:2px}label{display:block;margin:20px 0 8px}input{font:inherit;background:#2a0505;color:#fff0db;border:1px solid #d69e7c;border-radius:12px;padding:15px;width:100%}[hidden]{display:none!important}@media(prefers-reduced-motion:reduce){*{transition:none!important;scroll-behavior:auto!important}}
+/* Optical alignment in the transparent glass assets. */
+.side .metal svg{position:absolute;left:50%;top:51%;transform:translate(-50%,-50%);width:35px;height:35px;display:block}
+.side .home svg{top:49%;width:62px;height:62px}
+.side .games svg{width:39px;height:36px}
+.side .friends svg{width:36px;height:34px}
+.side .store svg{top:49%;width:33px;height:35px}
+.side .settings svg{width:35px;height:35px}
+#santa-snow{position:absolute!important;inset:0!important;width:1536px!important;height:864px!important;pointer-events:none!important;z-index:3}
+
+/* Keep all left controls visually stable when another control is activated. */
+.side .metal{filter:none;box-shadow:none}
+.side .metal:hover:not(:disabled){filter:brightness(1.06)}
+.side .metal:focus{box-shadow:none}
+.side .metal:focus-visible{outline:2px solid #fff0d0;outline-offset:2px;filter:none;box-shadow:none}
+.side .metal:active:not(:disabled){filter:none;transform:translateY(1px)}
+.live-lever{position:absolute;left:1400px;top:336px;width:120px;height:350px;background:#6d1712;border-radius:32px;z-index:4;touch-action:none;overflow:hidden}
+.lever-housing{position:absolute;left:-89px;top:-17px;width:298px;height:386px;pointer-events:none}
+#lever-knob{position:absolute;left:50%;width:130px;height:130px;transform:translate(-50%,-50%);pointer-events:none;filter:drop-shadow(0 3px 3px #180000)}
+#lever-control{position:absolute;inset:44px 0 56px;cursor:grab;border-radius:45px;touch-action:none}
+#lever-control:active{cursor:grabbing}#lever-control:focus-visible{outline:2px solid #fff0c7;outline-offset:-4px}
+.cola-badge{position:absolute;left:451px;top:730px;width:680px;height:69px;object-fit:contain;pointer-events:none}
+
+.cola-badge{left:451px;top:625px;width:680px;height:280px;object-fit:contain}
+
+/* Mount the badge inside the vacated recessed dock. */
+.cola-inset{position:absolute;left:403px;top:735px;width:774px;height:60px;overflow:hidden;pointer-events:none;display:flex;align-items:center;justify-content:center}
+.cola-inset .cola-badge{position:static;width:100%;height:100%;object-fit:fill;display:block}
+/* Stable raster controls: no filter/compositor changes during mouse transitions. */
+.side .metal,.side .metal:hover,.side .metal:active,.side .metal:focus,.side .metal:focus-visible{filter:none!important;transition:none!important;transform:none!important;box-shadow:none!important}
+.side .metal svg{transition:none!important}
+.side .metal:focus:not(:focus-visible){outline:none}
+.side .metal:focus-visible{outline:2px solid #fff0d0;outline-offset:2px}
+
+.cola-inset .cola-badge{width:310px;height:64px;object-fit:fill}
+
+.steam-avatar{position:absolute;left:256px;top:24px;width:104px;height:104px;border:7px ridge #d2d4d0;border-radius:50%;overflow:hidden;background:#253746;display:grid;place-items:center;box-shadow:0 3px 7px #0009;z-index:4}.steam-avatar img{width:100%;height:100%;object-fit:cover;position:absolute;inset:0}.steam-avatar span{font-size:36px;color:#edf3f5}
+
+/* Titles belong above the carousel, leaving cover artwork unobstructed. */
+.card .name{display:none}
+
+/* Separate LED layers allow the previous frame to power down while the next warms up. */
+.card{transition:transform .24s ease,border-color .3s ease,box-shadow .36s ease}
+.card:after{content:"";position:absolute;inset:-12px;border:5px dotted #fff2d0;border-radius:32px;pointer-events:none;filter:drop-shadow(0 0 5px #ffb96b);opacity:0;transition:opacity .32s ease,filter .36s ease}
+.card[aria-current=true]{transition:transform .3s cubic-bezier(.2,.7,.3,1),border-color .36s ease,box-shadow .42s ease;box-shadow:0 0 0 5px #fd2b16,0 0 0 8px #ffb488,0 0 28px 10px #ff2918}
+.card[aria-current=true]:after{opacity:1;filter:drop-shadow(0 0 7px #ffe3a2);animation:led-power-on .48s ease-out both}
+@keyframes led-power-on{0%{opacity:0;filter:drop-shadow(0 0 0 #ff4718)}35%{opacity:.35;filter:drop-shadow(0 0 3px #ff782b)}75%{opacity:1;filter:drop-shadow(0 0 12px #fff3bb)}100%{opacity:1;filter:drop-shadow(0 0 7px #ffe3a2)}}
+@media(prefers-reduced-motion:reduce){.card,.card:after{transition:none!important;animation:none!important}}
+html.no-theme-motion .card,html.no-theme-motion .card:after{transition:none!important;animation:none!important}
+
+/* Avatar sits behind the glass mask, with the rim above both. */
+.steam-avatar{isolation:isolate;overflow:hidden;border:0;background:conic-gradient(from 20deg,#e8e5d9,#525b60 15%,#fff1d3 26%,#242d33 43%,#c1c9cc 58%,#fff4d8 74%,#424b51 90%,#e8e5d9);box-shadow:0 0 0 2px #382d28,0 3px 8px #000a,inset 0 1px 2px #fff}
+.steam-avatar img{inset:8px;width:calc(100% - 16px);height:calc(100% - 16px);border-radius:50%;z-index:1}
+.steam-avatar:before{content:"";position:absolute;inset:7px;border-radius:50%;z-index:2;pointer-events:none;box-shadow:inset 0 0 0 2px #15242b,inset 0 0 12px 3px #06141c99,inset 0 -8px 12px #9bd9ee38;background:radial-gradient(ellipse at 25% 14%,#fff7dd88,transparent 34%),linear-gradient(135deg,#e5faff30,transparent 42%,#c1e1fa0a 70%,#ffffff30)}
+.steam-avatar:after{content:"";position:absolute;left:17%;top:12%;width:63%;height:29%;border-radius:50%;transform:rotate(-22deg);z-index:3;pointer-events:none;background:linear-gradient(#fff8e69c,#fff7e510);border-top:1px solid #fff6debd}
+.steam-avatar span{position:absolute;inset:8px;display:grid;place-items:center;background:#20384b;border-radius:50%}
+.cola-inset .cola-badge{width:100%;height:100%;object-fit:contain}
+
+/* A self-contained mechanical press, without sibling filters or hover changes. */
+.side .metal.is-pressed{animation:mechanical-press .24s ease-out}
+@keyframes mechanical-press{0%{translate:0 0;scale:1}35%{translate:0 3px;scale:.96}70%{translate:0 1px;scale:.985}100%{translate:0 0;scale:1}}
+.side .metal:active:not(:disabled){translate:0 2px;scale:.97}
+.top{top:35px;right:120px;min-width:125px;justify-content:center;padding:10px 22px;border:3px ridge #d5c2a6;border-radius:28px;background:radial-gradient(ellipse at 35% 0%,#edc4a74d,transparent 58%),linear-gradient(#6f1c18,#340907 65%,#82251b);box-shadow:0 3px 8px #23040199,inset 0 1px 2px #ffddae88,inset 0 -2px 4px #190000}
+#clock{font:500 24px "Segoe UI",sans-serif;letter-spacing:2px;font-variant-numeric:tabular-nums;color:#ffe9c8;text-shadow:0 1px 2px #170000,0 0 10px #ffaf5b33}
+@media(prefers-reduced-motion:reduce){.side .metal.is-pressed{animation:none}}
+
+.cola-inset{left:388px;top:723px;width:806px;height:83px;overflow:hidden}
+.cola-inset .cola-badge{position:absolute;left:0;top:-28px;width:806px;height:141px;object-fit:fill}
+.side .metal{isolation:isolate;contain:layout style;will-change:translate}
+@media(hover:hover){.side .metal:hover:not(:active):not(.is-pressed){translate:0 -1px}}
+html.no-theme-motion .side .metal.is-pressed{animation:none}
+
+/* Preserve source proportions: the shallow badge is drawn into the artwork. */
+.cola-inset{left:388px;top:724px;width:806px;height:80px}
+.cola-inset .cola-badge{left:-12px;top:-100px;width:830px;height:auto;max-width:none;object-fit:contain}
+
+/* Hover keeps the physical controls fixed in their housings. */
+.side .metal:hover:not(:active):not(.is-pressed){translate:0 0}
+
+/* Selected-game plaque: readable against Santa's bright artwork. */
+.caption{top:-47px;left:8px;right:5px;height:43px;padding:0 15px 0 17px;border:1px solid #edb79755;border-left:3px solid #ffe0a8;border-radius:12px;background:linear-gradient(100deg,#340a08ed,#53120edb 62%,#3b0c09b8);box-shadow:inset 0 1px 0 #ffe1b623,0 3px 9px #25000055;text-shadow:none;gap:18px}
+.selection-info{min-width:0;display:flex;align-items:center;gap:16px;flex:1}
+.caption #selection{max-width:none;min-width:0;font:600 21px/1.15 "Segoe UI",sans-serif;letter-spacing:.2px;color:#fff1d8;text-shadow:0 2px 3px #170100;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+#game-state{flex-shrink:0;display:inline-flex;align-items:center;gap:7px;font:500 11px "Segoe UI",sans-serif;letter-spacing:.3px;padding:5px 9px;border:1px solid #dfb38a40;border-radius:20px;color:#e6c7aa;background:#16040340}
+#game-state:before{content:"";width:5px;height:5px;border-radius:50%;background:#c9a184}
+#game-state.ready:before{background:#e9d5a1;box-shadow:0 0 6px #ffb65a88}
+#position{flex-shrink:0;font:500 12px "Segoe UI",sans-serif;font-variant-numeric:tabular-nums;letter-spacing:1.5px;color:#d9b49a;border-left:1px solid #e4bc9340;padding-left:15px}
+
+/* Keep the game shelf on a fixed vertical rail. */
+#carousel{overflow-y:hidden;overscroll-behavior-y:none;touch-action:pan-x}
+
+/* Clock: a recessed ruby-glass instrument with a rolled chrome bezel. */
+.top{isolation:isolate;top:32px;right:120px;width:166px;height:65px;min-width:0;padding:0;display:grid;place-items:center;border:2px solid #452923;border-radius:34px;background:conic-gradient(from 15deg,#fff0d6,#796c64 12%,#e8e3d9 22%,#463b36 34%,#e1bb97 49%,#fff4d9 61%,#71605a 77%,#f4e8d0 91%,#fff0d6);box-shadow:0 4px 9px #24030199,0 0 0 1px #f8dfbc88,inset 0 1px 1px #fff7df,inset 0 -2px 2px #2e1711;gap:0}
+.top:before{content:"";position:absolute;inset:5px;border-radius:28px;z-index:-1;background:radial-gradient(ellipse at 50% 115%,#df321f66,transparent 65%),linear-gradient(#8c2c20,#400c09 46%,#260806 66%,#691a11);border:1px solid #36100b;box-shadow:0 0 0 1px #f7dbb8b0,inset 0 3px 6px #170300b0,inset 0 -1px 2px #ffab6866}
+.top:after{content:"";position:absolute;left:17%;right:17%;top:12%;height:26%;border-radius:50%;background:linear-gradient(#ffe9c947,#fff5de03);border-top:1px solid #fff0cd73;pointer-events:none}
+#clock{position:relative;z-index:1;font:600 26px/1 "Segoe UI",sans-serif;letter-spacing:2px;font-variant-numeric:tabular-nums;color:#fff1d8;text-shadow:0 1px 1px #200200,0 0 8px #ffb56a55;-webkit-font-smoothing:antialiased}
