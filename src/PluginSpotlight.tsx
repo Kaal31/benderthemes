@@ -95,7 +95,7 @@ export function Badges({ item }: { item: SearchItem }) {
   return <span className="dht-spotlight-badges">
     {item.source === "spotlight" ? <b className="dht-spotlight-badge" data-kind="spotlight">✦ Spotlight</b>
       : <b className="dht-spotlight-badge" data-kind="unreviewed" title="Not reviewed by ThemeHub">Not in the store (unreviewed)</b>}
-    {item.installed && <b className="dht-spotlight-badge" data-kind="installed">✓ Installed</b>}
+    {item.installed && <b className="dht-spotlight-badge" data-kind="installed">✓ {t("installed")}</b>}
     {item.root && <b className="dht-spotlight-badge" data-kind="root">Needs root</b>}
     {item.archived && <b className="dht-spotlight-badge" data-kind="archived">Archived</b>}
     {item.forkOf && <b className="dht-spotlight-badge" data-kind="fork" title={`Another repository of ${item.forkOf}`}>Fork of {item.forkOf}</b>}
@@ -283,7 +283,7 @@ export function PluginSpotlight({ inputRef }: { inputRef: MutableRefObject<Input
         {(current.tags.length > 0 || current.release || current.downloads) && <dl className="dht-spotlight-facts">
           {current.tags.length > 0 && <div><dt>Tags</dt><dd>{current.tags.join(", ")}</dd></div>}
           {current.release && <div><dt>Latest release</dt><dd>{current.release}</dd></div>}
-          {!!current.downloads && <div><dt>Release downloads</dt><dd>{current.downloads.toLocaleString()}</dd></div>}
+          {!!current.downloads && <div><dt>{t("releaseDownloads")}</dt><dd>{current.downloads.toLocaleString()}</dd></div>}
         </dl>}
         {current.readme && <><h4>From the README</h4><ReadmeExcerpt text={current.readme} />{current.readmeUrl && <button className="dht-spotlight-more" onClick={() => openUrl(current.readmeUrl)}>Read the full README ↗</button>}</>}
         {message && <p role="status">{message}</p>}

@@ -92,10 +92,10 @@ export function DialHome() {
     }, s.animations ? 340 : 0);
   };
   const tabs = [
-    { name: "Library", run: () => { setZone("row"); playSound("tab"); } },
-    { name: "Store", run: () => openSteam("store") },
-    { name: "Downloads", run: () => openSteam("downloads") },
-    { name: "Settings", run: () => openSteam("settings") },
+    { name: t("destLibrary"), run: () => { setZone("row"); playSound("tab"); } },
+    { name: t("destStore"), run: () => openSteam("store") },
+    { name: t("destDownloads"), run: () => openSteam("downloads") },
+    { name: t("destSettings"), run: () => openSteam("settings") },
   ];
   const options = () => {
     const common: MenuItem[] = [

@@ -1,3 +1,4 @@
+import { t as tr } from "./i18n";
 import {FIXED_BACKGROUND_PAGES,pageBackgroundRef} from "./pageBackgrounds";
 import {downloadableAudio,downloadAudio,refreshAudioCatalog} from "./audioDownloads";
 // Customize: the slots of the preset in use, offered only where the look draws them (LAYOUT_SLOTS in
@@ -65,13 +66,13 @@ function backgroundControl(page?:string): SlotControl | null {
   const fxKey = FILE_KINDS[th]?.fx(fileOf(s, th)) ?? "";
   const hasFile = fileHasBackground(th, s);
   const special: Option[] = [
-    { id: "", name: hasFile ? "The theme file's own" : "The look's own" },
+    { id: "", name: hasFile ? tr("theThemeFilesOwn") : tr("theLooksOwn") },
     ...(hasFile ? [{ id: "@nofile", name: `${THEMES.find((x) => x.id === th)?.name ?? th}'s own (not the theme file's)` }] : []),
     ...(c?.gameArt || th === "ps4" ? [{ id: "@art", name: th === "ps4" ? "Game art (PS4 game backgrounds)" : "Game art · follows the focused game" }] : []),
   ];
   return {
     id: page?`wallpaper:${page}`:"wallpaper",
-    label: page?page[0].toUpperCase()+page.slice(1):"Background",
+    label: page ? page[0].toUpperCase() + page.slice(1) : tr("background"),
     special,
     groups: c?.background ? assetGroups("wallpaper", lists(), t?.id,c.videoBackground===true) : [],
     more: "background",
@@ -132,20 +133,20 @@ function soundControl(kind: "sounds" | "music"): SlotControl {
   const packs = getPacks().filter((p) => (kind === "sounds" ? sfxCoverage(p) > 0 : !!musicFile(p)));
   const group = (source: string, list: typeof packs) => ({ source, items: list.map((p) => ({ ref: `@pack/${p.folder}`, name: p.name })) });
   const groups = [
-    group("Hub and AudioLoader packs", packs.filter((p) => !p.folder.startsWith("Theme - "))),
-    group("Theme files", packs.filter((p) => p.folder.startsWith("Theme - "))),
+    group(tr("hubAndAudioLoaderPacks"), packs.filter((p) => !p.folder.startsWith("Theme - "))),
+    group(tr("themeFilesGroup"), packs.filter((p) => p.folder.startsWith("Theme - "))),
     ...assetGroups(kind, lists(), t?.id),
-    ...[true,false].map(recommended=>({source:recommended?"DeckThemes · for this theme":"DeckThemes · other packs",items:downloadableAudio().filter(p=>p.kind===kind&&p.themes.some(key=>key===th||key===`${th}:${getSettings().x360.style}`)===recommended).map(p=>{
+    ...[true,false].map(recommended=>({source: recommended ? tr("deckThemesForTheme") : tr("deckThemesOtherPacks"),items:downloadableAudio().filter(p=>p.kind===kind&&p.themes.some(key=>key===th||key===`${th}:${getSettings().x360.style}`)===recommended).map(p=>{
       const installed=packs.find(pack=>pack.id===p.id);
-      return {ref:installed?`@pack/${installed.folder}`:`@deckthemes/${p.id}`,name:`${p.name}${installed?" · Installed":" · Download"}`};
+      return {ref:installed?`@pack/${installed.folder}`:`@deckthemes/${p.id}`,name: `${p.name}${installed ? ` · ${tr("installed")}` : ` · ${tr("download")}`}`};
     })})),
   ].filter((g) => g.items.length);
   const special: Option[] = kind === "sounds"
-    ? [{ id: "", name: `Automatic${auto ? ` (${auto.name})` : ""}` }, { id: "steam", name: "Steam sounds" }]
-    : [{ id: "", name: `Automatic${auto ? ` (${auto.name})` : " (none found)"}` }, { id: "off", name: "Off" }];
+    ? [{ id: "", name: `${tr("automatic")}${auto ? ` (${auto.name})` : ""}` }, { id: "steam", name: tr("steamSounds") }]
+    : [{ id: "", name: `${tr("automatic")}${auto ? ` (${auto.name})` : ` (${tr("noneFound")})`}` }, { id: "off", name: tr("off") }];
   return {
     id: kind,
-    label: kind === "sounds" ? "Sound effects" : "Music",
+    label: kind === "sounds" ? tr("soundEffects") : tr("music"),
     special,
     groups,
     get() {
@@ -189,9 +190,9 @@ function fileControl(): SlotControl | null {
   const items = lists().files[kind] ?? [];
   return {
     id: "file",
-    label: "Theme file",
-    special: [{ id: "", name: "None (the look's own)" }],
-    groups: items.length ? [{ source: "Imported theme files", items: items.map((x) => ({ ref: x.id, name: x.name })) }] : [],
+    label: tr("themeFile"),
+    special: [{ id: "", name: tr("noneTheLooksOwn") }],
+    groups: items.length ? [{ source: tr("importedThemeFiles"), items: items.map((x) => ({ ref: x.id, name: x.name })) }] : [],
     get: () => fileOf(getSettings(), th),
     set: (v) => updateSettings((p) => {
       const top = k.path[0] as keyof Settings;
@@ -205,11 +206,11 @@ export function customizeControls(): SlotControl[] {
   const th = layout();
   return [
     ...(FIXED_BACKGROUND_PAGES[th]?.map(page=>backgroundControl(page))??[backgroundControl()]),
-    assetControl("icons", "Icons", "The look's own"),
+    assetControl("icons", tr("icons"), tr("theLooksOwn")),
     soundControl("sounds"),
     soundControl("music"),
-    assetControl("font", "Font", "The look's own"),
-    assetControl("accent", "Accent colour", "The look's own"),
+    assetControl("font", tr("font"), tr("theLooksOwn")),
+    assetControl("accent", tr("accentColour"), tr("theLooksOwn")),
     th === "frame" ? null : fileControl(),
   ].filter((c): c is SlotControl => !!c);
 }

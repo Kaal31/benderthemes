@@ -162,7 +162,7 @@ export function pspClipItems(file: string): MenuItem[] {
     sub: () => [
       { label: `Put ${fileName(file) || "<theme>"}.coldboot.ogg / .gameboot.ogg next to the theme file`, disabled: true },
       { label: "(or coldboot.ogg / gameboot.ogg for every theme; mp3, wav, at3 work too)", disabled: true },
-      ...(skin?.bootSoundNeedsDecoder ? [{ label: "Download the music decoder (for .at3 sounds)", action: () => { installMusicDecoder().then(() => resourcesChanged()).catch(() => {}); } }] : []),
+      ...(skin?.bootSoundNeedsDecoder ? [{ label: t("downloadMusicDecoderAt3"), action: () => { installMusicDecoder().then(() => resourcesChanged()).catch(() => {}); } }] : []),
       { label: "Rescan", action: () => resourcesChanged() },
     ] as MenuItem[],
   };
@@ -180,7 +180,7 @@ function vitaItems(part: "file" | "look"): MenuItem[] {
     choice("Custom Vita theme", [{ id: "", name: "None" }, ...lists.vita.map((n) => ({ id: n, name: fileName(n) }))], () => v().skin, (x) => updateVita({ skin: x })),
     ...(v().skin ? [group("Theme file effects", () => fxItems(key(), "vita", true))] : []),
     ...(lists.decoderNeeded ? [{
-      label: "Download music decoder (vgmstream, 3.4 MB)",
+      label: t("downloadMusicDecoderVgm"),
       action: () => { installMusicDecoder().then((r) => { if (r.installed) { lists.decoderNeeded = false; resourcesChanged(); refreshPacks(); } }).catch(() => {}); },
     }] : []),
   ];

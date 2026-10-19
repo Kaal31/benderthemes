@@ -252,21 +252,21 @@ export function Marketplace({ requested, from, initialTab }: { requested?: Theme
           <div className="market-art dht-hub-art" data-theme={pack.id}>{pack.poster ? <img src={pack.poster} alt="" loading="lazy" onError={e => { e.currentTarget.style.display = "none"; }} /> : <span>{pack.name}</span>}{state && <em className="dht-hub-state" data-state={state.toLowerCase()}>{state}</em>}</div>
           <div className="market-card-title"><strong>{pack.name}</strong>{pack.size > 0 && <span>{(pack.size / 1048576).toFixed(1)} MB</span>}</div>
           <p>{THEMES.find(t => t.id === pack.theme)?.blurb || pack.description}</p>
-          <BonusFeatureBadges id={pack.id}/>{pack.uiOverhaul && <small className="dht-hub-overhaul">UI overhaul</small>}
+          <BonusFeatureBadges id={pack.id}/>{pack.uiOverhaul && <small className="dht-hub-overhaul">{t("uiOverhaul")}</small>}
         </button>;
       })}
     </div><aside className="dht-hub-detail">{current && <>
       <div className="dht-hub-detail-scroll">
-        <div className="market-detail-art" data-theme={current.id}>{current.preview || current.poster ? <img key={current.id} src={current.preview || current.poster} alt={`${current.name} animated preview`} /> : <span>Preview coming soon</span>}</div>
+        <div className="market-detail-art" data-theme={current.id}>{current.preview || current.poster ? <img key={current.id} src={current.preview || current.poster} alt={`${current.name} animated preview`} /> : <span>{t("previewComingSoon")}</span>}</div>
         <h2>{current.name}</h2><p>{current.description}</p>
         <BonusFeatureBadges id={current.id}/>{current.uiOverhaul && <small className="dht-hub-overhaul">{t("uiOverhaul")}</small>}
         <dl><div><dt>{t("downloadFact")}</dt><dd>{current.size ? `${(current.size / 1048576).toFixed(1)} MB` : t("builtIn")}</dd></div><div><dt>{t("versionFact")}</dt><dd>{current.version}</dd></div><div><dt>{t("availableOffline")}</dt><dd>{current.installedVersion ? t("readyToPlay") : t("afterDownload")}</dd></div></dl>
       </div>
       <div className="dht-hub-detail-actions">
-        <button className="market-primary dht-hub-primary" disabled={busy || loading || !current.compatible} onClick={() => void activate()}>{busy ? `${progress?.percent || 0}% · ${progress?.message || "Preparing…"}` : !current.compatible ? t("comingSoon") : upToDate(current) ? t("activateTheme") : current.installedVersion ? t("updateTheme") : extrasMissing(current) ? t("downloadExtrasActivate") : t("downloadTheme")}<kbd>A</kbd></button>
+        <button className="market-primary dht-hub-primary" disabled={busy || loading || !current.compatible} onClick={() => void activate()}>{busy ? `${progress?.percent || 0}% · ${progress?.message || t("preparing")}` : !current.compatible ? t("comingSoon") : upToDate(current) ? t("activateTheme") : current.installedVersion ? t("updateTheme") : extrasMissing(current) ? t("downloadExtrasActivate") : t("downloadTheme")}<kbd>A</kbd></button>
         {busy && <progress max={100} value={progress?.percent || 0} />}
         {(current.installedVersion || current.builtIn) && !current.localThemeId && <button className="market-remove dht-hub-remove" disabled={busy || (current.community ? current.community.themeId === s.activeTheme : current.theme === s.theme)} onClick={() => void deletePack()}>{t("deleteTheme")}</button>}
-        <small>Updates activate immediately. Your settings are kept.</small>
+        <small>{t("updatesActivateImmediately")}</small>
       </div>
     </>}</aside></main>}
     {message && <div className="market-notice" role="status">{message}</div>}

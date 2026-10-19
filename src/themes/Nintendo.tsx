@@ -36,17 +36,29 @@ const DOCK_ART:Record<string,string>={friends:"icon-mii",store:"icon-shop",brows
 // The theme pictures whose drawing decides the look of the buttons the theme has no picture for (first one found).
 const LOOK_ART=["icon-shop","icon-browser","icon-mii","icon-messages","icon-friends","downloads"];
 
-const SERVICES:{name:string;icon:IconName;place:"library"|"friends"|"store"|"browser"|"notifications"|"downloads"|"settings";color:string}[]=[
- {name:"Library",icon:"disc",place:"library",color:"#53add4"},
- {name:"Friends",icon:"friends",place:"friends",color:"#ed9235"},
- {name:"Shop",icon:"store",place:"store",color:"#efa121"},
- {name:"Internet Browser",icon:"network",place:"browser",color:"#429adc"},
- // The Wii U dock's notifications bubble (the Wii's channel grid only takes the first four entries).
- {name:"Notifications",icon:"bell",place:"notifications",color:"#17bfd4"},
- {name:"Downloads",icon:"download",place:"downloads",color:"#71ad49"},
- {name:"Settings",icon:"gear",place:"settings",color:"#939ba1"},
+type ServiceItem = { name: string; icon: IconName; place: "library" | "friends" | "store" | "browser" | "notifications" | "downloads" | "settings"; color: string };
+const servicesList = (): ServiceItem[] => [
+  { name: t("destLibrary"), icon: "disc", place: "library", color: "#53add4" },
+  { name: t("destFriends"), icon: "friends", place: "friends", color: "#ed9235" },
+  { name: t("shop"), icon: "store", place: "store", color: "#efa121" },
+  { name: t("destBrowser"), icon: "network", place: "browser", color: "#429adc" },
+  // The Wii U dock's notifications bubble (the Wii's channel grid only takes the first four entries).
+  { name: t("destNotifications"), icon: "bell", place: "notifications", color: "#17bfd4" },
+  { name: t("destDownloads"), icon: "download", place: "downloads", color: "#71ad49" },
+  { name: t("destSettings"), icon: "gear", place: "settings", color: "#939ba1" },
 ];
-type Tile={game?:Game;service?:typeof SERVICES[number]};
+const SERVICES: ServiceItem[] = new Proxy([] as any, {
+  get: (_, prop: string) => {
+    const list = servicesList();
+    if (prop === "length") return list.length;
+    if (prop === "map") return list.map.bind(list);
+    if (prop === "filter") return list.filter.bind(list);
+    if (prop === "slice") return list.slice.bind(list);
+    if (prop === "some") return list.some.bind(list);
+    return (list as any)[prop];
+  },
+});
+type Tile = { game?: Game; service?: ServiceItem };
 // The boot logo plays once per session, the first time the Wii U menu appears.
 let wiiuBooted=false;
 // Activating the Wii U from the Hub plays its logo once more (the generic reveal would hide it).

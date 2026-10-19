@@ -1,3 +1,4 @@
+import { t } from "./i18n";
 // Theme packs from the Hub's catalog (py_modules: theme_catalog / theme_install): shared by the Hub
 // (Marketplace.tsx) and the themed store's Themes section (storeSections.tsx), so both download the same way.
 import { callable, toaster } from "@decky/api";
@@ -19,7 +20,7 @@ export const packIsCurrent = (p: ThemePack) => p.installedVersion === "legacy" |
 export async function ensurePackInstalled(p: ThemePack): Promise<void> {
   if (!packIsCurrent(p)) {
     const result = await themeInstall(p.id);
-    if (!result.success) throw new Error(result.error || "Download failed");
+    if (!result.success) throw new Error(result.error || t("downloadFailed"));
     if(result.audioWarning)toaster.toast({title:"Theme installed · audio incomplete",body:result.audioWarning});
   }
   await Promise.all([refreshPacks(), refreshPresets()]);

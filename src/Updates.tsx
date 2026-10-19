@@ -178,7 +178,7 @@ export function Updates({ onManageThemes }: { onManageThemes: () => void }) {
     <PanelSectionRow><div style={{ fontSize: 12, lineHeight: 1.5 }}>
       <div>{lang("installedVersion")}: {status ? releaseLabel({tag:"",version:status.currentVersion,assetUrl:"",notes:"",build:status.currentBuild,attempt:status.currentAttempt}) : checking ? lang("checking") : "Unavailable"}</div>
       <div>{checkError || (checking ? lang("checkingGitHub") : status?.stale ? `${status.error}. Showing saved releases; latest version is unverified.`
-        : status?.updateAvailable ? `Update available: ${status.latest?releaseLabel(status.latest):""}`
+        : status?.updateAvailable ? `${lang("updateAvailable")}: ${status.latest?releaseLabel(status.latest):""}`
         : status?.success ? (status.latest ? lang("channelUpToDate") : lang("noReleasesForChannel")) : lang("updateStatusUnavailable"))}</div>
       {status?.channelKnown === false && <div>{lang("installedChannelUnknown")}</div>}
     </div></PanelSectionRow>
