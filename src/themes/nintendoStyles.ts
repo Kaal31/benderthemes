@@ -122,6 +122,12 @@ export const NINTENDO_CSS=`
 .nt-wiiu .nt-grid{left:189px;right:190px;top:calc(var(--wy) + 90px);height:499px}
 .nt-wiiu:not([data-zoom=true]) .nt-grid{gap:26px 39px}
 .nt-wiiu:not([data-zoom=true]) .nt-tile{border-width:10px;border-radius:20px}.nt-wiiu:not([data-zoom=true]) .nt-tile>div{border-radius:6px}.nt-wiiu:not([data-zoom=true]) .nt-tile[data-focus=true]{transform:scale(1.19)}
+/* Artwork and glass share the inner aperture, including the focused tile's scale.
+   The outer frame radius includes the border; reusing it inside leaves uncovered corners. */
+.nt-wiiu .nt-tile{--nt-inner-radius:10px;isolation:isolate}
+.nt-wiiu[data-zoom=true] .nt-tile{--nt-inner-radius:13px}
+.nt-home.nt-wiiu .nt-tile>.nt-wiiu-art-frame{position:absolute;inset:0;border-radius:var(--nt-inner-radius);overflow:hidden;clip-path:inset(0 round var(--nt-inner-radius))}
+.nt-wiiu .nt-tile:after{border-radius:var(--nt-inner-radius);z-index:1}
 .nt-wiiu .nt-user{top:calc(var(--wy) + 35px);left:37px;right:40px;align-items:flex-start}
 .nt-wiiu .nt-user>button{flex-direction:column;align-items:flex-start;gap:6px;font-size:16px;max-width:150px}.nt-wiiu .nt-user>button>span:last-child{max-width:100%;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
 .nt-wiiu .nt-profile-image{width:110px;height:110px;border-width:4px;border-radius:8px}

@@ -1,10 +1,12 @@
-import { useThemeActive } from "../performance";
+import {PlazaPostPolicy} from "./plazaPostPolicy";
+import {createMiiAvatar} from "./miiAvatar";
+import {useSettings} from "../settings";
 import {CSSProperties,useEffect,useRef,useState} from "react";
 import * as THREE from "three";
 import {GameArt,Icon} from "../common";
 import {Game} from "../library";
 import {PLAZA_GEOMETRY} from "./wiiuPlazaGeometry";
-import {ACTIONS,FACE,HAIR_STYLES,HAT_STYLES,MII_HIP,MII_NECK_Y,MII_WAIST_Y,POSE,POSE_SIZE,faceLayer,footDrop,miiBodyGeometry,miiBodyMaterial,miiBodyScale,miiFaceAtlas,miiFaceGeometry,miiFaceMaterial,miiHair,miiHat,miiHead,miiShade,shapeGeometry,strideLength,type ActionName,type Look,type Lod} from "./wiiuPlazaMiiModel";
+import {ACTIONS,packMiiArm,packMiiOutfit,FACE,HAIR_STYLES,HAT_STYLES,MII_HIP,MII_NECK_Y,MII_WAIST_Y,POSE,POSE_SIZE,faceLayer,footDrop,miiBodyGeometry,miiBodyMaterial,miiBodyScale,miiFaceAtlas,miiFaceGeometry,miiFaceMaterial,miiHair,miiFittedHair,miiHat,miiHead,miiShade,shapeGeometry,strideLength,type ActionName,type Look,type Lod} from "./wiiuPlazaMiiModel";
 import {postFor,replyFor,shotPost} from "./wiiuPlazaPosts";
 import type {FeedPost} from "./wiiuPlazaFeed";
 import {useScreenshots} from "../media";
@@ -49,7 +51,7 @@ type Shape={positions:number[];normals?:number[];indices:number[];regions?:numbe
 function geometry(s:Shape){const g=new THREE.BufferGeometry();g.setAttribute('position',new THREE.Float32BufferAttribute(s.positions,3));g.setIndex(s.indices);if(s.uvs)g.setAttribute('uv',new THREE.Float32BufferAttribute(s.uvs,2));if(s.normals)g.setAttribute('normal',new THREE.Float32BufferAttribute(s.normals,3));else g.computeVertexNormals();return g;}
 type Act={name:ActionName;t:number;dur:number};
 type Face={eye:number;brow:number;mouth:number;tache:number;cheek:number;spacing:number;eyeY:number;mouthY:number;eyeCol:THREE.Color;lipCol:THREE.Color};
-type Person={group:THREE.Group;headMatrix?:THREE.Matrix4;phase:number;cluster:number;visitIn:number;goalX:number;goalZ:number;anchorX:number;anchorZ:number;wait:number;seed:number;buddy:number;host:boolean;falling:boolean;dropAt:number;vy:number;lift:number;name:string;roam:number;lookX:number;lookZ:number;chat:boolean;gender:number;hairStyle:number;hat:number;build:{x:number;y:number};base:number;
+type Person={group:THREE.Group;headMatrix?:THREE.Matrix4;phase:number;cluster:number;visitIn:number;goalX:number;goalZ:number;anchorX:number;anchorZ:number;wait:number;seed:number;buddy:number;host:boolean;falling:boolean;dropAt:number;vy:number;lift:number;name:string;roam:number;lookX:number;lookZ:number;chat:boolean;gender:number;outfit:number;hairStyle:number;hat:number;build:{x:number;y:number};base:number;
  colors:{shirt:THREE.Color;pants:THREE.Color;skin:THREE.Color;hair:THREE.Color;hat:THREE.Color};look:Look;face:Face;
  act:Act;prev:Act;blend:number;blendDur:number;pose:Float32Array;poseB:Float32Array;stride:number;idleStyle:number;energy:number;speed:number;runChance:number;running:boolean;headYaw:number;headPitch:number;
  focusUntil:number;camUntil:number;focusX:number;focusZ:number;huddle:{x:number;z:number;until:number}|null;queue:{name:ActionName;at:number}|null;blinkIn:number;blinking:number;talk:number;lod:number;debug:{act:ActionName;x:number;z:number;rot:number}|null;eyeCell:number;mouthCell:number};
@@ -76,8 +78,7 @@ const SPARKLES=Array.from({length:18},(_,i)=>({left:`${(i*37)%100}%`,delay:`${-(
 function IconArt({g}:{g:Game}){return <><GameArt flat g={g} kind="hero" fit="cover" style={{width:'100%',height:'100%'}}/><GameArt flat g={g} kind="logo" fit="contain" style={{position:'absolute',left:'9%',top:'14%',width:'82%',height:'72%',filter:'drop-shadow(0 1px 2px #000a)'}}/></>;}
 
 export function WaraWaraPlaza({iconGlass=false,posts:postsOn=true,postEvery=4200,drawings=true,crowd:crowdSize=1,games,selected,active,motion,hold=false,floorTexture,flatFloor=false,positions,tips,editing,onMove,onFocus,onPick,view:viewProp="console",marks="rings",feed=[]}:{iconGlass?:boolean;feed?:FeedPost[];posts?:boolean;postEvery?:number;drawings?:boolean;crowd?:number;view?:PlazaView;marks?:"rings"|"shadows"|"both";games:Game[];selected:number;active:boolean;motion:boolean;hold?:boolean;flatFloor?:boolean;floorTexture?:string;positions:Record<string,Spot>;tips:boolean;editing:boolean;onMove:(id:number,pos:Spot)=>void;onFocus:(i:number)=>void;onPick:(i:number)=>void}){
- const themeActive=useThemeActive(),themeLive=useRef(themeActive);themeLive.current=themeActive;
- const resume=useRef<(()=>void)|null>(null);useEffect(()=>{resume.current?.();},[themeActive]);
+ const personalMii=useSettings().personalMii;
  const [drag,setDrag]=useState<{id:number;pos:Spot}|null>(null),[posts,setPosts]=useState<Post[]>([]);
  const dragState=useRef<{id:number;startX:number;startY:number;moved:boolean}|null>(null),suppress=useRef(false);
  viewMode=viewProp;const liveMarks=useRef(marks);liveMarks.current=marks;
@@ -89,34 +90,63 @@ export function WaraWaraPlaza({iconGlass=false,posts:postsOn=true,postEvery=4200
  // Titles stay hidden during the close-up, then fly in; sparkles fall only during the close-up.
  const [opening,setOpening]=useState(()=>motion&&!plazaOpened&&!matchMedia('(prefers-reduced-motion: reduce)').matches);
  const shots=useScreenshots(),liveShots=useRef(shots);liveShots.current=shots;const liveDrawings=useRef(drawings);liveDrawings.current=drawings;
- const liveFeed=useRef(feed);liveFeed.current=feed;const feedAt=useRef(0);
+ const liveFeed=useRef(feed);liveFeed.current=feed;const postPolicy=useRef(new PlazaPostPolicy());
  const livePosts=useRef(posts);livePosts.current=posts;const liveSelected=useRef(selected);liveSelected.current=selected;const stageRef=useRef<((v:THREE.Vector3)=>{x:number;y:number})|null>(null);
  // The Miis around a newly selected title turn to it, and some cheer, clap, jump or point (handled in the render loop).
  const focusEvent=useRef<{index:number}|null>(null),liveActive=useRef(active);liveActive.current=active;
  useEffect(()=>{if(!active||calm)return;focusEvent.current={index:selected};},[selected,active]);
+ const selectionPost=useRef<{appid:number;expires:number}|null>(null),selectionLast=useRef(new Map<number,number>()),addSelectionPost=useRef<(()=>void)|null>(null);
+ const selectedApp=games[selected]?.appid;
+ useEffect(()=>{
+  selectionPost.current=null;
+  if(!active||calm||opening||!postsOn||selectedApp===undefined)return;
+  const timer=setTimeout(()=>{
+   const now=Date.now();if(now-(selectionLast.current.get(selectedApp)??0)<20000||Math.random()>=.85)return;
+   selectionLast.current.set(selectedApp,now);selectionPost.current={appid:selectedApp,expires:now+10000};addSelectionPost.current?.();
+  },2000+Math.floor(Math.random()*3001));
+  return()=>clearTimeout(timer);
+ },[selectedApp,active,calm,opening,postsOn]);
  // Posts: one bubble on each side of the Plaza, replaced in turn every few seconds.
  useEffect(()=>{
   if(calm||opening||!postsOn){setPosts([]);return;}let id=0;
-  const add=()=>{const crowd=people.current;id++;const slot=id%2;
+  const add=()=>{const crowd=people.current,policy=postPolicy.current;id++;const slot=id%2;
    // A post with a follow-up is always answered by a Mii nearby; otherwise one answers now and then.
-   const other=livePosts.current.find(x=>x.slot!==slot),asker=other&&!other.reply?crowd[other.mii]:undefined,follow=asker?other?.follow:undefined;
-   const around=(r:number)=>asker?crowd.map((p,i)=>({p,i})).filter(({p})=>p!==asker&&!p.falling&&p.group.visible&&p.group.position.distanceTo(asker.group.position)<r):[];
+   const other=livePosts.current.find(x=>x.slot!==slot),asker=other&&other.id===policy.lastBubble&&!other.reply&&(other.follow||/\?/.test(other.text))?crowd[other.mii]:undefined,follow=asker?other?.follow:undefined;
+   const around=(r:number)=>asker?crowd.map((p,i)=>({p,i})).filter(({p})=>p!==asker&&!p.host&&!p.falling&&p.group.visible&&p.group.position.distanceTo(asker.group.position)<r):[];
    const near=follow?(around(5).length?around(5):around(12)):asker&&Math.random()<.35?around(5):[],reply=near.length>0;
-   const side=reply?near:crowd.map((p,i)=>({p,i})).filter(({p})=>(slot?p.group.position.x>2&&p.group.position.x<19:p.group.position.x<-2&&p.group.position.x>-19)&&p.group.position.z>-9&&p.group.position.z<16),candidates=side.filter(({p})=>!p.falling&&p.group.visible&&(reply||!liveGames.current.length||p.cluster<liveGames.current.length));
-   if(!candidates.length)return;
+   const side=reply?near:crowd.map((p,i)=>({p,i})).filter(({p})=>(slot?p.group.position.x>2&&p.group.position.x<19:p.group.position.x<-2&&p.group.position.x>-19)&&p.group.position.z>-9&&p.group.position.z<16),candidates=side.filter(({p})=>!p.host&&!p.falling&&p.group.visible&&(reply||!liveGames.current.length||p.cluster<liveGames.current.length)&&(reply||policy.allowsGame(liveGames.current[p.cluster]?.appid)));
+
    // Prefer a speaker and bubble direction that leave the covers clear.
-   // Real activity (friends, notifications, unlocks) is said first; the sample posts only fill in when there is none.
-   const item=!reply&&liveFeed.current.length&&Math.random()<.7?liveFeed.current[feedAt.current++%liveFeed.current.length]:undefined,mine=item?.game?candidates.filter(c=>liveGames.current[c.p.cluster]?.appid===item.game!.appid):[],pool0=mine.length?mine:candidates;
+   // Activity is occasional and consumed once; author placement stays stable.
+   const available=crowd.map((p,i)=>({p,i})).filter(({p})=>!p.falling&&p.group.visible);
+   const wanted=selectionPost.current;
+   if(wanted&&(wanted.expires<Date.now()||liveGames.current[liveSelected.current]?.appid!==wanted.appid))selectionPost.current=null;
+   const preferred=!reply&&selectionPost.current&&policy.allowsGame(selectionPost.current.appid)?available.filter(c=>!c.p.host&&liveGames.current[c.p.cluster]?.appid===selectionPost.current!.appid):[];
+   const selectionDriven=preferred.length>0;
+   let item:FeedPost|undefined,pool0=selectionDriven?preferred:candidates;
+   if(!reply&&!selectionDriven&&policy.activityReady()){
+    for(const entry of liveFeed.current.filter(f=>policy.eligible(f))){
+     const author=entry.author??`system:${entry.name}`;
+     const used=new Set(policy.authors.values());
+     const speaker=entry.author==='self'?available.find(c=>c.p.host):available.find(c=>c.i===policy.authors.get(author))??available.find(c=>!c.p.host&&!used.has(c.i));
+     if(!speaker||livePosts.current.some(p=>p.mii===speaker.i&&p.slot!==slot))continue;
+     policy.authors.set(author,speaker.i);item=entry;pool0=[speaker];break;
+    }
+   }
+   if(!pool0.length)return;
    const stage=stageRef.current,covers=coverBoxes(coverEls.current),seed=Math.floor(Math.random()*997),aligns=slot?[.18,.5,.82]:[.82,.5,.18];
    const oe=other&&postEls.current[other.id];if(oe){const l=parseFloat(oe.style.left),t=parseFloat(oe.style.top),b={x0:l-20,x1:l+oe.offsetWidth+20,y0:t-36-oe.offsetHeight,y1:t+20};covers.push(b,b,b);}
    // About one post in four, for a game with screenshots, shows one of them like a drawing on the real Plaza.
    const shotFor=(g?:Game)=>{const own=g&&!reply&&liveDrawings.current?liveShots.current?.filter(s=>s.appid===g.appid):undefined;return own?.length&&seed%4===1?own[Math.floor(seed/4)%own.length]:undefined;};
-   const scored=pool0.flatMap(c=>{const g=liveGames.current[c.p.cluster],shot=item?undefined:shotFor(g),said=reply?{text:follow??replyFor(other?.game,seed)}:item?{text:item.text}:shot&&g?{text:shotPost(g,seed,shot.caption),shot:shot.url}:postFor(g,seed),text=said.text,width=shot?430:Math.min(540,150+text.length*11.5),head=stage?.(c.p.group.position.clone().setY(1.9));return aligns.map((align,k)=>({c,text,shot:'shot' in said?said.shot:undefined,follow:'follow' in said?said.follow:undefined,align,score:(head?hidden(bubbleBox(head,align,width,shot?96:text.length>80?120:96).box,covers,liveSelected.current):0)+k*400}));});
+   const scored=pool0.flatMap(c=>{const g=item?.game??liveGames.current[c.p.cluster],shot=item?undefined:shotFor(g),said=reply?{text:follow??replyFor(other?.game,seed)}:item?{text:item.text}:shot&&g?{text:shotPost(g,seed,shot.caption),shot:shot.url}:postFor(g,seed),text=said.text,width=shot?430:Math.min(540,150+text.length*11.5),head=stage?.(c.p.group.position.clone().setY(1.9));if(!reply&&!policy.allowsText(text))return [];return aligns.map((align,k)=>({c,text,shot:'shot' in said?said.shot:undefined,follow:'follow' in said?said.follow:undefined,align,score:(head?hidden(bubbleBox(head,align,width,shot?96:text.length>80?120:96).box,covers,liveSelected.current):0)+k*400}));});
+   if(!scored.length)return;
    scored.forEach(x=>{if(!Number.isFinite(x.score))x.score=1e9;});const best=Math.min(...scored.map(x=>x.score)),pool=scored.filter(x=>x.score<=best+600),pickd=pool[Math.floor(Math.random()*pool.length)]??scored[0],{p,i}=pickd.c;
    const game=reply?other?.game:item?item.game:liveGames.current[p.cluster];p.wait=Math.max(p.wait,7);p.talk=6.5;
    if(reply&&asker){p.chat=true;p.lookX=asker.group.position.x;p.lookZ=asker.group.position.z;}
+   policy.record(pickd.text,game?.appid,item);policy.lastBubble=id;if(selectionDriven)selectionPost.current=null;
    setPosts(list=>[...list.filter(post=>post.slot!==slot),{id,slot,align:pickd.align,mii:i,name:item?.name??p.name,kind:item?.kind,text:pickd.text,follow:pickd.follow,game,reply,shot:pickd.shot}]);};
-  const first=setTimeout(add,2800),second=setTimeout(add,4800),timer=setInterval(add,postEvery);return()=>{clearTimeout(first);clearTimeout(second);clearInterval(timer);};
+  addSelectionPost.current=add;
+  const first=setTimeout(add,2800),second=setTimeout(add,4800),timer=setInterval(add,postEvery);return()=>{addSelectionPost.current=null;clearTimeout(first);clearTimeout(second);clearInterval(timer);};
  },[calm,opening,postsOn,postEvery]);
  // Tips are system hints, not Mii posts: one quiet line at the bottom, changing every few seconds.
  const [tip,setTip]=useState(0);
@@ -144,13 +174,15 @@ export function WaraWaraPlaza({iconGlass=false,posts:postsOn=true,postEvery=4200
   const bodies=[0,1].map(lod=>[false,true].map(female=>{const g=miiBodyGeometry(female,lod as Lod);geometries.push(g);return g;}));
   const shape=(s:ReturnType<typeof miiHead>)=>{const g=shapeGeometry(s);geometries.push(g);return g;};
   const headGeo=[0,1].map(lod=>shape(miiHead(lod as Lod))),hairGeo=[0,1].map(lod=>Array.from({length:HAIR_STYLES},(_,s)=>shape(miiHair(s,lod as Lod)))),hatGeo=Array.from({length:HAT_STYLES},(_,s)=>shape(miiHat(s,0)));
+  const fittedHatHair=[0,1].map(lod=>shape(miiFittedHair(0,0,lod as Lod)));
   const atlas=new THREE.CanvasTexture(miiFaceAtlas());atlas.colorSpace=THREE.NoColorSpace;atlas.anisotropy=2;textures.push(atlas);
   const faceGeo=miiFaceGeometry();geometries.push(faceGeo);
   // Soft blob shadow under every Mii: a radial falloff, smaller and fainter while the Mii is in the air.
   const shadow=new THREE.PlaneGeometry(2,2);geometries.push(shadow);
   const shadowMaterial=new THREE.ShaderMaterial({transparent:true,depthWrite:false,vertexShader:'varying vec2 vUv;void main(){vUv=uv;gl_Position=projectionMatrix*modelViewMatrix*instanceMatrix*vec4(position,1.0);}',fragmentShader:'varying vec2 vUv;void main(){float d=length(vUv-.5)*2.0;float a=1.0-smoothstep(.15,1.0,d);gl_FragColor=vec4(.27,.33,.36,a*a*.34);}'});materials.push(shadowMaterial);
   const crowd:Person[]=[];
-  const bodyMaterials=[miiBodyMaterial(false),miiBodyMaterial(true)];materials.push(...bodyMaterials);
+  const logoTexture=personalMii?.logo?new THREE.TextureLoader().load(personalMii.logo,()=>{dirty=true;}):undefined;if(logoTexture){logoTexture.colorSpace=THREE.SRGBColorSpace;textures.push(logoTexture);}
+  const bodyMaterials=[miiBodyMaterial(false,logoTexture,personalMii?.accent),miiBodyMaterial(true,logoTexture,personalMii?.accent)];materials.push(...bodyMaterials);
   const skinMaterial=miiShade(new THREE.MeshLambertMaterial({vertexColors:true})),hairMaterial=miiShade(new THREE.MeshLambertMaterial({vertexColors:true,side:THREE.DoubleSide}),{gloss:.14,rim:.2}),featureMaterial=miiShade(new THREE.MeshLambertMaterial({vertexColors:true})),faceMaterial=miiFaceMaterial(atlas);materials.push(skinMaterial,hairMaterial,featureMaterial,faceMaterial);
   const intro=opening&&liveMotion.current&&!matchMedia('(prefers-reduced-motion: reduce)').matches;
   // Anchors: one per game, plus quiet "ambient" spots over the rest of the floor, so a library with few games
@@ -161,22 +193,22 @@ export function WaraWaraPlaza({iconGlass=false,posts:postsOn=true,postEvery=4200
     const seed=cluster*91+j*23+1,pick=(n:number,salt:number)=>{let h=Math.imul(seed^Math.imul(salt,0x9e3779b9),0x85ebca6b);h^=h>>>13;h=Math.imul(h,0xc2b2ae35);h^=h>>>16;return (h>>>0)%n;}; // well-mixed bits: gender follows seed parity, so low bits alone would tie looks to gender
     const phase=cluster*2.33+j*1.71,angle=j*2.39996;
     // Height and build 0-127 like a real Mii, most near the default 64; the body scale is applied in the shader, the head keeps its size.
-    const group=new THREE.Group(),build=host?miiBodyScale(64,64):miiBodyScale(pick(65,1)+pick(64,2),pick(65,18)+pick(64,19)),base=host?.115:.1+(j%3)*.005;group.scale.setScalar(base);
-    const gender=host?1:(cluster+j)%2,shirtColor=host?SHIRTS[0]:SHIRTS[pick(SHIRTS.length,3)],skin=host?0:SKIN_PICK[pick(SKIN_PICK.length,4)],pants=host?'#702015':PANTS[pick(PANTS.length,5)];
-    const hairIndex=host?1:HAIR_PICK[pick(HAIR_PICK.length,6)],look:Look=host?{glasses:0,beard:0}:{glasses:pick(6,9)===0?1+pick(3,12):0,beard:gender===0&&pick(7,15)===0?1:0};
+    const group=new THREE.Group(),build=host?miiBodyScale(personalMii?.height??64,personalMii?.build??64):miiBodyScale(pick(65,1)+pick(64,2),pick(65,18)+pick(64,19)),base=host?.115:.1+(j%3)*.005;group.scale.setScalar(base);
+    const gender=host?(personalMii?.female?1:0):(cluster+j)%2,shirtColor=host?(personalMii?.shirt??SHIRTS[0]):SHIRTS[pick(SHIRTS.length,3)],skin=host?0:SKIN_PICK[pick(SKIN_PICK.length,4)],pants=host?(personalMii?.pants??'#41464d'):PANTS[pick(PANTS.length,5)];
+    const hairIndex=host?1:HAIR_PICK[pick(HAIR_PICK.length,6)],look:Look=host?{glasses:personalMii?.glasses?1:0,beard:personalMii?.beard?1:0}:{glasses:pick(6,9)===0?1+pick(3,12):0,beard:gender===0&&pick(7,15)===0?1:0};
     // Hair: female Miis mostly bob, long or pigtails; male Miis mostly short or spiky, a few curly; one in nine wears a hat.
-    const hat=!host&&pick(9,21)===0?pick(HAT_STYLES,22):-1,hairStyle=host?1:hat>=0?0:gender===1?[1,1,1,3,3,4,0,5][pick(8,20)]:[0,0,0,0,2,2,5,1][pick(8,20)];
-    const tache=gender===0&&!host&&pick(6,23)===0?pick(FACE.moustaches-1,24):look.beard?3:-1;
-    const face:Face={eye:host?0:[0,0,1,1,2,3,4,5,6,7,8,9][pick(12,17)],brow:host?0:pick(FACE.brows,13),mouth:host?0:[0,0,0,1,2,3,4,5,6,7,8,9][pick(12,14)],tache:tache<0?FACE.NONE:FACE.MOUSTACHE0+tache,cheek:pick(7,25)===0?FACE.CHEEK_FRECKLES:gender===1&&pick(3,26)===0?FACE.CHEEK_BLUSH:FACE.NONE,
-     spacing:(pick(9,27)-4)*.035,eyeY:(pick(9,28)-4)*.04,mouthY:(pick(9,29)-4)*.035,eyeCol:color(EYE_COLORS[[0,0,0,1,2,2,3,4,5][pick(9,30)]]),lipCol:color(LIPS[pick(LIPS.length,31)])};
+    const hat=host?(personalMii?.hat??-1):pick(4,21)===0?pick(HAT_STYLES,22):-1,hairStyle=host?(personalMii?.hairStyle??1):hat>=0?0:gender===1?[1,1,1,3,3,4,0,5][pick(8,20)]:[0,0,0,0,2,2,5,1][pick(8,20)];
+    const tache=host&&personalMii?.moustache?0:gender===0&&!host&&pick(6,23)===0?pick(FACE.moustaches-1,24):look.beard?3:-1;
+    const face:Face={eye:host?(personalMii?.eyes??0):[0,0,1,1,2,3,4,5,6,7,8,9][pick(12,17)],brow:host?(personalMii?.brows??0):pick(FACE.brows,13),mouth:host?(personalMii?.mouth??0):[0,0,0,1,2,3,4,5,6,7,8,9][pick(12,14)],tache:tache<0?FACE.NONE:FACE.MOUSTACHE0+tache,cheek:pick(7,25)===0?FACE.CHEEK_FRECKLES:gender===1&&pick(3,26)===0?FACE.CHEEK_BLUSH:FACE.NONE,
+     spacing:host?(personalMii?.eyeSpacing??0)*.02:(pick(9,27)-4)*.035,eyeY:host?-(personalMii?.eyeY??0)*.02:(pick(9,28)-4)*.04,mouthY:host?-(personalMii?.mouthY??0)*.02:(pick(9,29)-4)*.035,eyeCol:color(host&&personalMii?.eyeColor?personalMii.eyeColor:EYE_COLORS[[0,0,0,1,2,2,3,4,5][pick(9,30)]]),lipCol:color(host&&personalMii?.lipColor?personalMii.lipColor:LIPS[pick(LIPS.length,31)])};
     // Loose, wide crowds like the console's: a few stay close, most wander the space between titles.
     const roam=1.6+pick(4,8)*.9,radius=.9+Math.sqrt(j)*1.15,mid=j%3===2?.3+(j%4)*.1:0;const x=host?0:Math.max(-21,Math.min(21,spot.x*(1-mid)+Math.cos(angle)*radius)),z=host?1:Math.max(-17,Math.min(17,(spot.z+2.6)*(1-mid)+1.5*mid+Math.sin(angle)*radius));
     // Opening: everyone but the host Mii waits out of sight, then drops in at its spot.
     const falling=intro&&!host;group.position.set(x,0,z);group.visible=!falling;
     group.rotation.y=host?0:Math.atan2(spot.x-x,spot.z-z);
     const energy=pick(100,32)/100;
-    crowd.push({group,phase,cluster,visitIn:cluster<realCount?14+j*2+cluster*.6:1e9,goalX:x,goalZ:z,anchorX:spot.x,anchorZ:spot.z,wait:host&&intro?INTRO.closeUp+INTRO.pullBack+.5:1+j*.7,seed,buddy:!host&&j>0&&pick(4,11)===0?crowd.length-1:-1,host,falling,dropAt:INTRO.dropFrom+pick(100,10)/100*INTRO.dropSpread,vy:0,lift:0,name:NAMES[pick(NAMES.length,7)],roam,lookX:spot.x,lookZ:spot.z,chat:false,gender,hairStyle,hat,build,base,
-     colors:{shirt:color(shirtColor),pants:color(pants),skin:color(SKIN[skin]),hair:color(HAIR[hairIndex]),hat:color(HATS[pick(HATS.length,33)])},look,face,
+    crowd.push({group,phase,cluster,visitIn:cluster<realCount?14+j*2+cluster*.6:1e9,goalX:x,goalZ:z,anchorX:spot.x,anchorZ:spot.z,wait:host&&intro?INTRO.closeUp+INTRO.pullBack+.5:1+j*.7,seed,buddy:!host&&j>0&&pick(4,11)===0?crowd.length-1:-1,host,falling,dropAt:INTRO.dropFrom+pick(100,10)/100*INTRO.dropSpread,vy:0,lift:0,name:host&&personalMii?personalMii.name:NAMES[pick(NAMES.length,7)],roam,lookX:spot.x,lookZ:spot.z,chat:false,gender,outfit:host?(personalMii?.outfit??0):pick(10,41),hairStyle,hat,build,base,
+     colors:{shirt:color(shirtColor),pants:color(pants),skin:color(host&&personalMii?personalMii.skin:SKIN[skin]),hair:color(host&&personalMii?personalMii.hair:HAIR[hairIndex]),hat:color(host&&personalMii?.hatColor?personalMii.hatColor:HATS[pick(HATS.length,33)])},look,face,
      act:{name:falling?'fall':'idle',t:pick(100,34)/10,dur:1e9},prev:{name:'idle',t:0,dur:1e9},blend:1,blendDur:.28,pose:new Float32Array(POSE_SIZE),poseB:new Float32Array(POSE_SIZE),stride:pick(100,35)/16,idleStyle:[0,0,0,1,2,3,4,4][pick(8,36)],energy,
      speed:.56+energy*.3+pick(10,37)*.012,runChance:.04+energy*.22,running:false,headYaw:0,headPitch:0,focusUntil:-1,camUntil:-1,focusX:0,focusZ:0,huddle:null,queue:null,blinkIn:1+pick(40,38)/10,blinking:0,talk:0,lod:1,debug:null,eyeCell:face.eye,mouthCell:face.mouth});
   };
@@ -184,6 +216,8 @@ export function WaraWaraPlaza({iconGlass=false,posts:postsOn=true,postEvery=4200
   for(let c=0;c<realCount+extras.length;c++)for(let j=0;j<perSpot(c);j++)addMii(anchorOf(c),c,j);
   // The host: the lone Mii in the middle that the opening starts on (like the player's own Mii).
   if(realCount+extras.length){const near=Array.from({length:realCount+extras.length},(_,i)=>i).reduce((b,i)=>Math.hypot(anchorOf(i).x,anchorOf(i).z-1)<Math.hypot(anchorOf(b).x,anchorOf(b).z-1)?i:b,0);addMii({x:0,z:1},near,0,true);crowd[crowd.length-1].anchorX=0;crowd[crowd.length-1].anchorZ=1;}
+  const personalAvatar=personalMii?createMiiAvatar(personalMii):undefined;
+  if(personalAvatar){personalAvatar.root.matrixAutoUpdate=false;scene.add(personalAvatar.root);}
   people.current=crowd;
   // Instanced batches. Every frame each batch is refilled with the Miis it currently draws (by gender, hair style and
   // level of detail), so far Miis use the cheap meshes and nobody costs vertex work in a mesh they are not shown in.
@@ -194,16 +228,18 @@ export function WaraWaraPlaza({iconGlass=false,posts:postsOn=true,postEvery=4200
   const batch=(geo:THREE.BufferGeometry,mat:THREE.Material,accept:(p:Person)=>boolean,matrix:(p:Person)=>THREE.Matrix4,attrs:[string,number,Writer][]=[],tint?:(p:Person)=>THREE.Color)=>{
    const g=attrs.length?geo.clone():geo;if(g!==geo)geometries.push(g);
    const list=attrs.map(([name,size,w])=>{const a=new THREE.InstancedBufferAttribute(new Float32Array(cap*size),size);a.setUsage(THREE.DynamicDrawUsage);g.setAttribute(name,a);return {a,w};});
-   const m=new THREE.InstancedMesh(g,mat,cap);m.frustumCulled=false;m.instanceMatrix.setUsage(THREE.DynamicDrawUsage);if(tint){m.setColorAt(0,new THREE.Color());m.instanceColor!.setUsage(THREE.DynamicDrawUsage);}scene.add(m);batches.push({m,accept,matrix,attrs:list,tint});};
+   const m=new THREE.InstancedMesh(g,mat,cap);m.frustumCulled=false;m.instanceMatrix.setUsage(THREE.DynamicDrawUsage);if(tint){m.setColorAt(0,new THREE.Color());m.instanceColor!.setUsage(THREE.DynamicDrawUsage);}scene.add(m);batches.push({m,accept:p=>(!personalMii||!p.host)&&accept(p),matrix,attrs:list,tint});};
   const level=(p:Person)=>p.lod>0?1:0,P=POSE,v3=(c:THREE.Color,a:Float32Array,o:number)=>{a[o]=c.r;a[o+1]=c.g;a[o+2]=c.b;};
   const bodyMat=(p:Person)=>p.group.matrix,headMat=(p:Person)=>p.headMatrix!;
   for(const lod of [0,1])for(const gd of [0,1])batch(bodies[lod][gd],bodyMaterials[gd],p=>p.gender===gd&&level(p)===lod,bodyMat,[
-   ['aArmL',4,(p,a,o)=>{a[o]=p.pose[P.LR];a[o+1]=p.pose[P.LP];a[o+2]=p.pose[P.LEZ];a[o+3]=p.pose[P.LEX];}],
-   ['aArmR',4,(p,a,o)=>{a[o]=p.pose[P.RR];a[o+1]=p.pose[P.RP];a[o+2]=p.pose[P.REZ];a[o+3]=p.pose[P.REX];}],
+   ['aArmL',4,(p,a,o)=>{a[o]=p.pose[P.LR];a[o+1]=p.pose[P.LP];a[o+2]=packMiiArm(p.pose[P.LEZ],p.pose[P.LT]);a[o+3]=p.pose[P.LEX];}],
+   ['aArmR',4,(p,a,o)=>{a[o]=p.pose[P.RR];a[o+1]=p.pose[P.RP];a[o+2]=packMiiArm(p.pose[P.REZ],p.pose[P.RT]);a[o+3]=p.pose[P.REX];}],
+   ['aKnees',4,(p,a,o)=>{a[o]=p.pose[P.LK];a[o+1]=p.pose[P.RK];a[o+2]=p.pose[P.LS];a[o+3]=p.pose[P.RS];}],
    ['aLegs',4,(p,a,o)=>{a[o]=p.pose[P.LL];a[o+1]=p.pose[P.RL];a[o+2]=p.pose[P.TP];a[o+3]=p.pose[P.TR];}],
    // Colours, with the body scale (width, height) packed in the fourth component to stay within 16 vertex attributes.
-   ['aShirt',4,(p,a,o)=>{v3(p.colors.shirt,a,o);a[o+3]=p.build.x;}],['aPants',4,(p,a,o)=>{v3(p.colors.pants,a,o);a[o+3]=p.build.y;}],['aSkin',3,(p,a,o)=>v3(p.colors.skin,a,o)]]);
-  for(const lod of [0,1]){batch(headGeo[lod],skinMaterial,p=>level(p)===lod,headMat,[],p=>p.colors.skin);for(let s=0;s<HAIR_STYLES;s++)batch(hairGeo[lod][s],hairMaterial,p=>level(p)===lod&&p.hairStyle===s,headMat,[],p=>p.colors.hair);}
+   ['aShirt',4,(p,a,o)=>{v3(p.colors.shirt,a,o);a[o+3]=p.build.x;}],['aPants',4,(p,a,o)=>{v3(p.colors.pants,a,o);a[o+3]=p.build.y;}],['aSkin',4,(p,a,o)=>{v3(p.colors.skin,a,o);a[o+3]=packMiiOutfit(p.outfit+(p.host?16:0),p.pose[P.TY]);}]]);
+  for(const lod of [0,1]){batch(headGeo[lod],skinMaterial,p=>level(p)===lod,headMat,[],p=>p.colors.skin);for(let s=0;s<HAIR_STYLES;s++)batch(hairGeo[lod][s],hairMaterial,p=>level(p)===lod&&p.hairStyle===s&&(p.hat<0||p.hat===3),headMat,[],p=>p.colors.hair);}
+  for(const lod of [0,1])batch(fittedHatHair[lod],hairMaterial,p=>level(p)===lod&&p.hat>=0&&p.hat!==3,headMat,[],p=>p.colors.hair);
   for(let s=0;s<HAT_STYLES;s++)batch(hatGeo[s],hairMaterial,p=>p.hat===s,headMat,[],p=>p.colors.hat);
   batch(faceGeo,faceMaterial,()=>true,headMat,[
    ['aFace',4,(p,a,o)=>{a[o]=p.eyeCell;a[o+1]=FACE.BROW0+p.face.brow;a[o+2]=p.mouthCell;a[o+3]=p.face.tache;}],
@@ -224,7 +260,7 @@ export function WaraWaraPlaza({iconGlass=false,posts:postsOn=true,postEvery=4200
   const mWaist=new THREE.Matrix4(),mTmp=new THREE.Matrix4(),mHead=new THREE.Matrix4(),eHead=new THREE.Euler(0,0,0,'YXZ');
   const placeHead=(p:Person)=>{
    const w=MII_WAIST_Y*p.build.y,pose=p.pose;
-   mWaist.makeTranslation(0,w,0).multiply(mTmp.makeRotationZ(pose[P.TR])).multiply(mTmp.makeRotationX(pose[P.TP])).multiply(mTmp.makeTranslation(0,MII_NECK_Y*p.build.y-w,0));
+   mWaist.makeTranslation(0,w,0).multiply(mTmp.makeRotationY(pose[P.TY])).multiply(mTmp.makeRotationZ(pose[P.TR])).multiply(mTmp.makeRotationX(pose[P.TP])).multiply(mTmp.makeTranslation(0,MII_NECK_Y*p.build.y-w,0));
    eHead.set(pose[P.HP],pose[P.HY],pose[P.HR]);mHead.makeRotationFromEuler(eHead);
    p.headMatrix=(p.headMatrix??new THREE.Matrix4()).multiplyMatrices(p.group.matrix,mWaist).multiply(mHead);
   };
@@ -265,7 +301,7 @@ export function WaraWaraPlaza({iconGlass=false,posts:postsOn=true,postEvery=4200
    members.forEach((p,i)=>{const a=a0+i*Math.PI*2/members.length;p.huddle={x:cx,z:cz,until};p.goalX=cx+Math.cos(a)*r;p.goalZ=cz+Math.sin(a)*r;p.wait=0;p.running=false;});
   };
 
-  const draw=(now:number)=>{raf=0;if(el.ownerDocument.hidden||!themeLive.current)return;raf=requestAnimationFrame(draw);if(now-last<33)return;if(hook.dirty){hook.dirty=false;dirty=true;}if(liveMarks.current!==drawnMarks||viewMode!==drawnView){drawnMarks=liveMarks.current;drawnView=viewMode;dirty=true;}
+  const draw=(now:number)=>{raf=requestAnimationFrame(draw);if(document.hidden||now-last<33)return;if(hook.dirty){hook.dirty=false;dirty=true;}if(liveMarks.current!==drawnMarks||viewMode!==drawnView){drawnMarks=liveMarks.current;drawnView=viewMode;dirty=true;}
    // The launch panel stops the crowd; give the Miis by that title a moment to cheer first.
    if(!liveMotion.current&&wasMoving&&reactLeft<0&&liveActive.current&&!reduce.matches&&document.querySelector('.nt-banner')){reactLeft=3;react(liveSelected.current,true);}
    const reacting=reactLeft>0;if(liveMotion.current)reactLeft=-1;
@@ -370,10 +406,11 @@ export function WaraWaraPlaza({iconGlass=false,posts:postsOn=true,postEvery=4200
    [...livePosts.current].sort((x,y)=>x.id-y.id).forEach(post=>{const el=postEls.current[post.id],p=crowd[post.mii];if(!el||!p)return;const s=stage(p.group.position.clone().setY(p.group.position.y+1.9)),width=el.offsetWidth||540,height=el.offsetHeight||96,box=bubbleBox(s,post.align,width,height);let {left,top}=box;
     for(const o of placed){if(left<o.r+12&&left+width>o.l-12&&top-height-40<o.t&&top>o.t-o.h-40){const opts=[o.l-12-width,o.r+12].filter(x=>x>=14&&x<=1266-width).sort((x,y)=>Math.abs(x-left)-Math.abs(y-left));if(opts.length&&Math.abs(opts[0]-left)<width*.8)left=opts[0];else top=Math.max(height+60,o.t-o.h-44);}}
     placed.push({l:left,r:left+width,t:top,h:height});el.style.left=`${left}px`;el.style.top=`${top}px`;el.style.setProperty('--speaker-x',`${Math.max(28,Math.min(width-28,s.x-left))}px`);});
+   if(personalAvatar){const host=crowd.find(p=>p.host);if(host){personalAvatar.setPose(host.pose);personalAvatar.setExpression(host.blinking>0,host.talk>0&&Math.sin(clock*12)>.2);personalAvatar.root.matrix.copy(host.group.matrix);personalAvatar.root.visible=host.group.visible;}}
    fill();renderer.render(scene,view);el.dataset.calls=String(renderer.info.render.calls);el.dataset.tris=String(renderer.info.render.triangles);hook.frame=++frame;
-  };const restart=()=>{cancelAnimationFrame(raf);draw(performance.now());};resume.current=restart;el.ownerDocument.addEventListener("visibilitychange",restart);restart();setReady(true);
-  return()=>{resume.current=null;el.ownerDocument.removeEventListener("visibilitychange",restart);disposed=true;cancelAnimationFrame(raf);shades.dispose();rings.dispose();coverShadows.dispose();batches.forEach(b=>b.m.dispose());people.current=[];floorMap?.dispose();textures.forEach(t=>t.dispose());geometries.forEach(g=>g.dispose());materials.forEach(m=>m.dispose());el.removeEventListener("webglcontextlost",lost);renderer.dispose();};
- },[games.length,floorTexture,flatFloor,crowdSize]);
+  };draw(performance.now());setReady(true);
+  return()=>{personalAvatar?.dispose();disposed=true;cancelAnimationFrame(raf);shades.dispose();rings.dispose();coverShadows.dispose();batches.forEach(b=>b.m.dispose());people.current=[];floorMap?.dispose();textures.forEach(t=>t.dispose());geometries.forEach(g=>g.dispose());materials.forEach(m=>m.dispose());el.removeEventListener("webglcontextlost",lost);renderer.dispose();};
+ },[games.length,floorTexture,flatFloor,crowdSize,personalMii]);
  return <section className="nt-plaza dht-wiiu-plaza" aria-label="WaraWara Plaza" data-view={viewProp} data-ready={ready&&!failed} data-hold={hold} data-opening={opening}>
   <canvas ref={canvas} className="dht-wiiu-plaza-canvas" aria-hidden="true"/>
   {failed&&<p className="nt-plaza-fallback dht-wiiu-plaza-note">3D crowd unavailable. Your games are still available.</p>}
@@ -381,7 +418,7 @@ export function WaraWaraPlaza({iconGlass=false,posts:postsOn=true,postEvery=4200
   {opening&&<div className="nt-plaza-sparkles" aria-hidden="true">{SPARKLES.map((p,i)=><i key={i} style={{left:p.left,animationDelay:p.delay,width:p.size,height:p.size}}/>)}</div>}
   {!games.length&&<p className="nt-plaza-fallback dht-wiiu-plaza-note">Your games will gather here when your library loads.</p>}
   {tips&&!opening&&<p key={tip} className="nt-plaza-tip dht-wiiu-tip" role="status"><span>Tip</span>{TIPS[tip%TIPS.length]}</p>}
-  {posts.map(post=><div key={post.id} ref={el=>{postEls.current[post.id]=el;}} className="nt-plaza-post dht-wiiu-post" data-reply={!!post.reply} data-kind={post.kind} data-long={post.text.length>80} data-shot={!!post.shot} data-side={post.slot?"right":"left"} role="status"><b>{post.name}</b><span className="nt-post-icon" data-glyph={!post.game&&!!post.kind||undefined}>{post.game?<IconArt g={post.game}/>:post.kind?<Icon name={post.kind==="friend"?"friends":post.kind==="achievement"?"trophy":post.kind==="download"?"download":"bell"} size={36}/>:null}</span><p>{post.text}</p>{post.shot&&<img className="nt-post-shot" src={post.shot} alt=""/>}</div>)}
+  {posts.map(post=><div key={post.id} ref={el=>{postEls.current[post.id]=el;}} className="nt-plaza-post dht-wiiu-post" data-game-appid={post.game?.appid} data-reply={!!post.reply} data-kind={post.kind} data-long={post.text.length>80} data-shot={!!post.shot} data-side={post.slot?"right":"left"} role="status"><b>{post.name}</b><span className="nt-post-icon" data-glyph={!post.game&&!!post.kind||undefined}>{post.game?<IconArt g={post.game}/>:post.kind?<Icon name={post.kind==="friend"?"friends":post.kind==="achievement"?"trophy":post.kind==="download"?"download":"bell"} size={36}/>:null}</span><p>{post.text}</p>{post.shot&&<img className="nt-post-shot" src={post.shot} alt=""/>}</div>)}
   <div className="nt-plaza-caption">{editing?"Move cover: D-pad · A / B finish":"WaraWara Plaza"} <small>Your library · Decorative crowd</small></div>
  </section>;
 }

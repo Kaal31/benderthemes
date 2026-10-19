@@ -208,6 +208,7 @@ export type DateFormat = "MDY" | "DMY" | "YMD";
 export type StandardOptions = Pick<Settings, StandardKey>;
 
 export interface Settings {
+  personalMii?: {faceShape?:number;beardStyle?:number;moustacheStyle?:number;glassesStyle?:number;earrings?:number;faceStyle?:"drawn"|"detailed";portrait?:string;logoMedia?:"image"|"animated"|"video";decal?:{part:string;point:[number,number,number];normal:[number,number,number];opacity:number;rotation:number;rotationX?:number;rotationY?:number;size:number};accent?:string;logo?:string;logoGame?:string;hat?:number;hatColor?:string;pants?:string;outfit?:number;brows?:number;eyeColor?:string;lipColor?:string;eyeSpacing?:number;eyeY?:number;mouthY?:number;beard?:boolean;moustache?:boolean;name:string;skin:string;hair:string;shirt:string;hairStyle:number;eyes:number;mouth:number;glasses:boolean;female:boolean;height:number;build:number};
   profilePictures?: Record<string,string>;
   /** The theme (engine manifest id) in use; "" = chosen the old way (layout + skin file). */
   activeTheme: string;

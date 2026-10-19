@@ -112,9 +112,10 @@ export function miiBody(female: boolean, lod: Lod = 0): MiiShape {
   for (const side of [-1, 1]) {
     const upper = side < 0 ? 1 : 2, fore = side < 0 ? 5 : 6, leg = side < 0 ? 3 : 4;
     // Legs: darker high up where the dress or the shirt hangs over them.
-    for (const g of limb(new THREE.Vector3(side * hip.x, hip.y, 0), new THREE.Vector3(side * hip.x, .55, .02), legR, legR * .88, lod)) parts.push({ g, region: 1, bone: leg, ao: p => (female ? .62 + .38 * smooth(2.9, 1.7, p.y) : .82 + .18 * smooth(3.6, 2.6, p.y)) });
+    const knee=new THREE.Vector3(side*hip.x,(hip.y+.55)/2,.01),shin=side<0?7:8;
+    for(const [a,b,bone,r1,r2] of [[new THREE.Vector3(side*hip.x,hip.y,0),knee,leg,legR,legR*.94],[knee,new THREE.Vector3(side*hip.x,.55,.02),shin,legR*.94,legR*.88]] as const)for(const g of limb(a,b,r1,r2,lod))parts.push({g,region:1,bone});
     const foot = new THREE.Vector3(side * hip.x, .37, .14);
-    parts.push({ g: shoe(foot, lod), region: p => (p.y < foot.y - .17 ? 4 : 3), bone: leg, ball: foot });
+    parts.push({ g: shoe(foot, lod), region: p => (p.y < foot.y - .17 ? 4 : 3), bone: shin, ball: foot });
     // Arms: upper arm and forearm meet at the elbow; the forearm and fist turn together.
     const s = new THREE.Vector3(side * MII_SHOULDER.x, MII_SHOULDER.y, 0), e = new THREE.Vector3(side * elbow.x, elbow.y, .02), w = new THREE.Vector3(side * wrist.x, wrist.y, .05);
     for (const g of limb(s, e, .4, .38, lod)) parts.push({ g, region: 0, bone: upper, ao: p => .86 + .14 * smooth(6.9, 6.2, p.y) });
@@ -129,6 +130,7 @@ export function miiBody(female: boolean, lod: Lod = 0): MiiShape {
 export function miiBodyGeometry(female: boolean, lod: Lod = 0) {
   const s = miiBody(female, lod), g = new THREE.BufferGeometry();
   g.setAttribute("position", new THREE.Float32BufferAttribute(s.positions, 3));
+  g.setAttribute("aClothRest", new THREE.Float32BufferAttribute(s.positions, 3));
   g.setAttribute("normal", new THREE.Float32BufferAttribute(s.normals, 3));
   // Bone, region and occlusion share one attribute (a vertex shader has only 16 attribute slots, and the instanced pose uses many).
   g.setAttribute("aPart", new THREE.Float32BufferAttribute(s.bones.flatMap((b, i) => [b, s.regions[i], s.ao[i]]), 3));
@@ -147,13 +149,16 @@ export function shapeGeometry(s: MiiShape) {
 }
 
 // Head: a rounded block with a flat face at the front, a small nose and ears. Its origin is the neck joint.
-export function miiHead(lod: Lod = 0): MiiShape {
+export function miiHead(lod: Lod = 0, flatFace=false,referenceShape=false): MiiShape {
   const d = DETAIL[lod], face = new THREE.SphereGeometry(1, d.head[0], d.head[1]), p = face.getAttribute("position"), v = new THREE.Vector3();
   for (let i = 0; i < p.count; i++) {
     v.fromBufferAttribute(p, i);
     // Squarer than a sphere (a superellipse), wider at the cheeks than at the chin.
     const sq = (x: number) => Math.sign(x) * Math.pow(Math.abs(x), .82);
     let x = sq(v.x) * 2.7, y = sq(v.y) * 2.35 + 2.38, z = sq(v.z) * 3.1;
+    // Our own procedural shape, guided by the broad cheeks, soft jaw and flat
+    // front seen in the reference. No extracted vertices or UVs are used.
+    if(referenceShape){x=Math.sign(v.x)*Math.pow(Math.abs(v.x),.9)*2.68;y=v.y*2.32+2.38;z=v.z*3.08;if(y<1.65)x*=.76+.24*Math.max(0,y)/1.65;}
     if (y < 1.4) x *= .82 + .18 * (y / 1.4);
     if (z > 2.3) z = 2.3;
     p.setXYZ(i, x, y, z);
@@ -161,8 +166,9 @@ export function miiHead(lod: Lod = 0): MiiShape {
   face.computeVertexNormals();
   const nose = new THREE.SphereGeometry(1, d.small[0], d.small[1]); nose.scale(.3, .36, .4); nose.translate(0, 2.02, 2.3);
   const ears = [-1, 1].map(side => { const e = new THREE.SphereGeometry(1, d.small[0], d.small[1]); e.scale(.26, .46, .36); e.translate(side * 2.6, 2.6, .25); return { g: e, region: 2, ao: () => .9 }; });
+  if(flatFace)nose.dispose();
   // Under the chin and at the back of the jaw the head is darker (soft occlusion against the neck and collar).
-  return build([{ g: face, region: 2, ao: q => .78 + .22 * smooth(.15, 1.5, q.y) }, { g: nose, region: 2 }, ...ears]);
+  return build([{ g: face, region: 2, ao: q => .78 + .22 * smooth(.15, 1.5, q.y) }, ...(flatFace?[]:[{ g: nose, region: 2 }]), ...ears]);
 }
 
 // Hair styles, each drawn as one instanced mesh for the whole crowd:
@@ -212,21 +218,31 @@ export function miiHair(style = 0, lod: Lod = 0): MiiShape {
   }
   return build(parts);
 }
+/** The same fitted hair mesh is used by the creator, personal Mii and NPC crowd. */
+export function miiFittedHair(style:number,hat:number,lod:Lod=0){
+ const shape=miiHair(style,lod);
+ if(hat<0||hat===3)return shape;
+ const g=shapeGeometry(shape),p=g.getAttribute('position');
+ for(let i=0;i<p.count;i++){
+  let x=p.getX(i),y=p.getY(i),z=p.getZ(i);
+  if(y>3.85){const radius=Math.sqrt((x/3.05)**2+((z+.25)/3.35)**2);if(radius>1){x/=radius;z=(z+.25)/radius-.25;}y=Math.min(6.35,3.85+(y-3.85)*.7);}
+  p.setXYZ(i,x,y,z);
+ }
+ g.computeVertexNormals();shape.positions=Array.from(p.array);shape.normals=Array.from(g.getAttribute('normal').array);g.dispose();return shape;
+}
 // Hats, worn over short hair: 0 a cap with a peak, 1 a knitted beanie with a turned-up band.
-export const HAT_STYLES = 2;
+export const HAT_STYLES = 5;
 export function miiHat(style = 0, lod: Lod = 0): MiiShape {
-  const d = DETAIL[lod], dome = new THREE.SphereGeometry(1, d.hair[0], Math.round(d.hair[1] * .6), 0, Math.PI * 2, 0, Math.PI * .52);
-  dome.scale(3.08, style ? 2.95 : 2.6, 3.42); dome.translate(0, 4.2, -.28);
-  const parts: Part[] = [{ g: dome, region: 0, ao: q => .8 + .2 * smooth(4.2, 5.6, q.y) }];
-  if (style === 0) {
-    const peak = new THREE.CylinderGeometry(2.3, 2.3, .16, d.hair[0], 1, false, -Math.PI / 2, Math.PI); peak.scale(.8, 1, .82); peak.rotateX(.14); peak.translate(0, 4.3, 2.05);
-    parts.push({ g: peak, region: 0, ao: () => .88 });
-  } else {
-    const band = new THREE.TorusGeometry(1, .17, d.small[1], d.hair[0]); band.rotateX(Math.PI / 2); band.scale(2.92, 1.3, 3.24); band.translate(0, 4.32, -.28);
-    parts.push({ g: band, region: 0, ao: () => .86 });
-    const bob = new THREE.SphereGeometry(.55, d.small[0], d.small[1]); bob.translate(0, 7.35, -.4); parts.push({ g: bob, region: 0 });
-  }
-  return build(parts);
+ const d=DETAIL[lod],parts:Part[]=[];
+ const add=(g:THREE.BufferGeometry,ao=.9)=>parts.push({g,region:0,ao:()=>ao});
+ const cap=(height:number)=>{const g=new THREE.SphereGeometry(1,d.hair[0],Math.round(d.hair[1]*.65),0,Math.PI*2,0,Math.PI*.51);g.scale(3.18,height,3.5);g.translate(0,3.95,-.25);add(g);};
+ const band=(y:number,r=3.16)=>{const g=new THREE.TorusGeometry(r,.15,8,d.hair[0]);g.rotateX(Math.PI/2);g.scale(1,1,1.1);g.translate(0,y,-.25);add(g,.78);};
+ if(style===0){cap(2.7);band(4.08);const peak=new THREE.CylinderGeometry(2.2,2.2,.14,d.hair[0],1,false,-Math.PI/2,Math.PI);peak.scale(1,1,.9);peak.rotateX(.08);peak.translate(0,4.04,2.4);add(peak,.8);const seam=new THREE.TorusGeometry(1,.035,5,24,Math.PI);seam.scale(3.2,2.68,1);seam.rotateX(Math.PI/2);seam.translate(0,4.05,-.25);add(seam,.72);}
+ else if(style===1){cap(2.85);band(4.05,3.2);band(4.35,3.17);const pom=new THREE.SphereGeometry(.5,16,12);pom.translate(0,7.12,-.25);add(pom);}
+ else if(style===2){const top=new THREE.CylinderGeometry(2.7,3.15,2.25,d.hair[0]);top.scale(1,1,1.1);top.translate(0,5.1,-.25);add(top);const brim=new THREE.CylinderGeometry(4.4,4.4,.17,d.hair[0]);brim.scale(1,1,1.08);brim.translate(0,3.98,-.25);add(brim,.82);band(4.25,3.09);}
+ else if(style===3){const base=new THREE.CylinderGeometry(3.2,3.2,.8,d.hair[0],1,true);base.scale(1,1,1.1);base.translate(0,4.8,-.25);add(base);band(4.42);for(let i=0;i<7;i++){const a=i/7*Math.PI*2,g=new THREE.ConeGeometry(.6,1.45,4);g.translate(Math.cos(a)*3.1,5.8,Math.sin(a)*3.4-.25);add(g);const gem=new THREE.SphereGeometry(.22,8,6);gem.translate(Math.cos(a)*3.12,4.85,Math.sin(a)*3.44-.25);add(gem,.6);}}
+ else {cap(2.9);band(4.05,3.21);for(const side of [-1,1]){const pad=new THREE.SphereGeometry(1,16,12);pad.scale(.38,.9,.85);pad.translate(side*2.95,3.7,.05);add(pad,.7);}const ridge=new THREE.BoxGeometry(.16,.25,5.5);ridge.translate(0,6.8,-.2);add(ridge,.76);}
+ return build(parts);
 }
 
 // Real Mii body scale from the Mii's height and build (0-127 each, 64 is the default), as computed by the
@@ -241,8 +257,11 @@ export function miiBodyScale(height: number, buildValue: number) {
 //   aArmL / aArmR = (raise: away from the body, pitch: forward, elbow in: towards the body, elbow bend: forward)
 //   aLegs = (left leg forward, right leg forward, torso lean forward, torso lean to the Mii's left)
 // All angles in radians. The CPU only blends these numbers; the vertex shader turns every limb rigidly.
-export const POSE = { LR: 0, LP: 1, LEZ: 2, LEX: 3, RR: 4, RP: 5, REZ: 6, REX: 7, LL: 8, RL: 9, TP: 10, TR: 11, HY: 12, HP: 13, HR: 14, Y: 15 } as const;
-export const POSE_SIZE = 16;
+export const POSE = { LR: 0, LP: 1, LEZ: 2, LEX: 3, RR: 4, RP: 5, REZ: 6, REX: 7, LL: 8, RL: 9, TP: 10, TR: 11, HY: 12, HP: 13, HR: 14, Y: 15, LK:16, RK:17, LS:18, RS:19, LT:20, RT:21, TY:22 } as const;
+export const POSE_SIZE = 23;
+// Two signed angles in one exact 22-bit integer, keeping NPCs within 16 vertex attributes.
+export const packMiiArm=(inward:number,twist:number)=>Math.round(Math.max(0,Math.min(2047,(inward+4)*256)))*2048+Math.round(Math.max(0,Math.min(2047,(twist+4)*256)));
+export const packMiiOutfit=(outfit:number,yaw:number)=>outfit+Math.max(.001,Math.min(.999,(yaw+4)/8));
 
 // Shared look for every Mii material: soft "toon" falloff of the sun (a wide, smooth terminator instead of a hard
 // Lambert edge), a soft rim light that separates the Miis from the pale floor, and an optional faint highlight (hair).
@@ -264,15 +283,22 @@ export function miiShade(m: THREE.Material, opts: { gloss?: number; rim?: number
   return m;
 }
 
-const SHADER_HEAD = `attribute vec4 aArmL;
+const SHADER_HEAD = `attribute vec3 aClothRest;
+attribute vec4 aArmL;
 attribute vec4 aArmR;
 attribute vec4 aLegs;
+attribute vec4 aKnees;
 attribute vec3 aPart;
-attribute vec4 aBall;
+// Limb dimensions follow body scale; free one attribute slot for knee poses.
+const vec4 aBall=vec4(0.0);
 attribute vec4 aShirt;
 attribute vec4 aPants;
-attribute vec3 aSkin;
+attribute vec4 aSkin;
+varying vec3 vOutfitPosition;
+varying float vOutfit;
+varying float vClothing;
 mat3 miiRotX(float a){float c=cos(a),s=sin(a);return mat3(1.0,0.0,0.0, 0.0,c,s, 0.0,-s,c);}
+mat3 miiRotY(float a){float c=cos(a),s=sin(a);return mat3(c,0.0,-s, 0.0,1.0,0.0, s,0.0,c);}
 mat3 miiRotZ(float a){float c=cos(a),s=sin(a);return mat3(c,s,0.0, -s,c,0.0, 0.0,0.0,1.0);}
 `;
 const f = (n: number) => n.toFixed(3);
@@ -285,21 +311,27 @@ const SHADER_POSE = (female: boolean) => {
  float aBone = aPart.x, aRegion = aPart.y;
  vec2 aBuild = vec2(aShirt.w, aPants.w);
  vec3 miiScale = vec3(aBuild.x, aBuild.y, aBuild.x);
- bool miiUpper = aBone > 0.5 && aBone < 2.5, miiFore = aBone > 4.5, miiArm = miiUpper || miiFore, miiLeg = aBone > 2.5 && aBone < 4.5;
- float miiSide = (aBone > 0.5 && aBone < 1.5) || (aBone > 2.5 && aBone < 3.5) || (aBone > 4.5 && aBone < 5.5) ? -1.0 : 1.0;
+ bool miiUpper = aBone > 0.5 && aBone < 2.5, miiFore = aBone > 4.5 && aBone < 6.5, miiArm = miiUpper || miiFore, miiLeg = (aBone > 2.5 && aBone < 4.5) || aBone > 6.5;
+ bool miiShin = aBone > 6.5;
+ float miiSide = (aBone > 0.5 && aBone < 1.5) || (aBone > 2.5 && aBone < 3.5) || (aBone > 4.5 && aBone < 5.5) || (aBone > 6.5 && aBone < 7.5) ? -1.0 : 1.0;
  vec4 miiA = miiSide < 0.0 ? aArmL : aArmR;
- mat3 miiRsh = miiRotZ(miiSide * miiA.x) * miiRotX(-miiA.y);
+ float miiTwist = mod(miiA.z,2048.0)/256.0-4.0;
+ miiA.z = floor(miiA.z/2048.0)/256.0-4.0;
+ mat3 miiRsh = miiRotZ(miiSide * miiA.x) * miiRotX(-miiA.y) * miiRotY(miiTwist);
  mat3 miiRel = miiRotZ(-miiSide * miiA.z) * miiRotX(-miiA.w);
- mat3 miiRleg = miiRotX(-(miiSide < 0.0 ? aLegs.x : aLegs.y));
+ mat3 miiRleg = miiRotZ(miiSide * (miiSide < 0.0 ? aKnees.z : aKnees.w)) * miiRotX(-(miiSide < 0.0 ? aLegs.x : aLegs.y));
  vec3 miiSh = vec3(miiSide * ${f(MII_SHOULDER.x)}, ${f(MII_SHOULDER.y)}, 0.0) * miiScale;
  vec3 miiEl = vec3(miiSide * ${f(el.x)}, ${f(el.y)}, 0.02) * miiScale;
  vec3 miiHp = vec3(miiSide * ${f(hip.x)}, ${f(hip.y)}, 0.0) * miiScale;
+ mat3 miiRknee = miiRotX(miiSide < 0.0 ? aKnees.x : aKnees.y);
+ vec3 miiKn = vec3(miiSide * ${f(hip.x)}, ${f((hip.y+.55)/2)}, .01) * miiScale;
  vec3 miiWaist = vec3(0.0, ${f(MII_WAIST_Y)}, 0.0) * miiScale;
  float miiW = miiLeg ? 0.0 : (miiArm || aRegion > 1.5 && aRegion < 2.5 ? 1.0 : smoothstep(${f(MII_WAIST_FROM)}, ${f(MII_WAIST_TO)}, position.y));
- mat3 miiRt = miiRotZ(aLegs.w * miiW) * miiRotX(aLegs.z * miiW);
+ mat3 miiRt = miiRotY((fract(aSkin.w)*8.0-4.0)*miiW) * miiRotZ(aLegs.w * miiW) * miiRotX(aLegs.z * miiW);
  if (aBall.w < 0.5) objectNormal = normalize(objectNormal / miiScale);
  if (miiFore) objectNormal = miiRel * objectNormal;
  if (miiArm) objectNormal = miiRsh * objectNormal;
+ if (miiShin) objectNormal = miiRknee * objectNormal;
  if (miiLeg) objectNormal = miiRleg * objectNormal;
  objectNormal = miiRt * objectNormal;`;
 };
@@ -307,17 +339,35 @@ const SHADER_PLACE = `#include <begin_vertex>
  transformed = aBall.w > 0.5 ? aBall.xyz * miiScale + (transformed - aBall.xyz) * aBuild.x : transformed * miiScale;
  if (miiFore) transformed = miiEl + miiRel * (transformed - miiEl);
  if (miiArm) transformed = miiSh + miiRsh * (transformed - miiSh);
+ if (miiShin) transformed = miiKn + miiRknee * (transformed - miiKn);
  if (miiLeg) transformed = miiHp + miiRleg * (transformed - miiHp);
  transformed = miiWaist + miiRt * (transformed - miiWaist);`;
-const SHADER_COLOR = `vColor = (aPart.y < 0.5 ? aShirt.rgb : (aPart.y < 1.5 ? aPants.rgb : (aPart.y < 2.5 ? aSkin : (aPart.y < 3.5 ? aPants.rgb * 0.78 : aPants.rgb * 0.42)))) * aPart.z;`;
+const SHADER_COLOR = `vOutfitPosition=aClothRest;vOutfit=floor(aSkin.w);vClothing=1.0-step(0.5,aPart.y);vColor = (aPart.y < 0.5 ? aShirt.rgb : (aPart.y < 1.5 ? aPants.rgb : (aPart.y < 2.5 ? aSkin.rgb : (aPart.y < 3.5 ? aPants.rgb * 0.78 : aPants.rgb * 0.42)))) * aPart.z;`;
 
 // The body material for one gender (the joints differ). Colours come from per-instance attributes picked by region.
-export function miiBodyMaterial(female: boolean) {
+export function miiBodyMaterial(female: boolean, branding?:THREE.Texture, accent="#e8f4fb", clothRest=false) {
   const m = new THREE.MeshLambertMaterial({ vertexColors: true });
   m.onBeforeCompile = shader => {
-    shader.vertexShader = SHADER_HEAD + shader.vertexShader.replace("#include <beginnormal_vertex>", SHADER_POSE(female)).replace("#include <begin_vertex>", SHADER_PLACE).replace("#include <color_vertex>", SHADER_COLOR);
+    shader.uniforms.miiLogo={value:branding??null};shader.uniforms.miiHasLogo={value:branding?1:0};shader.uniforms.miiAccent={value:new THREE.Color(accent)};
+    shader.fragmentShader = "uniform sampler2D miiLogo;uniform float miiHasLogo;uniform vec3 miiAccent;varying vec3 vOutfitPosition;varying float vOutfit;varying float vClothing;\n" + shader.fragmentShader.replace("#include <color_fragment>", `#include <color_fragment>
+ if(vClothing>.5){float mark=0.0;float style=mod(floor(vOutfit+.5),16.0);float host=step(15.5,vOutfit);float x=vOutfitPosition.x;float y=vOutfitPosition.y;
+ if(style>.5&&style<1.5)mark=step(.55,fract(y*1.3));
+ else if(style>1.5&&style<2.5)mark=1.0-step(.075,abs(x));
+ else if(style>2.5&&style<3.5)mark=1.0-step(.12,abs(y-5.1-abs(x)*.6));
+ else if(style>3.5&&style<4.5)mark=max(1.0-step(.07,abs(x)),1.0-step(.11,abs(y-4.2)));
+ else if(style>4.5&&style<5.5)mark=step(6.25,y)*(1.0-step(.65,abs(x)));
+ else if(style>5.5&&style<6.5)mark=max(step(.7,abs(x))*step(5.5,y),1.0-step(5.2,y));
+ else if(style>6.5&&style<7.5)mark=max(1.0-step(.1,abs(abs(x)-.85)),1.0-step(.1,abs(y-4.3)));
+ else if(style>7.5&&style<8.5)mark=1.0-step(.08,abs(abs(x)-(y-5.0)*.45));
+ else if(style>8.5)mark=max(1.0-step(.13,abs(y-4.3)),1.0-step(.12,abs(y-6.6+abs(x)*.6)));
+ vec3 trim=mix(vec3(.92),miiAccent,host);diffuseColor.rgb=mix(diffuseColor.rgb,trim,mark*.7);
+ if(host>.5&&miiHasLogo>.5&&vOutfitPosition.z>.3){vec2 uv=vec2(x/1.55+.5,(y-5.65)/.78+.5);if(uv.x>0.0&&uv.x<1.0&&uv.y>0.0&&uv.y<1.0){vec4 badge=texture2D(miiLogo,uv);diffuseColor.rgb=mix(diffuseColor.rgb,badge.rgb,badge.a);}}
+ }
+
+ `);
+    shader.vertexShader = (clothRest?SHADER_HEAD:SHADER_HEAD.replace("attribute vec3 aClothRest;", "")) + shader.vertexShader.replace("#include <beginnormal_vertex>", SHADER_POSE(female)).replace("#include <begin_vertex>", SHADER_PLACE).replace("#include <color_vertex>", clothRest?SHADER_COLOR:SHADER_COLOR.replace("vOutfitPosition=aClothRest;", "vOutfitPosition=position;"));
   };
-  m.customProgramCacheKey = () => "mii-body-" + (female ? "f" : "m");
+  m.customProgramCacheKey = () => "mii-body-wardrobe-v3-" + (female ? "f" : "m")+String(clothRest);
   return miiShade(m);
 }
 
@@ -456,10 +506,10 @@ export type Layer = 'beard' | 'glasses';
 export function faceLayer(kind: Layer, v: number) {
   const parts: THREE.BufferGeometry[] = [], paint = (g: THREE.BufferGeometry, color: string) => { const c = new THREE.Color(color), n = g.getAttribute('position').count; g.setAttribute('color', new THREE.Float32BufferAttribute(Array.from({ length: n }, () => c.toArray()).flat(), 3)); g.deleteAttribute('uv'); parts.push(g.index ? g.toNonIndexed() : g); };
   const blob = (x: number, y: number, z: number, sx: number, sy: number, sz: number, color: string) => { const g = new THREE.SphereGeometry(1, 16, 12); g.scale(sx, sy, sz); g.translate(x, y, z); paint(g, color); };
-  if (kind === 'beard') blob(0, 1.03, 1.75, 1.6, 1.08, .75, '#ffffff');
+  if (kind === 'beard') {if(v===2)blob(0,.94,2.02,.55,.67,.35,'#ffffff');else if(v===3){blob(0,.68,1.8,1.35,.5,.6,'#ffffff');for(const side of [-1,1])blob(side*1.38,1.3,1.6,.27,.7,.35,'#ffffff');}else if(v===4){for(const side of [-1,1])blob(side*1.52,1.65,1.45,.22,.73,.4,'#ffffff');}else if(v===5)blob(0,.58,1.7,.8,1.18,.62,'#ffffff');else blob(0,1.03,1.75,1.6,1.08,.75,'#ffffff');}
   if (kind === 'glasses') {
     const thick = v === 2, dark = v === 3;
-    for (const x of [-.82, .82]) { if (dark) blob(x, 2.76, 2.42, .55, .4, .05, '#16181b'); const r = new THREE.TorusGeometry(.52, thick || dark ? .12 : .07, 6, 22); r.scale(1, dark ? .8 : 1, 1); r.translate(x, 2.78, 2.45); paint(r, '#2e3238'); }
+    for (const x of [-.82, .82]) { if (dark) blob(x, 2.76, 2.42, .55, .4, .05, '#16181b'); const r = new THREE.TorusGeometry(.52, thick || dark ? .12 : .07, 6, 22); r.scale(v===4?1.2:1, v===4?.65:dark ? .8 : 1, 1); r.translate(x, 2.78, 2.45); paint(r, '#2e3238'); }
     const bridge = new THREE.BoxGeometry(.5, thick ? .13 : .08, .08); bridge.translate(0, 2.88, 2.48); paint(bridge, '#2e3238');
   }
   const merged = mergeGeometries(parts); parts.forEach(g => g.dispose()); return merged;
