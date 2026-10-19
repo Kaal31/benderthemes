@@ -1,4 +1,3 @@
-import { keyboardClasses, steamDocuments } from "./keyboardSkins";
 import {customProfilePicture} from "./profilePicture";
 import {FIXED_BACKGROUND_PAGES,pageBackgroundRef} from "./pageBackgrounds";
 import { connectThemeAudio, monitorThemeAudioElement } from './themeAudio';
