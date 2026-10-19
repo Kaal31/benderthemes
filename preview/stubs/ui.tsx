@@ -129,3 +129,7 @@ export const findClassModule = (f: (m: any) => boolean) => {
   const m = { FooterLegend: "dhtPreviewFooterLegend" };
   return f(m) ? m : undefined;
 };
+
+// Reading Room intercepts the physical Steam menu only in the real client.
+export const Router = {};
+export function replacePatch(object:any,property:string,handler:(args:any[])=>any){const original=object[property];object[property]=(...args:any[])=>handler(args);return {unpatch(){object[property]=original;}};}

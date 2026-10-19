@@ -35,6 +35,8 @@ export const LAYOUT_SLOTS: Record<ThemeId, LayoutCaps> = {
   "santa-express": caps(true, true, true),
   "old-beta-big-picture": caps(true, true, true),
   "old-big-picture": caps(true, true, true),
+
+  reading:caps(false,true,false,[],{gameArt:false,tint:false}),
   onyx: caps(false, true, false),
   silver: caps(false, true, false),
   wii: caps(true, true, false, [], { gameArt: false, tint: true }),

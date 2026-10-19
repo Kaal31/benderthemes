@@ -20,6 +20,8 @@ export const BUILTIN_THEMES: ThemeManifest[] = [
   t("gameamp", "GameAmp", "Bonus", "gameamp"),
   t("old-beta-big-picture", "Old Beta Big Picture", "Bonus", "old-beta-big-picture"),
   t("old-big-picture", "Old Big Picture", "Bonus", "old-big-picture"),
+
+  t("reading","Reading Room","Bonus","reading"),
   t("onyx", "Onyx Wheel (bonus)", "Bonus", "onyx"),
   t("silver", "Silver Wheel (bonus)", "Bonus", "silver"),
   t("wii", "Wii", "Nintendo", "wii"),

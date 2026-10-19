@@ -7,6 +7,10 @@ import { SantaHome } from "./themes/Santa";
 import { OldBetaBigPictureHome } from "./themes/OldBetaBigPicture";
 import { OldBigPictureHome } from "./themes/OldBigPicture";
 import {themeHomeOwnsRoute} from "./otherPlugins";
+
+import { ReadingRoomHome } from "./themes/ReadingRoom";
+import { ReadingVideoPlayer } from "./themes/ReadingVideoPlayer";
+import { ReadingWindowDrag } from "./themes/ReadingWindowDrag";
 import { useSteamScreensaver } from "./screensaver";
 import { ThemeActivity, UiDocument } from "./performance";
 import { DOWNLOAD_CSS, DownloadStatus } from "./downloadUi";
@@ -87,6 +91,8 @@ const THEME_COMPONENTS: Record<ThemeId, () => ReactNode> = {
   "santa-express": () => <SantaHome />,
   "old-beta-big-picture": () => <NativeMediaGate id="old-big-picture"><OldBetaBigPictureHome /></NativeMediaGate>,
   "old-big-picture": () => <NativeMediaGate id="old-big-picture"><OldBigPictureHome /></NativeMediaGate>,
+
+  reading:()=> <ReadingRoomHome/>,
   native: () => <NativeLayout />,
   onyx: () => <SilverHome dark />,
   silver: () => <SilverHome />,
@@ -335,7 +341,7 @@ function ThemedHomeContent({ standalone }: { standalone?: boolean }) {
     themeMenu.open([...essentialItems([], () => api.showSteamHome()), ...themeSettingsItems(), { label: "Global settings", sub: globalSettingsItems }], `${name} options`, { page: true });
   };
   useEffect(() => { setThemeSettingsOpener(openThemeSettings); return () => setThemeSettingsOpener(null); });
-  useEffect(()=>{setDestinationOpener(d=>transitionPage(s,()=>{if(d.place==="media"){setOverlay({kind:"shots"});setDestination(null);}else if(d.place==="music"){setOverlay({kind:"music"});setDestination(null);}else{setOverlay(null);setDestination(d);}},doc));return()=>{setDestinationOpener(null);};},[s.theme,s.animations,doc]);
+  useEffect(()=>{setDestinationOpener(d=>transitionPage(s,()=>{if(d.place==="media"&&s.theme!=="reading"){setOverlay({kind:"shots"});setDestination(null);}else if(d.place==="music"&&s.theme!=="reading"){setOverlay({kind:"music"});setDestination(null);}else{setOverlay(null);setDestination(d);}},doc));return()=>{setDestinationOpener(null);};},[s.theme,s.animations,doc]);
   useEffect(()=>()=>dismissLaunch(),[]);
   useEffect(()=>{if(overlay)setDestination(null);},[overlay]);
 
@@ -446,12 +452,13 @@ function ThemedHomeContent({ standalone }: { standalone?: boolean }) {
       {overlay?.kind === "trailer" && <div className="dht-themed-media"><TrailerPlayer game={overlay.game} onClose={() => setOverlay(null)} /></div>}
       {overlay?.kind === "video" && <div className="dht-themed-media"><VideoPlayer video={overlay.video} lib={lib.byId} onClose={() => setOverlay(overlay.back ? { kind: "shots", tab: "videos" } : null)} /></div>}
       {overlay?.kind === "music" && <div className="dht-themed-media"><MusicPlayerView onClose={() => setOverlay(null)} /></div>}
-      {!overlay && !destination && !launching && s.theme !== "ps3" && s.theme !== "psp" && <NowPlayingMini onOpen={() => { playSound("open"); setOverlay({ kind: "music" }); }} />}
+      {!overlay && !destination && !launching && s.theme !== "ps3" && s.theme !== "psp" && s.theme !== "reading" && <NowPlayingMini onOpen={() => { playSound("open"); setOverlay({ kind: "music" }); }} />}
       {overlay?.kind === "store" && inBlockPanel(<HomeCtx.Provider value={api}><NativeLayout destination={{place:"store"}} onClose={()=>setOverlay(null)} fallback={<StoreView settings={pageSettings(s, "store")} lib={lib} onClose={() => transitionPage(s,()=>setOverlay(null),doc)} onLaunch={(g) => launchGame(g)} />}/></HomeCtx.Provider>)}
       {destination && inBlockPanel(<HomeCtx.Provider value={api}><NativeLayout destination={destination} onClose={()=>setDestination(null)} fallback={<DestinationView destination={destination} settings={s} lib={lib} onClose={()=>transitionPage(s,()=>setDestination(null),doc)} onLaunch={launchGame} onMedia={()=>setOverlay({kind:"shots",appid:destination.game?.appid})} onTrailer={g=>setOverlay({kind:"trailer",game:g})}/>}/></HomeCtx.Provider>)}
       <style>{DOWNLOAD_CSS}</style>
       <DownloadStatus settings={s} hidden={!!overlay || !!destination || !!launching || market.opened} />
       <MenuView menu={themeMenu} variant={s.theme === "ps3" ? "xmb" : (s.theme === "frame" || s.theme === "native") ? "ps5" : s.theme} art={s.theme === "psp" ? { panel: cachedPspSkin(pspFile(s))?.visuals?.optionMenu, focus: cachedPspSkin(pspFile(s))?.visuals?.menuFocus } : undefined} />
+      {s.theme==="reading"&&<><ReadingVideoPlayer/><ReadingWindowDrag settings={s}/></>}
       {launching && <LaunchView value={launching} settings={s}/>}
       <BootIntro file={s.bootIntro} automatic={startupIntroEnabled(s)} />
       <ThemeIntro autoTheme={startupIntroEnabled(s) && s.onboardingDone && !market.opened && !api.busy && !slotUrl("bootVideo", s) && (!["old-big-picture","old-beta-big-picture"].includes(s.theme)||introResourcesReady) ? s.theme : undefined} />

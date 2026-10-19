@@ -52,7 +52,7 @@ onThemesChanged(() => listeners.forEach((l) => l()));
 // and the Quick Access Look list only offer looks whose console is here: never a deleted or not yet downloaded theme. null = not read yet.
 const remoteInventory = callable<[], Record<string, string>>("theme_inventory");
 /** Layouts that can supply an in-plugin Hub card when no catalog pack exists. */
-export const BUILT_IN_THEMES = ["ios6", "gameamp", "old-beta-big-picture"] as const;
+export const BUILT_IN_THEMES = ["reading", "ios6", "gameamp", "old-beta-big-picture"] as const;
 let downloaded: Record<string, string> | null = null;
 export async function refreshInventory(): Promise<Record<string, string>> {
   const remote = await remoteInventory();

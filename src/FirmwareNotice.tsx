@@ -7,6 +7,8 @@ import { useAssets } from "./assets";
 import { FIRMWARE_SKINS } from "./firmwareSkins";
 const identities: Record<string,[string,string]> = {
  onyx:["Onyx update","#eeeeee"],silver:["Silver system update","#92cfff"],"blue-glass":["Blue Glass Update","#78dfff"],gameamp:["GAMEAMP / UPDATE","#b6ee65"],gamecube:["System Update","#c7a7ff"],ios6:["Software Update","#b8d8ff"],"old-big-picture":["Big Picture Update","#76c8f1"],"santa-express":["Santa Express Delivery","#f4d28a"],"wiiflow-default":["WiiFlow Update","#d8efff"],
+
+ reading:["A little update","#d4ac6e"],
  wii:["Wii System Update","#208fb9"],switch:["System Update","#00c3e3"],n3ds:["System Update","#3fe3b5"],ps1:["SYSTEM UPDATE","#8fd0ff"],iisu:["Update ready","#8fd2ff"],wiiu:["Wii U System Update","#009ac7"], vita:["System Software Update","#83dcff"],ps2:["SYSTEM CONFIGURATION","#92bfff"],ps3:["System Update","#fff"],psp:["System Software","#fce69f"],ps4:["System Software Update","#79d1ff"],ps5:["System software update","#91b9ff"],xbox:["SYSTEM UPDATE","#a8ff35"],x360:["System Update","#9cec46"],aero:["Updates are ready to install","#dcff91"],aero2:["Aero System Update","#aff1ff"],dial:["FIRMWARE TRANSMISSION","#ff493b"],castle:["SYSTEM MESSAGE","#8ddeff"],republic:["REPUBLIC SYSTEMS / FIRMWARE","#e0c58e"],minecraft:["UPDATE AVAILABLE","#a4df6d"],pain:["A NEW TRANSMISSION","#cca9ee"],nazarick:["DECREE OF THE GREAT TOMB","#dbc17b"]
 };
 let previewStatus:Status|null=null;

@@ -19,7 +19,7 @@ export const VITA_LOOKS: { id: VitaLook; name: string }[] = [
   { id: "sakura", name: "Sakura" },
 ];
 
-export type ThemeId = "ios6" | "gameamp" | "santa-express" | "old-big-picture" | "old-beta-big-picture" | "native" | "onyx" | "silver" | "frame" | "wii" | "wiiu" | "switch" | "n3ds" | "vita" | "ps2" | "ps3" | "psp" | "ps4" | "ps5" | "x360" | "aero" | "aero2" | "xbox" | "dial" | "castle" | "republic" | "minecraft" | "pain" | "nazarick" | "ps1" | "iisu";
+export type ThemeId = "reading" | "ios6" | "gameamp" | "santa-express" | "old-big-picture" | "old-beta-big-picture" | "native" | "onyx" | "silver" | "frame" | "wii" | "wiiu" | "switch" | "n3ds" | "vita" | "ps2" | "ps3" | "psp" | "ps4" | "ps5" | "x360" | "aero" | "aero2" | "xbox" | "dial" | "castle" | "republic" | "minecraft" | "pain" | "nazarick" | "ps1" | "iisu";
 export type StyleValue = string | number | boolean;
 export type SortMode = "recent" | "alpha" | "playtime";
 export type AAction = "theme" | "launch" | "details";
@@ -42,6 +42,8 @@ export const THEMES: { id: ThemeId; name: string; blurb: string }[] = [
   {id:"santa-express",name:"Santa Express",blurb:"Native Christmas dashboard with chrome controls, snowfall and music"},
   {id:"old-beta-big-picture",name:"Old Beta Big Picture",blurb:"Early Steam Big Picture with a transforming cover sheet and games carousel"},
   {id:"old-big-picture",name:"Old Big Picture",blurb:"Classic Steam blue dashboard, carousel and native library pages"},
+
+  {id:"reading",name:"Reading Room",blurb:"A sunset room, pinned paper panels and an ordered day/night wallpaper cycle"},
   {id:"onyx",name:"Onyx Wheel (bonus)",blurb:"Black textured body, cover flow and circular touch navigation"},
   {id:"silver",name:"Silver Wheel (bonus)",blurb:"Brushed aluminum, reflected covers and circular wheel navigation"},
   {id:"wii",name:"Wii",blurb:"Channel grid, curved system bar and channel launch banners"},
@@ -223,6 +225,8 @@ export interface ThemeScreensaver {
 }
 export interface Settings {
   personalMii?: {faceShape?:number;beardStyle?:number;moustacheStyle?:number;glassesStyle?:number;earrings?:number;faceStyle?:"drawn"|"detailed";portrait?:string;logoMedia?:"image"|"animated"|"video";decal?:{part:string;point:[number,number,number];normal:[number,number,number];opacity:number;rotation:number;rotationX?:number;rotationY?:number;size:number};accent?:string;logo?:string;logoGame?:string;hat?:number;hatColor?:string;pants?:string;outfit?:number;brows?:number;eyeColor?:string;lipColor?:string;eyeSpacing?:number;eyeY?:number;mouthY?:number;beard?:boolean;moustache?:boolean;name:string;skin:string;hair:string;shirt:string;hairStyle:number;eyes:number;mouth:number;glasses:boolean;female:boolean;height:number;build:number};
+
+  readingWindowPositions?:Record<string,{x:number;y:number}>;
   screensaversDisabled?: boolean;
   themeScreensavers?: Record<string, ThemeScreensaver>;
   screensaverSteamBackup?: Record<string, string | number>;

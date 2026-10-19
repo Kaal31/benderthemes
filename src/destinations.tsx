@@ -2,6 +2,8 @@ import {switchPageVars} from "./themes/switchStandardSkin";
 import {SwitchGamePreview} from "./themes/SwitchGamePreview";
 import { SANTA_PAGE_STYLES } from "./themes/santaPageStyles";
 import {activeTheme} from "./engine/registry";
+
+import { ReadingDestinationView } from "./readingDestinations";
 import {transitionPage} from "./pageTransition";
 import {NazarickNavigation,NazarickPage,nextNazarickPage} from "./themes/NazarickNavigation";
 import {NazarickBackdrop} from "./themes/NazarickBackdrop";
@@ -24,16 +26,16 @@ import { PAGE_LOOKS } from "./pageLooks";
 import { iisuPageVars, iisuSchemeAttr } from "./themes/iisuStyles";
 import { downloadLine, pauseDownload, removeDownload, resumeDownload, useDownloads } from "./downloads";
 
-export type Destination = {place: SteamPlace | "game" | "achievements" | "music"; game?:Game; url?:string};
+export type Destination = {place: SteamPlace | "game" | "achievements" | "music" | "collections"; collectionId?:string; game?:Game; url?:string};
 let opener: ((destination:Destination)=>void)|null=null;
 export const setDestinationOpener=(fn:typeof opener)=>{opener=fn;};
 export const openDestination=(destination:Destination)=>{if(!opener)return false;opener(destination);return true;};
 interface Row {label:string; sub?:string; icon?:IconName; game?:Game; run?:()=>void; state?:"on"|"off"; progress?:number}
-const names:Record<Destination["place"],string>={library:"Game Library",search:"Search Library",game:"Game Details",achievements:"Achievements",friends:"Friends",settings:"Settings",qam:"Home Screen Settings",downloads:"Downloads",media:"Media",store:"Store",power:"Power",mainmenu:"Home",browser:"Internet Browser",community:"Community",cloud:"Cloud Saves",notifications:"Notifications",music:"Music"};
+const names:Record<Destination["place"],string>={collections:"Collections",library:"Game Library",search:"Search Library",game:"Game Details",achievements:"Achievements",friends:"Friends",settings:"Settings",qam:"Home Screen Settings",downloads:"Downloads",media:"Media",store:"Store",power:"Power",mainmenu:"Home",browser:"Internet Browser",community:"Community",cloud:"Cloud Saves",notifications:"Notifications",music:"Music"};
 const client=()=> (globalThis as any).SteamClient;
 
 /** Theme-owned destinations use real library/client data. Missing data is explicit. */
-export function DestinationView({destination,settings:homeSettings,lib,onClose,onLaunch,onMedia,onTrailer}:{destination:Destination;settings:Settings;lib:Library;onClose:()=>void;onLaunch:(g:Game)=>void;onMedia:()=>void;onTrailer:(g:Game)=>void}) {
+function DefaultDestinationView({destination,settings:homeSettings,lib,onClose,onLaunch,onMedia,onTrailer}:{destination:Destination;settings:Settings;lib:Library;onClose:()=>void;onLaunch:(g:Game)=>void;onMedia:()=>void;onTrailer:(g:Game)=>void}) {
   const menu=useMenu();
   const [page,setPage]=useState(destination);
   // each page can be drawn by another theme than the home (Theme options -> Pages)
@@ -146,3 +148,5 @@ export function DestinationView({destination,settings:homeSettings,lib,onClose,o
     </div><MenuView menu={menu} variant={menuVariant} appearance={settings.theme==="switch"?{panel:{background:skin.panel,color:skin.text},item:{color:skin.text},text:{color:skin.text},selectedItem:{color:skin.text,background:"var(--sw-panel)"}}:undefined} renderTitle={settings.theme==="switch"?title=><div style={{color:skin.sub,fontSize:18,padding:"0 30px 12px"}}>{title}</div>:undefined}/>
   </Stage></StageHost></div>;
 }
+
+export function DestinationView(props:Parameters<typeof DefaultDestinationView>[0]) {return props.settings.theme==="reading"?<ReadingDestinationView {...props}/>:<DefaultDestinationView {...props}/>;}

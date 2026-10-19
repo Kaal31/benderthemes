@@ -91,6 +91,7 @@ for (const [name,id] of Object.entries(referenceGames)) {
   referenceArt[name] = art;
 }
 for (const [theme,names] of Object.entries({
+  reading:["Hollow Knight","Stardew Valley","Hades","Elden Ring","Balatro","Portal 2"],
   republic:["STAR WARS Jedi: Survivor","STAR WARS Battlefront II","Elden Ring","Cyberpunk 2077","Hades","Balatro","Hollow Knight"],
   castle:["SWORD ART ONLINE Fractured Daydream","Elden Ring","Hades","Hollow Knight","Stardew Valley","Balatro"],
   dial:["Cyberpunk 2077","The Witcher 3","Portal 2","Grand Theft Auto V","Red Dead Redemption 2","Elden Ring","Hollow Knight"],
@@ -100,7 +101,7 @@ for (const [theme,names] of Object.entries({
   aero:["Cyberpunk 2077","Hades","Stardew Valley","Elden Ring","Balatro","Hollow Knight"],
 })) {
   const init = `window.__themePreview=${JSON.stringify(theme)};window.__referenceTitles=${JSON.stringify(names)};window.__referenceArt=${JSON.stringify(referenceArt)};`;
-  const html = readFileSync("preview/preview.html","utf8").replace("<script>",`<script>${init}</script><script>`).replace("<title>Deck Home Themes preview</title>",`<title>${theme === "dial" ? "Alien Dial" : theme === "castle" ? "Floating Castle" : theme === "republic" ? "Galactic Republic" : "Aero"} - preview</title>`);
+  const html = readFileSync("preview/preview.html","utf8").replace("<script>",`<script>${init}</script><script>`).replace("<title>Deck Home Themes preview</title>",`<title>${theme === "reading" ? "Reading Room" : theme === "dial" ? "Alien Dial" : theme === "castle" ? "Floating Castle" : theme === "republic" ? "Galactic Republic" : "Aero"} - preview</title>`);
   writePreview(`preview/${theme}-preview.html`,html);
 }
 

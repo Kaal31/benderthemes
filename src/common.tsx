@@ -496,6 +496,12 @@ export function MenuView({
   if (!menu.isOpen && !((variant==="castle"||(variant==="old-big-picture"||variant==="old-beta-big-picture")||exitDuration>0)&&retained)) return null;
   const top = liveTop ?? retained!;
   const styles: Record<string, { panel: CSSProperties; item: (sel: boolean, dis?: boolean) => CSSProperties; title?: CSSProperties }> = {
+    reading: {
+      panel:{position:"absolute",left:"50%",top:"50%",transform:"translate(-50%,-50%)",minWidth:480,padding:22,background:"#e8d1ac",color:"#423628",border:"1px solid #f9e6c5",borderRadius:6,boxShadow:"0 16px 65px #21120799",fontFamily:'"Segoe Print",cursive'},
+      item:(on,disabled)=>({fontSize:22,padding:"13px 20px",borderRadius:4,color:disabled?"#998b74":on?"#fff0d4":"#423628",background:on?"#4b5940":"transparent"}),
+      title:{fontSize:26,padding:"8px 20px 18px",borderBottom:"1px solid #a38b6955",marginBottom:10}
+    },
+
     wii: {
       panel:{position:"absolute",left:"50%",top:"50%",transform:"translate(-50%,-50%)",width:510,padding:22,background:"linear-gradient(#fff,#e8eff4)",border:"3px solid #b7cbd7",borderRadius:32,boxShadow:"0 15px 50px #44647755"},
       item:(on,disabled)=>({fontSize:23,padding:"14px 24px",margin:"5px 0",borderRadius:20,color:disabled?"#adb6bc":"#5b7584",background:on?"#e5f7ff":"transparent",boxShadow:on?"inset 0 0 0 3px #42bde7":"none"}),

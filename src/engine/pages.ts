@@ -25,7 +25,7 @@ export function pageOf(place: Destination["place"]): PageId {
   switch (place) {
     case "store": return "store";
     case "browser": case "community": return "browser";
-    case "library": case "search": return "library";
+    case "collections": case "library": case "search": return "library";
     case "game": case "achievements": return "game";
     case "media": case "music": return "media";
     default: return "system";

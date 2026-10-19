@@ -1,5 +1,7 @@
 import {switchPageVars,switchStandardPalette,switchStandardDark} from "./themes/switchStandardSkin";
 import { SANTA_PAGE_STYLES } from "./themes/santaPageStyles";
+
+import { READING_PAGES_CSS } from "./themes/readingPagesStyles";
 import {NazarickNavigation,NazarickPage,nextNazarickPage} from "./themes/NazarickNavigation";
 import {NazarickBackdrop} from "./themes/NazarickBackdrop";
 import {castleWindowAppearance,useCastleWindow} from "./themes/castleWindow";
@@ -74,6 +76,7 @@ export function storeSkin(s: Settings): Skin {
   }
   const ps = { title: "PlayStation Store", sale: "#f5c518" };
   switch (t) {
+    case "reading": return {title:"The Game Bookshop",sale:"#91a276",layout:"grid",bg:"transparent",panel:"#f0dfc1",text:"#3f3428",sub:"#786247",accent:"#4b5940",accentText:"#fff0d4",radius:7,font:'"Segoe Print","Comic Sans MS",cursive',ring:on=>on?{boxShadow:"0 0 0 3px #f4dfb9,0 0 0 5px #8f714b,0 8px 16px #38201644",transform:"translateY(-3px)"}:{boxShadow:"0 3px 8px #38201633"}};
     case "wii": case "wiiu": return {title:t==="wii"?"Shopping Channel":"Nintendo-style Shop",sale:"#1f93ba",layout:"grid",bg:"radial-gradient(ellipse at top,#fff,#e6eef3)",font:"Arial,sans-serif",panel:"linear-gradient(#fff,#edf3f7)",text:"#536c7b",sub:"#708895",accent:"#d9f4ff",accentText:"#256a89",radius:t==="wii"?24:18,ring:on=>on?{boxShadow:"0 0 0 3px #37bce9,0 4px 12px #70b9d644"}: {boxShadow:"0 2px 5px #879dab22"}};
     // Switch: the eShop's near-white pages, its orange sidebar colour on the open section, the system's teal focus frame
     case "switch": {const p=switchStandardPalette(s);return {title:"Nintendo eShop",sale:"#ff8a8a",layout:"grid",bg:`var(--dht-switch-store-bg,${switchStandardDark(s)?p.bg:"#f4f4f4"})`,font:'"Nintendo Switch UI","Segoe UI",Roboto,"Helvetica Neue",Arial,sans-serif',panel:p.panel,text:p.ink,sub:p.sub,accent:"#fa7e00",accentText:"#fff",radius:4,ring:on=>on?{boxShadow:"0 0 0 2px #fff,0 0 0 6px var(--dht-switch-accent,#00c3e3),0 6px 16px #0003"}:{boxShadow:"0 1px 3px #0002"}};}
@@ -290,7 +293,7 @@ export function StoreView({ settings, lib, onClose, onLaunch }: { settings: Sett
     <div ref={castleWindow.ref} className="dht-store" data-dht-store-skin={settings.theme} data-theme-id={activeTheme(settings)?.id} data-scheme={iisuSchemeAttr(settings)} style={{ position: "absolute", inset: 0, zIndex: 85, background: "#000",...iisuPageVars(settings),...switchPageVars(settings),...(settings.theme==="castle"?castleWindowAppearance(settings):{}) }}><style>{SANTA_PAGE_STYLES}</style>
       <style>{NINTENDO_STORE_CSS + "\n" + IISU_STORE_CSS}</style>
       {searchOpen && <div className="dht-store-search" style={{position:"absolute",inset:settings.theme==="nazarick"?"10% 0 0":0,zIndex:5,background:skin.bg,color:skin.text,display:"grid",placeItems:"center"}}><form onSubmit={e=>{e.preventDefault();submitSearch();}} style={{width:"65%"}}><h1>{tab === "plugins" ? "Search plugins" : tab === "themes" ? "Search themes" : "Search Store"}</h1><input ref={searchBox} autoFocus {...opensKeyboardOnTap} aria-label={tab === "plugins" ? "Search plugins" : tab === "themes" ? "Search themes" : "Search Store"} value={searchDraft} onChange={e=>setSearchDraft(e.target.value)} onKeyDown={e=>{e.stopPropagation();if(e.key==="Escape")setSearchOpen(false);}} style={{width:"100%",boxSizing:"border-box",fontSize:28,padding:18,color:skin.text,background:skin.panel,border:`2px solid ${skin.sub}`,borderRadius:skin.radius}}/><button type="submit" style={{fontSize:22,padding:"14px 30px",marginTop:24,background:skin.accent,color:skin.accentText}}>Search</button><button type="button" onClick={()=>setSearchOpen(false)} style={{fontSize:22,padding:"14px 30px",marginLeft:18}}>Back</button><p style={{marginTop:22,fontSize:16,color:skin.sub}}>Ⓐ Keyboard · Ⓨ Search · Ⓑ Back</p></form></div>}
-      <StageHost><Stage background="transparent">
+      <StageHost><Stage background="transparent">{settings.theme==="reading"&&<style>{READING_PAGES_CSS}</style>}
         {settings.theme==="nazarick"&&<><NazarickBackdrop page="store" motion={settings.animations} settings={settings}/><NazarickNavigation page="store" settings={settings} onNavigate={navigateNazarick}/></>}
         <StoreBody
           skin={skin}
