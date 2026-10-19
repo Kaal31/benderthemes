@@ -8,6 +8,7 @@
 // Data and install code are the Hub's; this file only lays them out the way each console's store does (category rows,
 // a category column, a list with a preview pane or the Xbox 360 NXE stack; storeSectionStyles.ts has the per-console
 // CSS) and moves the controller focus through them.
+import { t } from "./i18n";
 import { CSSProperties, MutableRefObject, useEffect, useMemo, useRef, useState } from "react";
 import type { Press } from "./input";
 import type { storeSkin } from "./storeView";
@@ -68,11 +69,11 @@ const matches = (t: Tile, q: string) => q.split(/\s+/).filter(Boolean).every((w)
 // presets v2: a theme-file preset carries its console (p.theme) and its file (p.file)
 const FILE_LABEL: Record<string, string> = { ps3: "PS3 theme", psp: "PSP theme", vita: "PS Vita theme", switch: "Switch theme", wii: "Wii theme", wiiu: "Wii U theme", n3ds: "3DS theme", xbox: "Xbox skin", x360: "Xbox 360 theme" };
 function fileTile(p: Preset, current: string): Tile {
-  const label = (p.file && FILE_LABEL[p.theme]) || "Theme file";
+  const label = (p.file && FILE_LABEL[p.theme]) || t("themeFile");
   const file = p.file;
   const ext = file.match(/\.([a-z0-9]{2,8})$/i)?.[1]?.toUpperCase();
   const name = p.label.includes(" · ") ? p.label.slice(p.label.indexOf(" · ") + 3) : p.label;
-  return { id: p.id, kind: "file", name, sub: ext ? `${label} (.${ext.toLowerCase()})` : label, meta: p.id === current ? "In use" : "Installed", mark: ext ? (ext.length > 4 ? ext.slice(0, 2) : ext) : initials(name), hue: hueOf(p.id), preset: p,
+  return { id: p.id, kind: "file", name, sub: ext ? `${label} (.${ext.toLowerCase()})` : label, meta: p.id === current ? t("inUse") : t("installed"), mark: ext ? (ext.length > 4 ? ext.slice(0, 2) : ext) : initials(name), hue: hueOf(p.id), preset: p,
     text: `${label} on this Deck: ${file.split("/").pop()}. Applying it keeps your library, folders and other settings.` };
 }
 function useThemeShelves(s: Settings, query: string) {
@@ -309,13 +310,13 @@ export function StoreSection({ kind, settings, skin, query, active, inputRef, on
       </div>
     );
   };
-  const sectionName = kind === "themes" ? "Themes" : "Plugins";
-  const empty = data.loading ? (kind === "themes" ? "Loading themes…" : "Loading plugins…") : query.trim() ? "Nothing found. Press Y to search again." : kind === "themes" ? "No themes for this console yet." : "No plugins to show.";
+  const sectionName = kind === "themes" ? t("themes") : t("plugins");
+  const empty = data.loading ? (kind === "themes" ? t("loadingThemes") : t("loadingPlugins")) : query.trim() ? t("nothingFoundPressY") : kind === "themes" ? t("noThemesForConsole") : t("noPluginsToShow");
   const hints = zone === "detail"
-    ? `A select · ◀ ▶ buttons · ▲ ▼ scroll${it ? " · X project page" : ""}${confirm ? " · B cancel" : " · B back"}`
-    : `A open · Y search ${kind === "themes" ? "themes" : "plugins"} · L1 / R1 sections · B close`;
+    ? `${t("storeSectionDetailHints")}${it ? t("projectPageHint") : ""}${confirm ? t("cancelHint") : t("backHint")}`
+    : (kind === "themes" ? t("storeSectionBrowseHintsThemes") : t("storeSectionBrowseHintsPlugins"));
   const footer = <div className="dht-store-section-hints dht-store-prompt">{T(hints)}</div>;
-  const attribution = kind === "plugins" && <span className="dht-store-section-attribution" onClick={() => openUrl(plugins.source || EXPLORER_PAGE)}>Plugin data: Decky Plugins Explorer by safetzahirovic</span>;
+  const attribution = kind === "plugins" && <span className="dht-store-section-attribution" onClick={() => openUrl(plugins.source || EXPLORER_PAGE)}>{t("pluginDataAttribution")}</span>;
 
   // ── the detail page of the open item ──
   if (zone === "detail" && tile) {
@@ -332,24 +333,24 @@ export function StoreSection({ kind, settings, skin, query, active, inputRef, on
             <p>{tile.text}</p>
             {it?.pick?.aiAssisted && <p>{it.pick.aiAssisted.note}</p>}
             {it && it.source === "explorer" && !confirm && <div className="dht-store-section-warning" role="note">
-              <strong>Not reviewed by ThemeHub</strong>
-              <span>This plugin comes from the public list of Decky plugin repositories. We have not checked its code, and it may or may not be in Decky’s own store. Read the project page first. ThemeHub installs an unreviewed plugin only from a known release ZIP and only after you confirm.</span>
-              {it.root && <span>It asks to run <b>as root</b> (full access to your system).</span>}
-              {it.archived && <span>The author has <b>archived</b> this repository; it may no longer work.</span>}
-              {it.forkOf && <span>Another repository of <b>{it.forkOf}</b> with the same name and author.</span>}
+              <strong>{t("notReviewedByThemeHub")}</strong>
+              <span>{t("notReviewedByThemeHubDesc")}</span>
+              {it.root && <span>{t("runsAsRootWarning")}</span>}
+              {it.archived && <span>{t("repoArchivedWarning")}</span>}
+              {it.forkOf && <span>{t("forkWarning", { repo: it.forkOf })}</span>}
             </div>}
             {it && confirm > 0 && <div className="dht-store-section-confirm" role="alertdialog" aria-label="Confirm installation">
-              {confirm === 1 ? <><strong>Install {it.name} without a review?</strong><span>ThemeHub has not checked this plugin. It downloads {it.release ? `release ${it.release}` : "the latest release"} from {it.repo} on GitHub and runs with Decky’s permissions. Decky asks once more before installing.</span></>
-                : <><strong>This plugin runs as root.</strong><span>It gets full access to your system, beyond what normal plugins can do. Install only if you trust {it.author || it.repo.split("/")[0]}.</span></>}
+              {confirm === 1 ? <><strong>{t("installConfirmTitle", { name: it.name })}</strong><span>{t("installConfirmDesc", { release: it.release ? `release ${it.release}` : t("latestRelease"), repo: it.repo })}</span></>
+                : <><strong>{t("rootConfirmTitle")}</strong><span>{t("rootConfirmDesc", { author: it.author || it.repo.split("/")[0] })}</span></>}
             </div>}
-            {it?.pick && <p className="dht-store-section-note">Decky will ask you to confirm before downloading and installing.</p>}
+            {it?.pick && <p className="dht-store-section-note">{t("deckyConfirmNote")}</p>}
             {it && (it.tags.length > 0 || it.release || !!it.downloads) && <dl className="dht-store-section-facts">
-              {it.tags.length > 0 && <div><dt>Tags</dt><dd>{it.tags.join(", ")}</dd></div>}
-              {it.release && <div><dt>Latest release</dt><dd>{it.release}</dd></div>}
-              {!!it.downloads && <div><dt>Release downloads</dt><dd>{it.downloads.toLocaleString()}</dd></div>}
+              {it.tags.length > 0 && <div><dt>{t("tagsFact")}</dt><dd>{it.tags.join(", ")}</dd></div>}
+              {it.release && <div><dt>{t("latestReleaseFact")}</dt><dd>{it.release}</dd></div>}
+              {!!it.downloads && <div><dt>{t("releaseDownloadsFact")}</dt><dd>{it.downloads.toLocaleString()}</dd></div>}
             </dl>}
-            {tile.pack && <dl className="dht-store-section-facts"><div><dt>Download</dt><dd>{(tile.pack.size / 1048576).toFixed(1)} MB</dd></div><div><dt>Version</dt><dd>{tile.pack.version}</dd></div><div><dt>On this Deck</dt><dd>{tile.pack.installedVersion ? `Yes (${tile.pack.installedVersion})` : "No"}</dd></div></dl>}
-            {it?.readme && <><h4>From the README</h4><ReadmeExcerpt text={it.readme} /></>}
+            {tile.pack && <dl className="dht-store-section-facts"><div><dt>{t("downloadFact")}</dt><dd>{(tile.pack.size / 1048576).toFixed(1)} MB</dd></div><div><dt>{t("versionFact")}</dt><dd>{tile.pack.version}</dd></div><div><dt>{t("onThisDeckFact")}</dt><dd>{tile.pack.installedVersion ? t("yesWithVersion", { version: tile.pack.installedVersion }) : t("noFact")}</dd></div></dl>}
+            {it?.readme && <><h4>{t("fromTheReadme")}</h4><ReadmeExcerpt text={it.readme} /></>}
             {message && <p className="dht-store-section-message" role="status">{message}</p>}
           </div>
           <div className="dht-store-section-actions">
