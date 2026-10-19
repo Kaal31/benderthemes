@@ -1,3 +1,4 @@
+import { t } from "./i18n";
 import { CSSProperties, useEffect, useRef, useState } from "react";
 import { checkFirmware, installFirmware, onFirmwareStatus, releaseLabel, releaseOrder, Status } from "./Updates";
 import { pushModalInput } from "./input";
@@ -31,12 +32,12 @@ export function FirmwareNotice({paused=false}:{paused?:boolean}){
  const [label,baseColor]=identities[theme]??["System Update","#7fd3ff"]; // a look without its own wording (a community theme)
  const color=theme==="dial"?({classic:"#85ff00",chrome:"#85ff00",crimson:"#ff344e",arctic:"#42ddff"}[settings.dial.look]):baseColor;
  const headline:Record<string,string>={switch:"A system update is available.",n3ds:"A system update is available.",ps1:"New system data found.",iisu:"Something new is here!",minecraft:"A new world awaits.",nazarick:"An invitation to ascend.",republic:"System upgrade authorized.",pain:"The next evolution.",dial:"New firmware detected.",castle:"A message from your system.",ps2:"Update data found.",xbox:"UPGRADE YOUR SYSTEM"};
- return <div style={{position:"absolute",inset:0,zIndex:500}}><div className="dht-firmware" data-firmware-theme={theme} data-dashboard={settings.x360.style} data-animated={settings.animations} role="dialog" aria-label="Firmware update" aria-modal="true" style={{"--fw-accent":color,fontFamily:theme==="republic"?"AurebeshEnglish,sans-serif":theme==="nazarick"?"Georgia,serif":"system-ui,sans-serif"} as CSSProperties}>
+ return <div style={{position:"absolute",inset:0,zIndex:500}}><div className="dht-firmware" data-firmware-theme={theme} data-dashboard={settings.x360.style} data-animated={settings.animations} role="dialog" aria-label={t("firmwareUpdateAria")} aria-modal="true" style={{"--fw-accent":color,fontFamily:theme==="republic"?"AurebeshEnglish,sans-serif":theme==="nazarick"?"Georgia,serif":"system-ui,sans-serif"} as CSSProperties}>
  <style>{BASE}{FIRMWARE_SKINS}</style>
  <div className="fw-top"><span className="fw-symbol">{emblem?<img src={emblem} alt=""/>:theme==="pain"?"◎":["castle","republic","nazarick"].includes(theme)?"✦":"↓"}</span><span>{label}</span></div>
- <h2>{headline[theme]||"A new version is ready."}</h2><p>Update ThemeHub to get the latest improvements. Your installed themes and settings stay with you.</p>
- <div className="fw-version"><span>{installedLabel}</span><span>→</span><strong>{releaseLabel(release)}</strong><span style={{marginLeft:"auto",opacity:.6}}>Plugin firmware</span></div>
- <div className="fw-actions"><button data-selected={selection===0} disabled={busy} onMouseEnter={()=>setSelection(0)} onClick={()=>void accept()}>{busy?"Preparing…":"A  Accept update"}</button><button data-selected={selection===1} disabled={busy} onMouseEnter={()=>setSelection(1)} onClick={dismiss}>B  Not now</button></div>
+ <h2>{headline[theme]||"A new version is ready."}</h2><p>{t("firmwareNoticeDesc")}</p>
+ <div className="fw-version"><span>{installedLabel}</span><span>→</span><strong>{releaseLabel(release)}</strong><span style={{marginLeft:"auto",opacity:.6}}>{t("pluginFirmware")}</span></div>
+ <div className="fw-actions"><button data-selected={selection===0} disabled={busy} onMouseEnter={()=>setSelection(0)} onClick={()=>void accept()}>{busy ? t("preparingDots") : t("acceptUpdateA")}</button><button data-selected={selection===1} disabled={busy} onMouseEnter={()=>setSelection(1)} onClick={dismiss}>{t("notNowB")}</button></div>
  {message&&<div className="fw-note" role="status">{message}</div>}
  </div></div>;
 }
@@ -46,15 +47,15 @@ const BASE=`.dht-firmware{position:absolute;right:4%;bottom:9%;width:min(460px,8
  *  screen, Yes / No sit side by side under it and the button guide is in the bottom-right corner
  *  (✕ Enter · ○ Back). Sizes follow the PSP's 480 × 272 screen. */
 function PspUpdateDialog({from,to,selection,busy,message,onSelect,onYes,onNo}:{from:string;to:string;selection:number;busy:boolean;message:string;onSelect:(i:number)=>void;onYes:()=>void;onNo:()=>void}){
- const lines=message?[message]:busy?["Please wait..."]:["A system software update is available.",`Update to version ${to}? (installed: ${from})`,"Your themes and settings will be kept."];
+ const lines = message ? [message] : busy ? [t("pleaseWait")] : [t("pspUpdateAvailable"), t("pspUpdateToVersion", { to, from }), t("pspThemesKept")];
  return <div className="dht-psp-dialog" role="dialog" aria-label="System software update" aria-modal="true" style={{position:"absolute",inset:0,zIndex:500,containerType:"size",fontFamily:"var(--dht-xmb-font, inherit)"} as CSSProperties}>
   <style>{PSP_DIALOG}</style>
   <div className="pd-dim"/>
   <div className="pd-band">
    <div className="pd-text">{lines.map((l,i)=><div key={i}>{l}</div>)}{busy&&!message&&<div className="pd-busy"><i/><i/><i/><i/></div>}</div>
-   {!busy&&!message&&<div className="pd-buttons">{["Yes","No"].map((t,i)=><button key={t} data-selected={selection===i} onMouseEnter={()=>onSelect(i)} onClick={i?onNo:onYes}>{t}</button>)}</div>}
+   {!busy&&!message&&<div className="pd-buttons">{[t("yes"), t("no")].map((label, i) => <button key={label} data-selected={selection===i} onMouseEnter={()=>onSelect(i)} onClick={i?onNo:onYes}>{label}</button>)}</div>}
   </div>
-  <div className="pd-guide"><span><b className="pd-x">✕</b> {message?"OK":"Enter"}</span><span><b className="pd-o">○</b> Back</span></div>
+  <div className="pd-guide"><span><b className="pd-x">✕</b> {message ? "OK" : t("enterAction")}</span><span><b className="pd-o">○</b> {t("back")}</span></div>
  </div>;
 }
 // u = one pixel of the PSP's 480 × 272 screen, scaled to the home's size

@@ -1,3 +1,4 @@
+import { t } from "./i18n";
 // Hub > Theme files: theme files for the theme-file importers (PSP, PS3, Vita, Switch, Wii U, 3DS, Wii, Xbox), listed
 // from public sites at runtime by the backend (py_modules/theme_sources.py) with the source and the creator named on
 // every entry. Nothing is downloaded until the user confirms it here; files land in <data>/skins/<kind>/.
@@ -170,28 +171,28 @@ export function ThemeFiles({ inputRef }: { inputRef: MutableRefObject<InputHandl
   const moreCard = selected >= items.length && more;
   const kindList = kinds?.kinds ?? [];
   const notBuilt = useMemo(() => (kinds?.notBuilt ?? []).filter(n => n.kinds.includes(kind)), [kinds, kind]);
-  return <section className="dht-files" aria-label="Theme files">
+  return <section className="dht-files" aria-label={t("themeFiles")}>
     <style>{FILES_CSS}</style>
     <div className="dht-files-bar">
-      <div className="dht-files-kinds" role="tablist" aria-label="Console" data-focused={zone === "kinds"}>
+      <div className="dht-files-kinds" role="tablist" aria-label={t("console")} data-focused={zone === "kinds"}>
         <span className="dht-files-glyph" aria-hidden="true">L2</span>
         {kindList.map(k => <button key={k.id} role="tab" aria-selected={k.id === kind} data-active={k.id === kind} onClick={() => { setKind(k.id); setSource(""); setQuery(""); setTyped(""); setZone("kinds"); }}>{k.label}</button>)}
         <span className="dht-files-glyph" aria-hidden="true">R2</span>
       </div>
       <label className="dht-files-search" data-focused={zone === "search"}>
         <span aria-hidden="true">⌕</span>
-        <input ref={searchRef} {...opensKeyboardOnTap} type="search" aria-label="Search theme files" placeholder={`Search ${kindInfo?.label ?? ""} themes`} value={typed}
+        <input ref={searchRef} {...opensKeyboardOnTap} type="search" aria-label={t("searchThemeFiles")} placeholder={t("searchConsoleThemesPlaceholder", { console: kindInfo?.label ?? "" })} value={typed}
           onFocus={() => setZone("search")} onChange={e => setTyped(e.target.value)}
           onKeyDown={e => { e.stopPropagation(); if (e.key === "Enter" || e.key === "ArrowDown") { e.preventDefault(); leaveSearch(true); } if (e.key === "Escape") { e.preventDefault(); searchRef.current?.blur(); setTyped(query); setZone("kinds"); } }} />
       </label>
     </div>
     <div className="dht-files-sub">
-      <span className="dht-files-sources">From {(kindInfo?.sources ?? []).map(s => <button key={s} data-active={s === src} onClick={() => setSource(s)}>{kinds?.sources[s]?.name ?? s}</button>)}{(kindInfo?.sources.length ?? 0) > 1 && <i>X switches</i>}</span>
+      <span className="dht-files-sources">From {(kindInfo?.sources ?? []).map(s => <button key={s} data-active={s === src} onClick={() => setSource(s)}>{kinds?.sources[s]?.name ?? s}</button>)}{(kindInfo?.sources.length ?? 0) > 1 && <i>{t("xSwitches")}</i>}</span>
       <span className="dht-files-status" role="status">{loading && !items.length ? "Loading…" : info?.error ? info.error : `${info?.total ?? 0} ${query ? `results for “${query}”` : "themes"} · saved to ${kindInfo?.dir ?? "skins"}/`}</span>
     </div>
     <div className="dht-files-layout">
       <div className="dht-files-grid" ref={gridRef} data-focused={zone === "grid"}>
-        {!items.length && !loading && <div className="dht-files-empty"><strong>{info?.error ? "This source is not reachable right now." : "Nothing here yet."}</strong><span>{info?.error ? "Installed theme files keep working offline. Try again later or pick another source." : query ? "Try fewer or other words." : "Pick another console or source."}</span></div>}
+        {!items.length && !loading && <div className="dht-files-empty"><strong>{info?.error ? t("sourceNotReachable") : t("nothingHereYet")}</strong><span>{info?.error ? t("installedThemeFilesOffline") : query ? t("tryFewerWords") : t("pickAnotherConsole")}</span></div>}
         {items.map((it, i) => <button key={it.id} className="dht-files-card" data-current={i === selected} data-selected={zone === "grid" && i === selected}
           onClick={() => { setSelected(i); setZone("detail"); setAction(0); }} onFocus={() => setSelected(i)}>
           <span className="dht-files-art">{it.image ? <img src={it.image} alt="" loading="lazy" referrerPolicy="no-referrer" onError={e => { e.currentTarget.style.display = "none"; }} /> : null}<b>{it.name.slice(0, 1)}</b></span>
@@ -203,29 +204,29 @@ export function ThemeFiles({ inputRef }: { inputRef: MutableRefObject<InputHandl
       </div>
       <aside className="dht-files-detail" ref={detailRef} data-focused={zone === "detail"}>
         {current ? <>
-          <div className="dht-files-preview">{current.image ? <img key={current.id} src={current.image} alt={`${current.name} preview`} referrerPolicy="no-referrer" onError={e => { e.currentTarget.style.display = "none"; }} /> : <span>No preview</span>}</div>
+          <div className="dht-files-preview">{current.image ? <img key={current.id} src={current.image} alt={`${current.name} preview`} referrerPolicy="no-referrer" onError={e => { e.currentTarget.style.display = "none"; }} /> : <span>{t("noPreview")}</span>}</div>
           <h3>{current.name}</h3>
           <small className="dht-files-by">{current.author ? `by ${current.author} · ` : ""}{srcInfo?.name}{current.tag ? ` · ${current.tag}` : ""}</small>
-          {fileList === null ? <p className="dht-files-note">{(files[current.id] as any)?.error ?? "Reading the item’s files…"}</p> : <div className="dht-files-actions">
+          {fileList === null ? <p className="dht-files-note">{(files[current.id] as any)?.error ?? t("readingItemFiles")}</p> : <div className="dht-files-actions">
             {fileList.map((f, i) => {
               const asking = confirm?.name === f.name;
               return <div key={f.name || i} className="dht-files-action" data-confirm={asking}>
                 <button className="dht-files-dl" data-active={zone === "detail" && action === i} disabled={busy} onClick={() => { setZone("detail"); setAction(i); pressAction(i); }}>
-                  {busy && asking ? `${progress?.percent ?? 0}% · ${progress?.message || "Downloading…"}` : asking ? `Confirm download · A` : `↓ ${fileList.length > 1 || src === "archive" ? f.name.split("/").pop() : "Download"}${f.size ? ` · ${mb(f.size)}` : ""}`}
+                  {busy && asking ? `${progress?.percent ?? 0}% · ${progress?.message || "Downloading…"}` : asking ? `{t("confirmDownloadA")}` : `↓ ${fileList.length > 1 || src === "archive" ? f.name.split("/").pop() : "Download"}${f.size ? ` · ${mb(f.size)}` : ""}`}
                 </button>
                 {asking && !busy && <p className="dht-files-confirm" role="alertdialog">Download {src === "archive" ? `“${f.name.split("/").pop()}”` : "this theme"} from {srcInfo?.name} into <b>{kindInfo?.dir}/</b>? {src === "archive" ? "It was uploaded by an archive.org user and is not checked by ThemeHub. " : src === "ps3pro" || src === "shenron0" ? "It comes from a public GitHub collection and is not checked by ThemeHub. " : ""}A confirms · B cancels.</p>}
               </div>;
             })}
             {!fileList.length && <p className="dht-files-note">No {kindInfo?.exts.join(" / ")} files in this item.</p>}
-            <button className="dht-files-page" data-active={zone === "detail" && action === fileList.length} onClick={() => openUrl(current.page)}>Source page · X ↗</button>
+            <button className="dht-files-page" data-active={zone === "detail" && action === fileList.length} onClick={() => openUrl(current.page)}>{t("sourcePageLink")}</button>
           </div>}
           {message && <p className="dht-files-message" data-ok={!!message.ok} role="status">{message.text}</p>}
           <p className="dht-files-credit">{srcInfo?.credit}</p>
-        </> : <div className="dht-files-note">{loading ? "Loading…" : "Choose a theme to see it here."}</div>}
+        </> : <div className="dht-files-note">{loading ? "Loading…" : t("chooseThemeToSeeHere")}</div>}
       </aside>
     </div>
     <div className="dht-files-foot">
-      <span className="dht-files-attribution">Theme data: <button type="button" onClick={() => openUrl(srcInfo?.url)}>{srcInfo?.name ?? "…"} ↗</button>{notBuilt.length > 0 && <em> · Not available: {notBuilt.map(n => n.name).join(", ")}</em>}</span>
+      <span className="dht-files-attribution">{t("themeDataLabel")} <button type="button" onClick={() => openUrl(srcInfo?.url)}>{srcInfo?.name ?? "…"} ↗</button>{notBuilt.length > 0 && <em> · Not available: {notBuilt.map(n => n.name).join(", ")}</em>}</span>
       <span className="dht-files-hints">{zone === "search" ? "Type · ↓ Results · B Done" : zone === "detail" ? "↑↓ Choose · A Download (asks first) · X Source page · B Back" : "L2/R2 Console · ☰ Search · X " + (zone === "kinds" ? "Source" : "Source page") + " · A Open"}</span>
     </div>
   </section>;

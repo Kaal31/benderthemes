@@ -154,22 +154,22 @@ export function Updates({ onManageThemes }: { onManageThemes: () => void }) {
     }
   };
   const order = selected && status ? releaseOrder(selected,status) : 0;
-  return <><PanelSection title="Community theme updates">
+  return <><PanelSection title={lang("communityThemeUpdates")}>
     <style>{COMMUNITY_UPDATE_CSS}</style>
     <PanelSectionRow><section className="dht-theme-updates" aria-label="Community update summary" aria-busy={themeChecking}>
       <div className="dht-tu-summary">
         <div className="dht-tu-symbol" aria-hidden="true">{themeChecking ? "↻" : community.updateCount ? "↓" : "✓"}</div>
-        <div><span className="dht-tu-eyebrow">COMMUNITY THEMES</span><h3>{themeChecking ? "Checking for updates…" : community.updateCount ? `${community.updateCount} update${community.updateCount === 1 ? "" : "s"} available` : "You’re up to date"}</h3><p>{themeChecking ? "Looking for new themes and assets" : community.updateCount ? "Fresh looks, ready when you are" : "No known theme updates"}</p></div>
+        <div><span className="dht-tu-eyebrow">{lang("communityThemesUpper")}</span><h3>{themeChecking ? lang("checkingForUpdates") : community.updateCount ? lang("themeUpdatesCount", { count: community.updateCount }) : lang("youAreUpToDate")}</h3><p>{themeChecking ? lang("lookingForThemesAndAssets") : community.updateCount ? lang("freshLooksReady") : lang("noKnownThemeUpdates")}</p></div>
       </div>
       <span className="dht-tu-accessible" role="status">{community.updateCount ? `${community.updateCount} community theme update${community.updateCount === 1 ? "" : "s"} available` : "No known community theme updates"}</span>
       {!!community.updates.length && <div className="dht-tu-list">{community.updates.map(theme => <article className="dht-tu-theme" key={theme.repo + "/" + theme.id}>
         <div className="dht-tu-title"><strong>{theme.name}</strong><span className="dht-tu-kind">{theme.installedVersion === theme.version ? "Assets" : "Theme"}</span></div>
         <span className="dht-tu-repo">{theme.repo}</span>
         <div className="dht-tu-versions"><span>{theme.installedVersion}</span><span aria-hidden="true">→</span><strong>{theme.installedVersion === theme.version ? "Updated assets" : theme.version}</strong></div>
-        {!theme.compatible && <p className="dht-tu-warning">Update ThemeHub first</p>}
+        {!theme.compatible && <p className="dht-tu-warning">{lang("updateThemeHubFirst")}</p>}
       </article>)}</div>}
-      {!!community.errors.length && <div className="dht-tu-notice" role="status"><span aria-hidden="true">!</span><div><strong>Some sources are offline</strong><p>Showing saved results. Installed themes still work.</p></div></div>}
-      <div className="dht-tu-schedule"><span className="dht-tu-dot" aria-hidden="true"/>Automatic checks every 6 hours</div>
+      {!!community.errors.length && <div className="dht-tu-notice" role="status"><span aria-hidden="true">!</span><div><strong>{lang("someSourcesOffline")}</strong><p>Showing saved results. Installed themes still work.</p></div></div>}
+      <div className="dht-tu-schedule"><span className="dht-tu-dot" aria-hidden="true"/>{lang("autoChecksEvery6Hours")}</div>
     </section></PanelSectionRow>
     <PanelSectionRow><div className="dht-tu-action dht-tu-primary"><ButtonItem layout="below" onClick={onManageThemes}>{community.updateCount ? lang("reviewThemeUpdates") : lang("browseCommunityThemes")}</ButtonItem></div></PanelSectionRow>
     <PanelSectionRow><div className="dht-tu-action dht-tu-secondary"><ButtonItem layout="below" disabled={themeChecking} onClick={() => { setThemeChecking(true); setThemeError(""); void checkCommunityUpdates(true).catch(e => setThemeError(String(e))).finally(() => setThemeChecking(false)); }}>{themeChecking ? lang("checkingThemes") : lang("checkCommunityThemeUpdates")}</ButtonItem></div></PanelSectionRow>
@@ -179,8 +179,8 @@ export function Updates({ onManageThemes }: { onManageThemes: () => void }) {
       <div>{lang("installedVersion")}: {status ? releaseLabel({tag:"",version:status.currentVersion,assetUrl:"",notes:"",build:status.currentBuild,attempt:status.currentAttempt}) : checking ? lang("checking") : "Unavailable"}</div>
       <div>{checkError || (checking ? lang("checkingGitHub") : status?.stale ? `${status.error}. Showing saved releases; latest version is unverified.`
         : status?.updateAvailable ? `Update available: ${status.latest?releaseLabel(status.latest):""}`
-        : status?.success ? (status.latest ? "This channel is up to date." : "No installable releases found for the installed channel.") : "Update status unavailable. Try checking again.")}</div>
-      {status?.channelKnown === false && <div>Installed release channel is unknown. Select your intended channel and reinstall a numbered release to restore build detection.</div>}
+        : status?.success ? (status.latest ? lang("channelUpToDate") : lang("noReleasesForChannel")) : lang("updateStatusUnavailable"))}</div>
+      {status?.channelKnown === false && <div>{lang("installedChannelUnknown")}</div>}
     </div></PanelSectionRow>
     {status?.updateAvailable && status.latest && <PanelSectionRow>
       <ButtonItem layout="below" disabled={busy || checking} onClick={() => void install(status.latest!)}>{lang("updateTo")} {releaseLabel(status.latest)}</ButtonItem>
