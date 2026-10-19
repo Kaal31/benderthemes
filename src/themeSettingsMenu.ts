@@ -1,3 +1,4 @@
+import { t, lang } from "./i18n";
 import { saverOptions, updateSaver, addSaverMedia, previewSaver } from "./themeScreensavers";
 import { achievementPopupStatus, achievementPopupsBlocked, previewAchievementPopup } from "./achievementPopups";
 import {customProfilePicture,setProfilePicture,uploadProfilePicture} from "./profilePicture";
@@ -433,24 +434,24 @@ export function customizeItems(): MenuItem[] {
   const controls=customizeControls().filter(c=>c.id!=="file");
   const pageBackgrounds=controls.filter(c=>c.id.startsWith("wallpaper:"));
   return [
-    group("Profile picture",()=>[
-      {label:"Upload custom picture…",action:uploadProfilePicture},
-      {label:"Use Steam / theme default picture",action:()=>setProfilePicture(undefined)},
+    group(t("profilePicture"),()=>[
+      {label:t("uploadCustomPicture"),action:uploadProfilePicture},
+      {label:t("useDefaultPicture"),action:()=>setProfilePicture(undefined)},
     ]),
-    ...(pageBackgrounds.length?[group("Background",()=>pageBackgrounds.map(slotItem))]:[]),
+    ...(pageBackgrounds.length?[group(t("background"),()=>pageBackgrounds.map(slotItem))]:[]),
     ...controls.filter(c=>!c.id.startsWith("wallpaper:")).map(slotItem),
-    ...(file.length ? [group("Theme file", () => themeFileItems(S().theme))] : []),
-    ...(own.length ? [group("Look options", () => lookOptionItems(S().theme))] : []),
-    group(own.some((i) => i.label === "Library") ? "Games shown" : "Library", () => [
-      { ...collectionMenu(th), label: "Show in this theme" },
-      toggle("ProtonDB badges (this theme)", () => protonDbEnabled(S()), (v) => updateSettings((p) => ({ protondbThemes: { ...p.protondbThemes, [protonDbThemeKey(S())]: v } }))),
-      choice("Icon size", [75, 85, 100, 110].map((v) => ({ id: v, name: `${v}%${v === 100 ? " · default" : ""}` })), () => S().iconSizes?.[th] ?? 100, (v) => updateSettings((p) => ({ iconSizes: { ...p.iconSizes, [th]: v } }))),
-      ...(USES.titles.includes(th) ? [choice("Game titles", TITLE_MODES, () => S().titles[th] ?? "show", (v) => updateSettings((p) => ({ titles: { ...p.titles, [th]: v } })))] : []),
-      ...(CASE_THEMES.includes(th) ? [choice("Cover style", [{ id: "flat", name: "Flat" }, { id: "case3d", name: "3D case" }], () => S().coverStyles?.[th] ?? "flat", (v) => updateSettings((p) => ({ coverStyles: { ...p.coverStyles, [th]: v as "flat" | "case3d" } })))] : []),
+    ...(file.length ? [group(t("themeFile"), () => themeFileItems(S().theme))] : []),
+    ...(own.length ? [group(t("lookOptions"), () => lookOptionItems(S().theme))] : []),
+    group(t("destLibrary"), () => [
+      { ...collectionMenu(th), label: t("showInThisTheme") },
+      toggle(t("protonDbBadgesThisTheme"), () => protonDbEnabled(S()), (v) => updateSettings((p) => ({ protondbThemes: { ...p.protondbThemes, [protonDbThemeKey(S())]: v } }))),
+      choice(t("iconSize"), [75, 85, 100, 110].map((v) => ({ id: v, name: `${v}%${v === 100 ? ` · ${t("default")}` : ""}` })), () => S().iconSizes?.[th] ?? 100, (v) => updateSettings((p) => ({ iconSizes: { ...p.iconSizes, [th]: v } }))),
+      ...(USES.titles.includes(th) ? [choice(t("gameTitles"), TITLE_MODES, () => S().titles[th] ?? "show", (v) => updateSettings((p) => ({ titles: { ...p.titles, [th]: v } })))] : []),
+      ...(CASE_THEMES.includes(th) ? [choice(t("coverStyle"), [{ id: "flat", name: t("flatCover") }, { id: "case3d", name: t("case3dCover") }], () => S().coverStyles?.[th] ?? "flat", (v) => updateSettings((p) => ({ coverStyles: { ...p.coverStyles, [th]: v as "flat" | "case3d" } })))] : []),
     ]),
     // the themed store's optional sections (src/storeSections.tsx), per theme, hidden by default
-    group("Store sections", () => (["themes", "plugins"] as const).map((k) => toggle(k === "themes" ? "Themes (packs and theme files)" : "Plugins (Spotlight)", () => storeSectionOn(S(), th, k), (v) => updateSettings((p) => ({ storeSections: { ...p.storeSections, [th]: { ...p.storeSections?.[th], [k]: v } } }))))),
-    ...(th !== "frame" ? [group("Pages", pageItems)] : []),
+    group(t("storeSections"), () => (["themes", "plugins"] as const).map((k) => toggle(k === "themes" ? t("storeSectionThemes") : t("storeSectionPlugins"), () => storeSectionOn(S(), th, k), (v) => updateSettings((p) => ({ storeSections: { ...p.storeSections, [th]: { ...p.storeSections?.[th], [k]: v } } }))))),
+    ...(th !== "frame" ? [group(t("pages"), pageItems)] : []),
   ];
 }
 
@@ -458,10 +459,10 @@ export function customizeItems(): MenuItem[] {
 export function advancedItems(): MenuItem[] {
   const th = S().theme;
   return [
-    group("Standard options (this look's own values)", () => standardItems(th)),
-    ...(LAYOUT_SLOTS[th]?.icons ? [group("Icons one by one", iconItems)] : []),
+    group(t("standardOptionsOwnValues"), () => standardItems(th)),
+    ...(LAYOUT_SLOTS[th]?.icons ? [group(t("iconsOneByOne"), iconItems)] : []),
     // a PSP theme's boot intro / game-start clip stays in use on other themes: it can be turned off from any of them
-    ...(th !== "psp" && (S().bootIntro || S().gameBoot) ? [group("PSP intro and game start video", () => pspClipItems(""))] : []),
+    ...(th !== "psp" && (S().bootIntro || S().gameBoot) ? [group(t("pspIntroAndGameBoot"), () => pspClipItems(""))] : []),
     resetGroup(),
   ];
 }
@@ -469,17 +470,17 @@ export function advancedItems(): MenuItem[] {
 /** The current theme's entries after Presets and the shared destinations: Customize and Advanced. */
 export function themeSettingsItems(): MenuItem[] {
   refreshThemeLists();
-  return [group("Customize", customizeItems), group("Screensaver", () => [
-    choice("Mode", [{id:"steam" as const,name:"Steam default"},{id:"custom" as const,name:"This theme’s media"},{id:"disabled" as const,name:"Disabled for this theme"}],()=>saverOptions().mode,mode=>updateSaver({mode})),
-    {label:"Add photo, GIF or video",action:()=>void addSaverMedia()},
+  return [group(t("customize"), customizeItems), group(t("screensaver"), () => [
+    choice(t("screensaverMode"), [{id:"steam" as const,name:t("screensaverSteamDefault")},{id:"custom" as const,name:t("screensaverThisThemeMedia")},{id:"disabled" as const,name:t("screensaverDisabledThisTheme")}],()=>saverOptions().mode,mode=>updateSaver({mode})),
+    {label:t("addPhotoGifVideo"),action:()=>void addSaverMedia()},
     {get label(){return "Media ("+saverOptions().media.length+")";},sub:()=>saverOptions().media.map((file,i)=>({label:"Remove "+(i+1)+": "+(saverOptions().labels?.[file]??file.slice(-8)),action:()=>updateSaver({media:saverOptions().media.filter(x=>x!==file)})}))},
-    choice("Slide duration", [5,10,15,30,60].map(id=>({id,name:id+" seconds"})),()=>saverOptions().duration,duration=>updateSaver({duration})),
-    toggle("Shuffle",()=>saverOptions().shuffle,shuffle=>updateSaver({shuffle})),
-    choice("Framing",[{id:"contain" as const,name:"Fit whole image"},{id:"cover" as const,name:"Fill screen"}],()=>saverOptions().fit,fit=>updateSaver({fit})),
-    choice("Transition",[{id:"fade" as const,name:"Fade"},{id:"none" as const,name:"None"}],()=>saverOptions().transition,transition=>updateSaver({transition})),
-    {label:"Preview",action:()=>void previewSaver(),get disabled(){return S().screensaversDisabled===true||saverOptions().mode==="disabled"||!saverOptions().media.length;}},
-    {label:"Global disable in Quick Access overrides this theme",disabled:true},
-  ]), group("Advanced", advancedItems)];
+    choice(t("slideDuration"), [5,10,15,30,60].map(id=>({id,name:`${id} ${t("seconds")}`})),()=>saverOptions().duration,duration=>updateSaver({duration})),
+    toggle(t("shuffle"),()=>saverOptions().shuffle,shuffle=>updateSaver({shuffle})),
+    choice(t("framing"),[{id:"contain" as const,name:t("fitWholeImage")},{id:"cover" as const,name:t("fillScreen")}],()=>saverOptions().fit,fit=>updateSaver({fit})),
+    choice(t("transition"),[{id:"fade" as const,name:t("fade")},{id:"none" as const,name:t("none")}],()=>saverOptions().transition,transition=>updateSaver({transition})),
+    {label:t("preview"),action:()=>void previewSaver(),get disabled(){return S().screensaversDisabled===true||saverOptions().mode==="disabled"||!saverOptions().media.length;}},
+    {label:t("globalDisableScreensaverNotice"),disabled:true},
+  ]), group(t("advanced"), advancedItems)];
 }
 
 /**
@@ -529,41 +530,41 @@ function standardItems(th: ThemeId): MenuItem[] {
     return {
       get label() {
         const own = R().themeOptions[th]?.[key];
-        return `${label}: ${own === undefined ? `${all()} (all themes)` : options.find((o) => o.id === own)?.name ?? String(own)}`;
+        return `${label}: ${own === undefined ? `${all()} ${t("allThemesSuffix")}` : options.find((o) => o.id === own)?.name ?? String(own)}`;
       },
       sub: () => choices.map((o) => ({
-        label: o.id === "__all__" ? `Like all themes (${all()})` : o.name,
+        label: o.id === "__all__" ? lang("likeAllThemes", { all: all() }) : o.name,
         get checked() { const own = R().themeOptions[th]?.[key]; return o.id === "__all__" ? own === undefined : own === o.id; },
         action: () => setThemeOption(th, key, o.id === "__all__" ? undefined : (o.id as Settings[K])),
       }) as MenuItem),
     } as MenuItem;
   };
-  const vol = [100, 80, 60, 40, 20, 0].map((v) => ({ id: v, name: v ? `${v}%` : "Muted" }));
+  const vol = [100, 80, 60, 40, 20, 0].map((v) => ({ id: v, name: v ? `${v}%` : t("off") }));
   return [
-    group("Clock and date", () => [
-      opt("Clock", "clockShown", [{ id: true, name: "Show" }, { id: false, name: "Hide" }]),
-      opt("Time format", "clock24", [{ id: false, name: "12-hour" }, { id: true, name: "24-hour" }]),
-      opt("Seconds", "clockSeconds", [{ id: false, name: "Off" }, { id: true, name: "On" }]),
-      opt("Date format", "dateFormat", [{ id: "MDY", name: "Month / day / year" }, { id: "DMY", name: "Day / month / year" }, { id: "YMD", name: "Year / month / day" }]),
+    group(t("clockAndDate"), () => [
+      opt(t("clock"), "clockShown", [{ id: true, name: t("show") }, { id: false, name: t("hide") }]),
+      opt(t("timeFormat"), "clock24", [{ id: false, name: t("clock12") }, { id: true, name: t("clock24") }]),
+      opt(t("clockSeconds"), "clockSeconds", [{ id: false, name: t("off") }, { id: true, name: t("on") }]),
+      opt(t("dateFormat"), "dateFormat", [{ id: "MDY", name: t("formatMdy") }, { id: "DMY", name: t("formatDmy") }, { id: "YMD", name: t("formatYmd") }]),
     ]),
-    group("Background", () => [
-      ...(USES.canvas.includes(th) || USES.wallpaper.includes(th) ? [opt("Brightness", "bgBrightness", [100, 90, 80, 70, 60, 50].map((v, i) => ({ id: v, name: i ? `−${i} (${v}%)` : "Normal" })))] : []),
-      opt("Animations", "animations", [{ id: true, name: "On" }, { id: false, name: "Off (still picture)" }]),
-      opt("Colour", "tint", TINTS),
-      ...(USES.gameArt.includes(th) ? [opt("Game art behind the menu", "gameArt", [{ id: false, name: "Off" }, { id: true, name: "On · follows the focused game" }])] : []),
-      ...(USES.canvas.includes(th) ? [opt("Animated background quality", "bgQuality", [{ id: "full", name: "Full resolution" }, { id: "half", name: "Half resolution · saves battery" }])] : []),
+    group(t("background"), () => [
+      ...(USES.canvas.includes(th) || USES.wallpaper.includes(th) ? [opt(t("brightness"), "bgBrightness", [100, 90, 80, 70, 60, 50].map((v, i) => ({ id: v, name: i ? `−${i} (${v}%)` : t("normal") })))] : []),
+      opt(t("animations"), "animations", [{ id: true, name: t("on") }, { id: false, name: t("offStillPicture") }]),
+      opt(t("colour"), "tint", TINTS),
+      ...(USES.gameArt.includes(th) ? [opt(t("gameArtBehindMenu"), "gameArt", [{ id: false, name: t("off") }, { id: true, name: t("onFollowsFocusedGame") }])] : []),
+      ...(USES.canvas.includes(th) ? [opt(t("animatedBgQuality"), "bgQuality", [{ id: "full", name: t("fullResolution") }, { id: "half", name: t("halfResolution") }])] : []),
     ]),
-    group("Sound", () => [
-      opt("Navigation sounds", "sounds", [{ id: true, name: "On" }, { id: false, name: "Off" }]),
-      opt("Sound volume", "sfxVolume", vol),
-      opt("Music volume", "musicVolume", vol),
+    group(t("sound"), () => [
+      opt(t("navigationSounds"), "sounds", [{ id: true, name: t("on") }, { id: false, name: t("off") }]),
+      opt(t("soundVolume"), "sfxVolume", vol),
+      opt(t("musicVolume"), "musicVolume", vol),
     ]),
-    group("Games", () => [
-      opt("Download status", "downloadStatus", [{ id: true, name: "Show while downloading" }, { id: false, name: "Hide" }]),
-      opt("Ⓐ on a game", "aAction", [{ id: "theme", name: "Like the console" }, { id: "launch", name: "Launch right away" }, { id: "details", name: "Steam's game page" }]),
-      opt("Sort", "sort", [{ id: "recent", name: "Recently played" }, { id: "alpha", name: "A–Z" }, { id: "playtime", name: "Most played" }]),
+    group(t("games"), () => [
+      opt(t("downloadStatus"), "downloadStatus", [{ id: true, name: t("showWhileDownloading") }, { id: false, name: t("hide") }]),
+      opt(t("aOnAGame"), "aAction", [{ id: "theme", name: t("likeTheConsole") }, { id: "launch", name: t("launchRightAway") }, { id: "details", name: t("steamGamePageOption") }]),
+      opt(t("sort"), "sort", [{ id: "recent", name: t("sortRecent") }, { id: "alpha", name: t("sortAlpha") }, { id: "playtime", name: t("sortPlaytime") }]),
     ]),
-    { label: "Use all-theme values for everything here", action: () => updateSettings((p) => ({ themeOptions: { ...p.themeOptions, [th]: {} } })) },
+    { label: t("useAllThemeValues"), action: () => updateSettings((p) => ({ themeOptions: { ...p.themeOptions, [th]: {} } })) },
   ];
 }
 
@@ -600,20 +601,20 @@ export function presetItems(): MenuItem[] {
   const pick = (x: { id: string; label: string }) => ({ label: x.label, checked: x.id === cur, action: () => (playSound("tab"), applyPreset(getPresets().find((y) => y.id === x.id)!)) }) as MenuItem;
   const name = p?.label ?? look;
   const rename = (): void => {
-    const typed = typeof window !== "undefined" && (window as any).prompt ? (window as any).prompt("Preset name", name) : null;
+    const typed = typeof window !== "undefined" && (window as any).prompt ? (window as any).prompt(t("presetNamePrompt"), name) : null;
     if (typed) renamePreset(cur, typed);
   };
-  const confirm = (label: string, yes: string, run: () => void): MenuItem => ({ label, sub: () => [{ label: yes, action: run }, { label: "Cancel", action: () => {} }] });
+  const confirm = (label: string, yes: string, run: () => void): MenuItem => ({ label, sub: () => [{ label: yes, action: run }, { label: t("cancel"), action: () => {} }] });
   return [
     ...mine.map(pick),
-    group("Other looks", () => presetGroups().map((g) => ({ label: g.name, checked: g.presets.some((x) => x.id === cur), sub: () => g.presets.map(pick) }) as MenuItem)),
+    group(t("otherLooks"), () => presetGroups().map((g) => ({ label: g.name, checked: g.presets.some((x) => x.id === cur), sub: () => g.presets.map(pick) }) as MenuItem)),
     S().userPresets.filter((u) => u.id.startsWith("my:")).length < MAX_USER_PRESETS
-      ? { label: "Save as new preset", action: () => void saveUserPreset() }
-      : { label: `${MAX_USER_PRESETS} saved presets is the most · delete one first`, disabled: true },
-    { label: `Rename ${name}`, action: rename },
+      ? { label: t("qamSaveNewPreset"), action: () => void saveUserPreset() }
+      : { label: lang("savedPresetsMaxNotice", { max: MAX_USER_PRESETS }), disabled: true },
+    { label: lang("renamePresetNamed", { name }), action: rename },
     ...(p?.origin === "saved"
-      ? [confirm(`Delete ${name}`, "Delete this saved preset", () => deleteUserPreset(cur))]
-      : p?.user ? [confirm(`Reset ${name}`, "Forget this preset's changes", () => deleteUserPreset(cur))] : []),
+      ? [confirm(lang("deletePresetNamed", { name }), t("deleteSavedPresetAction"), () => deleteUserPreset(cur))]
+      : p?.user ? [confirm(lang("resetPresetNamed", { name }), t("forgetPresetChangesAction"), () => deleteUserPreset(cur))] : []),
   ];
 }
 
@@ -625,13 +626,13 @@ export function essentialItems(moved: MenuItem[] = [], steamHome?: () => void): 
   const has = (re: RegExp) => moved.some((m) => re.test(m.label));
   return [
     // one Presets entry for every theme (a theme's own Presets entry is replaced by it: presets work the same everywhere)
-    { label: "Presets", sub: presetItems },
+    { label: t("presets"), sub: presetItems },
     ...moved.filter((m) => !/^presets$/i.test(m.label)),
-    ...(!has(/^steam home$/i) && steamHome ? [{ label: "Steam Home", action: steamHome }] : []),
+    ...(!has(/^steam home$/i) && steamHome ? [{ label: t("destMainMenu"), action: steamHome }] : []),
     // the shared music player and capture viewer, reachable from every theme
-    { label: "Music player", action: () => void openDestination({ place: "music" }) },
-    group("Music playback", musicPlaybackItems), // shuffle / repeat / crossfade of the shared player (all themes)
-    { label: "Captures", action: () => void openDestination({ place: "media" }) },
+    { label: t("musicPlayer"), action: () => void openDestination({ place: "music" }) },
+    group(t("musicPlayback"), musicPlaybackItems), // shuffle / repeat / crossfade of the shared player (all themes)
+    { label: t("captures"), action: () => void openDestination({ place: "media" }) },
   ];
 }
 
@@ -639,63 +640,74 @@ export function essentialItems(moved: MenuItem[] = [], steamHome?: () => void): 
 export function resetGroup(): MenuItem {
   const th = S().theme;
   const name = THEMES.find((t) => t.id === th)?.name ?? th;
-  const confirm = (label: string, yes: string, run: () => void): MenuItem => ({ label, sub: () => [{ label: yes, action: run }, { label: "Cancel", action: () => {} }] });
-  return group("Reset or delete", () => [
-    ...(THEME_STYLES[th]?.length ? [{ label: `Put back ${name}'s own options`, action: () => updateSettings((p) => ({ styles: { ...p.styles, [th]: {} } })) }] : []),
-    confirm(`Reset ${name} settings`, "Reset this theme's settings to defaults", () => resetThemeSettings(th)),
-    confirm("Reset all settings", "Every setting of every theme back to defaults", () => resetAllSettings()),
-    confirm(`Delete ${name}`, "Delete its resources and return to Steam Home", deleteCurrentTheme),
+  const confirm = (label: string, yes: string, run: () => void): MenuItem => ({ label, sub: () => [{ label: yes, action: run }, { label: t("cancel"), action: () => {} }] });
+  return group(t("resetOrDelete"), () => [
+    ...(THEME_STYLES[th]?.length ? [{ label: lang("putBackThemeOptions", { name }), action: () => updateSettings((p) => ({ styles: { ...p.styles, [th]: {} } })) }] : []),
+    confirm(lang("resetThemeSettingsNamed", { theme: name }), t("resetThisThemeDefaults"), () => resetThemeSettings(th)),
+    confirm(t("resetAllSettings"), t("resetAllSettingsDesc"), () => resetAllSettings()),
+    confirm(lang("deleteThemeNamed", { name }), t("deleteThemeDesc"), deleteCurrentTheme),
   ]);
 }
 
 /** Settings that are not the theme's own: behind "Global settings" in every theme's options. */
 export function globalSettingsItems(): MenuItem[] {
   return [
-    group("Library · all themes", () => [
-      choice("Sort", [{ id: "recent", name: "Recently played" }, { id: "alpha", name: "A–Z" }, { id: "playtime", name: "Most played" }], () => getRawSettings().sort, (v) => updateSettings({ sort: v as any })),
-      choice("Ⓐ on a game", [{ id: "theme", name: "Like the console" }, { id: "launch", name: "Launch right away" }, { id: "details", name: "Steam's game page" }], () => getRawSettings().aAction, (v) => updateSettings({ aAction: v as any })),
+    group(t("libraryAllThemes"), () => [
+      choice(t("sort"), [{ id: "recent", name: t("sortRecent") }, { id: "alpha", name: t("sortAlpha") }, { id: "playtime", name: t("sortPlaytime") }], () => getRawSettings().sort, (v) => updateSettings({ sort: v as any })),
+      choice(t("aOnAGame"), [{ id: "theme", name: t("likeTheConsole") }, { id: "launch", name: t("launchRightAway") }, { id: "details", name: t("steamGamePageOption") }], () => getRawSettings().aAction, (v) => updateSettings({ aAction: v as any })),
     ]),
-    group("Look · all themes", () => [
-      group("Profile picture · all themes",()=>[
-        {label:"Upload custom picture…",action:uploadProfilePicture},
-        {get label(){return customProfilePicture()?"Use Steam / theme default picture":"Steam / theme default picture (active)";},action:()=>setProfilePicture(undefined)},
+    group(t("lookAllThemes"), () => [
+      group(t("profilePictureAllThemes"),()=>[
+        {label:t("uploadCustomPicture"),action:uploadProfilePicture},
+        {get label(){return customProfilePicture()?t("useDefaultPicture"):t("defaultPictureActive");},action:()=>setProfilePicture(undefined)},
       ]),
-      toggle("TV mode", () => S().tvMode, (v) => updateSettings({ tvMode: v })),
-      toggle("Shortcut buttons the console never had", () => !!S().shortcutButtons, (v) => updateSettings({ shortcutButtons: v })),
-      toggle("Background animations", () => getRawSettings().animations, (v) => updateSettings({ animations: v })),
-      toggle("24-hour clock", () => getRawSettings().clock24, (v) => updateSettings({ clock24: v })),
-      toggle("Show the clock", () => getRawSettings().clockShown, (v) => updateSettings({ clockShown: v })),
-      toggle("Clock seconds", () => getRawSettings().clockSeconds, (v) => updateSettings({ clockSeconds: v })),
-      choice("Date format", [{ id: "MDY", name: "Month / day / year" }, { id: "DMY", name: "Day / month / year" }, { id: "YMD", name: "Year / month / day" }], () => getRawSettings().dateFormat, (v) => updateSettings({ dateFormat: v as any })),
-      choice("Background brightness", [100, 90, 80, 70, 60, 50].map((v, i) => ({ id: v, name: i ? `−${i} (${v}%)` : "Normal" })), () => getRawSettings().bgBrightness, (v) => updateSettings({ bgBrightness: v })),
-      choice("Animated background quality", [{ id: "full", name: "Full resolution" }, { id: "half", name: "Half resolution · saves battery" }], () => getRawSettings().bgQuality, (v) => updateSettings({ bgQuality: v as any })),
-      choice("Hub style", [{ id: "auto", name: "Auto (theme it was opened on)" }, { id: "neutral", name: "Neutral" }, { id: "preview", name: "Preview (the theme focused in Discover)" }, ...consoleThemeIds().map((id) => ({ id, name: THEMES.find((t) => t.id === id)?.name ?? id }))], () => S().hubStyle, (v) => updateSettings({ hubStyle: v })),
-      toggle("Themed store", () => S().themedStore !== false, (v) => updateSettings({ themedStore: v })),
-      toggle("Steam Deck compatibility badges", () => S().badges.deck, (v) => updateSettings((p) => ({ badges: { ...p.badges, deck: v } }))),
-      toggle("Hide Steam's top bar", () => S().hideSteamHeader, (v) => updateSettings({ hideSteamHeader: v })),
-      choice("Steam's bottom bar", FOOTER_MODES, () => S().footer, (v) => updateSettings({ footer: v })),
+      toggle(t("tvMode"), () => S().tvMode, (v) => updateSettings({ tvMode: v })),
+      toggle(t("shortcutButtonsDesc"), () => !!S().shortcutButtons, (v) => updateSettings({ shortcutButtons: v })),
+      toggle(t("backgroundAnimations"), () => getRawSettings().animations, (v) => updateSettings({ animations: v })),
+      toggle(t("clock24"), () => getRawSettings().clock24, (v) => updateSettings({ clock24: v })),
+      toggle(t("showTheClock"), () => getRawSettings().clockShown, (v) => updateSettings({ clockShown: v })),
+      toggle(t("clockSeconds"), () => getRawSettings().clockSeconds, (v) => updateSettings({ clockSeconds: v })),
+      choice(t("dateFormat"), [{ id: "MDY", name: t("formatMdy") }, { id: "DMY", name: t("formatDmy") }, { id: "YMD", name: t("formatYmd") }], () => getRawSettings().dateFormat, (v) => updateSettings({ dateFormat: v as any })),
+      choice(t("backgroundBrightness"), [100, 90, 80, 70, 60, 50].map((v, i) => ({ id: v, name: i ? `−${i} (${v}%)` : t("normal") })), () => getRawSettings().bgBrightness, (v) => updateSettings({ bgBrightness: v })),
+      choice(t("animatedBgQuality"), [{ id: "full", name: t("fullResolution") }, { id: "half", name: t("halfResolution") }], () => getRawSettings().bgQuality, (v) => updateSettings({ bgQuality: v as any })),
+      choice(t("hubStyle"), [{ id: "auto", name: t("hubStyleAuto") }, { id: "neutral", name: t("hubStyleNeutral") }, { id: "preview", name: t("hubStylePreview") }, ...consoleThemeIds().map((id) => ({ id, name: THEMES.find((t) => t.id === id)?.name ?? id }))], () => S().hubStyle, (v) => updateSettings({ hubStyle: v })),
+      toggle(t("themedStore"), () => S().themedStore !== false, (v) => updateSettings({ themedStore: v })),
+      toggle(t("deckBadges"), () => S().badges.deck, (v) => updateSettings((p) => ({ badges: { ...p.badges, deck: v } }))),
+      toggle(t("hideSteamHeader"), () => S().hideSteamHeader, (v) => updateSettings({ hideSteamHeader: v })),
+      choice(t("steamBottomBar"), FOOTER_MODES, () => S().footer, (v) => updateSettings({ footer: v })),
     ]),
-    group("Sound · all themes", () => [
-      toggle("Background music", () => S().backgroundMusic !== false, (v) => updateSettings({ backgroundMusic: v })),
-        toggle("ThemeDeck music for focused games", () => S().themeDeckFocusMusic !== false, (v) => updateSettings({ themeDeckFocusMusic: v })),
-      toggle("Navigation sounds", () => S().sounds, (v) => updateSettings({ sounds: v })),
-      choice("Sound volume", [0, 20, 40, 60, 80, 100].map((v) => ({ id: v, name: `${v}%` })), () => Math.round(S().sfxVolume / 20) * 20, (v) => updateSettings({ sfxVolume: v })),
-      choice("Music volume", [0, 20, 40, 60, 80, 100].map((v) => ({ id: v, name: `${v}%` })), () => Math.round(S().musicVolume / 20) * 20, (v) => updateSettings({ musicVolume: v })),
+    group(t("soundAllThemes"), () => [
+      toggle(t("backgroundMusic"), () => S().backgroundMusic !== false, (v) => updateSettings({ backgroundMusic: v })),
+        toggle(t("themeDeckFocusMusic"), () => S().themeDeckFocusMusic !== false, (v) => updateSettings({ themeDeckFocusMusic: v })),
+      toggle(t("navigationSounds"), () => S().sounds, (v) => updateSettings({ sounds: v })),
+      choice(t("soundVolume"), [0, 20, 40, 60, 80, 100].map((v) => ({ id: v, name: `${v}%` })), () => Math.round(S().sfxVolume / 20) * 20, (v) => updateSettings({ sfxVolume: v })),
+      choice(t("musicVolume"), [0, 20, 40, 60, 80, 100].map((v) => ({ id: v, name: `${v}%` })), () => Math.round(S().musicVolume / 20) * 20, (v) => updateSettings({ musicVolume: v })),
     ]),
-    { label: "Hub", action: () => openMarketplace(undefined, { from: S().theme }) },
-    { label: "Steam Quick Access", action: () => openSteam("qam") },
+    { label: t("qamHub"), action: () => openMarketplace(undefined, { from: S().theme }) },
+    { label: t("steamQuickAccess"), action: () => openSteam("qam") },
   ];
 }
 
 /** A theme's own options from src/themes/options/<theme>.ts, grouped by their sub-menu. */
 function styleItems(th: ThemeId, own: StyleOption[]): MenuItem[] {
-  const item = (o: StyleOption) => choice(o.label, o.choices, () => style(S(), th, o.key), (v) => setStyle(th, o.key, v));
+  const item = (o: StyleOption) => {
+    const locLabel = t(o.label);
+    const label = locLabel !== o.label ? locLabel : o.label;
+    const choices = o.choices.map((c) => {
+      const locName = t(c.name);
+      return { id: c.id, name: locName !== c.name ? locName : c.name };
+    });
+    return choice(label, choices, () => style(S(), th, o.key), (v) => setStyle(th, o.key, v));
+  };
   const out: MenuItem[] = [];
   const groups = new Map<string, StyleOption[]>();
   for (const o of own) {
     if (!o.group) out.push(item(o));
     else groups.set(o.group, [...(groups.get(o.group) ?? []), o]);
   }
-  for (const [name, list] of groups) out.push(group(name, () => list.map(item)));
+  for (const [name, list] of groups) {
+    const locGroupName = t(name);
+    out.push(group(locGroupName !== name ? locGroupName : name, () => list.map(item)));
+  }
   return out;
 }
