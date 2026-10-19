@@ -22,10 +22,6 @@ For example, Neon Drive's author registered a native layout by editing `src/sett
 
 The [GitHub repository installer](COMMUNITY-REPOSITORIES.md) supports both sandboxed frame themes and installed Native API v1 layouts. It does not automatically convert a plugin fork. Adapt the fork to either the frame SDK or the [native package contract](NATIVE-THEMES.md), then publish its compiled theme ZIP. Adding a catalog alone does not perform this adaptation. Native layout packages can supply custom Home and secondary-screen React components; unsupported internal service calls still need host API additions.
 
-## Installable interface showcase
-
-[Community Theme · Interface Showcase](../themes/community-starter/README.md) displays seven annotated interface examples: navigation, cards, lists, forms, media players, 3D editor composition and multiple pages. It explains what each area is for and which SDK/data source would power it. The examples are illustrative rather than live widgets. Build its ZIP with `python tools/package_community_starter.py`.
-
 ## Minimal working theme
 
 Create this folder and copy `sdk/theme-bridge.js` from this repository:
@@ -169,7 +165,7 @@ ZIP the **contents** of the theme folder so theme.json is at the root (a single 
 
 Install through Quick Access → Add a theme from a file. The theme appears in **Presets**. Alternatively, copy a folder/ZIP into the runtime themes directory and Rescan; see THEME-FORMAT.md for paths.
 
-For repository development, place the folder in `themes/`, run `npm ci` and `npm run preview`, and use `preview/server.mjs` to serve the generated preview. Opening the theme directly from disk does not reproduce the host/sandbox bridge. For the example, run `node tools/package_block_worlds_frame.mjs`, then `node tests/verify-block-worlds-frame.mjs` and `node tests/verify-frame-navigation.mjs` after the preview build.
+For repository development, place the folder in `themes/`, run `npm ci` and `npm run preview`, and use `preview/server.mjs` to serve the generated preview. Opening the theme directly from disk does not reproduce the host/sandbox bridge.
 
 Test controller input after touch and typing, search/keyboard behavior, empty/offline services, switching presets, saves across pages, missing-page recovery, reduced motion, pause/resume, and 1280×800/720 layouts. Browser preview data is sample content. Final Steam Deck verification remains necessary.
 
@@ -195,4 +191,4 @@ Community repositories are browsed in their own Hub tab. Installed community the
 | Page navigation fails | Root-relative safe HTML path; use params rather than query strings |
 | Imported theme missing from Hub | Current imported themes appear in Presets; Hub catalog integration is separate |
 
-Reference implementation: [Block Worlds frame theme](../themes/block-worlds-frame/README.md). SDK implementation: [theme-bridge.js](../sdk/theme-bridge.js). Service contracts: [framePages.ts](../src/engine/framePages.ts).
+SDK implementation: [theme-bridge.js](../sdk/theme-bridge.js). Service contracts: [framePages.ts](../src/engine/framePages.ts).

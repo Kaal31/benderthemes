@@ -64,9 +64,6 @@ jobs:
       - run: node tests/verify-achievement-unlocks.mjs
       - run: node tests/verify-achievement-popups-browser.mjs
       - run: node tests/verify-achievement-popup-styles.mjs
-      - run: node tests/verify-block-worlds-frame.mjs
-      - run: node tests/verify-frame-navigation.mjs
-      - run: node tests/verify-community-starter.mjs
       - run: node tests/verify-sdk-viewer.mjs
       - run: node tests/verify-native-builder.mjs
       - run: node tests/verify-native-layout.mjs

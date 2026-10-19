@@ -31,7 +31,7 @@ The viewer is useful for layout, SDK integration, isolation and page flows. Its 
 
 ## Code-heavy themes
 
-Code-heavy themes are supported through `layout: frame`: your entry is a normal web page, and its JavaScript can contain locally bundled React, canvas, Three.js or an editor. There is no requirement to supply button images or reuse a native layout. Block Worlds Frame is the working example: its 3D library is bundled in avatar-vendor.js and the rest is page code.
+Code-heavy themes are supported through `layout: frame`: your entry is a normal web page, and its JavaScript can contain locally bundled React, canvas, Three.js or an editor. There is no requirement to supply button images or reuse a native layout.
 
 Use your normal bundler to produce HTML/CSS/JS inside the theme folder. Avoid CDN imports, direct SteamClient calls and unrestricted fetch. Prefer classic bundled scripts and local assets; module/fetch loaders can hit opaque-origin restrictions. For GLB/textures loaded through fetch, bundle data into your JavaScript or use a supported local/data-URL loading path. Node/native code and raw .tsx files do not run inside the theme; React/TypeScript must be compiled first.
 

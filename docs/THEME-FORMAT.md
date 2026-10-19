@@ -194,4 +194,4 @@ Audio extension: `audioLibrary` returns bounded albums and tracks with no filesy
 
 ## Experimental multi-page interfaces
 
-Frame themes may navigate to arbitrary local HTML pages and same-page routes using the bundled ThemeHub SDK. See [FRAME-SDK.md](FRAME-SDK.md) for navigation/back/replace, shared saved data, controller/keyboard handling and animation lifecycle. The sandbox and theme-folder restrictions remain in place. The Block Worlds frame test includes a separate 3D workshop and shared-state preview page.
+Frame themes may navigate to arbitrary local HTML pages and same-page routes using the bundled ThemeHub SDK. See [FRAME-SDK.md](FRAME-SDK.md) for navigation/back/replace, shared saved data, controller/keyboard handling and animation lifecycle. The sandbox and theme-folder restrictions remain in place.
