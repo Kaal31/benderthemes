@@ -844,7 +844,7 @@ export function XmbHome({ variant }: { variant: Variant }) {
         label: "Game Trailers",
         icon: "folder",
         p3t: "icon_video",
-        sub: "Store trailers for your games",
+        sub: t("skinStoreTrailers"),
         children: () => api.lib.games.filter((g) => !g.shortcut).map((g) => ({ key: `v${g.appid}`, label: g.name, sub: "Trailer", game: g, trailer: true })),
       });
     if (vids === null) videoItems.push({ key: "vload", label: "Looking for videos…", icon: "video", p3t: "icon_video", visual: "loading" });
@@ -864,7 +864,7 @@ export function XmbHome({ variant }: { variant: Variant }) {
           action: () => api.playVideo(v),
         });
       }
-      if (!vids.length) videoItems.push({ key: "vnone", label: "No videos", icon: "video", p3t: "icon_video", visual: "unknown", sub: "Steam game recordings and videos in Videos, Downloads or on an SD card show up here" });
+      if (!vids.length) videoItems.push({ key: "vnone", label: t("noVideos"), icon: "video", p3t: "icon_video", visual: "unknown", sub: t("noVideosDesc") });
     }
     const video: XCat = { key: "video", label: t("catVideo"), icon: "video", p3t: "icon_video", items: videoItems };
     // PSP: Extras only exists when the theme has an Extras ("+") icon, like on firmware that shows it
@@ -898,12 +898,12 @@ export function XmbHome({ variant }: { variant: Variant }) {
           sub: [`${al.tracks.length} track${al.tracks.length === 1 ? "" : "s"}`, al.artist, al.source === "steam" ? "Steam soundtrack" : "Music folder"].filter(Boolean).join(" · "),
           children: () => al.tracks.map((t, i) => ({ key: `tr${t.id}`, label: t.title, icon: "music" as IconName, p3t: "icon_music", visual: "musicTrack" as XmbVisual, sub: [al.name, t.disc].filter(Boolean).join(" · "), track: { album: al.id, index: i }, action: () => playAlbum(al, i) })),
         });
-      if (!music.length) musicItems.push({ key: "m-none", label: "No music", icon: "music", p3t: "icon_music", visual: "unknown", sub: "Steam soundtracks and music in Music or on an SD card show up here" });
+      if (!music.length) musicItems.push({ key: "m-none", label: t("noMusic"), icon: "music", p3t: "icon_music", visual: "unknown", sub: t("noMusicDesc") });
     }
-    musicItems.push({ key: "player", label: "Music Player", icon: "music", p3t: "icon_music", sub: "Albums, queue, shuffle and repeat", action: () => openDestination({ place: "music" }) });
+    musicItems.push({ key: "player", label: t("musicPlayer"), icon: "music", p3t: "icon_music", sub: t("musicPlayerDesc"), action: () => openDestination({ place: "music" }) });
     const music_: XCat = { key: "music", label: t("catMusic"), icon: "music", p3t: "icon_music", items: musicItems };
-    const psn: XCat = {key:"psn",label:"PlayStation Network",icon:"psn",p3t:"icon_psn",items:[{key:"store",label:"PlayStation Store",sub:"Steam Store catalog",icon:"store",p3t:"icon_store",action:()=>openSteam("store")},{key:"account",label:"Account",icon:"user",p3t:"icon_user",action:()=>openSteam("friends")}]};
-    const tv: XCat = {key:"tv",label:"TV / Video Services",icon:"tv",p3t:"icon_tv",items:[{key:"trailers",label:"Game Trailers",icon:"video",p3t:"icon_video",children:()=>api.lib.games.filter(g=>!g.shortcut).map(g=>({key:`tr${g.appid}`,label:g.name,game:g,trailer:true}))},...api.lib.apps.map(g=>({key:`app${g.appid}`,label:g.name,game:g,icon:"apps" as IconName}))]};
+    const psn: XCat = {key:"psn",label:"PlayStation Network",icon:"psn",p3t:"icon_psn",items:[{key:"store",label:t("playstationStore"),sub:t("steamStoreCatalog"),icon:"store",p3t:"icon_store",action:()=>openSteam("store")},{key:"account",label:t("account"),icon:"user",p3t:"icon_user",action:()=>openSteam("friends")}]};
+    const tv: XCat = {key:"tv",label:t("tvVideoServices"),icon:"tv",p3t:"icon_tv",items:[{key:"trailers",label:t("gameTrailers"),icon:"video",p3t:"icon_video",children:()=>api.lib.games.filter(g=>!g.shortcut).map(g=>({key:`tr${g.appid}`,label:g.name,game:g,trailer:true}))},...api.lib.apps.map(g=>({key:`app${g.appid}`,label:g.name,game:g,icon:"apps" as IconName}))]};
     // a PSP opens every category on its top entry; the PS3 starts the Game column on the first game
     const game: XCat = { key: "game", label: t("catGame"), icon: "game", p3t: "icon_game", items: games, start: variant === "psp" ? 0 : Math.min(firstGame, games.length - 1) };
     if (variant === "psp") {
@@ -930,13 +930,13 @@ export function XmbHome({ variant }: { variant: Variant }) {
       icon: "user",
       p3t: "icon_user",
       items: [
-        { key: "me", p3t: "icon_user", label: api.user, icon: "user", sub: "Signed in", action: () => openSteam("friends") },
+        { key: "me", p3t: "icon_user", label: api.user, icon: "user", sub: t("signedIn"), action: () => openSteam("friends") },
         { key: "off", p3t: "icon_setting_item", label: t("destPower"), icon: "power", action: () => openSteam("power") },
-        { key: "steamhome", p3t: "icon_user", label: t("destMainMenu"), icon: "home", sub: "Show Steam's own home", action: api.showSteamHome },
+        { key: "steamhome", p3t: "icon_user", label: t("destMainMenu"), icon: "home", sub: t("showSteamHomeDesc"), action: api.showSteamHome },
       ],
       start: 0,
     };
-    const friends: XCat = { key: "friends", label: t("destFriends"), icon: "friends", p3t: "icon_friend", items: [{ key: "chat", p3t: "icon_chat", label: "Friends & Chat", icon: "friends", action: () => openSteam("friends") }] };
+    const friends: XCat = { key: "friends", label: t("destFriends"), icon: "friends", p3t: "icon_friend", items: [{ key: "chat", p3t: "icon_chat", label: t("friendsAndChat"), icon: "friends", action: () => openSteam("friends") }] };
     return [users, settingsCat, photo, music_, video, tv, game, network, psn, friends];
   }, [api.lib, s.theme, s.clock24, s.sounds, colorIdx, s.xmb.collectionFolders, api.user, shots, vids, s.trailers.video, s.trailers.sound, s.trailers.preview, skin, music, player.album?.id, player.index]);
 
@@ -1028,12 +1028,12 @@ export function XmbHome({ variant }: { variant: Variant }) {
     // Shuffle and Repeat like the PS3's mini control panel, Crossfade like its Music Settings
     if (cur && (cur.track || cat?.key === "music")) {
       const playing = musicPlayer.state().album;
-      menu.open([...musicPlaybackItems(), ...(playing ? [{ label: "Stop", action: () => musicPlayer.stop() }] : []), ...extra], "Music");
+      menu.open([...musicPlaybackItems(), ...(playing ? [{ label: t("stop"), action: () => musicPlayer.stop() }] : []), ...extra], t("destMusic"));
       return;
     }
     if (cur?.game) {
       const g = cur.game;
-      menu.open([{ label: "Start", action: () => api.launch(g) }, { label: "Watch Trailer", action: () => api.playTrailer(g) }, { label: "Information", action: () => api.details(g) }, { label: "Game Options", action: () => api.nativeMenu(g) }, ...extra], g.name);
+      menu.open([{ label: t("start"), action: () => api.launch(g) }, { label: t("watchTrailer"), action: () => api.playTrailer(g) }, { label: t("information"), action: () => api.details(g) }, { label: t("gameOptions"), action: () => api.nativeMenu(g) }, ...extra], g.name);
     } else menu.open(extra);
   };
 

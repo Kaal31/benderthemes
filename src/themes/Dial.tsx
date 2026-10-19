@@ -1,3 +1,4 @@
+import { t } from "../i18n";
 // Alien Dial: sculpted metal, a luminous hourglass core and a reflected carousel.
 import { CSSProperties, useEffect, useRef, useState } from "react";
 import { BatteryGlyph, GameArt, Icon, MenuItem, MenuView, themeMenu, useHome, useMenu, useRemembered } from "../common";
@@ -98,31 +99,31 @@ export function DialHome() {
   ];
   const options = () => {
     const common: MenuItem[] = [
-      { label: "Dial skin", sub: () => ([["classic","Original"],["chrome","Classic chrome"],["crimson","Crimson reactor"],["arctic","Arctic ceramic"]] as const).map(([look,label]) => ({label,checked:getSettings().dial.look===look,action:()=>updateDial({look})})) },
+      { label: t("dialSkin"), sub: () => ([["classic",t("original")],["chrome",t("classicChrome")],["crimson",t("crimsonReactor")],["arctic",t("arcticCeramic")]] as const).map(([look,label]) => ({label,checked:getSettings().dial.look===look,action:()=>updateDial({look})})) },
       { label: "Switch animation", sub: () => ([
         ["rhombus","Hourglass → Rhombus (video)"],["rhombus-slow","Slower morph (650 ms hold)"],["rotate","Rotate"],["pulse","Pulse"],["hologram","Hologram lift"],["none","None"],
       ] as [DialMotion,string][]).map(([motion,label]) => ({label,checked:motion === "none" ? motions.length === 0 : motions.includes(motion),action:()=>{const d=getSettings().dial;const selected=d.motions ?? (d.motion === "none" ? [] : [d.motion]);updateDial({motions:motion === "none" ? [] : selected.includes(motion) ? selected.filter(m=>m!==motion) : [...selected.filter(m => motion === "rhombus" ? m !== "rhombus-slow" : motion === "rhombus-slow" ? m !== "rhombus" : true),motion]});}})) },
       { label: "Dial activation", sub: () => ([
         ["on-browse","Activate when browsing"],["always","Always activated"],["off","Keep idle appearance"],
       ] as const).map(([activation,label]) => ({label,checked:getSettings().dial.activation===activation,action:()=>{setBrowsed(false);updateDial({activation});}})) },
-      { label: "Floating cover", sub: () => [true,false].map(floatingCover => ({label:floatingCover?"On":"Off",checked:getSettings().dial.floatingCover===floatingCover,action:()=>updateDial({floatingCover})})) },
-      { label: "Hologram light", sub: () => [true,false].map(projectionLight => ({label:projectionLight?"On":"Off",checked:getSettings().dial.projectionLight===projectionLight,action:()=>updateDial({projectionLight})})) },
-      { label: "Reflections", sub: () => [true,false].map(reflections => ({label:reflections?"On":"Off",checked:getSettings().dial.reflections===reflections,action:()=>updateDial({reflections})})) },
-      { label: "Dial sound effects", sub: () => ([
+      { label: t("floatingCover"), sub: () => [true,false].map(floatingCover => ({label:floatingCover?t("on"):t("off"),checked:getSettings().dial.floatingCover===floatingCover,action:()=>updateDial({floatingCover})})) },
+      { label: t("hologramLight"), sub: () => [true,false].map(projectionLight => ({label:projectionLight?t("on"):t("off"),checked:getSettings().dial.projectionLight===projectionLight,action:()=>updateDial({projectionLight})})) },
+      { label: t("reflections"), sub: () => [true,false].map(reflections => ({label:reflections?t("on"):t("off"),checked:getSettings().dial.reflections===reflections,action:()=>updateDial({reflections})})) },
+      { label: t("dialSfx"), sub: () => ([
         ["reference","Sounds from your video"],["pack","AudioLoader / Steam sounds"],["off","Off"],
       ] as const).map(([sound,label]) => ({label,checked:getSettings().dial.sound===sound,action:()=>updateDial({sound})})) },
-      { label: "Library", action: () => openSteam("library") },
-      { label: "Presets", sub: () => themeMenu(s.theme, api.switchTheme, THEMES) },
-      { label: "Screenshots", action: api.openMedia },
-      { label: "Home Screen Settings", action: api.openSettings },
-      { label: "Home", action: api.showSteamHome },
+      { label: t("destLibrary"), action: () => openSteam("library") },
+      { label: t("presets"), sub: () => themeMenu(s.theme, api.switchTheme, THEMES) },
+      { label: t("allScreenshots"), action: api.openMedia },
+      { label: t("homeScreenSettings"), action: api.openSettings },
+      { label: t("destMainMenu"), action: api.showSteamHome },
     ];
     menu.open(cur ? [
-      { label: "Play", action: () => launch(cur) },
-      { label: "Game Details", action: () => api.details(cur) },
-      { label: "Watch Trailer", action: () => api.playTrailer(cur) },
-      { label: "Achievements", action: () => openAchievements(cur) },
-      { label: "Game Options", action: () => api.nativeMenu(cur) }, ...common,
+      { label: t("play"), action: () => launch(cur) },
+      { label: t("gameDetails"), action: () => api.details(cur) },
+      { label: t("watchTrailer"), action: () => api.playTrailer(cur) },
+      { label: t("destAchievements"), action: () => openAchievements(cur) },
+      { label: t("gameOptions"), action: () => api.nativeMenu(cur) }, ...common,
     ] : common, cur?.name);
   };
   const onInput = (p: Press): boolean => {

@@ -1,3 +1,4 @@
+import { t, getCurrentLanguage } from "../i18n";
 import { openDestination } from "../destinations";
 // Original Xbox dashboard: the glowing green orb with its jelly shells and
 // orbit rings, round pods beside chamfered menu bars, the wireframe sphere
@@ -31,10 +32,11 @@ type Screen = "main" | "games" | "settings";
 
 /** "Live blue": the dashboard's green turned to the Xbox Live blue. */
 const BLUE = "hue-rotate(110deg)";
-type Lang = "en" | "de" | "fr" | "es" | "it";
+type Lang = "en" | "de" | "fr" | "es" | "it" | "ptBr";
 /** The dashboard's own words in the languages the console offered (Japanese left out: the font is ASCII only). */
 const WORDS: Record<Lang, Record<string, string>> = {
   en: { memory: "MEMORY", music: "MUSIC", live: "XBOX LIVE", settings: "SETTINGS", select: "SELECT", back: "BACK", clock: "Clock", language: "Language", audio: "Audio", video: "Video", network: "Network Settings", parental: "Parental Control", autooff: "Auto Off", skins: "Skins", system: "System Info", power: "Shutdown" },
+  ptBr: { memory: "MEMÓRIA", music: "MÚSICA", live: "XBOX LIVE", settings: "CONFIGURAÇÕES", select: "SELECIONAR", back: "VOLTAR", clock: "Relógio", language: "Idioma", audio: "Áudio", video: "Vídeo", network: "Configurações de Rede", parental: "Controle Parental", autooff: "Desligamento Automático", skins: "Skins", system: "Informações do Sistema", power: "Desligar" },
   de: { memory: "SPEICHER", music: "MUSIK", live: "XBOX LIVE", settings: "EINSTELLUNGEN", select: "AUSWÄHLEN", back: "ZURÜCK", clock: "Uhr", language: "Sprache", audio: "Audio", video: "Video", network: "Netzwerkeinstellungen", parental: "Jugendschutz", autooff: "Automatisch aus", skins: "Skins", system: "Systeminfo", power: "Ausschalten" },
   fr: { memory: "MÉMOIRE", music: "MUSIQUE", live: "XBOX LIVE", settings: "PARAMÈTRES", select: "SÉLECTIONNER", back: "RETOUR", clock: "Horloge", language: "Langue", audio: "Audio", video: "Vidéo", network: "Paramètres réseau", parental: "Contrôle parental", autooff: "Arrêt auto", skins: "Skins", system: "Infos système", power: "Arrêt" },
   es: { memory: "MEMORIA", music: "MÚSICA", live: "XBOX LIVE", settings: "CONFIGURACIÓN", select: "SELECCIONAR", back: "ATRÁS", clock: "Reloj", language: "Idioma", audio: "Audio", video: "Vídeo", network: "Configuración de red", parental: "Control parental", autooff: "Apagado automático", skins: "Skins", system: "Info. del sistema", power: "Apagar" },
@@ -378,7 +380,9 @@ export function XboxHome() {
   const burst = 0;
   const st = styleOf(s, "xbox");
   const tint = st("colour") === "blue" ? BLUE : undefined;
-  const T = WORDS[(st<string>("lang") in WORDS ? st<string>("lang") : "en") as Lang];
+  const curLang = getCurrentLanguage();
+  const langKey = st<string>("lang") in WORDS ? st<string>("lang") : (curLang === "ptBr" ? "ptBr" : "en");
+  const T = WORDS[langKey as Lang];
   const vis = Number(st("rows")) || 5;
 
   const lists = [{ id: "all", name: "All Games", games: api.lib.games }, ...api.lib.collections.map((c) => ({ id: c.id, name: c.name, games: c.games }))];
@@ -391,14 +395,14 @@ export function XboxHome() {
   const [ssel, setSsel] = useState(0);
 
   const SETTINGS: { key: string; label: string; value?: string; run: () => void }[] = [
-    {key:"clock",label:T.clock,run:()=>menu.open([{label:"12-hour clock",checked:!s.clock24,action:()=>updateSettings({clock24:false})},{label:"24-hour clock",checked:s.clock24,action:()=>updateSettings({clock24:true})}],"Clock",{page:true})},
-    {key:"language",label:T.language,run:()=>menu.open([{label:"Steam system language",action:()=>openSteam("settings")}],"Language",{page:true})},
-    {key:"audio",label:T.audio,run:()=>menu.open([{label:"Sound effects",checked:s.sounds,action:()=>updateSettings({sounds:!s.sounds})},{label:"Background music",checked:s.music.xbox!==false,action:()=>updateSettings(p=>({music:{...p.music,xbox:p.music.xbox===false}}))},{label:"Volume",sub:()=>[0,20,40,60,80,100].map(n=>({label:`${n}%`,checked:s.sfxVolume===n,action:()=>updateSettings({sfxVolume:n})}))}],"Audio",{page:true})},
-    {key:"video",label:T.video,run:()=>menu.open([{label:"TV mode",checked:s.tvMode,action:()=>updateSettings({tvMode:!s.tvMode})},{label:"Animations",checked:s.animations,action:()=>updateSettings({animations:!s.animations})}],"Video",{page:true})},
+    {key:"clock",label:T.clock,run:()=>menu.open([{label:t("clock12"),checked:!s.clock24,action:()=>updateSettings({clock24:false})},{label:t("clock24"),checked:s.clock24,action:()=>updateSettings({clock24:true})}],t("clock"),{page:true})},
+    {key:"language",label:T.language,run:()=>menu.open([{label:t("steamLanguage"),action:()=>openSteam("settings")}],T.language,{page:true})},
+    {key:"audio",label:T.audio,run:()=>menu.open([{label:t("soundEffects"),checked:s.sounds,action:()=>updateSettings({sounds:!s.sounds})},{label:t("backgroundMusic"),checked:s.music.xbox!==false,action:()=>updateSettings(p=>({music:{...p.music,xbox:p.music.xbox===false}}))},{label:t("volume"),sub:()=>[0,20,40,60,80,100].map(n=>({label:`${n}%`,checked:s.sfxVolume===n,action:()=>updateSettings({sfxVolume:n})}))}],T.audio,{page:true})},
+    {key:"video",label:T.video,run:()=>menu.open([{label:t("tvMode"),checked:s.tvMode,action:()=>updateSettings({tvMode:!s.tvMode})},{label:t("backgroundAnimations"),checked:s.animations,action:()=>updateSettings({animations:!s.animations})}],T.video,{page:true})},
     {key:"network",label:T.network,run:()=>openSteam("settings")},
     {key:"parental",label:T.parental,run:()=>openSteam("settings")},
     {key:"autooff",label:T.autooff,run:()=>openSteam("power")},
-    {key:"skins",label:T.skins,run:()=>menu.open(themeMenu(s.theme,api.switchTheme,THEMES),"Skins",{page:true})},
+    {key:"skins",label:T.skins,run:()=>menu.open(themeMenu(s.theme,api.switchTheme,THEMES),t("presets"),{page:true})},
     {key:"system",label:T.system,run:()=>api.openSettings()},
     {key:"power",label:T.power,run:()=>openSteam("power")},
   ];
@@ -425,23 +429,23 @@ export function XboxHome() {
   const gameMenu = (g: Game) =>
     menu.open(
       [
-        { label: "Launch", action: () => api.launch(g) },
-        { label: "Game Details", action: () => api.details(g) },
-        { label: "Watch Trailer", action: () => api.playTrailer(g) },
-        { label: "Achievements", action: () => openAchievements(g) },
-        { label: "Game Options", action: () => api.nativeMenu(g) },
+        { label: t("start"), action: () => api.launch(g) },
+        { label: t("gameDetails"), action: () => api.details(g) },
+        { label: t("watchTrailer"), action: () => api.playTrailer(g) },
+        { label: t("destAchievements"), action: () => openAchievements(g) },
+        { label: t("gameOptions"), action: () => api.nativeMenu(g) },
       ],
       g.name,
     );
   const options = () => {
     const extra: MenuItem[] = [
-      { label:"Xbox Live", action:()=>openSteam("friends") },
-      { label:"Marketplace", action:()=>openSteam("store") },
-      { label:"Downloads", action:()=>openSteam("downloads") },
-      { label:"Screenshots", action:api.openMedia },
-      { label: "Presets", sub: () => themeMenu(s.theme, api.switchTheme, THEMES) },
-      { label: "Home Screen Settings", action: api.openSettings },
-      { label: "Home", action: api.showSteamHome },
+      { label: t("xboxLive"), action: () => openSteam("friends") },
+      { label: t("marketplace"), action: () => openSteam("store") },
+      { label: t("destDownloads"), action: () => openSteam("downloads") },
+      { label: t("allScreenshots"), action: api.openMedia },
+      { label: t("presets"), sub: () => themeMenu(s.theme, api.switchTheme, THEMES) },
+      { label: t("homeScreenSettings"), action: api.openSettings },
+      { label: t("destMainMenu"), action: api.showSteamHome },
     ];
     if (screen === "games" && cur) gameMenu(cur);
     else menu.open(extra);

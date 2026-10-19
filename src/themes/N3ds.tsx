@@ -1,3 +1,4 @@
+import { t } from "../i18n";
 // Nintendo 3DS HOME Menu: the top screen (wallpaper, status bar, the selected software) above the bottom
 // screen (tab strip, the icon grid with folders and badges, side arrows, scroll handle and the Open bar), both
 // drawn at the console's own 400 × 240 / 320 × 240 pixel sizes and scaled to the Deck. Everything is drawn
@@ -103,13 +104,13 @@ function askName(title: string, initial: string, done: (name: string) => void) {
 }
 
 type Tab = { id: string; name: string; place?: SteamPlace; action?: "settings" | "album" };
-const TABS: Tab[] = [
-  { id: "settings", name: "Settings", action: "settings" },
-  { id: "album", name: "Album", action: "album" },
-  { id: "friends", name: "Friends", place: "friends" },
-  { id: "notifications", name: "Notifications", place: "notifications" },
-  { id: "store", name: "Store", place: "store" },
-  { id: "community", name: "Community", place: "community" },
+const getTabs = (): Tab[] => [
+  { id: "settings", name: t("destSettings"), action: "settings" },
+  { id: "album", name: t("destMedia"), action: "album" },
+  { id: "friends", name: t("destFriends"), place: "friends" },
+  { id: "notifications", name: t("destNotifications"), place: "notifications" },
+  { id: "store", name: t("destStore"), place: "store" },
+  { id: "community", name: t("destCommunity"), place: "community" },
 ];
 
 /** The tab strip's own symbols, drawn as small coloured outlines. */
@@ -505,7 +506,7 @@ export function N3dsHome() {
   const activate = (e: Entry | undefined, slot = curSlot) => {
     if (!e) {
       if (inFolder) return;
-      return menu.open([{ label: "Create Folder", action: () => createFolder(slot) }, { label: "Arrange icons and badges", action: () => startArrange(false) }], "Empty space", { page: true });
+      return menu.open([{ label: t("createFolder"), action: () => createFolder(slot) }, { label: t("arrangeIconsBadges"), action: () => startArrange(false) }], t("emptySpace"), { page: true });
     }
     if (e.t === "folder") return openFolderEntry(e);
     if (e.t === "game") return playSound("select"), api.activate(e.game, () => api.launch(e.game));
@@ -532,15 +533,15 @@ export function N3dsHome() {
     if (id === "back") return leaveFolder();
     if (id === "done") return endArrange();
     playSound("select");
-    const t = TABS.find((x) => x.id === id);
-    if (!t) return;
-    if (t.action === "album") api.openMedia();
-    else if (t.action === "settings") menu.open([...themeSettingsItems(), { label: "Presets", sub: () => themeMenu(s.theme, api.switchTheme, THEMES) }, { label: "Home Screen Settings", action: api.openSettings }], "HOME Menu Settings", { page: true });
-    else if (t.place) openSteam(t.place);
+    const targetTab = getTabs().find((x) => x.id === id);
+    if (!targetTab) return;
+    if (targetTab.action === "album") api.openMedia();
+    else if (targetTab.action === "settings") menu.open([...themeSettingsItems(), { label: t("presets"), sub: () => themeMenu(s.theme, api.switchTheme, THEMES) }, { label: t("homeScreenSettings"), action: api.openSettings }], t("homeMenuSettings"), { page: true });
+    else if (targetTab.place) openSteam(targetTab.place);
   };
-  const tabs: string[] = arranging ? ["done", ...(inFolder ? ["back"] : []), "big", "small"] : inFolder ? ["back", "big", "small"] : [...TABS.map((t) => t.id), "big", "small"];
+  const tabs: string[] = arranging ? ["done", ...(inFolder ? ["back"] : []), "big", "small"] : inFolder ? ["back", "big", "small"] : [...getTabs().map((t) => t.id), "big", "small"];
   const tabIdx = clamp(tab, 0, tabs.length - 1);
-  const bars: { id: string; label: string }[] = arranging ? [] : !it ? (inFolder ? [] : [{ id: "create", label: "Create Folder" }]) : it.t === "folder" && it.own ? [{ id: "settings", label: "Settings" }, { id: "open", label: "Open" }] : it.t === "badge" && !g ? [] : [{ id: "open", label: "Open" }];
+  const bars: { id: string; label: string }[] = arranging ? [] : !it ? (inFolder ? [] : [{ id: "create", label: t("createFolder") }]) : it.t === "folder" && it.own ? [{ id: "settings", label: t("destSettings") }, { id: "open", label: t("open") }] : it.t === "badge" && !g ? [] : [{ id: "open", label: t("open") }];
   const barIdx = clamp(bar, 0, Math.max(0, bars.length - 1));
   const runBar = (id: string) => {
     if (id === "open") return activate(it);
@@ -549,34 +550,34 @@ export function N3dsHome() {
   };
   const folderMenu = (e: Extract<Entry, { t: "folder" }>) =>
     menu.open([
-      { label: "Open", action: () => openFolderEntry(e) },
-      { label: "Rename", action: () => renameFolder(e.id) },
-      { label: "Delete folder (its software goes back to the HOME Menu)", action: () => deleteFolder(e.id) },
+      { label: t("open"), action: () => openFolderEntry(e) },
+      { label: t("rename"), action: () => renameFolder(e.id) },
+      { label: t("deleteFolderDesc"), action: () => deleteFolder(e.id) },
     ], `Folder ${e.name}`, { page: true });
-  const gridSizeItems = (): MenuItem[] => [1, 2, 3, 4, 5, 6].map((r) => ({ label: `${r} row${r > 1 ? "s" : ""}`, checked: rows === r, action: () => setRows(r) }));
+  const gridSizeItems = (): MenuItem[] => [1, 2, 3, 4, 5, 6].map((r) => ({ label: t("gridSizeRows", { rows: r }), checked: rows === r, action: () => setRows(r) }));
   const options = () => {
     const items: MenuItem[] = [];
     if (it?.t === "game") {
-      items.push({ label: "Start", action: () => api.launch(it.game) }, { label: "Information", action: () => api.details(it.game) }, { label: "Game Options", action: () => api.nativeMenu(it.game) });
-      if (!inFolder && layout.folders.length) items.push({ label: "Move to folder", sub: () => layout.folders.map((f) => ({ label: f.name || "(no name)", action: () => moveToFolder(curSlot, f.id) })) });
-      if (openOwn) items.push({ label: "Move out of the folder", action: () => moveOut(curSlot) });
+      items.push({ label: t("start"), action: () => api.launch(it.game) }, { label: t("information"), action: () => api.details(it.game) }, { label: t("gameOptions"), action: () => api.nativeMenu(it.game) });
+      if (!inFolder && layout.folders.length) items.push({ label: t("moveToFolder"), sub: () => layout.folders.map((f) => ({ label: f.name || "(no name)", action: () => moveToFolder(curSlot, f.id) })) });
+      if (openOwn) items.push({ label: t("moveOutOfFolder"), action: () => moveOut(curSlot) });
     } else if (it?.t === "folder") {
-      items.push({ label: "Open", action: () => openFolderEntry(it) });
-      if (it.own) items.push({ label: "Rename", action: () => renameFolder(it.id) }, { label: "Delete folder", action: () => deleteFolder(it.id) });
+      items.push({ label: t("open"), action: () => openFolderEntry(it) });
+      if (it.own) items.push({ label: t("rename"), action: () => renameFolder(it.id) }, { label: t("deleteFolder"), action: () => deleteFolder(it.id) });
     } else if (it?.t === "badge" && anchor != null) {
       const recent = [...api.lib.games].sort((a, b) => b.lastPlayed - a.lastPlayed).slice(0, 40);
       items.push(
-        { label: g ? `Badge shortcut: ${g.name}` : "Badge shortcut", sub: () => [{ label: "None", checked: !it.cell.app, action: () => setShortcut(anchor, undefined) }, ...recent.map((x) => ({ label: x.name, checked: it.cell.app === x.appid, action: () => setShortcut(anchor, x.appid) }))] },
-        ...(openOwn && it ? [{ label: "Move out of the folder", action: () => moveOut(curSlot) }] : []),
-        { label: "Remove badge", action: () => removeBadge({ box, slot: anchor }) },
+        { label: g ? `${t("badgeShortcut")}: ${g.name}` : t("badgeShortcut"), sub: () => [{ label: t("none"), checked: !it.cell.app, action: () => setShortcut(anchor, undefined) }, ...recent.map((x) => ({ label: x.name, checked: it.cell.app === x.appid, action: () => setShortcut(anchor, x.appid) }))] },
+        ...(openOwn && it ? [{ label: t("moveOutOfFolder"), action: () => moveOut(curSlot) }] : []),
+        { label: t("removeBadge"), action: () => removeBadge({ box, slot: anchor }) },
       );
-    } else if (!inFolder) items.push({ label: "Create Folder", action: () => createFolder(curSlot) });
+    } else if (!inFolder) items.push({ label: t("createFolder"), action: () => createFolder(curSlot) });
     items.push(
-      { label: "Arrange icons and badges", action: () => startArrange(false) },
-      { label: "Place badges", action: () => startArrange(true) },
-      { label: `Grid size: ${rows} row${rows > 1 ? "s" : ""}`, sub: gridSizeItems },
-      { label: "Power", action: () => openSteam("power") },
-      { label: "Home", action: api.showSteamHome },
+      { label: t("arrangeIconsBadges"), action: () => startArrange(false) },
+      { label: t("placeBadges"), action: () => startArrange(true) },
+      { label: t("gridSizeRows", { rows }), sub: gridSizeItems },
+      { label: t("destPower"), action: () => openSteam("power") },
+      { label: t("destMainMenu"), action: api.showSteamHome },
     );
     menu.open(items, it?.t === "game" ? it.game.name : it?.t === "folder" ? it.name : it?.t === "badge" ? it.def?.name ?? "Badge" : "HOME Menu");
   };
@@ -990,15 +991,15 @@ export function N3dsHome() {
             <div className="dht-n3ds-tabs" style={{ position: "absolute", left: 0, right: 0, top: 0, height: 31, background: "linear-gradient(#e8ebf2,#dde1ea)", boxShadow: "0 1px 0 #c2c8d4", display: "flex", alignItems: "flex-end", paddingLeft: 3, zIndex: 7 }}>
               {tabs.filter((t) => t !== "big" && t !== "small").map((id) => {
                 const i = tabs.indexOf(id), on = zone === "tabs" && tabIdx === i, wide = id === "settings" || id === "back" || id === "done";
-                const label = id === "back" ? "Back" : id === "done" ? "Done" : undefined;
+                const label = id === "back" ? t("back") : id === "done" ? t("done") : undefined;
                 return (
-                  <div key={id} className="dht-n3ds-tab" data-selected={on} data-name={label ?? TABS.find((t) => t.id === id)?.name} onClick={() => { setTab(i); runTab(id); }}
+                  <div key={id} className="dht-n3ds-tab" data-selected={on} data-name={label ?? getTabs().find((t) => t.id === id)?.name} onClick={() => { setTab(i); runTab(id); }}
                     style={{ minWidth: wide ? 46 : 38, height: wide ? 29 : 27, marginRight: wide ? 4 : 1, padding: label ? "0 8px" : 0, gap: 4, display: "flex", alignItems: "center", justifyContent: "center", borderRadius: "9px 9px 0 0", background: id === "done" ? `linear-gradient(${cur},${curDark})` : wide ? "linear-gradient(#fafbfc,#eef0f4)" : "transparent", color: id === "done" ? "#fff" : "#6a7080", fontWeight: 800, fontSize: 12.5, boxShadow: on ? `inset 0 0 0 2px ${id === "done" ? "#fff" : cur}` : "none", cursor: "pointer" }}>
                     {id !== "done" && <TabGlyph id={id} size={wide ? 25 : 25} />}{label}
                   </div>
                 );
               })}
-              {(inFolder || arranging) && <span className="dht-n3ds-strip-title" style={{ alignSelf: "center", fontSize: 12, fontWeight: 800, color: "#6a7080", marginLeft: 4, maxWidth: bw - 190, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>{arranging ? (inFolder ? `Arrange · ${openOwn?.name ?? openColl?.name}` : "Arrange") : openOwn?.name ?? openColl?.name}</span>}
+              {(inFolder || arranging) && <span className="dht-n3ds-strip-title" style={{ alignSelf: "center", fontSize: 12, fontWeight: 800, color: "#6a7080", marginLeft: 4, maxWidth: bw - 190, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>{arranging ? (inFolder ? `${t("rearrange")} · ${openOwn?.name ?? openColl?.name}` : t("rearrange")) : openOwn?.name ?? openColl?.name}</span>}
               <span style={{ flex: 1 }} />
               <div style={{ display: "flex", alignItems: "flex-end", background: "linear-gradient(#fafbfc,#eef0f4)", borderRadius: "8px 0 0 0", paddingLeft: 3, height: 29 }}>
                 {(["big", "small"] as const).map((id) => {

@@ -1,3 +1,4 @@
+import { t } from "../i18n";
 import {customProfilePicture} from "../profilePicture";
 import { BLADE_BOUNDARIES } from "./bladeBoundaries";
 import { BladesAtmosphere } from "./BladesAtmosphere";
@@ -29,15 +30,16 @@ function Btn({ img, letter, color }: { img?: string; letter: string; color: stri
 }
 
 // ═════════════════════════════ BLADES ═════════════════════════════
-const BLADES = [
-  { id: "market", label: "Marketplace", color: "#e46c0a", light: "#ffb36a" },
+const getBlades = () => [
+  { id: "market", label: t("marketplace"), color: "#e46c0a", light: "#ffb36a" },
   { id: "live", label: "Xbox Live", color: "#bd7029", light: "#f0c466" },
-  { id: "games", label: "Games", color: "#7aa516", light: "#d4f06a" },
-  { id: "media", label: "Media", color: "#2575ab", light: "#7cc8e5" },
-  { id: "system", label: "System", color: "#745389", light: "#c2a6cc" },
+  { id: "games", label: t("games"), color: "#7aa516", light: "#d4f06a" },
+  { id: "media", label: t("media"), color: "#2575ab", light: "#7cc8e5" },
+  { id: "system", label: t("system"), color: "#745389", light: "#c2a6cc" },
 ];
 
 export function BladesHome() {
+  const BLADES = getBlades();
   const api = useHome();
   const s = api.settings;
   const { W, H } = useStage();
@@ -56,30 +58,30 @@ export function BladesHome() {
 
   const entries: Record<string, Entry[]> = {
     market: [
-      { key: "store", label: "Steam Store", sub: "New releases, deals and demos", img: a.store, icon: "store", run: () => openSteam("store") },
-      { key: "dl", label: "Active Downloads", sub: "Downloads and updates", img: a.downloads, icon: "download", run: () => openSteam("downloads") },
-      { key: "tiles", label: "Themes and Gamer Pictures", sub: "Presets for this home screen", img: a.themes, icon: "palette", run: () => menu.open(themeMenu(s.theme, api.switchTheme, THEMES), "Presets", { page: true }) },
+      { key: "store", label: t("destSteamStore"), sub: t("storeDescNew"), img: a.store, icon: "store", run: () => openSteam("store") },
+      { key: "dl", label: t("destDownloads"), sub: t("downloadsAndUpdates"), img: a.downloads, icon: "download", run: () => openSteam("downloads") },
+      { key: "tiles", label: t("themesAndGamerPictures"), sub: t("presetsForHomeDesc"), img: a.themes, icon: "palette", run: () => menu.open(themeMenu(s.theme, api.switchTheme, THEMES), t("presets"), { page: true }) },
     ],
     live: [
-      { key: "friends", label: "Friends", sub: st.friendsOnline !== undefined ? `${st.friendsOnline} online` : "Friends and chat", img: a.friends, icon: "friends", run: () => openSteam("friends") },
-      { key: "msg", label: "Messages", sub: st.notifications ? `${st.notifications} new` : "Notifications", img: a.messages, icon: "bell", run: () => openSteam("notifications") },
-      { key: "community", label: "Steam Community", sub: "Hubs, guides and workshop", img: a.live, icon: "globe", run: () => openSteam("community") },
+      { key: "friends", label: t("destFriends"), sub: st.friendsOnline !== undefined ? t("friendsOnlineCount", { count: st.friendsOnline }) : t("friendsAndChat"), img: a.friends, icon: "friends", run: () => openSteam("friends") },
+      { key: "msg", label: t("destNotifications"), sub: st.notifications ? t("messagesNewCount", { count: st.notifications }) : t("destNotifications"), img: a.messages, icon: "bell", run: () => openSteam("notifications") },
+      { key: "community", label: t("destCommunity"), sub: t("communityDesc"), img: a.live, icon: "globe", run: () => openSteam("community") },
     ],
     games: [
       ...recent.map((g) => ({ key: `g${g.appid}`, label: g.name, sub: fmtPlaytime(g.playtime, g.lastPlayed), game: g, run: () => api.activate(g, () => api.launch(g)) })),
-      { key: "lib", label: "Games Library", sub: `${api.lib.games.length} games`, img: a.controller, icon: "library" as IconName, run: () => openSteam("library") },
-      { key: "ach", label: "Achievements", sub: "Your progress", img: a.trophy, icon: "trophy" as IconName, run: () => (recent[0] ? openAchievements(recent[0]) : openSteam("library")) },
+      { key: "lib", label: t("destLibrary"), sub: t("gamesCount", { count: api.lib.games.length }), img: a.controller, icon: "library" as IconName, run: () => openSteam("library") },
+      { key: "ach", label: t("destAchievements"), sub: t("achievementsProgress"), img: a.trophy, icon: "trophy" as IconName, run: () => (recent[0] ? openAchievements(recent[0]) : openSteam("library")) },
     ],
     media: [
-      { key: "shots", label: "Screenshots", sub: "Pictures from your games", icon: "photo", run: () => api.openMedia() },
-      { key: "browser", label: "Web Browser", sub: "Open the browser", icon: "globe", run: () => openSteam("browser") },
+      { key: "shots", label: t("allScreenshots"), sub: t("screenshotsDesc"), icon: "photo", run: () => api.openMedia() },
+      { key: "browser", label: t("destWebBrowser"), sub: t("openBrowserDesc"), icon: "globe", run: () => openSteam("browser") },
     ],
     system: [
-      { key: "settings", label: "Console Settings", sub: "Steam settings", icon: "gear", run: () => openSteam("settings") },
-      { key: "home", label: "Home Screen Settings", sub: "ThemeHub options", icon: "home", run: api.openSettings },
-      { key: "presets", label: "Dashboard", sub: "Switch presets", img: a.themes, icon: "palette", run: () => menu.open(themeMenu(s.theme, api.switchTheme, THEMES), "Presets", { page: true }) },
-      { key: "steamhome", label: "Home", sub: "Show Steam's own home", icon: "steam", run: api.showSteamHome },
-      { key: "power", label: "Turn Off", sub: "Power options", icon: "power", run: () => openSteam("power") },
+      { key: "settings", label: t("systemSettings"), sub: t("steamSettingsDesc"), icon: "gear", run: () => openSteam("settings") },
+      { key: "home", label: t("homeScreenSettings"), sub: t("themeOptionsDesc"), icon: "home", run: api.openSettings },
+      { key: "presets", label: t("presets"), sub: t("switchPresetsDesc"), img: a.themes, icon: "palette", run: () => menu.open(themeMenu(s.theme, api.switchTheme, THEMES), t("presets"), { page: true }) },
+      { key: "steamhome", label: t("destMainMenu"), sub: t("showSteamHomeDesc"), icon: "steam", run: api.showSteamHome },
+      { key: "power", label: t("destPower"), sub: t("powerOptionsDesc"), icon: "power", run: () => openSteam("power") },
     ],
   };
   const list = entries[b.id];
@@ -89,13 +91,13 @@ export function BladesHome() {
 
   const options = () => {
     const extra: MenuItem[] = [
-      {label:"Options menu side",sub:()=>["right","left"].map(side=>({label:side==="right"?"Right side":"Left side",checked:(s.x360.guideSide??"right")===side,action:()=>updateSettings({x360:{...s.x360,guideSide:side as "left"|"right"}})}))},
-      { label: "Presets", sub: () => themeMenu(s.theme, api.switchTheme, THEMES) },
-      { label: "Home Screen Settings", action: api.openSettings },
-      { label: "Home", action: api.showSteamHome },
+      {label:t("optionsMenuSide"),sub:()=>["right","left"].map(side=>({label:side==="right"?t("rightSide"):t("leftSide"),checked:(s.x360.guideSide??"right")===side,action:()=>updateSettings({x360:{...s.x360,guideSide:side as "left"|"right"}})}))},
+      { label: t("presets"), sub: () => themeMenu(s.theme, api.switchTheme, THEMES) },
+      { label: t("homeScreenSettings"), action: api.openSettings },
+      { label: t("destMainMenu"), action: api.showSteamHome },
     ];
     const g = cur?.game;
-    menu.open(g ? [{ label: "Play", action: () => api.launch(g) }, { label: "Game Details", action: () => api.details(g) }, { label: "Watch Trailer", action: () => api.playTrailer(g) }, { label: "Game Options", action: () => api.nativeMenu(g) }, ...extra] : extra, g?.name);
+    menu.open(g ? [{ label: t("play"), action: () => api.launch(g) }, { label: t("gameDetails"), action: () => api.details(g) }, { label: t("watchTrailer"), action: () => api.playTrailer(g) }, { label: t("gameOptions"), action: () => api.nativeMenu(g) }, ...extra] : extra, g?.name);
   };
   const onInput = (p: Press): boolean => {
     if (menu.handle(p)) return true;

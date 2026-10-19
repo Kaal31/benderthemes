@@ -1,3 +1,4 @@
+import { t } from "../i18n";
 // Aero (bonus): Frutiger-Aero "Steam Deck" desktop. This is the ChatGPT remake
 // the user made from the 1.5 build, ported back into the source: blue glass
 // shell, lime pills, profile + side navigation, hero card with Play, Continue
@@ -206,48 +207,48 @@ export function AeroHome() {
     openSteam(p);
   };
   const TABS: { id: string; label: string; glyph: Glyph; run: () => void }[] = [
-    { id: "home", label: "Home", glyph: "house", run: () => go("home") },
-    { id: "library", label: "Library", glyph: "db", run: () => go("all") },
-    { id: "store", label: "Store", glyph: "bag", run: steam("store") },
-    { id: "settings", label: "Settings", glyph: "gear", run: steam("settings") },
+    { id: "home", label: t("destMainMenu"), glyph: "house", run: () => go("home") },
+    { id: "library", label: t("destLibrary"), glyph: "db", run: () => go("all") },
+    { id: "store", label: t("destStore"), glyph: "bag", run: steam("store") },
+    { id: "settings", label: t("destSettings"), glyph: "gear", run: steam("settings") },
   ];
   const SIDE: { id: string; label: string; icon: Glyph | IconName; run: () => void }[] = [
-    { id: "home", label: "Home", icon: "house", run: () => go("home") },
-    { id: "library", label: "Library", icon: "list", run: () => go("all") },
-    { id: "store", label: "Store", icon: "store", run: steam("store") },
-    { id: "friends", label: "Friends", icon: "friends", run: steam("friends") },
-    { id: "downloads", label: "Downloads", icon: "download", run: steam("downloads") },
-    { id: "cloud", label: "Cloud", icon: "cloud", run: steam("cloud") },
-    { id: "achievements", label: "Achievements", icon: "trophy", run: () => (focusGame ? openAchievements(focusGame) : openSteam("library")) },
-    { id: "settings", label: "Settings", icon: "gear", run: steam("settings") },
-    { id: "power", label: "Power", icon: "power", run: steam("power") },
+    { id: "home", label: t("destMainMenu"), icon: "house", run: () => go("home") },
+    { id: "library", label: t("destLibrary"), icon: "list", run: () => go("all") },
+    { id: "store", label: t("destStore"), icon: "store", run: steam("store") },
+    { id: "friends", label: t("destFriends"), icon: "friends", run: steam("friends") },
+    { id: "downloads", label: t("destDownloads"), icon: "download", run: steam("downloads") },
+    { id: "cloud", label: t("destCloud"), icon: "cloud", run: steam("cloud") },
+    { id: "achievements", label: t("destAchievements"), icon: "trophy", run: () => (focusGame ? openAchievements(focusGame) : openSteam("library")) },
+    { id: "settings", label: t("destSettings"), icon: "gear", run: steam("settings") },
+    { id: "power", label: t("destPower"), icon: "power", run: steam("power") },
   ];
   const RIGHT: { id: string; title: string; sub?: string; dot?: string; icon: Glyph | IconName; run: () => void }[] = [
-    { id: "community", title: "Steam Community", icon: "community", run: steam("community") },
-    { id: "friends", title: "Friends", sub: st.friendsOnline === undefined ? (st.online ? "Online" : "Offline") : `${st.friendsOnline} Online`, dot: st.friendsOnline || st.online ? "#47e03a" : "#9fb7d6", icon: "friends", run: steam("friends") },
-    { id: "notifications", title: "Notifications", sub: st.notifications === undefined ? "View all" : st.notifications ? `${st.notifications} New` : "None new", dot: st.notifications ? "#ff6a1f" : undefined, icon: "bell", run: steam("notifications") },
-    { id: "downloads", title: "Downloads", sub: st.downloads === undefined ? "Queue" : `${st.downloads} Active`, icon: "download", run: steam("downloads") },
-    { id: "cloud", title: "Cloud Sync", sub: st.cloud === undefined ? "Steam Cloud" : st.cloud ? "Enabled" : "Off", dot: st.cloud ? "#47e03a" : undefined, icon: "cloud", run: steam("cloud") },
-    { id: "discover", title: "Discover New Worlds", icon: "globe", run: steam("store") },
+    { id: "community", title: t("destCommunity"), icon: "community", run: steam("community") },
+    { id: "friends", title: t("destFriends"), sub: st.friendsOnline === undefined ? (st.online ? t("statusOnline") : t("statusOffline")) : `${st.friendsOnline} ${t("statusOnline")}`, dot: st.friendsOnline || st.online ? "#47e03a" : "#9fb7d6", icon: "friends", run: steam("friends") },
+    { id: "notifications", title: t("destNotifications"), sub: st.notifications === undefined ? t("viewAll") : st.notifications ? t("notificationsNewCount", { count: st.notifications }) : t("noneNew"), dot: st.notifications ? "#ff6a1f" : undefined, icon: "bell", run: steam("notifications") },
+    { id: "downloads", title: t("destDownloads"), sub: st.downloads === undefined ? t("queue") : t("downloadsActiveCount", { count: st.downloads }), icon: "download", run: steam("downloads") },
+    { id: "cloud", title: t("cloudSync"), sub: st.cloud === undefined ? t("steamCloud") : st.cloud ? t("enabled") : t("off"), dot: st.cloud ? "#47e03a" : undefined, icon: "cloud", run: steam("cloud") },
+    { id: "discover", title: t("discoverNewWorlds"), icon: "globe", run: steam("store") },
   ];
 
   const options = () => {
     const extra: MenuItem[] = [
-      { label: view === "all" ? "Home view" : "All Games", action: () => go(view === "all" ? "home" : "all") },
-      { label: "Screenshots", action: () => api.openMedia() },
-      { label: "Presets", sub: () => themeMenu(s.theme, api.switchTheme, THEMES) },
-      { label: "Home Screen Settings", action: api.openSettings },
-      { label: "Home", action: api.showSteamHome },
+      { label: view === "all" ? t("homeView") : t("allGames"), action: () => go(view === "all" ? "home" : "all") },
+      { label: t("allScreenshots"), action: () => api.openMedia() },
+      { label: t("presets"), sub: () => themeMenu(s.theme, api.switchTheme, THEMES) },
+      { label: t("homeScreenSettings"), action: api.openSettings },
+      { label: t("destMainMenu"), action: api.showSteamHome },
     ];
     const g = zone === "row" || zone === "hero" || zone === "grid" ? focusGame : undefined;
     menu.open(
       g
         ? [
-            { label: "Play", action: () => api.launch(g) },
-            { label: "Watch Trailer", action: () => api.playTrailer(g) },
-            { label: "Game Details", action: () => api.details(g) },
-            { label: "Achievements", action: () => openAchievements(g) },
-            { label: "Game Options", action: () => api.nativeMenu(g) },
+            { label: t("play"), action: () => api.launch(g) },
+            { label: t("watchTrailer"), action: () => api.playTrailer(g) },
+            { label: t("gameDetails"), action: () => api.details(g) },
+            { label: t("destAchievements"), action: () => openAchievements(g) },
+            { label: t("gameOptions"), action: () => api.nativeMenu(g) },
             ...extra,
           ]
         : extra,
@@ -442,11 +443,11 @@ export function AeroHome() {
             <div className="aero-profile">
               <div className="aero-avatar">{st.avatar ? <img src={st.avatar} /> : glyph("person", 72, true)}</div>
               <div>
-                <small>Welcome Back!</small>
+                <small>{t("welcomeBack")}</small>
                 <strong title={api.user}>{api.user}</strong>
                 <span>
                   <i className="aero-dot" style={{ background: st.online ? "#8aff13" : "#a6b3c0" }} />
-                  {st.online ? "Online" : "Offline"} <small>▾</small>
+                  {st.online ? t("statusOnline") : t("statusOffline")} <small>▾</small>
                 </span>
               </div>
             </div>
@@ -470,11 +471,7 @@ export function AeroHome() {
               ))}
             </nav>
             <div className="aero-postcard" style={{ backgroundImage: wall ? `url("${wall}")` : undefined }}>
-              <strong>
-                Good Games.
-                <br />
-                Brighter Days.
-              </strong>
+              <strong>{t("goodGamesBrighterDays")}</strong>
               <SteamBadge size={38} />
             </div>
           </aside>
@@ -489,9 +486,9 @@ export function AeroHome() {
                   </>
                 ) : (
                   <div className="aero-empty">
-                    <strong>Your next adventure awaits</strong>
-                    <span>No games in this library view.</span>
-                    <button onClick={api.openSettings}>Library settings</button>
+                    <strong>{t("adventureAwaits")}</strong>
+                    <span>{t("noGamesInView")}</span>
+                    <button onClick={api.openSettings}>{t("librarySettings")}</button>
                   </div>
                 )}
                 {heroGame && (
@@ -499,22 +496,22 @@ export function AeroHome() {
                     <div className="aero-play-group" data-focus={zone === "hero"}>
                       <button className="dht-aero-play" aria-label={`Play ${heroGame.name}`} data-focus={zone === "hero" && hsel === 0} data-selected={zone === "hero" && hsel === 0} onClick={() => api.launch(heroGame)}>
                         <Icon name="play" size={29} color="#092968" />
-                        <b>Play</b>
+                        <b>{t("play")}</b>
                       </button>
                       <button aria-label="Game options" data-focus={zone === "hero" && hsel === 1} onClick={() => api.nativeMenu(heroGame)}>
                         ▾
                       </button>
                     </div>
                     <div className="aero-stat">
-                      <small>LAST PLAYED</small>
+                      <small>{t("lastPlayed")}</small>
                       <b>{fmtLastPlayed(heroGame.lastPlayed)}</b>
                     </div>
                     <div className="aero-stat">
-                      <small>PLAY TIME</small>
-                      <b>{heroGame.playtime ? `${(heroGame.playtime / 60).toFixed(1)} hours` : "—"}</b>
+                      <small>{t("playTime")}</small>
+                      <b>{heroGame.playtime ? `${(heroGame.playtime / 60).toFixed(1)} {t("hours")}` : "—"}</b>
                     </div>
                     <div className="aero-stat aero-ach">
-                      <small>ACHIEVEMENTS</small>
+                      <small>{t("destAchievements")}</small>
                       <div>
                         <b>{ach ? `${ach.unlocked}/${ach.total}` : "—"}</b>
                         {ach && ach.total > 0 && (
@@ -530,9 +527,9 @@ export function AeroHome() {
               <section className="aero-continue">
                 <div className="aero-section-title">
                   {glyph("pad", 30)}
-                  <h2>Continue Playing</h2>
+                  <h2>{t("continuePlaying")}</h2>
                   <button onClick={() => go("all")}>
-                    See All <b>›</b>
+                    {t("seeAll")} <b>›</b>
                   </button>
                 </div>
                 <div className="aero-games">{games.slice(first, first + 6).map((g, j) => tile(g, first + j))}</div>
@@ -542,11 +539,11 @@ export function AeroHome() {
             <section className="aero-library dht-aero-all">
               <div className="aero-section-title">
                 {glyph("db", 32)}
-                <h2>All Games</h2>
-                <span>{games.length} games</span>
+                <h2>{t("allGames")}</h2>
+                <span>{t("gamesCount", { count: games.length })}</span>
               </div>
               <div className="aero-grid">{games.slice(gridStart, gridStart + 12).map((g, j) => tile(g, gridStart + j, true))}</div>
-              {!games.length && <div className="aero-empty">No games in this library view.</div>}
+              {!games.length && <div className="aero-empty">{t("noGamesInView")}</div>}
             </section>
           )}
 

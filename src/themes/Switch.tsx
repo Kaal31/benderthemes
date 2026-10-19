@@ -186,7 +186,7 @@ export function SwitchHome() {
     : { background: "var(--dht-switch-bg, linear-gradient(#ececec,#dcdcdc))" };
 
   return (
-    <ThemeRoot onInput={onInput} hints={{ a: "Open", y: "Options", b: view === "home" ? undefined : "Back" } as any}>
+    <ThemeRoot onInput={onInput} hints={{ a: t("open"), y: t("options"), b: view === "home" ? undefined : t("back") } as any}>
       <Stage background="#e6e6e6">
         <style>{CSS}</style>
         <div className="dht-switch-bg" data-dht-from-skin={parts.background ? "" : undefined} data-view={view} style={{ position: "absolute", inset: 0, ...bg }} />
@@ -194,7 +194,7 @@ export function SwitchHome() {
           <div className="dht-switch-lock" style={{ position: "absolute", inset: 0, zIndex: 20, color: ink, textShadow: dark ? "0 1px 6px #000a" : "none", fontFamily: "inherit" }}>
             <div style={{ position: "absolute", inset: 0, backgroundImage: `url(${parts.background})`, backgroundSize: "cover", backgroundPosition: "center" }} />
             <div style={{ position: "absolute", left: 0, right: 0, top: H * 0.38, textAlign: "center", fontSize: 96, fontWeight: 300 }}>{clock24h(now)}</div>
-            <div style={{ position: "absolute", left: 0, right: 0, bottom: H * 0.08, textAlign: "center", fontSize: 20 }}>Press any button</div>
+            <div style={{ position: "absolute", left: 0, right: 0, bottom: H * 0.08, textAlign: "center", fontSize: 20 }}>{t("pressAnyButton")}</div>
           </div>
         )}
         <div className="dht-switch-status" style={{ position: "absolute", top: 34 * k, left: 60 * k, right: 50 * k, display: "flex", alignItems: "center", gap: 24 * k, color: ink, fontSize: 26 * k, textShadow: dark ? "0 1px 4px #0008" : "none" }}>
@@ -229,7 +229,7 @@ export function SwitchHome() {
               onClick={() => { setRow("tiles"); if (on) { if (game) api.activate(game, () => api.launch(game)); else setView("apps"); } else { setSel(i); playSound("move"); } }}
               style={{ position: "absolute", left: tileX(i), top: tileY - (on ? (F - T) / 2 : 0), width: size, height: size, transition: "left 160ms ease-out, width 140ms, height 140ms, top 140ms", background: game ? "#222" : "linear-gradient(145deg,#f5f5f5,#cfcfcf)", overflow: "hidden" }}>
               {game ? <GameArt g={game} kind="portrait" position="50% 22%" style={{ width: "100%", height: "100%" }} />
-                : <div style={{ width: "100%", height: "100%", display: "flex", flexDirection: "column", alignItems: "center", justifyContent: "center", gap: 10, color: "#444", fontSize: on ? 22 : 17 }}><Icon name="apps" size={on ? 64 : 48} color="#444" />All Software</div>}
+                : <div style={{ width: "100%", height: "100%", display: "flex", flexDirection: "column", alignItems: "center", justifyContent: "center", gap: 10, color: "#444", fontSize: on ? 22 : 17 }}><Icon name="apps" size={on ? 64 : 48} color="#444" />{t("allSoftware")}</div>}
               {on && row === "tiles" && <div className="dht-switch-focus" style={{ position: "absolute", inset: 0 }} />}
             </div>;
           })}
@@ -237,7 +237,7 @@ export function SwitchHome() {
             <span style={{ width: 20 * k, height: 26 * k, background: "currentColor", borderRadius: 3, flex: "none", clipPath: "polygon(0 0,100% 0,100% 100%,50% 82%,0 100%)" }} />
             <span style={{ overflow: "hidden", textOverflow: "ellipsis" }}>{!g || showTitle(s, "switch", true) ? label(cur) : ""}</span>
           </div>
-          {n === 0 && <div style={{ position: "absolute", left: startX, top: H * 0.62, color: ink, opacity: 0.7, fontSize: 18 }}>No games found for the selected library view.</div>}
+          {n === 0 && <div style={{ position: "absolute", left: startX, top: H * 0.62, color: ink, opacity: 0.7, fontSize: 18 }}>{t("noGamesFound")}</div>}
           <div className="dht-switch-dock" style={{ position: "absolute", left: 0, right: 0, top: dockY, display: "flex", justifyContent: "center", gap: 20 * k }}>
             {DOCK.map((d, i) => {
               const on = row === "dock" && i === dsel, art = d.art ? parts.icons[d.art] : undefined;

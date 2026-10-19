@@ -1,3 +1,4 @@
+import { t } from "../i18n";
 import {customProfilePicture} from "../profilePicture";
 // Xbox 360 Kinect dashboard (2010), rebuilt from the Kinect-era dashboard in
 // thedev0ps/Xbox-360-Dashboard-Archive. Layout follows its XUI scenes on a
@@ -47,37 +48,37 @@ export function KinectHome() {
   const games = api.lib.games;
   // your avatar: your own exported model if you added one, otherwise the first visit opens the creator
   const { spec: mine, model, editing, setEditing } = useMyAvatar(s, api.user);
-  const presets = () => menu.open(themeMenu(s.theme, api.switchTheme, THEMES), "Presets", { page: true });
+  const presets = () => menu.open(themeMenu(s.theme, api.switchTheme, THEMES), t("presets"), { page: true });
   const play = (g: Game): Slot => ({ key: `g${g.appid}`, label: g.name, sub: `${fmtPlaytime(g.playtime, g.lastPlayed, true)} · Last played ${fmtLastPlayed(g.lastPlayed)}`, game: g, run: () => api.activate(g, () => api.launch(g)) });
 
   // Kinect-era channel names; the slots open Steam's equivalents.
   const channels: Channel[] = [
-    { id: "home", label: "home", slots: [
+    { id: "home", label: t("homeTab"), slots: [
       ...games.slice(0, 1).map(play),
-      { key: "kinect", label: "Steam Store", sub: "New releases, deals and demos", art: "slot-xboxlive", glyph: "store", run: () => openSteam("store") },
-      { key: "basics", label: "Downloads", sub: st.downloads ? `${st.downloads} downloading` : "Queue and updates", art: "slot-xboxbasicsslot", glyph: "download", run: () => openSteam("downloads") },
+      { key: "kinect", label: t("destSteamStore"), sub: t("storeDescNew"), art: "slot-xboxlive", glyph: "store", run: () => openSteam("store") },
+      { key: "basics", label: t("destDownloads"), sub: st.downloads ? t("downloadingCount", { count: st.downloads }) : t("queueAndUpdates"), art: "slot-xboxbasicsslot", glyph: "download", run: () => openSteam("downloads") },
     ] },
-    { id: "games", label: "games", slots: [
+    { id: "games", label: t("tabGames"), slots: [
       ...games.slice(0, 10).map(play),
-      { key: "lib", label: "Game Library", sub: `${games.length} games`, art: "slot-games", glyph: "library", run: () => openSteam("library") },
-      { key: "ach", label: "Achievements", sub: "Your progress", art: "slot-kinect", glyph: "trophy", run: () => (games[0] ? openAchievements(games[0]) : openSteam("library")) },
+      { key: "lib", label: t("destLibrary"), sub: t("gamesCount", { count: games.length }), art: "slot-games", glyph: "library", run: () => openSteam("library") },
+      { key: "ach", label: t("destAchievements"), sub: t("achievementsProgress"), art: "slot-kinect", glyph: "trophy", run: () => (games[0] ? openAchievements(games[0]) : openSteam("library")) },
     ] },
-    { id: "video", label: "video", slots: [
-      { key: "shots", label: "Screenshots", sub: "Your captures", glyph: "photo", run: () => api.openMedia() },
-      { key: "web", label: "Internet", sub: "Web browser", glyph: "globe", run: () => openSteam("browser") },
+    { id: "video", label: t("catVideo"), slots: [
+      { key: "shots", label: t("allScreenshots"), sub: t("screenshotsDesc"), glyph: "photo", run: () => api.openMedia() },
+      { key: "web", label: t("destWebBrowser"), sub: t("openBrowserDesc"), glyph: "globe", run: () => openSteam("browser") },
     ] },
-    { id: "social", label: "social", slots: [
-      { key: "friends", label: "Friends", sub: st.friendsOnline !== undefined ? `${st.friendsOnline} online` : "Friends and chat", art: "slot-friends", glyph: "friends", run: () => openSteam("friends") },
-      { key: "msg", label: "Messages", sub: st.notifications ? `${st.notifications} new` : "Notifications", glyph: "bell", run: () => openSteam("notifications") },
-      { key: "community", label: "Community", sub: "Hubs, guides and workshop", art: "slot-family", glyph: "globe", run: () => openSteam("community") },
+    { id: "social", label: t("social"), slots: [
+      { key: "friends", label: t("destFriends"), sub: st.friendsOnline !== undefined ? t("friendsOnlineCount", { count: st.friendsOnline }) : t("friendsAndChat"), art: "slot-friends", glyph: "friends", run: () => openSteam("friends") },
+      { key: "msg", label: t("destNotifications"), sub: st.notifications ? t("messagesNewCount", { count: st.notifications }) : t("destNotifications"), glyph: "bell", run: () => openSteam("notifications") },
+      { key: "community", label: t("destCommunity"), sub: t("communityDesc"), art: "slot-family", glyph: "globe", run: () => openSteam("community") },
     ] },
-    { id: "settings", label: "settings", slots: [
-      ...([{ key: "avatar", label: "My Avatar", sub: model ? "Your imported 360sona avatar · change, import or remove" : "Change your avatar's look and clothes", art: "slot-avatars", glyph: "user" as const, run: () => setEditing("edit") }]),
-      { key: "settings", label: "System Settings", sub: "Steam settings", glyph: "gear", run: () => openSteam("settings") },
-      { key: "home", label: "Home Screen", sub: "ThemeHub options", glyph: "home", run: api.openSettings },
-      { key: "presets", label: "Dashboards", sub: "Switch presets", glyph: "palette", run: presets },
-      { key: "steamhome", label: "Home", sub: "Steam's own home", glyph: "steam", run: api.showSteamHome },
-      { key: "power", label: "Turn Off", sub: "Power options", glyph: "power", run: () => openSteam("power") },
+    { id: "settings", label: t("destSettings"), slots: [
+      ...([{ key: "avatar", label: t("myAvatar"), sub: model ? t("myAvatarDesc") : t("myAvatarDesc"), art: "slot-avatars", glyph: "user" as const, run: () => setEditing("edit") }]),
+      { key: "settings", label: t("systemSettings"), sub: t("steamSettingsDesc"), glyph: "gear", run: () => openSteam("settings") },
+      { key: "home", label: t("homeScreenSettings"), sub: t("themeOptionsDesc"), glyph: "home", run: api.openSettings },
+      { key: "presets", label: t("presets"), sub: t("switchPresetsDesc"), glyph: "palette", run: presets },
+      { key: "steamhome", label: t("destMainMenu"), sub: t("showSteamHomeDesc"), glyph: "steam", run: api.showSteamHome },
+      { key: "power", label: t("destPower"), sub: t("powerOptionsDesc"), glyph: "power", run: () => openSteam("power") },
     ] },
   ];
   const [ch, setCh] = useRemembered("kinect-ch", 1);
@@ -90,13 +91,13 @@ export function KinectHome() {
 
   const options = () => {
     const extra: MenuItem[] = [
-      { label: "Presets", sub: () => themeMenu(s.theme, api.switchTheme, THEMES) },
-      { label: "My Avatar", sub: () => avatarMenu(model, setEditing) },
-      { label: "Home Screen Settings", action: api.openSettings },
-      { label: "Home", action: api.showSteamHome },
+      { label: t("presets"), sub: () => themeMenu(s.theme, api.switchTheme, THEMES) },
+      { label: t("myAvatar"), sub: () => avatarMenu(model, setEditing) },
+      { label: t("homeScreenSettings"), action: api.openSettings },
+      { label: t("destMainMenu"), action: api.showSteamHome },
     ];
     const g = cur?.game;
-    menu.open(g ? [{ label: "Play", action: () => api.launch(g) }, { label: "Game Details", action: () => api.details(g) }, { label: "Watch Trailer", action: () => api.playTrailer(g) }, { label: "Game Options", action: () => api.nativeMenu(g) }, ...extra] : extra, g?.name);
+    menu.open(g ? [{ label: t("play"), action: () => api.launch(g) }, { label: t("gameDetails"), action: () => api.details(g) }, { label: t("watchTrailer"), action: () => api.playTrailer(g) }, { label: t("gameOptions"), action: () => api.nativeMenu(g) }, ...extra] : extra, g?.name);
   };
   const onInput = (p: Press): boolean => {
     if (menu.handle(p)) return true;

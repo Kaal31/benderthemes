@@ -1,3 +1,4 @@
+import { t } from "../i18n";
 // iiSU-style home (a bonus look after the iiSU emulation frontend for Android):
 // a white (or dark) page with a soft dot grid, rounded square icons in three
 // rows that scroll sideways, mixed-size cards ("Jump back in!", "Been a
@@ -21,7 +22,7 @@ import { IISU_FONT, iisuAccent, iisuPill, iisuSchemeVars } from "./iisuStyles";
 
 type Tab = "home" | "collections" | "achievements" | "friends" | "apps";
 const TABS: Tab[] = ["home", "collections", "achievements", "friends", "apps"];
-const TAB_NAMES: Record<Tab, string> = { home: "Home", collections: "Collections", achievements: "Achievements", friends: "Friends", apps: "Apps" };
+const getTabNames = (): Record<Tab, string> => ({ home: t("destMainMenu"), collections: t("allCollections"), achievements: t("destAchievements"), friends: t("destFriends"), apps: t("apps") });
 const EMPTY: Record<Tab, [string, string]> = {
   home: ["No games yet", "Games in your Steam library show up here."],
   collections: ["No collections yet", "Steam collections with games show up here."],
@@ -100,7 +101,7 @@ export function IisuHome() {
         if (features) {
           const old = games.filter((g) => g.lastPlayed > 0 && g.appid !== recent?.appid).sort((a, b) => a.lastPlayed - b.lastPlayed)[0];
           if (old && games.length >= 5) out.splice(Math.min(out.length, 7), 0, { ...gameItem(old), key: "while", label: old.name, card: "while", span: [2, 1] });
-          if (favs && games.length) out.splice(Math.min(out.length, 12), 0, { key: "favs", label: "Your Favorites", game: favs.games[0], card: "favs", span: [2, 1], run: () => (setTab("collections"), setOpenCol(favs.id), playSound("open")) });
+          if (favs && games.length) out.splice(Math.min(out.length, 12), 0, { key: "favs", label: t("yourFavorites"), game: favs.games[0], card: "favs", span: [2, 1], run: () => (setTab("collections"), setOpenCol(favs.id), playSound("open")) });
         }
         return out;
       }
@@ -191,11 +192,11 @@ export function IisuHome() {
 
   const options = () => {
     const extra: MenuItem[] = [
-      { label: "Presets", sub: () => themeMenu(s.theme, api.switchTheme, THEMES) },
-      { label: "Home Screen Settings", action: api.openSettings },
-      { label: "Home", action: api.showSteamHome },
+      { label: t("presets"), sub: () => themeMenu(s.theme, api.switchTheme, THEMES) },
+      { label: t("homeScreenSettings"), action: api.openSettings },
+      { label: t("destMainMenu"), action: api.showSteamHome },
     ];
-    menu.open(g ? [{ label: "Play", action: () => api.launch(g) }, { label: "Game Details", action: () => api.details(g) }, { label: "Achievements", action: () => openAchievements(g) }, { label: "Game Options", action: () => api.nativeMenu(g) }, ...extra] : extra, g?.name);
+    menu.open(g ? [{ label: t("play"), action: () => api.launch(g) }, { label: t("gameDetails"), action: () => api.details(g) }, { label: t("destAchievements"), action: () => openAchievements(g) }, { label: t("gameOptions"), action: () => api.nativeMenu(g) }, ...extra] : extra, g?.name);
   };
 
   const panelInput = (b: Press["btn"]): boolean => {
@@ -258,7 +259,7 @@ export function IisuHome() {
   const bgMode = st<string>("background") || "pattern";
   const glass = st<string>("glass");
   const panelBg = glass === "clear" ? "transparent" : light ? (glass === "dark" ? "#ffffff" : "#ffffffc4") : glass === "dark" ? "linear-gradient(180deg,#14121fcc,#0b0a14d9)" : "linear-gradient(180deg,#ffffff30,#ffffff18)";
-  const title = panelGame ? panelGame.name : zone === "dock" ? TAB_NAMES[tab] : item ? (item.game && item.card !== "favs" && !showTitle(s, "iisu", true) ? "" : item.card === "favs" ? item.label : item.game ? item.game.name : item.label) : TAB_NAMES[tab];
+  const title = panelGame ? panelGame.name : zone === "dock" ? getTabNames()[tab] : item ? (item.game && item.card !== "favs" && !showTitle(s, "iisu", true) ? "" : item.card === "favs" ? item.label : item.game ? item.game.name : item.label) : getTabNames()[tab];
   const pill: CSSProperties = { ...iisuPill, background: v("pill", pal.pill), border: `1.5px solid ${v("pill-edge", pal.pillEdge)}`, boxShadow: pal.pillShadow, color: v("text", pal.text), backdropFilter: light ? "none" : iisuPill.backdropFilter };
   const vars = { "--dht-iisu-accent-ring": ringC, "--dht-iisu-accent-fill": fill, "--dht-iisu-accent-deep": deep, ...iisuSchemeVars(light) } as CSSProperties;
   const ring = v("ring", ringC);

@@ -1,3 +1,4 @@
+import { t } from "../i18n";
 import { GameHero } from "../common";
 // PS Vita home: pages of bubbles scrolled vertically, user folders (and Steam
 // collections as folders), rearranging, and a LiveArea gate for each game.
@@ -32,15 +33,15 @@ interface SysBubble {
   skinKey: string; // Vita custom-theme icon this bubble takes
   altKey?: string; // fallback icon key
 }
-const SYSTEM: SysBubble[] = [
-  { id: "library", label: "Library", icon: "library", color: "#2b6fd6", place: "library", skinKey: "hostCollabo" },
-  { id: "store", label: "Store", icon: "store", color: "#1b4fa8", place: "store", skinKey: "store", altKey: "near" },
-  { id: "friends", label: "Friends", icon: "friends", color: "#3aa35a", place: "friends", skinKey: "friend" },
-  { id: "media", label: "Screenshots", icon: "photo", color: "#e0902a", place: "media", skinKey: "camera" },
-  { id: "browser", label: "Browser", icon: "globe", color: "#2a9fd6", place: "browser", skinKey: "browser" },
-  { id: "downloads", label: "Downloads", icon: "download", color: "#7a5bd0", place: "downloads", skinKey: "message" },
-  { id: "settings", label: "Settings", icon: "gear", color: "#6d7a8c", skinKey: "settings" },
-  { id: "power", label: "Power", icon: "power", color: "#3b4252", place: "power", skinKey: "power" },
+const getSystemBubbles = (): SysBubble[] => [
+  { id: "library", label: t("destLibrary"), icon: "library", color: "#2b6fd6", place: "library", skinKey: "hostCollabo" },
+  { id: "store", label: t("destStore"), icon: "store", color: "#1b4fa8", place: "store", skinKey: "store", altKey: "near" },
+  { id: "friends", label: t("destFriends"), icon: "friends", color: "#3aa35a", place: "friends", skinKey: "friend" },
+  { id: "media", label: t("allScreenshots"), icon: "photo", color: "#e0902a", place: "media", skinKey: "camera" },
+  { id: "browser", label: t("destBrowser"), icon: "globe", color: "#2a9fd6", place: "browser", skinKey: "browser" },
+  { id: "downloads", label: t("destDownloads"), icon: "download", color: "#7a5bd0", place: "downloads", skinKey: "message" },
+  { id: "settings", label: t("destSettings"), icon: "gear", color: "#6d7a8c", skinKey: "settings" },
+  { id: "power", label: t("destPower"), icon: "power", color: "#3b4252", place: "power", skinKey: "power" },
 ];
 
 type VItem =
@@ -290,20 +291,20 @@ function LiveArea({ game, focus, closing, art, peel = 0, onTap }: { game: Game; 
         <div className="dht-livearea-gate" data-selected={focus === "start"} onClick={() => onTap?.("start")} style={{ width: 560, height: 262, borderRadius: 16, overflow: "hidden", position: "relative", ...ring(focus === "start") }}>
           <GameArt g={game} kind="landscape" style={{ width: "100%", height: "100%" }} />
           <div style={{ position: "absolute", left: 0, right: 0, bottom: 0, height: 64, background: "linear-gradient(180deg, rgba(0,0,0,0), rgba(0,0,0,0.75))", display: "flex", alignItems: "center", justifyContent: "center" }}>
-            <span style={{ color: "#fff", fontSize: 30, fontWeight: 700, letterSpacing: 1, textShadow: "0 2px 6px #000" }}>Start</span>
+            <span style={{ color: "#fff", fontSize: 30, fontWeight: 700, letterSpacing: 1, textShadow: "0 2px 6px #000" }}>{t("start")}</span>
           </div>
         </div>
       </div>
       {/* info card */}
       <div className="dht-livearea-info" style={{ position: "absolute", left: 40, top: H * 0.3, width: 380, padding: "18px 22px", borderRadius: 14, background: "rgba(255,255,255,0.88)", color: "#1c2433", fontSize: 19, lineHeight: 1.7, boxShadow: "0 8px 22px rgba(0,0,0,0.35)" }}>
         <div>
-          <b>Play time:</b> {fmtPlaytime(game.playtime, game.lastPlayed, true)}
+          <b>{t("playTimeLabel")}</b> {fmtPlaytime(game.playtime, game.lastPlayed, true)}
         </div>
         <div>
-          <b>Last played:</b> {fmtLastPlayed(game.lastPlayed)}
+          <b>{t("lastPlayedLabel")}</b> {fmtLastPlayed(game.lastPlayed)}
         </div>
         <div>
-          <b>Status:</b> {game.shortcut ? "Non-Steam game" : game.installed ? "Installed" : "Not installed"}
+          <b>{t("statusLabel")}</b> {game.shortcut ? t("nonSteamGame") : game.installed ? t("installed") : t("notInstalled")}
         </div>
         <Badges g={game} size={15} light style={{ marginTop: 8 }} />
       </div>
@@ -311,8 +312,8 @@ function LiveArea({ game, focus, closing, art, peel = 0, onTap }: { game: Game; 
       <div style={{ position: "absolute", left: 40, top: H * 0.66, display: "flex", gap: 22 }}>
         {(
           [
-            ["page", "Game Page", "info"],
-            ["menu", "Options", "dots"],
+            ["page", t("gameDetails"), "info"],
+            ["menu", t("options"), "dots"],
           ] as [LiveBtn, string, IconName][]
         ).map(([k, label, icon]) => (
           <div key={k} onClick={() => onTap?.(k)} style={{ width: 170, height: 118, borderRadius: 14, background: "rgba(20,30,50,0.78)", color: "#fff", display: "flex", flexDirection: "column", alignItems: "center", justifyContent: "center", gap: 10, fontSize: 18, transition: "transform 150ms", transform: focus === k ? "scale(1.05)" : "none", ...ring(focus === k) }}>
@@ -323,7 +324,7 @@ function LiveArea({ game, focus, closing, art, peel = 0, onTap }: { game: Game; 
       </div>
       {/* page-curl corner */}
       <div style={{ position: "absolute", right: 0, top: 0, width: 0, height: 0, borderStyle: "solid", borderWidth: "0 86px 86px 0", borderColor: "transparent rgba(235,240,248,0.95) transparent transparent", filter: "drop-shadow(-4px 4px 6px rgba(0,0,0,0.4))" }} />
-      <div style={{ position: "absolute", right: 10, top: 92, color: "#fff", fontSize: 14, opacity: 0.85, textShadow: "0 1px 3px #000" }}>Ⓑ / drag to peel</div>
+      <div style={{ position: "absolute", right: 10, top: 92, color: "#fff", fontSize: 14, opacity: 0.85, textShadow: "0 1px 3px #000" }}>{t("dragToPeel")}</div>
     </div>
   );
 }
@@ -435,7 +436,7 @@ export function VitaHome() {
     const inFolders = new Set<number>();
     v.folders.forEach((f) => f.apps.forEach((a) => inFolders.add(a)));
     const out: VItem[] = [];
-    if (v.systemBubbles) SYSTEM.forEach((sys) => out.push({ key: `sys:${sys.id}`, kind: "sys", label: sys.label, sys }));
+    if (v.systemBubbles) getSystemBubbles().forEach((sys) => out.push({ key: `sys:${sys.id}`, kind: "sys", label: sys.label, sys }));
     v.folders.forEach((f) =>
       out.push({ key: `folder:${f.id}`, kind: "folder", label: f.name, folder: f, games: f.apps.map((a) => api.lib.byId.get(a)).filter(Boolean) as Game[] }),
     );
@@ -500,10 +501,10 @@ export function VitaHome() {
   const recolorFolder = (fid: string, color: string) => updateVita((p) => ({ folders: p.folders.map((x) => (x.id === fid ? { ...x, color } : x)) }));
 
   const commonMenu = (): MenuItem[] => [
-    { label: "Create Folder", action: () => newFolder() },
-    { label: "Presets", sub: () => themeMenu(s.theme, api.switchTheme, THEMES) },
-    { label: "Home Screen Settings", action: api.openSettings },
-    { label: "Home", action: api.showSteamHome },
+    { label: t("createFolder"), action: () => newFolder() },
+    { label: t("presets"), sub: () => themeMenu(s.theme, api.switchTheme, THEMES) },
+    { label: t("homeScreenSettings"), action: api.openSettings },
+    { label: t("destMainMenu"), action: api.showSteamHome },
   ];
 
   const openOptions = () => {
@@ -511,24 +512,24 @@ export function VitaHome() {
     const items: MenuItem[] = [];
     if (it?.kind === "game") {
       const g = it.game;
-      items.push({ label: "Open LiveArea", action: () => openLive(g) });
-      items.push({ label: "Start", action: () => startGame(g) });
-      if (!g.shortcut) items.push({ label: "Watch Trailer", action: () => api.playTrailer(g) });
+      items.push({ label: t("openLiveArea"), action: () => openLive(g) });
+      items.push({ label: t("start"), action: () => startGame(g) });
+      if (!g.shortcut) items.push({ label: t("watchTrailer"), action: () => api.playTrailer(g) });
       items.push({
-        label: "Add to Folder",
-        sub: () => [...v.folders.map((f) => ({ label: f.name, checked: f.apps.includes(g.appid), action: () => addToFolder(f.id, g.appid) })), { label: "New Folder…", action: () => newFolder(g.appid) }],
+        label: t("addToFolder"),
+        sub: () => [...v.folders.map((f) => ({ label: f.name, checked: f.apps.includes(g.appid), action: () => addToFolder(f.id, g.appid) })), { label: t("newFolderDots"), action: () => newFolder(g.appid) }],
       });
-      if (v.folders.some((f) => f.apps.includes(g.appid))) items.push({ label: "Remove from Folder", action: () => removeFromFolder(g.appid) });
-      items.push({ label: "Game Options", action: () => api.nativeMenu(g) });
+      if (v.folders.some((f) => f.apps.includes(g.appid))) items.push({ label: t("removeFromFolder"), action: () => removeFromFolder(g.appid) });
+      items.push({ label: t("gameOptions"), action: () => api.nativeMenu(g) });
     }
     if (it?.kind === "folder") {
       const f = it.folder;
-      items.push({ label: "Open", action: () => enter(it) });
-      items.push({ label: "Rename", action: () => renameFolder(f) });
-      items.push({ label: "Colour", sub: () => FOLDER_COLORS.map((c, i) => ({ label: ["Blue", "Orange", "Green", "Pink", "Purple", "Mint", "Yellow", "Red"][i], checked: f.color === c, action: () => recolorFolder(f.id, c) })) });
-      items.push({ label: "Delete Folder", action: () => deleteFolder(f.id) });
+      items.push({ label: t("open"), action: () => enter(it) });
+      items.push({ label: t("rename"), action: () => renameFolder(f) });
+      items.push({ label: t("colour"), sub: () => FOLDER_COLORS.map((c, i) => ({ label: ["Blue", "Orange", "Green", "Pink", "Purple", "Mint", "Yellow", "Red"][i], checked: f.color === c, action: () => recolorFolder(f.id, c) })) });
+      items.push({ label: t("deleteFolder"), action: () => deleteFolder(f.id) });
     }
-    if (!openFolder && it) items.push({ label: "Rearrange", action: () => setMoving(list) });
+    if (!openFolder && it) items.push({ label: t("rearrange"), action: () => setMoving(list) });
     menu.open([...items, ...commonMenu()], it?.label);
   };
 
@@ -895,7 +896,7 @@ export function VitaHome() {
   };
   const swipeTarget = drag && Math.abs(drag) > 60 ? clamp(page + (drag < 0 ? 1 : -1), 0, pages - 1) : null;
 
-  const hints = live ? { a: "Select", b: "Close" } : moving ? { a: "Done" } : { a: "Open", x: "Start", y: "Options", menu: "Options" };
+  const hints = live ? { a: t("selected"), b: t("close") } : moving ? { a: t("done") } : { a: t("open"), x: t("start"), y: t("options"), menu: t("options") };
 
   return (
     <ThemeRoot onInput={onInput} hints={hints}>
@@ -931,10 +932,10 @@ export function VitaHome() {
           <div style={{ position: "absolute", inset: 0 }}>
             <div style={{ position: "absolute", inset: 0, transition: "transform 260ms ease-out", transform: drag ? `translateY(${drag * 0.55}px)` : undefined }}>{renderPages(folderList, cur, false)}</div>
             <PageDots page={page} pages={pages} target={swipeTarget} />
-            {folderList.length === 0 && <div style={{ position: "absolute", left: 0, right: 0, top: H / 2, textAlign: "center", color: "#fff", opacity: 0.8, fontSize: 20 }}>This folder is empty. Use △ → Add to Folder on a game.</div>}
+            {folderList.length === 0 && <div style={{ position: "absolute", left: 0, right: 0, top: H / 2, textAlign: "center", color: "#fff", opacity: 0.8, fontSize: 20 }}>{t("folderEmptyHint")}</div>}
           </div>
         )}
-        {moving && <div style={{ position: "absolute", left: 0, right: 0, bottom: 60, textAlign: "center", color: "#fff", fontSize: 18, textShadow: "0 1px 4px #000" }}>Move the bubble with the D-pad or tap where it should go · Ⓐ or tap it to finish</div>}
+        {moving && <div style={{ position: "absolute", left: 0, right: 0, bottom: 60, textAlign: "center", color: "#fff", fontSize: 18, textShadow: "0 1px 4px #000" }}>{t("moveBubbleHint")}</div>}
         {live && (
           <LiveArea
             game={live.game}

@@ -76,7 +76,7 @@ export function Ps5Home() {
 
   const cards = g && showCards
     ? [
-        { title: t("gameDetails"), sub: "Achievements, news, properties", run: () => api.details(g) },
+        { title: t("gameDetails"), sub: t("gameDetailsSub"), run: () => api.details(g) },
         { title: t("playTime"), sub: fmtPlaytime(g.playtime, g.lastPlayed, true), run: () => api.details(g) },
         { title: t("lastPlayed"), sub: fmtLastPlayed(g.lastPlayed), run: () => api.details(g) },
       ]
@@ -187,7 +187,7 @@ export function Ps5Home() {
   const scrolledDown = zone === "cards";
 
   return (
-    <ThemeRoot onInput={onInput} hints={{ a: g ? "Play" : "Select", y: "Options", menu: "Options" }}>
+    <ThemeRoot onInput={onInput} hints={{ a: g ? t("play") : t("selected"), y: t("options"), menu: t("options") }}>
       <Stage background="#000">
         {/* background */}
         <div className="dht-ps5-bg" style={{ position: "absolute", inset: 0, background: `var(--dht-ps5-bg, ${wallCss})` }} />
@@ -253,7 +253,7 @@ export function Ps5Home() {
           {/* play row */}
           <div style={{ position: "absolute", left: x0, top: playY, display: "flex", gap: 16, alignItems: "center" }}>
             <div onClick={()=>g?api.launch(g):activateTile(cur)} className="dht-ps5-play" data-selected={zone === "play" && psel === 0} style={{ height: 56, padding: "0 64px", borderRadius: 28, background: zone === "play" && psel === 0 ? "var(--dht-ps5-play, #fff)" : "rgba(255,255,255,0.88)", color: "#000", fontSize: 22, fontWeight: 600, display: "flex", alignItems: "center", boxShadow: zone === "play" && psel === 0 ? "0 0 0 4px rgba(255,255,255,0.4)" : "none", transform: zone === "play" && psel === 0 ? "scale(1.05)" : "none", transition: "transform 150ms" }}>
-              {g ? "Play" : "Open"}
+              {g ? t("play") : t("open")}
             </div>
             <div style={{ width: 56, height: 56, borderRadius: 28, background: zone === "play" && psel === 1 ? "#fff" : "rgba(60,60,60,0.8)", display: "flex", alignItems: "center", justifyContent: "center" }}>
               <Icon name="dots" size={26} color={zone === "play" && psel === 1 ? "#000" : "#fff"} />
@@ -266,7 +266,7 @@ export function Ps5Home() {
           <div style={{ position: "absolute", left: x0, top: cardsY, display: "flex", gap: 20 }}>
             {cards.map((c, i) => (
               <div key={c.title} onClick={c.run} className="dht-ps5-card" data-selected={zone === "cards" && i === csel} style={{ width: 300, height: Math.min(150,H-cardsY-26), borderRadius: 14, padding: 20, boxSizing: "border-box", background: "rgba(30,34,42,0.82)", color: "#fff", boxShadow: zone === "cards" && i === csel ? "0 0 0 3px #fff" : "none", transform: zone === "cards" && i === csel ? "scale(1.04)" : "none", transition: "transform 150ms" }}>
-                <div style={{ fontSize: 14, opacity: 0.6, marginBottom: 10 }}>Activity</div>
+                <div style={{ fontSize: 14, opacity: 0.6, marginBottom: 10 }}>{t("activity")}</div>
                 <div style={{ fontSize: 21, fontWeight: 600 }}>{c.title}</div>
                 <div style={{ fontSize: 16, opacity: 0.8, marginTop: 8 }}>{c.sub}</div>
               </div>

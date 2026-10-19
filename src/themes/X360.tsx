@@ -1,3 +1,4 @@
+import { t } from "../i18n";
 import {ProfileAvatar} from "../ProfileAvatar";
 // Xbox 360 Metro-era dashboard (2011): lowercase pivots across the top and a
 // horizontally scrolling field of flat tiles on the grey V2 background. The
@@ -58,7 +59,7 @@ function X360MetroHome() {
   const ICO: Partial<Record<IconName, string>> = { game: "ico-games", store: "ico-marketplace", friends: "ico-addfriends", bell: "ico-messages", download: "ico-installedgame", library: "ico-controller", globe: "ico-internet", palette: "ico-changetheme", gear: "ico-settingspreferences", power: "ico-turnoff", apps: "ico-apps" };
 
   const play = (g: Game) => () => api.activate(g, () => api.launch(g));
-  const themes = () => menu.open(themeMenu(s.theme, api.switchTheme, THEMES), "presets", { page: true });
+  const themes = () => menu.open(themeMenu(s.theme, api.switchTheme, THEMES), t("presets"), { page: true });
 
   const pivots = useMemo(() => {
     const sys = (key: string, x: number, y: number, w: number, h: number, label: string, icon: IconName, run: () => void, color = GREEN): XTile => ({ key, x, y, w, h, label, icon, color, run });
@@ -139,7 +140,7 @@ function X360MetroHome() {
       { label: "home settings", action: api.openSettings },
       { label: "home", action: api.showSteamHome },
     ];
-    menu.open(g ? [{ label: "play", action: () => api.launch(g) }, { label: "watch trailer", action: () => api.playTrailer(g) }, { label: "game details", action: () => api.details(g) }, { label: "game options", action: () => api.nativeMenu(g) }, ...extra] : extra, g ? g.name : "options");
+    menu.open(g ? [{ label: t("play"), action: () => api.launch(g) }, { label: t("watchTrailer"), action: () => api.playTrailer(g) }, { label: t("gameDetails"), action: () => api.details(g) }, { label: t("gameOptions"), action: () => api.nativeMenu(g) }, ...extra] : extra, g ? g.name : t("options"));
   };
 
   const onInput = (p: Press): boolean => {
