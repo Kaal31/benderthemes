@@ -1,3 +1,4 @@
+import { t } from "./i18n";
 import {useEffect,useRef,useState} from "react";
 import {loadAssets} from "./assets";
 import {ConsoleStartup,CONSOLE_STARTUPS} from "./consoleStartup";
@@ -22,6 +23,6 @@ export function RecordedConsoleStartup({theme,leaving,finish}:{theme:string;leav
  if(url===null)return <ConsoleStartup theme={theme} leaving={leaving} finish={finish}/>;
  return <div className="dht-console-video" data-console={theme} role="button" tabIndex={0} aria-label={`${CONSOLE_STARTUPS[theme].name} video intro. Press any button to skip.`} onClick={finish} onKeyDown={e=>{e.preventDefault();finish();}} style={{position:"absolute",inset:0,zIndex:96,background:"#000",opacity:leaving?0:1,transition:"opacity .5s",overflow:"hidden"}}>
  {url&&<video ref={video} src={url} playsInline preload="auto" onEnded={finish} onError={()=>setUrl(null)} style={{width:"100%",height:"100%",objectFit:"contain",display:"block"}}/>}
- <small style={{position:"absolute",bottom:"5%",left:0,right:0,textAlign:"center",color:"#ffffff88",fontFamily:"Segoe UI,Arial",fontSize:12}}>Press any button to skip</small>
+ <small style={{position:"absolute",bottom:"5%",left:0,right:0,textAlign:"center",color:"#ffffff88",fontFamily:"Segoe UI,Arial",fontSize:12}}>{t("pressAnyButtonToSkip")}</small>
  </div>;
 }

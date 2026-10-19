@@ -1,3 +1,4 @@
+import { t } from "./i18n";
 import {CSSProperties} from "react";
 /** Lightweight console-inspired sequences. No firmware/video download is needed. */
 export const CONSOLE_STARTUPS:Record<string,{name:string;subtitle:string;color:string;background:string;duration:number;scene:string}>={
@@ -27,7 +28,7 @@ export function ConsoleStartup({theme,leaving,finish}:{theme:string;leaving:bool
  {cfg.scene==="n3ds"&&<div className="boot-screens"><i/><i/></div>}
  {cfg.scene==="switch"&&<svg className="boot-switch" viewBox="0 0 120 120"><path d="M53 10H34Q10 10 10 34V86Q10 110 34 110H53Z" fill="none" stroke="currentColor" strokeWidth="7"/><circle cx="33" cy="41" r="10" fill="currentColor"/><g className="boot-switch-right"><path d="M67 10H86Q110 10 110 34V86Q110 110 86 110H67Z" fill="currentColor"/><circle cx="87" cy="78" r="10" fill="#e60012"/></g></svg>}
  {(cfg.scene==="xbox"||cfg.scene==="x360")&&<div className="boot-orb"><span>X</span><i/></div>}
- </div><div className="boot-wordmark"><strong>{cfg.name}</strong>{cfg.subtitle&&<small>{cfg.subtitle}</small>}</div><small className="boot-skip">Press any button to skip</small>
+ </div><div className="boot-wordmark"><strong>{cfg.name}</strong>{cfg.subtitle&&<small>{cfg.subtitle}</small>}</div><small className="boot-skip">{t("pressAnyButtonToSkip")}</small>
  </div>;
 }
 const STARTUP_CSS=`
