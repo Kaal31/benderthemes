@@ -136,7 +136,7 @@ function soundControl(kind: "sounds" | "music"): SlotControl {
     group("Hub and AudioLoader packs", packs.filter((p) => !p.folder.startsWith("Theme - "))),
     group("Theme files", packs.filter((p) => p.folder.startsWith("Theme - "))),
     ...assetGroups(kind, lists(), t?.id),
-    ...[true,false].map(recommended=>({source:recommended?"DeckThemes · for this theme":"DeckThemes · other packs",items:downloadableAudio().filter(p=>p.kind===kind&&p.themes.some(key=>key===th||key===`${th}:${getSettings().x360.style}`)===recommended).map(p=>{
+    ...[true,false].map(recommended=>({source:recommended?"DeckThemes · for this theme":"DeckThemes · other packs",items:downloadableAudio().filter(p=>p.kind===kind&&p.themes.some(key=>key===t?.id||key===th||key===`${th}:${getSettings().x360.style}`)===recommended).map(p=>{
       const installed=packs.find(pack=>pack.id===p.id);
       return {ref:installed?`@pack/${installed.folder}`:`@deckthemes/${p.id}`,name:`${p.name}${installed?" · Installed":" · Download"}`};
     })})),

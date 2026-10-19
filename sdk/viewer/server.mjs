@@ -29,7 +29,7 @@ export async function startThemeViewer({folders,port=0}={}){
       if(path==='/api/themes'){res.setHeader('Content-Type','application/json');res.end(JSON.stringify([...themes.values()].map(t=>t.manifest)));return;}
       const match=path.match(/^\/(theme|wrap)\/([a-z0-9:-]+)\/(.+)$/);
       if(match){
-        const [,kind,id,relative]=match,theme=themes.get(id);const file=theme&&safeFile(theme.folder,relative);
+        const [,kind,id,relative]=match,theme=themes.get(id);const file=theme&&(safeFile(theme.folder,relative)||safeFile(resolve(here,'../../out/frame-media',id),relative));
         if(!file)throw Error('missing');
         const own=`http://127.0.0.1:${server.address().port}/theme/${id}/`,all=`http://127.0.0.1:${server.address().port}/theme/`;
         if(kind==='wrap'){

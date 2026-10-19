@@ -2,6 +2,7 @@
 import { build } from "esbuild";
 import { existsSync, readdirSync, readFileSync, writeFileSync } from "fs";
 import { execFileSync } from "node:child_process";
+execFileSync(process.env.PYTHON || "python", ["tools/prepare_frame_media.py"], { stdio: "inherit" });
 if (existsSync("bundle") && process.env.SKIP_THEME_PACK_BUILD !== "1") execFileSync(process.env.PYTHON || "python", ["tools/package_themes.py"], { stdio: "inherit" });
 const r = await build({
   entryPoints: ["preview/main.tsx"],

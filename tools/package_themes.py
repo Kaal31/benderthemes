@@ -122,6 +122,9 @@ def build():
             "url": pack_url(ident, pack_version, target.name),
             "preview": None,
             "poster": None})
+    # Shipped frame interfaces keep code in themes/ and media in immutable
+    # published packs. Rebuilding the old bundle must not drop those entries.
+    catalog["themes"] += [p for p in previous["themes"] if p.get("frameTheme")]
     preview_zip = out / "HubPreviews.zip"
     with zipfile.ZipFile(preview_zip, "w", zipfile.ZIP_DEFLATED) as z:
         for ident in LABELS:

@@ -1,4 +1,6 @@
 import { frameRoute, FrameRoute } from "./frameNavigation";
+import { ensureThemeAudio } from "../audioDownloads";
+import { callable } from "@decky/api";
 // The "frame" layout: a community theme's own interface, sealed off from Steam.
 //
 // The interface is an HTML page from the theme's folder. It runs in an iframe
@@ -29,6 +31,7 @@ import { framePageRequest } from "./framePages";
 import { useReportFocus } from "../focus";
 
 export const FRAME_PROTOCOL = 1;
+const ensureMedia=callable<[id:string],{success:boolean;error?:string}>("ensure_frame_media");
 const BUTTONS: Btn[] = ["up", "down", "left", "right", "a", "b", "x", "y", "menu", "l1", "r1"];
 const PLACES: SteamPlace[] = ["library", "store", "friends", "settings", "downloads", "search", "power", "mainmenu"];
 const MAX_SAVE = 64 * 1024;
@@ -52,6 +55,15 @@ export function FrameHome() {
   const downloads = useDownloads();
   const requests = useRef({ at: 0, count: 0, pending: 0 });
   const theme = activeTheme(api.settings);
+  useEffect(()=>{if(theme?.id)void ensureThemeAudio(theme.id);},[theme?.id]);
+  const [media,setMedia]=useState<{id?:string;ready:boolean;error?:string}>({ready:false});
+  const [mediaAttempt,setMediaAttempt]=useState(0);
+  useEffect(()=>{
+    let alive=true;
+    setMedia({id:theme?.id,ready:theme?.source!=="bundled"});
+    if(theme?.source==="bundled")void ensureMedia(theme.id).then(result=>{if(alive)setMedia({id:theme.id,ready:result.success,error:result.error});}).catch(error=>{if(alive)setMedia({id:theme.id,ready:false,error:String(error)});});
+    return()=>{alive=false;};
+  },[theme?.id,theme?.source,mediaAttempt]);
   const frame = useRef<HTMLIFrameElement>(null);
   const [ready, setReady] = useState<{ handles: Set<Btn>; textInput: boolean } | null>(null);
   const [hints, setHints] = useState<Hints>({});
@@ -270,7 +282,7 @@ export function FrameHome() {
   return (
     <ThemeRoot onInput={onInput} hints={{ y: "Options", ...hints }}>
       {pageError && <div role="alert" style={{position:"absolute",inset:0,zIndex:5,background:"#16202bf2",padding:48,color:"white"}}>This page did not connect to ThemeHub.<button onClick={() => { if (!back()) { setPageError(false); setReady(null); client.current = null; generation.current++; setReload(n => n + 1); } }}>Back to a working page</button></div>}
-      {url ? (
+      {theme?.source==="bundled"&&(media.id!==theme.id||!media.ready)?<div role="status" style={{padding:48,color:"white"}}>{media.error?`Could not download theme media: ${media.error}`:"Downloading theme media…"}{media.error&&<button onClick={()=>setMediaAttempt(n=>n+1)}>Retry download</button>}</div>:url ? (
         <iframe
           ref={frame}
           key={`${url}:${reload}:${theme?.revision ?? ""}`}

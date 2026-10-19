@@ -276,9 +276,14 @@ def resolve(ident, rel):
         return None
     folder = hit[1]
     path = os.path.realpath(os.path.join(folder, *parts))
-    if not path.startswith(folder + os.sep) or not os.path.isfile(path):
+    if not path.startswith(folder + os.sep):
         return None
-    return path
+    if os.path.isfile(path):
+        return path
+    if hit[2] == "bundled":
+        import frame_media
+        return frame_media.resolve(ident, "/".join(parts))
+    return None
 
 
 def _pack(folder, rel):
@@ -349,6 +354,14 @@ def list_themes():
         for slot in SLOT_FOLDERS:
             rel = (m.get("slots") or {}).get(slot)
             p = _pack(folder, rel) if rel else None
+            if rel and source == "bundled":
+                import frame_media
+                prefix = rel.rstrip("/") + "/"
+                files = [name[len(prefix):] for name in frame_media.catalog().get(ident, {}).get("files", [])
+                         if name.startswith(prefix) and "/" not in name[len(prefix):]
+                         and name.lower().endswith(AUDIO) and frame_media.resolve(ident, name)]
+                if files:
+                    p = {**(p or {"mappings": {}, "ignore": []}), "files": sorted(set((p or {}).get("files", []) + files))}
             if p:
                 packs[slot] = p
         entry["packs"] = packs

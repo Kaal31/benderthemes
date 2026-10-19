@@ -58,7 +58,9 @@ import { IisuHome } from "./themes/Iisu";
 import { NativeLayout } from "./engine/NativeLayout";
 import { FrameHome } from "./engine/FrameHome";
 import { VideoIntro } from "./engine/VideoIntro";
-import { activeTheme, slotAccent, slotFont, slotUrl, useThemes } from "./engine/registry";
+import { activeTheme, refreshThemes, slotAccent, slotFont, slotUrl, useThemes } from "./engine/registry";
+import { callable } from "@decky/api";
+const ensureShippedMedia=callable<[id:string],{success:boolean;error?:string}>("ensure_frame_media");
 import { LAYOUT_SLOTS } from "./engine/assets";
 import { pageSettings } from "./engine/pages";
 import { useThemeDeckIntegration } from "./themeDeckIntegration";
@@ -191,6 +193,15 @@ function VerifiedThemedHome({ standalone }: { standalone?: boolean }) {
   useEffect(() => {
     let alive = true;
     setState("checking");
+    const shipped=activeTheme(settings);
+    if(shipped?.source==="bundled"){
+      void ensureShippedMedia(shipped.id).then(async result=>{
+        if(!result.success)throw new Error(result.error||"Theme media unavailable");
+        await refreshThemes();
+        if(alive)setState("ready");
+      }).catch(()=>{if(alive)setState("error");});
+      return()=>{alive=false;};
+    }
     if ((settings.theme === "frame" || settings.theme === "native")) { setState("ready"); return; }
     inventory().then(installed => {
       if (!alive) return;
@@ -200,7 +211,7 @@ function VerifiedThemedHome({ standalone }: { standalone?: boolean }) {
       if (!ready) openMarketplace(settings.theme, { from: settings.theme });
     }).catch(() => { if (alive) { setState("error"); logInfo(`[theme-availability] inventory check failed theme=${settings.theme}`); } });
     return () => { alive = false; };
-  }, [settings.theme, retry]);
+  }, [settings.theme, settings.activeTheme, retry]);
   if (state === "ready") return <ThemedHomeContent standalone={standalone} />;
   return <div data-dht-root="" data-theme-availability={state} style={{position:"fixed",inset:0,zIndex:standalone?900:1,background:"#10151d",color:"#fff",display:"grid",placeItems:"center"}}>
     <ThemeRoot onInput={p => {

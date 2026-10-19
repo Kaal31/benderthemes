@@ -1730,7 +1730,7 @@ class Plugin:
     # ───── AudioLoader packs ─────
     async def deckthemes_audio_catalog(self):
         import deckthemes_audio
-        return [{k: v for k, v in p.items() if k in ("id", "name", "kind", "themes")} for p in deckthemes_audio.catalog()]
+        return [{k: v for k, v in p.items() if k in ("id", "name", "kind", "themes", "installWithTheme")} for p in deckthemes_audio.catalog()]
 
     async def install_deckthemes_audio(self, ident: str):
         import deckthemes_audio
@@ -2219,6 +2219,13 @@ class Plugin:
             themes = []
         wrap = base[:-2] + "/w" if base else None  # community interfaces open through their wrapper page
         return {"base": base, "wrap": wrap, "themes": themes, "dir": data_themes.user_root(), "errors": data_themes.zip_errors()}
+
+    async def ensure_frame_media(self, ident: str):
+        import frame_media
+        try:
+            return await asyncio.to_thread(frame_media.ensure, str(ident))
+        except Exception as error:
+            return {"success": False, "error": str(error)}
 
     async def import_data_theme(self, path):
         """Quick Access → Add a theme: copy a picked theme .zip into the themes folder (checked first)."""

@@ -25,6 +25,8 @@ export function frameWrapper(origin, id, entry) {
 }
 // Data themes are read from themes/ (shipped) and, for the tests only, tests/fixtures/themes/ (never shipped).
 function themePath(rest) {
+  const media=resolve(root,"out/frame-media","."+rest);
+  if(media.startsWith(resolve(root,"out/frame-media")+sep)&&existsSync(media))return media;
   for (const dir of ["themes", "tests/fixtures/themes"]) {
     const base = resolve(root, dir);
     const path = resolve(base, "." + rest);

@@ -1,0 +1,92 @@
+{
+  "blue-glass": {
+    "pack": "blue-glass",
+    "files": [
+      "test-video.mp4"
+    ],
+    "version": "1.0.0"
+  },
+  "gamecube": {
+    "pack": "gamecube",
+    "files": [
+      "assets/generated-glass-v2.png",
+      "assets/generated-glass.png"
+    ],
+    "version": "1.0.0"
+  },
+  "ios6": {
+    "pack": "ios6",
+    "files": [
+      "test-video.mp4",
+      "wallpaper.jpg"
+    ],
+    "version": "1.0.0"
+  },
+  "midnight-ps4": {
+    "pack": "midnight-ps4",
+    "files": [
+      "music/menu_music.wav",
+      "sounds/deck_ui_bumper_end_02.wav",
+      "sounds/deck_ui_default_activation.wav",
+      "sounds/deck_ui_hide_modal.wav",
+      "sounds/deck_ui_into_game_detail.wav",
+      "sounds/deck_ui_launch_game.wav",
+      "sounds/deck_ui_navigation.wav",
+      "sounds/deck_ui_out_of_game_detail.wav",
+      "sounds/deck_ui_show_modal.wav",
+      "sounds/deck_ui_tab_transition_01.wav",
+      "sounds/deck_ui_tile_scroll.wav",
+      "wallpaper.jpg"
+    ],
+    "version": "1.0.0"
+  },
+  "old-big-picture": {
+    "pack": "old-big-picture",
+    "files": [
+      "assets/downloads.png",
+      "assets/exit.png",
+      "assets/generic_800.png",
+      "assets/homeglow.png",
+      "assets/icon_cart.png",
+      "assets/icon_community_hub.png",
+      "assets/mainmenu_bg_2.png",
+      "assets/settings.png",
+      "assets/steam_home.png",
+      "sounds/activation.wav",
+      "sounds/focus_change.wav",
+      "sounds/txting_press_b.wav"
+    ],
+    "version": "1.0.0"
+  },
+  "santa-express": {
+    "pack": "santa-express",
+    "files": [
+      "background.png",
+      "button-glass.png",
+      "button-home.png",
+      "cola-metal.png",
+      "cola-panel-v2.png",
+      "cola-panel.png",
+      "holiday-music.mp3",
+      "lever-housing.png",
+      "lever-knob.png"
+    ],
+    "version": "1.0.0"
+  },
+  "wiiflow-default": {
+    "pack": "wiiflow-default",
+    "files": [
+      "assets/background.png",
+      "assets/btnconfig.png",
+      "assets/btnconfigs.png",
+      "assets/btndvd.png",
+      "assets/btndvds.png",
+      "assets/EXO2MED.TTF",
+      "assets/favoritesoff.png",
+      "assets/favoritesoffs.png",
+      "assets/font.ttf",
+      "assets/vapors.png"
+    ],
+    "version": "1.0.0"
+  }
+}

@@ -12,6 +12,7 @@ let browser;
 try{
  browser=await chromium.launch();const page=await browser.newPage({viewport:{width:1440,height:1080}}),errors=[];
  page.on('pageerror',e=>errors.push(e.message));
+ await page.addInitScript(()=>{window.__gamecubeSounds=[];window.addEventListener("message",e=>{if(e.data?.dht===1&&e.data.type==="sound")window.__gamecubeSounds.push(e.data.name);});});
  await page.goto(url);await page.locator('#log').filter({hasText:'ready'}).waitFor();
  const theme=page.frames().find(f=>f.url().includes('/theme/gamecube/'));
  await theme.locator('.startup-skip').click();await page.locator('#animations').uncheck();
@@ -30,9 +31,13 @@ try{
  assert.equal(await theme.locator('#play-face-art').isVisible(),true);
  await input('a');await page.locator('#log').filter({hasText:'Simulated launch'}).waitFor();
  await input('b');await state('home');await input('right');await state('calendar');
- await input('a');await theme.locator('.date-editor').waitFor();await input('up');await input('a');
+ await input('a');await theme.locator('.date-editor').waitFor();await input('up');await input('down');await input('a');
  await theme.locator('.calendar-view').waitFor();await theme.waitForFunction(()=>Number.isFinite(ThemeHub.state.saved?.clockOffset));
  await input('b');await state('home');await input('down');await input('a');await theme.locator('#panel:not([hidden])').waitFor();
+ await input('a');await theme.locator('.save-action-menu').waitFor();await input('down');await input('a');
+ await page.waitForFunction(()=>window.__gamecubeSounds.includes('select'));
+ const sounds=await page.evaluate(()=>window.__gamecubeSounds);
+ for(const cue of ['move','select','open','back','launch','menu','close','sideOpen','sideClose','sliderUp','sliderDown','misc'])assert.ok(sounds.includes(cue),`Missing GameCube cue: ${cue}`);
  await page.locator('#empty').check();await theme.waitForFunction(()=>document.querySelectorAll('.block:not(.empty)').length===0);
  assert.deepEqual(errors,[]);
  console.log('PASS: shipped Nintendo manifest, packaging, sandbox handshake, 3D grid, selection/menu, nested title persistence, launch, clock save and empty library.');

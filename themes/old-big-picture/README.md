@@ -15,3 +15,14 @@ The visual layout is a recreation, not the original Steam layout source. Origina
 Validation: standalone SDK viewer checks actual sandboxed host messages, controller focus/selection/back, game launch handoff, search and collection filters, store checkout handoff, friends, empty libraries, inactive lifecycle, and 1280×800 / 1280×720 layout. Steam Deck hardware, real Steam service responses and audio playback still require device testing.
 
 Additional full-page interfaces are documented in PAGES.md, including their reference sources, supported actions and native Steam handoffs. The browser preview's Compare references panel includes the additional screenshots.
+
+## AudioLoader sound pack
+
+Activating Old Big Picture automatically downloads the original
+[Big Picture Mode pack by MrFlappi](https://deckthemes.com/packs/view?themeId=cadb90ee-b772-493c-8d7d-72443029960a)
+through ThemeHub's existing DeckThemes/AudioLoader downloader. Its original WAV
+files and manifest are retained in the standard sounds directory. Already installed
+copies with the same pack ID are reused and playback works offline after download.
+Automatic selects this pack for Old Big Picture. The interface sends sound events
+to ThemeHub so custom sound-pack selections, mute and SFX volume are respected;
+its older bundled WAV files are no longer used for playback. The matching [Steam Big Picture Ambience by Defalt303](https://deckthemes.com/packs/view?themeId=e5875375-c3c0-4ab2-a1d0-5f58f6b5b000) also downloads automatically and supplies the default looping background audio. Custom music selections and Off remain respected.

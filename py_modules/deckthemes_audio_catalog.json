@@ -637,5 +637,53 @@
     "folders": [
       "Minecraft Console Legacy"
     ]
+  },
+  {
+    "id": "cdc948e9-399c-4179-94ff-0f72f9d89fed",
+    "name": "Nintendo GameCube Menu SFX",
+    "kind": "sounds",
+    "themes": [
+      "gamecube"
+    ],
+    "folders": [
+      "Nintendo GameCube Menu SFX"
+    ],
+    "installWithTheme": true
+  },
+  {
+    "id": "e2f01d10-042d-4b8b-af01-f11b044c72cb",
+    "name": "Nintendo GameCube Menu Music",
+    "kind": "music",
+    "themes": [
+      "gamecube"
+    ],
+    "folders": [
+      "Nintendo GameCube Menu Music"
+    ],
+    "installWithTheme": true
+  },
+  {
+    "id": "cadb90ee-b772-493c-8d7d-72443029960a",
+    "name": "Big Picture Mode",
+    "kind": "sounds",
+    "themes": [
+      "old-big-picture"
+    ],
+    "folders": [
+      "Big Picture Mode"
+    ],
+    "installWithTheme": true
+  },
+  {
+    "id": "e5875375-c3c0-4ab2-a1d0-5f58f6b5b000",
+    "name": "Steam Big Picture Ambience",
+    "kind": "music",
+    "themes": [
+      "old-big-picture"
+    ],
+    "folders": [
+      "Steam Big Picture Ambience"
+    ],
+    "installWithTheme": true
   }
 ]

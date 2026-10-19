@@ -93,7 +93,7 @@ def install(ident, root, installed=(), fetch=request):
                     if not path.is_relative_to(prefix):
                         continue
                     relative = path.relative_to(prefix)
-                    if relative.suffix.lower() not in allowed:
+                    if relative.suffix.lower() not in allowed and relative.name.upper() not in {"LICENSE", "COPYING", "NOTICE"}:
                         continue
                     dest = stage.joinpath(*relative.parts)
                     dest.parent.mkdir(parents=True, exist_ok=True)

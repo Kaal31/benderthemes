@@ -1,7 +1,8 @@
 import {callable,toaster} from "@decky/api";
 import {getPacks,refreshPacks} from "./steam";
+import {resourcesChanged} from "./marketplaceState";
 
-export interface DownloadableAudio {id:string;name:string;kind:"sounds"|"music";themes:string[]}
+export interface DownloadableAudio {id:string;name:string;kind:"sounds"|"music";themes:string[];installWithTheme?:boolean}
 const catalog=callable<[],DownloadableAudio[]>("deckthemes_audio_catalog");
 const install=callable<[id:string],{ok:boolean;folder?:string;reused?:boolean;error?:string}>("install_deckthemes_audio");
 let available:DownloadableAudio[]=[];
@@ -29,4 +30,24 @@ export async function downloadAudio(id:string):Promise<string|null> {
     finally{pending.delete(id);}
   })();
   pending.set(id,task);return task;
+}
+
+const automatic=new Map<string,{at:number;promise:Promise<boolean>}>();
+/** Shipped theme dependencies use the same original DeckThemes packs as manual audio downloads. */
+export function ensureThemeAudio(themeId:string):Promise<boolean> {
+  const previous=automatic.get(themeId);
+  if(previous&&Date.now()-previous.at<5*60*1000)return previous.promise;
+  const promise=(async()=>{
+    await refreshAudioCatalog();
+    const required=available.filter(p=>p.installWithTheme&&p.themes.includes(themeId));
+    if(!required.length)return true;
+    await refreshPacks();
+    const missing=required.filter(p=>!getPacks().some(installed=>installed.id===p.id));
+    if(!missing.length)return true;
+    const results=await Promise.all(missing.map(p=>downloadAudio(p.id)));
+    if(results.some(Boolean))resourcesChanged();
+    return results.every(Boolean);
+  })().catch(()=>false);
+  automatic.set(themeId,{at:Date.now(),promise});
+  return promise;
 }

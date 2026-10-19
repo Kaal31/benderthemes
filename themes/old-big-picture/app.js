@@ -2,8 +2,7 @@
  'use strict';
  const hub=window.ThemeHub,root=document.getElementById('content');
  let state=null,page='home',selected=null,previous='home',filter='all',query='',storeTab='featured',generation=0,signature='',clockTimer,noticeTimer,explore=true;
- const sounds={move:new Audio('sounds/focus_change.wav'),select:new Audio('sounds/activation.wav'),back:new Audio('sounds/txting_press_b.wav')};
- function sound(name){if(!state||state.settings?.sounds===false||!hub.active||state.preview)return;const a=sounds[name];a.volume=Math.max(0,Math.min(1,(state.settings?.sfxVolume??50)/100));a.currentTime=0;a.play().catch(()=>{});}
+ function sound(name){if(!state||state.settings?.sounds===false||!hub.active||state.preview)return;hub.sound(name);}
  function el(tag,cls,text){const n=document.createElement(tag);if(cls)n.className=cls;if(text!==undefined)n.textContent=text;return n;}
  function button(text,fn,cls){const n=el('button',cls,text);n.type='button';n.onclick=()=>{sound('select');fn();};return n;}
  function notify(text){const n=document.getElementById('notice');n.textContent=text;n.style.display='block';clearTimeout(noticeTimer);noticeTimer=setTimeout(()=>n.style.display='none',4500);}
@@ -28,8 +27,8 @@
  hub.on('input',({btn})=>{if(btn==='b')back();else if(btn==='y'||btn==='menu')hub.open('options');else if(btn==='x'){const id=selected?.appid||Number(document.activeElement?.dataset.appid);if(id&&(state.games||[]).some(g=>g.appid===id))hub.launch(id);}else if(btn==='l1'||btn==='r1'){const pages=['store','library','community'];const index=pages.indexOf(page);go(pages[(index+(btn==='r1'?1:2)+3)%3]);}});
  function clock(){document.getElementById('clock').textContent=new Date().toLocaleTimeString([],{hour:'2-digit',minute:'2-digit',hour12:state?.settings?.clock24===false});}
  hub.on('state',s=>{const first=!state;state=s;document.getElementById('user').textContent=s.user||'Steam';document.body.classList.toggle('no-motion',s.settings?.animations===false);clock();const next=JSON.stringify([s.games,s.collections]);if(first||next!==signature){signature=next;if(selected){selected=s.games?.find(g=>g.appid===selected.appid)||selected;}render();if(first)focusFirst();}});
- hub.on('activity',active=>{clearInterval(clockTimer);if(active){clock();clockTimer=setInterval(clock,30000);}else Object.values(sounds).forEach(a=>a.pause());});
- hub.on('error',notify);hub.on('dispose',()=>{clearInterval(clockTimer);clearTimeout(noticeTimer);Object.values(sounds).forEach(a=>a.pause());});
+ hub.on('activity',active=>{clearInterval(clockTimer);if(active){clock();clockTimer=setInterval(clock,30000);}});
+ hub.on('error',notify);hub.on('dispose',()=>{clearInterval(clockTimer);clearTimeout(noticeTimer);});
  clockTimer=setInterval(clock,30000);
  hub.connect({keyboard:true,focusNavigation:true,autoBack:false});
 })();

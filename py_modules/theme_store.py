@@ -83,8 +83,17 @@ def catalog(refresh=False):
                     continue
         _catalog_error = error
     themes = []
+    # New frame media are pinned in the plugin catalogue. Older clients keep
+    # using the shared beta catalogue without learning unsupported pack IDs.
+    shipped = read_json(Path(decky.DECKY_PLUGIN_DIR) / "theme-catalog.json")
+    merged = {p["id"]: p for p in (_catalog or {}).get("themes", [])}
+    for pack in shipped.get("themes", []):
+        if pack.get("frameTheme") and pack["id"] not in merged:
+            merged[pack["id"]] = pack
+    if merged:
+        validate_catalog({"schema": 1, "themes": list(merged.values())})
     installed_themes = local_inventory()
-    for pack in (_catalog or {}).get("themes", []):
+    for pack in merged.values():
         try:
             compatible = version_key(current_version()) >= version_key(pack["minPluginVersion"])
         except ValueError:

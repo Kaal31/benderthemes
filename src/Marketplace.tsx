@@ -26,7 +26,7 @@ function BonusFeatureBadges({id}:{id:string}) {
   return <div className="dht-hub-feature-badges" aria-label="Bonus theme features">{features.map(feature=><span key={feature} className="dht-hub-feature-badge" data-feature={feature} title={BONUS_FEATURE_LABELS[feature].description}>{BONUS_FEATURE_LABELS[feature].label}</span>)}</div>;
 }
 
-export type ThemePack = { id: string; name: string; theme: ThemeId | null; description: string; size: number; version: string; installedVersion?: string; compatible: boolean; preview?: string; poster?: string; builtIn?: boolean; localThemeId?: string; uiOverhaul?: boolean; community?: { repo: string; id: string; themeId?: string; updateAvailable: boolean } };
+export type ThemePack = { id: string; name: string; theme: ThemeId | null; description: string; size: number; version: string; installedVersion?: string; compatible: boolean; preview?: string; poster?: string; builtIn?: boolean; localThemeId?: string; frameTheme?:string; uiOverhaul?: boolean; community?: { repo: string; id: string; themeId?: string; updateAvailable: boolean } };
 type CommunitySource = { repo: string; themes: { id: string; themeId?: string; name: string; description: string; size?: number; version: string; installedVersion?: string; compatible: boolean; preview?: string; uiOverhaul?: boolean; updateAvailable: boolean; layout?: ThemeId }[] };
 const communityList = callable<[], { sources: CommunitySource[] }>("community_themes");
 const communityPackage = callable<[repo: string, id: string, action: string], { ok: boolean; error?: string; themeId?: string }>("community_package");
@@ -105,10 +105,12 @@ export function Marketplace({ requested, from, initialTab }: { requested?: Theme
         community: { repo: source.repo, id: t.id, themeId: t.themeId, updateAvailable: t.updateAvailable }
       } satisfies ThemePack)));
       const localThemes: ThemePack[] = allThemes().filter(t => t.source === "bundled" && !/test/i.test(t.name)).map(t => ({
-        id: `local:${t.id}`, localThemeId: t.id, name: t.name, theme: t.layout, description: t.description ?? "Bundled community theme",
-        size: 0, version: "bundled", installedVersion: "bundled", compatible: true
+        id: `local:${t.id}`, name: t.name, description: t.description ?? "Bundled community theme",
+        size: 0, version: "bundled", compatible: true,
+        ...result.themes.find(p=>p.frameTheme===t.id), localThemeId:t.id, theme:t.layout,
+        installedVersion:result.themes.some(p=>p.frameTheme===t.id)?result.themes.find(p=>p.frameTheme===t.id)?.installedVersion:"bundled"
       }));
-      setPacks([...withBuiltIns(result.themes, result.art), ...localThemes, ...installed]); setError(result.error || "");
+      setPacks([...withBuiltIns(result.themes.filter(p=>!p.frameTheme), result.art), ...localThemes, ...installed]); setError(result.error || "");
       setProgress(result.progress); setBusy(result.progress.busy);
     } catch (e) { if (alive.current) setError(`Cannot load themes: ${e}`); }
     finally { if (alive.current) setLoading(false); }
@@ -141,6 +143,7 @@ export function Marketplace({ requested, from, initialTab }: { requested?: Theme
     setBusy(true); setMessage(""); const before = getSettings().theme;
     try {
       if (current.community || current.localThemeId) {
+        if(current.frameTheme)await ensurePackInstalled(current);
         let themeId = current.community?.themeId ?? current.localThemeId;
         if (current.community?.updateAvailable) {
           const result = await communityPackage(current.community.repo, current.community.id, "install");
