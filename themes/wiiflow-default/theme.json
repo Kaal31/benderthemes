@@ -1,0 +1,15 @@
+{
+  "schema": 1,
+  "id": "wiiflow-default",
+  "name": "WiiFlow Default",
+  "author": "ThemeHub",
+  "description": "Stock WiiFlow Default assets with 3D Steam cases, reflective coverflow and optional flattened spine logos.",
+  "company": "Nintendo",
+  "layout": "frame",
+  "frame": {
+    "entry": "index.html"
+  },
+  "slots": {
+    "accent": "#36c9ff"
+  }
+}
