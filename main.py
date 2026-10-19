@@ -23,6 +23,7 @@ except Exception:  # pragma: no cover
 import io
 import json
 import os
+import pathlib
 import shutil
 import struct
 try:  # Decky ships a trimmed Python; never let one missing module stop the backend
@@ -44,6 +45,7 @@ except Exception:  # pragma: no cover
 import decky
 
 IMAGE_EXT = (".png", ".jpg", ".jpeg", ".webp", ".gif")
+WALLPAPER_VIDEO_EXT = (".mp4", ".webm")
 
 
 def _settings_path() -> str:
@@ -116,6 +118,8 @@ def _steamui_dir() -> str:
 
 def _mime(name: str) -> str:
     n = name.lower()
+    if n.endswith(".mp4"):
+        return "video/mp4"
     if n.endswith(".png"):
         return "image/png"
     if n.endswith(".webp"):
@@ -1472,6 +1476,9 @@ async def _serve(reader, writer):
                 fpath = _sound_file(seg[2], seg[3])
             elif seg[1] == "m" and len(seg) == 3:
                 fpath = _music_files.get(seg[2])
+            elif seg[1] == "td" and len(seg) == 4 and seg[2].isdigit():
+                import themedeck
+                fpath = await asyncio.to_thread(themedeck.resolve, decky.DECKY_PLUGIN_SETTINGS_DIR, int(seg[2]), seg[3])
             elif seg[1] == "k" and len(seg) == 4 and _SEG.match(seg[2]) and _SEG.match(seg[3]):
                 fpath = os.path.join(_cache_root(), seg[2], seg[3])
             elif seg[1] == "w" and len(seg) >= 4:
@@ -1498,7 +1505,13 @@ async def _serve(reader, writer):
         if method not in ("GET", "HEAD") or not fpath or not os.path.isfile(fpath):
             await _send(writer, "404 Not Found", {**base, "Content-Length": "0"})
             return
-        size = os.path.getsize(fpath)
+        stat = await asyncio.to_thread(os.stat, fpath)
+        size = stat.st_size
+        etag = f'"{stat.st_mtime_ns:x}-{size:x}"'
+        base.update({"Cache-Control": "private, no-cache", "ETag": etag})
+        if req_headers.get("if-none-match") == etag:
+            await _send(writer, "304 Not Modified", base)
+            return
         ext = os.path.splitext(fpath)[1].lower()
         ctype = VIDEO_EXT.get(ext) or AUDIO_EXT.get(ext) or WEB_EXT.get(ext) or {".m4s": "video/iso.segment", ".json": "application/json", ".bin": "application/octet-stream"}.get(ext) or _mime(fpath)
         start, end = 0, size - 1
@@ -1521,11 +1534,11 @@ async def _serve(reader, writer):
         await _send(writer, status, hdr)
         if method == "HEAD":
             return
-        with open(fpath, "rb") as f:
-            f.seek(start)
+        with await asyncio.to_thread(open, fpath, "rb") as f:
+            await asyncio.to_thread(f.seek, start)
             left = end - start + 1
             while left > 0:
-                buf = f.read(min(262144, left))
+                buf = await asyncio.to_thread(f.read, min(262144, left))
                 if not buf:
                     break
                 writer.write(buf)
@@ -1579,7 +1592,17 @@ class Plugin:
 
     async def theme_install(self, ident: str):
         import theme_store
-        return await asyncio.to_thread(theme_store.install, ident)
+        result = await asyncio.to_thread(theme_store.install, ident)
+        if result.get("success"):
+            pack = next((p for p in theme_store.catalog()["themes"] if p["id"] == ident), {})
+            warnings = []
+            for audio_id in pack.get("audioPacks", []):
+                audio = await self.install_deckthemes_audio(audio_id)
+                if not audio.get("ok"):
+                    warnings.append(audio.get("error", "Audio download failed"))
+            if warnings:
+                result["audioWarning"] = "Some audio could not be downloaded. Steam sounds remain available; retry through Customize: " + "; ".join(warnings)
+        return result
 
     async def theme_remove(self, ident: str):
         import theme_store
@@ -1588,6 +1611,11 @@ class Plugin:
     async def theme_download_progress(self):
         import theme_store
         return theme_store.progress()
+
+    async def achievement_popup_status(self):
+        import achievement_popups
+        return await asyncio.to_thread(achievement_popups.installed_finally,
+                                       os.path.dirname(decky.DECKY_PLUGIN_DIR))
 
     async def plugin_catalog(self, refresh: bool = False):
         # Plugin Spotlight search: Decky Plugins Explorer data, cached 24 h (py_modules/plugin_catalog.py)
@@ -1631,6 +1659,39 @@ class Plugin:
         return True
 
     # ───── settings ─────
+    async def import_screensaver_media(self, path):
+        import theme_screensavers
+        try:
+            return await asyncio.to_thread(theme_screensavers.import_media, _data_dir(), path)
+        except Exception as e:
+            return {"error": str(e)}
+
+    async def export_screensaver(self, files, options):
+        import theme_screensavers
+        try:
+            ui = _steamui_dir()
+            if not ui:
+                return {"error": "Steam installation could not be found."}
+            if not hasattr(self, "_screensaver_export_lock"):
+                self._screensaver_export_lock = asyncio.Lock()
+            async with self._screensaver_export_lock:
+                return await asyncio.to_thread(theme_screensavers.export, _data_dir(), os.path.dirname(ui), decky.DECKY_PLUGIN_DIR, files, options)
+        except Exception as e:
+            return {"error": str(e)}
+
+    async def read_profile_picture(self, path):
+        try:
+            target = pathlib.Path(str(path)).expanduser().resolve()
+            if target.suffix.lower() not in (".png", ".jpg", ".jpeg", ".webp") or not target.is_file():
+                return {"error": "Choose a PNG, JPEG or WebP image."}
+            if target.stat().st_size > 10 * 1024 * 1024:
+                return {"error": "Choose an image smaller than 10 MB."}
+            raw = await asyncio.to_thread(target.read_bytes)
+            mime = "image/png" if raw.startswith(b"\x89PNG\r\n\x1a\n") else "image/jpeg" if raw.startswith(b"\xff\xd8\xff") else "image/webp" if raw[:4] == b"RIFF" and raw[8:12] == b"WEBP" else None
+            return {"image": _data_url(raw, mime)} if mime else {"error": "This image could not be opened."}
+        except Exception:
+            return {"error": "This image could not be opened."}
+
     async def get_settings(self):
         try:
             with open(_settings_path(), "r", encoding="utf-8") as f:
@@ -1672,6 +1733,20 @@ class Plugin:
         (decky.logger.error if level == "error" else decky.logger.info)(f"[frontend] {msg}")
 
     # ───── AudioLoader packs ─────
+    async def deckthemes_audio_catalog(self):
+        import deckthemes_audio
+        return [{k: v for k, v in p.items() if k in ("id", "name", "kind", "themes")} for p in deckthemes_audio.catalog()]
+
+    async def install_deckthemes_audio(self, ident: str):
+        import deckthemes_audio
+        try:
+            installed = await self.list_sound_packs()
+            result = await asyncio.to_thread(deckthemes_audio.install, ident, _sounds_dir(), installed)
+            return {"ok": True, **result}
+        except Exception as error:
+            decky.logger.warning(f"DeckThemes audio install failed: {error}")
+            return {"ok": False, "error": str(error)}
+
     async def list_sound_packs(self):
         out = []
         root = _sounds_dir()
@@ -1690,6 +1765,7 @@ class Plugin:
                 out.append(
                     {
                         "name": meta.get("name") or entry,
+                        "id": meta.get("id"),
                         "folder": entry,
                         "files": [n for n in os.listdir(folder) if not n.endswith(".json")],
                         "mappings": meta.get("mappings") or {},
@@ -1706,15 +1782,27 @@ class Plugin:
     async def list_wallpapers(self):
         d = _wall_dir()
         os.makedirs(d, exist_ok=True)
-        files = sorted(n for n in set(os.listdir(d)) | set(_resource_names("wallpapers")) if n.lower().endswith(IMAGE_EXT))
+        files = sorted(n for n in set(os.listdir(d)) | set(_resource_names("wallpapers")) if n.lower().endswith(IMAGE_EXT + WALLPAPER_VIDEO_EXT))
         return {"dir": d, "files": files}
 
     async def get_wallpaper(self, name: str):
         p = _user_resource(_wall_dir(), name, "wallpapers")
         if not os.path.isfile(p):
             return None
-        with open(p, "rb") as f:
-            return _data_url(f.read(), _mime(p))
+        ext = os.path.splitext(p)[1].lower()
+        if ext in WALLPAPER_VIDEO_EXT:
+            if not await _ensure_server():
+                return None
+            import hashlib
+            ident = "wallpaper-" + hashlib.sha256(os.path.realpath(p).encode()).hexdigest()[:24] + ext
+            _vi.files[ident] = p
+            return f"http://127.0.0.1:{_vi.port}/{_vi.token}/f/{ident}"
+        if ext not in IMAGE_EXT:
+            return None
+        def read_wallpaper():
+            with open(p, "rb") as f:
+                return _data_url(f.read(), _mime(p))
+        return await asyncio.to_thread(read_wallpaper)
 
     # ───── console skins ─────
     async def list_skins(self):
@@ -2022,7 +2110,7 @@ class Plugin:
         out = {}
         try:
             for n in sorted(os.listdir(folder)):
-                if n.lower().endswith(IMAGE_EXT + (".glb",)):
+                if n.lower().endswith(IMAGE_EXT + (".glb", ".mp4",)):
                     with open(os.path.join(folder, n), "rb") as f:
                         out[os.path.splitext(n)[0]] = _data_url(f.read(), "model/gltf-binary" if n.lower().endswith(".glb") else _mime(n))
         except Exception:
@@ -2135,6 +2223,41 @@ class Plugin:
             decky.logger.error(f"import theme: {e}")
             return {"ok": False, "error": str(e)[:200]}
 
+    async def community_themes(self):
+        import community_themes
+        return await asyncio.to_thread(community_themes.listing)
+
+    async def community_source(self, repo: str, action: str):
+        import community_themes
+        try:
+            return {"ok": True, **await asyncio.to_thread(community_themes.source_action, repo, action)}
+        except Exception as e:
+            return {"ok": False, "error": str(e)[:250]}
+
+    async def community_package(self, repo: str, ident: str, action: str):
+        import community_themes
+        try:
+            return await asyncio.to_thread(community_themes.package_action, repo, ident, action)
+        except Exception as e:
+            return {"ok": False, "error": str(e)[:250]}
+
+    async def community_progress(self):
+        import community_themes
+        return community_themes.progress()
+
+    async def community_update_status(self, force: bool = False):
+        import community_themes
+        return await asyncio.to_thread(community_themes.check_updates, bool(force))
+
+    async def _community_update_loop(self):
+        import community_themes
+        while True:
+            try:
+                await asyncio.to_thread(community_themes.check_updates)
+            except Exception as e:
+                decky.logger.warning(f"community update check: {e}")
+            await asyncio.sleep(30 * 60)
+
     async def media_server(self):
         if not await _ensure_server():
             return None
@@ -2153,6 +2276,15 @@ class Plugin:
             return {"ok": False, "videos": []}
 
     # ───── music on the Deck ─────
+    async def themedeck_track(self, appid: int):
+        import themedeck
+        track = await asyncio.to_thread(themedeck.assignment, decky.DECKY_PLUGIN_SETTINGS_DIR, appid)
+        if not track or not await _ensure_server():
+            return None
+        track.pop("path", None)
+        signature = track.pop("signature")
+        return {**track, "url": f"http://127.0.0.1:{_vi.port}/{_vi.token}/td/{appid}/{signature}"}
+
     async def list_music(self):
         if not await _ensure_server():
             return {"ok": False, "albums": []}
@@ -2169,6 +2301,9 @@ class Plugin:
         theme_updates.clear_replacement()
         import theme_store
         theme_store.recover()
+        import community_themes
+        community_themes.recover()
+        self._community_updates = asyncio.create_task(self._community_update_loop())
         theme_store.migrate_legacy_resources()
         os.makedirs(_wall_dir(), exist_ok=True)
         os.makedirs(os.path.join(_skin_dir(), "p3t"), exist_ok=True)
@@ -2200,6 +2335,8 @@ class Plugin:
                     dst = os.path.join(_sounds_dir(), n)
                     if not os.path.exists(dst):
                         shutil.copytree(os.path.join(ssrc, n), dst)
+                        import theme_uninstall
+                        theme_uninstall.record_shared("sounds", n)
         except Exception as e:
             decky.logger.warning(f"could not install bundled sound packs: {e}")
         # Example CSS Loader themes shipped in the zip → ~/homebrew/themes (never overwrites).
@@ -2212,6 +2349,8 @@ class Plugin:
                     dst = os.path.join(dst_root, n)
                     if not os.path.exists(dst):
                         shutil.copytree(os.path.join(src_root, n), dst)
+                        import theme_uninstall
+                        theme_uninstall.record_shared("themes", n)
         except Exception as e:
             decky.logger.warning(f"could not install example CSS themes: {e}")
         # Same link AudioLoader makes, so pack sounds are reachable from Steam's UI
@@ -2225,6 +2364,13 @@ class Plugin:
             decky.logger.warning(f"could not link sounds: {e}")
 
     async def _unload(self):
+        task = getattr(self, "_community_updates", None)
+        if task is not None:
+            task.cancel()
+            try:
+                await task
+            except asyncio.CancelledError:
+                pass
         try:
             if _vi.server is not None:
                 _vi.server.close()
@@ -2233,6 +2379,13 @@ class Plugin:
             pass
 
     async def _uninstall(self):
-        # Decky also invokes this for manual ZIP reinstalls. User preferences and
-        # installed theme resources deliberately outlive the plugin directory.
         await self._unload()
+        import theme_updates
+        if theme_updates.replacement_pending():
+            return  # Preserve resources during a ThemeHub update/channel switch.
+        import theme_uninstall
+        import theme_screensavers
+        ui = _steamui_dir()
+        if ui:
+            await asyncio.to_thread(theme_screensavers.cleanup, os.path.dirname(ui))
+        theme_uninstall.cleanup()

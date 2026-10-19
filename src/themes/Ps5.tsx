@@ -1,3 +1,5 @@
+import { GameHero } from "../common";
+import {ProfileAvatar} from "../ProfileAvatar";
 // PS5 home: Games / Media tabs, a compact row of rounded tiles at the top
 // with the focused title written beside it, full-bleed hero art, the game's
 // logo, a Play button and activity cards underneath.
@@ -190,8 +192,8 @@ export function Ps5Home() {
         <div className="dht-ps5-bg" style={{ position: "absolute", inset: 0, background: `var(--dht-ps5-bg, ${wallCss})` }} />
         {wall && hubBg !== "solid" && <img src={wall} style={{ position: "absolute", inset: 0, width: W, height: H, objectFit: "cover" }} />}
         {bg && hubBg !== "solid" && (
-          <div key={bg.appid} style={{ position: "absolute", inset: 0, overflow: "hidden", animation: fade === "cut" ? "none" : fade === "fade" ? "dhtFadeOnly5 450ms ease-out" : "dhtFade5 450ms ease-out" }}>
-            <GameArt g={bg} kind="hero" style={{ width: W, height: H, ...(hubBg === "blur" ? { filter: "blur(28px) saturate(1.2)", transform: "scale(1.12)" } : {}) }} />
+          <div key={bg.appid} style={{ position: "absolute", inset: 0, overflow: "hidden", animation: fade === "cut" ? "none" : (fade === "fade" || st<string>("heroScaling") !== "cover") ? "dhtFadeOnly5 450ms ease-out" : "dhtFade5 450ms ease-out" }}>
+            <GameHero g={bg} theme="ps5" blurred={hubBg === "blur"} />
           </div>
         )}
         <div style={{ position: "absolute", inset: 0, background: "linear-gradient(90deg, rgba(0,0,0,0.75) 0%, rgba(0,0,0,0.25) 55%, rgba(0,0,0,0.1) 100%), linear-gradient(180deg, rgba(0,0,0,0.55) 0%, rgba(0,0,0,0) 30%, rgba(0,0,0,0.0) 60%, rgba(0,0,0,0.8) 100%)" }} />
@@ -210,7 +212,7 @@ export function Ps5Home() {
           <div style={{ position: "absolute", right: 40, top: 26, display: "flex", alignItems: "center", gap: 22, color: "#fff" }}>
             {st<string>("topBar") !== "clock" && topIcons.map((ic, i) => (
               <div key={i} onClick={topIcons[i].run} style={{ width: 40, height: 40, borderRadius: 20, display: "flex", alignItems: "center", justifyContent: "center", background: zone === "tabs" && tsel === i + 2 ? "#fff" : "transparent" }}>
-                <Icon name={ic.icon} size={24} color={zone === "tabs" && tsel === i + 2 ? "#000" : "#fff"} />
+                {ic.icon==="user"?<ProfileAvatar size={30}/>:<Icon name={ic.icon} size={24} color={zone === "tabs" && tsel === i + 2 ? "#000" : "#fff"} />}
               </div>
             ))}
             {bat && st<string>("topBar") !== "clock" && <BatteryGlyph level={bat.level} charging={bat.charging} w={28} />}

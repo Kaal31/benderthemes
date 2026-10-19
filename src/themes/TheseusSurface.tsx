@@ -1,3 +1,4 @@
+import { useThemeActive } from "../performance";
 import {useEffect,useRef} from "react";
 import {THESEUS_SETTINGS} from "./theseusSettingsGeometry";
 import {THESEUS_GEOMETRY} from "./theseusGeometry";
@@ -16,6 +17,8 @@ else{vec3 col=mix(vec3(30.,255.,0.)/255.,vec3(243.,255.,107.)/255.,edge);gl_Frag
 
 /** Native mesh data; Theseus Waver equation and per-shell Spinner RPMs. */
 export function TheseusSurface({src,W,H,animate,orb=false,model}:{src?:string;W:number;H:number;animate:boolean;orb?:boolean;model?:keyof typeof THESEUS_SETTINGS}){
+ const active=useThemeActive(),liveActive=useRef(active);liveActive.current=active;
+ const wake=useRef<(()=>void)|null>(null);useEffect(()=>{wake.current?.();},[active]);
  const ref=useRef<HTMLCanvasElement>(null);
  useEffect(()=>{
   const canvas=ref.current;if(!canvas)return;
@@ -32,14 +35,15 @@ export function TheseusSurface({src,W,H,animate,orb=false,model}:{src?:string;W:
   const meshes=(model?THESEUS_SETTINGS[model]:orb?[THESEUS_GEOMETRY.shell9,THESEUS_GEOMETRY.shell10,THESEUS_GEOMETRY.shell11]:[THESEUS_GEOMETRY.wall]).map(m=>{const vb=gl.createBuffer()!,ib=gl.createBuffer()!;buffers.push(vb,ib);gl.bindBuffer(gl.ARRAY_BUFFER,vb);gl.bufferData(gl.ARRAY_BUFFER,decode(m.v),gl.STATIC_DRAW);const ids=decode(m.i);gl.bindBuffer(gl.ELEMENT_ARRAY_BUFFER,ib);gl.bufferData(gl.ELEMENT_ARRAY_BUFFER,ids,gl.STATIC_DRAW);return{vb,ib,count:ids.length/2,role:"role" in m?String(m.role):"",material:"material" in m?String(m.material):""};});
   const attrs=[gl.getAttribLocation(program,"position"),gl.getAttribLocation(program,"normal"),gl.getAttribLocation(program,"uv")];
   const texture=gl.createTexture()!;gl.bindTexture(gl.TEXTURE_2D,texture);gl.texImage2D(gl.TEXTURE_2D,0,gl.RGBA,1,1,0,gl.RGBA,gl.UNSIGNED_BYTE,new Uint8Array([0,0,0,0]));gl.texParameteri(gl.TEXTURE_2D,gl.TEXTURE_MIN_FILTER,gl.LINEAR);gl.texParameteri(gl.TEXTURE_2D,gl.TEXTURE_MAG_FILTER,gl.LINEAR);gl.texParameteri(gl.TEXTURE_2D,gl.TEXTURE_WRAP_S,gl.REPEAT);gl.texParameteri(gl.TEXTURE_2D,gl.TEXTURE_WRAP_T,gl.REPEAT);
-  const render=(now:number)=>{if(!alive)return;const moving=animate&&!media.matches&&!document.hidden;if(moving&&now-last<32){raf=requestAnimationFrame(render);return;}elapsed+=moving?Math.min(.1,(now-start)/1000):0;start=now;last=now;gl.viewport(0,0,canvas.width,canvas.height);gl.clearColor(0,0,0,0);gl.depthMask(true);gl.clear(gl.COLOR_BUFFER_BIT|gl.DEPTH_BUFFER_BIT);
+  const render=(now:number)=>{if(!alive||!liveActive.current||canvas.ownerDocument.hidden)return;const moving=animate&&!media.matches&&!document.hidden;if(moving&&now-last<32){raf=requestAnimationFrame(render);return;}elapsed+=moving?Math.min(.1,(now-start)/1000):0;start=now;last=now;gl.viewport(0,0,canvas.width,canvas.height);gl.clearColor(0,0,0,0);gl.depthMask(true);gl.clear(gl.COLOR_BUFFER_BIT|gl.DEPTH_BUFFER_BIT);
    meshes.forEach((m,i)=>{gl.bindBuffer(gl.ARRAY_BUFFER,m.vb);gl.bindBuffer(gl.ELEMENT_ARRAY_BUFFER,m.ib);attrs.forEach((a,j)=>{gl.enableVertexAttribArray(a);gl.vertexAttribPointer(a,j===2?2:3,gl.FLOAT,false,32,j===0?0:j===1?12:24);});const time=new Date();gl.uniform1f(loc.hand,m.role==="ClockMinuteHand"?-(time.getMinutes()-15+time.getSeconds()/60)*Math.PI/30:m.role==="ClockHourHand"?-(time.getHours()%12+time.getMinutes()/60)*Math.PI/6:0);const chrome=/Chrome|Clock|TV|Audio|Metal/i.test(m.material);const clockBody=model==="ClockIcon"&&i===0;gl.uniform1f(loc.materialKind,clockBody?2:chrome?1:0);gl.depthMask((chrome&&!clockBody)||!model);gl.uniform3f(loc.shade,.898,.898,.898);gl.uniform1f(loc.angle,model?(model==="GlobeIcon"?elapsed*Math.PI*2/30:Math.sin(elapsed*Math.PI*5/60)*(model==="ClockIcon"||model==="ConsoleIcon"?.196:Math.PI/8))+.12:orb?elapsed*[1.3,-2.3,-1][i]*Math.PI/30:Math.sin(elapsed*Math.PI*.75/60)*Math.PI/8);gl.drawElements(gl.TRIANGLES,m.count,gl.UNSIGNED_SHORT,0);});canvas.dataset.frame=String(Math.round(elapsed*1000));if(moving)raf=requestAnimationFrame(render);
   };
   const restart=()=>{cancelAnimationFrame(raf);start=performance.now();render(start);};
+  wake.current=restart;
   const img=new Image();img.onload=()=>{if(!alive)return;gl.bindTexture(gl.TEXTURE_2D,texture);gl.texImage2D(gl.TEXTURE_2D,0,gl.RGBA,gl.RGBA,gl.UNSIGNED_BYTE,img);restart();};if(src)img.src=src;
   const clockTimer=model==="ClockIcon"?window.setInterval(()=>{if(!animate||media.matches)restart();},1000):undefined;
   document.addEventListener("visibilitychange",restart);media.addEventListener("change",restart);restart();
-  return()=>{alive=false;clearInterval(clockTimer);cancelAnimationFrame(raf);img.onload=null;document.removeEventListener("visibilitychange",restart);media.removeEventListener("change",restart);buffers.forEach(b=>gl.deleteBuffer(b));shaders.forEach(s=>gl.deleteShader(s));gl.deleteTexture(texture);gl.deleteProgram(program);};
+  return()=>{wake.current=null;alive=false;clearInterval(clockTimer);cancelAnimationFrame(raf);img.onload=null;document.removeEventListener("visibilitychange",restart);media.removeEventListener("change",restart);buffers.forEach(b=>gl.deleteBuffer(b));shaders.forEach(s=>gl.deleteShader(s));gl.deleteTexture(texture);gl.deleteProgram(program);};
  },[src,W,H,animate,orb,model]);
  return <canvas ref={ref} data-model={model} className={model?"dht-xbox-category-model":orb?"dht-xbox-native-shells":"dht-xbox-cellwall"} data-source="theseus-mesh" width={Math.round(W)} height={Math.round(H)} aria-hidden style={{position:"absolute",inset:0,width:W,height:H,pointerEvents:"none"}}/>;
 }

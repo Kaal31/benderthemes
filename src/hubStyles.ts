@@ -56,6 +56,8 @@ const X360: Record<string, HubStyle> = {
 };
 
 export const HUB_STYLES: Record<ThemeId, HubStyle> = {
+  onyx: mk({bg:"repeating-linear-gradient(135deg,#ffffff03 0 1px,transparent 1px 4px),radial-gradient(ellipse at 50% 20%,#27292c,#08090b)",panel:"linear-gradient(#24262a,#111215)",panelHi:"#34373c",accent:"#eeeeef",accentText:"#111",ring:"0 0 0 2px #ddd",radius:18,pill:30,tagline:"Cover flow, dark texture and a circular wheel."}),
+  silver: mk({light:true,bg:"linear-gradient(120deg,#eee,#aaa,#fafafa)",panel:"#e5e5e5",panelHi:"#fff",text:"#252525",sub:"#666",cardText:"#252525",cardSub:"#666",accent:"#444",accentText:"#fff",line:"#bbb",tab:"#ddd",tabText:"#222",radius:22,pill:30,ring:"0 0 0 3px #555",tagline:"Turn the wheel. Find your next game."}),
   wii: mk({ light: true, bg: "radial-gradient(ellipse at 50% 0%,#fff 0%,#eef4f8 55%,#d6e4ee 100%)", panel: "linear-gradient(#fff,#eef4f8)", panelHi: "#fff", line: "#c9d8e2", text: "#4d6877", sub: "#778f9d", cardText: "#4d6877", cardSub: "#778f9d", accent: "#37bce9", accentText: "#fff", tab: "#dff3fb", tabText: "#1f8db5", radius: 24, pill: 22, font: '"Trebuchet MS","Segoe UI",Arial,sans-serif', ring: "0 0 0 4px #37bce9,0 6px 16px #5aa9c855", shadow: "0 2px 6px #8aa6b655", track: "-.6px", deco: "wii", glow: "#37bce9", tagline: "Pick a channel and make it yours." }),
   wiiu: mk({ light: true, bg: "radial-gradient(ellipse at 30% 0%,#fff 0%,#e9f0f5 50%,#cddbe5 100%)", panel: "linear-gradient(#ffffffee,#eef3f7ee)", panelHi: "#fff", line: "#cfdce5", text: "#54707f", sub: "#7d95a2", cardText: "#54707f", cardSub: "#7d95a2", accent: "#28c3ec", accentText: "#fff", tab: "#d9f4fc", tabText: "#1f94b5", radius: 20, pill: 20, font: '"Trebuchet MS","Segoe UI",Arial,sans-serif', ring: "0 0 0 4px #28c3ec,0 8px 20px #28c3ec44", shadow: "0 3px 10px #7b96a844", track: "-.6px", deco: "glass", glow: "#28c3ec", tagline: "Tap a tile and make it yours." }),
   switch: mk({ light: true, bg: "linear-gradient(180deg,#efefef,#e0e0e2)", panel: "#fff", panelHi: "#fff", line: "#d2d2d4", text: "#2d2d30", sub: "#6e6e74", cardText: "#2d2d30", cardSub: "#6e6e74", accent: "#00c3e3", accentText: "#00323b", tab: "#fff", tabText: "#00a3bf", radius: 4, pill: 22, font: '"Nunito","Trebuchet MS","Segoe UI",Arial,sans-serif', ring: "0 0 0 4px #00c3e3,0 0 0 7px #fff,0 0 18px 6px #00c3e377", shadow: "0 2px 6px #0002", track: "-.6px", deco: "none", glow: "#00c3e3", tagline: "Pick a theme and play." }),
@@ -78,7 +80,8 @@ export const HUB_STYLES: Record<ThemeId, HubStyle> = {
   minecraft: mk({ bg: "repeating-conic-gradient(#ffffff03 0% 25%,#00000010 0% 50%) 0 0/32px 32px,#292b2e", panel: "linear-gradient(110deg,#303236,#242629)", panelHi: "linear-gradient(110deg,#3c4046,#2d3034)", line: "#171717", text: "#eee", sub: "#bdbdc2", cardText: "#eee", cardSub: "#bdbdc2", accent: "#5f9a3a", accentText: "#fff", tab: "#326f18", tabText: "#fff", radius: 0, pill: 0, font: 'BlockWorlds,"Courier New",monospace', ring: "0 0 0 3px #171717,0 0 0 6px #82bf50", shadow: "inset 2px 2px #55565a,inset -2px -2px #191b1e", track: "0", deco: "voxel", glow: "#82bf50", tagline: "Craft your home. Pick a world." }),
   ps1: mk({ bg: "linear-gradient(180deg,#14161c,#07080b)", panel: "#1b1e27", panelHi: "#2a2f40", line: "#4b5170", text: "#d9dbe8", sub: "#8c91ac", cardText: "#e4e6f2", cardSub: "#9399b3", accent: "#cfd2e6", accentText: "#111320", tab: "#2f3550", tabText: "#fff", radius: 0, pill: 0, font: '"Courier New",ui-monospace,monospace', ring: "0 0 0 3px #fff,0 0 0 5px #555a7a", shadow: "none", track: "0", upper: true, deco: "dither", glow: "#9aa0c8", tagline: "Insert disc. Pick a theme." }),
   iisu: mk({ bg: "linear-gradient(160deg,#141828,#0a0c14)", panel: "rgba(255,255,255,.07)", panelHi: "rgba(255,255,255,.16)", line: "#ffffff22", text: "#f4f4fa", sub: "#a9aec4", cardText: "#f4f4fa", cardSub: "#aab0c6", accent: "#ff7ab8", accentText: "#2a0a1a", tab: "rgba(255,122,184,.2)", tabText: "#ffb2d6", radius: 22, pill: 22, font: '"Segoe UI","Motiva Sans",system-ui,sans-serif', ring: "0 0 0 3px #ff7ab8,0 0 24px #ff7ab888", shadow: "0 6px 18px #0006", track: "-.8px", deco: "glass", glow: "#ff7ab8", tagline: "Glass icons, pills and colour." }),
-  frame: DARK,
+  native: DARK,
+  frame: mk({bg:"linear-gradient(145deg,#122126,#071217)",panel:"#142b31",panelHi:"#20404a",accent:"#6ee7d4",accentText:"#072621",ring:"0 0 0 2px #6ee7d4",deco:"grid",glow:"#6ee7d4",tagline:"Community interfaces. Make them yours."}),
 };
 
 /** The style of a theme; an unknown id gets the default. `x360Style` picks the Xbox 360 dashboard era. */
@@ -90,13 +93,14 @@ export function isConsoleTheme(theme: string | undefined): boolean {
   return !!t && CONSOLE_COMPANIES.includes(t.company as string);
 }
 
-/** Console theme ids a Hub style can be fixed to. */
-export const consoleThemeIds = (): string[] => [...new Set(BUILTIN_THEMES.filter((b) => CONSOLE_COMPANIES.includes(b.company as string)).map((b) => b.layout as string))];
+/** Every registered built-in palette is available as a fixed Hub style. */
+export const consoleThemeIds = (): string[] => Object.keys(HUB_STYLES);
+const hasHubStyle = (theme: string | undefined): boolean => !!theme && Object.prototype.hasOwnProperty.call(HUB_STYLES, theme);
 
 /**
  * Which theme look the Hub wears, decided when it opens. `setting` = settings.hubStyle ("auto" | "neutral" | "preview" | theme id),
  * `from` = the theme home it was opened on (undefined from Quick Access, links, the Steam overlay...), `inv` = the installed packs.
- * Neutral (theme null) unless the resolved theme is a console theme. A fixed choice must also be installed; Auto wears the
+ * Neutral (theme null) unless the resolved theme has a registered palette. A fixed choice must also be installed; Auto wears the
  * home it was opened on even before its pack is downloaded (the look is CSS only), so switching to a theme that still needs
  * its download (L1 switcher, L2 / R2) opens the Hub in that theme's style. Preview wears the theme `focused` in Discover
  * (installed or not) and is Auto elsewhere. `source` goes to `data-hub-source`.
@@ -105,23 +109,23 @@ export function resolveHubTheme(setting: string | undefined, from: string | unde
   let s = setting || "auto";
   if (s === "neutral") return { theme: null, source: "none" };
   if (s === "preview") {
-    if (focused && isConsoleTheme(focused)) return { theme: focused, source: "preview" };
+    if (focused && hasHubStyle(focused)) return { theme: focused, source: "preview" };
     s = "auto";
   }
   const fixed = s !== "auto";
   const t = fixed ? s : from;
-  const ok = !!t && isConsoleTheme(t) && (!fixed || (!!inv && !!inv[t]));
+  const ok = !!t && hasHubStyle(t) && !!inv?.[t];
   return { theme: ok ? (t as string) : null, source: ok ? (fixed ? "setting" : "auto") : "none" };
 }
 
 export function hubStyle(theme: string | undefined, x360Style?: string): HubStyle {
-  if (!isConsoleTheme(theme)) return DARK;
+  if (!hasHubStyle(theme)) return DARK;
   if (theme === "x360") return X360[x360Style ?? "metro"] ?? X360.metro;
   return (HUB_STYLES as Record<string, HubStyle | undefined>)[theme ?? ""] ?? DARK;
 }
 
 /** Ids used in `data-hub-theme` (the Xbox 360 era is part of it: "x360-blades"). */
-export const hubThemeKey = (theme: string | undefined, x360Style?: string) => !isConsoleTheme(theme) ? "default" : (theme === "x360" ? `x360-${X360[x360Style ?? "metro"] ? x360Style ?? "metro" : "metro"}` : theme || "default");
+export const hubThemeKey = (theme: string | undefined, x360Style?: string) => !hasHubStyle(theme) ? "default" : (theme === "x360" ? `x360-${X360[x360Style ?? "metro"] ? x360Style ?? "metro" : "metro"}` : theme || "default");
 
 /** Every `--dht-hub-*` variable of a style. */
 export function hubVars(st: HubStyle): CSSProperties {

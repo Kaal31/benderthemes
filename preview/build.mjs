@@ -2,7 +2,7 @@
 import { build } from "esbuild";
 import { existsSync, readdirSync, readFileSync, writeFileSync } from "fs";
 import { execFileSync } from "node:child_process";
-if (existsSync("bundle")) execFileSync(process.env.PYTHON || "python", ["tools/package_themes.py"], { stdio: "inherit" });
+if (existsSync("bundle") && process.env.SKIP_THEME_PACK_BUILD !== "1") execFileSync(process.env.PYTHON || "python", ["tools/package_themes.py"], { stdio: "inherit" });
 const r = await build({
   entryPoints: ["preview/main.tsx"],
   bundle: true,
@@ -20,14 +20,14 @@ previewCatalog.themes = previewCatalog.themes.map((pack, i) => ({ ...pack, compa
 const walls = {};
 if (existsSync("bundle/wallpapers/aero-background.jpg")) walls["aero-background.jpg"] = "../bundle/wallpapers/aero-background.jpg";
 const assets = {};
-for (const root of ["assets", "bundle/assets"]) {
+for (const root of ["assets", "bundle/assets", "defaults/assets"]) {
   if (!existsSync(root)) continue;
   for (const set of readdirSync(root)) {
     assets[set] = assets[set] ?? {};
     // PREVIEW_JPG_ASSETS=1: also .jpg / .gif, as the plugin's get_assets reads them (main.py IMAGE_EXT); off by default because
     // the preview serves them as plain URLs, and the 3D dashboards (Xbox 360 NXE / Kinect) then can't use them as WebGL textures
     // from a file:// page (verify-launch-audio). Presets v2's mixing sheets were shot with it on (Hub .jpg backgrounds).
-    const ext = process.env.PREVIEW_JPG_ASSETS ? /\.(png|webp|jpe?g|gif)$/i : /\.(png|webp)$/i;
+    const ext = process.env.PREVIEW_JPG_ASSETS ? /\.(png|webp|jpe?g|gif|mp4)$/i : /\.(png|webp|mp4)$/i;
     for (const f of readdirSync(`${root}/${set}`)) if (ext.test(f)) assets[set][f.replace(ext, "")] = `../${root}/${set}/${f}`;
   }
 }

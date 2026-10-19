@@ -1,3 +1,4 @@
+import { GameHero } from "../common";
 // PS Vita home: pages of bubbles scrolled vertically, user folders (and Steam
 // collections as folders), rearranging, and a LiveArea gate for each game.
 import { ConfirmModal, showModal, TextField } from "@decky/ui";
@@ -275,7 +276,7 @@ function LiveArea({ game, focus, closing, art, peel = 0, onTap }: { game: Game; 
         clipPath: !closing && peel > 0 ? `polygon(0 0, ${(1 - 2 * peel) * 100}% 0, 100% ${2 * peel * 100}%, 100% 100%, 0 100%)` : undefined,
       }}
     >
-      <GameArt g={game} kind="hero" style={{ position: "absolute", inset: 0, width: W, height: H }} />
+      <GameHero g={game} theme="vita" />
       <div style={{ position: "absolute", inset: 0, background: "linear-gradient(180deg, rgba(0,0,0,0.45), rgba(0,0,0,0.05) 35%, rgba(0,0,0,0.55))" }} />
       {/* header: bubble + title */}
       <div style={{ position: "absolute", left: 40, top: 62, display: "flex", alignItems: "center", gap: 18 }}>

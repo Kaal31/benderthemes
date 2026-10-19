@@ -1,0 +1,17 @@
+import { build } from 'esbuild';
+import assert from 'node:assert/strict';
+const result=await build({entryPoints:['src/input.tsx'],bundle:true,write:false,format:'esm',platform:'node',tsconfigRaw:{compilerOptions:{jsx:'react'}},jsx:'transform',jsxFactory:'__element',banner:{js:'const __element=(type,props)=>({type,props});'},plugins:[{name:'stubs',setup(b){b.onResolve({filter:/^(@decky\/ui|react|\.\/compatibility)$/},a=>({path:a.path,namespace:'stub'}));b.onLoad({filter:/.*/,namespace:'stub'},a=>({contents:a.path==='react'?`export const useRef=x=>({current:x}),useMemo=f=>f(),useLayoutEffect=()=>{},useState=x=>[x,()=>{}],createContext=x=>({}),useContext=()=>({}); export default {createElement:(type,props)=>({type,props})};`:a.path==='@decky/ui'?`export const Focusable=()=>{},GamepadButton={DIR_UP:1,DIR_DOWN:2,DIR_LEFT:3,DIR_RIGHT:4,BUMPER_LEFT:5,BUMPER_RIGHT:6,TRIGGER_LEFT:7,TRIGGER_RIGHT:8,CANCEL:9};`:`export const failHome=e=>{throw e};`}));}}]});
+const api=await import('data:text/javascript;base64,'+Buffer.from(result.outputFiles[0].text).toString('base64'));
+const steps=[],normal=[];
+api.setL1Switcher({available:()=>true,begin(){},step:(...x)=>steps.push(x),end(){}});
+const root=api.ThemeRoot({onInput:p=>{normal.push(p.btn);return true;},children:null}).props;
+const e=button=>({detail:{button},preventDefault(){},stopPropagation(){}});
+root.onButtonDown(e(5)); root.onButtonDown(e(6));
+assert.deepEqual(normal,['l1','r1']);assert.equal(steps.length,0);
+root.onGamepadDirection(e(4));root.onButtonDown(e(8));root.onButtonUp(e(8));root.onButtonUp(e(4));
+assert.deepEqual(steps.pop(),['variant',1,false]);
+root.onButtonDown(e(7));root.onGamepadDirection(e(1));root.onButtonUp(e(7));root.onButtonUp(e(1));
+assert.deepEqual(steps.pop(),['console',-1,false]);assert.equal(steps.length,0);
+root.onButtonDown(e(8));root.onButtonUp(e(8));assert.deepEqual(steps.pop(),['console',1,false]);
+const off=api.pushModalInput(()=>true);root.onButtonDown(e(7));root.onButtonUp(e(7));off();assert.equal(steps.length,0);
+console.log('PASS: bumpers unchanged, direction before/after trigger, plain trigger, modal isolation');

@@ -1,4 +1,9 @@
 import { keyboardClasses, steamDocuments } from "./keyboardSkins";
+import {customProfilePicture} from "./profilePicture";
+import {FIXED_BACKGROUND_PAGES,pageBackgroundRef} from "./pageBackgrounds";
+import { connectThemeAudio, monitorThemeAudioElement } from './themeAudio';
+import { useActiveInterval } from "./performance";
+import { BoundedCache } from "./boundedCache";
 import { useFocusedGame } from "./focus";
 import { tintOf } from "./color";
 import { loadDialAsset } from "./themes/dialAssets";
@@ -10,15 +15,18 @@ import { findClassModule, Navigation, showContextMenu } from "@decky/ui";
 import { callable } from "@decky/api";
 import { createElement, useEffect, useRef, useState } from "react";
 import { getUiDocument } from "./cssvars";
-import { getSettings, ThemeId } from "./settings";
+import { getSettings, useSettings, Settings, ThemeId } from "./settings";
 import { onMusicCompress, onSkinPack, skinSoundPack } from "./skins";
 import { encodeOggOpus, opusSupported, parseWav, toBase64 } from "./oggOpus";
 import { holdOtherMusic } from "./otherPlugins";
+import { keyboardClasses, steamDocuments } from "./keyboardSkins";
+import { backgroundMediaKind } from "./backgroundMedia";
 
 declare const SteamClient: any;
 
 // ───────────── backend calls ─────────────
 export interface SoundPack {
+  id?:string;
   name: string;
   folder: string; // relative to ~/homebrew/sounds
   files: string[];
@@ -37,7 +45,7 @@ interface EngineHooks {
   pack(theme: ThemeId, kind: "sfx" | "music"): SoundPack | null | undefined;
   /** The background of the look on screen as an asset reference (src/engine/assets.ts): undefined = the engine has
    *  no say (a wallpapers-folder picture or the look's own), "" = deliberately none. `folder`: the folder picture set. */
-  background(theme: ThemeId, folder: string | undefined): string | undefined;
+  background(theme: ThemeId, folder: string | undefined, settings?:Settings): string | undefined;
   /** Reads a reference that is not a wallpapers-folder file. */
   resolve(ref: string): Promise<string | null>;
 }
@@ -71,7 +79,7 @@ export async function listWallpapers() {
   }
 }
 
-const wallCache = new Map<string, string | null>();
+const wallCache = new BoundedCache<string, string | null>();
 onResourcesChanged(() => { wallCache.clear(); void refreshPacks(); });
 let wallpaperOverride: ((name: string) => string | null) | null = null;
 export function setWallpaperOverride(f: typeof wallpaperOverride) {
@@ -92,10 +100,11 @@ export const DEFAULT_WALLPAPER: Partial<Record<ThemeId, string>> = { aero: "aero
 /** The one background of the look on screen (presets v2: the preset's Background choice, from any installed source;
  *  else a wallpapers-folder picture chosen before v2; else the theme's own or the look's default picture), with game
  *  art, brightness and colour applied. null = the look draws its own background. */
-export function useWallpaper(theme: ThemeId): string | null {
-  const chosen = getSettings().wallpapers[theme];
-  const fromEngine = engine?.background(theme, chosen);
-  const ref = fromEngine !== undefined ? fromEngine : chosen ? `@wp/${chosen}` : DEFAULT_WALLPAPER[theme] ? `@wp/${DEFAULT_WALLPAPER[theme]}` : "";
+export function useWallpaper(theme: ThemeId, options?:{raw?:boolean;settings?:Settings;gameArt?:boolean;page?:string}): string | null {
+  const s=options?.settings??getSettings();
+  const chosen = s.wallpapers[theme];
+  const fromEngine = engine?.background(theme, chosen,s);
+  const ref = options?.page && FIXED_BACKGROUND_PAGES[theme] ? pageBackgroundRef(s,theme,options.page)??"" : fromEngine !== undefined ? fromEngine : chosen ? `@wp/${chosen}` : DEFAULT_WALLPAPER[theme] ? `@wp/${DEFAULT_WALLPAPER[theme]}` : "";
   const [state, setState] = useState<{ ref: string; url: string | null }>({ ref, url: ref ? wallCache.get(ref) ?? null : null });
   useEffect(() => {
     if (!ref) return setState({ ref, url: null });
@@ -114,8 +123,8 @@ export function useWallpaper(theme: ThemeId): string | null {
   const raw = state.ref === ref ? state.url : null;
   // Standard options → Game art behind the menu: the focused game's art takes the wallpaper's place
   const focused = useFocusedGame();
-  const art = getSettings().gameArt && theme !== "ps4" && theme !== "ps5" ? focused?.art.hero[0] ?? focused?.art.landscape[0] : undefined;
-  return useDimmed(art ?? raw, getSettings().bgBrightness, tintOf(getSettings()));
+  const art = options?.gameArt!==false && s.gameArt && theme !== "ps4" && theme !== "ps5" ? focused?.art.hero[0] ?? focused?.art.landscape[0] : undefined;
+  return useDimmed(art ?? raw, options?.raw?100:s.bgBrightness,options?.raw?undefined:tintOf(s));
 }
 
 /** Recolours what's drawn to the colour's hue, keeping its light and shade (the PSP tints its background the same way). */
@@ -133,7 +142,7 @@ export function tintCanvas(g: CanvasRenderingContext2D, w: number, h: number, ti
 // theme that draws a wallpaper honours it without code of its own.
 const dimCache = new Map<string, string>();
 function useDimmed(src: string | null, pct: number, tint?: string): string | null {
-  const key = src && (pct < 100 || tint) ? `${pct}|${tint ?? ""}|${src}` : "";
+  const key = src && backgroundMediaKind(src)==="image" && (pct < 100 || tint) ? `${pct}|${tint ?? ""}|${src}` : "";
   const [out, setOut] = useState<string | null>(key ? dimCache.get(key) ?? null : src);
   useEffect(() => {
     if (!key || !src) return setOut(src);
@@ -214,6 +223,7 @@ export const PACK_MATCH: Record<string, { re: RegExp[]; suggest: string }> = {
   wii: {re:[/^wii(?![ _-]*u)/i],suggest:"Wii Menu Sounds"},
   wiiu: {re:[/wii[ _-]*u/i],suggest:"Wii U Menu Sounds"},
   switch: {re:[/(^|[^a-z0-9])switch([^a-z0-9]|$)/i],suggest:"Switch Menu Sounds"},
+  n3ds: {re:[/nintendo\s*3ds|3ds.*home/i],suggest:"Nintendo 3DS UI"},
   minecraft: { re: [/Minecraft Console Legacy/i], suggest: "Minecraft Console Legacy" },
   republic: { re: [/DHT Verified Republic/i], suggest: "DHT Verified Republic" },
   pain: { re: [/DHT Six Paths Music/i], suggest: "DHT Six Paths Music" },
@@ -232,6 +242,8 @@ export const PACK_MATCH: Record<string, { re: RegExp[]; suggest: string }> = {
   "x360:nxe": { re: [/nxe/i], suggest: "Xbox 360 NXE Dash UI" },
   "x360:blades": { re: [/DHT Verified MC360 Blades 1\.7\.2/i, /blade/i], suggest: "Xbox 360 Blades" },
   aero: { re: [/windows\s*xp/i, /windows\s*7|win\s*7/i, /vista|aero|frutiger|media\s*center/i], suggest: "windows xp sounds" },
+  onyx: { re: [/DHT Onyx iPod/i], suggest: "Onyx iPod" },
+  silver: { re: [/DHT Onyx iPod/i], suggest: "Onyx iPod" },
   iisu: { re: [/iisu/i], suggest: "iisu SFX (comes with the plugin)" },
   dial: { re: [/alien\s*dial/i], suggest: "DHT Alien Dial (comes with the plugin)" },
 };
@@ -300,6 +312,7 @@ export function packFile(pack: SoundPack, file: string): string | null {
   const exact = (name:string) => {
     if(pack.ignore.includes(name))return null;
     const mapped=pack.mappings[name];
+    if(typeof mapped==="string")return pack.files.includes(mapped)?mapped:null;
     if(Array.isArray(mapped))return mapped.find(f=>pack.files.includes(f))??null;
     return pack.files.includes(name)?name:null;
   };
@@ -319,7 +332,7 @@ export function packFile(pack: SoundPack, file: string): string | null {
 export function musicFile(pack: SoundPack): string | null {
   const m = packFile(pack, "menu_music.mp3");
   if (m) return m;
-  return pack.files.find((f) => /music/i.test(f) && /\.(mp3|ogg|wav|flac|m4a)$/i.test(f)) ?? null;
+  return pack.files.find((f) => /music/i.test(f) && /\.(mp3|ogg|oga|opus|wav|flac|m4a)$/i.test(f)) ?? null;
 }
 
 const backendServer = callable<[], { base: string } | null>("media_server");
@@ -366,7 +379,8 @@ function audioCtx(): AudioContext | null {
     return null;
   }
 }
-const buffers = new Map<string, Promise<AudioBuffer | null>>();
+const bufferBytes = new WeakMap<Promise<AudioBuffer | null>, number>();
+const buffers = new BoundedCache<string, Promise<AudioBuffer | null>>(48, 32 * 1024 * 1024, p => bufferBytes.get(p) ?? 0);
 function loadBuffer(url: string): Promise<AudioBuffer | null> {
   let p = buffers.get(url);
   if (!p) {
@@ -380,6 +394,11 @@ function loadBuffer(url: string): Promise<AudioBuffer | null> {
       return await c.decodeAudioData(data).catch(() => null);
     })().catch(() => null);
     buffers.set(url, p);
+    const pending = p;
+    pending.then(buffer => {
+      bufferBytes.set(pending, buffer ? buffer.length * buffer.numberOfChannels * 4 : 0);
+      if (buffers.get(url) === pending) buffers.set(url, pending);
+    });
   }
   return p;
 }
@@ -391,6 +410,8 @@ function playBuffer(b: AudioBuffer, volume: number) {
   g.gain.value = volume;
   src.buffer = b;
   src.connect(g).connect(c.destination);
+  connectThemeAudio(g, c);
+  src.onended = () => { src.disconnect(); g.disconnect(); };
   src.start();
   return true;
 }
@@ -550,6 +571,8 @@ export function useHomeMusic(theme: ThemeId, active: boolean, page?: string) {
   const key = pack && file ? `${pack.folder}/${file}` : "";
   const targetVolume = useRef(vol);
   targetVolume.current = vol;
+  const wakeFade = useRef<(() => void) | null>(null);
+  useEffect(() => { wakeFade.current?.(); }, [vol]);
   useEffect(() => {
     preloadSounds(theme);
   }, [theme, pack?.folder]);
@@ -557,34 +580,42 @@ export function useHomeMusic(theme: ThemeId, active: boolean, page?: string) {
     if (!on || !pack || !file) return;
     let dead = false;
     let a: HTMLAudioElement | null = null;
+    let unmeter: (() => void) | null = null;
     let fade: any = null;
     let release: (() => void) | null = null;
     (async () => {
       const url = await packUrl(pack, file);
       if (dead || !url) return;
       try {
-        a = new (uiWindow().Audio ?? Audio)(url) as HTMLAudioElement;
+        a = new (uiWindow().Audio ?? Audio)() as HTMLAudioElement;
+        a.crossOrigin = "anonymous";
+        unmeter = monitorThemeAudioElement(a);
+        a.src = url;
         a.loop = true;
         a.volume = 0;
         await a.play();
-        if (dead) { a.pause(); return; }
+        if (dead) { a.pause(); unmeter?.(); return; }
         // AudioLoader's / ThemeDeck's menu music would play underneath ours.
         release = holdOtherMusic();
         // One envelope follows current volume/ducking, including changes while
         // the file is loading. Competing fades must not restore stale volume.
-        fade = setInterval(() => {
-          if (!a) return;
-          const target = targetVolume.current;
-          const delta = target - a.volume;
+        const step = () => {
+          clearTimeout(fade);
+          if (!a || dead) return;
+          const target = targetVolume.current, delta = target - a.volume;
           a.volume = Math.abs(delta) <= .02 ? target : Math.max(0, Math.min(1, a.volume + Math.sign(delta) * .02));
-        }, 60);
+          if (a.volume !== target) fade = setTimeout(step, 60);
+        };
+        wakeFade.current = step; step();
       } catch {
+        unmeter?.();
         /* blocked or missing */
       }
     })();
     return () => {
       dead = true;
-      clearInterval(fade);
+      wakeFade.current = null;
+      clearTimeout(fade);
       const el = a;
       if (!el) return;
       const done = release;
@@ -598,6 +629,7 @@ export function useHomeMusic(theme: ThemeId, active: boolean, page?: string) {
           try {
             el.pause();
             el.src = "";
+            unmeter?.();
           } catch {
             /* ignore */
           }
@@ -605,7 +637,7 @@ export function useHomeMusic(theme: ThemeId, active: boolean, page?: string) {
         } else el.volume = v;
       }, 30);
     };
-  }, [on, key]);
+  }, [on, key, s.activeTheme]);
 
 }
 
@@ -621,7 +653,7 @@ function getRequire(): any {
   }
   return req;
 }
-function findModuleExports(...needles: string[]): Record<string, any> | null {
+export function findModuleExports(...needles: string[]): Record<string, any> | null {
   const r = getRequire();
   if (!r?.m) return null;
   for (const id of Object.keys(r.m)) {
@@ -1063,8 +1095,12 @@ function readStatus(): SteamStatus {
     /* ignore */
   }
   try {
-    const u = g.App?.m_CurrentUser;
-    const hash = u?.strAvatarHash;
+    const u = g.App?.m_CurrentUser ?? g.currentUser ?? g.loginStore?.m_CurrentUser;
+    const persona=g.friendStore?.m_FriendsUIFriendStore?.m_self?.m_persona??g.friendStore?.localPersona??g.friendStore?.m_LoggedInUser??g.personaStore?.localPersona;
+    const url=u?.strAvatarURL??u?.avatar_url_full??persona?.avatar_url_full??persona?.m_strAvatarURL??persona?.m_strAvatarFullURL;
+    if(typeof url==="string"&&/^https?:\/\//.test(url))st.avatar=url;
+    const rawHash = u?.strAvatarHash??u?.avatar_hash??persona?.m_strAvatarHash??persona?.avatar_hash;
+    const hash=typeof rawHash==="string"?rawHash:(Array.isArray(rawHash)||rawHash instanceof Uint8Array)?Array.from(rawHash as number[]).map(v=>v.toString(16).padStart(2,"0")).join(""):undefined;
     if (typeof hash === "string" && /^[0-9a-f]{40}$/i.test(hash) && !/^0+$/.test(hash)) st.avatar = `https://avatars.steamstatic.com/${hash}_full.jpg`;
   } catch {
     /* ignore */
@@ -1072,11 +1108,9 @@ function readStatus(): SteamStatus {
   return st;
 }
 export function useSteamStatus(): SteamStatus {
+  useSettings();
   const [st, setSt] = useState<SteamStatus>(() => previewStatus ?? readStatus());
-  useEffect(() => {
-    if (previewStatus) return;
-    const iv = setInterval(() => setSt(readStatus()), 5000);
-    return () => clearInterval(iv);
-  }, []);
-  return st;
+  useActiveInterval(() => { const next = readStatus(); setSt(prev => JSON.stringify(prev) === JSON.stringify(next) ? prev : next); }, 5000, !previewStatus);
+  return {...st,avatar:customProfilePicture()??st.avatar};
 }
+

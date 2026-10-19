@@ -1,3 +1,4 @@
+import { BoundedCache } from "./boundedCache";
 // User-supplied console skins, read on the Deck by the backend:
 //  • PS3 .p3t theme files  → XMB background + category icons
 //  • PS Vita custom themes (folder or .zip with theme.xml) → page wallpapers + system bubble icons
@@ -96,7 +97,7 @@ export interface X360Skin {
   accent?: string | null; // average colour of the wallpaper (worked out here, not in the file)
 }
 const getX360 = callable<[name: string], X360Skin | null>("get_x360_skin");
-const x360Cache = new Map<string, X360Skin | null>();
+const x360Cache = new BoundedCache<string, X360Skin | null>();
 onResourcesChanged(() => x360Cache.clear());
 /** Average colour of the more saturated pixels of a picture, as #rrggbb (null if it can't be read). */
 function pictureAccent(url: string): Promise<string | null> {
@@ -183,7 +184,7 @@ export interface XboxSkin {
   errors: string[];
 }
 const getXbox = callable<[name: string], XboxSkin | null>("get_xbox_skin");
-const xboxCache = new Map<string, XboxSkin | null>();
+const xboxCache = new BoundedCache<string, XboxSkin | null>();
 onResourcesChanged(() => xboxCache.clear());
 const loadXbox = async (name: string): Promise<XboxSkin | null> => (await getXbox(name).catch(() => null)) ?? null;
 /** The original Xbox skin chosen in Theme options (null while loading / none). */
@@ -221,7 +222,7 @@ export interface WiiSkin {
   errors: string[];
 }
 const getWii = callable<[name: string], WiiSkin | null>("get_wii_skin");
-const wiiCache = new Map<string, WiiSkin | null>();
+const wiiCache = new BoundedCache<string, WiiSkin | null>();
 onResourcesChanged(() => wiiCache.clear());
 const loadWii = async (name: string): Promise<WiiSkin | null> => (await getWii(name).catch(() => null)) ?? null;
 /** The Wii theme chosen in Theme options (null while loading / none). */
@@ -274,7 +275,7 @@ export interface N3dsSkin {
   errors: string[];
 }
 const getN3ds = callable<[name: string], N3dsSkin | null>("get_3ds_skin");
-const n3dsCache = new Map<string, N3dsSkin | null>();
+const n3dsCache = new BoundedCache<string, N3dsSkin | null>();
 onResourcesChanged(() => n3dsCache.clear());
 const loadN3ds = async (name: string): Promise<N3dsSkin | null> => (await getN3ds(name).catch(() => null)) ?? null;
 /** The 3DS theme file chosen in Theme options (null while loading / none). */
@@ -325,9 +326,9 @@ export function setSkinOverride(o: Override) {
   override = o;
 }
 
-const vitaCache = new Map<string, VitaSkin | null>();
-const p3tCache = new Map<string, P3tSkin | null>();
-const pspCache = new Map<string, P3tSkin | null>();
+const vitaCache = new BoundedCache<string, VitaSkin | null>();
+const p3tCache = new BoundedCache<string, P3tSkin | null>();
+const pspCache = new BoundedCache<string, P3tSkin | null>();
 onResourcesChanged(() => { vitaCache.clear(); p3tCache.clear(); pspCache.clear(); });
 
 function useSkin<T>(name: string, cache: Map<string, T | null>, load: (n: string) => Promise<T | null>, ov?: (n: string) => T | null): T | null {

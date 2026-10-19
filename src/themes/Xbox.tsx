@@ -164,7 +164,6 @@ function Orb({ x, y, r, animate, burst, glow = "normal" }: { x: number; y: numbe
           <ellipse rx={r * 1.42} ry={r * 0.44} transform="rotate(-64)" fill="none" stroke="rgba(190,255,110,0.4)" strokeWidth={1.5} />
         </g>
         <ellipse rx={r * 1.3} ry={r * 1.3} fill="none" stroke="rgba(150,235,70,0.22)" strokeWidth={2} />
-        <ellipse cx={-r * 1.18} cy={r * 0.08} rx={r * 0.55} ry={r * 0.045} fill="rgba(170,250,90,0.4)" />
         {/* Native rotating shell geometry is rendered above the textured core. */}
 
 

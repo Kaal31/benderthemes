@@ -1,3 +1,6 @@
+import { GameHero } from "../common";
+import {customProfilePicture} from "../profilePicture";
+import { frameLoop, useThemeActive } from "../performance";
 import { openDestination } from "../destinations";
 // XrossMediaBar for the PS3 and PSP themes: a horizontal category bar
 // crossing a vertical item list, over a month-coloured gradient and wave.
@@ -302,6 +305,9 @@ function XmbBackground({ variant, color, animate, now, skin, fx, month = now.get
 /** A .ctf's own background: its layout (pictures + animation scripts) and its 3D wave model. */
 function PspThemeBg({ fps = 30, scene, background, wallpaper, animate, wave, level, tint, waveTint }: { fps?: number; scene: PspSceneData; background: string | null; wallpaper: string | null; animate: boolean; wave: boolean; level: number; tint?: number[] | null; waveTint?: number[] | null }) {
   const { W, H } = useStage();
+  const active = useThemeActive(), activeRef = useRef(active); activeRef.current = active;
+  const redraw = useRef<(() => void) | null>(null);
+  useEffect(() => { redraw.current?.(); }, [active]);
   const sceneRef = useRef<HTMLCanvasElement>(null);
   const waveRef = useRef<HTMLCanvasElement>(null);
   useEffect(() => {
@@ -309,7 +315,7 @@ function PspThemeBg({ fps = 30, scene, background, wallpaper, animate, wave, lev
     const sc = sceneRef.current ? createPspScene(sceneRef.current, scene, { background, wallpaper, pages, tint }) : null;
     // every 3D model object of the layout gets its own wave, following the object as its scripts
     // move, fade and turn it; a model started by the firmware itself sits where the stock wave sits
-    const waves: { draw: (t: number) => void }[] = [];
+    const waves: { draw: (t: number) => void; dispose: () => void; image: HTMLImageElement }[] = [];
     if (wave && waveRef.current) {
       const models = sceneModels(scene, pages);
       // on the wallpaper page the console draws no wave of its own (real shots of themes with a wallpaper: Midnight Black, Organ,
@@ -321,28 +327,21 @@ function PspThemeBg({ fps = 30, scene, background, wallpaper, animate, wave, lev
         const wv = createPspWave(waveRef.current, { ...data, obj: native ? null : n }, { yOffset: native ? PSP_NATIVE_Y : 0, intensity: level / 100, tint: waveTint ?? undefined });
         if (!wv) continue;
         const first = !waves.length;
-        waves.push({ draw: (t) => wv.draw(t, native || !n ? undefined : sc?.objs[n.n], first) });
+        waves.push({ draw: (t) => wv.draw(t, native || !n ? undefined : sc?.objs[n.n], first), dispose: wv.dispose, image: wv.image });
       }
     }
     const wv = waves.length ? { draw: (t: number) => waves.forEach((x) => x.draw(t)) } : null;
-    let raf = 0, last = -1;
     const t0 = performance.now();
-    const tick = (now: number) => {
-      raf = requestAnimationFrame(tick);
-      if (now - last < 1000 / fps - 2) return; // ~30 fps, like the PSP
-      last = now;
-      const t = now - t0;
-      sc?.frame(t);
-      wv?.draw(t);
-    };
-    if (animate) raf = requestAnimationFrame(tick);
-    else {
-      // still picture: let the scripts settle for a moment, then hold
-      let n = 0;
-      const still = () => { const t = n * 100; sc?.frame(t); wv?.draw(4000); if (++n < 30) raf = requestAnimationFrame(still); };
-      raf = requestAnimationFrame(still);
-    }
-    return () => cancelAnimationFrame(raf);
+    let settled = false;
+    const loop = frameLoop(sceneRef.current!, (now, moving) => {
+      if (!moving && !settled) { for (let n = 0; n < 30; n++) sc?.frame(n * 100); settled = true; }
+      sc?.frame(moving ? now - t0 : 2900);
+      wv?.draw(moving ? now - t0 : 4000);
+    }, () => animate, () => activeRef.current, fps);
+    redraw.current = loop.invalidate;
+    const images = [...(sc?.loaded ?? []), ...waves.map(w => w.image)];
+    images.forEach(img => img.addEventListener("load", loop.invalidate));
+    return () => { redraw.current = null; loop.dispose(); images.forEach(img => img.removeEventListener("load", loop.invalidate)); waves.forEach(w => w.dispose()); };
   }, [scene, background, wallpaper, animate, wave, level, fps, tint?.join(","), waveTint?.join(",")]);
   const box: CSSProperties = { position: "absolute", inset: 0, width: "100%", height: "100%" };
   return (
@@ -1181,6 +1180,7 @@ export function XmbHome({ variant }: { variant: Variant }) {
     const sh = shadowPic;
     if (!sh || !(it.game || it.video || it.image)) return icon;
     const [iw, ih] = cell(it, selected);
+    if(it.key==="me"&&customProfilePicture())return <img src={customProfilePicture()} alt="Custom profile picture" style={{width:iw,height:ih,objectFit:"cover",borderRadius:8}}/>;
     return (
       <div className="dht-xmb-shadowed" style={{ position: "relative", width: iw, height: ih, flexShrink: 0 }}>
         <img src={sh} alt="" style={{ position: "absolute", left: -iw * 0.225, top: -ih * 0.225 + ih * 0.04, width: iw * 1.45, height: ih * 1.45, pointerEvents: "none" }} />
@@ -1190,6 +1190,7 @@ export function XmbHome({ variant }: { variant: Variant }) {
   };
   const renderIcon = (it: XItem, selected: boolean) => {
     const [iw, ih] = cell(it, selected);
+    if(it.key==="me"&&customProfilePicture())return <img src={customProfilePicture()} alt="Custom profile picture" style={{width:iw,height:ih,objectFit:"cover",borderRadius:8}}/>;
     if (it.game)
       return (
         <div className="dht-xmb-game-icon" data-preview={selected && previewKey === it.key} style={{ width: iw, height: ih, boxShadow: selected ? "0 6px 20px rgba(0,0,0,0.45)" : "0 3px 10px rgba(0,0,0,0.35)", overflow: "hidden", transition: "width 160ms, height 160ms", position: "relative" }}>
@@ -1243,7 +1244,7 @@ export function XmbHome({ variant }: { variant: Variant }) {
         {/* the selected game's own backdrop fades in after a moment, like PIC1 on the console */}
         {backdrop && (
           <div className="dht-xmb-game-backdrop" key={backdrop.appid} style={{ position: "absolute", inset: 0, animation: "dhtPic1 900ms ease-out both" }}>
-            <GameArt g={backdrop} kind="hero" style={{ width: W, height: H }} />
+            <GameHero g={backdrop} theme={variant} />
             <div style={{ position: "absolute", inset: 0, background: "linear-gradient(90deg, rgba(0,0,0,0.55), rgba(0,0,0,0.25) 60%, rgba(0,0,0,0.15))" }} />
           </div>
         )}
@@ -1325,6 +1326,7 @@ export function XmbHome({ variant }: { variant: Variant }) {
           const i = lo + k;
           const selected = i === sel;
           const [iw, ih] = cell(it, selected);
+    if(it.key==="me"&&customProfilePicture())return <img src={customProfilePicture()} alt="Custom profile picture" style={{width:iw,height:ih,objectFit:"cover",borderRadius:8}}/>;
           const y = yOf(i);
           if (y < -120 || y > H + 60) return null;
           // a turned bar (Persona 3): the rows below the selected one run down the left edge, under the bar's blue band and out past its

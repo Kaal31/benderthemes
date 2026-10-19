@@ -264,7 +264,7 @@ export function StoreView({ settings, lib, onClose, onLaunch }: { settings: Sett
       <style>{NINTENDO_STORE_CSS + "\n" + IISU_STORE_CSS}</style>
       {searchOpen && <div className="dht-store-search" style={{position:"absolute",inset:settings.theme==="nazarick"?"10% 0 0":0,zIndex:5,background:skin.bg,color:skin.text,display:"grid",placeItems:"center"}}><form onSubmit={e=>{e.preventDefault();submitSearch();}} style={{width:"65%"}}><h1>{tab === "plugins" ? "Search plugins" : tab === "themes" ? "Search themes" : "Search Store"}</h1><input ref={searchBox} autoFocus {...opensKeyboardOnTap} aria-label={tab === "plugins" ? "Search plugins" : tab === "themes" ? "Search themes" : "Search Store"} value={searchDraft} onChange={e=>setSearchDraft(e.target.value)} onKeyDown={e=>{e.stopPropagation();if(e.key==="Escape")setSearchOpen(false);}} style={{width:"100%",boxSizing:"border-box",fontSize:28,padding:18,color:skin.text,background:skin.panel,border:`2px solid ${skin.sub}`,borderRadius:skin.radius}}/><button type="submit" style={{fontSize:22,padding:"14px 30px",marginTop:24,background:skin.accent,color:skin.accentText}}>Search</button><button type="button" onClick={()=>setSearchOpen(false)} style={{fontSize:22,padding:"14px 30px",marginLeft:18}}>Back</button><p style={{marginTop:22,fontSize:16,color:skin.sub}}>Ⓐ Keyboard · Ⓨ Search · Ⓑ Back</p></form></div>}
       <Stage background="transparent">
-        {settings.theme==="nazarick"&&<><NazarickBackdrop page="store" motion={settings.animations}/><NazarickNavigation page="store" settings={settings} onNavigate={navigateNazarick}/></>}
+        {settings.theme==="nazarick"&&<><NazarickBackdrop page="store" motion={settings.animations} settings={settings}/><NazarickNavigation page="store" settings={settings} onNavigate={navigateNazarick}/></>}
         <StoreBody
           skin={skin}
           icon={skin.icon ? icons[skin.icon] : undefined}
@@ -474,3 +474,4 @@ function StoreBody(p: {
     </div>
   );
 }
+

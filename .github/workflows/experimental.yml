@@ -1,0 +1,101 @@
+name: Experimental release
+on:
+  push:
+    branches: [experimental]
+  workflow_dispatch:
+permissions:
+  contents: write
+concurrency:
+  group: experimental-release
+  cancel-in-progress: false
+jobs:
+  release:
+    if: github.ref == 'refs/heads/experimental'
+    runs-on: ubuntu-latest
+    env:
+      RELEASE_CHANNEL: experimental
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+      - run: npm ci
+      - run: npm run typecheck
+      - run: node tests/verify-preset-company.mjs
+      - run: node tests/verify-controller-compatibility.mjs
+      - run: python -m unittest discover -s tests -p "test_*.py"
+      - name: Choose the next version
+        id: version
+        shell: bash
+        run: |
+          python tools/next_release_version.py >> "$GITHUB_OUTPUT"
+      - name: Set package version
+        run: npm version "${{ steps.version.outputs.version }}" --no-git-tag-version --allow-same-version
+      - name: Write experimental build identity
+        id: channel
+        run: python tools/channel_build.py prepare >> "$GITHUB_OUTPUT"
+      - run: npm run build
+      - run: npx playwright install --with-deps chromium
+      - run: node tests/verify-screensaver-player.mjs
+      - run: node tests/verify-theme-screensavers.mjs
+      - run: node tests/verify-screensaver.mjs
+      - run: node tests/verify-performance.mjs
+      - run: node tests/verify-keyboard-diagnostics.mjs
+      - run: node tests/verify-keyboard-lifecycle.mjs
+      - run: node tests/verify-idle-diagnostics.mjs
+      - run: node tests/verify-required-theme-packs.mjs
+      - run: node tests/verify-footer-keyboard.mjs
+      - run: node tests/verify-quick-access-keyboard.mjs
+      - run: python tests/verify-deckthemes-audio.py
+      - run: python -m pip install Pillow
+      - run: npm run preview
+        env:
+          SKIP_THEME_PACK_BUILD: '1'
+      - run: node tests/verify-performance-ui.mjs
+      - run: node tests/verify-screensaver-settings-ui.mjs
+      - run: node tests/verify-hero-scaling.mjs
+      - run: node tests/verify-n3ds-split.mjs
+      - run: node tests/verify-achievement-unlocks.mjs
+      - run: node tests/verify-achievement-popups-browser.mjs
+      - run: node tests/verify-achievement-popup-styles.mjs
+      - run: node tests/verify-block-worlds-frame.mjs
+      - run: node tests/verify-frame-navigation.mjs
+      - run: node tests/verify-community-starter.mjs
+      - run: node tests/verify-sdk-viewer.mjs
+      - run: node tests/verify-native-builder.mjs
+      - run: node tests/verify-native-layout.mjs
+      - run: node tools/preview_community_updates.mjs --build-only
+      - run: node tests/verify-community-updates.mjs
+      - run: node tests/verify-channel-updater.mjs
+      - run: node tests/verify-audio-downloads-browser.mjs
+      - run: node tools/capture_theme_previews.mjs
+      - run: python tools/make_theme_gifs.py
+      - run: node tests/verify-spotlight-install.mjs
+      - run: node tests/verify-spotlight-ui.mjs
+      - run: node tests/verify-marketplace.mjs
+      - run: node tests/verify-theme-availability.mjs
+      - run: node tests/verify-theme-options.mjs
+      - run: node tests/verify-block-panels.mjs
+      - run: node tests/verify-firmware-looks.mjs
+      - run: npm run package
+        env:
+          USE_PUBLISHED_ASSETS: '1' # theme packs live on Kaal31/deckthemes-assets (asset-catalog.json)
+      - run: python tools/verify_release.py
+        env:
+          USE_PUBLISHED_ASSETS: '1'
+      - name: Verify package identity and generate release manifest
+        run: python tools/channel_build.py manifest
+      - name: Publish numbered experimental ZIP
+        env:
+          GH_TOKEN: ${{ github.token }}
+          VERSION: ${{ steps.version.outputs.version }}
+          TAG: ${{ steps.channel.outputs.tag }}
+        run: |
+          gh release create "$TAG" "out/DeckHomeThemes-v${VERSION}.zip" asset-catalog.json out/channel-release.json --target "$GITHUB_SHA" --title "ThemeHub experimental v${VERSION} (build $GITHUB_RUN_NUMBER, attempt $GITHUB_RUN_ATTEMPT)" --generate-notes --draft --prerelease
+          gh release edit "$TAG" --draft=false --prerelease --latest=false

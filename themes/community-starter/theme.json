@@ -1,0 +1,11 @@
+{
+  "schema": 1,
+  "id": "community-starter",
+  "name": "Community Theme · Interface Showcase",
+  "author": "ThemeHub",
+  "description": "An explanation theme displaying interface examples with labels: navigation, cards, lists, forms, media, 3D editors and multiple pages.",
+  "company": "Community",
+  "layout": "frame",
+  "frame": { "entry": "index.html" },
+  "slots": { "accent": "#75dbb4" }
+}

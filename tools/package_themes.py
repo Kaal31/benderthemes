@@ -7,6 +7,7 @@ import zipfile
 import sys
 sys.path.insert(0, str(Path(__file__).resolve().parents[1] / "py_modules"))
 from theme_pack_names import asset_filename
+from deckthemes_audio import catalog as audio_catalog
 
 # ASSET_REPO=Kaal31/assets-data (online test builds): pack URLs point at that private repository's files
 # (packs/, gallery/, catalog/ read through the GitHub contents API, see py_modules/asset_source.py); default: public releases.
@@ -62,25 +63,34 @@ def build():
     out = ROOT / "out/themes"
     out.mkdir(parents=True, exist_ok=True)
     groups = {key: [] for key in LABELS}
+    audio_dependencies = {key: set() for key in LABELS}
+    remote_audio = {folder: spec["id"] for spec in audio_catalog() for folder in spec.get("folders", [])}
     notices = []
     for path in sorted((ROOT / "bundle").rglob("*")):
         if not path.is_file() or "__pycache__" in path.parts:
             continue
         relative = path.relative_to(ROOT / "bundle")
+        if any(part.startswith(".") for part in relative.parts):
+            continue
         assigned = owners(relative)
+        if relative.parts[0] == "sounds" and relative.parts[1] in remote_audio:
+            for key in assigned:
+                audio_dependencies[key].add(remote_audio[relative.parts[1]])
+            continue  # only confirmed DeckThemes sources; custom/extracted audio stays bundled
         if not assigned:
             notices.append((path, relative.as_posix()))
         for key in assigned:
             groups[key].append((path, relative.as_posix()))
     for path in sorted((ROOT / "third-party").rglob("*")):
-        if path.is_file():
-            notices.append((path, "notices/third-party/" + path.relative_to(ROOT / "third-party").as_posix()))
+        relative = path.relative_to(ROOT / "third-party")
+        if path.is_file() and not any(part.startswith(".") for part in relative.parts):
+            notices.append((path, "notices/third-party/" + relative.as_posix()))
     lock_path = ROOT / "asset-catalog.json"
     previous = json.loads(lock_path.read_text(encoding="utf-8")) if lock_path.exists() else {"themes": []}
     old = {p["id"]: p for p in previous["themes"]}
     catalog = {"schema": 1, "themes": []}
     for ident, files in groups.items():
-        if not files:
+        if not files and not audio_dependencies[ident]:
             continue
         target = out / asset_filename(ident, version)
         # Previews are published separately and cached by the Hub.
@@ -104,7 +114,8 @@ def build():
         catalog["themes"].append({"id": ident, "name": LABELS[ident], "version": pack_version,
             "theme": ident if ident != "extras" else None,
             "description": "Artwork, sounds and optional skins for " + LABELS[ident] + ".",
-            "minPluginVersion": "1.10.2", "size": target.stat().st_size,
+            "minPluginVersion": "1.10.8", "size": target.stat().st_size,
+            "audioPacks": sorted(audio_dependencies[ident]),
             "resources": [name for _, name in files],
             "unpackedSize": sum(p.stat().st_size for p, _ in all_files),
             "sha256": hashlib.sha256(target.read_bytes()).hexdigest(),
@@ -135,6 +146,8 @@ def offline_catalog():
     for path in sorted((ROOT / "bundle").rglob("*")):
         if path.is_file() and "__pycache__" not in path.parts:
             relative = path.relative_to(ROOT / "bundle")
+            if any(part.startswith(".") for part in relative.parts):
+                continue
             for key in owners(relative):
                 groups[key].append(relative.as_posix())
     catalog = {"schema": 1, "themes": [

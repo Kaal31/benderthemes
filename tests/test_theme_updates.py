@@ -30,7 +30,10 @@ class UpdateTests(unittest.TestCase):
         self.root = Path(self.temp.name)
         updates.decky.DECKY_PLUGIN_DIR = str(self.root)
         updates.decky.DECKY_PLUGIN_SETTINGS_DIR = str(self.root / "settings")
+        updates.decky.DECKY_HOME = str(self.root)
+        updates.decky.DECKY_PLUGIN_RUNTIME_DIR = str(self.root / "runtime")
         (self.root / "package.json").write_text('{"version":"1.9.9"}')
+        (self.root / "release-channel.json").write_text('{"tag":"v1.9.9","channel":"stable"}')
 
     def test_numeric_sort_and_only_real_numbered_packages(self):
         raw = [release("1.9.9"), release("1.10.0"), release("1.9.10"),
@@ -57,6 +60,15 @@ class UpdateTests(unittest.TestCase):
             with patch.object(updates, "urlopen", return_value=io.BytesIO(json.dumps([release(version)]).encode())):
                 self.assertFalse(updates.status()["updateAvailable"])
 
+    def test_missing_identity_does_not_guess_stable_channel(self):
+        (self.root / "release-channel.json").unlink()
+        with patch.object(updates, "urlopen", return_value=io.BytesIO(json.dumps([release("1.9.10"), self.channel_release("experimental", "1.9.9", 21)]).encode())):
+            result = updates.status()
+        self.assertEqual(result["currentChannel"], "unknown")
+        self.assertFalse(result["channelKnown"])
+        self.assertFalse(result["updateAvailable"])
+        self.assertEqual(len(result["releases"]), 2)
+
     def test_pagination(self):
         first = [release("1.9.9")] * 100
         responses = [io.BytesIO(json.dumps(first).encode()), io.BytesIO(json.dumps([release("1.9.10")]).encode())]
@@ -72,6 +84,39 @@ class UpdateTests(unittest.TestCase):
         with patch.object(updates.time, "time", return_value=time.time() + 301):
             self.assertFalse(updates.replacement_pending())
 
+    def channel_release(self, channel, version, build, attempt=1):
+        tag = f"{channel}-v{version}-{build}-{attempt}"
+        return {"tag_name": tag, "prerelease": True, "assets": [{"name": f"DeckHomeThemes-v{version}.zip", "browser_download_url": updates.asset_url(version, tag)}]}
+
+    def test_channels_sort_build_numbers_and_ignore_rolling_and_sources(self):
+        beta = self.channel_release("beta", "1.10.0", 10)
+        raw = [beta, self.channel_release("beta", "1.10.0", 2), self.channel_release("experimental", "1.10.0", 3), {"tag_name": "experimental-latest"}]
+        self.assertEqual([r["build"] for r in updates.normalise(raw)], [10, 3, 2])
+        beta["assets"][0]["browser_download_url"] += "?other=1"
+        self.assertEqual(len(updates.normalise(raw)), 2)
+
+    def test_installed_channel_only_gets_its_own_updates(self):
+        (self.root / "package.json").write_text('{"version":"1.10.0"}')
+        (self.root / "release-channel.json").write_text(json.dumps({"tag": "beta-v1.10.0-5-1", "channel": "beta"}))
+        raw = [release("9.0.0"), self.channel_release("experimental", "10.0.0", 99), self.channel_release("beta", "1.10.0", 6)]
+        with patch.object(updates, "urlopen", return_value=io.BytesIO(json.dumps(raw).encode())):
+            result = updates.status()
+        self.assertTrue(result["updateAvailable"])
+        self.assertEqual(result["latest"]["channel"], "beta")
+        self.assertEqual(result["currentBuild"], 5)
+        self.assertTrue(result["channelKnown"])
+        self.assertEqual(result["channels"], ["stable", "beta", "experimental"])
+
+    def test_channel_switch_marker_and_mismatches(self):
+        tag = "experimental-v1.9.8-2-1"
+        url = updates.asset_url("1.9.8", tag)
+        self.assertTrue(updates.prepare_replacement("1.9.8", url)["success"])
+        self.assertTrue(updates.replacement_pending())
+        self.assertFalse(updates.prepare_replacement("1.9.9", url)["success"])
+        for tag in ["experimental-latest", "evil-v1.9.8-2", "../v1.9.8", "beta-v1.9.8-0"]:
+            with self.assertRaises(ValueError):
+                updates.asset_url("1.9.8", tag)
+
     def test_updater_and_manual_reinstall_both_preserve_settings(self):
         spec = importlib.util.spec_from_file_location("themes_backend", ROOT / "main.py")
         module = importlib.util.module_from_spec(spec)
@@ -80,10 +125,14 @@ class UpdateTests(unittest.TestCase):
         settings.parent.mkdir()
         settings.write_text('{"theme":"minecraft"}')
         updates.prepare_replacement("1.9.10", updates.asset_url("1.9.10"))
-        asyncio.run(module.Plugin()._uninstall())
+        import theme_uninstall
+        with patch.object(theme_uninstall, "decky", updates.decky):
+            asyncio.run(module.Plugin()._uninstall())
         self.assertEqual(json.loads(settings.read_text()), {"theme": "minecraft"})
         updates.clear_replacement()
-        asyncio.run(module.Plugin()._uninstall())
+        import theme_uninstall
+        with patch.object(theme_uninstall, "decky", updates.decky):
+            asyncio.run(module.Plugin()._uninstall())
         self.assertEqual(json.loads(settings.read_text()), {"theme": "minecraft"})
 
 

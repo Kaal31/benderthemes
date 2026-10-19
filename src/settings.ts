@@ -19,7 +19,7 @@ export const VITA_LOOKS: { id: VitaLook; name: string }[] = [
   { id: "sakura", name: "Sakura" },
 ];
 
-export type ThemeId = "frame" | "wii" | "wiiu" | "switch" | "n3ds" | "vita" | "ps2" | "ps3" | "psp" | "ps4" | "ps5" | "x360" | "aero" | "aero2" | "xbox" | "dial" | "castle" | "republic" | "minecraft" | "pain" | "nazarick" | "ps1" | "iisu";
+export type ThemeId = "native" | "onyx" | "silver" | "frame" | "wii" | "wiiu" | "switch" | "n3ds" | "vita" | "ps2" | "ps3" | "psp" | "ps4" | "ps5" | "x360" | "aero" | "aero2" | "xbox" | "dial" | "castle" | "republic" | "minecraft" | "pain" | "nazarick" | "ps1" | "iisu";
 export type StyleValue = string | number | boolean;
 export type SortMode = "recent" | "alpha" | "playtime";
 export type AAction = "theme" | "launch" | "details";
@@ -37,6 +37,8 @@ export const showTitle = (s: { titles: Partial<Record<ThemeId, TitleMode>> }, th
 };
 
 export const THEMES: { id: ThemeId; name: string; blurb: string }[] = [
+  {id:"onyx",name:"Onyx Wheel (bonus)",blurb:"Black textured body, cover flow and circular touch navigation"},
+  {id:"silver",name:"Silver Wheel (bonus)",blurb:"Brushed aluminum, reflected covers and circular wheel navigation"},
   {id:"wii",name:"Wii",blurb:"Channel grid, curved system bar and channel launch banners"},
   {id:"wiiu",name:"Wii U",blurb:"Rounded software tiles and colorful system shortcuts"},
   {id:"switch",name:"Switch",blurb:"Square game tiles with a bright focus frame; .nxtheme themes"},
@@ -59,6 +61,7 @@ export const THEMES: { id: ThemeId; name: string; blurb: string }[] = [
   {id:"minecraft",name:"Block Worlds (bonus)",blurb:"Voxel sunset, block panels and a customizable 3D player"},
   {id:"ps1",name:"PS1",blurb:"BIOS menu, memory cards of pixel save icons and the CD Player"},
   {id:"iisu",name:"iiSU style (bonus)",blurb:"Glass icon grid over game art, pill bars and a colourful dock"},
+  {id:"native",name:"Community native layout",blurb:"A trusted community React layout running inside ThemeHub"},
   {id:"frame",name:"Community interface",blurb:"A community theme's own interface, running sealed off from Steam"},
 ];
 
@@ -163,7 +166,7 @@ export const storeSectionOn = (s: Pick<Settings, "storeSections">, theme: ThemeI
  *  Everything else (clock, volume, library sorting, Ⓐ…) is the user's own. */
 export const LOOK_KEYS = [
   "theme", "activeTheme", "pages", "mix", "iconPicks", "themeOptions", "styles", "vita", "xmb", "x360", "dial", "wallpapers", "wallpaperDim", "packs", "musicPacks", "music",
-  "coverStyles", "titles", "iconSizes", "videoBackgrounds", "ps4GameBackgrounds", "castleWeather", "castleWindows",
+  "coverStyles", "titles", "iconSizes", "protondbThemes", "videoBackgrounds", "ps4GameBackgrounds", "castleWeather", "castleWindows",
   "minecraftFollowFocus", "minecraftWaitForSwipe", "minecraftSlim", "themeFx", "wiiuView", "wiiuTheme", "xboxSkin", "wiiSkin", "switchTheme", "wiiuPlazaPositions", "wiiuPlazaTips", "n3dsSkin", "n3dsCursor", "n3dsTop", "n3dsLayout", "hubStyle", "storeSections",
 ] as const;
 export type LookKey = (typeof LOOK_KEYS)[number];
@@ -204,7 +207,21 @@ export type StandardKey = (typeof STANDARD_KEYS)[number];
 export type DateFormat = "MDY" | "DMY" | "YMD";
 export type StandardOptions = Pick<Settings, StandardKey>;
 
+export interface ThemeScreensaver {
+  mode: "steam" | "custom" | "disabled";
+  media: string[];
+  labels?: Record<string,string>;
+  duration: number;
+  shuffle: boolean;
+  fit: "contain" | "cover";
+  transition: "fade" | "none";
+}
 export interface Settings {
+  screensaversDisabled?: boolean;
+  themeScreensavers?: Record<string, ThemeScreensaver>;
+  screensaverSteamBackup?: Record<string, string | number>;
+
+  profilePictures?: Record<string,string>;
   /** The theme (engine manifest id) in use; "" = chosen the old way (layout + skin file). */
   activeTheme: string;
   /** A look's slots (presets v2): per look id, what fills each slot. A theme id (that theme's own file), "none", or an
@@ -223,6 +240,7 @@ export interface Settings {
   userPreset: string;
   hiddenThemes?: ThemeId[];
   dismissedFirmware?: string;
+  achievementPopups?: boolean;
   firmwareNotifications?: boolean;
   presetCompany?: "Sony" | "Microsoft" | "Nintendo" | "Bonus" | "Community" | "My presets";
   minecraftSkin?: string;
@@ -230,6 +248,7 @@ export interface Settings {
   minecraftWaitForSwipe?: boolean;
   minecraftSlim?: boolean;
   backgroundMusic: boolean;
+  themeDeckFocusMusic: boolean;
   ps4GameBackgrounds: boolean;
   castleWeather: boolean;
   castleWindows: "replace" | "layered";
@@ -277,6 +296,7 @@ export interface Settings {
   maxGames: number; // cap for very large libraries
   animations: boolean; // background animations (waves, particles, towers)
   badges: { protondb: boolean; deck: boolean }; // compatibility badges on game details
+  protondbThemes: Record<string, boolean | undefined>; // per-look Options menu; requires detected ProtonDB plugin
   coverStyles: Partial<Record<ThemeId,"flat"|"case3d">>;
   titles: Partial<Record<ThemeId, TitleMode>>; // game name text under icons
   trailers: { preview: boolean; sound: boolean; video: boolean }; // PSP/PS3 icon videos, trailer sound, store trailers in the Video category
@@ -316,7 +336,7 @@ export interface Settings {
   wiiuTheme?: string; // Wii U custom theme (.utheme file name in skins/wiiu) or ""
   wiiSkin?: string; // Wii System Menu theme: a .mym / .csm name under skins/wii ("" = none)
   n3dsSkin?: string; // Nintendo 3DS theme: a .zip / folder / body_LZ.bin name under skins/3ds ("" = the built-in stock look)
-  n3dsTop?: "show" | "hide"; // 3DS look: "hide" shows only the bottom screen, as large as possible ("show" when unset)
+  n3dsTop?: "show" | "hide" | "split"; // 3DS look: "hide" shows only the bottom screen, as large as possible ("show" when unset)
   n3dsCursor?: "3ds" | "simple"; // 3DS look: the bobbing corner cursor, or a plain focus frame ("3ds" when unset)
   n3dsArrows?: "show" | "hide"; // 3DS look: the half-ring page arrows at the screen edges ("show" when unset; L1 / R1 and swipes still page)
   n3dsHandle?: "show" | "hide"; // 3DS look: the grey scroll bar along the bottom of the icon grid ("show" when unset)
@@ -329,6 +349,7 @@ export interface Settings {
   themedStore: boolean; // Store entries open the store styled like the current theme
   /** Extra sections of the themed store, per home theme: Themes (packs + theme files) and Plugins (Spotlight). Hidden unless turned on. */
   storeSections: Partial<Record<ThemeId, StoreSections>>;
+  keyboardSpacing?: number; // Key inset in px, 0–5; default 1 (global, persisted).
   keyboardSkin?: boolean; // Steam's on-screen keyboard skinned like the active look (src/keyboardSkins.ts); off unless set to true (global)
   // PSP theme files whose boot intro / game-start clip is used, "" = none. One of each at a time;
   // it stays in use while other themes are active.
@@ -403,6 +424,7 @@ export const DEFAULTS: Settings = {
   userPresets: [],
   userPreset: "",
   backgroundMusic: true,
+  themeDeckFocusMusic: true,
   ps4GameBackgrounds: true,
   castleWeather: false,
   castleWindows: "replace",
@@ -441,6 +463,7 @@ export const DEFAULTS: Settings = {
   maxGames: 400,
   animations: true,
   badges: { protondb: false, deck: false },
+  protondbThemes: {},
   coverStyles: {},
   titles: {},
   trailers: { preview: true, sound: false, video: false },
@@ -475,6 +498,9 @@ export function onSettingsChange(l: () => void): () => void {
 export const cleanSettings = (saved: any): Settings => merge(saved);
 function merge(saved: any): Settings {
   const s: any = { ...DEFAULTS, ...(saved && typeof saved === "object" ? saved : {}) };
+  s.protondbThemes = Object.fromEntries(Object.entries(s.protondbThemes && typeof s.protondbThemes === "object" ? s.protondbThemes : {}).filter(([key,value])=>key.length>0&&key.length<=64&&typeof value==="boolean").slice(0,500));
+  s.themeDeckFocusMusic = s.themeDeckFocusMusic !== false;
+  s.profilePictures=Object.fromEntries(Object.entries(s.profilePictures&&typeof s.profilePictures==="object"?s.profilePictures:{}).filter(([k,v])=>k.length<128&&typeof v==="string"&&v.length<500000&&/^data:image\/png;base64,/.test(v)));
   if (typeof s.minecraftSkin !== "string" || s.minecraftSkin.length > 60000 || !s.minecraftSkin.startsWith("data:image/png;base64,")) s.minecraftSkin = "";
   s.wiiuPlazaPositions=Object.fromEntries(Object.entries(s.wiiuPlazaPositions??{}).filter(([k,v]:[string,any])=>/^\d+$/.test(k)&&Number.isFinite(v?.x)&&Number.isFinite(v?.z)).slice(0,1000).map(([k,v]:[string,any])=>[k,{x:Math.max(-17,Math.min(17,v.x)),z:Math.max(-14,Math.min(13,v.z))}]));
   if (s.wiiuView!=="plaza") s.wiiuView="grid";
@@ -549,6 +575,15 @@ function merge(saved: any): Settings {
   // the old on/off switch: on stays the console's size; off (also the old default) becomes Auto, so theme files line up with their art
   if (!["auto", "console", "compact"].includes(s.xmb.pspSize as string)) s.xmb.pspSize = s.xmb.pspAccurate ? "console" : "auto";
   s.coverStyles = Object.fromEntries(Object.entries(saved?.coverStyles ?? {}).filter(([theme,value]) => THEMES.some(t=>t.id===theme) && ["flat","case3d"].includes(String(value))));
+  s.screensaversDisabled = saved?.screensaversDisabled === true;
+  s.themeScreensavers = Object.fromEntries(Object.entries(saved?.themeScreensavers ?? {}).filter(([key,v]) => key.length<=160 && v && typeof v==="object").map(([key,v]:[string,any])=>[key,{
+    mode: ["steam","custom","disabled"].includes(v.mode)?v.mode:"steam",
+    media: Array.isArray(v.media)?[...new Set(v.media.filter((x:any)=>typeof x==="string"&&/^[a-f0-9]{64}\.(gif|mp4|webm|png|jpe?g|webp)$/.test(x)))].slice(0,100):[],
+    labels: v.labels && typeof v.labels==="object" ? Object.fromEntries(Object.entries(v.labels).filter(([k,x])=>/^[a-f0-9]{64}\.(gif|mp4|webm|png|jpe?g|webp)$/.test(k)&&typeof x==="string").map(([k,x])=>[k,String(x).slice(0,160)])) : {},
+    duration: Number.isFinite(v.duration)?Math.max(3,Math.min(300,Math.round(v.duration))):15,
+    shuffle:v.shuffle===true, fit:v.fit==="cover"?"cover":"contain",transition:v.transition==="none"?"none":"fade",
+  }]));
+  s.screensaverSteamBackup = Object.fromEntries(Object.entries(saved?.screensaverSteamBackup??{}).filter(([k,v])=>k==="screensaver_current_id"?typeof v==="string":["system_idle_screensaver_ac_sec","system_idle_screensaver_battery_sec"].includes(k)&&typeof v==="number"&&Number.isFinite(v)&&v>=0));
   s.backgroundMusic = saved?.backgroundMusic !== false;
   s.musicShuffle = saved?.musicShuffle === true;
   s.musicRepeat = saved?.musicRepeat === "all" || saved?.musicRepeat === "one" ? saved.musicRepeat : "off";
@@ -571,7 +606,7 @@ function merge(saved: any): Settings {
   s.xboxSkin = typeof saved?.xboxSkin === "string" ? saved.xboxSkin : "";
   s.n3dsSkin = typeof saved?.n3dsSkin === "string" ? saved.n3dsSkin : "";
   s.n3dsCursor = saved?.n3dsCursor === "simple" ? "simple" : "3ds";
-  s.n3dsTop = saved?.n3dsTop === "hide" ? "hide" : "show";
+  s.n3dsTop = saved?.n3dsTop === "hide" || saved?.n3dsTop === "split" ? saved.n3dsTop : "show";
   s.n3dsArrows = saved?.n3dsArrows === "hide" ? "hide" : "show";
   s.n3dsHandle = saved?.n3dsHandle === "hide" ? "hide" : "show";
   s.n3dsLayout = cleanN3dsLayout(saved?.n3dsLayout);
@@ -708,7 +743,7 @@ export function resetThemeSettings(theme: ThemeId) {
       return r;
     };
     const out: Partial<Settings> = {
-      iconSizes: drop(p.iconSizes), titles: drop(p.titles), coverStyles: drop(p.coverStyles), packs: drop(p.packs),
+      iconSizes: drop(p.iconSizes), protondbThemes: Object.fromEntries(Object.entries(p.protondbThemes).filter(([key])=>key!==theme&&!key.startsWith(`${theme}:`)&&!(p.theme===theme&&key===p.activeTheme))), titles: drop(p.titles), coverStyles: drop(p.coverStyles), packs: drop(p.packs),
       music: drop(p.music), musicPacks: drop(p.musicPacks), wallpapers: drop(p.wallpapers), videoBackgrounds: drop(p.videoBackgrounds),
       storeSections: drop(p.storeSections),
     };

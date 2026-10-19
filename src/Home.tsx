@@ -1,3 +1,5 @@
+import { useSteamScreensaver } from "./screensaver";
+import { ThemeActivity, UiDocument } from "./performance";
 import { DOWNLOAD_CSS, DownloadStatus } from "./downloadUi";
 import { tintOf } from "./color";
 import {transitionPage} from "./pageTransition";
@@ -6,6 +8,7 @@ import { Marketplace, inventory } from "./Marketplace";
 import { openMarketplace, useMarketplace, useResourceRevision } from "./marketplaceState";
 import { FirmwareNotice } from "./FirmwareNotice";
 import { WiiuImportPrompt } from "./wiiuThemes";
+import {SilverHome} from "./themes/Silver";
 import {NazarickHome} from "./themes/Nazarick";
 import {PainHome} from "./themes/Pain";
 import {AeroV2Home} from "./themes/AeroV2";
@@ -30,13 +33,14 @@ import { Game, launchGame, loadLibrary, openGamePage, setStoreOpener } from "./l
 import { presentationVariables, PRESENTATION_CSS } from "./themePresentation";
 import { getSettings, pspFile, ThemeId, THEMES, updateSettings, useSettings, useSettingsLoaded } from "./settings";
 import { playSound, refreshPacks, restoreFooter, restoreHeader, useHiddenFooter, useHiddenHeader, useHomeMusic, userName } from "./steam";
-import { currentPresetId, cyclePreset, refreshPresets } from "./presets";
-import { bump, diag, reportError } from "./diag";
+import { currentPresetId, refreshPresets } from "./presets";
+import { bump, diag, logInfo, reportError } from "./diag";
 import { setUiDocument } from "./cssvars";
 import { Overlay, ScreenshotGallery, TrailerPlayer, VideoPlayer } from "./overlays";
 import { MusicPlayerView, NowPlayingMini } from "./mediaCenter";
+import { HomePluginBadges, PLUGIN_BADGE_CSS } from "./pluginBadges";
 import { StoreView } from "./storeView";
-import { l1Held, pushModalInput, ThemeRoot, setGlobalInput, StageHost } from "./input";
+import { pushModalInput, ThemeRoot, setGlobalInput, StageHost } from "./input";
 import { ThemeSwitcher } from "./themeSwitcher";
 import { keyboardInset } from "./keyboardSkins";
 import { VitaHome } from "./themes/Vita";
@@ -52,11 +56,13 @@ import { X360Home } from "./themes/X360";
 import { Ps2Home } from "./themes/Ps2";
 import { Ps1Home } from "./themes/Ps1";
 import { IisuHome } from "./themes/Iisu";
+import { NativeLayout } from "./engine/NativeLayout";
 import { FrameHome } from "./engine/FrameHome";
 import { VideoIntro } from "./engine/VideoIntro";
 import { activeTheme, slotAccent, slotFont, slotUrl, useThemes } from "./engine/registry";
 import { LAYOUT_SLOTS } from "./engine/assets";
 import { pageSettings } from "./engine/pages";
+import { useThemeDeckIntegration } from "./themeDeckIntegration";
 
 // CSS hook: which theme file is active, as "<kind>:<file name>" (empty for looks without theme files)
 const skinHook = (s: ReturnType<typeof getSettings>) => {
@@ -65,6 +71,9 @@ const skinHook = (s: ReturnType<typeof getSettings>) => {
 };
 
 const THEME_COMPONENTS: Record<ThemeId, () => ReactNode> = {
+  native: () => <NativeLayout />,
+  onyx: () => <SilverHome dark />,
+  silver: () => <SilverHome />,
   frame: () => <FrameHome />,
   wii: () => <NintendoHome kind="wii"/>,
   wiiu: () => <NintendoHome kind="wiiu"/>,
@@ -126,6 +135,13 @@ function useSteamHomeShown() {
 }
 export const showThemedHomeAgain = () => setSteamHomeShown(false);
 
+/** Bypass the themed home until the user leaves Steam's home route. */
+export function showNativeSteamHome() {
+  setSteamHomeShown(true);
+  Navigation.CloseSideMenus();
+  Navigation.Navigate("/library/home");
+}
+
 /** Rendered in place of Steam's home route. */
 export function HomeSwitch({ original }: { original: ReactNode }) {
   const s = useSettings();
@@ -160,29 +176,74 @@ function ErrorBanner() {
 
 export function ThemedHome({ standalone }: { standalone?: boolean }) {
   const revision = useResourceRevision();
-  const first = !useSettings().onboardingDone;
+  const settings = useSettings();
+  const first = !settings.onboardingDone;
   if (first) return <div data-dht-root="" className="dht-root dht-first-run" style={{ position: "fixed", inset: 0, zIndex: standalone ? 900 : 1, background: "#000", overflow: "hidden", userSelect: "none" }}><ThemeRoot onInput={() => false}><Onboarding /></ThemeRoot></div>;
-  return <ThemedHomeContent key={revision} standalone={standalone} />;
+  return <VerifiedThemedHome key={`${settings.theme}:${revision}`} standalone={standalone} />;
+}
+
+// Every activation path (saved settings, onboarding, direct theme changes and
+// presets) passes here before mounting a renderer that depends on asset packs.
+function VerifiedThemedHome({ standalone }: { standalone?: boolean }) {
+  const settings = useSettings();
+  const market = useMarketplace();
+  const [state, setState] = useState<"checking" | "ready" | "missing" | "error">("checking");
+  const [retry, setRetry] = useState(0);
+  useEffect(() => {
+    let alive = true;
+    setState("checking");
+    if ((settings.theme === "frame" || settings.theme === "native")) { setState("ready"); return; }
+    inventory().then(installed => {
+      if (!alive) return;
+      const ready = !!installed[settings.theme];
+      setState(ready ? "ready" : "missing");
+      logInfo(`[theme-availability] theme=${settings.theme} installed=${ready}`);
+      if (!ready) openMarketplace(settings.theme, { from: settings.theme });
+    }).catch(() => { if (alive) { setState("error"); logInfo(`[theme-availability] inventory check failed theme=${settings.theme}`); } });
+    return () => { alive = false; };
+  }, [settings.theme, retry]);
+  if (state === "ready") return <ThemedHomeContent standalone={standalone} />;
+  return <div data-dht-root="" data-theme-availability={state} style={{position:"fixed",inset:0,zIndex:standalone?900:1,background:"#10151d",color:"#fff",display:"grid",placeItems:"center"}}>
+    <ThemeRoot onInput={p => {
+      if (market.opened) return false;
+      if (p.btn === "b" && !p.repeat) { showNativeSteamHome(); return true; }
+      if (p.btn === "a" && !p.repeat && state !== "checking") {
+        if (state === "missing") openMarketplace(settings.theme, {from:settings.theme});
+        else setRetry(n=>n+1);
+        return true;
+      }
+      return false;
+    }}>
+    <div style={{textAlign:"center",maxWidth:520,padding:32}}>
+      <h2>{state === "checking" ? "Checking theme files…" : state === "error" ? "Couldn’t check theme files" : "Download this theme to continue"}</h2>
+      {state === "missing" && <p>The theme’s artwork and resources haven’t been installed yet.</p>}
+      {state !== "checking" && <button onClick={() => state === "missing" ? openMarketplace(settings.theme, {from:settings.theme}) : setRetry(n=>n+1)}>{state === "missing" ? "Open theme downloads" : "Try again"}</button>}
+      <button onClick={showNativeSteamHome}>Steam Home</button>
+    </div>
+    {market.opened && <Marketplace requested={market.requested} from={market.from} />}
+    </ThemeRoot>
+  </div>;
 }
 
 function ThemedHomeContent({ standalone }: { standalone?: boolean }) {
   const s = useSettings();
   const market = useMarketplace();
-  useEffect(() => {
-    let alive = true, wait: any = 0;
-    // a theme still to download opens the Hub on it; while L1 is held the switcher is still browsing, so only the theme
-    // it stops on asks (switching again cancels this one)
-    const offer = () => { if (!alive) return; if (l1Held()) { wait = setTimeout(offer, 250); return; } openMarketplace(s.theme, { from: s.theme }); };
-    if (s.theme !== "frame") inventory().then(installed => { if (alive && installed && !installed[s.theme]) offer(); }).catch(() => {});
-    return () => { alive = false; clearTimeout(wait); };
-  }, [s.theme]);
   const root = useRef<HTMLDivElement>(null);
   const [doc, setDoc] = useState<Document | null>(null);
+  const [visible, setVisible] = useState(true);
+  useEffect(() => {
+    const el = root.current; if (!el || !doc) return;
+    let intersects = true;
+    const sync = () => setVisible(intersects && !doc.hidden);
+    const observer = new IntersectionObserver(entries => { intersects = entries[0]?.isIntersecting ?? false; sync(); });
+    observer.observe(el); doc.addEventListener("visibilitychange", sync); sync();
+    return () => { observer.disconnect(); doc.removeEventListener("visibilitychange", sync); };
+  }, [doc]);
   // Steam's keyboard (STEAM + X, a search box) opens under our fixed home: end the home above it while it is open
   const [kbInset, setKbInset] = useState(0);
   useEffect(() => {
     if (!doc) return;
-    const iv = setInterval(() => { const h = keyboardInset(doc); setKbInset((v) => (v === h ? v : h)); }, 250);
+    const iv = setInterval(() => { const h = doc.hidden ? 0 : keyboardInset(doc); setKbInset((v) => (v === h ? v : h)); }, 250);
     return () => clearInterval(iv);
   }, [doc]);
   useEffect(() => {
@@ -194,8 +255,10 @@ function ThemedHomeContent({ standalone }: { standalone?: boolean }) {
   // Library: re-read on mount and periodically (installs, new plays).
   const [rev, setRev] = useState(0);
   useEffect(() => {
-    const iv = setInterval(() => setRev((r) => r + 1), 30000);
-    return () => clearInterval(iv);
+    const refresh = () => { if (!root.current?.ownerDocument.hidden) setRev(r => r + 1); };
+    const iv = setInterval(refresh, 30000);
+    const owner = root.current?.ownerDocument; owner?.addEventListener("visibilitychange", refresh);
+    return () => { clearInterval(iv); owner?.removeEventListener("visibilitychange", refresh); };
   }, []);
   const collectionChoice = s.themeCollections?.[s.theme];
   const librarySource = collectionChoice?.source ?? s.source;
@@ -203,8 +266,9 @@ function ThemedHomeContent({ standalone }: { standalone?: boolean }) {
   // Empty libraries are valid; a missing/changed Steam API is a compatibility failure.
   if (lib.error) throw new Error(lib.error);
 
-  useHiddenHeader(doc, s.hideSteamHeader);
-  useHiddenFooter(doc, s.footer);
+  const screensaver = useSteamScreensaver();
+  useHiddenHeader(doc, !screensaver && s.hideSteamHeader);
+  useHiddenFooter(doc, screensaver ? "show" : s.footer);
   useEffect(() => () => { restoreHeader(doc); restoreFooter(doc); }, [doc]);
   const [overlay, setOverlay] = useState<Overlay>(null);
   const [destination,setDestination] = useState<Destination|null>(null);
@@ -242,17 +306,14 @@ function ThemedHomeContent({ standalone }: { standalone?: boolean }) {
   useEffect(()=>()=>dismissLaunch(),[]);
   useEffect(()=>{if(overlay)setDestination(null);},[overlay]);
 
-  // L2 / R2 anywhere: previous / next preset in one flat list, with a banner naming it.
-  // (Hold L1 + direction is the console / variant switcher: themeSwitcher.tsx, rendered below.)
+  // ThemeRoot routes L2 / R2 through the theme / skin switcher.
+  // Consume triggers when switching is unavailable so they do not change a hidden home.
   const [banner, setBanner] = useState<{ text: string; at: number } | null>(null);
   useEffect(() => {
     refreshPresets();
     setGlobalInput((p) => {
       if (p.btn !== "l2" && p.btn !== "r2") return false;
       if (p.repeat) return true;
-      const next = cyclePreset(p.btn === "l2" ? -1 : 1);
-      playSound("tab");
-      setBanner({ text: next.label, at: Date.now() });
       return true;
     });
     return () => setGlobalInput(null);
@@ -267,7 +328,8 @@ function ThemedHomeContent({ standalone }: { standalone?: boolean }) {
   useEffect(() => {
     refreshPacks().then(() => setPacksRev((r) => r + 1));
   }, []);
-  useHomeMusic(s.theme, !launching && (overlay === null || overlay.kind === "store"), destination?.place); // the store keeps the theme music
+  useHomeMusic(s.theme, !screensaver && !launching && (overlay === null || overlay.kind === "store"), destination?.place); // the store keeps the theme music
+  useThemeDeckIntegration(!screensaver && s.enabled && s.backgroundMusic !== false && s.themeDeckFocusMusic !== false && !launching && !overlay && !market.opened && (!destination || destination.place === "game"), useMemo(() => new Set(lib.games.map(g => g.appid)), [lib]), destination?.place === "game" ? destination.game?.appid : undefined);
   // every theme's "Store" entry opens the themed store (unless turned off in Quick Access)
   useEffect(() => {
     setStoreOpener(() => {
@@ -299,17 +361,7 @@ function ThemedHomeContent({ standalone }: { standalone?: boolean }) {
         playSound("tab");
         updateSettings({ theme: id });
       },
-      showSteamHome: () => {
-        if (s.theme !== "ps2") {setDestination({place:"mainmenu"});return;}
-        if (standalone) {
-          try {
-            Navigation.Navigate("/library/home");
-          } catch {
-            /* ignore */
-          }
-        }
-        setSteamHomeShown(true);
-      },
+      showSteamHome: showNativeSteamHome,
       openSettings: openThemeSettings,
       openMedia: (appid?: number, index?: number) => {
         playSound("open");
@@ -329,6 +381,7 @@ function ThemedHomeContent({ standalone }: { standalone?: boolean }) {
     [lib, s, overlay !== null, destination !== null, launching !== null, market.opened],
   );
 
+  const themeActive = !screensaver && visible && !market.opened && !launching && (!overlay || (s.theme === "minecraft" && overlay.kind === "store")) && (!destination || s.theme === "minecraft");
   const render = THEME_COMPONENTS[s.theme] ?? THEME_COMPONENTS.vita;
   // the engine theme's colour and font, for layouts that use --dht-accent / inherit the font
   const accent = tintOf(s) ?? slotAccent(s);
@@ -339,14 +392,16 @@ function ThemedHomeContent({ standalone }: { standalone?: boolean }) {
   const themeSlotStyle = { ...(accent ? { "--dht-accent": accent } : {}), ...lookAccent, ...(themeFont ? { "--dht-font": '"dht-theme-font", "Motiva Sans", sans-serif', fontFamily: "var(--dht-font)" } : {}) } as CSSProperties;
   return (
     // zIndex 1: Steam's own popups (context menus, modals) must paint above us.
-    <div ref={root} data-dht-root="" data-tv={s.tvMode} data-motion={s.animations} data-dht-theme={s.theme} data-dht-preset={currentPresetId(s)} data-dht-skin={skinHook(s) || undefined} className={`dht-root dht-theme-${s.theme}`} style={{ position: "fixed", inset: 0, bottom: kbInset, zIndex: standalone ? 900 : 1, background: "#000", overflow: "hidden", fontFamily: "var(--dht-font, inherit)", userSelect: "none", WebkitUserSelect: "none" }}>
+    <div ref={root} data-dht-root="" data-tv={s.tvMode} data-motion={s.animations} data-dht-theme={s.theme} data-dht-preset={currentPresetId(s)} data-dht-skin={skinHook(s) || undefined} data-dht-screensaver={screensaver || undefined} className={`dht-root dht-theme-${s.theme}`} style={{ position: "fixed", inset: 0, bottom: kbInset, zIndex: standalone ? 900 : 1, visibility: screensaver ? "hidden" : undefined, pointerEvents: screensaver ? "none" : undefined, background: "#000", overflow: "hidden", fontFamily: "var(--dht-font, inherit)", userSelect: "none", WebkitUserSelect: "none" }}>
       <div className="dht-safe-area" style={{position:"absolute",inset:s.tvMode?"3%":"0",...presentationVariables(s),...themeSlotStyle}}>
       {themeFont && <style>{`@font-face{font-family:"dht-theme-font";src:url("${themeFont}")}`}</style>}
       <style>{PRESENTATION_CSS}</style>
-      <style>{`.dht-root[data-tv=true] .dht-menu-item{font-size:25px!important;min-height:44px}.dht-root[data-motion=false] *{animation:none!important;transition:none!important}@media(prefers-reduced-motion:reduce){.dht-root *{animation:none!important;transition:none!important}}`}</style>
-      <HomeCtx.Provider value={api}>
+      <style>{PLUGIN_BADGE_CSS}</style>
+      {market.opened&&<style>{".dht-root .dht-badge--protondb{display:none!important}"}</style>}
+      <style>{`.dht-root[data-tv=true] .dht-menu-item{font-size:25px!important;min-height:44px}.dht-root [data-dht-stage-active=false] *{animation-play-state:paused!important}.dht-root[data-motion=false] *{animation:none!important;transition:none!important}@media(prefers-reduced-motion:reduce){.dht-root *{animation:none!important;transition:none!important}}`}</style>
+      <UiDocument.Provider value={doc}><ThemeActivity.Provider value={themeActive}><HomeCtx.Provider value={api}>
         <SafeBoundary
-          key={s.theme}
+          key={`${s.theme}:${engineTheme?.id}:${engineTheme?.revision}`}
           where={`theme ${s.theme}`}
           fallback={
             <div style={{ color: "#ddd", padding: 60, fontSize: 20, lineHeight: 1.5 }}>
@@ -355,24 +410,25 @@ function ThemedHomeContent({ standalone }: { standalone?: boolean }) {
             </div>
           }
         >
-          <StageHost>{render()}</StageHost>
+          <div data-dht-stage-active={themeActive} style={{display:"contents"}}><StageHost>{render()}</StageHost></div>
         </SafeBoundary>
-      </HomeCtx.Provider>
+      </HomeCtx.Provider></ThemeActivity.Provider></UiDocument.Provider>
+      <HomePluginBadges settings={s} hidden={!!overlay||!!destination||!!launching||market.opened||themeMenu.isOpen}/>
       {overlay?.kind === "shots" && <div className="dht-themed-media"><ScreenshotGallery appid={overlay.appid} index={overlay.index} tab={overlay.tab} lib={lib.byId} onClose={() => setOverlay(null)} onVideo={(v) => { playSound("open"); setOverlay({ kind: "video", video: v, back: true }); }} /></div>}
       {overlay?.kind === "trailer" && <div className="dht-themed-media"><TrailerPlayer game={overlay.game} onClose={() => setOverlay(null)} /></div>}
       {overlay?.kind === "video" && <div className="dht-themed-media"><VideoPlayer video={overlay.video} lib={lib.byId} onClose={() => setOverlay(overlay.back ? { kind: "shots", tab: "videos" } : null)} /></div>}
       {overlay?.kind === "music" && <div className="dht-themed-media"><MusicPlayerView onClose={() => setOverlay(null)} /></div>}
       {!overlay && !destination && !launching && s.theme !== "ps3" && s.theme !== "psp" && <NowPlayingMini onOpen={() => { playSound("open"); setOverlay({ kind: "music" }); }} />}
-      {overlay?.kind === "store" && inBlockPanel(<StoreView settings={pageSettings(s, "store")} lib={lib} onClose={() => transitionPage(s,()=>setOverlay(null),doc)} onLaunch={(g) => launchGame(g)} />)}
-      {destination && inBlockPanel(<DestinationView destination={destination} settings={s} lib={lib} onClose={()=>transitionPage(s,()=>setDestination(null),doc)} onLaunch={launchGame} onMedia={()=>setOverlay({kind:"shots",appid:destination.game?.appid})} onTrailer={g=>setOverlay({kind:"trailer",game:g})}/>)}
+      {overlay?.kind === "store" && inBlockPanel(<HomeCtx.Provider value={api}><NativeLayout destination={{place:"store"}} onClose={()=>setOverlay(null)} fallback={<StoreView settings={pageSettings(s, "store")} lib={lib} onClose={() => transitionPage(s,()=>setOverlay(null),doc)} onLaunch={(g) => launchGame(g)} />}/></HomeCtx.Provider>)}
+      {destination && inBlockPanel(<HomeCtx.Provider value={api}><NativeLayout destination={destination} onClose={()=>setDestination(null)} fallback={<DestinationView destination={destination} settings={s} lib={lib} onClose={()=>transitionPage(s,()=>setDestination(null),doc)} onLaunch={launchGame} onMedia={()=>setOverlay({kind:"shots",appid:destination.game?.appid})} onTrailer={g=>setOverlay({kind:"trailer",game:g})}/>}/></HomeCtx.Provider>)}
       <style>{DOWNLOAD_CSS}</style>
       <DownloadStatus settings={s} hidden={!!overlay || !!destination || !!launching || market.opened} />
-      <MenuView menu={themeMenu} variant={s.theme === "ps3" ? "xmb" : s.theme === "frame" ? "ps5" : s.theme} art={s.theme === "psp" ? { panel: cachedPspSkin(pspFile(s))?.visuals?.optionMenu, focus: cachedPspSkin(pspFile(s))?.visuals?.menuFocus } : undefined} />
+      <MenuView menu={themeMenu} variant={s.theme === "ps3" ? "xmb" : (s.theme === "frame" || s.theme === "native") ? "ps5" : s.theme} art={s.theme === "psp" ? { panel: cachedPspSkin(pspFile(s))?.visuals?.optionMenu, focus: cachedPspSkin(pspFile(s))?.visuals?.menuFocus } : undefined} />
       {launching && <LaunchView value={launching} settings={s}/>}
       <BootIntro file={s.bootIntro} />
-      <ThemeIntro />
+      <ThemeIntro autoTheme={s.onboardingDone && !market.opened && !api.busy && !slotUrl("bootVideo", s) ? s.theme : undefined} />
       <VideoIntro url={slotUrl("bootVideo", s)} />
-      {market.opened && <Marketplace requested={market.requested} from={market.from} />}
+      {market.opened && <Marketplace requested={market.requested} from={market.from} initialTab={market.initialTab} />}
       <FirmwareNotice paused={market.opened || !!overlay || !!destination || !!launching} />
       <WiiuImportPrompt paused={market.opened || !!overlay || !!destination || !!launching} />
       <ThemeSwitcher available={() => !overlay && !destination && !launching && !market.opened && !themeMenu.isOpen && !anyMenuOpen()} />

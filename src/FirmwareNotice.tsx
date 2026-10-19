@@ -1,5 +1,5 @@
 import { CSSProperties, useEffect, useRef, useState } from "react";
-import { checkFirmware, installFirmware, onFirmwareStatus, Status } from "./Updates";
+import { checkFirmware, installFirmware, onFirmwareStatus, releaseLabel, releaseOrder, Status } from "./Updates";
 import { pushModalInput } from "./input";
 import { updateSettings, useSettings } from "./settings";
 import { useAssets } from "./assets";
@@ -18,15 +18,16 @@ export function FirmwareNotice({paused=false}:{paused?:boolean}){
  const mounted=useRef(true);
  useEffect(()=>{mounted.current=true;const preview=()=>{setStatus(previewStatus);setMessage("");setBusy(false);setSelection(0);updateSettings({dismissedFirmware:""});};listeners.add(preview);const off=onFirmwareStatus(v=>{if(mounted.current&&!previewStatus)setStatus(v);});const check=()=>void checkFirmware().then(v=>{if(mounted.current&&!previewStatus)setStatus(v);}).catch(()=>{});check();const timer=setInterval(check,1800000);return()=>{mounted.current=false;listeners.delete(preview);off();clearInterval(timer);};},[]);
  const release=status?.latest;
- const visible=!handedOff&&!paused&&settings.firmwareNotifications!==false&&status?.success&&!status.stale&&status.updateAvailable&&release&&settings.dismissedFirmware!==release.version;
- const dismiss=()=>{if(release)updateSettings({dismissedFirmware:release.version});setMessage("");};
+ const visible=!handedOff&&!paused&&settings.firmwareNotifications!==false&&status?.success&&!status.stale&&status.updateAvailable&&release&&releaseOrder(release,status)>0&&settings.dismissedFirmware!==release.tag;
+ const installedLabel=status?releaseLabel({tag:"",version:status.currentVersion,assetUrl:"",notes:"",build:status.currentBuild,attempt:status.currentAttempt}):"";
+ const dismiss=()=>{if(release)updateSettings({dismissedFirmware:release.tag});setMessage("");};
  // Decky's own confirmation opens on top of everything at once: hand over and step aside (for this session; cancelling
  // in Decky brings the notice back next time)
  const accept=async()=>{if(!release||busy)return;setBusy(true);setMessage("");try{if(!release.assetUrl){setMessage("Preview: Decky would now ask you to confirm the update.");return;}await installFirmware(release,status!.currentVersion);if(mounted.current){setMessage("");setHandedOff(true);}}catch(e){if(mounted.current)setMessage(String(e));}finally{if(mounted.current)setBusy(false);}};
  const latest=useRef({accept,dismiss,busy,selection,message});latest.current={accept,dismiss,busy,selection,message};
  useEffect(()=>{if(!visible)return;return pushModalInput(p=>{const s=latest.current;if(p.btn==="b"&&!s.busy)s.dismiss();if(["left","right","up","down"].includes(p.btn))setSelection(s.selection?0:1);if(p.btn==="a"&&!p.repeat&&!s.busy){if(s.selection||s.message)s.dismiss();else void s.accept();}return true;});},[!!visible]);
  if(!visible)return null;
- if(theme==="psp")return <PspUpdateDialog from={status.currentVersion} to={release.version} selection={selection} busy={busy} message={message} onSelect={setSelection} onYes={()=>void accept()} onNo={dismiss}/>;
+ if(theme==="psp")return <PspUpdateDialog from={installedLabel} to={releaseLabel(release)} selection={selection} busy={busy} message={message} onSelect={setSelection} onYes={()=>void accept()} onNo={dismiss}/>;
  const [label,baseColor]=identities[theme]??["System Update","#7fd3ff"]; // a look without its own wording (a community theme)
  const color=theme==="dial"?({classic:"#85ff00",chrome:"#85ff00",crimson:"#ff344e",arctic:"#42ddff"}[settings.dial.look]):baseColor;
  const headline:Record<string,string>={switch:"A system update is available.",n3ds:"A system update is available.",ps1:"New system data found.",iisu:"Something new is here!",minecraft:"A new world awaits.",nazarick:"An invitation to ascend.",republic:"System upgrade authorized.",pain:"The next evolution.",dial:"New firmware detected.",castle:"A message from your system.",ps2:"Update data found.",xbox:"UPGRADE YOUR SYSTEM"};
@@ -34,7 +35,7 @@ export function FirmwareNotice({paused=false}:{paused?:boolean}){
  <style>{BASE}{FIRMWARE_SKINS}</style>
  <div className="fw-top"><span className="fw-symbol">{emblem?<img src={emblem} alt=""/>:theme==="pain"?"◎":["castle","republic","nazarick"].includes(theme)?"✦":"↓"}</span><span>{label}</span></div>
  <h2>{headline[theme]||"A new version is ready."}</h2><p>Update ThemeHub to get the latest improvements. Your installed themes and settings stay with you.</p>
- <div className="fw-version"><span>{status.currentVersion}</span><span>→</span><strong>{release.version}</strong><span style={{marginLeft:"auto",opacity:.6}}>Plugin firmware</span></div>
+ <div className="fw-version"><span>{installedLabel}</span><span>→</span><strong>{releaseLabel(release)}</strong><span style={{marginLeft:"auto",opacity:.6}}>Plugin firmware</span></div>
  <div className="fw-actions"><button data-selected={selection===0} disabled={busy} onMouseEnter={()=>setSelection(0)} onClick={()=>void accept()}>{busy?"Preparing…":"A  Accept update"}</button><button data-selected={selection===1} disabled={busy} onMouseEnter={()=>setSelection(1)} onClick={dismiss}>B  Not now</button></div>
  {message&&<div className="fw-note" role="status">{message}</div>}
  </div></div>;

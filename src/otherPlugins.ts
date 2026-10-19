@@ -17,6 +17,8 @@
 // DeckyXMB also patches /library/home; with both on, whichever patch Decky
 // applies last decides which home shows, so we report it in Diagnostics.
 import { useEffect, useState } from "react";
+import { pluginSupport } from "./pluginSupport";
+import { loadedPluginNames } from "./pluginPresence";
 
 const wins = (): any[] => {
   const out = [globalThis as any];
@@ -32,7 +34,7 @@ const audioLoader = (): { play?: () => any; pause?: () => any } | null => {
   for (const w of wins()) if (w?.AUDIOLOADER_MENUMUSIC) return w.AUDIOLOADER_MENUMUSIC;
   return null;
 };
-const themeDeck = (): HTMLAudioElement | null => {
+export const themeDeck = (): HTMLAudioElement | null => {
   for (const w of wins()) if (w?.__themedeckSharedAudio) return w.__themedeckSharedAudio;
   return null;
 };
@@ -88,7 +90,7 @@ const fire = (event: string, value: boolean) => {
   }
 };
 /** ThemeDeck is loaded: its element exists or it already stored settings. */
-const themeDeckPresent = (): boolean => {
+export const themeDeckPresent = (): boolean => {
   if (themeDeck()) return true;
   const s = storage();
   try {
@@ -98,6 +100,18 @@ const themeDeckPresent = (): boolean => {
   }
   return false;
 };
+/** Read ThemeDeck's own autoplay and master preferences, never overwrite them. */
+export function themeDeckPreferences() {
+  const s = storage();
+  let autoplay = true, master = 1;
+  try {
+    autoplay = s?.getItem("themedeck:autoPlay") !== "false";
+    const raw = s?.getItem("themedeck:masterVolume");
+    const n = raw == null ? 100 : Number(raw);
+    master = Number.isFinite(n) ? Math.max(.01, Math.min(1, n / 100)) : 1;
+  } catch { /* defaults */ }
+  return { autoplay, master };
+}
 let prefsOff = false;
 function setThemeDeckPrefsOff() {
   const s = storage();
@@ -140,12 +154,13 @@ export function restoreThemeDeckPrefs() {
 }
 
 let holds = 0;
+let gameTrackHolds = 0;
 let guard: any = null;
 let pausedAudioLoader = false;
 let pausedThemeDeck: HTMLAudioElement | null = null;
 let watched: HTMLAudioElement | null = null;
 function onThemeDeckPlay(this: HTMLAudioElement) {
-  if (!holds || onGamePage()) return;
+  if (!holds || (onGamePage()&&!gameTrackHolds)) return;
   try {
     this.pause();
     pausedThemeDeck = this;
@@ -174,7 +189,7 @@ function silenceOthers() {
     watched = td;
     td.addEventListener("play", onThemeDeckPlay);
   }
-  if (td && !td.paused && !onGamePage() && !prefsOff) {
+  if (td && !td.paused && (gameTrackHolds>0||(!onGamePage()&&!prefsOff))) {
     try {
       td.pause();
       pausedThemeDeck = td;
@@ -206,16 +221,19 @@ function resumeOthers() {
 }
 
 /** Pause other plugins' menu music until the returned function is called. */
-export function holdOtherMusic(): () => void {
+export function holdOtherMusic(options: {includeGameTracks?:boolean} = {}): () => void {
+  if(options.includeGameTracks)gameTrackHolds++;
   holds++;
   if (holds === 1) {
     silenceOthers();
     guard = setInterval(silenceOthers, 1000);
   }
+  else if(options.includeGameTracks)silenceOthers();
   let released = false;
   return () => {
     if (released) return;
     released = true;
+    if(options.includeGameTracks)gameTrackHolds=Math.max(0,gameTrackHolds-1);
     holds = Math.max(0, holds - 1);
     if (holds) return;
     clearInterval(guard);
@@ -228,12 +246,7 @@ export function holdOtherMusic(): () => void {
 
 /** Names of loaded Decky plugins (empty if Decky's list isn't reachable). */
 function loadedPlugins(): string[] {
-  try {
-    const list = (globalThis as any).DeckyPluginLoader?.plugins;
-    return Array.isArray(list) ? list.map((p: any) => String(p?.name ?? "")).filter(Boolean) : [];
-  } catch {
-    return [];
-  }
+  return loadedPluginNames();
 }
 
 const HOME_REPLACERS = [/^DeckyXMB$/i, /^Spindeck$/i];
@@ -251,7 +264,7 @@ export function musicPluginsSeen(): string[] {
 }
 
 export function useOtherPlugins() {
-  const read = () => ({ homes: otherHomePlugins(), music: musicPluginsSeen() });
+  const read = () => ({ homes: otherHomePlugins(), music: musicPluginsSeen(), support: pluginSupport(loadedPlugins()) });
   const [v, setV] = useState(read);
   useEffect(() => {
     // A previous session may have died while ThemeDeck's settings were off.

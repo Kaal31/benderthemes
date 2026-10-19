@@ -1,0 +1,24 @@
+import {chromium} from 'playwright';
+import {pathToFileURL as url} from 'node:url';
+import {readdirSync} from 'node:fs';
+const root=process.cwd(),browser=await chromium.launch({headless:true}),page=await browser.newPage({viewport:{width:1280,height:800}}),errors=[];
+page.on('pageerror',e=>errors.push(e.message));
+await page.goto(url(root+'/themes/blue-glass/index.html').href);
+const names={'1086940':'Baldur’s Gate 3','1091500':'Cyberpunk 2077','1145360':'Hades','1174180':'Red Dead Redemption 2','1237950':'Star Wars Battlefront II','1245620':'Elden Ring','1687950':'Persona 5 Royal','1817070':'Marvel’s Spider-Man','2195250':'EA Sports FC 24','413150':'Stardew Valley','620':'Portal 2','730':'Counter-Strike 2','814380':'Sekiro','892970':'Valheim'};
+const games=readdirSync('preview/art').filter(f=>f.endsWith('-header.jpg')).map((f,i)=>({appid:i+1,name:names[f.split('-')[0]]||'Adventure '+(i+1),installed:true,playtime:1944,lastPlayed:100-i,art:{hero:[url(root+'/preview/art/'+f.replace('header','library_hero')).href],landscape:[url(root+'/preview/art/'+f).href],logo:[],portrait:[url(root+'/preview/art/'+f.replace('header','library_600x900')).href]}}));
+await page.evaluate(games=>{window.messages=[];window.addEventListener('message',e=>window.messages.push(e.data));window.postMessage({dht:1,type:'state',games,settings:{},saved:{}},'*')},games);
+await page.waitForTimeout(300);
+if(await page.locator('#apps .game-app').count()!==games.length)throw Error('Grid missing games');
+await page.keyboard.press('ArrowRight');await page.keyboard.press('Enter');await page.waitForTimeout(80);
+if(!await page.evaluate(()=>messages.some(m=>m.type==='launch')))throw Error('Launch failed');
+await page.evaluate(()=>window.postMessage({dht:1,type:'input',btn:'r1'},'*'));await page.waitForTimeout(80);
+if(await page.locator('#shelf .selected').count()!==1)throw Error('Recent focus failed');
+await page.keyboard.press('ArrowDown');await page.keyboard.press('ArrowRight');await page.keyboard.press('Enter');await page.waitForTimeout(80);
+if(!await page.locator('#library-grid').isVisible())throw Error('Library page failed');
+for(const place of ['store','friends','downloads','settings','media']){await page.locator('footer [data-place='+place+']').click();if(!await page.locator('#page-actions').isVisible())throw Error(place+' page failed');await page.locator('#page-actions button').last().click();}
+await page.locator('footer [data-place=home]').click();
+await page.evaluate(()=>window.postMessage({dht:1,type:'input',btn:'l1'},'*'));await page.waitForTimeout(80);
+await page.screenshot({path:root+'/../BlueGlass-preview.png'});
+await page.evaluate(()=>window.postMessage({dht:1,type:'state',games:[],settings:{},saved:{}},'*'));await page.waitForTimeout(80);
+if(!await page.locator('#empty').isVisible())throw Error('Empty state failed');
+if(errors.length)throw Error(errors.join());await browser.close();console.log('PASS: cover grid, launch, recent focus, dock shortcut, empty state; no runtime errors');

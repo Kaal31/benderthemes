@@ -1,0 +1,41 @@
+{
+  "name": "Onyx iPod",
+  "author": "Soundsnap public previews; local personal test",
+  "music": false,
+  "mappings": {
+    "deck_ui_default_activation.wav": [
+      "confirm-press.wav"
+    ],
+    "deck_ui_into_game_detail.wav": [
+      "confirm-press.wav"
+    ],
+    "deck_ui_launch_game.wav": [
+      "confirm-press.wav"
+    ],
+    "deck_ui_out_of_game_detail.wav": [
+      "back-release.wav"
+    ],
+    "deck_ui_hide_modal.wav": [
+      "back-release.wav"
+    ],
+    "deck_ui_show_modal.wav": [
+      "menu-press.wav"
+    ],
+    "deck_ui_switch_toggle_on.wav": [
+      "wheel-press.wav"
+    ],
+    "deck_ui_bumper_end_02.wav": [
+      "back-release.wav"
+    ],
+    "deck_ui_navigation.wav": [
+      "rotation-click.wav"
+    ],
+    "deck_ui_tile_scroll.wav": [
+      "rotation-click.wav"
+    ],
+    "deck_ui_tab_transition_01.wav": [
+      "menu-press.wav"
+    ]
+  },
+  "ignore": []
+}

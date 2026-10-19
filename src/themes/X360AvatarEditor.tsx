@@ -1,3 +1,4 @@
+import {customProfilePicture} from "../profilePicture";
 // The NXE avatar creator (2008), after the console's own: a short intro, the
 // "Choose an avatar as a starting point" line-up under a spotlight, then the
 // editor with your avatar on the left and a 3×3 grid of choices on the right.
@@ -42,7 +43,7 @@ export function useMyAvatar(s: Settings, user: string) {
       alive = false;
     };
   }, []);
-  return { spec: saved ?? avatarForName(user), model: own.avatar as string | undefined, gamerpic: own.gamerpic as string | undefined, editing, setEditing };
+  return { spec: saved ?? avatarForName(user), model: own.avatar as string | undefined, gamerpic: customProfilePicture()??own.gamerpic as string | undefined, editing, setEditing };
 }
 
 // ───────────────────────── 360sona ─────────────────────────

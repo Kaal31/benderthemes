@@ -14,6 +14,8 @@ import { OPTIONS as aero2 } from "../themes/options/aero2";
 import { OPTIONS as pain } from "../themes/options/pain";
 import { OPTIONS as nazarick } from "../themes/options/nazarick";
 import { OPTIONS as ps1 } from "../themes/options/ps1";
+import { OPTIONS as onyx } from "../themes/options/onyx";
+import { OPTIONS as silver } from "../themes/options/silver";
 import { OPTIONS as iisu } from "../themes/options/iisu";
 
 export type StyleOption = {
@@ -25,7 +27,22 @@ export type StyleOption = {
   def: StyleValue;
 };
 
-export const THEME_STYLES: Partial<Record<ThemeId, StyleOption[]>> = { wii, wiiu, ps2, ps5, xbox, aero, aero2, pain, nazarick, ps1, iisu };
+export const THEME_STYLES: Partial<Record<ThemeId, StyleOption[]>> = { onyx, silver, wii, wiiu, ps2, ps5, xbox, aero, aero2, pain, nazarick, ps1, iisu };
+
+// Only layouts with game hero backgrounds expose this control. Cover tiles and
+// console wallpapers keep their own sizing.
+export const HERO_SCALING_THEMES: ThemeId[] = ["ps4", "ps5", "ps3", "psp", "vita"];
+for (const theme of HERO_SCALING_THEMES) {
+  THEME_STYLES[theme] = [...(THEME_STYLES[theme] ?? []), {
+    key: "heroScaling", label: "Game artwork scaling", group: "Background",
+    choices: [
+      { id: "cover", name: "Fill screen" },
+      { id: "contain", name: "Show full artwork" },
+      { id: "blur", name: "Full artwork + blurred backdrop" },
+    ],
+    def: "cover",
+  }];
+}
 
 /** A theme's own option, or its default. */
 export function style<T extends StyleValue>(s: Settings, theme: ThemeId, key: string): T {

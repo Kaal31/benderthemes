@@ -47,7 +47,7 @@ export async function refreshThemes() {
         continue;
       }
       if (BUILTIN_THEMES.some((b) => b.id === v.theme.id)) continue; // built-in ids are reserved
-      next.push({ ...v.theme, company: v.theme.company ?? "Community", source: raw.source === "bundled" ? "bundled" : "user" });
+      next.push({ ...v.theme, company: v.theme.company ?? "Community", source: raw.source === "bundled" ? "bundled" : "user", revision: typeof raw.communityRevision === "string" ? raw.communityRevision : undefined });
       if (raw.packs) nextPacks.set(v.theme.id, raw.packs);
       if (raw.icons && typeof raw.icons === "object") {
         const own = Object.fromEntries(Object.entries(raw.icons).filter(([n, f]) => ICON_NAME.test(n) && typeof f === "string" && !f.includes("..")).slice(0, 300));
@@ -108,9 +108,9 @@ export function themeFileUrl(theme: ThemeEntry, rel: string): string | null {
  * URL a community interface (layout "frame") is opened at: the plugin's wrapper page for it (py_modules/data_themes.py:
  * frame_wrapper), never the theme's page itself, so the interface can't navigate its frame elsewhere. null = can't open.
  */
-export function frameUrl(theme: ThemeEntry): string | null {
+export function frameUrl(theme: ThemeEntry, entry: string = theme.frame?.entry ?? ""): string | null {
   if (theme.source === "builtin" || !wrap || !theme.frame) return null;
-  return `${wrap}/${encodeURIComponent(theme.id)}/${theme.frame.entry.split("/").map(encodeURIComponent).join("/")}`;
+  return `${wrap}/${encodeURIComponent(theme.id)}/${entry.split("/").map(encodeURIComponent).join("/")}`;
 }
 
 // ───────────── slots ─────────────
@@ -247,8 +247,8 @@ setEngineHooks({
     if (from === t && t.source === "builtin") return undefined; // the layout's usual rules
     return themePack(from, kind);
   },
-  background(theme: ThemeId, folder: string | undefined) {
-    const s = getSettings();
+  background(theme: ThemeId, folder: string | undefined, settings?:Settings) {
+    const s = settings??getSettings();
     const t = activeTheme(s);
     if (!t || t.layout !== theme) return undefined;
     const ref = s.mix?.[t.id]?.wallpaper;

@@ -1,11 +1,11 @@
-// Hold L1 + direction on the home: a quick theme switcher.
-//   L1 + up/down     the previous / next console (its own default look): Wii, Wii U, Switch, 3DS, PS1 … Xbox 360,
+// Hold L2 / R2 + direction on the home: a quick theme switcher.
+//   L2 / R2 + up/down     the previous / next console (its own default look): Wii, Wii U, Switch, 3DS, PS1 … Xbox 360,
 //                    then the bonus looks, then installed themes.
-//   L1 + left/right  that console's looks: its default, its other built-in looks (Xbox 360 eras, Vita Sakura),
+//   L2 / R2 + left/right  that console's looks: its default, its other built-in looks (Xbox 360 eras, Vita Sakura),
 //                    its theme files (.p3t, .ptf, .nxtheme, .utheme, …) and the user's saved presets based on it.
 // The HUD names the place ("PS3 · ZenGarden.p3t (3/12)"). Stepping only moves the HUD's cursor; the preset is applied
-// once stepping pauses (APPLY_MS) or when L1 is released, so running through twenty looks does not load twenty homes.
-// The button handling (L1 held, L1's own action kept for a plain press) is in input.tsx.
+// once stepping pauses (APPLY_MS) or when L2 / R2 is released, so running through twenty looks does not load twenty homes.
+// The button handling (L2 / R2 held, L2 / R2's own action kept for a plain press) is in input.tsx.
 import { useEffect, useRef, useState } from "react";
 import { setL1Switcher, SwitchAxis } from "./input";
 import { applyPreset, ConsoleRow, consoleRows, currentPresetId, switcherPosition, variantLabel } from "./presets";
@@ -13,9 +13,9 @@ import { playSound } from "./steam";
 
 /** Stepping pauses this long before the look under the cursor is loaded. */
 export const APPLY_MS = 350;
-/** Holding L1 this long without a direction shows the HUD as a hint. */
+/** Holding L2 / R2 this long without a direction shows the HUD as a hint. */
 const HINT_MS = 450;
-/** The HUD stays this long after L1 is released. */
+/** The HUD stays this long after L2 / R2 is released. */
 const LINGER_MS = 1100;
 
 interface HudState {
@@ -24,7 +24,7 @@ interface HudState {
   v: number;
   /** The look under the cursor is the one on screen. */
   applied: boolean;
-  /** L1 still down. */
+  /** L2 / R2 still down. */
   held: boolean;
 }
 
@@ -119,7 +119,7 @@ function SwitcherHud({ rows, r, v, applied, held }: HudState) {
     <div className="dht-switcher" data-held={held} data-applied={applied} role="status" aria-live="polite" aria-label={`${row.label} · ${name} (${v + 1}/${n})`}>
       <style>{SWITCHER_CSS}</style>
       <div className="dht-switcher-console">
-        <div className="dht-switcher-axis"><b>L1</b> + ▲▼ Console <span>{r + 1}/{rows.length}</span></div>
+        <div className="dht-switcher-axis"><b>L2 / R2</b> + ▲▼ Console <span>{r + 1}/{rows.length}</span></div>
         <div className="dht-switcher-ring">
           {rows.length > 2 && <span className="dht-switcher-near">{near(-1).label}</span>}
           <strong>{row.label}</strong>
@@ -127,7 +127,7 @@ function SwitcherHud({ rows, r, v, applied, held }: HudState) {
         </div>
       </div>
       <div className="dht-switcher-variant">
-        <div className="dht-switcher-axis"><b>L1</b> + ◀▶ {row.label} looks <span>{v + 1}/{n}</span></div>
+        <div className="dht-switcher-axis"><b>L2 / R2</b> + ◀▶ {row.label} looks <span>{v + 1}/{n}</span></div>
         <div className="dht-switcher-name">
           <i aria-hidden="true">{n > 1 ? "◀" : ""}</i>
           <strong>{name}</strong>
@@ -137,7 +137,7 @@ function SwitcherHud({ rows, r, v, applied, held }: HudState) {
           {n <= 24 ? row.presets.map((x, i) => <i key={x.id} data-on={i === v} data-user={x.origin === "saved"} />) : <em style={{ width: `${((v + 1) / n) * 100}%` }} />}
         </div>
       </div>
-      <div className="dht-switcher-foot">{held ? (applied ? "Release L1 to keep" : "Loading when you stop…") : "Kept"} · {row.label} · {name} ({v + 1}/{n})</div>
+      <div className="dht-switcher-foot">{held ? (applied ? "Release L2 / R2 to keep" : "Loading when you stop…") : "Kept"} · {row.label} · {name} ({v + 1}/{n})</div>
     </div>
   );
 }

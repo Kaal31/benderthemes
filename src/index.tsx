@@ -1,12 +1,14 @@
+import { startThemeScreensavers, useScreensaverStatus } from "./themeScreensavers";
+import { startAchievementPopups } from "./achievementPopups";
+import {stopSilverPad} from "./themes/silverPad";
 import { ButtonItem, DropdownItem, Navigation, PanelSection, PanelSectionRow, SliderField, staticClasses, TextField, ToggleField } from "@decky/ui";
 import { definePlugin, openFilePicker, routerHook } from "@decky/api";
 import { importThemeZip, onThemesChanged, userThemes } from "./engine/registry";
 import { useEffect, useRef, useState } from "react";
-import { HomeSwitch, SafeBoundary, showThemedHomeAgain, ThemedHome } from "./Home";
+import { HomeSwitch, SafeBoundary, showNativeSteamHome, showThemedHomeAgain, ThemedHome } from "./Home";
 import { loadLibrary } from "./library";
 import { useDiag, logInfo, reportError } from "./diag";
 const PLUGIN_VERSION = "__DHT_VERSION__";
-import { Updates } from "./Updates";
 import { retryHome, useHomeFailure } from "./compatibility";
 import { restoreFooter } from "./steam";
 import { openMarketplace } from "./marketplaceState";
@@ -15,7 +17,7 @@ import { refreshPacks, restoreHeader, soundDiag } from "./steam";
 import { getUiDocument } from "./cssvars";
 import { useOtherPlugins } from "./otherPlugins";
 import { startKeyboardSkins } from "./keyboardSkins";
-import { startRuntimeDiagnostics } from "./runtimeDiagnostics";
+import { startExperimentalDiagnostics } from "./experimentalDiagnostics";
 import { refreshThemeLists } from "./themeSettingsMenu";
 import { deleteCurrentTheme } from "./themeActions";
 import { applyPreset, currentLook, currentPresetId, deleteUserPreset, getPresets, isDownloaded, refreshPresets, renamePreset, saveUserPreset, usePresets, PRESET_GROUPS } from "./presets";
@@ -107,7 +109,10 @@ function Panel() {
 
   return (
     <>
-      <Updates />
+      <PanelSection title="Screensavers">
+        <PanelSectionRow><ScreensaverStatus /></PanelSectionRow>
+        <PanelSectionRow><ToggleField label="Disable screensavers" description="Disable all Steam screensavers while ThemeHub is loaded. Overrides every theme’s screensaver." checked={s.screensaversDisabled===true} onChange={screensaversDisabled=>updateSettings({screensaversDisabled})}/></PanelSectionRow>
+      </PanelSection>
       <PanelSection title="Themes">
         <PanelSectionRow><ButtonItem layout="below" description="Browse animated previews, download a theme and activate it." onClick={() => { openMarketplace(); Navigation.Navigate(ROUTE); Navigation.CloseSideMenus(); }}>Hub</ButtonItem></PanelSectionRow>
         <AddThemeRow />
@@ -137,7 +142,7 @@ function Panel() {
         <PanelSectionRow>
           <DropdownItem
             label="Preset"
-            description={`${themeName}'s presets: its own look, its imported theme files and the ones you saved. Changes are kept in the preset in use. On the home: hold L1 + ▲▼ to change console, L1 + ◀▶ for its presets; L2 / R2 every preset; △ / Y → Presets.`}
+            description={`${themeName}'s presets: its own look, its imported theme files and the ones you saved. Changes are kept in the preset in use. On the home: hold L2 / R2 + ▲▼ to change console, L2 / R2 + ◀▶ for its presets; L2 / R2 previous / next theme; △ / Y → Presets.`}
             key={look}
             rgOptions={mine.map((p) => ({ data: p.id, label: p.label }))}
             selectedOption={current}
@@ -174,7 +179,7 @@ function Panel() {
           <>
             {s.enabled && (
               <PanelSectionRow>
-                <ButtonItem layout="below" description="Steam's Home button / Library → Home shows the theme" onClick={() => { showThemedHomeAgain(); Navigation.CloseSideMenus(); setTimeout(() => Navigation.Navigate(HOME_ROUTE), 80); }}>
+                <ButtonItem layout="below" description="Open the native Steam home screen" onClick={showNativeSteamHome}>
                   Go to Steam Home
                 </ButtonItem>
               </PanelSectionRow>
@@ -188,10 +193,16 @@ function Panel() {
               <DropdownItem label="Ⓐ on a game" rgOptions={[{ data: "theme", label: "Like the console (LiveArea, Start…)" }, { data: "launch", label: "Launch right away" }, { data: "details", label: "Open Steam's game page" }]} selectedOption={s.aAction} onChange={(o) => updateSettings({ aAction: o.data })} />
             </PanelSectionRow>
             <PanelSectionRow><ToggleField label="Themed store" description="Store entries open the Steam Store styled like this theme (off: Steam's own store)" checked={s.themedStore !== false} onChange={(v) => updateSettings({ themedStore: v })} /></PanelSectionRow>
-            <PanelSectionRow><ToggleField label="ProtonDB badges" description="Community rating on game details (needs internet)" checked={s.badges.protondb} onChange={(v) => updateSettings((p) => ({ badges: { ...p.badges, protondb: v } }))} /></PanelSectionRow>
             <PanelSectionRow><ToggleField label="Steam Deck compatibility badges" checked={s.badges.deck} onChange={(v) => updateSettings((p) => ({ badges: { ...p.badges, deck: v } }))} /></PanelSectionRow>
             <PanelSectionRow><ToggleField label="Hide Steam's top bar" description="While the themed home is on screen" checked={s.hideSteamHeader} onChange={(v) => updateSettings({ hideSteamHeader: v })} /></PanelSectionRow>
             <PanelSectionRow><ToggleField label="Themed keyboard" description="Off by default. Steam's on-screen keyboard looks like the active console's keyboard, in every theme (a CSS Loader keyboard theme or a Points Shop keyboard wins)" checked={s.keyboardSkin === true} onChange={(v) => updateSettings({ keyboardSkin: v })} /></PanelSectionRow>
+            {s.keyboardSkin === true && (
+              <PanelSectionRow>
+                <div style={{ paddingLeft: 12 }}>
+                  <SliderField label="Keyboard spacing (px)" description="Gap around each key · default 1 px" min={0} max={5} step={0.5} value={Math.max(0, Math.min(5, Number.isFinite(s.keyboardSpacing) ? s.keyboardSpacing! : 1))} showValue onChange={(value) => updateSettings({ keyboardSpacing: value })} />
+                </div>
+              </PanelSectionRow>
+            )}
             <PanelSectionRow><DropdownItem label="Steam's bottom bar" description="Steam Menu · Ⓐ Select · Ⓑ Back, while the themed home is on screen" rgOptions={FOOTER_MODES.map((f) => ({ data: f.id, label: f.name }))} selectedOption={s.footer} onChange={(o) => updateSettings({ footer: o.data })} /></PanelSectionRow>
             <PanelSectionRow><ToggleField label="Background animations" checked={s.animations} onChange={(v) => updateSettings({ animations: v })} /></PanelSectionRow>
             <PanelSectionRow><ToggleField label="24-hour clock" checked={s.clock24} onChange={(v) => updateSettings({ clock24: v })} /></PanelSectionRow>
@@ -283,7 +294,7 @@ function Diagnostics() {
   );
   return (
     <PanelSection title="Diagnostics">
-      <PanelSectionRow><div style={{fontSize:12}}>Automatic keyboard, input lifecycle and idle-overlay diagnostics run for thirty minutes after plugin load. Logs: ~/homebrew/logs/DeckHomeThemes. Messages and typed text are excluded.</div></PanelSectionRow>
+      <PanelSectionRow><div style={{fontSize:12}}>Experimental diagnostics run automatically for thirty minutes after plugin load. Keyboard, input lifecycle and idle overlay events share the Decky log at ~/homebrew/logs/DeckHomeThemes. Messages and typed text are excluded.</div></PanelSectionRow>
       <PanelSectionRow>
         <div>
           {row("Version", PLUGIN_VERSION)}
@@ -294,6 +305,7 @@ function Diagnostics() {
           {row("Library", `${lib.games.length} games · ${lib.apps.length} apps · ${lib.collections.length} collections`, !lib.games.length)}
           {others.homes.length > 0 && row("Also replacing Home", `${others.homes.join(", ")}: only one home can show. Turn off its home option or this plugin.`, true)}
           {others.music.length > 0 && row("Other music", `${others.music.join(", ")} paused while theme music plays`)}
+          {others.support.map(p => <div key={p.name}>{row(p.name, `${p.mode}: ${p.detail}`, p.mode === "conflict")}</div>)}
           {row("Last error", d.lastError || "none", !!d.lastError)}
         </div>
       </PanelSectionRow>
@@ -301,10 +313,14 @@ function Diagnostics() {
   );
 }
 
+function ScreensaverStatus(){const status=useScreensaverStatus();return <div style={{fontSize:12,opacity:.8}}>{status}</div>;}
+
 export default definePlugin(() => {
   logInfo(`frontend loaded v${PLUGIN_VERSION}`);
   initSettings();
-  const stopDiagnostics = startRuntimeDiagnostics();
+  const stopScreensavers = startThemeScreensavers();
+  const stopDiagnostics = startExperimentalDiagnostics();
+  const stopAchievementPopups = startAchievementPopups();
   refreshPacks();
   refreshPresets();
   let stopKeyboardSkins: (() => void) | null = null;
@@ -347,7 +363,10 @@ export default definePlugin(() => {
     ),
     icon: <HomeIcon />,
     onDismount() {
+      stopScreensavers();
       stopDiagnostics();
+      stopAchievementPopups();
+      stopSilverPad();
       routerHook.removeRoute(ROUTE);
       if (patch) routerHook.removePatch(HOME_ROUTE, patch);
       stopKeyboardSkins?.();

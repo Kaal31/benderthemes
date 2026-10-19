@@ -3,7 +3,7 @@
 // external player library).
 import { callable, fetchNoCors } from "@decky/api";
 import { CSSProperties, useEffect, useRef, useState } from "react";
-import { duckMusic } from "./steam";
+import { useVideoAudio } from "./videoAudio";
 
 declare const SteamClient: any;
 
@@ -210,12 +210,7 @@ export function SegmentVideo({
 }) {
   const ref = useRef<HTMLVideoElement>(null);
   const [ready, setReady] = useState(false);
-  // a trailer playing with sound fades the theme music out while it plays
-  useEffect(() => {
-    if (!ready || muted) return;
-    duckMusic(true);
-    return () => duckMusic(false);
-  }, [ready, muted]);
+  useVideoAudio(ref,!muted);
   const cb = useRef({ onReady, onNone });
   cb.current = { onReady, onNone };
   useEffect(() => {
@@ -482,11 +477,13 @@ export function LocalVideoView({
   onNone?: () => void;
 }) {
   const [ready, setReady] = useState(false);
+  const fileRef = useRef<HTMLVideoElement>(null);
+  useVideoAudio(fileRef,sound&&video.kind==="file");
   if (video.kind !== "file")
     return <SegmentVideo plan={async () => recordingPlan(video, sound)} deps={[video.id, sound]} muted={!sound} loop={loop} style={style} videoRef={videoRef} onReady={onReady} onEnded={onEnded} onNone={onNone} />;
   return (
     <video
-      ref={videoRef}
+      ref={el=>{fileRef.current=el;videoRef?.(el);}}
       src={video.url}
       autoPlay
       muted={!sound}

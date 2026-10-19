@@ -1,0 +1,13 @@
+import {build} from 'esbuild';
+import {chromium} from 'playwright';
+import assert from 'node:assert/strict';
+import {mkdirSync,writeFileSync} from 'node:fs';
+const code=`import React from 'react';import {createRoot} from 'react-dom/client';import {ProfileAvatar} from './src/ProfileAvatar';import {seedSettings,updateSettings,getSettings} from './src/settings';import {setProfilePicture,uploadProfilePicture,customProfilePicture} from './src/profilePicture';
+globalThis.__isThemePreview=true;globalThis.App={m_CurrentUser:{strSteamID:'account-a',strAvatarHash:'1234567890123456789012345678901234567890'}};seedSettings({theme:'silver'});Object.assign(window,{setProfilePicture,uploadProfilePicture,customProfilePicture,updateSettings,getSettings});createRoot(document.getElementById('root')).render(<><ProfileAvatar/><button onClick={uploadProfilePicture}>Upload</button></>);`;
+const r=await build({stdin:{contents:code,loader:'tsx',resolveDir:process.cwd()},bundle:true,write:false,format:'iife',jsx:'automatic',alias:{'@decky/ui':'./preview/stubs/ui.tsx','@decky/api':'./preview/stubs/api.ts'}});
+mkdirSync('out',{recursive:true});writeFileSync('out/profile-picture-check.html','<div id="root"></div><script>'+r.outputFiles[0].text.replace(/<\/script/g,'<\\/script')+'</script>');
+const b=await chromium.launch(),p=await b.newPage();const errors=[];p.on('pageerror',e=>errors.push(e.message));await p.goto('file:///'+process.cwd().replaceAll('\\','/')+'/out/profile-picture-check.html');await p.locator('img').waitFor();assert.match(await p.locator('img').getAttribute('src'),/^https:\/\/avatars.steamstatic.com\/123/);
+const picker=p.waitForEvent('filechooser');await p.getByText('Upload',{exact:true}).click();await (await picker).setFiles('assets/silver-reference/previewAvatar.png');await p.waitForFunction(()=>document.querySelector('img')?.src.startsWith('data:image/png'));
+const custom=await p.locator('img').getAttribute('src');assert.ok(custom.length>100);await p.evaluate(()=>window.updateSettings({theme:'ps4'}));assert.equal(await p.locator('img').getAttribute('src'),custom);
+await p.evaluate(()=>{window.App.m_CurrentUser.strSteamID='account-b';window.updateSettings({theme:'switch'});});assert.match(await p.locator('img').getAttribute('src'),/^https:/);
+await p.evaluate(()=>{window.App.m_CurrentUser.strSteamID='account-a';window.updateSettings({theme:'silver'});});assert.equal(await p.locator('img').getAttribute('src'),custom);await p.evaluate(()=>window.setProfilePicture(undefined));assert.match(await p.locator('img').getAttribute('src'),/^https:/);assert.deepEqual(errors,[]);console.log('PASS: Steam avatar default, image upload, shared themes, account isolation, reset, no browser errors');await b.close();

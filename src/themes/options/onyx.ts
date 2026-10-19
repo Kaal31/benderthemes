@@ -1,0 +1,2 @@
+import type {StyleOption} from "../../engine/themeStyles";
+export const OPTIONS:StyleOption[]=[{key:"carousel",label:"Carousel style",group:"Visuals",def:"covers",choices:[{id:"covers",name:"Portrait covers"},{id:"square",name:"Square capsules"},{id:"icons",name:"Classic square Cover Flow"}]},...(["screenGlass","coverGlass"] as const).map(key=>({key,label:key==="screenGlass"?"Screen glass":"Cover glass",group:"Visuals",def:"off",choices:[{id:"off",name:"Off"},{id:"clear",name:"Clear glass"},{id:"prism",name:"Prismatic glass"}]}))];

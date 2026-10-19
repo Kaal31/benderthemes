@@ -11,6 +11,7 @@ import { playSound } from "./steam";
 import { CaseArt, CASE_THEMES } from "./CaseArt";
 import { getSettings, updateSettings, Settings, ThemeId } from "./settings";
 import { essentialItems, globalSettingsItems, presetItems, themeSettingsItems } from "./themeSettingsMenu";
+import { style as themeStyle } from "./engine/themeStyles";
 import { iconUrl } from "./engine/registry";
 
 // ───────────── home context ─────────────
@@ -128,6 +129,17 @@ export function GameArt({
 }
 
 // ───────────── icons (original, monochrome, 24×24 grid) ─────────────
+/** Game backgrounds can show the whole artwork without changing tile sizing. */
+export function GameHero({ g, theme, blurred = false }: { g: Game; theme: ThemeId; blurred?: boolean }) {
+  const { settings } = useHome();
+  const mode = themeStyle<string>(settings, theme, "heroScaling") ?? "cover";
+  const fit = mode === "cover" ? "cover" : "contain";
+  return <div className="dht-game-hero" data-scaling={mode} data-artwork-blurred={blurred} style={{ position: "absolute", inset: 0, overflow: "hidden", background: "#080a0e" }}>
+    {mode === "blur" && <GameArt g={g} kind="hero" style={{ position: "absolute", inset: 0, width: "100%", height: "100%", objectFit: "cover", filter: "blur(28px) brightness(0.65)", transform: "scale(1.12)" }} />}
+    <GameArt g={g} kind="hero" style={{ position: "absolute", inset: 0, width: "100%", height: "100%", objectFit: `var(--dht-hero-fit, ${fit})` as CSSProperties["objectFit"], objectPosition: "var(--dht-hero-position, center)", ...(blurred ? { filter: "blur(28px) saturate(1.2)", ...(mode === "cover" ? { transform: "scale(1.12)" } : {}) } : {}) }} />
+  </div>;
+}
+
 export type IconName =
   | "gear"
   | "photo"

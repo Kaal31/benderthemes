@@ -56,6 +56,7 @@ def roots():
         ("user", user_root()),
         # zips the user dropped into the themes folder, unpacked by unpack_zips()
         ("user", os.path.join(user_root(), UNPACKED)),
+        ("user", os.path.join(user_root(), ".community", "current")),
     ]
 
 
@@ -79,7 +80,7 @@ _unpack_lock = threading.Lock()
 _zip_errors = {}  # zip name -> why it was refused (shown in Quick Access)
 
 
-def _zip_plan(z):
+def _zip_plan(z, manifest_name="theme.json"):
     """The files of a theme zip as (info, parts inside the theme), or raises ValueError.
     theme.json may sit at the top of the zip or in one folder (how most zip tools pack a folder)."""
     entries = z.infolist()
@@ -109,11 +110,11 @@ def _zip_plan(z):
             raise ValueError("unpacks to more than 256 MB")
         files.append((info, p.parts))
     tops = {parts[0] for _, parts in files}
-    if any(parts == ("theme.json",) for _, parts in files):
+    if any(parts == (manifest_name,) for _, parts in files):
         return files
-    if len(tops) == 1 and any(parts[1:] == ("theme.json",) for _, parts in files):
+    if len(tops) == 1 and any(parts[1:] == (manifest_name,) for _, parts in files):
         return [(info, parts[1:]) for info, parts in files]
-    raise ValueError("no theme.json at the top of the zip")
+    raise ValueError(f"no {manifest_name} at the top of the zip; publish a compiled theme ZIP, not plugin source")
 
 
 def _unpack(zpath, dest):
@@ -330,6 +331,19 @@ def list_themes():
     out = []
     for ident, (m, folder, source) in _scan().items():
         entry = dict(m)
+        if entry.get("layout") == "native":
+            # Downloaded/local manifests cannot grant themselves native execution.
+            approved = False
+            managed = os.path.realpath(os.path.join(user_root(), ".community", "current"))
+            if os.path.dirname(folder) == managed:
+                try:
+                    with open(os.path.join(folder, ".install.json"), encoding="utf-8") as f:
+                        install = json.load(f)
+                    approved = (install.get("themeId") == ident and bool(install.get("nativeSha256"))
+                                and install.get("nativeSha256") == entry.get("nativeSha256"))
+                except (OSError, ValueError, AttributeError):
+                    pass
+            entry["nativeInstalled"] = approved
         entry["source"] = source
         packs = {}
         for slot in SLOT_FOLDERS:
@@ -388,9 +402,9 @@ def frame_csp(origin, ident):
         f"script-src {own} 'unsafe-inline'",
         f"style-src {own} 'unsafe-inline'",
         f"img-src {themes} {art} data: blob:",
-        f"media-src {themes} blob:",
+        f"media-src {themes} blob:" + (f" {origin}/f/" if ident == "blue-glass" else ""),
         f"font-src {themes} data:",
-        "connect-src 'none'",
+        f"connect-src {origin}/r/" if ident == "blue-glass" else "connect-src 'none'",
         "frame-src 'none'",
         "worker-src 'none'",
         "form-action 'none'",

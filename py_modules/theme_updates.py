@@ -10,6 +10,7 @@ import decky
 
 REPO = "Kaal31/benderthemes"
 TAG = re.compile(r"^v(0|[1-9]\d*)\.(0|[1-9]\d*)\.(0|[1-9]\d*)$")
+CHANNEL_TAG = re.compile(r"^(beta|experimental|optimization-testing)-v((?:0|[1-9]\d*)\.(?:0|[1-9]\d*)\.(?:0|[1-9]\d*))-([1-9]\d*)(?:-([1-9]\d*))?$")
 MARKER_TTL = 300
 
 
@@ -44,36 +45,80 @@ def version_key(version):
     return tuple(map(int, match.groups()))
 
 
-def asset_url(version):
+def release_identity(tag):
+    if TAG.fullmatch(tag):
+        return {"channel": "stable", "version": tag[1:], "build": 0, "attempt": 0}
+    match = CHANNEL_TAG.fullmatch(tag)
+    if not match:
+        raise ValueError("Invalid numbered release tag")
+    channel, version, build, attempt = match.groups()
+    return {"channel": channel, "version": version, "build": int(build), "attempt": int(attempt or 1)}
+
+
+def asset_url(version, tag=None):
     version_key(version)
-    return f"https://github.com/{REPO}/releases/download/v{version}/DeckHomeThemes-v{version}.zip"
+    tag = tag or "v" + version
+    if release_identity(tag)["version"] != version:
+        raise ValueError("Release tag/version mismatch")
+    return f"https://github.com/{REPO}/releases/download/{tag}/DeckHomeThemes-v{version}.zip"
+
+
+def trusted_tag(version, url):
+    prefix = f"https://github.com/{REPO}/releases/download/"
+    if not isinstance(url, str) or not url.startswith(prefix):
+        raise ValueError("Refusing an untrusted plugin package URL")
+    tag = url[len(prefix):].split("/", 1)[0]
+    if url != asset_url(version, tag):
+        raise ValueError("Refusing an untrusted plugin package URL")
+    return tag
+
+
+def installed_identity():
+    data = _read(os.path.join(decky.DECKY_PLUGIN_DIR, "release-channel.json"))
+    try:
+        parsed = release_identity(data["tag"])
+        if parsed["version"] == current_version() and parsed["channel"] == data.get("channel"):
+            return {**parsed, "known": True}
+    except (KeyError, TypeError, ValueError):
+        pass
+    return {"channel": "unknown", "version": current_version(), "build": 0, "attempt": 0, "known": False}
+
+
+def release_key(release):
+    return (*version_key(release["version"]), release.get("build", 0), release.get("attempt", 0))
 
 
 def normalise(raw):
     releases = {}
     for release in raw:
-        if not isinstance(release, dict):
+        if not isinstance(release, dict) or release.get("draft"):
             continue
         tag = str(release.get("tag_name", ""))
-        if not TAG.fullmatch(tag) or release.get("draft") or release.get("prerelease"):
+        try:
+            parsed = release_identity(tag)
+            if parsed["channel"] == "stable" and release.get("prerelease"):
+                continue
+            url = asset_url(parsed["version"], tag)
+        except ValueError:
             continue
-        version = tag[1:]
-        url = asset_url(version)
         asset = next((a for a in (release.get("assets") or [])
-                      if a.get("name") == f"DeckHomeThemes-v{version}.zip"
+                      if isinstance(a, dict) and a.get("name") == f"DeckHomeThemes-v{parsed['version']}.zip"
                       and a.get("browser_download_url") == url), None)
         if asset is None:
             continue
-        releases[tag] = {"tag": tag, "version": version, "assetUrl": url,
+        releases[tag] = {"tag": tag, **parsed, "assetUrl": url,
                          "notes": str(release.get("body") or ""),
                          "publishedAt": str(release.get("published_at") or "")}
-    return sorted(releases.values(), key=lambda r: version_key(r["version"]), reverse=True)
+    return sorted(releases.values(), key=release_key, reverse=True)
 
 
 def status():
     current = current_version()
+    installed = installed_identity()
     result = {"success": False, "currentVersion": current, "releases": [],
-              "latest": None, "updateAvailable": False, "stale": False}
+              "latest": None, "updateAvailable": False, "stale": False,
+              "currentChannel": installed["channel"], "channelKnown": installed["known"],
+              "currentBuild": installed["build"], "currentAttempt": installed["attempt"]}
     try:
         raw = []
         # Include historical numbered releases; never infer a ZIP from a source archive.
@@ -97,11 +142,12 @@ def status():
         cached = _read(_path("plugin-releases-cache.json"))
         result.update(error=f"Could not check GitHub: {exc}", stale=True,
                       releases=normalise(cached.get("raw", [])), checkedAt=cached.get("checkedAt"))
-    releases = result["releases"]
+    releases = [r for r in result["releases"] if r["channel"] == installed["channel"]]
+    result["channels"] = [c for c in ("stable", "beta", "experimental", "optimization-testing") if any(r["channel"] == c for r in result["releases"])]
     if releases:
         result["latest"] = releases[0]
         try:
-            result["updateAvailable"] = version_key(releases[0]["version"]) > version_key(current)
+            result["updateAvailable"] = release_key(releases[0]) > release_key(installed)
         except ValueError:
             pass
     return result
@@ -109,9 +155,8 @@ def status():
 
 def prepare_replacement(version, url):
     try:
-        if url != asset_url(version):
-            raise ValueError("Refusing an untrusted plugin package URL")
-        _write(_path("decky-replacement.json"), {"createdAt": time.time(), "version": version, "url": url})
+        tag = trusted_tag(version, url)
+        _write(_path("decky-replacement.json"), {"createdAt": time.time(), "version": version, "url": url, "tag": tag})
         return {"success": True}
     except Exception as exc:
         return {"success": False, "error": str(exc)}
@@ -128,7 +173,7 @@ def replacement_pending():
     marker = _read(_path("decky-replacement.json"))
     try:
         valid = (0 <= time.time() - float(marker["createdAt"]) <= MARKER_TTL
-                 and marker["url"] == asset_url(marker["version"]))
+                 and bool(trusted_tag(marker["version"], marker["url"])))
     except (KeyError, TypeError, ValueError):
         valid = False
     if not valid:

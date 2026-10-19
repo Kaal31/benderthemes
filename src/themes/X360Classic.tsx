@@ -1,3 +1,4 @@
+import {customProfilePicture} from "../profilePicture";
 import { BLADE_BOUNDARIES } from "./bladeBoundaries";
 import { BladesAtmosphere } from "./BladesAtmosphere";
 import { BladesGuide } from "./BladesGuide";
@@ -171,7 +172,7 @@ export function BladesHome() {
             <div className="dht-blades-profile" style={{position:"absolute",left:36,top:H*.135,width:column,height:H*.2,backgroundImage:texture("gamecard_home-silver"),backgroundSize:"100% 100%",boxSizing:"border-box",padding:"12px 28px"}}>
               <div style={{fontSize:24,fontWeight:600,overflow:"hidden",whiteSpace:"nowrap",textOverflow:"ellipsis"}}>{api.user}</div>
               <div style={{display:"flex",alignItems:"center",gap:14,marginTop:6}}>
-                {pickedPic||a.avatar?<img src={pickedPic??a.avatar} alt="" style={{width:58,height:58,objectFit:"contain",border:"2px solid #a58555",background:"#726f60"}}/>:<Icon name="user" size={52} color="#776648"/>}
+                {customProfilePicture()||pickedPic||a.avatar?<img src={customProfilePicture()??pickedPic??a.avatar} alt="" style={{width:58,height:58,objectFit:"contain",border:"2px solid #a58555",background:"#726f60"}}/>:<Icon name="user" size={52} color="#776648"/>}
                 <div style={{flex:1,minWidth:0,fontSize:19,lineHeight:1.16}}><div style={{display:"flex",justifyContent:"space-between"}}><span>Games</span><span>{api.lib.games.length}</span></div><div style={{display:"flex",justifyContent:"space-between"}}><span>Friends online</span><span>{st.friendsOnline??"—"}</span></div><div style={{display:"flex",justifyContent:"space-between"}}><span>Notifications</span><span>{st.notifications??"—"}</span></div></div>
               </div>
             </div>

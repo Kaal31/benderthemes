@@ -128,5 +128,13 @@ const pref = (g) => g.localStorage.getItem('themedeck:globalAmbientEnabled');
   assert.deepEqual(op.musicPluginsSeen(), []);
   console.log('ok ThemeDeck missing');
 }
+{
+  const t=setup();const op=await fresh();t.route('/library/app/10');
+  const release=op.holdOtherMusic({includeGameTracks:true});
+  t.el.src='blob:game-theme';t.el.play();
+  assert.equal(t.el.paused,true,'audible video holds ThemeDeck game tracks on native game pages');
+  release();release();
+  console.log('ok video holds native game music');
+}
 console.log('all other-plugins checks passed');
 process.exit(0);

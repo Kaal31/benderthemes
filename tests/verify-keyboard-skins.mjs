@@ -11,7 +11,7 @@ import assert from "node:assert/strict";
 const out = process.env.KB_SHOTS || "out/kb-shots";
 mkdirSync(out, { recursive: true });
 const base = pathToFileURL(resolve("preview/keyboard.html")).href;
-const LOOKS = [["wii"], ["wiiu"], ["switch"], ["n3ds"], ["ps1"], ["ps2"], ["ps3"], ["psp"], ["ps4"], ["ps5"], ["vita"], ["xbox"], ["x360", "metro"], ["x360", "blades"], ["iisu"], ["aero"], ["minecraft"], ["castle"]];
+const LOOKS = [["wii"], ["wiiu"], ["switch"], ["n3ds"], ["ps1"], ["ps2"], ["ps3"], ["psp"], ["ps4"], ["ps5"], ["vita"], ["xbox"], ["x360", "metro"], ["x360", "blades"], ["iisu"], ["aero"], ["minecraft"], ["castle"], ["onyx"], ["silver"], ["aero2"], ["dial"], ["republic"], ["nazarick"], ["pain"], ["frame"]];
 const b = await launch();
 const p = await b.newPage({ viewport: { width: 1280, height: 800 } });
 const errors = [];
@@ -30,7 +30,7 @@ for (const [theme, x360] of LOOKS) {
   await p.goto(base + `?theme=${theme}${x360 ? `&x360=${x360}` : ""}&focus=g&toggled=${theme === "wiiu" ? "CapsLock" : ""}`);
   await p.locator("#dht-kb-skin").waitFor({ state: "attached" });
   const look = await p.evaluate(() => document.documentElement.dataset.dhtKb);
-  assert.ok(look, `${name}: data-dht-kb set`);
+  assert.equal(look, x360 === "blades" ? "x360blades" : theme, `${name}: distinct theme mapping`);
   assert.notEqual(await keyBg("q"), steamBg, `${name}: key colour changed`);
   assert.deepEqual(await geometry(), steamGeometry, `${name}: layout unchanged`);
   await p.locator("#kbwrap").screenshot({ path: `${out}/${name}.png` });

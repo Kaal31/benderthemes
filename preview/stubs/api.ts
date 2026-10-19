@@ -1,3 +1,4 @@
+import { createRoot } from "react-dom/client";
 // Browser stand-ins for @decky/api.
 const R = (): any => (window as any).__real;
 const realSkin = (kind: string, n: string, fallback: any) => (R() ? R().skins?.[kind]?.[n] ?? null : fallback);
@@ -47,6 +48,44 @@ const themeSourcePage = (kind: string, source: string) => {
   return { items, total: 40, pages: 2 };
 };
 const backend: Record<string, (...a: any[]) => any> = {
+  // Community UI fixtures: no real GitHub requests/downloads in the browser preview.
+  community_update_status: (force: boolean) => {
+    const w = window as any;
+    for (const source of w.__communitySources ?? []) {
+      if (force && w.__communityOffline) { source.error = 'GitHub unavailable; showing saved catalog.'; continue; }
+      if (force) { source.error = ''; source.checkedAt = Date.now() / 1000; }
+      for (const theme of source.themes) {
+        if (force && theme.availableVersion) theme.version = theme.availableVersion;
+        if (force && theme.availableAssets) { theme.assetUpdate = true; theme.availableAssets = false; }
+        theme.updateAvailable = !!theme.installedVersion && (theme.version !== theme.installedVersion || !!theme.assetUpdate);
+      }
+    }
+    const updates = (w.__communitySources ?? []).flatMap((s: any) => s.themes.filter((t: any) => t.updateAvailable).map((t: any) => ({ ...t, repo: s.repo })));
+    return { updateCount: updates.length, updates, errors: (w.__communitySources ?? []).filter((s: any) => s.error).map((s: any) => ({repo:s.repo,error:s.error})) };
+  },
+  community_themes: () => ({ sources: (window as any).__communitySources ?? [] }),
+  community_source: (value: string, action: string) => {
+    const w = window as any;
+    const repo = value.replace(/^https:\/\/github.com\//, "").replace(/\/$/, "").toLowerCase();
+    if (!/^[a-z0-9-]+\/[a-z0-9_.-]+$/.test(repo)) return { ok: false, error: "Enter owner/repository" };
+    w.__communitySources ??= [];
+    if (action === "remove") w.__communitySources = w.__communitySources.filter((s: any) => s.repo !== repo);
+    else if (!w.__communitySources.some((s: any) => s.repo === repo)) w.__communitySources.push({ repo, mode: "single", themes: [{ id: "theme", name: "Community preview", author: repo.split("/")[0], description: "Sample theme for testing the repository interface.", version: "1.0.0", size: 1024, compatible: true, updateAvailable: false, canRollback: false, uiOverhaul: repo.includes("native") }] });
+    return { ok: true, sources: w.__communitySources };
+  },
+  community_package: (repo: string, id: string, action: string) => {
+    const w = window as any;
+    const theme = w.__communitySources?.find((s: any) => s.repo === repo)?.themes.find((t: any) => t.id === id);
+    if (!theme) return { ok: false, error: "Theme not found" };
+    if (action === "remove") { delete theme.installedVersion; delete theme.themeId; theme.canRollback = false; }
+    else if (action === "rollback") { const before = theme.installedVersion; theme.installedVersion = theme.previousVersion; theme.previousVersion = before; theme.updateAvailable = theme.installedVersion !== theme.version; }
+    else { theme.previousVersion = theme.installedVersion; theme.canRollback = !!theme.previousVersion; theme.installedVersion = theme.version; theme.themeId = "community-preview"; theme.updateAvailable = false; theme.assetUpdate = false; }
+    w.__dataThemes ??= { base: location.origin + "/themes", themes: [] };
+    w.__dataThemes.themes = w.__dataThemes.themes.filter((t: any) => t.id !== "community-preview");
+    if (action !== "remove") w.__dataThemes.themes.push({ schema: 1, id: "community-preview", name: theme.name, layout: "ps4", source: "user", packs: {} });
+    return { ok: true, themeId: theme.themeId };
+  },
+  community_progress: () => ({ busy: false, percent: 100, message: "" }),
   // window.__inventoryFromInstalled = true: only packs with an installedVersion count (tests of the first-open / reopen styling)
   theme_inventory: () => (window as any).__inventoryFromInstalled ? { ...Object.fromEntries(((window as any).__themeCatalog?.themes || []).filter((p: any) => p.installedVersion).map((p: any) => [p.id, p.installedVersion])), ...((window as any).__testInventory ?? {}) } : ({ ...Object.fromEntries(((window as any).__themeCatalog?.themes || []).map((p: any) => [p.id, p.version])), ...((window as any).__testInventory ?? {}) }),
   theme_catalog: () => ({ ...((window as any).__themeCatalog || { themes: [] }), progress: (window as any).__downloadProgress || { busy: false, percent: 0, id: "", message: "" } }),
@@ -63,6 +102,7 @@ const backend: Record<string, (...a: any[]) => any> = {
   theme_remove: (id: string) => { const pack = (window as any).__themeCatalog?.themes.find((p: any) => p.id === id); if (pack) delete pack.installedVersion; return { success: true }; },
   // Plugin Spotlight search (py_modules/plugin_catalog.py). A small invented fixture, not the real 4 MB list;
   // window.__pluginCatalog replaces it (e.g. { entries: [], installed: [], error: "…" } for the offline note).
+  achievement_popup_status: () => ({verified:true,finallyInstalled:!!(window as any).__finallyInstalled}),
   plugin_catalog: () => (window as any).__pluginCatalog ?? PLUGIN_CATALOG_FIXTURE,
   // Hub > Theme files (py_modules/theme_sources.py). Invented entries; window.__themeSources = { "<kind>:<source>": page }
   // replaces a page (tests inject real backend output with local pictures). Downloads are recorded in __themeSourceDownloads.
@@ -95,6 +135,17 @@ const backend: Record<string, (...a: any[]) => any> = {
   get_settings: () => (window as any).__previewSettings ?? null,
   set_settings: (s: any) => ((window as any).__previewSettings = s, true),
   list_sound_packs: () => (window as any).__testPacks ?? [],
+  deckthemes_audio_catalog: () => (window as any).__deckthemesAudio ?? [],
+  install_deckthemes_audio: async (id:string) => {
+    const w=window as any;
+    (w.__audioDownloadCalls??=[]).push(id);
+    if(w.__audioDownloadFailure)return {ok:false,error:"Preview download failure"};
+    const entry=w.__deckthemesAudio?.find((p:any)=>p.id===id);
+    if(!entry)return {ok:false,error:"Unknown preview audio"};
+    const folder=`DeckThemes-${id}`;
+    w.__testPacks=[...(w.__testPacks??[]),{id,folder,name:entry.name,music:entry.kind==="music",author:"Preview fixture",mappings:{},ignore:[],files:[entry.kind==="music"?"menu_music.mp3":"deck_ui_navigation.wav"]}];
+    return {ok:true,folder};
+  },
   media_server: () => (window as any).__testServer ?? null,
   list_data_themes: () => (window as any).__dataThemes ?? { base: null, themes: [] },
   get_dial_asset: (n: string) => (window as any).__dialAssets?.[n] ?? null,
@@ -139,5 +190,14 @@ export const callable =
 export const definePlugin = (f: any) => f;
 export const routerHook = { addRoute() {}, removeRoute() {}, addPatch() { return {}; }, removePatch() {} };
 export const fetchNoCors = (u: string, init?: any) => fetch(u, init);
-export const toaster = { toast() {} };
+export const toaster = { toast(data: any) {
+  if (data?.className !== "dht-achievement-toast") return {data,dismiss() {}};
+  const node = document.createElement("div"); node.dataset.achievementPreview = "true";
+  Object.assign(node.style, {position:"fixed",right:"38px",bottom:"32px",zIndex:"999999"});
+  document.body.appendChild(node); const root = createRoot(node); root.render(data.body);
+  let closed=false;
+  const dismiss=()=>{if(closed)return;closed=true;root.unmount();node.remove();};
+  const timer=setTimeout(dismiss,data.duration??5500);
+  return {data,dismiss:()=>{clearTimeout(timer);dismiss();}};
+} };
 export const openFilePicker = async () => ({ path: "", realpath: "" });

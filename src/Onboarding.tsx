@@ -3,13 +3,15 @@
 // its intro (its own boot sequence when it has one, else the generic reveal of themeIntro.tsx).
 // B on the first step skips the setup and keeps the default theme.
 import { HubLogo } from "./hubLogo";
-import { useEffect, useRef, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import { pushModalInput } from "./input";
 import { getSettings, THEMES, ThemeId, updateSettings } from "./settings";
-import { hubStyle, hubThemeKey, hubVarsCss, HUB_DECO_CSS } from "./hubStyles";
+import { hubStyle, hubThemeKey, hubVarsCss, HUB_DECO_CSS, HUB_STYLES } from "./hubStyles";
 import { inventory } from "./Marketplace";
 import { playThemeIntro } from "./themeIntro";
 import { playSound } from "./steam";
+import { loadLibrary } from "./library";
+import { Img } from "./common";
 
 const CHOICES = THEMES.filter((t) => t.id !== "frame");
 
@@ -22,7 +24,7 @@ export function Onboarding() {
   useEffect(() => { let live = true; inventory().then((i) => live && setInstalled(i || {})).catch(() => live && setInstalled({})); return () => { live = false; }; }, []);
   useEffect(() => { listRef.current?.querySelector('[data-selected="true"]')?.scrollIntoView({ block: "nearest" }); }, [sel, step]);
   const chosen = CHOICES[sel];
-  const isInstalled = (id: string) => !installed || !!installed[id]; // unknown yet: assume yes, the Hub catches the rest
+  const isInstalled = (id: string) => !!installed?.[id];
   const finish = (pick: boolean) => {
     const theme = pick ? chosen.id : getSettings().theme;
     updateSettings({ onboardingDone: true, theme: theme as ThemeId, enabled: true });
@@ -40,8 +42,12 @@ export function Onboarding() {
     return true;
   }), []);
   const s = getSettings();
-  const shown = step === 0 ? hubStyle(s.theme, s.x360?.style) : hubStyle(chosen.id, s.x360?.style);
-  const key = step === 0 ? hubThemeKey(s.theme, s.x360?.style) : hubThemeKey(chosen.id, s.x360?.style);
+  const sampleGames = useMemo(() => loadLibrary("all", "recent", 4).games.filter(g => !g.hidden).slice(0, 4), []);
+  const previewTheme = step === 0 ? s.theme : chosen.id;
+  // The Hub deliberately uses neutral styling for bonus themes; onboarding
+  // previews their own registered palette without that console-only restriction.
+  const shown = previewTheme === "x360" ? hubStyle(previewTheme, s.x360?.style) : HUB_STYLES[previewTheme];
+  const key = previewTheme === "x360" ? hubThemeKey(previewTheme, s.x360?.style) : previewTheme;
   const go = () => (step < 2 ? setStep(step + 1) : finish(true));
   return (
     <div className="dht-onboarding" data-hub-theme={key} data-step={step} data-motion={s.animations} role="dialog" aria-modal="true" aria-label="Welcome">
@@ -61,11 +67,18 @@ export function Onboarding() {
         <div className="dht-ob-body">
           <div className="dht-ob-list" ref={listRef}>
             {CHOICES.map((t, i) => <button key={t.id} className="dht-ob-item" data-selected={i === sel} onClick={() => (i === sel ? setStep(2) : setSel(i))} onFocus={() => setSel(i)}>
-              <strong>{t.name}</strong><span>{installed && !installed[t.id] ? "Download" : "Ready"}</span>
+              <strong>{t.name}</strong><span>{!installed ? "Checking…" : !installed[t.id] ? "Download" : "Ready"}</span>
             </button>)}
           </div>
           <div className="dht-ob-preview">
-            <div className="dht-ob-swatch" aria-hidden="true"><div className="dht-ob-swatch-bar" /><div className="dht-ob-swatch-tiles"><i /><i /><i /><i /></div></div>
+            <div className="dht-ob-swatch" aria-label={`${chosen.name} with games from your library`}>
+              <div className="dht-ob-swatch-bar" />
+              <div className="dht-ob-swatch-tiles">{sampleGames.length ? sampleGames.map(game =>
+                <div key={game.appid} className="dht-ob-game" title={game.name}>
+                  <Img srcs={game.art.portrait} className="dht-ob-game-cover" fit="contain" fallback={<div className="dht-ob-game-fallback">{game.name}</div>} />
+                </div>) : <><i /><i /><i /><i /></>}</div>
+            </div>
+            {sampleGames.length > 0 && <small className="dht-ob-library-note">Cover examples from your library</small>}
             <h2>{chosen.name}</h2>
             <p>{chosen.blurb}</p>
             <small>{installed && !installed[chosen.id] ? "Downloaded from the Hub in the next moment." : "Built in. You can change it any time from Theme options or the Hub."}</small>
@@ -99,6 +112,9 @@ const ONBOARDING_CSS = `
 .dht-ob-primary{background:var(--dht-hub-accent);color:var(--dht-hub-accent-text)!important;border-radius:var(--dht-hub-pill);padding:14px 30px;font-weight:700;font-size:15px;margin-top:10px;box-shadow:var(--dht-hub-shadow)}
 .dht-ob-pick{width:min(1040px,92vw);height:min(660px,88vh);display:flex;flex-direction:column}.dht-ob-pick header{padding-top:38px}.dht-ob-pick h1{font-size:34px;margin:6px 0 16px}.dht-ob-pick footer{font-size:11px;color:var(--dht-hub-sub);padding-top:12px;border-top:1px solid var(--dht-hub-line);margin-top:12px;text-transform:none}
 .dht-ob-body{display:grid;grid-template-columns:320px 1fr;gap:34px;flex:1;min-height:0}.dht-ob-list{overflow:auto;display:flex;flex-direction:column;gap:8px;padding:6px 8px 8px 4px}
+.dht-ob-preview .dht-ob-swatch{height:260px}.dht-ob-game{min-width:0;min-height:0;overflow:hidden;border-radius:var(--dht-hub-radius);background:var(--dht-hub-panel-hi)}.dht-ob-game-cover{display:block;width:100%;height:100%;object-fit:contain}.dht-ob-game-fallback{height:100%;display:grid;place-items:center;padding:12px;text-align:center;color:var(--dht-hub-text);font-size:14px}.dht-ob-library-note{margin-top:8px}
+.dht-onboarding[data-hub-theme=onyx]{--dht-hub-bg:repeating-linear-gradient(135deg,#ffffff03 0 1px,transparent 1px 4px),radial-gradient(ellipse at 50% 20%,#27292c,#08090b);--dht-hub-panel:linear-gradient(#24262a,#111215);--dht-hub-panel-hi:#34373c;--dht-hub-accent:#eeeeef;--dht-hub-accent-text:#111;--dht-hub-ring:0 0 0 2px #ddd;--dht-hub-radius:18px;--dht-hub-pill:30px}
+.dht-onboarding[data-hub-theme=silver] .dht-ob-swatch{background:repeating-linear-gradient(0deg,#ffffff33 0 1px,#00000005 1px 2px),linear-gradient(120deg,#e9e9e9,#a7a7a7,#f6f6f6);border-color:#aaa}
 .dht-ob-item{display:flex;justify-content:space-between;align-items:center;text-align:left;padding:13px 16px;background:var(--dht-hub-panel);color:var(--dht-hub-card-text)!important;border-radius:var(--dht-hub-radius);box-shadow:var(--dht-hub-shadow);flex:none}.dht-ob-item span{font-size:10px;color:var(--dht-hub-card-sub)}.dht-ob-item[data-selected=true]{background:var(--dht-hub-panel-hi);box-shadow:var(--dht-hub-ring);transform:translateX(4px)}
 .dht-ob-preview{padding:6px 4px;overflow:auto}.dht-ob-swatch{height:170px;border-radius:var(--dht-hub-radius);background:var(--dht-hub-panel);box-shadow:var(--dht-hub-shadow);padding:16px;display:flex;flex-direction:column;gap:14px;border:1px solid var(--dht-hub-line)}.dht-ob-swatch-bar{height:16px;width:46%;border-radius:var(--dht-hub-pill);background:var(--dht-hub-accent)}.dht-ob-swatch-tiles{display:grid;grid-template-columns:repeat(4,1fr);gap:10px;flex:1}.dht-ob-swatch-tiles i{border-radius:var(--dht-hub-radius);background:var(--dht-hub-panel-hi);box-shadow:var(--dht-hub-shadow)}.dht-ob-swatch-tiles i:first-child{box-shadow:var(--dht-hub-ring)}
 @media(max-width:850px){.dht-ob-body{grid-template-columns:230px 1fr;gap:18px}.dht-onboarding h1{font-size:34px}.dht-ob-card{padding:30px 26px}}

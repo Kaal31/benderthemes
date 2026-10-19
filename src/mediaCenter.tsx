@@ -8,7 +8,7 @@ import { CSSProperties, MouseEvent as RMouseEvent, ReactNode, useEffect, useRef,
 import { Icon } from "./common";
 import { pageSettings } from "./engine/pages";
 import { pushModalInput, Press, Stage } from "./input";
-import { crossfadeName, CROSSFADE_MAX, fmtClock, MusicAlbum, musicPlayer, REPEAT_NAMES, useMusic, usePlayer } from "./musicPlayer";
+import { crossfadeName, CROSSFADE_MAX, fmtClock, MusicAlbum, musicPlayer, REPEAT_NAMES, useMusic, usePlayer, useFullMusicPlayer, fullMusicPlayerVisible } from "./musicPlayer";
 import { Settings, useSettings } from "./settings";
 import { playSound } from "./steam";
 import { storeSkin } from "./storeView";
@@ -78,6 +78,9 @@ export const MEDIA_CSS = `
 .dht-media-mini b{display:block;font-size:16px;font-weight:600;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
 .dht-media-mini small{display:block;font-size:13px;color:var(--m-sub);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
 .dht-media-mini .dht-media-bar{height:3px;margin-top:6px}
+.dht-media-mini-controls{display:flex;align-items:center;gap:2px;flex-shrink:0}
+.dht-media-mini-controls button{display:grid;place-items:center;min-width:36px;min-height:40px;padding:4px;border:0;border-radius:6px;background:none;color:inherit;font-size:18px;cursor:pointer}
+.dht-media-mini-controls button:hover,.dht-media-mini-controls button:focus-visible{background:color-mix(in srgb,currentColor 15%,transparent);outline:1px solid currentColor}
 /* console touches */
 .dht-media-mini[data-theme=minecraft]{bottom:72px}
 .dht-media[data-theme=ps3],.dht-media[data-theme=psp]{background:radial-gradient(ellipse at 30% 10%,#2a5ea8,#0e2a5c 45%,#050f24)}
@@ -146,6 +149,7 @@ const where = { album: 0, track: 0, zone: "albums" as "albums" | "tracks" };
 
 // ───────────── the music player screen ─────────────
 export function MusicPlayerView({ onClose }: { onClose: () => void }) {
+  useFullMusicPlayer(true);
   const s = useMediaSettings();
   const albums = useMusic();
   const p = usePlayer();
@@ -255,7 +259,7 @@ export function MusicPlayerView({ onClose }: { onClose: () => void }) {
 export function NowPlayingMini({ onOpen }: { onOpen: () => void }) {
   const s = useMediaSettings();
   const p = usePlayer();
-  if (!p.album) return null;
+  if (!p.album || fullMusicPlayerVisible()) return null;
   const t = p.album.tracks[p.index];
   return (
     <div className="dht-media-mini" data-theme={s.theme} data-scheme={iisuSchemeAttr(s)} style={mediaVars(s)} onClick={onOpen} role="button" aria-label="Open the music player">
@@ -266,7 +270,11 @@ export function NowPlayingMini({ onOpen }: { onOpen: () => void }) {
         <small>{p.playing ? "Now playing" : "Paused"} · {p.album.name}</small>
         <div className="dht-media-bar"><div style={{ width: `${p.duration ? Math.min(100, (p.time / p.duration) * 100) : 0}%` }} /></div>
       </div>
-      <button aria-label={p.playing ? "Pause" : "Play"} onClick={(e) => { e.stopPropagation(); musicPlayer.toggle(); }} style={{ background: "none", border: 0, color: "inherit", fontSize: 18, cursor: "pointer" }}>{p.playing ? "❚❚" : "▶"}</button>
+      <div className="dht-media-mini-controls">
+        <button type="button" aria-label="Previous" onClick={(e) => { e.stopPropagation(); musicPlayer.prev(); }}>⏮</button>
+        <button type="button" aria-label={p.playing ? "Pause" : "Play"} onClick={(e) => { e.stopPropagation(); musicPlayer.toggle(); }}>{p.playing ? "❚❚" : "▶"}</button>
+        <button type="button" aria-label="Next" onClick={(e) => { e.stopPropagation(); musicPlayer.next(); }}>⏭</button>
+      </div>
     </div>
   );
 }

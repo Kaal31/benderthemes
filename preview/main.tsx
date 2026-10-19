@@ -1,8 +1,13 @@
+import { startAchievementPopups, previewAchievementPopup, achievementPopupStatus } from "../src/achievementPopups";
+import {SILVER_REFERENCE as PREVIEW_REFERENCE} from "../src/themes/silverReference";
+import {openThemeSettings} from "../src/themeSettingsMenu";
+import {ONYX_SOUND_PACK,ONYX_PREVIEW_CUES} from "./onyxSoundPack";
+import {REAL_GAME_ART} from "./realGameArt";
 import { THEME_STYLES } from "../src/engine/themeStyles";
 import { beginLaunch, dismissLaunch, launchState } from "../src/launch";
 import { openMarketplace, useMarketplace } from "../src/marketplaceState";
 import { showFirmwarePreview } from "../src/FirmwareNotice";
-import { autoPack, packFile, SOUND_FILES } from "../src/steam";
+import { autoPack, packFile, SOUND_FILES, playSound } from "../src/steam";
 // Browser preview of every theme with an invented sample library.
 import { createRoot } from "react-dom/client";
 import { applyPreset, consoleRows, currentPresetId, cycleLook, cycleLookPreset, cyclePreset, getPresets, refreshPresets, usePresets, saveUserPreset, variantLabel } from "../src/presets";
@@ -13,6 +18,7 @@ import { openSteam as openSteamPreview, setLibrarySource, setPreviewAchievements
 import { getSettings, initSettings, resetThemeSettings, seedSettings, THEMES, updateSettings, useSettings, ThemeId } from "../src/settings";
 import { refreshPacks, setPreviewBattery, setPreviewSound, setPreviewStatus, setPreviewUser, setWallpaperOverride, soundDiag } from "../src/steam";
 import { setPreviewTier } from "../src/badges";
+import { setPreviewLoadedPlugins } from "../src/pluginPresence";
 import { setPreviewShots, setPreviewTrailer } from "../src/media";
 import { setPreviewStore } from "../src/store";
 import { openDestination } from "../src/destinations";
@@ -31,8 +37,8 @@ function svg(w: number, h: number, body: string) {
   return "data:image/svg+xml;utf8," + encodeURIComponent(`<svg xmlns="http://www.w3.org/2000/svg" width="${w}" height="${h}" viewBox="0 0 ${w} ${h}">${body}</svg>`);
 }
 function art(name: string, i: number) {
-  if (referenceArt?.[name]) {
-    const a = referenceArt[name];
+  if (referenceArt?.[name] || REAL_GAME_ART[name]) {
+    const a = referenceArt?.[name] ?? REAL_GAME_ART[name];
     return {portrait:a.portrait,landscape:a.landscape ?? a.portrait,hero:a.hero ?? a.portrait,logo:a.logo ?? []};
   }
   const a = hue(name);
@@ -121,7 +127,7 @@ setPreviewUser("DeckPlayer");
 (window as any).__musicPlayer = musicPlayer; // tests: drive the shared music player
 (window as any).__refreshPacks = () => refreshPacks();
 setWallpaperOverride((n) => (window as any).__testWalls?.[n] ?? null);
-setPreviewStatus({ friendsOnline: 3, notifications: 3, downloads: 0, online: true });
+setPreviewStatus({ friendsOnline: 3, notifications: 3, downloads: 0, online: true, avatar: PREVIEW_REFERENCE.previewAvatar });
 setPreviewAchievements((id) => (id % 3 === 2 ? null : { unlocked: (id * 7) % 40, total: 57 }));
 // sample screenshots (drawn) and an optional local test trailer (?trailer=http://…/dash_h264.mpd)
 setPreviewShots(
@@ -132,6 +138,13 @@ setPreviewTier((id) => (["platinum", "gold", "silver", "bronze", "borked", "nati
 setPreviewBattery({ level: 0.72, charging: false });
 if (!new URLSearchParams(location.search).get("realsound")) setPreviewSound((kind,variation=0) => {
   const settings = getSettings();
+  if(settings?.theme === "onyx"){
+    if(!settings.sounds || ["none","steam"].includes(settings.packs.onyx??""))return;
+    const names:Record<string,string>={move:"rotation-click",tile:"rotation-click",tab:"menu-press",select:"confirm-press",open:"confirm-press",launch:"confirm-press",back:"back-release",close:"back-release",menu:"menu-press",toggle:"wheel-press",end:"back-release"};
+    const name=names[kind];if(!name)return;
+    const audio=new Audio(ONYX_PREVIEW_CUES[name]);audio.volume=Math.max(0,Math.min(1,(settings.sfxVolume??80)/100));audio.play().catch(()=>{});return;
+  }
+
   if(settings?.theme === "minecraft" || settings?.theme === "aero" || settings?.theme === "aero2"){
     if (["none","steam"].includes(settings.packs[settings.theme] ?? "")) return;
     const folder=settings.theme === "minecraft" ? "Minecraft Console Legacy" : "windows xp sounds";
@@ -154,7 +167,17 @@ if (!new URLSearchParams(location.search).get("realsound")) setPreviewSound((kin
 });
 
 const params = new URLSearchParams(location.search);
+if(params.has("protondb"))setPreviewLoadedPlugins(params.get("protondb")==="1"?["ProtonDB Badges"]:[]);
+(window as any).__previewLoadedPlugins=setPreviewLoadedPlugins;
 const initialTheme = (params.get("theme") as ThemeId) || themedPreview || "vita";
+(window as any).__testPacks=[...((window as any).__testPacks??[]),ONYX_SOUND_PACK];
+// Preview-only generated audio, never part of the Deck's scanned library.
+(window as any).__testMusic={ok:true,albums:[
+ {id:"demo-evening",name:"Evening Sessions",artist:"Preview Studio",cover:REAL_GAME_ART["Hollow Knight"].portrait[0],source:"local",appid:0,tracks:[{id:"demo-evening-1",title:"Evening Glow",file:"evening.wav",url:new URL("test-music/evening.wav",location.href).href,size:1323044,disc:"1"},{id:"demo-evening-2",title:"Slow Drift",file:"drift.wav",url:new URL("test-music/drift.wav",location.href).href,size:1323044,disc:"1"}]},
+ {id:"demo-drift",name:"Quiet Horizons",artist:"Preview Studio",cover:REAL_GAME_ART["Stardew Valley"].portrait[0],source:"local",appid:0,tracks:[{id:"demo-drift-1",title:"Quiet Horizon",file:"drift.wav",url:new URL("test-music/drift.wav",location.href).href,size:1323044,disc:"1"}]},
+ {id:"demo-orbit",name:"Night Orbit",artist:"Preview Studio",cover:REAL_GAME_ART["Cyberpunk 2077"].portrait[0],source:"local",appid:0,tracks:[{id:"demo-orbit-1",title:"Night Orbit",file:"orbit.wav",url:new URL("test-music/orbit.wav",location.href).href,size:1323044,disc:"1"}]}
+]};
+
 seedSettings({
   theme: initialTheme,
   onboardingDone: params.get("onboarding") !== "1",
@@ -177,7 +200,9 @@ seedSettings({
 });
 (globalThis as any).__previewSettings = null;
 
-Object.assign(window,{__themeStyles:THEME_STYLES,__getThemeSettings:getSettings,__getThemeLibrary:()=>{const s=getSettings(),c=s.themeCollections?.[s.theme];return loadLibraryPreview(c?.source??s.source,s.sort,s.maxGames,c?.ids);},__beginNativeLaunch:beginLaunch,__dismissLaunch:dismissLaunch,__launchState:launchState,__autoPack:autoPack,__packFile:packFile,__refreshPacks:refreshPacks,__openPlace:openSteamPreview,__updateTheme:updateSettings,__openGame:(id:number)=>openGamePage((window as any).__libraryGame(id)),__openAchievements:()=>openAchievements(loadLibraryPreview("all","recent",400).games[0]),__launchGame:launchGame});
+Object.assign(window,{__openThemeSettings:openThemeSettings,__themeStyles:THEME_STYLES,__getThemeSettings:getSettings,__getThemeLibrary:()=>{const s=getSettings(),c=s.themeCollections?.[s.theme];return loadLibraryPreview(c?.source??s.source,s.sort,s.maxGames,c?.ids);},__beginNativeLaunch:beginLaunch,__dismissLaunch:dismissLaunch,__launchState:launchState,__autoPack:autoPack,__packFile:packFile,__refreshPacks:refreshPacks,__openPlace:openSteamPreview,__updateTheme:updateSettings,__openGame:(id:number)=>openGamePage((window as any).__libraryGame(id)),__openAchievements:()=>openAchievements(loadLibraryPreview("all","recent",400).games[0]),__launchGame:launchGame});
+const stopAchievementPreview = startAchievementPopups();
+Object.assign(window,{__previewAchievementPopup:previewAchievementPopup,__achievementPopupStatus:achievementPopupStatus,__stopAchievementPopups:stopAchievementPreview});
 (window as any).__libraryGame=(id:number)=>loadLibraryPreview("all","recent",400).byId.get(id);
 function Toast() {
   const [msg, setMsg] = useState("");
@@ -219,9 +244,12 @@ function App() {
       <div id="bar" style={{ display: "flex", gap: 6, alignItems: "center", padding: "10px 12px", flexWrap: "wrap" }}>
         <b style={{ marginRight: 8 }}>Deck Home Themes preview</b>
         <button onClick={() => openMarketplace()}>Hub</button>
+        {s.theme === "silver" && <button onClick={() => window.dispatchEvent(new Event("preview-steam-button"))}>Steam button</button>}
         <button onClick={() => openMarketplace(undefined, { from: s.theme })}>Hub (from this home)</button>
         <button onClick={() => openSteamPreview("settings")}>Theme settings</button>
         <button onClick={showFirmwarePreview}>Preview firmware update</button>
+        {s.theme === "onyx" && <><label><input aria-label="Preview sound effects" type="checkbox" checked={s.sounds} onChange={e=>updateSettings({sounds:e.target.checked})}/> SFX</label><label>Volume <input aria-label="Preview SFX volume" type="range" min="0" max="100" value={s.sfxVolume} onChange={e=>updateSettings({sfxVolume:Number(e.target.value)})}/></label><button onClick={()=>{updateSettings({sounds:true,sfxVolume:Math.max(60,s.sfxVolume),packs:{...s.packs,onyx:""}});playSound("toggle");}}>Test wheel sound</button><label>Carousel <select aria-label="Preview carousel style" value={String(s.styles?.onyx?.carousel??"covers")} onChange={e=>updateSettings({styles:{...s.styles,onyx:{...s.styles?.onyx,carousel:e.target.value}}})}><option value="covers">Portrait covers</option><option value="square">Square capsules</option><option value="icons">Classic Cover Flow</option></select></label>{(["screenGlass","coverGlass"] as const).map(key=><label key={key}>{key==="screenGlass"?"Screen glass":"Cover glass"} <select aria-label={key==="screenGlass"?"Preview screen glass":"Preview cover glass"} value={String(s.styles?.onyx?.[key]??"off")} onChange={e=>updateSettings({styles:{...s.styles,onyx:{...s.styles?.onyx,[key]:e.target.value}}})}><option value="off">Off</option><option value="clear">Clear</option><option value="prism">Prismatic</option></select></label>)}<label><input aria-label="Preview animations" type="checkbox" checked={s.animations} onChange={e=>updateSettings({animations:e.target.checked})}/> Animations</label></>}
+
         {THEMES.filter((t) => t.id !== "frame").map((t, i) => (
           <button key={t.id} onClick={() => updateSettings({ theme: t.id, activeTheme: "", enabled: true })} style={{ padding: "5px 10px", borderRadius: 6, border: 0, cursor: "pointer", background: s.theme === t.id ? "#3d8bfd" : "#333", color: "#fff" }}>
             {i + 1}. {t.name}

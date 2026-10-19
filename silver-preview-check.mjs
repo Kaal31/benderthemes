@@ -1,0 +1,2 @@
+import {chromium} from 'playwright';
+const browser=await chromium.launch({headless:true});const page=await browser.newPage({viewport:{width:1280,height:800}});let errors=[];page.on('pageerror',e=>errors.push(e.message));await page.goto('file:///C:/Users/levmi/Desktop/deckygamescreenplugin/experimental/preview/silver.html');await page.waitForTimeout(1500);await page.screenshot({path:'preview/silver-preview.png'});console.log({errors,theme:await page.locator('.silver-home').count(),covers:await page.locator('.silver-cover').count()});await browser.close();

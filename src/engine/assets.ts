@@ -18,18 +18,21 @@ import { loadSkinFile } from "../skins";
 import { loadSwitchSkin } from "../switchThemes";
 import { loadWiiuSkin } from "../wiiuThemes";
 import { ICON_SPOTS } from "./manifest";
+import { backgroundMediaKind } from "../backgroundMedia";
 
 export type AssetSlot = "wallpaper" | "icons" | "sounds" | "music" | "font" | "accent";
 export type FileKind = "p3t" | "psp" | "vita" | "x360" | "xbox" | "wii" | "n3ds" | "switch" | "wiiu";
 
 /** What each layout draws of the shared slots. accent: the layout's own colour variables the accent is written to. */
-export interface LayoutCaps { background: boolean; gameArt: boolean; tint: boolean; brightness: boolean; icons: boolean; font: boolean; accent: string[] }
+export interface LayoutCaps { background: boolean; videoBackground?:boolean; gameArt: boolean; tint: boolean; brightness: boolean; icons: boolean; font: boolean; accent: string[] }
 const caps = (background: boolean, icons: boolean, font: boolean, accent: string[] = [], extra: Partial<LayoutCaps> = {}): LayoutCaps =>
   ({ background, gameArt: background, tint: background, brightness: background, icons, font, accent, ...extra });
 /** Checked in the preview (handoff-notes/presets-v2.md, "Capability table"). Background = draws the chosen picture;
  *  icons = draws the shared <Icon> glyphs where an icon set can replace them; font = its text follows --dht-font;
  *  accent = the variables its focus / highlight colour reads. */
 export const LAYOUT_SLOTS: Record<ThemeId, LayoutCaps> = {
+  onyx: caps(false, true, false),
+  silver: caps(false, true, false),
   wii: caps(true, true, false, [], { gameArt: false, tint: true }),
   wiiu: caps(true, true, false, ["--dht-wiiu-accent"], { gameArt: false, tint: true }),
   switch: caps(true, true, false, ["--dht-switch-accent"], { gameArt: false, tint: true }),
@@ -46,12 +49,13 @@ export const LAYOUT_SLOTS: Record<ThemeId, LayoutCaps> = {
   aero: caps(true, true, false),
   aero2: caps(true, true, false),
   dial: caps(true, true, false, [], { tint: false }),
-  castle: caps(false, true, false),
-  republic: caps(false, true, false),
+  castle: caps(true, true, false, [], {videoBackground:true,gameArt:false,tint:false}),
+  republic: caps(true, true, false, [], {videoBackground:true,gameArt:false,tint:false}),
   minecraft: caps(false, false, false),
   pain: caps(false, true, false),
-  nazarick: caps(false, true, false),
+  nazarick: caps(true, true, false, [], {videoBackground:true,gameArt:false,tint:false}),
   iisu: caps(true, true, true, ["--dht-iisu-ring", "--dht-iisu-accent-fill"], { tint: false }),
+  native: caps(true, true, true, ["--dht-accent"]),
   frame: caps(true, true, true, ["--dht-accent"], { gameArt: false, tint: false, brightness: false }),
 };
 export const slotOffered = (layout: ThemeId, slot: AssetSlot): boolean => {
@@ -210,7 +214,7 @@ export interface AssetGroup { source: string; items: AssetChoice[] }
 export interface InstalledLists {
   walls: string[];
   files: Partial<Record<FileKind, { id: string; name: string }[]>>;
-  themes: { id: string; name: string; has: (slot: AssetSlot) => boolean }[];
+  themes: { id: string; name: string; wallpaper?:string; has: (slot: AssetSlot) => boolean }[];
 }
 const FILE_SOURCES: { kind: FileKind; label: string; background: boolean; icons: boolean; font?: boolean; accent?: boolean }[] = [
   { kind: "p3t", label: "PS3 theme files", background: true, icons: true },
@@ -234,12 +238,12 @@ export async function refreshHubSets() {
   }));
 }
 /** Every installed asset for a slot, grouped by where it comes from (an empty group is left out). */
-export function assetGroups(slot: AssetSlot, lists: InstalledLists, exceptTheme?: string): AssetGroup[] {
+export function assetGroups(slot: AssetSlot, lists: InstalledLists, exceptTheme?: string, allowVideo=false): AssetGroup[] {
   const groups: AssetGroup[] = [];
   const add = (source: string, items: AssetChoice[]) => items.length && groups.push({ source, items });
-  const fromThemes = (s: AssetSlot) => lists.themes.filter((t) => t.id !== exceptTheme && t.has(s)).map((t) => ({ ref: t.id, name: t.name }));
+  const fromThemes = (s: AssetSlot) => lists.themes.filter((t) => t.id !== exceptTheme && t.has(s) && (s!=="wallpaper"||allowVideo||backgroundMediaKind(t.wallpaper)!=="video")).map((t) => ({ ref: t.id, name: t.name }));
   if (slot === "wallpaper") {
-    add("Wallpapers folder", lists.walls.map((f) => ({ ref: `@wp/${f}`, name: f })));
+    add("Wallpapers folder", lists.walls.filter(f=>allowVideo||backgroundMediaKind(f)!=="video").map((f) => ({ ref: `@wp/${f}`, name: f })));
     add("Hub packs", HUB_BACKGROUNDS.filter((b) => hubFound.has(`${b.set}/${b.name}`)).map((b) => ({ ref: `@hub/${b.set}/${b.name}`, name: b.label })));
     for (const f of FILE_SOURCES.filter((x) => x.background)) add(f.label, (lists.files[f.kind] ?? []).map((x) => ({ ref: fileRef(f.kind, x.id), name: x.name })));
     add("Community themes", fromThemes("wallpaper"));

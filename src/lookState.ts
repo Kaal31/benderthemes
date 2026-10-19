@@ -86,7 +86,7 @@ export const GLOBAL_PATHS: Path[] = [["pages"], ["hubStyle"]];
 /** Every settings path a preset of `look` holds, for the theme file `file`. */
 export function lookPaths(look: string, file: string, hint?: ThemeId): Path[] {
   const layout = layoutOf(look, hint);
-  const out: Path[] = [["mix", look], ...PER_LAYOUT.map((k) => [k, layout]), ...GLOBAL_PATHS, ...(LAYOUT_OWN[layout] ?? [])];
+  const out: Path[] = [["mix", look], ["protondbThemes",look], ...PER_LAYOUT.map((k) => [k, layout]), ...GLOBAL_PATHS, ...(LAYOUT_OWN[layout] ?? [])];
   const fx = FILE_KINDS[layout]?.fx(file);
   if (fx) out.push(["themeFx", fx]);
   return out;

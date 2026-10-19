@@ -1,3 +1,4 @@
+import {customProfilePicture} from "../profilePicture";
 // Xbox 360 Kinect dashboard (2010), rebuilt from the Kinect-era dashboard in
 // thedev0ps/Xbox-360-Dashboard-Archive. Layout follows its XUI scenes on a
 // 1280×720 canvas: ChannelListScene at (144,154) with the channel names about
@@ -206,7 +207,7 @@ export function KinectHome() {
           {/* your avatar, standing on the floor in front of the far panels */}
           <div aria-hidden="true" style={{ position: "absolute", left: 1075, top: 236, width: 220, height: 360, zIndex: 50, pointerEvents: "none" }}>
             <div style={{ position: "absolute", left: 50, top: 316, width: 120, height: 22, borderRadius: "50%", background: "radial-gradient(closest-side, rgba(0,0,0,.35), transparent)" }} />
-            <X360Avatar spec={mine} model={model} motion={s.animations} faceX={-0.6} />
+            {customProfilePicture()?<img src={customProfilePicture()} alt="Custom profile picture" style={{width:"100%",height:"100%",objectFit:"contain"}}/>:<X360Avatar spec={mine} model={model} motion={s.animations} faceX={-0.6} />}
           </div>
           {/* button legend */}
           <div style={{ position: "absolute", left: LIST_X, top: 632, height: 32, display: "flex", gap: 34, alignItems: "center", fontSize: 18, textShadow: TEXT_SHADOW }}>

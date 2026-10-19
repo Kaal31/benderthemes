@@ -6,7 +6,11 @@ import { CSSProperties, useEffect, useRef, useState } from "react";
 import { opensKeyboardOnTap, showSteamKeyboard } from "./steamKeyboard";
 import { collectionMenu, GameArt, Icon, IconName, MenuView, themeMenu, useMenu } from "./common";
 import { friendFullName } from "./steamData";
-import { Game, Library, SteamPlace, achievements, fmtPlaytime, openSteam } from "./library";
+import { Game, Library, SteamPlace, achievements, fmtPlaytime, openNativeGamePage, openSteam } from "./library";
+import { Navigation } from "@decky/ui";
+import { Badges, protonDbEnabled } from "./badges";
+import { useProtonDbPresent } from "./pluginPresence";
+import { pluginGameActions } from "./pluginSupport";
 import { Press, pushModalInput, spatial, Stage } from "./input";
 import { Settings, updateSettings } from "./settings";
 import { playSound, useSteamStatus } from "./steam";
@@ -30,6 +34,7 @@ export function DestinationView({destination,settings:homeSettings,lib,onClose,o
   const [page,setPage]=useState(destination);
   // each page can be drawn by another theme than the home (Theme options -> Pages)
   const settings=pageSettings(homeSettings,pageOf(page.place));
+  const protonDbDetected = useProtonDbPresent();
   const skin=storeSkin(settings);
   const {ref:surfaceRef,close:closeSurface}=useCastleWindow(settings,onClose);
   const [history,setHistory]=useState<Destination[]>([]);
@@ -63,6 +68,9 @@ export function DestinationView({destination,settings:homeSettings,lib,onClose,o
   } else if(page.place==="game"&&game) {
     rows=[{label:game.installed?"Play":"Install / Play",icon:"play",run:()=>onLaunch(game)},{label:"Achievements",icon:"trophy",run:()=>go({place:"achievements",game})},{label:"Screenshots",icon:"photo",run:onMedia},{label:"Watch Trailer",icon:"video",run:()=>onTrailer(game)},{label:"Browse Store",icon:"store",run:()=>openSteam("store")}];
     subtitle=fmtPlaytime(game.playtime, game.lastPlayed);
+    if (protonDbDetected && protonDbEnabled(settings) && !game.shortcut) rows.push({label:"ProtonDB reports",icon:"info",run:()=>Navigation.NavigateToExternalWeb(`https://www.protondb.com/app/${game.appid}`)});
+    rows.push(...pluginGameActions(game).map(action=>({label:action.label,run:action.run})));
+    rows.push({label:"Steam game page",sub:"Open plugin badges, panels and game options",icon:"info",run:()=>{openNativeGamePage(game);onClose();}});
   } else if(page.place==="achievements"&&game) {
     const progress=achievements(game);subtitle=progress?`${progress.unlocked} / ${progress.total} unlocked`:"Achievement progress";
     rows=(ach??[]).map(a=>({label:a.strName??a.name??"Achievement",sub:a.bAchieved?"Unlocked":a.strDescription??a.description??"Locked",icon:"trophy",state:a.bAchieved?"on":"off"}));
@@ -106,11 +114,12 @@ export function DestinationView({destination,settings:homeSettings,lib,onClose,o
   const itemStyle:CSSProperties={display:"flex",alignItems:"center",gap:22,padding:"16px 22px",minHeight:68,boxSizing:"border-box",borderRadius:skin.radius,border:"1px solid transparent",color:skin.text,width:"100%",textAlign:"left",font:"inherit",cursor:"pointer"};
   const menuVariant=settings.theme==="ps3"||settings.theme==="psp"?"xmb":settings.theme;
   return <div ref={surfaceRef} className="dht-destination" data-theme={settings.theme} data-place={page.place} data-variant={settings.theme==="x360"?settings.x360?.style??"metro":undefined} data-n3ds-top={settings.theme==="n3ds"?(settings.n3dsTop==="hide"?"hide":"show"):undefined} data-scheme={iisuSchemeAttr(settings)} style={{position:"absolute",inset:0,zIndex:85,...iisuPageVars(settings),...(settings.theme==="castle"?castleWindowAppearance(settings):{})}}><Stage background={skin.bg}><style>{PAGE_LOOKS}</style>
-    {settings.theme==="nazarick"&&<><NazarickBackdrop page={page.place} motion={settings.animations}/><NazarickNavigation page={page.place} settings={settings} onNavigate={navigateNazarick}/></>}
+    {settings.theme==="nazarick"&&<><NazarickBackdrop page={page.place} motion={settings.animations} settings={settings}/><NazarickNavigation page={page.place} settings={settings} onNavigate={navigateNazarick}/></>}
     <div className={settings.theme==="nazarick"?"naz-content dht-page-frame":"dht-page-frame"} style={{position:"absolute",inset:"5% 6%",color:skin.text,fontFamily:skin.font??'"Segoe UI",Arial,sans-serif',display:"flex",flexDirection:"column",gap:18}}>
       <header className="dht-page-header" style={{display:"flex",alignItems:"center",gap:24,color:skin.tabText??skin.text}}>{settings.theme!=="nazarick"&&<button className="dht-page-back" onClick={back} style={{...itemStyle,width:"auto",minHeight:48,background:skin.panel}}>‹ Back</button>}<h1 className="dht-page-title" data-focus-label={page.place==="library"||page.place==="search"?rows[current]?.label??"":undefined} style={{fontSize:38,fontWeight:400,margin:0}}>{game?.name??names[page.place]}</h1></header>
       <div className="dht-page-main">{settings.theme!=="nazarick"&&<nav className="dht-page-tabs" aria-label="Page tabs">{tabs.map(place=><button key={place} style={{borderRadius:skin.radius,...skin.ring(page.place===place)}} aria-current={page.place===place?"page":undefined} onClick={()=>switchTab(place)}>{names[place]}</button>)}</nav>}
       <div className="dht-page-content">{subtitle&&<div className="dht-page-subtitle" style={{fontSize:21,color:skin.tabText??skin.sub}}>{subtitle}</div>}
+      {page.place==="game"&&game&&<Badges g={game} size={15} theme={settings.theme}/>}
       {(page.place==="search"||page.place==="library")&&<input ref={inputRef} {...opensKeyboardOnTap} aria-label="Search games" placeholder="Search games…" value={query} onChange={e=>{setQuery(e.target.value);setSel(0);}} onKeyDown={e=>e.stopPropagation()} style={{fontSize:24,padding:14,background:skin.panel,color:skin.text,border:`1px solid ${skin.sub}`,borderRadius:skin.radius}}/>}
       {notice&&<p role="status">{notice}</p>}
       {(page.place==="browser"||page.place==="community") ? <div style={{display:"flex",flexDirection:"column",gap:12,flex:1,minHeight:0}}><form onSubmit={e=>{e.preventDefault();try{const u=new URL(address.includes("://")?address:`https://${address}`);if(u.protocol!=="https:")throw new Error();setWebUrl(u.href);setNotice("");}catch{setNotice("Enter a valid HTTPS address.");}}} style={{display:"flex",gap:12}}><input aria-label="Web address" value={address} onChange={e=>setAddress(e.target.value)} onKeyDown={e=>e.stopPropagation()} style={{flex:1,fontSize:21,padding:12}}/><button type="submit" style={{fontSize:20,padding:12}}>Go</button></form><iframe title="Themed web browser" src={webUrl} sandbox="allow-scripts allow-forms allow-same-origin allow-popups" style={{border:0,background:"white",flex:1}}/><div style={{fontSize:17}}>Some sites block embedded browsing. Checkout and sign-in use Steam’s browser.</div><button onClick={()=>{const sc=client();if(sc?.System?.OpenInSystemBrowser)sc.System.OpenInSystemBrowser(webUrl);else setNotice("The browser handoff is only available on Steam Deck.");}} style={{...itemStyle,background:skin.panel,minHeight:45,fontSize:20}}>Open in system browser</button></div> : <div className="dht-page-body" style={{display:"flex",gap:38,minHeight:0,flex:1}}>

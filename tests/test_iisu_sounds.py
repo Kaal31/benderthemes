@@ -38,7 +38,12 @@ class IisuSounds(unittest.TestCase):
         self.assertIn("iisu", package_themes.LABELS)
         catalog = json.loads((ROOT / "theme-catalog.json").read_text(encoding="utf-8"))
         pack = [t for t in catalog["themes"] if t["id"] == "iisu"]
-        self.assertTrue(pack and "sounds/iisu SFX/pack.json" in pack[0]["resources"] and pack[0]["theme"] == "iisu")
+        self.assertTrue(pack and pack[0]["theme"] == "iisu")
+        remote = next((a for a in package_themes.audio_catalog() if "iisu SFX" in a.get("folders", [])), None)
+        if remote:
+            self.assertIn(remote["id"], pack[0].get("audioPacks", []))
+        else:
+            self.assertIn("sounds/iisu SFX/pack.json", pack[0]["resources"])
 
 
 if __name__ == "__main__":

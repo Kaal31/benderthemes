@@ -1,3 +1,4 @@
+import { useActiveInterval } from "./performance";
 // Live Steam activity for the themes that show it as part of their own look (Wii U Plaza now, the 3DS later):
 // notifications, friends (online / playing), a game's achievements (names, icons, unlock times) and the
 // facts for a "details" card. Everything reads Steam's own UI stores and SteamClient when they exist and
@@ -52,7 +53,7 @@ export interface Notices{count:number;items:Notice[]}
 export function useNotices(on=true):Notices{
   const status=useSteamStatus(),dls=useDownloads();
   const [items,setItems]=useState<Notice[]>(()=>readNotices());
-  useEffect(()=>{if(!on)return;const read=()=>setItems(readNotices());read();const t=setInterval(read,4000);return()=>clearInterval(t);},[on]);
+  useActiveInterval(() => { const next = readNotices(); setItems(prev => JSON.stringify(prev) === JSON.stringify(next) ? prev : next); }, 4000, on);
   const done:Notice[]=dls.items.filter(d=>d.completed).map(d=>({id:`download:${d.appid}`,kind:"download",title:"Download complete",body:"",appid:d.appid,unread:true}));
   const all=!on?[]:[...items,...done.filter(d=>!items.some(n=>n.kind==="download"&&n.appid===d.appid))];
   const unread=all.filter(n=>n.unread).length;
@@ -75,7 +76,7 @@ export function readFriends():Friend[]{
 /** Friends who are online, those playing something first. Refreshed every few seconds. */
 export function useFriends(on=true):Friend[]{
   const [list,setList]=useState<Friend[]>(()=>readFriends());
-  useEffect(()=>{if(!on)return;const read=()=>setList(readFriends());read();const t=setInterval(read,6000);return()=>clearInterval(t);},[on]);
+  useActiveInterval(() => { const next = readFriends(); setList(prev => JSON.stringify(prev) === JSON.stringify(next) ? prev : next); }, 6000, on);
   return list.filter(f=>f.online).sort((a,b)=>Number(!!b.game)-Number(!!a.game));
 }
 
@@ -136,7 +137,7 @@ export function noticeCues(prevFriends:Friend[]|null,friends:Friend[],prevNotice
 export function useNoticeSounds(on=true){
   const notices=useNotices(on);
   const [friends,setFriends]=useState<Friend[]>(()=>readFriends());
-  useEffect(()=>{if(!on)return;const t=setInterval(()=>setFriends(readFriends()),6000);return()=>clearInterval(t);},[on]);
+  useActiveInterval(() => { const next = readFriends(); setFriends(prev => JSON.stringify(prev) === JSON.stringify(next) ? prev : next); }, 6000, on);
   const last=useRef<{f:Friend[];n:Notice[]}|null>(null);
   useEffect(()=>{
     if(!on)return;

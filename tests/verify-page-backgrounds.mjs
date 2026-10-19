@@ -1,0 +1,15 @@
+import {build} from 'esbuild';
+import assert from 'node:assert/strict';
+const out=await build({entryPoints:['src/pageBackgrounds.ts'],bundle:true,write:false,format:'esm'});
+const {pageBackgroundRef:ref,FIXED_BACKGROUND_PAGES:pages}=await import('data:text/javascript;base64,'+Buffer.from(out.outputFiles[0].text).toString('base64'));
+const s={activeTheme:'nazarick',wallpapers:{},mix:{nazarick:{wallpaper:'@wp/old.mp4','wallpaper:library':'@wp/library.gif','wallpaper:settings':'@wp/settings.png'}}};
+assert.equal(ref(s,'nazarick','home'),'@wp/old.mp4');
+for(const p of ['store','friends','downloads'])assert.equal(ref(s,'nazarick',p),undefined,'unconfigured pages keep their own defaults');
+for(const p of ['library','search','game','achievements'])assert.equal(ref(s,'nazarick',p),'@wp/library.gif');
+assert.equal(ref(s,'nazarick','qam'),'@wp/settings.png');
+s.mix.nazarick['wallpaper:home']='none';assert.equal(ref(s,'nazarick','home'),'','explicit default overrides legacy shared background');
+s.activeTheme='custom-naz';s.mix['custom-naz']={'wallpaper:store':'@wp/shop.webm'};
+assert.equal(ref(s,'nazarick','store'),'@wp/shop.webm');assert.equal(ref(s,'nazarick','library'),undefined,'choices remain isolated per theme');
+assert.deepEqual(Object.keys(pages),['nazarick'],'desktop/window themes do not gain per-window controls');
+assert.equal(pages.nazarick.length,6);
+console.log('PASS six fixed backgrounds, page isolation, legacy Home-only choice, page default reset, destination aliases and theme isolation');

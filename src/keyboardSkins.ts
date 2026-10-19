@@ -58,7 +58,7 @@ export function keyboardClasses(): { classes: KbClasses; from: "steam" | "fallba
 }
 
 // ───────────── the skins ─────────────
-export type KbLook = "wii" | "wiiu" | "switch" | "n3ds" | "ps1" | "ps2" | "ps3" | "psp" | "ps4" | "ps5" | "vita" | "xbox" | "x360" | "x360blades" | "iisu" | "aero" | "minecraft" | "neutral";
+export type KbLook = "wii" | "wiiu" | "switch" | "n3ds" | "ps1" | "ps2" | "ps3" | "psp" | "ps4" | "ps5" | "vita" | "xbox" | "x360" | "x360blades" | "iisu" | "aero" | "minecraft" | "neutral" | "onyx" | "silver" | "aero2" | "dial" | "castle" | "republic" | "nazarick" | "pain" | "frame";
 interface Skin {
   name: string;
   /** What the skin is based on (shown in the handoff notes / preview sheet). */
@@ -96,7 +96,7 @@ export const SKINS: Record<KbLook, Skin> = {
     back: "#9fd0dc", backImg: "linear-gradient(180deg,#cdeaf1 0%,#a5d3df 55%,#86c0cf 100%)", backText: "#1f6982",
     space: "#9fd0dc", spaceImg: "linear-gradient(180deg,#cdeaf1 0%,#a5d3df 55%,#86c0cf 100%)", spaceText: "#1f6982",
     arrows: "#9fd0dc", arrowsImg: "linear-gradient(180deg,#cdeaf1 0%,#a5d3df 55%,#86c0cf 100%)", arrowsText: "#1f6982",
-    enter: "#8fcca4", enterImg: "linear-gradient(180deg,#c3e8c4 0%,#9fd5ad 55%,#7fc195 100%)", enterText: "#245c3a",
+    enter: "#9fd0dc", enterImg: "linear-gradient(180deg,#cdeaf1,#86c0cf)", enterText: "#1f6982",
     focus: "#ffffff", focusImg: "linear-gradient(180deg,#ffffff 0%,#f6f6f6 100%)", focusText: "#202124", focusShadow: "0 0 10px 3px #ffffffd0, inset 0 0 0 1px #ffffff",
     press: "#ffffff", pressText: "#000", toggle: "#e8ec9c", toggleText: "#3a3c10", glyphs: "dark", focusGlyphs: "dark",
   },
@@ -112,20 +112,20 @@ export const SKINS: Record<KbLook, Skin> = {
     press: "#ffffff", pressText: "#1a49b0", toggle: "#8ad13a", toggleText: "#fff", glyphs: "dark", focusGlyphs: "dark", align: "right",
   },
   ps4: {
-    name: "PS4", ref: "PS4 on-screen keyboard (Create Party, 2015 firmware): black panel, dark grey keys, blue focus frame, teal Done",
+    name: "PS4", ref: "Sony PS4 user guide screenshot: flat charcoal keys, grey function keys, white focus frame, cyan Done",
     font: SONY, panel: "linear-gradient(180deg,#0b0b0c 0%,#141516 100%)", radius: "2px", gap: [1, 1],
-    key: "#36383b", keyImg: "linear-gradient(180deg,#4a4c50 0%,#36383b 55%,#2c2e31 100%)", keyText: "#ffffff", keyShift: "#a6a8ab", keyBorder: "1px solid #1d1e20",
-    fn: "#303235", fnImg: "linear-gradient(180deg,#414347 0%,#2f3134 100%)", fnText: "#ffffff",
-    enter: "#1aa5c6", enterImg: "linear-gradient(180deg,#3cc0dc 0%,#1aa5c6 60%,#1290b0 100%)", enterText: "#ffffff",
-    focus: "#2c2e31", focusImg: "linear-gradient(180deg,#45474b 0%,#2f3134 100%)", focusText: "#ffffff", focusShadow: "inset 0 0 0 2px #6fd3f2, 0 0 8px 1px #4fc1e9", focusBorder: "#6fd3f2",
+    key: "#2d2e30", keyImg: "none", keyText: "#ffffff", keyShift: "#a6a8ab", keyBorder: "1px solid #1d1e20",
+    fn: "#48494b", fnImg: "none", fnText: "#ffffff",
+    enter: "#168eb2", enterImg: "none", enterText: "#ffffff",
+    focus: "#2d2e30", focusImg: "none", focusText: "#ffffff", focusShadow: "inset 0 0 0 2px #ffffff", focusBorder: "#ffffff",
     press: "#4fc1e9", pressText: "#fff", toggle: "#1aa5c6", toggleText: "#fff", glyphs: "light", focusGlyphs: "light",
   },
   ps5: {
     name: "PS5", ref: "PS5 on-screen keyboard: near-black panel, borderless letters, darker function row, white rounded focus frame",
-    font: SONY, panel: "#16171a", radius: "6px", gap: [1, 1],
-    key: "#1d1e21", keyText: "#f2f2f2", keyShift: "#8c8d91",
+    font: SONY, panel: "#14171b", radius: "3px", gap: [1, 1],
+    key: "#101318", keyText: "#f2f2f2", keyShift: "#8c8d91",
     fn: "#26282c", fnText: "#f2f2f2", enter: "#26282c", enterText: "#ffffff",
-    focus: "#34363b", focusText: "#ffffff", focusShadow: "inset 0 0 0 2px #f4f4f4, 0 0 12px #ffffff40",
+    focus: "#34363b", focusText: "#ffffff", focusShadow: "inset 0 0 0 2px #f4f4f4, 0 0 1px #ffffff40",
     press: "#f4f4f4", pressText: "#111", toggle: "#3b3d42", toggleText: "#fff", glyphs: "light", focusGlyphs: "light", weight: 500,
     extra: (S, c) => `${S} .${c.KeyboardMetaKey},${S} .${c.KeyboardEnter},${S} .${c.KeyboardBackspace},${S} .${c.KeyboardLeftShift},${S} .${c.KeyboardRightShift},${S} .${c.KeyboardTabKey},${S} .${c.KeyboardCapsKey},${S} .${c.KeyboardSpacebar}{box-shadow:inset 0 0 0 1px #3a3c40}`,
   },
@@ -134,6 +134,7 @@ export const SKINS: Record<KbLook, Skin> = {
     font: SONY, panel: "linear-gradient(180deg,#c3c3cb 0%,#a9a9b4 100%)", radius: "8px", gap: [1, 1.5],
     key: "#f7f7f9", keyImg: "linear-gradient(180deg,#ffffff 0%,#ececf0 100%)", keyText: "#333338", keyShift: "#8a8a94", keyShadow: "0 2px 0 #80808c",
     fn: "#7d7d8c", fnImg: "linear-gradient(180deg,#8e8e9c 0%,#727282 100%)", fnText: "#ffffff",
+    enter: "#79cc08", enterImg: "linear-gradient(180deg,#a4e713,#67b900)", enterText: "#ffffff",
     space: "#7d7d8c", spaceImg: "linear-gradient(180deg,#8e8e9c 0%,#727282 100%)", spaceText: "#ffffff",
     focus: "#3fa9f5", focusImg: "linear-gradient(180deg,#6cc0ff 0%,#2b97e8 100%)", focusText: "#ffffff", focusShadow: "0 2px 0 #1a6fb0, 0 0 10px #3fa9f580",
     press: "#bfe3ff", pressText: "#0b3d66", toggle: "#3fa9f5", toggleText: "#fff", glyphs: "dark", focusGlyphs: "light",
@@ -162,7 +163,7 @@ export const SKINS: Record<KbLook, Skin> = {
     radius: "7px", gap: [2, 2.5],
     key: "#e4e6e7", keyImg: "linear-gradient(180deg,#fdfdfd 0%,#ececec 55%,#d3d5d6 100%)", keyText: "#2f3335", keyShift: "#7c8387", keyBorder: "1px solid #8e9ba3", keyShadow: "0 1px 0 #ffffff90, inset 0 -2px 0 #b9bfc3",
     fn: "#e4e6e7", fnImg: "linear-gradient(180deg,#fdfdfd 0%,#ececec 55%,#d3d5d6 100%)", fnText: "#2f3335",
-    focus: "#d6eefa", focusImg: "linear-gradient(180deg,#f6fcff 0%,#cfe9f7 100%)", focusText: "#000", focusShadow: "0 0 0 2px #34beed, 0 3px 8px #00000040", focusScale: 1.16,
+    focus: "#c9c8e2", focusImg: "linear-gradient(180deg,#e5e5f5,#b6b5d4)", focusText: "#000", focusShadow: "0 0 0 1px #747b9a, 0 3px 8px #00000040", focusScale: 1.16,
     press: "#9fdcf6", pressText: "#000", toggle: "#bfe6f8", toggleText: "#063b55", glyphs: "dark", focusGlyphs: "dark", weight: 600,
   },
   wiiu: {
@@ -175,30 +176,30 @@ export const SKINS: Record<KbLook, Skin> = {
     press: "#d9f5fc", pressText: "#0b5e73", toggle: "#2bb6c8", toggleText: "#fff", glyphs: "dark", focusGlyphs: "dark",
   },
   switch: {
-    name: "Switch", ref: "Switch software keyboard (Basic White), drawn from memory and the Switch look: flat white keys, grey function keys, cyan focus frame (no reference screenshot found)",
-    font: `"Nintendo Switch UI", "Rodin NTLG", "Segoe UI", Arial, sans-serif`, panel: "#ebebeb", panelEdge: "inset 0 1px 0 #d0d0d0", radius: "4px", gap: [1, 1],
-    key: "#ffffff", keyText: "#2d2d2d", keyShift: "#9a9a9a", keyShadow: "0 1px 0 #cfcfcf",
-    fn: "#dedede", fnText: "#2d2d2d", enter: "#3c50f0", enterText: "#ffffff",
-    focus: "#ffffff", focusText: "#2d2d2d", focusShadow: "0 0 0 2px #ffffff, 0 0 0 5px var(--dht-switch-accent, #00c3e3), 0 0 10px 4px var(--dht-switch-accent-glow, #00c3e380)",
+    name: "Switch", ref: "Switch Basic White screenshot: near-white square keys, grey modifiers, cyan focus outline, blue OK",
+    font: `"Nintendo Switch UI", "Rodin NTLG", "Segoe UI", Arial, sans-serif`, panel: "#ebebeb", panelEdge: "inset 0 1px 0 #d0d0d0", radius: "0", gap: [1, 1],
+    key: "#f8f8f8", keyText: "#2d2d2d", keyShift: "#9a9a9a", keyShadow: "none",
+    fn: "#e9e9e9", fnText: "#2d2d2d", enter: "#323cff", back: "#252525", backText: "#ffffff", enterText: "#ffffff",
+    focus: "#ffffff", focusText: "#2d2d2d", focusShadow: "inset 0 0 0 3px var(--dht-switch-accent, #00c9bf)",
     press: "#e3f8fc", pressText: "#2d2d2d", toggle: "#3c50f0", toggleText: "#fff", glyphs: "dark", focusGlyphs: "dark",
   },
   n3ds: {
-    name: "3DS", ref: "Nintendo 3DS software keyboard: periwinkle QWERTY keys on a blue-violet panel, green mode tabs, grey Enter / Backspace",
-    font: NINTENDO, panel: "linear-gradient(180deg,#a6aeea 0%,#8e96dc 100%)", panelEdge: "inset 0 4px 0 #3f4374", radius: "2px", gap: [0, 0],
-    key: "#c6ccf6", keyImg: "linear-gradient(180deg,#d4d9fb 0%,#bcc3f2 100%)", keyText: "#23263f", keyShift: "#5c6094", keyBorder: "1px solid #8b92d4",
-    fn: "#3fbf8c", fnImg: "linear-gradient(180deg,#5bd6a3 0%,#2fa877 100%)", fnText: "#ffffff",
+    name: "3DS", ref: "Nintendo 3DS software keyboard: grey bevelled QWERTY keys, mint modifiers and orange active input mode",
+    font: NINTENDO, panel: "linear-gradient(180deg,#dededb,#b9bfbd)", panelEdge: "inset 0 2px 0 #818987", radius: "2px", gap: [0, 0],
+    key: "#e5e5e0", keyImg: "linear-gradient(180deg,#ffffff,#d3d6d2)", keyText: "#303631", keyShift: "#777f79", keyBorder: "1px solid #858e88",
+    fn: "#b7dcca", fnImg: "linear-gradient(180deg,#d9f0e1,#a4cabb)", fnText: "#283a32",
     enter: "#d7d7d7", enterImg: "linear-gradient(180deg,#e9e9e9 0%,#c9c9c9 100%)", enterText: "#3a3a3a",
     back: "#d7d7d7", backImg: "linear-gradient(180deg,#e9e9e9 0%,#c9c9c9 100%)", backText: "#3a3a3a",
-    space: "#bfe7c9", spaceImg: "linear-gradient(180deg,#d8f3df 0%,#b3dfbf 100%)", spaceText: "#23263f",
+    space: "#bfe7c9", spaceImg: "linear-gradient(180deg,#d8f3df 0%,#b3dfbf 100%)", spaceText: "#303631",
     focus: "#ffffff", focusText: "#000", focusShadow: "inset 0 0 0 3px var(--dht-n3ds-cursor, #3fe3b5), 0 0 6px var(--dht-n3ds-cursor, #3fe3b5)",
     press: "#ffffff", pressText: "#000", toggle: "#f3a46f", toggleText: "#3a1a05", glyphs: "dark", focusGlyphs: "dark", weight: 700,
   },
   xbox: {
     name: "Xbox", ref: "Original Xbox dashboard keyboard: dark green panel, outlined keys with lime text, glowing lime selection",
-    font: `"DHT Xbox Book", "DHT Xbox Original", "Segoe UI", Arial, sans-serif`, panel: "radial-gradient(ellipse at 50% 0%,#24461a 0%,#0c1a08 60%,#050904 100%)", radius: "5px", gap: [1, 1],
-    key: "#0e1d09", keyImg: "linear-gradient(180deg,#1b3510 0%,#0b1707 100%)", keyText: "var(--dht-xbox-skin-text, #b9f26a)", keyShift: "#6fa83a", keyBorder: "1px solid #4d8a1f",
-    fn: "#16300d", fnImg: "linear-gradient(180deg,#24461a 0%,#112608 100%)", fnText: "#d4ff8a",
-    focus: "#bde61c", focusImg: "linear-gradient(180deg,#eaff6a 0%,#bde61c 55%,#86b80f 100%)", focusText: "#132400", focusShadow: "0 0 12px 2px #a8e02a90", focusBorder: "#efffa0",
+    font: `"DHT Xbox Book", "DHT Xbox Original", "Segoe UI", Arial, sans-serif`, panel: "radial-gradient(ellipse at 50% 0%,#24461a 0%,#0c1a08 60%,#050904 100%)", radius: "0", gap: [1, 1],
+    key: "#0e1d09", keyImg: "none", keyText: "var(--dht-xbox-skin-text, #b9f26a)", keyShift: "#6fa83a", keyBorder: "1px solid #4d8a1f",
+    fn: "#16300d", fnImg: "linear-gradient(90deg,#194b05,#092000)", fnText: "#d4ff8a",
+    focus: "#bde61c", focusImg: "none", focusText: "#132400", focusShadow: "inset 0 0 0 1px #b9d626", focusBorder: "#efffa0",
     press: "#efffa0", pressText: "#132400", toggle: "#86b80f", toggleText: "#0c1a08", glyphs: "light", focusGlyphs: "dark", textShadow: "0 0 5px #7fc23a60",
   },
   x360: {
@@ -210,12 +211,12 @@ export const SKINS: Record<KbLook, Skin> = {
     press: "#3f9010", pressText: "#fff", toggle: "#bfe3a6", toggleText: "#24480b", glyphs: "dark", focusGlyphs: "light",
   },
   x360blades: {
-    name: "Xbox 360 Blades", ref: "Xbox 360 keyboard with the 2005 Blades gloss (same keyboard as NXE; Blades-era keyboard not compared to a reference)",
-    font: `"DHT MC360", "Segoe UI", Arial, sans-serif`, panel: "linear-gradient(180deg,#d9dbdd 0%,#b3b7bb 100%)", panelEdge: "inset 0 2px 0 #8a8f94", radius: "3px", gap: [1, 1],
-    key: "#f4f4f4", keyImg: "linear-gradient(180deg,#ffffff 0%,#f1f1f1 50%,#dedfe0 51%,#ececec 100%)", keyText: "#4a4d50", keyShift: "#9a9da0", keyBorder: "1px solid #a3a7ab",
-    fn: "#e3e5e7", fnImg: "linear-gradient(180deg,#f4f5f6 0%,#e3e5e7 50%,#d0d3d6 51%,#dfe1e3 100%)", fnText: "#4a4d50",
-    focus: "#6ccf1f", focusImg: "linear-gradient(180deg,#a6ec5a 0%,#71d322 50%,#4fb30e 51%,#62c71a 100%)", focusText: "#ffffff", focusBorder: "#3d8a0a",
-    press: "#3d8a0a", pressText: "#fff", toggle: "#ff9c1c", toggleText: "#fff", glyphs: "dark", focusGlyphs: "light", textShadow: "none",
+    name: "Xbox 360 Blades", ref: "Blades-era WPA keyboard screenshot: slate blue-grey panel, dark outlined keys, pale lettering and lime Done",
+    font: `"DHT MC360", "Segoe UI", Arial, sans-serif`, panel: "linear-gradient(180deg,#354e5b,#263d48)", radius: "3px", gap: [1, 1],
+    key: "#1d323e", keyText: "#d6e5e8", keyShift: "#9caeb7", keyBorder: "1px solid #617985", keyShadow: "inset 0 1px 1px #ffffff18",
+    fn: "#243b47", fnText: "#d6e5e8", enter: "#9bd400", enterText: "#ffffff", enterImg: "linear-gradient(180deg,#bce81d,#75b400)",
+    focus: "#a5d914", focusText: "#172d08", focusBorder: "#d5ff6a", focusShadow: "inset 0 0 0 1px #d5ff6a",
+    press: "#d5ff6a", pressText: "#172d08", toggle: "#89b923", toggleText: "#fff", glyphs: "light", focusGlyphs: "dark",
   },
   iisu: {
     name: "iiSU", ref: "iiSU launcher (bonus look, light scheme): white pills on the dot grid, sky-blue focus ring",
@@ -242,6 +243,78 @@ export const SKINS: Record<KbLook, Skin> = {
     focus: "#7d88c9", focusImg: "linear-gradient(180deg,#a7b1e8 0 2px,#7d88c9 2px calc(100% - 3px),#4b558f calc(100% - 3px))", focusText: "#ffffa0", focusBorder: "#ffffff",
     press: "#ffffff", pressText: "#1d1d1d", toggle: "#5b8a32", toggleText: "#fff", glyphs: "light", focusGlyphs: "light", textShadow: "2px 2px 0 #3f3f3f",
   },
+  onyx: {
+    name: "Onyx Wheel", ref: "Black textured wheel body, graphite keys and an ice-blue selection", font: `"Segoe UI", Arial, sans-serif`,
+    panel: "repeating-linear-gradient(115deg,#101114 0 2px,#151619 2px 4px)", panelEdge: "inset 0 2px 0 #ffffff26", radius: "7px", gap: [1, 1.5],
+    key: "#26282c", keyImg: "linear-gradient(180deg,#36383c,#202226)", keyText: "#edf4fa", keyBorder: "1px solid #ffffff26", keyShadow: "inset 0 1px 0 #ffffff22, 0 2px 0 #00000030",
+    fn: "#111215", fnText: "#edf4fa", enter: "#8bcaff", enterText: "#10202a",
+    focus: "#8bcaff", focusText: "#10202a", focusShadow: "inset 0 0 0 2px #ffffffcc, 0 0 12px #8bcaff88",
+    press: "#ffffff", pressText: "#10202a", toggle: "#8bcaff", toggleText: "#10202a", glyphs: "light", focusGlyphs: "dark", weight: 500,
+  },
+  silver: {
+    name: "Silver Wheel", ref: "Brushed aluminium body, enamel keys and blue LCD selection", font: `"Segoe UI", Arial, sans-serif`,
+    panel: "repeating-linear-gradient(0deg,#bfc4ca 0 1px,#d2d6db 1px 3px)", panelEdge: "inset 0 2px 0 #60849955", radius: "5px", gap: [1, 1.5],
+    key: "#f3f5f7", keyImg: "linear-gradient(180deg,#ffffff,#dce1e6)", keyText: "#26333d", keyBorder: "1px solid #60849955", keyShadow: "inset 0 1px 0 #ffffff22, 0 2px 0 #00000030",
+    fn: "#aeb6bf", fnText: "#26333d", enter: "#2979bd", enterText: "#10202a",
+    focus: "#2979bd", focusText: "#10202a", focusShadow: "inset 0 0 0 2px #ffffffcc, 0 0 12px #2979bd88",
+    press: "#ffffff", pressText: "#10202a", toggle: "#2979bd", toggleText: "#10202a", glyphs: "dark", focusGlyphs: "dark", weight: 500,
+  },
+  aero2: {
+    name: "Aero v2", ref: "Sculpted aqua glass, deep ocean function keys and pearl focus", font: `"Segoe UI", Arial, sans-serif`,
+    panel: "radial-gradient(ellipse at 50% 0%,#73eaff,#087ea9 55%,#063557)", panelEdge: "inset 0 2px 0 #ffffff26", radius: "12px", gap: [1, 1.5],
+    key: "#137ba6", keyImg: "linear-gradient(180deg,#ffffff88,#ffffff11 48%,#001f4833 50%,#ffffff22)", keyText: "#ffffff", keyBorder: "1px solid #ffffff26", keyShadow: "inset 0 1px 0 #ffffff22, 0 2px 0 #00000030",
+    fn: "#064964", fnText: "#ffffff", enter: "#c8ffff", enterText: "#10202a",
+    focus: "#c8ffff", focusText: "#10202a", focusShadow: "inset 0 0 0 2px #ffffffcc, 0 0 12px #c8ffff88",
+    press: "#ffffff", pressText: "#10202a", toggle: "#c8ffff", toggleText: "#10202a", glyphs: "light", focusGlyphs: "dark", weight: 500,
+  },
+  dial: {
+    name: "Alien Dial", ref: "Machined gunmetal, cyan instrument lighting and angular keys", font: `"Segoe UI", Arial, sans-serif`,
+    panel: "repeating-linear-gradient(135deg,#171e24 0 2px,#1c252d 2px 4px)", panelEdge: "inset 0 2px 0 #ffffff26", radius: "2px", gap: [1, 1.5],
+    key: "#283b46", keyImg: "linear-gradient(160deg,#50616b,#23323c 52%,#18252d)", keyText: "#c8f4ff", keyBorder: "1px solid #ffffff26", keyShadow: "inset 0 1px 0 #ffffff22, 0 2px 0 #00000030",
+    fn: "#13262f", fnText: "#c8f4ff", enter: "#6be8ff", enterText: "#10202a",
+    focus: "#6be8ff", focusText: "#10202a", focusShadow: "inset 0 0 0 2px #ffffffcc, 0 0 12px #6be8ff88",
+    press: "#ffffff", pressText: "#10202a", toggle: "#6be8ff", toggleText: "#10202a", glyphs: "light", focusGlyphs: "dark", weight: 500,
+  },
+  castle: {
+    name: "Floating Castle", ref: "Airy cloud glass, pale blue keys and a turquoise selection", font: `"Segoe UI", Arial, sans-serif`,
+    panel: "linear-gradient(165deg,#e8f9ff,#a8cfdf 65%,#80aabd)", panelEdge: "inset 0 2px 0 #60849955", radius: "10px", gap: [1, 1.5],
+    key: "#f1fbff", keyImg: "linear-gradient(180deg,#ffffffcc,#e0f5fa88)", keyText: "#224859", keyBorder: "1px solid #60849955", keyShadow: "inset 0 1px 0 #ffffff22, 0 2px 0 #00000030",
+    fn: "#c5e4ed", fnText: "#224859", enter: "#58d4dc", enterText: "#10202a",
+    focus: "#58d4dc", focusText: "#10202a", focusShadow: "inset 0 0 0 2px #ffffffcc, 0 0 12px #58d4dc88",
+    press: "#ffffff", pressText: "#10202a", toggle: "#58d4dc", toggleText: "#10202a", glyphs: "dark", focusGlyphs: "dark", weight: 500,
+  },
+  republic: {
+    name: "Galactic Republic", ref: "Navy command console, brushed gold edges and amber selection", font: `"Segoe UI", Arial, sans-serif`,
+    panel: "linear-gradient(180deg,#243242,#101925)", panelEdge: "inset 0 2px 0 #c7a36366", radius: "3px", gap: [1, 1.5],
+    key: "#304457", keyImg: "linear-gradient(180deg,#ffffff15,#00000020)", keyText: "#f8edce", keyBorder: "1px solid #c7a36366", keyShadow: "inset 0 1px 0 #ffffff22, 0 2px 0 #00000030",
+    fn: "#182a3b", fnText: "#f8edce", enter: "#e7bd62", enterText: "#24182d",
+    focus: "#e7bd62", focusText: "#24182d", focusShadow: "inset 0 0 0 2px #ffffffcc, 0 0 12px #e7bd6288",
+    press: "#ffffff", pressText: "#24182d", toggle: "#e7bd62", toggleText: "#24182d", glyphs: "light", focusGlyphs: "dark", weight: 500,
+  },
+  nazarick: {
+    name: "Nazarick", ref: "Obsidian gothic keys, antique gold trim and violet magic", font: `"Segoe UI", Arial, sans-serif`,
+    panel: "radial-gradient(ellipse at 50% 100%,#3a1752,#120f1a 70%)", panelEdge: "inset 0 2px 0 #c7a36366", radius: "4px", gap: [1, 1.5],
+    key: "#291d36", keyImg: "linear-gradient(135deg,#482d51,#241a30 55%,#17101e)", keyText: "#f1dfb3", keyBorder: "1px solid #c7a36366", keyShadow: "inset 0 1px 0 #ffffff22, 0 2px 0 #00000030",
+    fn: "#160f21", fnText: "#f1dfb3", enter: "#bd8bf5", enterText: "#24182d",
+    focus: "#bd8bf5", focusText: "#24182d", focusShadow: "inset 0 0 0 2px #ffffffcc, 0 0 12px #bd8bf588",
+    press: "#ffffff", pressText: "#24182d", toggle: "#bd8bf5", toggleText: "#24182d", glyphs: "light", focusGlyphs: "dark", weight: 500,
+  },
+  pain: {
+    name: "Six Paths", ref: "Purple moonlight, concentric orbital texture and lavender focus", font: `"Segoe UI", Arial, sans-serif`,
+    panel: "repeating-radial-gradient(circle at 50% 120%,#251c3c 0 18px,#302447 19px 20px,#251c3c 21px 40px)", panelEdge: "inset 0 2px 0 #ffffff26", radius: "16px", gap: [1, 1.5],
+    key: "#3b2d54", keyImg: "linear-gradient(180deg,#59406c,#332343)", keyText: "#eee4ff", keyBorder: "1px solid #ffffff26", keyShadow: "inset 0 1px 0 #ffffff22, 0 2px 0 #00000030",
+    fn: "#20172f", fnText: "#eee4ff", enter: "#c7a0ff", enterText: "#24182d",
+    focus: "#c7a0ff", focusText: "#24182d", focusShadow: "inset 0 0 0 2px #ffffffcc, 0 0 12px #c7a0ff88",
+    press: "#ffffff", pressText: "#24182d", toggle: "#c7a0ff", toggleText: "#24182d", glyphs: "light", focusGlyphs: "dark", weight: 500,
+  },
+  frame: {
+    name: "Community interface", ref: "Neutral slate shell for community interfaces", font: `"Segoe UI", Arial, sans-serif`,
+    panel: "linear-gradient(180deg,#253140,#121b26)", panelEdge: "inset 0 2px 0 #ffffff26", radius: "7px", gap: [1, 1.5],
+    key: "#344456", keyImg: "linear-gradient(180deg,#ffffff0c,#00000012)", keyText: "#eef4fb", keyBorder: "1px solid #ffffff26", keyShadow: "inset 0 1px 0 #ffffff22, 0 2px 0 #00000030",
+    fn: "#1d2c3d", fnText: "#eef4fb", enter: "#a8c9ec", enterText: "#10202a",
+    focus: "#a8c9ec", focusText: "#10202a", focusShadow: "inset 0 0 0 2px #ffffffcc, 0 0 12px #a8c9ec88",
+    press: "#ffffff", pressText: "#10202a", toggle: "#a8c9ec", toggleText: "#10202a", glyphs: "light", focusGlyphs: "dark", weight: 500,
+  },
   neutral: {
     name: "Neutral (bonus looks)", ref: "Shared skin for the bonus looks and community interfaces: soft dark keys, rounded, white focus",
     font: `var(--dht-font, "Motiva Sans", "Segoe UI", Arial, sans-serif)`, panel: "linear-gradient(180deg,#1d2026 0%,#15171c 100%)", radius: "8px", gap: [1, 1],
@@ -252,14 +325,24 @@ export const SKINS: Record<KbLook, Skin> = {
   },
 };
 
+// Material refinements: retain console palettes and reserve ornament for bonus looks.
+Object.assign(SKINS.onyx, { radius: "8px", keyImg: "linear-gradient(180deg,#363a40,#22262b)", keyBorder: "1px solid #4a515b", keyShadow: "inset 0 1px 0 #ffffff16, inset 0 -2px 0 #00000055", focusShadow: "inset 0 0 0 2px #c6eaff, 0 0 8px #76c8ff55", keyShift: "#b8c4d2" });
+Object.assign(SKINS.silver, { keyImg: "linear-gradient(180deg,#ffffff,#edf0f4 65%,#d5dbe2)", keyText: "#283847", keyBorder: "1px solid #9faab7", keyShadow: "inset 0 1px 0 #ffffff, inset 0 -2px 0 #b8c2cc", focusText: "#ffffff", enterText: "#ffffff", focusGlyphs: "light", focusShadow: "inset 0 0 0 2px #a4d9ff", keyShift: "#657383" });
+Object.assign(SKINS.dial, { radius: "4px", keyImg: "linear-gradient(165deg,#435862,#263842 60%,#1c2b34)", keyBorder: "1px solid #56717d", keyShadow: "inset 0 1px 0 #ffffff22, inset 0 -2px 0 #08151f80", focusShadow: "inset 0 0 0 2px #dcfcff, 0 0 8px #6be8ff55", keyShift: "#93b8c8" });
+Object.assign(SKINS.castle, { keyImg: "linear-gradient(180deg,#ffffff,#e6f3f8)", keyBorder: "1px solid #aacbd8", keyShadow: "inset 0 1px 0 #ffffff, inset 0 -2px 0 #c0dce6", focusShadow: "inset 0 0 0 2px #238e9a", keyShift: "#617f8e" });
+Object.assign(SKINS.republic, { keyImg: "linear-gradient(180deg,#3b5065,#273b4e)", keyBorder: "1px solid #a9915955", keyShadow: "inset 0 1px 0 #dfbd6b33, inset 0 -2px 0 #07121e66", focusShadow: "inset 0 0 0 2px #fff0c0, 0 0 8px #e7bd6240", keyShift: "#b6b8a4", radius: "5px" });
+Object.assign(SKINS.nazarick, { keyImg: "linear-gradient(180deg,#3d294b,#24172f)", keyBorder: "1px solid #ab894a77", keyShadow: "inset 0 1px 0 #e4c37b22, inset 0 -2px 0 #09061080", focusShadow: "inset 0 0 0 2px #edcffa, 0 0 8px #bd8bf560", keyShift: "#a895b9", radius: "6px" });
+Object.assign(SKINS.pain, { radius: "8px", keyImg: "linear-gradient(180deg,#554069,#352741)", keyBorder: "1px solid #a485bc55", keyShadow: "inset 0 1px 0 #dfbdff22, inset 0 -2px 0 #180d2580", focusShadow: "inset 0 0 0 2px #ecd9ff, 0 0 8px #c7a0ff55", keyShift: "#ba9dcf" });
+Object.assign(SKINS.aero2, { radius: "9px", keyBorder: "1px solid #b7f2ff66", keyShadow: "inset 0 1px 0 #ffffff77, inset 0 -2px 0 #023e5c88", focusShadow: "inset 0 0 0 2px #ffffff, 0 0 8px #b2faff66", keyShift: "#b8e6f2" });
+
 /** The keyboard skin of the settings' look, or null for none (plugin off, setting off). */
 export function keyboardLookFor(s: Pick<Settings, "enabled" | "theme" | "x360"> & { keyboardSkin?: boolean }): KbLook | null {
   if (!s.enabled || s.keyboardSkin !== true) return null;
   switch (s.theme) {
-    case "wii": case "wiiu": case "switch": case "n3ds": case "ps1": case "ps2": case "ps3": case "psp": case "ps4": case "ps5": case "vita": case "xbox": case "iisu": case "minecraft":
+    case "wii": case "wiiu": case "switch": case "n3ds": case "ps1": case "ps2": case "ps3": case "psp": case "ps4": case "ps5": case "vita": case "xbox": case "iisu": case "minecraft": case "onyx": case "silver": case "aero2": case "dial": case "castle": case "republic": case "nazarick": case "pain": case "frame":
       return s.theme;
     case "x360": return s.x360?.style === "blades" ? "x360blades" : "x360";
-    case "aero": case "aero2": return "aero";
+    case "aero": return "aero";
     default: return "neutral";
   }
 }
@@ -311,9 +394,14 @@ export function buildKeyboardCss(look: KbLook, c: KbClasses = keyboardClasses().
 --key-touched-background-color:${press};--key-touched-color:${pressText};--key-pointer-background-color:${accent};--key-pointer-stroke-color:${pressText};
 --key-deadkey-background-color:${fn};--key-deadkeyinactive-color:${keyText};--key-deadkeyactive-color:${accent};
 font-family:${v("font", k.font)};${k.panelEdge ? `box-shadow:${k.panelEdge};` : ""}}`);
-  if (k.gap && (k.gap[0] || k.gap[1])) out.push(`${K}{margin:${k.gap[0]}px ${k.gap[1]}px;min-height:${44 - 2 * k.gap[0]}px;max-height:${44 - 2 * k.gap[0]}px}`);
+  // Keep Steam's hit areas intact; create even gutters inside each hit area.
+  out.push(`${K}{margin:var(--dht-kb-gap, 1px);min-height:calc(44px - 2 * var(--dht-kb-gap, 1px));max-height:calc(44px - 2 * var(--dht-kb-gap, 1px));min-width:0}`);
   out.push(`${K},${S} .${c.KeyboardExtendedKey}{border-radius:${v("radius", k.radius)};box-sizing:border-box;${k.keyBorder ? `border:${k.keyBorder};` : ""}box-shadow:${k.keyShadow ?? "none"};background-image:${v("key-image", k.keyImg, "none")};transition:transform .08s ease-out,box-shadow .12s ease-out}`);
   out.push(`${K},${K} span,${S} .${c.KeyboardExtendedKey}{font-family:inherit;${k.weight ? `font-weight:${k.weight};` : ""}${k.textShadow ? `text-shadow:${k.textShadow};` : ""}}`);
+  out.push(`${K}>span{font-size:16px;line-height:18px;font-weight:500}`);
+  out.push(`${K}>span.${c.ShiftedLabel}{font-size:10px;line-height:10px;opacity:.65;transform:none;margin:0 2px 2px;font-weight:400}`);
+  out.push(`${K}:has(.${c.ActionButtonGlyph})>span{font-size:12px;font-weight:500}`);
+  out.push(`@media(prefers-reduced-motion:reduce){${K}{transition:none}}`);
   const fnImg = k.fnImg ?? "none";
   out.push(`${metaKeys}{background-image:${v("fn-image", fnImg, "none")}}`);
   out.push(`${S} .${c.KeyboardMetaKey}{background-image:${v("arrows-image", k.arrowsImg ?? fnImg, "none")}}`);
@@ -321,10 +409,16 @@ font-family:${v("font", k.font)};${k.panelEdge ? `box-shadow:${k.panelEdge};` : 
   out.push(`${S} .${c.KeyboardBackspace}{background-image:${v("back-image", k.backImg ?? (k.back ? "none" : fnImg), "none")}}`);
   out.push(`${S} .${c.KeyboardSpacebar}{background-image:${v("space-image", k.spaceImg ?? (k.space ? "none" : k.keyImg ?? "none"), "none")}}`);
   out.push(`${K} img{filter:${glyph(k.glyphs)}}`);
-  // Backspace / Enter carry Steam's button glyph at the left edge (Ⓧ on Backspace) and the label bottom-right: a skin's
-  // font (bold, or a wider fallback on the Deck) must not run the label into the glyph, so the label keeps clear of it
-  // and ends in an ellipsis on a key too narrow for it
-  out.push(`${S} .${c.KeyboardBackspace} span,${S} .${c.KeyboardEnter} span{display:block;margin-left:auto;max-width:calc(100% - 48px);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}`);
+  // Steam normally absolutely positions action glyphs over the key. Theme fonts and
+  // narrower windows can then run Caps/Shift/Backspace labels underneath them.
+  // Put glyphs and labels in one flex row instead, letting only the text truncate.
+  // This applies to any key carrying a controller glyph, including future layouts.
+  const actionKey = `${K}:has(.${c.ActionButtonGlyph})`;
+  out.push(`${actionKey}{display:flex;flex-direction:row;align-items:center;justify-content:flex-start;gap:6px;padding:0 6px;text-align:center}`);
+  out.push(`${actionKey}>span{display:block;flex:1 1 0;min-width:0;max-width:100%;margin:0;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;line-height:normal;transform:none}`);
+  out.push(`${actionKey} .${c.ActionButtonGlyph}{position:static;display:flex;align-items:center;justify-content:center;flex:0 0 auto;margin:0;min-width:0;line-height:normal;transform:none}`);
+  out.push(`${actionKey} .${c.ActionButtonGlyph} img{display:block;width:auto;height:18px;max-width:none;max-height:18px;object-fit:contain;flex-shrink:0;transform:none}`);
+  out.push(`${K}>span{min-width:0;max-width:100%;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}`);
   out.push(`${K}.${c.ToggleOn},${K}.${c.ToggleOneShot}{background-image:none}`);
   out.push(`${K}.${c.Focused},${S} .${c.KeyboardExtendedKey}.${c.Focused}{background-image:${v("focus-image", k.focusImg, "none")};box-shadow:${k.focusShadow ?? "none"};${k.focusBorder ? `border-color:${k.focusBorder};` : ""}${k.focusScale ? `transform:scale(${k.focusScale});` : ""}z-index:4}`);
   out.push(`${K}.${c.Focused} img{filter:${glyph(k.focusGlyphs)}}`);
@@ -369,18 +463,19 @@ export function steamDocuments(): Document[] {
   return [...docs];
 }
 
-const loaderSeen = new WeakMap<Element, { len: number; hit: boolean }>();
+const loaderSeen = new WeakMap<Element, { css: string; classes: string; hit: boolean }>();
 /** True when CSS Loader has a theme in this document that styles the keyboard: ours steps aside. */
 export function cssLoaderStylesKeyboard(doc: Document, c: KbClasses): boolean {
   for (const st of Array.from(doc.querySelectorAll("style.css-loader-style"))) {
     const t = st.textContent ?? "";
+    const classes = `${c.KeyboardKey}:${c.Keyboard}`;
     const seen = loaderSeen.get(st);
-    if (seen && seen.len === t.length) {
+    if (seen && seen.css === t && seen.classes === classes) {
       if (seen.hit) return true;
       continue;
     }
     const hit = t.includes(c.KeyboardKey) || t.includes(c.Keyboard) || /KeyTheme_|virtualkeyboard_|--key-[a-z-]*(background-)?color\s*:/.test(t);
-    loaderSeen.set(st, { len: t.length, hit });
+    loaderSeen.set(st, { css: t, classes, hit });
     if (hit) return true;
   }
   return false;
@@ -409,13 +504,17 @@ function apply(doc: Document, css: string | null, look: KbLook | null, c: KbClas
   if (el.parentNode !== doc.head || el !== doc.head.lastElementChild) doc.head.appendChild(el);
 }
 
-let state: { look: KbLook | null; css: string | null } = { look: null, css: null };
+let state: { look: KbLook | null; css: string | null; spacing?: number } = { look: null, css: null };
 const touched = new Set<Document>();
 function refresh() {
   const { classes } = keyboardClasses();
   const look = keyboardLookFor(getSettings() as any);
-  if (look !== state.look) state = { look, css: look ? buildKeyboardCss(look, classes) : null };
-  for (const doc of steamDocuments()) {
+  const savedSpacing = getSettings().keyboardSpacing;
+  const spacing = Math.max(0, Math.min(5, typeof savedSpacing === "number" && Number.isFinite(savedSpacing) ? savedSpacing : 1));
+  if (look !== state.look || spacing !== state.spacing) {
+    state = { look, spacing, css: look ? buildKeyboardCss(look, classes) + `\n:root .${classes.Keyboard}.DefaultTheme{--dht-kb-gap:${spacing}px}` : null };
+  }
+  for (const doc of new Set([...steamDocuments(), ...(!look ? touched : [])])) {
     try {
       apply(doc, state.css, state.look, classes);
       touched.add(doc);
@@ -423,6 +522,7 @@ function refresh() {
       /* a window that is closing */
     }
   }
+  if (!look) touched.clear();
 }
 
 /** Starts the keyboard skin; returns the function that removes it from every window again. */
@@ -434,9 +534,15 @@ export function startKeyboardSkins(): () => void {
       /* never break the plugin over a keyboard skin */
     }
   };
-  run();
-  const off = onSettingsChange(run);
-  const iv = setInterval(run, 2000); // new windows (Quick Access, Steam menu) and CSS Loader changes
+  let iv: ReturnType<typeof setInterval> | undefined;
+  const sync = () => {
+    run();
+    clearInterval(iv); iv = undefined;
+    if (keyboardLookFor(getSettings() as any)) iv = setInterval(run, 2000);
+  };
+  sync();
+  const off = onSettingsChange(sync);
+  // Enabled skins discover new Steam windows.
   return () => {
     recordKeyboardEvent({ event: "skin-service-unload" });
     off();

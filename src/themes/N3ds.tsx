@@ -291,7 +291,8 @@ export function N3dsHome() {
   const rows = grid.rows, geo = GEO[rows];
   // "Top screen: hide" = a full-display theme: the bottom screen alone, as wide as the display needs (same height as the console's)
   const topOn = s.n3dsTop !== "hide";
-  const bw = topOn ? SW.bottom : Math.max(SW.bottom, Math.round((SH * W) / H));
+  const split = s.n3dsTop === "split";
+  const bw = split ? SH * 2 * W / H : topOn ? SW.bottom : Math.max(SW.bottom, Math.round((SH * W) / H));
   const sideDrawer = arranging && !topOn;
   const gridW = bw - PANEL.left - (sideDrawer ? DRAWER_SIDE : 0);
   const visCols = Math.max(1, Math.floor((gridW - (geo.x0 - geo.px / 2)) / geo.px));
@@ -717,8 +718,8 @@ export function N3dsHome() {
   const handleRef = useRef<{ x0: number; w: number } | null>(null);
 
   // ───────── layout: the two screens stacked, centred, at the console's pixel sizes ─────────
-  const stackWpx = topOn ? SW.top : bw, stackHpx = topOn ? SH * 2 + GAP : SH, botLeft = topOn ? 40 : 0, botTop = topOn ? SH + GAP : 0;
-  const k = topOn ? Math.min((H - 24) / stackHpx, (W - 24) / stackWpx) : Math.max(H / stackHpx, W / stackWpx); // hidden: fills the display edge to edge
+  const stackWpx = split ? bw : topOn ? SW.top : bw, stackHpx = split ? SH * 2 : topOn ? SH * 2 + GAP : SH, botLeft = split ? 0 : topOn ? 40 : 0, botTop = split ? SH : topOn ? SH + GAP : 0;
+  const k = split ? H / stackHpx : topOn ? Math.min((H - 24) / stackHpx, (W - 24) / stackWpx) : Math.max(H / stackHpx, W / stackWpx); // hidden: fills the display edge to edge
   const stackW = stackWpx * k, left = (W - stackW) / 2, topY = (H - stackHpx * k) / 2; // hidden: 0
   const bgBlur: CSSProperties = topImg?.image ? { backgroundImage: `url(${topImg.image})`, backgroundSize: "cover", backgroundPosition: "center", filter: "blur(18px) brightness(.75)", transform: "scale(1.15)" } : {};
   const wallOff = (img: { scroll?: boolean; wide?: string | null } | null, w: number) => (look.scroll && img?.scroll && img.wide ? -(maxScroll ? scroll / maxScroll : 0) * (1024 - w) : 0);
@@ -852,10 +853,10 @@ export function N3dsHome() {
         <div className="dht-n3ds-backdrop" style={{ position: "absolute", inset: 0, overflow: "hidden", background: topImg ? "#101014" : "radial-gradient(ellipse at 50% 40%,#eceef2,#bcc1ca)" }}>
           <div style={{ position: "absolute", inset: 0, ...bgBlur }} />
         </div>
-        <div className={`dht-n3ds-stack${s.animations ? "" : " dht-n3ds-still"}`} data-rows={rows} data-arranging={arranging} style={{ position: "absolute", left, top: topY, width: stackWpx, height: stackHpx, transform: `scale(${k})`, transformOrigin: "0 0", fontFamily: FONT }}>
+        <div className={`dht-n3ds-stack${s.animations ? "" : " dht-n3ds-still"}`} data-screen-layout={s.n3dsTop ?? "show"} data-rows={rows} data-arranging={arranging} style={{ position: "absolute", left, top: topY, width: stackWpx, height: stackHpx, transform: `scale(${k})`, transformOrigin: "0 0", fontFamily: FONT }}>
           {/* ───────── top screen ───────── */}
           {topOn && (
-          <div className="dht-n3ds-top" data-dht-from-skin={topImg || look.top ? "" : undefined} style={{ position: "absolute", left: 0, top: 0, width: SW.top, height: SH, overflow: "hidden", borderRadius: 3, boxShadow: "0 0 0 3px #202226, 0 0 0 4.5px #4a4d54, 0 8px 22px #0006", background: look.top?.mode === "solid" ? look.top.color ?? "#eceef2" : "#eceef2", ...(look.top ? wallStyle(topImg, SW.top) : {}) }}>
+          <div className="dht-n3ds-top" data-dht-from-skin={topImg || look.top ? "" : undefined} style={{ position: "absolute", left: 0, top: 0, width: split ? bw : SW.top, height: SH, overflow: "hidden", borderRadius: split ? 0 : 3, boxShadow: split ? "none" : "0 0 0 3px #202226, 0 0 0 4.5px #4a4d54, 0 8px 22px #0006", background: look.top?.mode === "solid" ? look.top.color ?? "#eceef2" : "#eceef2", ...(look.top ? wallStyle(topImg, SW.top) : {}) }}>
             {!look.top && <div className="dht-n3ds-pattern" style={{ position: "absolute", inset: 0, background: `var(--dht-n3ds-top-bg, ${PATTERN} 8px 4px/100px 100px, linear-gradient(#eff0f3,#e1e3e8 60%,#e9ebef))` }} />}
             <div className="dht-n3ds-status" style={{ position: "absolute", left: 0, right: 0, top: 0, height: 26, background: darkTop ? "linear-gradient(#0008,#0000)" : "linear-gradient(#fffe 55%,#fff0)", color: ink, fontSize: 12.5, fontWeight: 600, textShadow: darkTop ? "0 1px 2px #0009" : "none" }}>
               <div style={{ position: "absolute", left: 4, top: 6 }}><Bars color="#28a9e8" /></div>
@@ -900,7 +901,7 @@ export function N3dsHome() {
           </div>
           )}
           {/* ───────── bottom screen ───────── */}
-          <div className={`dht-n3ds-bottom${arranging ? " dht-n3ds-arranging" : ""}`} data-dht-from-skin={noPanel ? "" : undefined} style={{ position: "absolute", left: botLeft, top: botTop, width: bw, height: SH, overflow: "clip", borderRadius: topOn ? 3 : 0, boxShadow: !topOn ? "none" : "0 0 0 3px #202226, 0 0 0 4.5px #4a4d54, 0 8px 22px #0006", ...bottomBg }}>
+          <div className={`dht-n3ds-bottom${arranging ? " dht-n3ds-arranging" : ""}`} data-dht-from-skin={noPanel ? "" : undefined} style={{ position: "absolute", left: botLeft, top: botTop, width: bw, height: SH, overflow: "clip", borderRadius: topOn && !split ? 3 : 0, boxShadow: !topOn || split ? "none" : "0 0 0 3px #202226, 0 0 0 4.5px #4a4d54, 0 8px 22px #0006", ...bottomBg }}>
             {!noPanel && <div className="dht-n3ds-stripes" style={{ position: "absolute", left: 0, right: 0, bottom: 0, height: 40, background: STRIPES }} />}
             {!noPanel && <div className="dht-n3ds-panel" style={{ position: "absolute", left: PANEL.left, top: PANEL.top, right: -20, height: PANEL.h, borderRadius: "10px 0 0 10px", background: `var(--dht-n3ds-panel, ${panelBg})`, boxShadow: "inset 0 2px 5px #0002, 0 1px 0 #fff9" }} />}
             {/* the grid, clipped to the panel's width */}

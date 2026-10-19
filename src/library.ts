@@ -160,7 +160,7 @@ let source: LibrarySource = steamSource;
 /** Preview harness hook. */
 export function setLibrarySource(s: LibrarySource) {
   source = s;
-  cache = null;
+  libraryCache.clear(); normalized = null;
 }
 
 export interface Library {
@@ -172,23 +172,27 @@ export interface Library {
   collections: Collection[];
 }
 
-let cache: { key: string; at: number; lib: Library } | null = null;
+let normalized: { at: number; everyAll: Game[]; collections: ReturnType<LibrarySource["collections"]>; hidden: Set<number> } | null = null;
+const libraryCache = new Map<string, { at: number; lib: Library }>();
 
 export function loadLibrary(src: string, sort: SortMode, max: number, collectionIds: string[] = []): Library {
   const key = JSON.stringify([src, sort, max, collectionIds]);
-  if (cache && cache.key === key && Date.now() - cache.at < 4000) return cache.lib;
+  const cache = libraryCache.get(key);
+  if (cache && Date.now() - cache.at < 4000) return cache.lib;
   let lib: Library;
   try {
     // Hidden games stay out of every list unless the Hidden collection itself is the source ("col:hidden").
     const showHidden = src === "col:hidden";
     let hiddenSet = new Set<number>();
     try {
-      hiddenSet = source.hiddenIds?.() ?? new Set<number>();
+      hiddenSet = normalized && Date.now() - normalized.at < 4000 ? normalized.hidden : source.hiddenIds?.() ?? new Set<number>();
     } catch {
       /* ignore */
     }
     const isHidden = (a: any) => isHiddenApp(a, hiddenSet);
-    const everyAll = (source.allApps() ?? []).map((a: any) => { const g = toGame(a); if (g && isHidden(a)) g.hidden = true; return g; }).filter(Boolean) as Game[];
+    const everyAll = normalized && Date.now() - normalized.at < 4000 ? normalized.everyAll : (source.allApps() ?? []).map((a: any) => { const g = toGame(a); if (g && isHidden(a)) g.hidden = true; return g; }).filter(Boolean) as Game[];
+    const rawCollections = normalized && Date.now() - normalized.at < 4000 ? normalized.collections : source.collections() ?? [];
+    normalized = { at: normalized?.everyAll === everyAll ? normalized.at : Date.now(), everyAll, collections: rawCollections, hidden: hiddenSet };
     const every = showHidden ? everyAll : everyAll.filter((g) => !g.hidden);
     const games = every.filter((g) => g.kind === "game");
     const apps = sortGames(
@@ -197,7 +201,7 @@ export function loadLibrary(src: string, sort: SortMode, max: number, collection
     );
     const byId = new Map<number, Game>();
     every.forEach((g) => byId.set(g.appid, g));
-    const collections: Collection[] = (source.collections() ?? []).map((c) => ({
+    const collections: Collection[] = rawCollections.map((c) => ({
       id: c.id,
       name: c.name,
       games: sortGames((c.apps.filter((a) => showHidden || !isHidden(a)).map((a) => byId.get(a?.appid) ?? toGame(a)).filter(Boolean) as Game[]), sort),
@@ -220,7 +224,9 @@ export function loadLibrary(src: string, sort: SortMode, max: number, collection
     console.error("[DeckHomeThemes] library read failed", e);
     lib = { games: [], apps: [], all: [], byId: new Map(), collections: [], error: String(e) };
   }
-  cache = { key, at: Date.now(), lib };
+  libraryCache.delete(key);
+  libraryCache.set(key, { at: Date.now(), lib });
+  while (libraryCache.size > 8) libraryCache.delete(libraryCache.keys().next().value!);
   return lib;
 }
 
@@ -248,6 +254,18 @@ export function openGamePage(g: Game) {
   } catch {
     /* ignore */
   }
+}
+
+/** Bypass themed destinations so plugins patched into Steam's game page can render. */
+export function openNativeGamePage(g: Game) {
+  if (previewActions.nav) return previewActions.nav(`native-game:${g.appid}`);
+  Navigation.Navigate(`/library/app/${g.appid}`);
+}
+
+/** Open Steam's native overlay without passing through themed destinations. */
+export function openNativeSteamMenu(){
+  if(previewActions.nav)return previewActions.nav("native-mainmenu");
+  try{Navigation.OpenMainMenu();}catch{/* Steam may be shutting down */}
 }
 
 export type SteamPlace =

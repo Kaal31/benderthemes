@@ -1,5 +1,7 @@
 <p align="center"><img src="docs/logo.svg" width="128" height="128" alt="ThemeHub logo"></p>
 
+Theme authors can use the [standalone SDK viewer](sdk/viewer/README.md) with `npm run theme:viewer`, or open a compiled theme folder with `node sdk/viewer/server.mjs --theme /path/to/theme`. It supports code-heavy HTML/JavaScript, bundled React, canvas and Three.js themes with sample host data, controller input, multiple pages and saved state.
+
 <h1 align="center">ThemeHub</h1>
 
 <p align="center">Console-style home screens for the Steam Deck: PlayStation, Xbox and Nintendo looks, a theme Hub, theme-file importers and Plugin Spotlight. A <a href="https://github.com/SteamDeckHomebrew/decky-loader">Decky Loader</a> plugin.</p>
@@ -179,3 +181,12 @@ Plugin Spotlight credits each plugin's author on its own page.
 Bundled third-party notices are kept in [third-party/](third-party/) and next to the resources (`SOURCES.txt`, `SOURCE.txt`, `Copyright`). The Nazarick category wallpapers were generated from a supplied visual reference; Overlord characters and setting belong to their rights holders. PlayStation, Xbox, Nintendo, Wii, Steam and the other console and product names are trademarks of their owners; ThemeHub is a fan project and is not affiliated with or endorsed by them.
 
 No project-wide license is added by this repository.
+
+## Build a community theme
+
+See the [custom theme author guide](docs/CUSTOM-THEMES.md) for a working starter, multi-page navigation, 3D interfaces, saved data, controller input, live Steam services, packaging and Hub publishing status. The [frame SDK reference](docs/FRAME-SDK.md) describes the experimental bridge API.
+
+Try the [community interface showcase](themes/community-starter/README.md) for labeled examples of different interfaces inside an installable explanation theme.
+
+
+Uninstalling ThemeHub through Decky keeps only `settings.json`. Downloaded packs, imported skins, wallpapers, caches, tools and plugin logs are removed. Shared sound/CSS packs are removed only when recorded as installed by ThemeHub. Updates and channel switches initiated through ThemeHub preserve resources; manual Decky ZIP reinstalls clear resources while keeping settings.
