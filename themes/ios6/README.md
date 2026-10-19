@@ -23,3 +23,5 @@ Visual behavior reference: Apple iPhone User Guide for iOS 6, page 28: https://c
 Wallpaper and earlier visual references are in REFERENCES.md. Apple’s original wallpaper is included for this personal theme; it remains Apple’s property.
 
 Home uses horizontal, finger-following pages with six columns and three rows. Swipe left/right or tap the page dots; controller selection follows pages. Hold an icon to rearrange it, then drag to a page edge to move between pages. Home does not scroll vertically.
+
+Hold a Home or glass-dock icon, then drag it onto an icon in the other area to exchange their slots. The dock keeps four icons; music and video widgets stay in the Home grid. Dock assignments and Home order are saved.

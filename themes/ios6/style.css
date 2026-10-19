@@ -141,3 +141,9 @@ main.apps-panel{padding:0;top:25px;bottom:106px}#apps{display:block;position:rel
 #apps .video-widget{height:138px;min-height:0;max-height:138px}
 #apps .video-widget .video-stage{min-height:0;overflow:hidden}
 #apps .video-widget video{min-height:0;max-height:100%}
+
+body:not(.away-from-home) footer>button:not([data-home-dock]){display:none!important}
+body.away-from-home footer>[data-home-dock]{display:none!important}
+#dashboard footer>[data-home-dock]{touch-action:none;max-width:155px;display:flex;flex-direction:column;align-items:center}
+#dashboard footer>[data-home-dock] .cover-frame,#dashboard footer>[data-home-dock] .ios-app-art{width:73px;height:73px;border-radius:15px;margin:0;flex-shrink:0;-webkit-box-reflect:below 2px linear-gradient(transparent 48%,#fff3)}
+#dashboard footer>[data-home-dock] .app-label{max-width:150px;font-size:14px;line-height:20px}
