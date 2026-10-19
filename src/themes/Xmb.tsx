@@ -1408,7 +1408,7 @@ export function XmbHome({ variant }: { variant: Variant }) {
         })}
         </div>
         {items.length === 0 && (
-          <div style={{ position: "absolute", left: itemX - 40, top: catY + L.selGapBelow - 14, color: "#fff", opacity: 0.7, fontSize: L.font }}>There are no items.</div>
+          <div style={{ position: "absolute", left: itemX - 40, top: catY + L.selGapBelow - 14, color: "#fff", opacity: 0.7, fontSize: L.font }}>{t("noItems")}</div>
         )}
         </div>
 

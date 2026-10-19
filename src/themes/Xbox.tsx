@@ -552,7 +552,7 @@ export function XboxHome() {
             <div style={{ position: "absolute", inset: 0, filter: tint }}>
             <Plate W={W} H={H} title={T.memory} sub={`◀ ${list?.name.toUpperCase()} ▶`}>
               <Rows W={W} H={H} items={games.map((g, i) => ({ key: String(g.appid), label: showTitle(s, "xbox", i === gsel) ? g.name : "· · ·" }))} sel={clamp(gsel, 0, Math.max(0, games.length - 1))} vis={vis} onPick={(i) => (i === gsel && cur ? gameMenu(cur) : setGsel(i))} />
-              {!games.length && <div style={{ position: "absolute", left: W * 0.4, top: H * 0.25, fontFamily: FONT, color: TEXT, fontSize: H * 0.03 }}>NO SAVED GAMES</div>}
+              {!games.length && <div style={{ position: "absolute", left: W * 0.4, top: H * 0.25, fontFamily: FONT, color: TEXT, fontSize: H * 0.03 }}>{t("noSavedGames")}</div>}
             </Plate>
             <InfoBox W={W} H={H}>
               {cur ? (

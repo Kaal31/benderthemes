@@ -401,7 +401,7 @@ function askName(title: string, initial: string, done: (name: string) => void) {
   try {
     showModal(
       <ConfirmModal strTitle={title} strOKButtonText="OK" onOK={() => done(value.trim() || initial)}>
-        <TextField label="Folder name" defaultValue={initial} onChange={(e: any) => (value = e?.target?.value ?? value)} />
+        <TextField label={t("folderNameLabel")} defaultValue={initial} onChange={(e: any) => (value = e?.target?.value ?? value)} />
       </ConfirmModal>,
     );
   } catch {
