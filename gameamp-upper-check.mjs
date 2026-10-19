@@ -10,7 +10,7 @@ try{
  await f.locator('.transport [data-open="library"]').click();
  await windows.nth(0).locator('.amp-library-card').first().waitFor();
  await page.waitForTimeout(700);
- assert.equal(await f.locator('.transport [data-open="library"]').evaluate(b=>b.classList.contains('press-lit')),false);
+ assert.equal(await f.locator('.transport [data-open="library"]').evaluate(b=>b.classList.contains('page-open')),false);
  await windows.nth(0).locator('.amp-library-card').first().click();
  await windows.nth(1).locator('.amp-game-detail').waitFor();
  await f.locator('.transport [data-open="downloads"]').click();
@@ -18,18 +18,20 @@ try{
  const pause=windows.nth(2).getByRole('button',{name:'Pause',exact:true}).first();await pause.click();
  await windows.nth(2).getByRole('button',{name:'Resume',exact:true}).first().waitFor();
  await f.locator('footer [data-open="friends"]').click();
- await windows.nth(3).locator('.friend-row').first().waitFor();assert.match(await f.locator('footer [data-open="friends"] .led').evaluate(el=>getComputedStyle(el).backgroundImage),/23, 237, 97/);
+ await windows.nth(3).locator('.friend-row').first().waitFor();assert.match(await f.locator('footer [data-open="friends"] .led').evaluate(el=>getComputedStyle(el).backgroundImage),/23, 201, 99/);
  await f.locator('.transport [data-open="options"]').click();
  await windows.nth(4).getByRole('button',{name:'All ThemeHub options'}).waitFor();
  await windows.nth(4).locator('.setting-toggle').first().waitFor();
  assert.equal(await windows.count(),5);
- assert.equal(await f.locator('.transport [data-open="options"]').evaluate(b=>b.classList.contains('press-lit')),false);assert(await f.locator('footer [data-open="friends"]').evaluate(b=>b.classList.contains('press-lit')));
- assert.equal(await f.locator('.transport [data-open="library"]').evaluate(b=>b.classList.contains('press-lit')),false);
+ assert.equal(await f.locator('.transport [data-open="options"]').evaluate(b=>b.classList.contains('page-open')),false);assert(await f.locator('footer [data-open="friends"]').evaluate(b=>b.classList.contains('page-open')));
+ assert.equal(await f.locator('.transport [data-open="library"]').evaluate(b=>b.classList.contains('page-open')),false);
  await page.screenshot({path:'../GameAmp-upper-pages-preview.png'});
  for(let i=4;i>=0;i--)await windows.nth(i).locator('.window-close').click();
  assert.equal(await windows.count(),0);
  await f.locator('#details').click();await windows.nth(0).locator('.amp-game-detail').waitFor();
  await windows.nth(0).locator('.window-close').click();
  assert.deepEqual(errors,[]);
- console.log('PASS: upper/bottom windows stack, full library/details/options/downloads, pause/resume, persistent green lower LEDs; upper buttons stay blue');
+ console.log('PASS: upper/bottom windows stack, full library/details/options/downloads, pause/resume, page-driven lower LEDs; upper buttons stay blue');
 }finally{await browser.close();}
+
+
