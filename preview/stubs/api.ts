@@ -137,6 +137,15 @@ const backend: Record<string, (...a: any[]) => any> = {
   log_frontend: (l: string, m: string) => console.log("[backend log]", l, m),
   get_settings: () => (window as any).__previewSettings ?? null,
   set_settings: (s: any) => ((window as any).__previewSettings = s, true),
+  local_music_folders: () => ({ downloads: "/home/deck/Downloads", music: "/home/deck/Music" }),
+  import_local_music: (path: string) => {
+    const w = window as any;
+    (w.__localMusicImports ??= []).push(path);
+    if (w.__localMusicFailure) return { ok: false, error: "Invalid audio" };
+    const folder = "ThemeHub-Local-Music-fixture";
+    w.__testPacks = [...(w.__testPacks ?? []).filter((p:any) => p.folder !== folder), { name: "Local music · song.mp3", folder, files: ["menu_music.mp3"], mappings: {}, ignore: [], music: true }];
+    return { ok: true, folder };
+  },
   list_sound_packs: () => (window as any).__testPacks ?? [],
   deckthemes_audio_catalog: () => (window as any).__deckthemesAudio ?? [],
   install_deckthemes_audio: async (id:string) => {
@@ -203,4 +212,7 @@ export const toaster = { toast(data: any) {
   const timer=setTimeout(dismiss,data.duration??5500);
   return {data,dismiss:()=>{clearTimeout(timer);dismiss();}};
 } };
-export const openFilePicker = async () => ({ path: "", realpath: "" });
+export const openFilePicker = async (...args: any[]) => {
+  ((window as any).__filePickerCalls ??= []).push(args);
+  return (window as any).__filePickerResult ?? { path: "", realpath: "" };
+};

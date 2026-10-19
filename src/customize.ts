@@ -1,4 +1,5 @@
 import {FIXED_BACKGROUND_PAGES,pageBackgroundRef} from "./pageBackgrounds";
+import {chooseLocalMusic} from "./localMusic";
 import {downloadableAudio,downloadAudio,refreshAudioCatalog} from "./audioDownloads";
 // Customize: the slots of the preset in use, offered only where the look draws them (LAYOUT_SLOTS in
 // src/engine/assets.ts), each with every compatible asset from every installed source, grouped by source.
@@ -142,7 +143,8 @@ function soundControl(kind: "sounds" | "music"): SlotControl {
   ].filter((g) => g.items.length);
   const special: Option[] = kind === "sounds"
     ? [{ id: "", name: `Automatic${auto ? ` (${auto.name})` : ""}` }, { id: "steam", name: "Steam sounds" }]
-    : [{ id: "", name: `Automatic${auto ? ` (${auto.name})` : " (none found)"}` }, { id: "off", name: "Off" }];
+    : [{ id: "", name: `Automatic${auto ? ` (${auto.name})` : " (none found)"}` }, { id: "off", name: "Off" },
+       { id: "@local/downloads", name: "Choose music from Downloads…" }, { id: "@local/music", name: "Choose music from Music…" }];
   return {
     id: kind,
     label: kind === "sounds" ? "Sound effects" : "Music",
@@ -159,6 +161,12 @@ function soundControl(kind: "sounds" | "music"): SlotControl {
     async set(v: string) {
       const key=`${t?.id??th}:${kind}`,revision=(audioSelections.get(key)??0)+1;
       audioSelections.set(key,revision);
+      if (kind === "music" && v.startsWith("@local/")) {
+        const preset = getSettings().userPreset;
+        const folder = await chooseLocalMusic(v === "@local/downloads" ? "downloads" : "music");
+        if (!folder || audioSelections.get(key) !== revision || layout() !== th || look()?.id !== t?.id || getSettings().userPreset !== preset) return;
+        v = `@pack/${folder}`;
+      }
       if(v.startsWith("@deckthemes/")){
         const folder=await downloadAudio(v.slice(12));
         if(!folder||audioSelections.get(key)!==revision)return;

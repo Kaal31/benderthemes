@@ -1742,6 +1742,17 @@ class Plugin:
             decky.logger.warning(f"DeckThemes audio install failed: {error}")
             return {"ok": False, "error": str(error)}
 
+    async def local_music_folders(self):
+        import local_music
+        return local_music.folders(decky.DECKY_USER_HOME)
+
+    async def import_local_music(self, path: str):
+        import local_music
+        try:
+            return await asyncio.to_thread(local_music.import_file, str(path), decky.DECKY_USER_HOME, _sounds_dir())
+        except Exception as error:
+            return {"ok": False, "error": str(error)}
+
     async def list_sound_packs(self):
         out = []
         root = _sounds_dir()

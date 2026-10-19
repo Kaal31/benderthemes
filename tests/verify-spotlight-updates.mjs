@@ -13,7 +13,7 @@ try {
     window.__spotlightUpdates={plugins:[{id:'youtube-pip',name:'YouTube PiP',repo:'otisabiburada/decky-youtube-pip',currentVersion:'0.5.0',version:localStorage.getItem('fixture-next-version')||'0.6.0',zipUrl:'https://github.com/otisabiburada/decky-youtube-pip/releases/download/0.6.0/youtube-pip-v0.6.0.zip',root:false,updateAvailable:true}],updateAvailable:true};
     window.DeckyBackend={call:async(...args)=>{(window.__updateCalls??=[]).push(args);}};
   });
-  await page.goto(url);
+  await page.goto(`${url}?theme=ps4&still=1`);
   await page.getByRole('heading',{name:'YouTube PiP update available.'}).waitFor();
   assert.match(await page.locator('.fw-version').innerText(),/0.5.0[\s\S]*0.6.0/);
   await page.keyboard.press('Escape');
@@ -36,7 +36,7 @@ try {
   await withDeckyUp.addInitScript(()=>{
     window.__spotlightUpdates={deckyUpInstalled:true,plugins:[{id:'youtube-pip',name:'YouTube PiP',repo:'otisabiburada/decky-youtube-pip',currentVersion:'0.5.0',version:'0.6.0',zipUrl:'https://github.com/otisabiburada/decky-youtube-pip/releases/download/0.6.0/youtube-pip-v0.6.0.zip',root:false,updateAvailable:true}],updateAvailable:true};
   });
-  await withDeckyUp.goto(url);
+  await withDeckyUp.goto(`${url}?theme=ps4&still=1`);
   await withDeckyUp.getByRole('button',{name:'Hub',exact:true}).first().click();
   await withDeckyUp.getByRole('tab',{name:'Plugin Spotlight',exact:true}).click();
   await withDeckyUp.locator('.dht-spotlight-search input').fill('YouTube PiP');
