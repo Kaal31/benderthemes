@@ -1,0 +1,15 @@
+{
+  "schema": 1,
+  "id": "ios6",
+  "name": "iOS 6 Classic",
+  "author": "ThemeHub",
+  "description": "Classic SpringBoard with a linen Notification Center, weather, stocks and grouped Steam alerts.",
+  "company": "Community",
+  "layout": "frame",
+  "frame": {
+    "entry": "index.html"
+  },
+  "slots": {
+    "accent": "#3b75b5"
+  }
+}
