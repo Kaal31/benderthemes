@@ -660,7 +660,7 @@ function getRequire(): any {
   }
   return req;
 }
-function findModuleExports(...needles: string[]): Record<string, any> | null {
+export function findModuleExports(...needles: string[]): Record<string, any> | null {
   const r = getRequire();
   if (!r?.m) return null;
   for (const id of Object.keys(r.m)) {

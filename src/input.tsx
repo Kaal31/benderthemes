@@ -96,6 +96,7 @@ export function ThemeRoot({
   latest.current = onInput;
   const gate=useRef(activationGate);gate.current=activationGate;
   const fire = (btn: Btn, e: any, direct = false): boolean => {
+    if (document.querySelector("[data-dht-screensaver=true]")) { stopHold(); return false; }
     const press = { btn, repeat: !!e?.detail?.is_repeat };
     if (!direct) {
       const modalOpen = modalLayers.length > 0 || !!modalInput;

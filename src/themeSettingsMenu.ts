@@ -1,3 +1,4 @@
+import { saverOptions, updateSaver, addSaverMedia, previewSaver } from "./themeScreensavers";
 import { achievementPopupStatus, achievementPopupsBlocked, previewAchievementPopup } from "./achievementPopups";
 import {customProfilePicture,setProfilePicture,uploadProfilePicture} from "./profilePicture";
 // Every option that belongs to one theme, as an in-theme menu (△ / Y → Theme options, and the
@@ -475,7 +476,17 @@ export function advancedItems(): MenuItem[] {
 /** The current theme's entries after Presets and the shared destinations: Customize and Advanced. */
 export function themeSettingsItems(): MenuItem[] {
   refreshThemeLists();
-  return [group("Customize", customizeItems), group("Advanced", advancedItems)];
+  return [group("Customize", customizeItems), group("Screensaver", () => [
+    choice("Mode", [{id:"steam" as const,name:"Steam default"},{id:"custom" as const,name:"This theme’s media"},{id:"disabled" as const,name:"Disabled for this theme"}],()=>saverOptions().mode,mode=>updateSaver({mode})),
+    {label:"Add photo, GIF or video",action:()=>void addSaverMedia()},
+    {get label(){return "Media ("+saverOptions().media.length+")";},sub:()=>saverOptions().media.map((file,i)=>({label:"Remove "+(i+1)+": "+(saverOptions().labels?.[file]??file.slice(-8)),action:()=>updateSaver({media:saverOptions().media.filter(x=>x!==file)})}))},
+    choice("Slide duration", [5,10,15,30,60].map(id=>({id,name:id+" seconds"})),()=>saverOptions().duration,duration=>updateSaver({duration})),
+    toggle("Shuffle",()=>saverOptions().shuffle,shuffle=>updateSaver({shuffle})),
+    choice("Framing",[{id:"contain" as const,name:"Fit whole image"},{id:"cover" as const,name:"Fill screen"}],()=>saverOptions().fit,fit=>updateSaver({fit})),
+    choice("Transition",[{id:"fade" as const,name:"Fade"},{id:"none" as const,name:"None"}],()=>saverOptions().transition,transition=>updateSaver({transition})),
+    {label:"Preview",action:()=>void previewSaver(),get disabled(){return S().screensaversDisabled===true||saverOptions().mode==="disabled"||!saverOptions().media.length;}},
+    {label:"Global disable in Quick Access overrides this theme",disabled:true},
+  ]), group("Advanced", advancedItems)];
 }
 
 /**
