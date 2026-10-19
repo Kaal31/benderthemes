@@ -3,7 +3,7 @@ import assert from 'node:assert/strict';
 import {launch} from './browser.mjs';
 const pure=await build({entryPoints:['src/backgroundMedia.ts'],bundle:true,write:false,format:'esm'});
 const {backgroundMediaKind:kind}=await import('data:text/javascript;base64,'+Buffer.from(pure.outputFiles[0].text).toString('base64'));
-for(const src of ['movie.MP4','https://local/a.webm?token=1','data:video/webm;base64,AA'])assert.equal(kind(src),'video');
+for(const src of ['movie.MP4','https://local/a.webm?token=1','data:video/webm;base64,AA','data:video/mp4;base64,AA','http://127.0.0.1:9999/test/f/cinematic-republic-video.mp4'])assert.equal(kind(src),'video');
 for(const src of ['a.gif#x','data:image/gif;base64,AA'])assert.equal(kind(src),'gif');
 assert.equal(kind('poster.png'),'image');
 const script=await build({stdin:{contents:`import React from 'react';import {createRoot} from 'react-dom/client';import {BackgroundMedia} from './src/WallpaperMedia';const root=createRoot(document.getElementById('root'));window.show=(src,paused=false)=>root.render(React.createElement(BackgroundMedia,{src,paused}));window.clear=()=>root.unmount();`,resolveDir:process.cwd(),loader:'tsx'},bundle:true,write:false,format:'iife',jsx:'automatic'});

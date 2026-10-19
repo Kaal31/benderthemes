@@ -1,6 +1,6 @@
 """Hub > Theme files: theme files for the theme-file importers, listed from public online sources at runtime.
 
-Nothing from these sites is copied into the plugin or the repository: lists are fetched when the user opens the
+GBAtemp has a dated metadata-only index fallback; its images remain on their original hosts. Other sources: lists are fetched when the user opens the
 tab (kept in memory for LIST_TTL), every entry carries its source page and the creator's name, and a file is only
 downloaded after the user confirmed it in the Hub. Downloads land in <data>/skins/<kind>/ where the importers read
 them (main.py list_skins / get_*_skin).
@@ -43,6 +43,7 @@ MAX_JSON = 8 * 1024 * 1024
 UA = "DeckHomeThemes/theme-files (+https://github.com/Kaal31)"
 
 SOURCES = {
+    "gbatemp": {"name": "GBAtemp", "url": "https://gbatemp.net/threads/wiiflow-themes.180497/", "credit": "WiiFlow themes, descriptions and screenshots from public GBAtemp posts. Credits belong to the original creators; older image and download links may be unavailable."},
     "themezer": {"name": "Themezer", "url": "https://themezer.net",
                  "credit": "Themes and previews from Themezer (themezer.net) by their creators."},
     "pspunk": {"name": "PSPunk", "url": "https://www.pspunk.com/psp-themes/",
@@ -56,6 +57,7 @@ SOURCES = {
 }
 # kind -> label, folder under <data>/skins, accepted extensions, size cap, sources (first = default)
 KINDS = {
+    "wiiflow": {"label": "WiiFlow", "dir": "wiiflow", "exts": (".zip", ".rar", ".7z"), "max": 256 << 20, "sources": ("gbatemp",)},
     "psp": {"label": "PSP", "dir": "psp", "exts": (".ptf", ".ctf"), "max": 24 << 20, "sources": ("pspunk", "shenron0", "archive")},
     "p3t": {"label": "PS3", "dir": "p3t", "exts": (".p3t",), "max": 160 << 20, "sources": ("themezer", "ps3pro", "archive")},
     "vita": {"label": "PS Vita", "dir": "vita", "exts": (".zip",), "max": 96 << 20, "sources": ("archive",)},
@@ -285,6 +287,8 @@ def _https(url, host=None):
 
 def _allowed_host(source, host):
     host = (host or "").lower()
+    if source == "gbatemp":
+        return host == "gbatemp.net"
     if source == "themezer":
         return host == "api.themezer.net" or host.endswith(".r2.cloudflarestorage.com")
     if source == "pspunk":
@@ -320,7 +324,9 @@ def _opener(source):
 
 def _fetch(source, url, data=None, limit=MAX_JSON):
     """GET (or POST JSON) -> bytes, refusing more than `limit` bytes and redirects off the source's hosts."""
-    headers = {"User-Agent": UA, "Accept": "application/json, text/html;q=0.8, */*;q=0.5"}
+    headers = {"User-Agent": "DeckHomeThemes/theme-files" if source == "gbatemp" else UA, "Accept": "application/json, text/html;q=0.8, */*;q=0.5"}
+    if source == "gbatemp":
+        headers.pop("Accept", None)
     if data is not None:
         headers["Content-Type"] = "application/json"
     req = urllib.request.Request(url, data=data, headers=headers)
@@ -372,7 +378,30 @@ def browse(kind, source, query="", page=1, refresh=False, fetch_json=None, fetch
     if kind not in KINDS or source not in KINDS[kind]["sources"]:
         return {**base, "error": "This source has no themes of that kind."}
     try:
-        if source == "themezer":
+        if source == "gbatemp":
+            from gbatemp_themes import THREADS, parse
+            def load():
+                items, failures = [], []
+                for thread in THREADS:
+                    try:
+                        items.extend(parse(fetch_text("gbatemp", thread), thread))
+                    except Exception:
+                        failures.append(thread)
+                if not items:
+                    from pathlib import Path
+                    snapshot = json.loads(Path(__file__).with_name("gbatemp_wiiflow_index.json").read_text(encoding="utf-8"))
+                    return snapshot["items"], failures
+                from pathlib import Path
+                saved = json.loads(Path(__file__).with_name("gbatemp_wiiflow_index.json").read_text(encoding="utf-8"))
+                fallbacks = {i["id"]: i.get("fallbackImage") for i in saved["items"]}
+                for item in items:
+                    if fallbacks.get(item["id"]): item["fallbackImage"] = fallbacks[item["id"]]
+                return items, failures
+            every, failures = _cached(("gbatemp",), load, now, refresh)
+            words = query.lower().split()
+            hits = [i for i in every if all(w in (i["name"]+" "+i["description"]+" "+i["author"]).lower() for w in words)]
+            res = {"items": hits[(page-1)*PAGE_SIZE:page*PAGE_SIZE], "total": len(hits), "pages": max(1, -(-len(hits)//PAGE_SIZE)), "skipped": len(failures), "warning": "Some GBAtemp pages are unavailable. Showing available entries or the saved index from 2026-10-17; older links may have expired." if failures else ""}
+        elif source == "themezer":
             def load():
                 data = fetch_json("themezer", THEMEZER_API, json.dumps({"query": _themezer_query(kind, query, page)}).encode())
                 if isinstance(data, dict) and data.get("errors") and not data.get("data"):
@@ -454,6 +483,8 @@ def download_url(kind, source, ident, file=""):
     """The one URL a (kind, source, id, file) may download, or raise ValueError."""
     if kind not in KINDS or source not in KINDS[kind]["sources"]:
         raise ValueError("unknown kind or source")
+    if source == "gbatemp":
+        raise ValueError("Open the original author download page; WiiFlow archives require separate import.")
     if source == "themezer":
         if not _HEX.fullmatch(str(ident or "")):
             raise ValueError("bad Themezer id")

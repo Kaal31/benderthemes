@@ -7,6 +7,7 @@ import { useEffect, useRef, useState } from "react";
 import { HomeSwitch, SafeBoundary, showNativeSteamHome, showThemedHomeAgain, ThemedHome } from "./Home";
 import { loadLibrary } from "./library";
 import { useDiag, logInfo, reportError } from "./diag";
+import { Updates } from "./Updates";
 const PLUGIN_VERSION = "__DHT_VERSION__";
 import { retryHome, useHomeFailure } from "./compatibility";
 import { restoreFooter } from "./steam";
@@ -108,6 +109,7 @@ function Panel() {
 
   return (
     <>
+      <Updates onManageThemes={() => { openMarketplace(); Navigation.Navigate(ROUTE); Navigation.CloseSideMenus(); }} />
       <PanelSection title="Themes">
         <PanelSectionRow><ButtonItem layout="below" description="Browse animated previews, download a theme and activate it." onClick={() => { openMarketplace(); Navigation.Navigate(ROUTE); Navigation.CloseSideMenus(); }}>Hub</ButtonItem></PanelSectionRow>
         <AddThemeRow />

@@ -230,7 +230,7 @@ class ParseTests(unittest.TestCase):
 
     def test_kinds_listing(self):
         k = ts.kinds()
-        self.assertEqual({x["id"] for x in k["kinds"]}, {"psp", "p3t", "vita", "switch", "wiiu", "3ds", "wii", "xbox"})
+        self.assertEqual({x["id"] for x in k["kinds"]}, {"wiiflow", "psp", "p3t", "vita", "switch", "wiiu", "3ds", "wii", "xbox"})
         for x in k["kinds"]:
             self.assertTrue(all(s in k["sources"] for s in x["sources"]))
 

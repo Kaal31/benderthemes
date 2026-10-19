@@ -2192,7 +2192,7 @@ class Plugin:
         for key, ext in (("video", ".mp4"), ("poster", ".jpg")):
             path = _resource("cinematic/" + name + ext)
             if os.path.isfile(path):
-                ident = "cinematic-" + name + "-" + key
+                ident = "cinematic-" + name + "-" + key + ext
                 _vi.files[ident] = path
                 result[key] = f"http://127.0.0.1:{_vi.port}/{_vi.token}/f/{ident}"
         return result
