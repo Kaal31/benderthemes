@@ -19,7 +19,7 @@ import { pageOf, pageSettings } from "./engine/pages";
 import { PAGE_LOOKS } from "./pageLooks";
 import { iisuPageVars, iisuSchemeAttr } from "./themes/iisuStyles";
 import { downloadLine, pauseDownload, removeDownload, resumeDownload, useDownloads } from "./downloads";
-import { t } from "./i18n";
+import { t, lang } from "./i18n";
 
 export type Destination = {place: SteamPlace | "game" | "achievements" | "music"; game?:Game; url?:string};
 let opener: ((destination:Destination)=>void)|null=null;
@@ -85,43 +85,72 @@ export function DestinationView({destination,settings:homeSettings,lib,onClose,o
   let subtitle="";
   const all=lib;
   if(page.place==="library"||page.place==="search") {
-    rows=all.games.filter(g=>g.name.toLowerCase().includes(query.toLowerCase())).map(g=>({label:g.name,sub:fmtPlaytime(g.playtime, g.lastPlayed)+(g.installed?" · Installed":" · Not installed"),game:g,run:()=>go({place:"game",game:g})}));
-    subtitle=`${rows.length} games`;
+    rows=all.games.filter(g=>g.name.toLowerCase().includes(query.toLowerCase())).map(g=>({label:g.name,sub:fmtPlaytime(g.playtime, g.lastPlayed)+(g.installed?` · ${t("installed")}`:` · ${t("notInstalled")}`),game:g,run:()=>go({place:"game",game:g})}));
+    subtitle=lang("gamesCount", { count: rows.length });
   } else if(page.place==="game"&&game) {
-    rows=[{label:game.installed?"Play":"Install / Play",icon:"play",run:()=>onLaunch(game)},{label:"Achievements",icon:"trophy",run:()=>go({place:"achievements",game})},{label:"Screenshots",icon:"photo",run:onMedia},{label:"Watch Trailer",icon:"video",run:()=>onTrailer(game)},{label:"Browse Store",icon:"store",run:()=>openSteam("store")}];
+    rows=[
+      {label:game.installed?t("play"):t("installOrPlay"),icon:"play",run:()=>onLaunch(game)},
+      {label:t("destAchievements"),icon:"trophy",run:()=>go({place:"achievements",game})},
+      {label:t("destScreenshots"),icon:"photo",run:onMedia},
+      {label:t("watchTrailer"),icon:"video",run:()=>onTrailer(game)},
+      {label:t("browseStore"),icon:"store",run:()=>openSteam("store")}
+    ];
     subtitle=fmtPlaytime(game.playtime, game.lastPlayed);
-    if (protonDbDetected && protonDbEnabled(settings) && !game.shortcut) rows.push({label:"ProtonDB reports",icon:"info",run:()=>Navigation.NavigateToExternalWeb(`https://www.protondb.com/app/${game.appid}`)});
+    if (protonDbDetected && protonDbEnabled(settings) && !game.shortcut) rows.push({label:t("protonDbReports"),icon:"info",run:()=>Navigation.NavigateToExternalWeb(`https://www.protondb.com/app/${game.appid}`)});
     rows.push(...pluginGameActions(game).map(action=>({label:action.label,run:action.run})));
-    rows.push({label:"Steam game page",sub:"Open plugin badges, panels and game options",icon:"info",run:()=>{openNativeGamePage(game);onClose();}});
+    rows.push({label:t("steamGamePage"),sub:t("steamGamePageDesc"),icon:"info",run:()=>{openNativeGamePage(game);onClose();}});
   } else if(page.place==="achievements"&&game) {
-    const progress=achievements(game);subtitle=progress?`${progress.unlocked} / ${progress.total} unlocked`:"Achievement progress";
-    rows=(ach??[]).map(a=>({label:a.strName??a.name??"Achievement",sub:a.bAchieved?"Unlocked":a.strDescription??a.description??"Locked",icon:"trophy",state:a.bAchieved?"on":"off"}));
-    if(!rows.length)subtitle+=" · Detailed achievements are not available in this session.";
+    const progress=achievements(game);subtitle=progress?`${progress.unlocked} / ${progress.total} ${t("unlocked")}`:t("achievementProgress");
+    rows=(ach??[]).map(a=>({label:a.strName??a.name??t("achievement"),sub:a.bAchieved?t("unlocked"):a.strDescription??a.description??t("locked"),icon:"trophy",state:a.bAchieved?"on":"off"}));
+    if(!rows.length)subtitle+=` · ${t("noDetailedAchievements")}`;
   } else if(page.place==="qam"||page.place==="settings") {
-    rows=[option("Presets",()=>themeMenu()),option("Collections",()=>collectionMenu(settings.theme).sub!()),option("Icon size",()=>[75,85,100,110].map(size=>({label:`${size}%${size===100?" · Default":""}`,checked:(settings.iconSizes?.[settings.theme]??100)===size,action:()=>updateSettings(p=>({iconSizes:{...p.iconSizes,[settings.theme]:size}}))}))),option("Game order",()=>["recent","alpha","playtime"].map(sort=>({label:sort==="recent"?"Recently played":sort==="alpha"?"Alphabetical":"Play time",action:()=>updateSettings({sort:sort as any}),checked:settings.sort===sort}))),toggle("TV mode",settings.tvMode,()=>updateSettings({tvMode:!settings.tvMode})),toggle("Animations",settings.animations,()=>updateSettings({animations:!settings.animations})),toggle("Sound effects",settings.sounds,()=>updateSettings({sounds:!settings.sounds})),toggle("Background music",settings.music[settings.theme]!==false,()=>updateSettings({music:{...settings.music,[settings.theme]:settings.music[settings.theme]===false}})),option("Sound effects volume",()=>[0,20,40,60,80,100].map(sfxVolume=>({label:`${sfxVolume}%`,checked:settings.sfxVolume===sfxVolume,action:()=>updateSettings({sfxVolume})}))),option("Music volume",()=>[0,20,40,60,80,100].map(musicVolume=>({label:`${musicVolume}%`,checked:settings.musicVolume===musicVolume,action:()=>updateSettings({musicVolume})}))),toggle("24-hour clock",settings.clock24,()=>updateSettings({clock24:!settings.clock24})),browse("cloud","cloud"),browse("power","power")];
+    rows=[
+      option(t("presets"),()=>themeMenu()),
+      option(t("allCollections"),()=>collectionMenu(settings.theme).sub!()),
+      option(t("iconSize"),()=>[75,85,100,110].map(size=>({label:`${size}%${size===100?` · ${t("default")}`:""}`,checked:(settings.iconSizes?.[settings.theme]??100)===size,action:()=>updateSettings(p=>({iconSizes:{...p.iconSizes,[settings.theme]:size}}))}))),
+      option(t("gameOrder"),()=>["recent","alpha","playtime"].map(sort=>({label:sort==="recent"?t("sortRecent"):sort==="alpha"?t("sortAlpha"):t("sortPlaytime"),action:()=>updateSettings({sort:sort as any}),checked:settings.sort===sort}))),
+      toggle(t("tvMode"),settings.tvMode,()=>updateSettings({tvMode:!settings.tvMode})),
+      toggle(t("animations"),settings.animations,()=>updateSettings({animations:!settings.animations})),
+      toggle(t("soundEffects"),settings.sounds,()=>updateSettings({sounds:!settings.sounds})),
+      toggle(t("backgroundMusic"),settings.music[settings.theme]!==false,()=>updateSettings({music:{...settings.music,[settings.theme]:settings.music[settings.theme]===false}})),
+      option(t("soundVolume"),()=>[0,20,40,60,80,100].map(sfxVolume=>({label:`${sfxVolume}%`,checked:settings.sfxVolume===sfxVolume,action:()=>updateSettings({sfxVolume})}))),
+      option(t("musicVolume"),()=>[0,20,40,60,80,100].map(musicVolume=>({label:`${musicVolume}%`,checked:settings.musicVolume===musicVolume,action:()=>updateSettings({musicVolume})}))),
+      toggle(t("clock24"),settings.clock24,()=>updateSettings({clock24:!settings.clock24})),
+      browse("cloud","cloud"),
+      browse("power","power")
+    ];
   } else if(page.place==="friends") {
     const fs=(globalThis as any).friendStore;const friends=fs?.allFriends??fs?.m_FriendsUIFriendStore?.allFriends;
-    rows=(Array.isArray(friends)?friends:[]).map(f=>{const p=f.persona??f;return{label:friendFullName(f,fs)||"Friend",sub:p.m_strGameName??(p.is_online||p.m_ePersonaState>0?"Online":"Offline"),icon:"friends",state:p.is_online||p.m_ePersonaState>0||p.m_strGameName?"on":"off"};});
-    subtitle=rows.length?`${status.friendsOnline??0} online`:"Friends data is not available in this Steam session.";
+    rows=(Array.isArray(friends)?friends:[]).map(f=>{const p=f.persona??f;return{label:friendFullName(f,fs)||t("friend"),sub:p.m_strGameName??(p.is_online||p.m_ePersonaState>0?t("online"):t("offline")),icon:"friends",state:p.is_online||p.m_ePersonaState>0||p.m_strGameName?"on":"off"};});
+    subtitle=rows.length?`${status.friendsOnline??0} ${t("online")}`:t("noFriendsData");
   } else if(page.place==="downloads") {
     // the live queue (src/downloads.ts): progress, speed and time left, with Steam's own controls
     const live=dls.items;const ds=(globalThis as any).downloadsStore;const raw=ds?.m_DownloadItems??ds?.downloadItems;
-    rows=live.length?live.map(d=>({label:lib.byId.get(d.appid)?.name??`App ${d.appid}`,sub:downloadLine(d),game:lib.byId.get(d.appid),icon:"download" as IconName,state:(d.active&&!d.paused?"on":"off") as "on"|"off",progress:d.completed?1:d.progress,run:()=>menu.open([d.paused?{label:"Resume download",action:()=>resumeDownload(d.appid)}:{label:"Pause download",action:()=>pauseDownload(d.appid)},{label:"Remove from queue",action:()=>removeDownload(d.appid)}],"Download")})):(Array.isArray(raw)?raw:[]).map(d=>{const id=d.appid??d.nAppID;return{label:lib.byId.get(id)?.name??d.display_name??`App ${id}`,sub:d.completed?"Complete":d.paused?"Paused":"Downloading / queued",icon:"download" as IconName,run:()=>menu.open([{label:"Pause download",action:()=>pauseDownload(id)},{label:"Resume download",action:()=>resumeDownload(id)}],"Download")};});
-    subtitle=rows.length?dls.running?"Downloading":"Download queue":Array.isArray(raw)||live.length||(globalThis as any).SteamClient?.Downloads?"No active downloads":"Download data is not available in this Steam session.";
+    rows=live.length?live.map(d=>({label:lib.byId.get(d.appid)?.name??`App ${d.appid}`,sub:downloadLine(d),game:lib.byId.get(d.appid),icon:"download" as IconName,state:(d.active&&!d.paused?"on":"off") as "on"|"off",progress:d.completed?1:d.progress,run:()=>menu.open([d.paused?{label:t("resumeDownload"),action:()=>resumeDownload(d.appid)}:{label:t("pauseDownload"),action:()=>pauseDownload(d.appid)},{label:t("removeFromQueue"),action:()=>removeDownload(d.appid)}],t("destDownloads"))})):(Array.isArray(raw)?raw:[]).map(d=>{const id=d.appid??d.nAppID;return{label:lib.byId.get(id)?.name??d.display_name??`App ${id}`,sub:d.completed?t("complete"):d.paused?t("paused"):t("downloadingOrQueued"),icon:"download" as IconName,run:()=>menu.open([{label:t("pauseDownload"),action:()=>pauseDownload(id)},{label:t("resumeDownload"),action:()=>resumeDownload(id)}],t("destDownloads"))};});
+    subtitle=rows.length?dls.running?t("downloading"):t("downloadQueue"):Array.isArray(raw)||live.length||(globalThis as any).SteamClient?.Downloads?t("noActiveDownloads"):t("noDownloadsData");
   } else if(page.place==="notifications") {
     const ns=(globalThis as any).notificationStore;const items=ns?.m_rgNotificationTray??ns?.m_rgTrayNotifications;
-    rows=(Array.isArray(items)?items:[]).map(n=>({label:n.title??n.strTitle??"Steam notification",sub:n.body??n.strBody??"",icon:"bell"}));
-    subtitle=Array.isArray(items)?"Notifications":"Notifications are not available in this Steam session.";
+    rows=(Array.isArray(items)?items:[]).map(n=>({label:n.title??n.strTitle??t("steamNotification"),sub:n.body??n.strBody??"",icon:"bell"}));
+    subtitle=Array.isArray(items)?t("destNotifications"):t("noNotificationsData");
   } else if(page.place==="cloud") {
-    subtitle=status.cloud===undefined?"Cloud status is unavailable.":status.cloud?"Steam Cloud is enabled. Saves synchronize when games start and close.":"Steam Cloud is disabled.";
-    rows=lib.games.filter(g=>!g.shortcut).map(g=>({label:g.name,sub:"Managed by Steam Cloud when supported by this game",game:g,run:()=>go({place:"game",game:g})}));
+    subtitle=status.cloud===undefined?t("cloudUnavailable"):status.cloud?t("cloudEnabled"):t("cloudDisabled");
+    rows=lib.games.filter(g=>!g.shortcut).map(g=>({label:g.name,sub:t("cloudManagedSub"),game:g,run:()=>go({place:"game",game:g})}));
   } else if(page.place==="power") {
-    rows=[{label:"Sleep",icon:"power",run:()=>menu.open([{label:"Sleep now",action:()=>call(client()?.System?.SuspendPC?.bind(client()?.System))}],"Put the device to sleep?")},{label:"Restart",icon:"power",run:()=>menu.open([{label:"Restart now",action:()=>call(client()?.System?.RestartPC?.bind(client()?.System))}],"Restart the device?")},{label:"Shut down",icon:"power",run:()=>menu.open([{label:"Shut down now",action:()=>call(client()?.System?.ShutdownPC?.bind(client()?.System))}],"Shut down the device?")}];
+    rows=[
+      {label:t("powerSleep"),icon:"power",run:()=>menu.open([{label:t("sleepNow"),action:()=>call(client()?.System?.SuspendPC?.bind(client()?.System))}],t("sleepPrompt"))},
+      {label:t("powerRestart"),icon:"power",run:()=>menu.open([{label:t("restartNow"),action:()=>call(client()?.System?.RestartPC?.bind(client()?.System))}],t("restartPrompt"))},
+      {label:t("powerShutDown"),icon:"power",run:()=>menu.open([{label:t("shutDownNow"),action:()=>call(client()?.System?.ShutdownPC?.bind(client()?.System))}],t("shutDownPrompt"))}
+    ];
   } else if(page.place==="music") {
-    rows=[{label:"Play / Pause",icon:"music",run:()=>call(client()?.Music?.TogglePlayPause?.bind(client()?.Music))},{label:"Previous track",icon:"back",run:()=>call(client()?.Music?.PlayPrevious?.bind(client()?.Music))},{label:"Next track",icon:"play",run:()=>call(client()?.Music?.PlayNext?.bind(client()?.Music))}];subtitle="Steam soundtrack player";
+    rows=[
+      {label:t("playOrPause"),icon:"music",run:()=>call(client()?.Music?.TogglePlayPause?.bind(client()?.Music))},
+      {label:t("prevTrack"),icon:"back",run:()=>call(client()?.Music?.PlayPrevious?.bind(client()?.Music))},
+      {label:t("nextTrack"),icon:"play",run:()=>call(client()?.Music?.PlayNext?.bind(client()?.Music))}
+    ];
+    subtitle=t("steamSoundtrackPlayer");
   } else if(page.place==="browser"||page.place==="community") {
-    rows=[browse("friends","friends"),browse("notifications","bell"),browse("library","library"),{label:"Store",icon:"store",run:()=>openSteam("store")}];subtitle="Steam community and discovery";
-  } else rows=[browse("library","library"),{label:"Store",icon:"store",run:()=>openSteam("store")},{label:"Music",icon:"music",run:()=>openDestination({place:"music"})},{label:"Captures",icon:"photo",run:()=>openDestination({place:"media"})},browse("friends","friends"),browse("downloads","download"),browse("notifications","bell"),browse("settings","gear"),browse("power","power")];
+    rows=[browse("friends","friends"),browse("notifications","bell"),browse("library","library"),{label:t("destStore"),icon:"store",run:()=>openSteam("store")}];subtitle=t("steamCommunityDiscovery");
+  } else rows=[browse("library","library"),{label:t("destStore"),icon:"store",run:()=>openSteam("store")},{label:t("destMusic"),icon:"music",run:()=>openDestination({place:"music"})},{label:t("captures"),icon:"photo",run:()=>openDestination({place:"media"})},browse("friends","friends"),browse("downloads","download"),browse("notifications","bell"),browse("settings","gear"),browse("power","power")];
   const current=Math.min(sel,Math.max(0,rows.length-1));
   const choose=(i:number)=>{setSel(i);playSound("select");rows[i]?.run?.();};
   const navigateNazarick=(place:NazarickPage)=>{playSound("tab");if(place==="home")closeSurface();else if(place==="store")openSteam("store");else transitionPage(settings,()=>{setPage({place});setHistory([]);setSel(0);setQuery("");setNotice("");});};
@@ -138,17 +167,17 @@ export function DestinationView({destination,settings:homeSettings,lib,onClose,o
   return <div ref={surfaceRef} className="dht-destination" data-theme={settings.theme} data-place={page.place} data-variant={settings.theme==="x360"?settings.x360?.style??"metro":undefined} data-n3ds-top={settings.theme==="n3ds"?(settings.n3dsTop==="hide"?"hide":"show"):undefined} data-scheme={iisuSchemeAttr(settings)} style={{position:"absolute",inset:0,zIndex:85,...iisuPageVars(settings),...(settings.theme==="castle"?castleWindowAppearance(settings):{})}}><Stage background={skin.bg}><style>{PAGE_LOOKS}</style>
     {settings.theme==="nazarick"&&<><NazarickBackdrop page={page.place} motion={settings.animations} settings={settings}/><NazarickNavigation page={page.place} settings={settings} onNavigate={navigateNazarick}/></>}
     <div className={settings.theme==="nazarick"?"naz-content dht-page-frame":"dht-page-frame"} style={{position:"absolute",inset:"5% 6%",color:skin.text,fontFamily:skin.font??'"Segoe UI",Arial,sans-serif',display:"flex",flexDirection:"column",gap:18}}>
-      <header className="dht-page-header" style={{display:"flex",alignItems:"center",gap:24,color:skin.tabText??skin.text}}>{settings.theme!=="nazarick"&&<button className="dht-page-back" onClick={back} style={{...itemStyle,width:"auto",minHeight:48,background:skin.panel}}>‹ Back</button>}<h1 className="dht-page-title" data-focus-label={page.place==="library"||page.place==="search"?rows[current]?.label??"":undefined} style={{fontSize:38,fontWeight:400,margin:0}}>{game?.name??names[page.place]}</h1></header>
+      <header className="dht-page-header" style={{display:"flex",alignItems:"center",gap:24,color:skin.tabText??skin.text}}>{settings.theme!=="nazarick"&&<button className="dht-page-back" onClick={back} style={{...itemStyle,width:"auto",minHeight:48,background:skin.panel}}>‹ {t("back")}</button>}<h1 className="dht-page-title" data-focus-label={page.place==="library"||page.place==="search"?rows[current]?.label??"":undefined} style={{fontSize:38,fontWeight:400,margin:0}}>{game?.name??names[page.place]}</h1></header>
       <div className="dht-page-main">{settings.theme!=="nazarick"&&<nav className="dht-page-tabs" aria-label="Page tabs">{tabs.map(place=><button key={place} style={{borderRadius:skin.radius,...skin.ring(page.place===place)}} aria-current={page.place===place?"page":undefined} onClick={()=>switchTab(place)}>{names[place]}</button>)}</nav>}
       <div className="dht-page-content">{subtitle&&<div className="dht-page-subtitle" style={{fontSize:21,color:skin.tabText??skin.sub}}>{subtitle}</div>}
       {page.place==="game"&&game&&<Badges g={game} size={15} theme={settings.theme}/>}
-      {(page.place==="search"||page.place==="library")&&<input ref={inputRef} {...opensKeyboardOnTap} aria-label="Search games" placeholder="Search games…" value={query} onChange={e=>{setQuery(e.target.value);setSel(0);}} onKeyDown={e=>e.stopPropagation()} style={{fontSize:24,padding:14,background:skin.panel,color:skin.text,border:`1px solid ${skin.sub}`,borderRadius:skin.radius}}/>}
+      {(page.place==="search"||page.place==="library")&&<input ref={inputRef} {...opensKeyboardOnTap} aria-label="Search games" placeholder={t("searchGamesDots")} value={query} onChange={e=>{setQuery(e.target.value);setSel(0);}} onKeyDown={e=>e.stopPropagation()} style={{fontSize:24,padding:14,background:skin.panel,color:skin.text,border:`1px solid ${skin.sub}`,borderRadius:skin.radius}}/>}
       {notice&&<p role="status">{notice}</p>}
-      {(page.place==="browser"||page.place==="community") ? <div style={{display:"flex",flexDirection:"column",gap:12,flex:1,minHeight:0}}><form onSubmit={e=>{e.preventDefault();try{const u=new URL(address.includes("://")?address:`https://${address}`);if(u.protocol!=="https:")throw new Error();setWebUrl(u.href);setNotice("");}catch{setNotice("Enter a valid HTTPS address.");}}} style={{display:"flex",gap:12}}><input aria-label="Web address" value={address} onChange={e=>setAddress(e.target.value)} onKeyDown={e=>e.stopPropagation()} style={{flex:1,fontSize:21,padding:12}}/><button type="submit" style={{fontSize:20,padding:12}}>Go</button></form><iframe title="Themed web browser" src={webUrl} sandbox="allow-scripts allow-forms allow-same-origin allow-popups" style={{border:0,background:"white",flex:1}}/><div style={{fontSize:17}}>Some sites block embedded browsing. Checkout and sign-in use Steam’s browser.</div><button onClick={()=>{const sc=client();if(sc?.System?.OpenInSystemBrowser)sc.System.OpenInSystemBrowser(webUrl);else setNotice("The browser handoff is only available on Steam Deck.");}} style={{...itemStyle,background:skin.panel,minHeight:45,fontSize:20}}>Open in system browser</button></div> : <div className="dht-page-body" style={{display:"flex",gap:38,minHeight:0,flex:1}}>
+      {(page.place==="browser"||page.place==="community") ? <div style={{display:"flex",flexDirection:"column",gap:12,flex:1,minHeight:0}}><form onSubmit={e=>{e.preventDefault();try{const u=new URL(address.includes("://")?address:`https://${address}`);if(u.protocol!=="https:")throw new Error();setWebUrl(u.href);setNotice("");}catch{setNotice(t("enterValidHttps"));}}} style={{display:"flex",gap:12}}><input aria-label={t("webAddress")} value={address} onChange={e=>setAddress(e.target.value)} onKeyDown={e=>e.stopPropagation()} style={{flex:1,fontSize:21,padding:12}}/><button type="submit" style={{fontSize:20,padding:12}}>{t("go")}</button></form><iframe title={t("themedWebBrowser")} src={webUrl} sandbox="allow-scripts allow-forms allow-same-origin allow-popups" style={{border:0,background:"white",flex:1}}/><div style={{fontSize:17}}>{t("browserBlockedNotice")}</div><button onClick={()=>{const sc=client();if(sc?.System?.OpenInSystemBrowser)sc.System.OpenInSystemBrowser(webUrl);else setNotice(t("browserDeckOnly"));}} style={{...itemStyle,background:skin.panel,minHeight:45,fontSize:20}}>{t("openInSystemBrowser")}</button></div> : <div className="dht-page-body" style={{display:"flex",gap:38,minHeight:0,flex:1}}>
         {game&&<GameArt g={game} kind="portrait" style={{width:250,alignSelf:"flex-start",maxHeight:"85%",borderRadius:skin.radius}}/>}
-        <div ref={listRef} className="dht-page-list" data-place={page.place} style={{overflowY:"auto",flex:1,padding:6}}>{rows.length?rows.map((r,i)=><button key={`${r.label}-${i}`} className="dht-destination-row" data-selected={current===i} data-state={r.state} onClick={()=>choose(i)} style={{...itemStyle,marginBottom:8,background:current===i?skin.accent:skin.panel,color:current===i?skin.accentText:skin.text,...(current===i?{outline:`2px solid ${skin.sub}`,outlineOffset:1}:{} )}}><span className="dht-row-icon">{r.game?<GameArt g={r.game} kind="portrait" style={{width:42,height:58,borderRadius:3}}/>:<Icon name={r.icon??"info"} size={32}/>}</span><span className="dht-row-text"><span className="dht-row-label" style={{display:"block",fontSize:settings.tvMode?27:24}}>{r.label}</span>{r.sub&&<span className="dht-row-sub" style={{display:"block",fontSize:18,marginTop:5}}>{r.sub}</span>}{r.progress!==undefined&&r.progress>=0&&<span className="dht-row-progress" style={{display:"block",height:6,marginTop:8,borderRadius:3,background:"#0003",overflow:"hidden",width:"min(420px,100%)"}}><i style={{display:"block",height:"100%",width:`${r.progress*100}%`,background:"currentColor"}}/></span>}</span></button>):<p style={{fontSize:24}}>Nothing to display.</p>}</div>
+        <div ref={listRef} className="dht-page-list" data-place={page.place} style={{overflowY:"auto",flex:1,padding:6}}>{rows.length?rows.map((r,i)=><button key={`${r.label}-${i}`} className="dht-destination-row" data-selected={current===i} data-state={r.state} onClick={()=>choose(i)} style={{...itemStyle,marginBottom:8,background:current===i?skin.accent:skin.panel,color:current===i?skin.accentText:skin.text,...(current===i?{outline:`2px solid ${skin.sub}`,outlineOffset:1}:{} )}}><span className="dht-row-icon">{r.game?<GameArt g={r.game} kind="portrait" style={{width:42,height:58,borderRadius:3}}/>:<Icon name={r.icon??"info"} size={32}/>}</span><span className="dht-row-text"><span className="dht-row-label" style={{display:"block",fontSize:settings.tvMode?27:24}}>{r.label}</span>{r.sub&&<span className="dht-row-sub" style={{display:"block",fontSize:18,marginTop:5}}>{r.sub}</span>}{r.progress!==undefined&&r.progress>=0&&<span className="dht-row-progress" style={{display:"block",height:6,marginTop:8,borderRadius:3,background:"#0003",overflow:"hidden",width:"min(420px,100%)"}}><i style={{display:"block",height:"100%",width:`${r.progress*100}%`,background:"currentColor"}}/></span>}</span></button>):<p style={{fontSize:24}}>{t("nothingToDisplay")}</p>}</div>
       </div>}</div></div>
-      <footer className="dht-page-footer" style={{fontSize:19,color:skin.tabText??skin.text}}>{settings.theme==="nazarick"?"A · Select　 L1 / R1 · Categories　":"A · Select　 B · Back　"}{page.place==="library"||page.place==="search"?"Y · Search":""}</footer>
+      <footer className="dht-page-footer" style={{fontSize:19,color:skin.tabText??skin.text}}>{settings.theme==="nazarick"?t("hintsNazarickDest"):t("hintsStandardDest")}{page.place==="library"||page.place==="search"?t("hintSearch"):""}</footer>
     </div><MenuView menu={menu} variant={menuVariant}/>
   </Stage></div>;
 }

@@ -1,3 +1,4 @@
+import { t } from "./i18n";
 // Reads the Steam library from Steam's internal stores (collectionStore /
 // appStore). These are not a public API, so every access is defensive: if a
 // Steam update changes them, the themes show an empty library instead of
@@ -369,18 +370,18 @@ export function openAchievements(g: Game) {
 /** "Never played" only when there is neither playtime nor a last-played time; a game with a last-played time
  *  but no readable playtime (non-Steam shortcuts) shows when it was last played instead. */
 export function fmtPlaytime(min: number, lastPlayed = 0, lastShownElsewhere = false): string {
-  if (!min) return !lastPlayed ? "Never played" : lastShownElsewhere ? "Playtime not recorded" : `Last played ${fmtLastPlayed(lastPlayed)}`;
-  if (min < 60) return `${min} min played`;
+  if (!min) return !lastPlayed ? t("neverPlayed") : lastShownElsewhere ? t("playtimeNotRecorded") : `${t("lastPlayedPrefix")} ${fmtLastPlayed(lastPlayed)}`;
+  if (min < 60) return `${min} ${t("minPlayed")}`;
   const h = min / 60;
-  return `${h < 10 ? h.toFixed(1) : Math.round(h)} hrs played`;
+  return `${h < 10 ? h.toFixed(1) : Math.round(h)} ${t("hrsPlayed")}`;
 }
 
-export function fmtLastPlayed(t: number): string {
-  if (!t) return "—";
-  const d = new Date(t * 1000);
+export function fmtLastPlayed(ts: number): string {
+  if (!ts) return "—";
+  const d = new Date(ts * 1000);
   const days = Math.floor((Date.now() - d.getTime()) / 86400000);
-  if (days <= 0) return "Today";
-  if (days === 1) return "Yesterday";
-  if (days < 30) return `${days} days ago`;
+  if (days <= 0) return t("today");
+  if (days === 1) return t("yesterday");
+  if (days < 30) return `${days} ${t("daysAgo")}`;
   return d.toLocaleDateString();
 }
