@@ -325,11 +325,12 @@ function switchItems(): MenuItem[] {
   const part = (label: string, k: "background" | "icons" | "visuals"): MenuItem =>
     toggle(label, () => !!fx()[k], (v) => updateThemeFx(key(), { [k]: v } as Partial<ThemeFx>), () => !file());
   return [
-    choice("Switch theme", [{ id: "", name: "None (built-in look)" }, ...lists.switch.map((t) => ({ id: t.id, name: t.name + (t.author ? ` · ${t.author}` : "") }))], file, (v) => updateSettings({ switchTheme: v }), undefined, "Put .nxtheme files in skins/switch (Switch theme folder)"),
-    group("Theme parts", () => [
-      part("Theme wallpaper", "background"),
-      part("Theme round-button pictures", "icons"),
-      part("Wallpapers of All Software and Settings", "visuals"),
+    choice(t("switchColorTheme"), [{ id: "light", name: t("switchBasicWhite") }, { id: "dark", name: t("switchBasicBlack") }], () => style(S(), "switch", "themeColor"), (v) => setStyle("switch", "themeColor", v)),
+    choice(t("switchTheme"), [{ id: "", name: t("switchBuiltInLook") }, ...lists.switch.map((t) => ({ id: t.id, name: t.name + (t.author ? ` · ${t.author}` : "") }))], file, (v) => updateSettings({ switchTheme: v }), undefined, t("switchFolderPrompt")),
+    group(t("themeParts"), () => [
+      part(t("themeWallpaper"), "background"),
+      part(t("switchRoundIcons"), "icons"),
+      part(t("switchOtherWallpapers"), "visuals"),
     ]),
   ];
 }

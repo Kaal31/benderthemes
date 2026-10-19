@@ -967,5 +967,15 @@
   "youAreUpToDate": "Tudo atualizado",
   "yourFavorites": "Seus Favoritos",
   "yourLibrary": "Sua biblioteca",
-  "yourLibraryAwaits": "Sua biblioteca o aguarda."
+  "yourLibraryAwaits": "Sua biblioteca o aguarda.",
+  "switchColorTheme": "Cor do tema",
+  "switchBasicWhite": "Branco básico",
+  "switchBasicBlack": "Preto básico",
+  "Basic White": "Branco básico",
+  "Basic Black": "Preto básico",
+  "switchTheme": "Tema do Switch",
+  "switchBuiltInLook": "Nenhum (aparência integrada)",
+  "switchFolderPrompt": "Coloque arquivos .nxtheme em skins/switch (pasta de temas do Switch)",
+  "switchRoundIcons": "Imagens dos botões redondos do tema",
+  "switchOtherWallpapers": "Papéis de parede de Todos os Softwares e Configurações"
 }

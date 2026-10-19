@@ -146,6 +146,7 @@ export function factory(look: string, file: string, hint?: ThemeId): Settings {
   s.activeTheme = look;
   if (layout === "vita") s.vita.look = info?.layoutOptions?.vitaLook ?? "";
   if (layout === "x360") s.x360.style = info?.layoutOptions?.x360Style ?? "metro";
+  if (layout === "switch" && info?.layoutOptions?.switchStyle) s.styles = { ...s.styles, switch: { ...s.styles?.switch, themeColor: info.layoutOptions.switchStyle } };
   const k = FILE_KINDS[layout];
   if (k) {
     setPath(s, k.path, ""); // a look starts without a theme file; `file` only picks whose effects defaults are added
@@ -188,6 +189,7 @@ export function applyDiff(s: Settings, look: string, diff: Record<string, any>, 
   // the look's own layout options (the Vita's colour look, the Xbox 360 dashboard era) are fixed by the look
   if (layout === "vita") next.vita = { ...next.vita, look: info?.layoutOptions?.vitaLook ?? "" };
   if (layout === "x360") next.x360 = { ...next.x360, style: info?.layoutOptions?.x360Style ?? "metro" };
+  if (layout === "switch" && info?.layoutOptions?.switchStyle) next.styles = { ...next.styles, switch: { ...next.styles?.switch, themeColor: info.layoutOptions.switchStyle } };
   return { ...next, theme: layout, activeTheme: look };
 }
 

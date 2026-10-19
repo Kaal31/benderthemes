@@ -967,5 +967,15 @@
   "youAreUpToDate": "You’re up to date",
   "yourFavorites": "Your Favorites",
   "yourLibrary": "Your library",
-  "yourLibraryAwaits": "Your library awaits."
+  "yourLibraryAwaits": "Your library awaits.",
+  "switchColorTheme": "Theme color",
+  "switchBasicWhite": "Basic White",
+  "switchBasicBlack": "Basic Black",
+  "Basic White": "Basic White",
+  "Basic Black": "Basic Black",
+  "switchTheme": "Switch theme",
+  "switchBuiltInLook": "None (built-in look)",
+  "switchFolderPrompt": "Put .nxtheme files in skins/switch (Switch theme folder)",
+  "switchRoundIcons": "Theme round-button pictures",
+  "switchOtherWallpapers": "Wallpapers of All Software and Settings"
 }

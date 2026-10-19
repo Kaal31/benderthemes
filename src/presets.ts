@@ -1,3 +1,4 @@
+import { t } from "./i18n";
 // Presets v2 (handoff-notes/presets-v2.md): one preset type.
 //
 // A preset belongs to one look (an engine theme: a built-in look or a community data theme) and holds the look's whole
@@ -289,7 +290,9 @@ export function variantLabel(row: ConsoleRow, p: Preset): string {
   if (p.origin === "file" && p.user?.name) return p.user.name; // a renamed theme-file preset
   if (p.file && p.theme !== "switch" && p.theme !== "xbox" && p.theme !== "x360") return tail(p.file);
   const rest = p.label.startsWith(`${row.label} · `) ? p.label.slice(row.label.length + 3) : p.label.includes(" · ") ? p.label.replace(/^[^·]*· /, "") : "";
-  return rest || "Default";
+  const name = rest || "Default";
+  const loc = t(name);
+  return loc !== name ? loc : name;
 }
 
 /** Where a preset sits in the switcher: [console index, variant index], or null. */

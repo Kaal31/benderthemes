@@ -46,6 +46,7 @@ export const ICON_SPOTS: { id: string; name: string }[] = [
 export interface LayoutOptions {
   x360Style?: X360Style;
   vitaLook?: VitaLook;
+  switchStyle?: "light" | "dark";
 }
 
 export interface ThemeManifest {
@@ -94,6 +95,7 @@ export function validateManifest(raw: unknown, layouts: readonly string[]): { ok
     const opts: LayoutOptions = {};
     if (["blades", "nxe", "kinect", "metro"].includes(lo.x360Style)) opts.x360Style = lo.x360Style;
     if (["", "sakura"].includes(lo.vitaLook)) opts.vitaLook = lo.vitaLook;
+    if (["light", "dark"].includes(lo.switchStyle)) opts.switchStyle = lo.switchStyle;
     theme.layoutOptions = opts;
   }
   if (m.slots && typeof m.slots === "object") {

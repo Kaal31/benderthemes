@@ -17,6 +17,7 @@ import { OPTIONS as ps1 } from "../themes/options/ps1";
 import { OPTIONS as onyx } from "../themes/options/onyx";
 import { OPTIONS as silver } from "../themes/options/silver";
 import { OPTIONS as iisu } from "../themes/options/iisu";
+import { OPTIONS as switchOpt } from "../themes/options/switch";
 
 export type StyleOption = {
   key: string;
@@ -27,7 +28,7 @@ export type StyleOption = {
   def: StyleValue;
 };
 
-export const THEME_STYLES: Partial<Record<ThemeId, StyleOption[]>> = { onyx, silver, wii, wiiu, ps2, ps5, xbox, aero, aero2, pain, nazarick, ps1, iisu };
+export const THEME_STYLES: Partial<Record<ThemeId, StyleOption[]>> = { onyx, silver, wii, wiiu, ps2, ps5, xbox, aero, aero2, pain, nazarick, ps1, iisu, switch: switchOpt };
 
 // Only layouts with game hero backgrounds expose this control. Cover tiles and
 // console wallpapers keep their own sizing.

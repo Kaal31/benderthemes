@@ -1,3 +1,4 @@
+import { style } from "./engine/themeStyles";
 import { t } from "./i18n";
 // The music player and the capture viewer every theme shares. There is one player (musicPlayer.ts)
 // and one viewer (overlays.tsx); each theme only gives them its look, taken from the theme drawing
@@ -114,7 +115,7 @@ ${IISU_MEDIA_CSS}
 /** The shared frame: background, title, optional tabs and the button hints, in the theme's look. */
 export function MediaFrame({ s, title, tabs, children, hints, onTab }: { s: Settings; title: ReactNode; tabs?: { id: string; label: string; on: boolean }[]; onTab?: (id: string) => void; hints?: string[]; children: ReactNode }) {
   return (
-    <div className="dht-media" data-theme={s.theme} data-variant={s.theme === "x360" ? s.x360?.style : undefined} data-scheme={iisuSchemeAttr(s)} style={mediaVars(s)}>
+    <div className="dht-media" data-theme={s.theme} data-variant={s.theme === "x360" ? s.x360?.style : undefined} data-switch-style={s.theme === "switch" ? style(s, "switch", "themeColor") : undefined} data-scheme={iisuSchemeAttr(s)} style={mediaVars(s)}>
       <style>{MEDIA_CSS}</style>
       <Stage background="transparent">
         <header className="dht-media-head">

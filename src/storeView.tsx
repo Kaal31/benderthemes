@@ -1,3 +1,4 @@
+import { style } from "./engine/themeStyles";
 import { t } from "./i18n";
 import {NazarickNavigation,NazarickPage,nextNazarickPage} from "./themes/NazarickNavigation";
 import {NazarickBackdrop} from "./themes/NazarickBackdrop";
@@ -73,7 +74,26 @@ export function storeSkin(s: Settings): Skin {
   switch (t) {
     case "wii": case "wiiu": return {title:t==="wii"?"Shopping Channel":"Nintendo-style Shop",sale:"#1f93ba",layout:"grid",bg:"radial-gradient(ellipse at top,#fff,#e6eef3)",font:"Arial,sans-serif",panel:"linear-gradient(#fff,#edf3f7)",text:"#536c7b",sub:"#708895",accent:"#d9f4ff",accentText:"#256a89",radius:t==="wii"?24:18,ring:on=>on?{boxShadow:"0 0 0 3px #37bce9,0 4px 12px #70b9d644"}: {boxShadow:"0 2px 5px #879dab22"}};
     // Switch: the eShop's near-white pages, its orange sidebar colour on the open section, the system's teal focus frame
-    case "switch": return {title:"Nintendo eShop",sale:"#ff8a8a",layout:"grid",bg:"var(--dht-switch-store-bg,#f4f4f4)",font:'"Nintendo Switch UI","Segoe UI",Roboto,"Helvetica Neue",Arial,sans-serif',panel:"#fff",text:"#2d2d2d",sub:"#6c6c6c",accent:"#fa7e00",accentText:"#fff",radius:4,ring:on=>on?{boxShadow:"0 0 0 2px #fff,0 0 0 6px var(--dht-switch-accent,#00c3e3),0 6px 16px #0003"}:{boxShadow:"0 1px 3px #0002"}};
+    case "switch": {
+      const isDark = style(s, "switch", "themeColor") === "dark";
+      if (isDark) {
+        return {
+          title: "Nintendo eShop",
+          sale: "#ff8a8a",
+          layout: "grid",
+          bg: "var(--dht-switch-store-bg, #1a1a1a)",
+          font: '"Nintendo Switch UI","Segoe UI",Roboto,"Helvetica Neue",Arial,sans-serif',
+          panel: "#2d2d2d",
+          text: "#ffffff",
+          sub: "#b0b0b0",
+          accent: "#fa7e00",
+          accentText: "#fff",
+          radius: 4,
+          ring: (on) => (on ? { boxShadow: "0 0 0 2px #2d2d2d, 0 0 0 6px var(--dht-switch-accent, #00dcd4), 0 6px 16px #0006" } : { boxShadow: "0 1px 3px #0004" }),
+        };
+      }
+      return {title:"Nintendo eShop",sale:"#ff8a8a",layout:"grid",bg:"var(--dht-switch-store-bg,#f4f4f4)",font:'"Nintendo Switch UI","Segoe UI",Roboto,"Helvetica Neue",Arial,sans-serif',panel:"#fff",text:"#2d2d2d",sub:"#6c6c6c",accent:"#fa7e00",accentText:"#fff",radius:4,ring:on=>on?{boxShadow:"0 0 0 2px #fff,0 0 0 6px var(--dht-switch-accent,#00c3e3),0 6px 16px #0003"}:{boxShadow:"0 1px 3px #0002"}};
+    }
     // 3DS: the eShop's pale cream pages, white cards on a soft edge, the thick orange cursor, pink sale tags
     case "n3ds": return {title:"Nintendo eShop",sale:"#f37ea1",layout:"grid",bg:"var(--dht-n3ds-store-bg,linear-gradient(#f8f6dc,#efecc6))",font:'"Nunito","Varela Round","Hiragino Maru Gothic ProN","Segoe UI",system-ui,sans-serif',panel:"#fff",text:"#4b4b4b",sub:"#8a8670",accent:"#f39800",accentText:"#fff",radius:14,ring:on=>on?{boxShadow:"0 0 0 4px #fff,0 0 0 9px #f39800,0 6px 14px #0003"}:{boxShadow:"0 3px 0 #d8d4ad"}};
     case "minecraft": return { compact: true, title: "Marketplace", sale: "#70b33e", layout: "grid", bg: "repeating-conic-gradient(#ffffff02 0% 25%,#00000003 0% 50%) 0 0 / 29px 29px, #292b2e", font: "BlockWorlds, monospace", panel: "linear-gradient(110deg,#303236,#242629)", text: "#eee", sub: "#bdbdc2", accent: "#326f18", accentText: "#fff", radius: 0, ring: on => on ? { boxShadow: "0 0 0 3px #171717,0 0 0 6px #82bf50", transform: "translateY(-2px)" } : { boxShadow: "inset 2px 2px #55565a,inset -2px -2px #191b1e" } };
@@ -275,7 +295,7 @@ export function StoreView({ settings, lib, onClose, onLaunch }: { settings: Sett
   }, []);
 
   return (
-    <div ref={castleWindow.ref} className="dht-store" data-dht-store-skin={settings.theme} data-scheme={iisuSchemeAttr(settings)} style={{ position: "absolute", inset: 0, zIndex: 85, background: "#000",...iisuPageVars(settings),...(settings.theme==="castle"?castleWindowAppearance(settings):{}) }}>
+    <div ref={castleWindow.ref} className="dht-store" data-dht-store-skin={settings.theme} data-switch-style={settings.theme === "switch" ? style(settings, "switch", "themeColor") : undefined} data-scheme={iisuSchemeAttr(settings)} style={{ position: "absolute", inset: 0, zIndex: 85, background: "#000",...iisuPageVars(settings),...(settings.theme==="castle"?castleWindowAppearance(settings):{}) }}>
       <style>{NINTENDO_STORE_CSS + "\n" + IISU_STORE_CSS}</style>
       {searchOpen && <div className="dht-store-search" style={{position:"absolute",inset:settings.theme==="nazarick"?"10% 0 0":0,zIndex:5,background:skin.bg,color:skin.text,display:"grid",placeItems:"center"}}><form onSubmit={e=>{e.preventDefault();submitSearch();}} style={{width:"65%"}}><h1>{tab === "plugins" ? t("searchPlugins") : tab === "themes" ? t("searchThemes") : t("searchStore")}</h1><input ref={searchBox} autoFocus {...opensKeyboardOnTap} aria-label={tab === "plugins" ? t("searchPlugins") : tab === "themes" ? t("searchThemes") : t("searchStore")} value={searchDraft} onChange={e=>setSearchDraft(e.target.value)} onKeyDown={e=>{e.stopPropagation();if(e.key==="Escape")setSearchOpen(false);}} style={{width:"100%",boxSizing:"border-box",fontSize:28,padding:18,color:skin.text,background:skin.panel,border:`2px solid ${skin.sub}`,borderRadius:skin.radius}}/><button type="submit" style={{fontSize:22,padding:"14px 30px",marginTop:24,background:skin.accent,color:skin.accentText}}>{t("search")}</button><button type="button" onClick={()=>setSearchOpen(false)} style={{fontSize:22,padding:"14px 30px",marginLeft:18}}>{t("back")}</button><p style={{marginTop:22,fontSize:16,color:skin.sub}}>{t("storeSearchPrompt")}</p></form></div>}
       <Stage background="transparent">
