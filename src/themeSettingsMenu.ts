@@ -424,6 +424,10 @@ function themeOpt<K extends StandardKey>(label: string, key: K, options: { id: S
 
 /** Customize: the slots of the preset in use that its look draws (capability table), then the look's theme file,
  *  its own options, the library view and pages. */
+function gameCubeSaved(settings: Settings): Record<string, unknown> {
+  const data = settings.frameData.gamecube;
+  return data && typeof data === "object" && !Array.isArray(data) ? data as Record<string, unknown> : {};
+}
 export function customizeItems(): MenuItem[] {
   refreshThemeLists();
   const th = S().theme;
@@ -445,6 +449,7 @@ export function customizeItems(): MenuItem[] {
       toggle("ProtonDB badges (this theme)", () => protonDbEnabled(S()), (v) => updateSettings((p) => ({ protondbThemes: { ...p.protondbThemes, [protonDbThemeKey(S())]: v } }))),
       choice("Icon size", [75, 85, 100, 110].map((v) => ({ id: v, name: `${v}%${v === 100 ? " · default" : ""}` })), () => S().iconSizes?.[th] ?? 100, (v) => updateSettings((p) => ({ iconSizes: { ...p.iconSizes, [th]: v } }))),
       ...(USES.titles.includes(th) ? [choice("Game titles", TITLE_MODES, () => S().titles[th] ?? "show", (v) => updateSettings((p) => ({ titles: { ...p.titles, [th]: v } })))] : []),
+      ...(th === "frame" && activeTheme(S())?.id === "gamecube" ? [choice("Game titles", [{ id: "show", name: "Show" }, { id: "hide", name: "Hide" }], () => gameCubeSaved(S()).showGameTitle === false ? "hide" : "show", (value) => updateSettings((p) => ({ frameData: { ...p.frameData, gamecube: { ...gameCubeSaved(p), showGameTitle: value !== "hide" } } })))] : []),
       ...(CASE_THEMES.includes(th) ? [choice("Cover style", [{ id: "flat", name: "Flat" }, { id: "case3d", name: "3D case" }], () => S().coverStyles?.[th] ?? "flat", (v) => updateSettings((p) => ({ coverStyles: { ...p.coverStyles, [th]: v as "flat" | "case3d" } })))] : []),
     ]),
     // the themed store's optional sections (src/storeSections.tsx), per theme, hidden by default
