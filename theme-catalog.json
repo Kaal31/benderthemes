@@ -1520,7 +1520,10 @@
       "sha256": "04f6c30d95a80d18a0591a486f3a64a811a652c17785ab5c3436b27483edf6a9",
       "url": "https://github.com/Kaal31/deckthemes-assets/releases/download/iisu-v1.0.0/ThemeAssets-iiSU-v1.0.0.zip",
       "preview": null,
-      "poster": null
+      "poster": null,
+      "audioPacks": [
+        "db4bf996-bf29-47fb-892d-52e2fe87637d"
+      ]
     },
     {
       "id": "minecraft",
