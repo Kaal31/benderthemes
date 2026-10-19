@@ -1,3 +1,4 @@
+import { t } from "../i18n";
 import { frameRoute, FrameRoute } from "./frameNavigation";
 // The "frame" layout: a community theme's own interface, sealed off from Steam.
 //
@@ -269,7 +270,7 @@ export function FrameHome() {
 
   return (
     <ThemeRoot onInput={onInput} hints={{ y: "Options", ...hints }}>
-      {pageError && <div role="alert" style={{position:"absolute",inset:0,zIndex:5,background:"#16202bf2",padding:48,color:"white"}}>This page did not connect to ThemeHub.<button onClick={() => { if (!back()) { setPageError(false); setReady(null); client.current = null; generation.current++; setReload(n => n + 1); } }}>Back to a working page</button></div>}
+      {pageError && <div role="alert" style={{position:"absolute",inset:0,zIndex:5,background:"#16202bf2",padding:48,color:"white"}}>{t("frameNotConnected")}<button onClick={() => { if (!back()) { setPageError(false); setReady(null); client.current = null; generation.current++; setReload(n => n + 1); } }}>{t("backToWorkingPage")}</button></div>}
       {url ? (
         <iframe
           ref={frame}
@@ -296,7 +297,7 @@ function FrameMissing({ name }: { name?: string }) {
     <div style={{ position: "absolute", inset: 0, display: "grid", placeItems: "center", background: "#101216", color: "#d6d9de", font: '20px "Motiva Sans", Arial, sans-serif', textAlign: "center", padding: 40 }}>
       <div>
         <div style={{ fontSize: 28, marginBottom: 12 }}>{name ?? "Community interface"}</div>
-        <div style={{ opacity: 0.75 }}>This theme's interface couldn't be opened. Pick another look with L1 held + the D-pad or L2 / R2, or press △ / Y for options.</div>
+        <div style={{ opacity: 0.75 }}>{t("frameCouldNotOpen")}</div>
         <div style={{ opacity: 0.5, marginTop: 24, fontSize: 16 }}>{fmtTime(new Date(), s.clock24)}</div>
       </div>
     </div>

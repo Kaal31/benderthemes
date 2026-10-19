@@ -1,3 +1,4 @@
+import { t } from "./i18n";
 // Wii U Menu custom themes (.utheme), read on the Deck by the backend (py_modules/wiiu_themes.py).
 // A .utheme only holds patches, so the user's own Wii U menu files are needed once; both are
 // picked up from Downloads / SD cards with a one-time prompt.
@@ -130,7 +131,7 @@ export function WiiuImportPrompt({ paused = false }: { paused?: boolean }) {
       <div className="wi-actions">{message
         ? <button data-selected onClick={next}>OK</button>
         : <><button data-selected={selection === 0} disabled={busy} onMouseEnter={() => setSelection(0)} onClick={() => void answer(true)}>{busy ? "Working…" : item.kind === "stock" ? "Use them" : "Add theme"}</button>
-          <button data-selected={selection === 1} disabled={busy} onMouseEnter={() => setSelection(1)} onClick={() => void answer(false)}>Dismiss</button></>}</div>
+          <button data-selected={selection === 1} disabled={busy} onMouseEnter={() => setSelection(1)} onClick={() => void answer(false)}>{t("dismiss")}</button></>}</div>
     </div>
   </div>;
 }
