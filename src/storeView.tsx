@@ -89,7 +89,7 @@ export function storeSkin(s: Settings): Skin {
           accent: "#fa7e00",
           accentText: "#fff",
           radius: 4,
-          ring: (on) => (on ? { boxShadow: "0 0 0 2px #2d2d2d, 0 0 0 6px var(--dht-switch-accent, #00dcd4), 0 6px 16px #0006" } : { boxShadow: "0 1px 3px #0004" }),
+          ring: (on) => (on ? { boxShadow: "0 0 0 2px #2d2d2d, 0 0 0 6px var(--dht-switch-accent, #e60012), 0 6px 16px #0006" } : { boxShadow: "0 1px 3px #0004" }),
         };
       }
       return {title:"Nintendo eShop",sale:"#ff8a8a",layout:"grid",bg:"var(--dht-switch-store-bg,#f4f4f4)",font:'"Nintendo Switch UI","Segoe UI",Roboto,"Helvetica Neue",Arial,sans-serif',panel:"#fff",text:"#2d2d2d",sub:"#6c6c6c",accent:"#fa7e00",accentText:"#fff",radius:4,ring:on=>on?{boxShadow:"0 0 0 2px #fff,0 0 0 6px var(--dht-switch-accent,#00c3e3),0 6px 16px #0003"}:{boxShadow:"0 1px 3px #0002"}};

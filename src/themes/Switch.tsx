@@ -192,7 +192,7 @@ export function SwitchHome() {
   return (
     <ThemeRoot onInput={onInput} hints={{ a: t("open"), y: t("options"), b: view === "home" ? undefined : t("back") } as any}>
       <Stage background={isDarkTheme ? "#1a1a1a" : "#e6e6e6"}>
-        <style>{CSS}</style>
+        <style>{`:root{--dht-switch-accent:${isDarkTheme ? "#e60012" : "#00dcd4"};}\n${CSS}`}</style>
         <div className="dht-switch-bg" data-dht-from-skin={parts.background ? "" : undefined} data-view={view} style={{ position: "absolute", inset: 0, ...bg }} />
         {view === "lock" && (
           <div className="dht-switch-lock" style={{ position: "absolute", inset: 0, zIndex: 20, color: ink, textShadow: dark ? "0 1px 6px #000a" : "none", fontFamily: "inherit" }}>
@@ -238,7 +238,7 @@ export function SwitchHome() {
             </div>;
           })}
           <div className="dht-switch-title" style={{ position: "absolute", left: startX - 28 * k, top: tileY - (F - T) / 2 - 56 * k, width: W - 2 * startX, display: "flex", alignItems: "center", gap: 12 * k, color: parts.background ? ink : isDarkTheme ? "#ffffff" : "var(--dht-switch-title, #19bcc4)", fontSize: 26 * k, whiteSpace: "nowrap", overflow: "hidden", textOverflow: "ellipsis", textShadow: dark ? "0 1px 5px #000a" : "none" }}>
-            <span style={{ width: 20 * k, height: 26 * k, background: isDarkTheme ? "#00dcd4" : "currentColor", borderRadius: 3, flex: "none", clipPath: "polygon(0 0,100% 0,100% 100%,50% 82%,0 100%)" }} />
+            <span style={{ width: 20 * k, height: 26 * k, background: isDarkTheme ? "#e60012" : "currentColor", borderRadius: 3, flex: "none", clipPath: "polygon(0 0,100% 0,100% 100%,50% 82%,0 100%)" }} />
             <span style={{ overflow: "hidden", textOverflow: "ellipsis" }}>{!g || showTitle(s, "switch", true) ? label(cur) : ""}</span>
           </div>
           {n === 0 && <div style={{ position: "absolute", left: startX, top: H * 0.62, color: ink, opacity: 0.7, fontSize: 18 }}>{t("noGamesFound")}</div>}
@@ -249,7 +249,7 @@ export function SwitchHome() {
                 <div className={on ? "dht-switch-focus" : undefined} style={{ width: 80 * k, height: 80 * k, borderRadius: "50%", background: dark ? "#2d2d2d" : "#fff", border: `1.5px dashed ${dark ? "#555" : "#bbb"}`, display: "flex", alignItems: "center", justifyContent: "center", transform: on ? "scale(1.12)" : "none", transition: "transform 120ms" }}>
                   {art ? <img src={art} alt="" style={{ width: 44, height: 38, objectFit: "contain" }} /> : (d.id === "settings" || d.id === "power" ? <Icon name={d.icon} size={36 * k} color={dark ? "#fff" : DOCK_COLOR[d.id] ?? "#666"} /> : <DockGlyph id={d.id} size={40 * k} color={dark ? "#fff" : DOCK_COLOR[d.id] ?? "#666"} />)}
                 </div>
-                <span style={{ color: dark ? "#b0b0b0" : ink, fontSize: 14, opacity: on ? 1 : 0, textShadow: dark ? "0 1px 4px #000a" : "none" }}>{d.label}</span>
+                <span style={{ color: on ? (isDarkTheme ? "#e60012" : ink) : (dark ? "#b0b0b0" : ink), fontSize: 14, opacity: on ? 1 : 0, textShadow: dark ? "0 1px 4px #000a" : "none" }}>{d.label}</span>
               </div>;
             })}
           </div>

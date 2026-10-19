@@ -539,7 +539,7 @@ export function MenuView({
   const isDarkSwitch = variant === "switch" && themeStyle(getSettings(), "switch", "themeColor") === "dark";
   styles.switch = {
     panel: { position: "absolute", left: "50%", top: "50%", transform: "translate(-50%,-50%)", minWidth: 460, background: isDarkSwitch ? "#2d2d2d" : "#f2f2f2", borderRadius: 6, padding: "18px 0 10px", boxShadow: isDarkSwitch ? "0 12px 50px #0008" : "0 12px 50px #0006", fontFamily: '"Nintendo Switch UI","Segoe UI",Roboto,Arial,sans-serif' },
-    item: (s, d) => ({ color: d ? (isDarkSwitch ? "#666" : "#aaa") : s ? (isDarkSwitch ? "#00dcd4" : "#3b4ee0") : (isDarkSwitch ? "#ffffff" : "#2d2d2d"), fontSize: 22, padding: "14px 30px", margin: "0 12px", background: s ? (isDarkSwitch ? "#383838" : "#e0e0e0") : "none", boxShadow: s ? `0 0 0 4px var(--dht-switch-accent,${isDarkSwitch ? "#00dcd4" : "#00c3e3"}),inset 0 0 0 2px ${isDarkSwitch ? "#2d2d2d" : "#fff"}` : "none", borderBottom: s ? "none" : `1px solid ${isDarkSwitch ? "#3a3a3a" : "#d6d6d6"}` }),
+    item: (s, d) => ({ color: d ? (isDarkSwitch ? "#666" : "#aaa") : s ? (isDarkSwitch ? "#e60012" : "#3b4ee0") : (isDarkSwitch ? "#ffffff" : "#2d2d2d"), fontSize: 22, padding: "14px 30px", margin: "0 12px", background: s ? (isDarkSwitch ? "#383838" : "#e0e0e0") : "none", boxShadow: s ? `0 0 0 4px var(--dht-switch-accent,${isDarkSwitch ? "#e60012" : "#00c3e3"}),inset 0 0 0 2px ${isDarkSwitch ? "#2d2d2d" : "#fff"}` : "none", borderBottom: s ? "none" : `1px solid ${isDarkSwitch ? "#3a3a3a" : "#d6d6d6"}` }),
     title: { color: isDarkSwitch ? "#b0b0b0" : "#6c6c6c", fontSize: 18, padding: "0 30px 12px" },
   };
   styles.aero2 = styles.aero;
