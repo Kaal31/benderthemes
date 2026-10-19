@@ -8,20 +8,29 @@ import { GameArt, Icon, IconName, MenuView, themeMenu, useHome, useMenu, useReme
 import { clamp, Press, Stage, ThemeRoot, useStage } from "../input";
 import { Game, openSteam, SteamPlace } from "../library";
 import { showTitle, THEMES } from "../settings";
+import { t } from "../i18n";
 import { playSound, useBattery, useClock, useWallpaper } from "../steam";
 import { themeSettingsItems } from "../themeSettingsMenu";
 import { switchParts, useSwitchSkin } from "../switchThemes";
 import { useReportFocus } from "../focus";
 
 type Dock = { id: string; label: string; icon: IconName; art?: string; place?: SteamPlace; action?: "settings" | "album" };
-const DOCK: Dock[] = [
-  { id: "news", label: "News", icon: "bell", art: "news", place: "community" },
-  { id: "shop", label: "Shop", icon: "store", art: "shop", place: "store" },
-  { id: "album", label: "Album", icon: "photo", art: "album", action: "album" },
-  { id: "controller", label: "Controllers", icon: "game", art: "controller", place: "qam" },
-  { id: "settings", label: "Settings", icon: "gear", art: "settings", action: "settings" },
-  { id: "power", label: "Power", icon: "power", art: "power", place: "power" },
+const dockItems = (): Dock[] => [
+  { id: "news", label: t("news"), icon: "bell", art: "news", place: "community" },
+  { id: "shop", label: t("shop"), icon: "store", art: "shop", place: "store" },
+  { id: "album", label: t("album"), icon: "photo", art: "album", action: "album" },
+  { id: "controller", label: t("controllers"), icon: "game", art: "controller", place: "qam" },
+  { id: "settings", label: t("destSettings"), icon: "gear", art: "settings", action: "settings" },
+  { id: "power", label: t("destPower"), icon: "power", art: "power", place: "power" },
 ];
+const DOCK: Dock[] = new Proxy([] as any, {
+  get: (_, prop: string) => {
+    const list = dockItems();
+    if (prop === "length") return list.length;
+    if (prop === "map") return list.map.bind(list);
+    return (list as any)[prop];
+  },
+});
 /** The console's own dock symbols, drawn as outlines (news, eShop bag, album, controller); settings and power use the shared icons. */
 function DockGlyph({ id, size, color }: { id: string; size: number; color: string }) {
   const p = { fill: "none", stroke: color, strokeWidth: 3, strokeLinecap: "round", strokeLinejoin: "round" } as const;
@@ -124,14 +133,14 @@ export function SwitchHome() {
   useEffect(() => { if (view === "set" && !menu.isOpen) setView("home"); }, [menu.isOpen, view]);
 
   const options = () => menu.open([
-    ...(g ? [{ label: "Start", action: () => api.launch(g) }, { label: "Information", action: () => api.details(g) }, { label: "Game Options", action: () => api.nativeMenu(g) }] : []),
-    ...(skin?.screens.lock?.background ? [{ label: "Lock screen", action: () => setView("lock") }] : []),
-    { label: "Home", action: api.showSteamHome },
+    ...(g ? [{ label: t("start"), action: () => api.launch(g) }, { label: t("information"), action: () => api.details(g) }, { label: t("gameOptions"), action: () => api.nativeMenu(g) }] : []),
+    ...(skin?.screens.lock?.background ? [{ label: t("lockScreen"), action: () => setView("lock") }] : []),
+    { label: t("destMainMenu"), action: api.showSteamHome },
   ], g?.name ?? "Switch");
   const runDock = (i: number) => {
     const d = DOCK[i]; playSound("select");
     if (d.action === "album") api.openMedia();
-    else if (d.action === "settings") { setView("set"); menu.open([...themeSettingsItems(), { label: "Presets", sub: () => themeMenu(s.theme, api.switchTheme, THEMES) }, { label: "Home Screen Settings", action: api.openSettings }], "Settings", { page: true }); }
+    else if (d.action === "settings") { setView("set"); menu.open([...themeSettingsItems(), { label: t("presets"), sub: () => themeMenu(s.theme, api.switchTheme, THEMES) }, { label: t("homeScreenSettings"), action: api.openSettings }], t("destSettings"), { page: true }); }
     else if (d.place) openSteam(d.place);
   };
 
@@ -171,7 +180,7 @@ export function SwitchHome() {
   const tileX = (i: number) => startX + i * (T + GAP) - scroll + (i > cur ? F - T : 0);
   const tileY = H * 0.29;
   const dockY = H * 0.7;
-  const label = (i: number) => i < n ? games[i].name : "All Software";
+  const label = (i: number) => i < n ? games[i].name : t("allSoftware");
   const bg: CSSProperties = parts.background
     ? { backgroundImage: `url(${parts.background})`, backgroundSize: "cover", backgroundPosition: "center" }
     : { background: "var(--dht-switch-bg, linear-gradient(#ececec,#dcdcdc))" };

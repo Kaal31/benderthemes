@@ -19,13 +19,35 @@ import { pageOf, pageSettings } from "./engine/pages";
 import { PAGE_LOOKS } from "./pageLooks";
 import { iisuPageVars, iisuSchemeAttr } from "./themes/iisuStyles";
 import { downloadLine, pauseDownload, removeDownload, resumeDownload, useDownloads } from "./downloads";
+import { t } from "./i18n";
 
 export type Destination = {place: SteamPlace | "game" | "achievements" | "music"; game?:Game; url?:string};
 let opener: ((destination:Destination)=>void)|null=null;
 export const setDestinationOpener=(fn:typeof opener)=>{opener=fn;};
 export const openDestination=(destination:Destination)=>{if(!opener)return false;opener(destination);return true;};
 interface Row {label:string; sub?:string; icon?:IconName; game?:Game; run?:()=>void; state?:"on"|"off"; progress?:number}
-const names:Record<Destination["place"],string>={library:"Game Library",search:"Search Library",game:"Game Details",achievements:"Achievements",friends:"Friends",settings:"Settings",qam:"Home Screen Settings",downloads:"Downloads",media:"Media",store:"Store",power:"Power",mainmenu:"Home",browser:"Internet Browser",community:"Community",cloud:"Cloud Saves",notifications:"Notifications",music:"Music"};
+const destinationNames = (): Record<Destination["place"], string> => ({
+  library: t("destLibrary"),
+  search: t("destSearch"),
+  game: t("destGame"),
+  achievements: t("destAchievements"),
+  friends: t("destFriends"),
+  settings: t("destSettings"),
+  qam: t("destQam"),
+  downloads: t("destDownloads"),
+  media: t("destMedia"),
+  store: t("destStore"),
+  power: t("destPower"),
+  mainmenu: t("destMainMenu"),
+  browser: t("destBrowser"),
+  community: t("destCommunity"),
+  cloud: t("destCloud"),
+  notifications: t("destNotifications"),
+  music: t("destMusic"),
+});
+const names: Record<Destination["place"], string> = new Proxy({} as any, {
+  get: (_, prop: string) => destinationNames()[prop as Destination["place"]] || prop,
+});
 const client=()=> (globalThis as any).SteamClient;
 
 /** Theme-owned destinations use real library/client data. Missing data is explicit. */

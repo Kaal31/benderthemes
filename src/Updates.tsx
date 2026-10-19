@@ -2,6 +2,7 @@ import { ButtonItem, DropdownItem, PanelSection, PanelSectionRow, ProgressBarWit
 import { callable } from "@decky/api";
 import { logInfo } from "./diag";
 import { useEffect, useRef, useState } from "react";
+import { useLocalization } from "./i18n";
 import { checkCommunityUpdates, useCommunityUpdates } from "./communityUpdates";
 
 export type Release = { tag: string; version: string; assetUrl: string; notes: string; channel?:string; build?:number; attempt?:number };
@@ -67,6 +68,7 @@ export async function installFirmware(release: Release, current: string) {
 }
 
 export function Updates({ onManageThemes }: { onManageThemes: () => void }) {
+  const lang = useLocalization();
   const community = useCommunityUpdates();
   const [themeChecking, setThemeChecking] = useState(false);
   const [themeError, setThemeError] = useState("");
@@ -102,7 +104,7 @@ export function Updates({ onManageThemes }: { onManageThemes: () => void }) {
     const start = (name: string) => {
       if (name !== NAME) return;
       downloading.current = true;
-      setBusy(true); setProgress(0); setMessage("Downloading plugin…");
+      setBusy(true); setProgress(0); setMessage(lang("downloadingPlugin"));
     };
     const info = (percent: number) => {
       if (downloading.current) setProgress(Math.max(0, Math.min(100, Number(percent) || 0)));
@@ -110,9 +112,9 @@ export function Updates({ onManageThemes }: { onManageThemes: () => void }) {
     const finish = (name: string) => {
       if (name !== NAME) return;
       downloading.current = false;
-      setBusy(false); setProgress(100); setMessage("Installed. Reloading plugin…");
+      setBusy(false); setProgress(100); setMessage(lang("installedReloading"));
       api?.call("loader/reload_plugin", NAME).catch(() => {
-        if (active.current) setMessage("Installed. Reload the plugin in Decky to finish.");
+        if (active.current) setMessage(lang("reloadPluginManual"));
       });
     };
     api?.addEventListener?.("loader/plugin_download_start", start);
@@ -134,8 +136,8 @@ export function Updates({ onManageThemes }: { onManageThemes: () => void }) {
   const install = async (release: Release) => {
     if (busy || !status) return;
     const api = backend();
-    if (!api?.call) { setMessage("Open this panel in Decky Loader to install updates."); return; }
-    setBusy(true); setMessage("Preparing Decky installer…");
+    if (!api?.call) { setMessage(lang("openInDeckyLoader")); return; }
+    setBusy(true); setMessage(lang("preparingDeckyInstaller"));
     try {
       const result = await tracedPrepare(release);
       if (!result.success) throw new Error(result.error || "Could not prepare installation");
@@ -143,7 +145,7 @@ export function Updates({ onManageThemes }: { onManageThemes: () => void }) {
     await api.call("utilities/install_plugin", release.assetUrl, NAME, release.version, "", installType(release,status));
       if (!active.current) return;
       logInfo(`[updater] Decky install prompt requested for ${release.tag}`);
-      setMessage("Confirm installation in Decky. If you cancel, you can try again.");
+      setMessage(lang("confirmInstallationInDecky"));
       timer.current = setTimeout(() => { if (!downloading.current) setBusy(false); }, 5000);
     } catch (error) {
       logInfo("[updater] installation handoff failed; cancelling replacement marker");
@@ -169,33 +171,33 @@ export function Updates({ onManageThemes }: { onManageThemes: () => void }) {
       {!!community.errors.length && <div className="dht-tu-notice" role="status"><span aria-hidden="true">!</span><div><strong>Some sources are offline</strong><p>Showing saved results. Installed themes still work.</p></div></div>}
       <div className="dht-tu-schedule"><span className="dht-tu-dot" aria-hidden="true"/>Automatic checks every 6 hours</div>
     </section></PanelSectionRow>
-    <PanelSectionRow><div className="dht-tu-action dht-tu-primary"><ButtonItem layout="below" onClick={onManageThemes}>{community.updateCount ? "Review theme updates" : "Browse community themes"}</ButtonItem></div></PanelSectionRow>
-    <PanelSectionRow><div className="dht-tu-action dht-tu-secondary"><ButtonItem layout="below" disabled={themeChecking} onClick={() => { setThemeChecking(true); setThemeError(""); void checkCommunityUpdates(true).catch(e => setThemeError(String(e))).finally(() => setThemeChecking(false)); }}>{themeChecking ? "Checking themes…" : "Check community theme updates"}</ButtonItem></div></PanelSectionRow>
+    <PanelSectionRow><div className="dht-tu-action dht-tu-primary"><ButtonItem layout="below" onClick={onManageThemes}>{community.updateCount ? lang("reviewThemeUpdates") : lang("browseCommunityThemes")}</ButtonItem></div></PanelSectionRow>
+    <PanelSectionRow><div className="dht-tu-action dht-tu-secondary"><ButtonItem layout="below" disabled={themeChecking} onClick={() => { setThemeChecking(true); setThemeError(""); void checkCommunityUpdates(true).catch(e => setThemeError(String(e))).finally(() => setThemeChecking(false)); }}>{themeChecking ? lang("checkingThemes") : lang("checkCommunityThemeUpdates")}</ButtonItem></div></PanelSectionRow>
     {themeError && <PanelSectionRow><div className="dht-tu-error" role="alert">{themeError}</div></PanelSectionRow>}
-  </PanelSection><PanelSection title="Plugin updates">
+  </PanelSection><PanelSection title={lang("pluginUpdate")}>
     <PanelSectionRow><div style={{ fontSize: 12, lineHeight: 1.5 }}>
-      <div>Installed: {status ? releaseLabel({tag:"",version:status.currentVersion,assetUrl:"",notes:"",build:status.currentBuild,attempt:status.currentAttempt}) : checking ? "Checking..." : "Unavailable"}</div>
-      <div>{checkError || (checking ? "Checking GitHub releases..." : status?.stale ? `${status.error}. Showing saved releases; latest version is unverified.`
+      <div>{lang("installedVersion")}: {status ? releaseLabel({tag:"",version:status.currentVersion,assetUrl:"",notes:"",build:status.currentBuild,attempt:status.currentAttempt}) : checking ? lang("checking") : "Unavailable"}</div>
+      <div>{checkError || (checking ? lang("checkingGitHub") : status?.stale ? `${status.error}. Showing saved releases; latest version is unverified.`
         : status?.updateAvailable ? `Update available: ${status.latest?releaseLabel(status.latest):""}`
         : status?.success ? (status.latest ? "This channel is up to date." : "No installable releases found for the installed channel.") : "Update status unavailable. Try checking again.")}</div>
       {status?.channelKnown === false && <div>Installed release channel is unknown. Select your intended channel and reinstall a numbered release to restore build detection.</div>}
     </div></PanelSectionRow>
     {status?.updateAvailable && status.latest && <PanelSectionRow>
-      <ButtonItem layout="below" disabled={busy || checking} onClick={() => void install(status.latest!)}>Update to {releaseLabel(status.latest)}</ButtonItem>
+      <ButtonItem layout="below" disabled={busy || checking} onClick={() => void install(status.latest!)}>{lang("updateTo")} {releaseLabel(status.latest)}</ButtonItem>
     </PanelSectionRow>}
     {!!status?.releases.length && <>
-      <PanelSectionRow><DropdownItem label="Release channel" description="Only channels with numbered, installable releases are shown. Selecting a channel does not install it."
+      <PanelSectionRow><DropdownItem label={lang("releaseChannel")} description={lang("releaseChannelDesc")}
         rgOptions={channels.map(c=>({data:c,label:c==="stable"?"Stable":c==="beta"?"Beta":c==="experimental"?"Experimental":"Optimization testing"}))}
         selectedOption={channel} onChange={o=>setChannel(String(o.data))} disabled={busy||checking}/></PanelSectionRow>
-      <PanelSectionRow><DropdownItem label="Install version" description="Choose a release to update, reinstall, or downgrade. Your settings and themes are kept."
+      <PanelSectionRow><DropdownItem label={lang("installVersion")} description={lang("installVersionDesc")}
         rgOptions={channelReleases.map(r => ({ data: r.tag, label: releaseLabel(r) }))} selectedOption={tag}
         onChange={o => setTag(String(o.data))} disabled={busy || checking} /></PanelSectionRow>
       <PanelSectionRow><ButtonItem layout="below" disabled={busy || checking || !selected} onClick={() => selected && void install(selected)}>
-        {switching?`Switch to ${channel}`:order > 0 ? "Update to" : order < 0 ? "Downgrade to" : "Reinstall"} {selected?releaseLabel(selected):""}
+        {switching ? lang("switchChannelTo", { channel }) : order > 0 ? lang("updateTo") : order < 0 ? lang("downgradeTo") : lang("reinstall")} {selected?releaseLabel(selected):""}
       </ButtonItem></PanelSectionRow>
-      {(order < 0||switching) && <PanelSectionRow><div style={{ fontSize: 12 }}>Some destination builds may not include channel switching. You can return by installing a compatible ZIP through Decky.</div></PanelSectionRow>}
+      {(order < 0||switching) && <PanelSectionRow><div style={{ fontSize: 12 }}>{lang("channelSwitchNotice")}</div></PanelSectionRow>}
     </>}
-    <PanelSectionRow><ButtonItem layout="below" disabled={busy || checking} onClick={() => void load()}>{checking ? "Checking…" : "Check for updates"}</ButtonItem></PanelSectionRow>
+    <PanelSectionRow><ButtonItem layout="below" disabled={busy || checking} onClick={() => void load()}>{checking ? lang("checking") : lang("checkPluginUpdate")}</ButtonItem></PanelSectionRow>
     {busy && downloading.current && <PanelSectionRow><ProgressBarWithInfo layout="inline" nProgress={progress} sOperationText={message} /></PanelSectionRow>}
     {message && <PanelSectionRow><div style={{ fontSize: 12, overflowWrap: "anywhere" }}>{message}</div></PanelSectionRow>}
   </PanelSection></>;

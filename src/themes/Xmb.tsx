@@ -12,6 +12,7 @@ import { BatteryGlyph, GameArt, Icon, IconName, MenuItem, MenuView, themeMenu, u
 import { clamp, Press, Stage, ThemeRoot, useStage } from "../input";
 import { fmtLastPlayed, fmtPlaytime, Game, openSteam } from "../library";
 import { pspFile, Settings, showTitle, themeFx, ThemeFx, THEMES, updateSettings, useSettings } from "../settings";
+import { t } from "../i18n";
 import { fmtDate, fmtTime, playSound, SoundKind, useBattery, useClock, useWallpaper } from "../steam";
 import { P3tSkin, ThemeText, useP3t, usePsp, useRafScene, XmbVisual } from "../skins";
 import { RafBackground } from "../ps3/RafBackground";
@@ -759,7 +760,7 @@ export function XmbHome({ variant }: { variant: Variant }) {
     ];
     const setColor = (i: number) => updateSettings((p) => ({ xmb: { ...p.xmb, [variant === "ps3" ? "ps3Color" : "pspColor"]: i } }));
     const games: XItem[] = [];
-    games.push({ key: "lib", p3t: "icon_gamedata", label: "Library", icon: "library", sub: "All games and collections", action: () => openSteam("library") });
+    games.push({ key: "lib", p3t: "icon_gamedata", label: t("destLibrary"), icon: "library", sub: t("allGamesAndCollections"), action: () => openSteam("library") });
     if (s.xmb.collectionFolders) {
       for (const c of api.lib.collections) games.push({ key: `col-${c.id}`, label: c.name, icon: "folder", p3t: "icon_savedata", sub: `${c.games.length} items`, children: folderItems(c.games) });
     }
@@ -767,18 +768,18 @@ export function XmbHome({ variant }: { variant: Variant }) {
     api.lib.games.forEach((g) => games.push(gameItem(g)));
     const settingsCat: XCat = {
       key: "settings",
-      label: "Settings",
+      label: t("catSettings"),
       icon: "gear",
       p3t: "icon_setting",
       items: [
-        { key: "theme", p3t: "icon_theme_setting", label: "Presets", icon: "palette", sub: "Switch console + skin", children: themeItems },
-        { key: "color", p3t: "icon_display_setting", label: "Background Colour", icon: "palette", sub: colorIdx < 0 ? "Automatic" : MONTH_NAMES[colorIdx], children: colorItems },
-        { key: "clock", p3t: "icon_datetime_setting", label: "Date and Time Settings", icon: "clock", sub: s.clock24 ? "24-hour clock" : "12-hour clock", action: () => updateSettings({ clock24: !s.clock24 }) },
-        { key: "sfx", p3t: "icon_sound_setting", label: "Sound Settings", icon: "sound", sub: s.sounds ? "Sound effects on" : "Sound effects off", action: () => updateSettings({ sounds: !s.sounds }) },
-        { key: "tsound", p3t: "icon_sound_setting", label: "Trailer Sound", icon: "video", sub: s.trailers.sound ? "On: trailers in game icons play with sound" : "Off: trailers in game icons are silent", action: () => updateSettings((p) => ({ trailers: { ...p.trailers, sound: !p.trailers.sound } })) },
-        { key: "tprev", p3t: "icon_video", label: "Animated Icons", icon: "video", sub: s.trailers.preview ? "On: resting on a game plays its trailer" : "Off", action: () => updateSettings((p) => ({ trailers: { ...p.trailers, preview: !p.trailers.preview } })) },
-        { key: "home", p3t: "icon_setting_item", label: "Theme Options", icon: "gear", sub: "Icons, brightness, theme file, intro, sounds…", action: api.openSettings },
-        { key: "steam", p3t: "icon_system_setting", label: "System Settings", icon: "steam", sub: "Steam settings", action: () => openSteam("settings") },
+        { key: "theme", p3t: "icon_theme_setting", label: t("presets"), icon: "palette", sub: t("presetsDesc"), children: themeItems },
+        { key: "color", p3t: "icon_display_setting", label: t("backgroundColour"), icon: "palette", sub: colorIdx < 0 ? t("automatic") : MONTH_NAMES[colorIdx], children: colorItems },
+        { key: "clock", p3t: "icon_datetime_setting", label: t("dateTimeSettings"), icon: "clock", sub: s.clock24 ? t("clock24") : t("clock12"), action: () => updateSettings({ clock24: !s.clock24 }) },
+        { key: "sfx", p3t: "icon_sound_setting", label: t("soundSettings"), icon: "sound", sub: s.sounds ? t("sfxOn") : t("sfxOff"), action: () => updateSettings({ sounds: !s.sounds }) },
+        { key: "tsound", p3t: "icon_sound_setting", label: t("trailerSound"), icon: "video", sub: s.trailers.sound ? t("trailerSoundOn") : t("trailerSoundOff"), action: () => updateSettings((p) => ({ trailers: { ...p.trailers, sound: !p.trailers.sound } })) },
+        { key: "tprev", p3t: "icon_video", label: t("animatedIcons"), icon: "video", sub: s.trailers.preview ? t("animatedIconsOn") : t("animatedIconsOff"), action: () => updateSettings((p) => ({ trailers: { ...p.trailers, preview: !p.trailers.preview } })) },
+        { key: "home", p3t: "icon_setting_item", label: t("themeOptions"), icon: "gear", sub: t("themeOptionsDesc"), action: api.openSettings },
+        { key: "steam", p3t: "icon_system_setting", label: t("systemSettings"), icon: "steam", sub: t("systemSettings"), action: () => openSteam("settings") },
       ],
     };
     // Steam's download queue as a list, each with its progress bar (the Steam page stays one entry away)
@@ -795,29 +796,29 @@ export function XmbHome({ variant }: { variant: Variant }) {
           action: () => {
             const now = downloadsRef.current.byApp.get(d.appid);
             menu.open([
-              now?.paused || !now?.active ? { label: "Download now", action: () => resumeDownload(d.appid) } : { label: "Pause", action: () => pauseDownload(d.appid) },
-              { label: "Remove from queue", action: () => removeDownload(d.appid) },
-              { label: "Steam Downloads", action: () => openSteam("downloads") },
+              now?.paused || !now?.active ? { label: t("downloadNow"), action: () => resumeDownload(d.appid) } : { label: t("pause"), action: () => pauseDownload(d.appid) },
+              { label: t("removeFromQueue"), action: () => removeDownload(d.appid) },
+              { label: t("steamDownloads"), action: () => openSteam("downloads") },
             ], g?.name);
           },
         };
       }),
-      ...(downloadsRef.current.items.length ? [] : [{ key: "dl-none", label: "No downloads", icon: "download" as IconName, p3t: "icon_download", sub: "Games and updates Steam is downloading show up here" }]),
-      { key: "dl-steam", label: "Steam Downloads", icon: "steam", p3t: "icon_download", sub: "Steam's own download page", action: () => openSteam("downloads") },
+      ...(downloadsRef.current.items.length ? [] : [{ key: "dl-none", label: t("noDownloads"), icon: "download" as IconName, p3t: "icon_download", sub: t("noDownloadsDesc") }]),
+      { key: "dl-steam", label: t("steamDownloads"), icon: "steam", p3t: "icon_download", sub: t("steamDownloadsDesc"), action: () => openSteam("downloads") },
     ];
     const network: XCat = {
       key: "network",
-      label: "Network",
+      label: t("catNetwork"),
       icon: "globe",
       p3t: "icon_network",
       items: [
 
-        { key: "web", p3t: "icon_browser", label: "Internet Browser", icon: "globe", action: () => openSteam("browser") },
-        { key: "dl", p3t: "icon_download", label: "Downloads", icon: "download", children: downloadItems },
+        { key: "web", p3t: "icon_browser", label: t("destBrowser"), icon: "globe", action: () => openSteam("browser") },
+        { key: "dl", p3t: "icon_download", label: t("destDownloads"), icon: "download", children: downloadItems },
       ],
     };
     // Photo: Steam screenshots, one folder per game (like the console's photo albums)
-    const photoItems: XItem[] = [{ key: "shots", p3t: "icon_photo_album_default", visual: "photoAlbum", label: "All Screenshots", icon: "photo", sub: shots ? `${shots.length} pictures` : "Loading…", action: () => api.openMedia() }];
+    const photoItems: XItem[] = [{ key: "shots", p3t: "icon_photo_album_default", visual: "photoAlbum", label: t("allScreenshots"), icon: "photo", sub: shots ? t("picturesCount", { count: shots.length }) : t("loading"), action: () => api.openMedia() }];
     if (shots) {
       const byApp = new Map<number, typeof shots>();
       shots.forEach((sh) => byApp.set(sh.appid, [...(byApp.get(sh.appid) ?? []), sh]));
@@ -834,7 +835,7 @@ export function XmbHome({ variant }: { variant: Variant }) {
         });
       }
     }
-    const photo: XCat = { key: "photo", label: "Photo", icon: "photo", p3t: "icon_photo", items: photoItems };
+    const photo: XCat = { key: "photo", label: t("catPhoto"), icon: "photo", p3t: "icon_photo", items: photoItems };
     // Video: videos stored on the Deck (Steam recordings, files); store trailers optional
     const videoItems: XItem[] = [];
     if (s.trailers.video)
@@ -865,7 +866,7 @@ export function XmbHome({ variant }: { variant: Variant }) {
       }
       if (!vids.length) videoItems.push({ key: "vnone", label: "No videos", icon: "video", p3t: "icon_video", visual: "unknown", sub: "Steam game recordings and videos in Videos, Downloads or on an SD card show up here" });
     }
-    const video: XCat = { key: "video", label: "Video", icon: "video", p3t: "icon_video", items: videoItems };
+    const video: XCat = { key: "video", label: t("catVideo"), icon: "video", p3t: "icon_video", items: videoItems };
     // PSP: Extras only exists when the theme has an Extras ("+") icon, like on firmware that shows it
     // …and only when that icon belongs to the theme's category row: a one-bar theme whose bar has no "+" (Large Original Midnight
     // Black: 7 icons, its icon_extras is a lone "+") would otherwise show the "+" alone in place of the whole row (the bar vanished)
@@ -900,11 +901,11 @@ export function XmbHome({ variant }: { variant: Variant }) {
       if (!music.length) musicItems.push({ key: "m-none", label: "No music", icon: "music", p3t: "icon_music", visual: "unknown", sub: "Steam soundtracks and music in Music or on an SD card show up here" });
     }
     musicItems.push({ key: "player", label: "Music Player", icon: "music", p3t: "icon_music", sub: "Albums, queue, shuffle and repeat", action: () => openDestination({ place: "music" }) });
-    const music_: XCat = { key: "music", label: "Music", icon: "music", p3t: "icon_music", items: musicItems };
+    const music_: XCat = { key: "music", label: t("catMusic"), icon: "music", p3t: "icon_music", items: musicItems };
     const psn: XCat = {key:"psn",label:"PlayStation Network",icon:"psn",p3t:"icon_psn",items:[{key:"store",label:"PlayStation Store",sub:"Steam Store catalog",icon:"store",p3t:"icon_store",action:()=>openSteam("store")},{key:"account",label:"Account",icon:"user",p3t:"icon_user",action:()=>openSteam("friends")}]};
     const tv: XCat = {key:"tv",label:"TV / Video Services",icon:"tv",p3t:"icon_tv",items:[{key:"trailers",label:"Game Trailers",icon:"video",p3t:"icon_video",children:()=>api.lib.games.filter(g=>!g.shortcut).map(g=>({key:`tr${g.appid}`,label:g.name,game:g,trailer:true}))},...api.lib.apps.map(g=>({key:`app${g.appid}`,label:g.name,game:g,icon:"apps" as IconName}))]};
     // a PSP opens every category on its top entry; the PS3 starts the Game column on the first game
-    const game: XCat = { key: "game", label: "Game", icon: "game", p3t: "icon_game", items: games, start: variant === "psp" ? 0 : Math.min(firstGame, games.length - 1) };
+    const game: XCat = { key: "game", label: t("catGame"), icon: "game", p3t: "icon_game", items: games, start: variant === "psp" ? 0 : Math.min(firstGame, games.length - 1) };
     if (variant === "psp") {
       // Extras (the "+" category of later PSP firmware): Steam's tools, non-Steam shortcuts and apps
       const shortcuts = api.lib.games.filter((g) => g.shortcut);
@@ -925,17 +926,17 @@ export function XmbHome({ variant }: { variant: Variant }) {
     }
     const users: XCat = {
       key: "users",
-      label: "Users",
+      label: t("catUsers"),
       icon: "user",
       p3t: "icon_user",
       items: [
         { key: "me", p3t: "icon_user", label: api.user, icon: "user", sub: "Signed in", action: () => openSteam("friends") },
-        { key: "off", p3t: "icon_setting_item", label: "Turn Off System", icon: "power", action: () => openSteam("power") },
-        { key: "steamhome", p3t: "icon_user", label: "Home", icon: "home", sub: "Show Steam's own home", action: api.showSteamHome },
+        { key: "off", p3t: "icon_setting_item", label: t("destPower"), icon: "power", action: () => openSteam("power") },
+        { key: "steamhome", p3t: "icon_user", label: t("destMainMenu"), icon: "home", sub: "Show Steam's own home", action: api.showSteamHome },
       ],
       start: 0,
     };
-    const friends: XCat = { key: "friends", label: "Friends", icon: "friends", p3t: "icon_friend", items: [{ key: "chat", p3t: "icon_chat", label: "Friends & Chat", icon: "friends", action: () => openSteam("friends") }] };
+    const friends: XCat = { key: "friends", label: t("destFriends"), icon: "friends", p3t: "icon_friend", items: [{ key: "chat", p3t: "icon_chat", label: "Friends & Chat", icon: "friends", action: () => openSteam("friends") }] };
     return [users, settingsCat, photo, music_, video, tv, game, network, psn, friends];
   }, [api.lib, s.theme, s.clock24, s.sounds, colorIdx, s.xmb.collectionFolders, api.user, shots, vids, s.trailers.video, s.trailers.sound, s.trailers.preview, skin, music, player.album?.id, player.index]);
 

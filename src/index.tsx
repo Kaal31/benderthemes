@@ -22,6 +22,7 @@ import { refreshThemeLists } from "./themeSettingsMenu";
 import { deleteCurrentTheme } from "./themeActions";
 import { applyPreset, currentLook, currentPresetId, deleteUserPreset, getPresets, isDownloaded, refreshPresets, renamePreset, saveUserPreset, usePresets, PRESET_GROUPS } from "./presets";
 import { customizeControls } from "./customize";
+import { useLocalization } from "./i18n";
 
 const ROUTE = "/deck-home-themes";
 const HOME_ROUTE = "/library/home";
@@ -85,6 +86,7 @@ function AddThemeRow() {
 }
 
 function Panel() {
+  const lang = useLocalization();
   const failure = useHomeFailure();
   const s = useSettings();
   const loaded = useSettingsLoaded();
@@ -113,11 +115,11 @@ function Panel() {
         <PanelSectionRow><ScreensaverStatus /></PanelSectionRow>
         <PanelSectionRow><ToggleField label="Disable screensavers" description="Disable all Steam screensavers while ThemeHub is loaded. Overrides every theme’s screensaver." checked={s.screensaversDisabled===true} onChange={screensaversDisabled=>updateSettings({screensaversDisabled})}/></PanelSectionRow>
       </PanelSection>
-      <PanelSection title="Themes">
-        <PanelSectionRow><ButtonItem layout="below" description="Browse animated previews, download a theme and activate it." onClick={() => { openMarketplace(); Navigation.Navigate(ROUTE); Navigation.CloseSideMenus(); }}>Hub</ButtonItem></PanelSectionRow>
+      <PanelSection title={lang("qamThemes")}>
+        <PanelSectionRow><ButtonItem layout="below" description={lang("qamHubDesc")} onClick={() => { openMarketplace(); Navigation.Navigate(ROUTE); Navigation.CloseSideMenus(); }}>{lang("qamHub")}</ButtonItem></PanelSectionRow>
         <AddThemeRow />
         <PanelSectionRow>
-          <ToggleField label="Themed home screen" description="Replace Steam's home with the console theme" checked={s.enabled} onChange={(v) => updateSettings({ enabled: v })} />
+          <ToggleField label={lang("qamThemedHome")} description={lang("qamThemedHomeDesc")} checked={s.enabled} onChange={(v) => updateSettings({ enabled: v })} />
         </PanelSectionRow>
         <PanelSectionRow>
           <ButtonItem
@@ -133,15 +135,15 @@ function Panel() {
           </ButtonItem>
         </PanelSectionRow>
       </PanelSection>
-      {failure && <PanelSection title="Steam Home restored"><PanelSectionRow><ButtonItem layout="below" description={failure} onClick={retryHome}>Retry themed home</ButtonItem></PanelSectionRow></PanelSection>}
+      {failure && <PanelSection title={lang("qamHomeRestored")}><PanelSectionRow><ButtonItem layout="below" description={failure} onClick={retryHome}>{lang("qamRetryHome")}</ButtonItem></PanelSectionRow></PanelSection>}
 
-      <PanelSection title="Presets">
+      <PanelSection title={lang("qamPresets")}>
         <PanelSectionRow>
-          <DropdownItem label="Look" rgOptions={looks} selectedOption={look} onChange={(o) => { const p = presets.find((x) => x.id === o.data); if (p) applyPreset(p); }} />
+          <DropdownItem label={lang("qamLook")} rgOptions={looks} selectedOption={look} onChange={(o) => { const p = presets.find((x) => x.id === o.data); if (p) applyPreset(p); }} />
         </PanelSectionRow>
         <PanelSectionRow>
           <DropdownItem
-            label="Preset"
+            label={lang("qamPreset")}
             description={`${themeName}'s presets: its own look, its imported theme files and the ones you saved. Changes are kept in the preset in use. On the home: hold L2 / R2 + ▲▼ to change console, L2 / R2 + ◀▶ for its presets; L2 / R2 previous / next theme; △ / Y → Presets.`}
             key={look}
             rgOptions={mine.map((p) => ({ data: p.id, label: p.label }))}
@@ -149,15 +151,15 @@ function Panel() {
             onChange={(o) => { const p = presets.find((x) => x.id === o.data); if (p) applyPreset(p); }}
           />
         </PanelSectionRow>
-        <PanelSectionRow><ButtonItem layout="below" onClick={() => void saveUserPreset()}>Save as new preset</ButtonItem></PanelSectionRow>
+        <PanelSectionRow><ButtonItem layout="below" onClick={() => void saveUserPreset()}>{lang("qamSaveNewPreset")}</ButtonItem></PanelSectionRow>
         <PanelSectionRow>
-          <DeferredText key={`${current}|${preset?.label}`} label="Name" initial={preset?.label ?? ""} onCommit={(v) => { if (v.trim() && v !== preset?.label) renamePreset(current, v); }} />
+          <DeferredText key={`${current}|${preset?.label}`} label={lang("qamName")} initial={preset?.label ?? ""} onCommit={(v) => { if (v.trim() && v !== preset?.label) renamePreset(current, v); }} />
         </PanelSectionRow>
         {(preset?.origin === "saved" || preset?.user) && <PresetDeleteRow id={current} saved={preset?.origin === "saved"} name={preset?.label ?? ""} />}
       </PanelSection>
 
       {controls.length > 0 && (
-        <PanelSection title="Customize">
+        <PanelSection title={lang("qamCustomize")}>
           {controls.map((c) => (
             <PanelSectionRow key={c.id}>
               <DropdownItem
@@ -171,9 +173,9 @@ function Panel() {
         </PanelSection>
       )}
 
-      <PanelSection title="Advanced">
+      <PanelSection title={lang("qamAdvanced")}>
         <PanelSectionRow>
-          <ToggleField label="Show advanced options" description="Settings for all themes, rescanning, reset and delete" checked={advanced} onChange={setAdvanced} />
+          <ToggleField label={lang("qamShowAdvanced")} description={lang("qamShowAdvancedDesc")} checked={advanced} onChange={setAdvanced} />
         </PanelSectionRow>
         {advanced && (
           <>
@@ -283,6 +285,7 @@ function ResetSection({ th, themeName }: { th: ThemeId; themeName: string }) {
 }
 
 function Diagnostics() {
+  const lang = useLocalization();
   const d = useDiag();
   const lib = loadLibrary(useSettings().source, "recent", 9999);
   const others = useOtherPlugins();
@@ -293,7 +296,7 @@ function Diagnostics() {
     </div>
   );
   return (
-    <PanelSection title="Diagnostics">
+    <PanelSection title={lang("qamDiagnostics")}>
       <PanelSectionRow><div style={{fontSize:12}}>Experimental diagnostics run automatically for thirty minutes after plugin load. Keyboard, input lifecycle and idle overlay events share the Decky log at ~/homebrew/logs/DeckHomeThemes. Messages and typed text are excluded.</div></PanelSectionRow>
       <PanelSectionRow>
         <div>

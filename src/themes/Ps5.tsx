@@ -1,4 +1,5 @@
 import { GameHero } from "../common";
+import { t } from "../i18n";
 import {ProfileAvatar} from "../ProfileAvatar";
 // PS5 home: Games / Media tabs, a compact row of rounded tiles at the top
 // with the focused title written beside it, full-bleed hero art, the game's
@@ -43,15 +44,15 @@ export function Ps5Home() {
 
   const [tab, setTab] = useRemembered<"games" | "media">("ps5-tab", st<string>("startTab") === "media" ? "media" : "games");
   const gamesTiles: Tile[] = [
-    { key: "store", label: "Steam Store", icon: "store", place: "store" },
+    { key: "store", label: t("destSteamStore"), icon: "store", place: "store" },
     ...api.lib.games.map((g) => ({ key: `g${g.appid}`, label: g.name, game: g })),
-    { key: "lib", label: "Game Library", icon: "library", place: "library" },
+    { key: "lib", label: t("destLibrary"), icon: "library", place: "library" },
   ];
   const mediaTiles: Tile[] = [
-    { key: "shots", label: "Media Gallery", icon: "photo", place: "media" },
-    { key: "web", label: "Web Browser", icon: "globe", place: "browser" },
-    { key: "dl", label: "Downloads", icon: "download", place: "downloads" },
-    { key: "friends", label: "Friends", icon: "friends", place: "friends" },
+    { key: "shots", label: t("allScreenshots"), icon: "photo", place: "media" },
+    { key: "web", label: t("destBrowser"), icon: "globe", place: "browser" },
+    { key: "dl", label: t("destDownloads"), icon: "download", place: "downloads" },
+    { key: "friends", label: t("destFriends"), icon: "friends", place: "friends" },
     ...api.lib.apps.map((g) => ({ key: `a${g.appid}`, label: g.name, game: g })),
   ];
   const tiles = tab === "games" ? gamesTiles : mediaTiles;
@@ -75,9 +76,9 @@ export function Ps5Home() {
 
   const cards = g && showCards
     ? [
-        { title: "Game Details", sub: "Achievements, news, properties", run: () => api.details(g) },
-        { title: "Play Time", sub: fmtPlaytime(g.playtime, g.lastPlayed, true), run: () => api.details(g) },
-        { title: "Last Played", sub: fmtLastPlayed(g.lastPlayed), run: () => api.details(g) },
+        { title: t("gameDetails"), sub: "Achievements, news, properties", run: () => api.details(g) },
+        { title: t("playTime"), sub: fmtPlaytime(g.playtime, g.lastPlayed, true), run: () => api.details(g) },
+        { title: t("lastPlayed"), sub: fmtLastPlayed(g.lastPlayed), run: () => api.details(g) },
       ]
     : [];
   const topIcons: { icon: IconName; run: () => void }[] = [
@@ -96,11 +97,11 @@ export function Ps5Home() {
 
   const options = () => {
     const extra: MenuItem[] = [
-      { label: "Presets", sub: () => themeMenu(s.theme, api.switchTheme, THEMES) },
-      { label: "Home Screen Settings", action: api.openSettings },
-      { label: "Home", action: api.showSteamHome },
+      { label: t("presets"), sub: () => themeMenu(s.theme, api.switchTheme, THEMES) },
+      { label: t("homeScreenSettings"), action: api.openSettings },
+      { label: t("destMainMenu"), action: api.showSteamHome },
     ];
-    menu.open(g ? [{ label: "Play", action: () => api.launch(g) }, { label: "Watch Trailer", action: () => api.playTrailer(g) }, { label: "Game Details", action: () => api.details(g) }, { label: "Game Options", action: () => api.nativeMenu(g) }, ...extra] : extra, g?.name);
+    menu.open(g ? [{ label: t("play"), action: () => api.launch(g) }, { label: t("watchTrailer"), action: () => api.playTrailer(g) }, { label: t("gameDetails"), action: () => api.details(g) }, { label: t("gameOptions"), action: () => api.nativeMenu(g) }, ...extra] : extra, g?.name);
   };
 
   const switchTab = (t: "games" | "media") => {
@@ -202,9 +203,9 @@ export function Ps5Home() {
         <div style={{ position: "absolute", inset: 0, transform: scrolledDown ? `translateY(-${H * 0.32}px)` : "none", transition: "transform 300ms ease-out" }}>
           {/* tabs */}
           <div style={{ position: "absolute", left: x0, top: 30, display: "flex", gap: 34, fontSize: 22, color: "#fff" }}>
-            {(["games", "media"] as const).map((t, i) => (
-              <span key={t} className="dht-ps5-tab" data-selected={tab === t} style={{ fontWeight: tab === t ? 600 : 300, opacity: tab === t ? 1 : 0.6, padding: "2px 10px", borderRadius: 16, boxShadow: zone === "tabs" && tsel === i ? "0 0 0 2px #fff" : "none" }}>
-                {t === "games" ? "Games" : "Media"}
+            {(["games", "media"] as const).map((tabKey, i) => (
+              <span key={tabKey} className="dht-ps5-tab" data-selected={tab === tabKey} style={{ fontWeight: tab === tabKey ? 600 : 300, opacity: tab === tabKey ? 1 : 0.6, padding: "2px 10px", borderRadius: 16, boxShadow: zone === "tabs" && tsel === i ? "0 0 0 2px #fff" : "none" }}>
+                {tabKey === "games" ? t("tabGames") : t("tabMedia")}
               </span>
             ))}
           </div>
