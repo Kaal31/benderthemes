@@ -1,0 +1,96 @@
+[
+  {
+    "id": "FFDC",
+    "enabled": true,
+    "covers": [
+      {
+        "alpha": 1,
+        "width": 205.19998168945312,
+        "height": 205.20001220703125,
+        "loaded": true
+      },
+      {
+        "alpha": 1,
+        "width": 102.5999755859375,
+        "height": 102.60000610351562,
+        "loaded": true
+      },
+      {
+        "alpha": 1,
+        "width": 102.5999755859375,
+        "height": 102.60000610351562,
+        "loaded": true
+      },
+      {
+        "alpha": 1,
+        "width": 102.5999755859375,
+        "height": 102.60000610351562,
+        "loaded": true
+      },
+      {
+        "alpha": 1,
+        "width": 102.5999755859375,
+        "height": 102.60000610351562,
+        "loaded": true
+      }
+    ],
+    "pass": true
+  },
+  {
+    "id": "FFDC",
+    "enabled": false,
+    "covers": [
+      {
+        "alpha": 1,
+        "width": 205.19998168945312,
+        "height": 205.20001220703125,
+        "loaded": true
+      },
+      {
+        "alpha": 1,
+        "width": 102.5999755859375,
+        "height": 102.60000610351562,
+        "loaded": true
+      },
+      {
+        "alpha": 1,
+        "width": 102.5999755859375,
+        "height": 102.60000610351562,
+        "loaded": true
+      },
+      {
+        "alpha": 1,
+        "width": 102.5999755859375,
+        "height": 102.60000610351562,
+        "loaded": true
+      },
+      {
+        "alpha": 1,
+        "width": 102.5999755859375,
+        "height": 102.60000610351562,
+        "loaded": true
+      }
+    ],
+    "pass": true
+  },
+  {
+    "id": "106EF",
+    "enabled": true,
+    "pass": true
+  },
+  {
+    "id": "106EF",
+    "enabled": false,
+    "pass": true
+  },
+  {
+    "id": "B116",
+    "enabled": true,
+    "pass": true
+  },
+  {
+    "id": "B116",
+    "enabled": false,
+    "pass": true
+  }
+]

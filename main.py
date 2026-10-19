@@ -908,13 +908,20 @@ def _read_switch_cached(name: str):
             break
     if not folder_src:
         return None
-    make = lambda: switch_themes.read_theme(folder_src, name, _data_url, index)
+    resource_folder = _switch_dir()
+    make = lambda: switch_themes.read_theme(folder_src, name, _data_url, index, resource_folder=resource_folder)
     try:
         # the key covers every file of the theme's folder level, so adding a screen refreshes it
         parts = []
         for n in switch_themes._list_files(folder_src):
             st = os.stat(os.path.join(folder_src, *n.split("/")))
             parts.append(f"{n}:{st.st_size}:{st.st_mtime_ns}")
+        for root in sorted(set((folder_src,resource_folder))):
+            for resource in ('common','ResidentMenu','FontStandard','FontExtended','FontExtended2'):
+                resource_path=os.path.join(root,'.resources',resource+'.json')
+                if os.path.isfile(resource_path):
+                    resource_stat=os.stat(resource_path)
+                    parts.append(f"resources:{root}:{resource}:{resource_stat.st_size}:{resource_stat.st_mtime_ns}")
         text = f"{folder_src}|{name}|{switch_themes.READER_VERSION}|{'|'.join(parts)}"
     except Exception:
         return make()
@@ -2028,6 +2035,14 @@ class Plugin:
         except Exception as e:
             decky.logger.warning(f"vita theme music failed: {e}")
         return r
+
+    async def import_switch_theme(self, path: str):
+        import switch_import
+        return await asyncio.to_thread(switch_import.import_theme, path, _switch_dir())
+
+    async def import_switch_resources(self, path: str):
+        import switch_resources
+        return await asyncio.to_thread(switch_resources.import_resources, path, _switch_dir())
 
     async def list_switch_themes(self):
         folder = _switch_dir()

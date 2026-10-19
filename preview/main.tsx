@@ -195,7 +195,9 @@ seedSettings({
   n3dsSkin: params.get("n3ds") ?? "",
   n3dsCursor: params.get("cursor") === "simple" ? "simple" : "3ds",
   n3dsTop: params.get("top") === "hide" ? "hide" : "show",
-  switchTheme: params.get("switchTheme") ?? "",
+  // A supplied conversion fixture is the initial skin. Starting with an empty
+  // selection makes browser checks race the first native scene subscription.
+  switchTheme: params.get("switchTheme") ?? (window as any).__testSwitch?.file ?? "",
   ...(params.get("wall") ? { wallpapers: { x360: params.get("wall")! } } : {}),
 });
 (globalThis as any).__previewSettings = null;

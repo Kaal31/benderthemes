@@ -312,6 +312,7 @@ export interface MenuItem {
   keepOpen?: boolean; // run action without closing
 }
 export interface MenuLevel {
+  body?:ReactNode;
   title?: string;
   items: MenuItem[];
   sel: number;
@@ -362,16 +363,16 @@ export function useMenu() {
   ref.current = stack;
   /** page: a settings picker inside the theme's own interface (Presets, Clock, Audio…) — it shows only
    *  its own entries, not the context menu's shared extras (icon size, Hub, Delete theme…). */
-  const open = (items: MenuItem[], title?: string, opts?: { page?: boolean }) => {
+  const open = (items: MenuItem[], title?: string, opts?: { page?: boolean;body?:ReactNode }) => {
     if (opts?.page) {
       const first = Math.max(0, items.findIndex((i) => !i.disabled));
-      setStack([{ items, title, sel: first }]);
+      setStack([{ items, title, sel: first,body:opts?.body }]);
       playSound("menu");
       return;
     }
     items = optionsMenu(items);
     const first = Math.max(0, items.findIndex((i) => !i.disabled));
-    setStack([{ items, title, sel: first }]);
+    setStack([{ items, title, sel: first,body:opts?.body }]);
     playSound("menu");
   };
   const close = () => {
@@ -434,12 +435,25 @@ export function MenuView({
   menu,
   variant,
   art,
+  appearance,
+  renderItem,
+  renderTitle,
+  wrapPanel,
+  renderBody,
+  exitDuration=0,
 }: {
+  exitDuration?:number;
+  renderItem?:(item:MenuItem,selected:boolean,touched:boolean)=>ReactNode;
+  renderTitle?:(title:string)=>ReactNode;
+  wrapPanel?:(panel:ReactNode)=>ReactNode;
+  renderBody?:(parts:{header:ReactNode;title:ReactNode;items:ReactNode})=>ReactNode;
+  appearance?:{backdrop?:CSSProperties;panel?:CSSProperties;item?:CSSProperties;selectedItem?:CSSProperties;touchItem?:CSSProperties;text?:CSSProperties;optionBase?:CSSProperties;header?:ReactNode;bottomShadow?:CSSProperties;capture?:CSSProperties;mask?:CSSProperties;bottom?:CSSProperties;bottomMask?:CSSProperties;decoration?:ReactNode};
   menu: MenuState;
   variant: "xmb" | ThemeId;
   /** PSP: the theme's options-menu panel (a 480 × 1 strip: its opacity across the panel) and item highlight */
   art?: { panel?: string; focus?: string };
 }) {
+  const [touchIndex,setTouchIndex]=useState<number|null>(null);
   const panel = useRef<HTMLDivElement>(null);
   const selected = menu.stack[menu.stack.length - 1]?.sel;
   const openKey = useRef({});
@@ -459,7 +473,13 @@ export function MenuView({
     motion.onfinish=()=>{if(!menu.isOpen)setRetained(undefined);};
     return()=>motion.cancel();
   },[menu.isOpen,variant,liveTop?.title]);
-  if (!menu.isOpen && !(variant==="castle"&&retained)) return null;
+  useEffect(()=>{
+    if(!exitDuration)return;
+    if(liveTop){setRetained(liveTop);return;}
+    const timer=setTimeout(()=>setRetained(undefined),exitDuration);
+    return()=>clearTimeout(timer);
+  },[liveTop,exitDuration]);
+  if (!menu.isOpen && !((variant==="castle"||exitDuration>0)&&retained)) return null;
   const top = liveTop ?? retained!;
   const styles: Record<string, { panel: CSSProperties; item: (sel: boolean, dis?: boolean) => CSSProperties; title?: CSSProperties }> = {
     wii: {
@@ -552,22 +572,26 @@ export function MenuView({
   const cinematic = variant === "castle" || variant === "republic";
   const st = cinematic ? {panel:{position:"absolute",left:"50%",top:"50%",transform:"translate(-50%,-50%)",minWidth:420,padding:18,background:variant==="castle"?"#eff8ffff":"#071019f5",border:"1px solid #e5c470",boxShadow:"0 15px 70px #0009"} as CSSProperties,item:(on:boolean)=>({fontSize:22,padding:"12px 22px",color:on?"#302400":variant==="castle"?"#30455c":"#e8d7af",background:on?"linear-gradient(100deg,#ffe579,#d4b157)":"transparent"}),title:{padding:12,fontSize:20,color:variant==="castle"?"#30455c":"#e8d7af"}} : styles[variant];
   return (
-    <div className="dht-menu-backdrop" aria-hidden={!menu.isOpen} onClick={(e) => e.target === e.currentTarget && menu.handle({ btn: "b", repeat: false })} style={{ position: "absolute", inset: 0, zIndex: 50, pointerEvents:menu.isOpen?"auto":"none", background: variant === "xmb" ? "transparent" : "rgba(0,0,0,0.25)" }}>
-      <div className={`dht-menu dht-menu--${variant}`} ref={panel} style={{...st.panel, maxHeight:variant==="ps4"||variant==="psp"?"100%":"82%", overflowY:"auto", boxSizing:"border-box", justifyContent:variant==="psp"?"center":"flex-start"}}>
+    <div className="dht-menu-backdrop" aria-hidden={!menu.isOpen} onClick={(e) => e.target === e.currentTarget && menu.handle({ btn: "b", repeat: false })} style={{ position: "absolute", inset: 0, zIndex: 50, pointerEvents:menu.isOpen?"auto":"none", background: variant === "xmb" ? "transparent" : "rgba(0,0,0,0.25)",...appearance?.backdrop }}>
+      {appearance?.capture&&<div className="dht-menu-capture" style={{position:"absolute",inset:0,pointerEvents:"none",...appearance.capture}}/>}
+      {appearance?.mask&&<div className="dht-menu-mask" style={{position:"absolute",inset:0,pointerEvents:"none",...appearance.mask}}/>}
+      {appearance?.bottomShadow&&<div className="dht-menu-bottom-shadow" style={{position:"absolute",left:0,right:0,bottom:0,height:80,pointerEvents:"none",...appearance.bottomShadow}}/>}
+      {appearance?.bottomMask&&<div className="dht-menu-bottom-mask" style={{position:"absolute",left:0,right:0,bottom:0,height:80,pointerEvents:"none",...appearance.bottomMask}}/>}
+      {appearance?.bottom&&<div className="dht-menu-bottom" style={{position:"absolute",left:0,right:0,bottom:0,height:80,pointerEvents:"none",...appearance.bottom}}/>}
+      {(wrapPanel??((content:ReactNode)=>content))(<div className={`dht-menu dht-menu--${variant}`} ref={panel} style={{...st.panel,...appearance?.panel, maxHeight:variant==="ps4"||variant==="psp"||variant==="switch"?"100%":"82%", overflowY:appearance?.panel?.overflowY??"auto", boxSizing:"border-box", justifyContent:variant==="psp"?"center":"flex-start"}}>
         {variant === "psp" && <>
           <style>{"@keyframes dhtPspMenuIn{from{transform:translateX(100%)}}"}</style>
           {/* the panel: dark glass, its opacity profile from the theme's picture; the bright left edge */}
           <div style={{ position: "absolute", inset: 0, zIndex: -1, background: "#000", opacity: art?.panel ? 0.95 : 0.6, ...(art?.panel ? { WebkitMaskImage: `url("${art.panel}")`, maskImage: `url("${art.panel}")`, WebkitMaskSize: "100% 100%", maskSize: "100% 100%" } : {}) }} />
           <div style={{ position: "absolute", left: 0, top: 0, bottom: 0, width: 2, zIndex: -1, background: "linear-gradient(#fff0,#ffffffd0 15%,#ffffffd0 85%,#fff0)", boxShadow: "0 0 6px #fff8" }} />
         </>}
-        {top.title && <div style={st.title}>{top.title}</div>}
-        {top.items.map((it, i) => (
-          <div key={i} className="dht-menu-item" data-selected={i === top.sel} onClick={() => menu.clickItem(i)} style={{ display: "flex", alignItems: "center", justifyContent: "space-between", gap: 20, ...st.item(i === top.sel, it.disabled) }}>
-            <span>{it.label}</span>
-            <span style={{ opacity: 0.8 }}>{it.checked ? "✓" : it.sub ? "›" : ""}</span>
+        {(renderBody??(({header,title,items})=><>{header}{title}{items}</>))({header:<>{appearance?.header}{appearance?.decoration}</>,title:top.title && (renderTitle?renderTitle(top.title):<div style={st.title}>{top.title}</div>),items:top.items.map((it, i) => (
+          <div key={i} className="dht-menu-item" data-selected={i === top.sel} onPointerDown={()=>setTouchIndex(i)} onPointerUp={()=>setTouchIndex(null)} onPointerCancel={()=>setTouchIndex(null)} onPointerLeave={()=>setTouchIndex(null)} onClick={() => menu.clickItem(i)} style={{ display: "flex", alignItems: "center", justifyContent: "space-between", gap: 20, ...st.item(i === top.sel, it.disabled),...appearance?.optionBase,...appearance?.item,...(i===top.sel?appearance?.selectedItem:{}),...(i===touchIndex?appearance?.touchItem:{}) }}>
+            {renderItem?renderItem(it,i===top.sel,i===touchIndex):<><span style={appearance?.text}>{it.label}</span>
+            <span style={{ opacity: 0.8 }}>{it.checked ? "✓" : it.sub ? "›" : ""}</span></>}
           </div>
-        ))}
-      </div>
+        ))})}
+      </div>)}
     </div>
   );
 }

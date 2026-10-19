@@ -1,0 +1,81 @@
+import type {ComponentProps,CSSProperties,ReactNode} from 'react';
+import {MenuView,GameArt,useHome} from '../common';
+import type {MenuItem} from '../common';
+import type {Game} from '../library';
+import type {SwitchAnimation,SwitchEffect} from '../switchThemes';
+import {ProfileAvatar} from '../ProfileAvatar';
+import {SwitchWidgetTree} from './SwitchWidgetTree';
+import {SwitchMotionPane} from './SwitchGameMotion';
+import {panelColor,SwitchMaterial} from './SwitchMaterial';
+import {useLaunchState} from '../launch';
+import {SwitchText} from './SwitchText';
+import {SwitchPicture} from './SwitchPicture';
+import {useContext,Children} from 'react';
+import {SwitchNativeContext} from './SwitchWidgetTree';
+import {useDownloads} from '../downloads';
+import {SwitchMenuSurface} from './SwitchMenuSurface';
+import {SwitchServiceScene} from './SwitchServiceScene';
+import {SwitchLoading} from './SwitchLoading';
+import {SwitchUserList} from './SwitchUserList';
+import {useSteamStatus} from '../steam';
+import {SwitchDialogBody} from './SwitchDialogBody';
+import {WIDGET_DEFAULTS} from './switchWidgetDefaults';
+import {SCENE_MOTION} from './switchSceneDefaults';
+import {composeSwitchAnimations} from './switchAnimationFiles';
+import {SwitchDialogActions} from './SwitchDialogActions';
+import {SwitchSelectionList} from './SwitchSelectionList';
+import {SwitchMenuBackdrop} from './SwitchBackdrop';
+
+type Props=ComponentProps<typeof MenuView>&{effects:Record<string,SwitchEffect>;animations:SwitchAnimation[];modern:boolean;dark:boolean;enabled:boolean;game?:Game};
+/** Shared dialog panes retain their own bounds, palette, focus and touch state. */
+export function SwitchMenu({effects,animations,modern,dark,enabled,game,...props}:Props){
+ const gameDialog=!!game&&props.menu.stack.length===1&&props.menu.stack[0].title===game.name;
+ const download=useDownloads().byApp.get(game?.appid??-1),hasDownload=gameDialog&&!!download&&!download.completed;
+ const launch=useLaunchState(),native=useContext(SwitchNativeContext),api=useHome(),status=useSteamStatus();
+ const has=(file:string)=>Object.keys(effects).some(key=>key.startsWith('widget:'+file+':'));
+ const tree=(file:string,label:string,selected=false,touched=false,item?:MenuItem):ReactNode=><SwitchWidgetTree {...{file,modern,effects,animations,dark,enabled}} events={['enter',selected?'active':'inactive',...(selected?['focus']:[]),...(touched?['touch']:[])]} render={(node,effect)=>{
+  const name=node.name,style:CSSProperties={};let content:ReactNode;
+  if(file==='DHdrSoft'&&name==='N_00')return {hidden:!game};
+  if(file==='DHdrSoft'&&name==='N_01')return {hidden:!!game};
+  if(node.part==='Line_Root')return {content:tree('Line_Root','')};
+  if(name==='N_BtnFocusKey')return {hidden:!selected,style:{outline:'3px solid var(--dht-switch-accent,#00c3e3)'}};
+  if(name==='P_BtnTouch')return {hidden:!touched,style:{background:panelColor(effect)}};
+  if(name==='P_BtnDecideKey')return {hidden:!touched,style:{background:panelColor(effect)}};
+  if(name==='P_CheckBaseOff')return {hidden:!!item?.checked,style:{border:'2px solid '+panelColor(effect),boxSizing:'border-box'}};
+  if(name==='P_CheckBaseOn')return {hidden:!item?.checked,style:{background:panelColor(effect)}};
+  if(name==='P_Check')return {hidden:!item?.checked,content:<span style={{fontSize:25,color:dark?'#222':'white'}}>✓</span>};
+  if(name==='B_Hit')return {content:<button tabIndex={-1} aria-label={label} disabled={item?.disabled} style={{position:'absolute',inset:0,opacity:0,pointerEvents:!props.menu.isOpen||item?.disabled?'none':'auto',cursor:'pointer'}}/>};
+  if(name.startsWith('T_')){const text=name==='T_Soft'?(game?.name??label):name==='T_User'||name==='T_UserLeft'?api.user:name==='T_01'?(item?.sub?'›':''):label;content=<SwitchMaterial surfaceStyle={false} effect={effect}><SwitchText text={text} metrics={node.text} enabled={enabled} multiline={!file.startsWith('DHdr')} marquee={file.startsWith('DHdr')}/></SwitchMaterial>;}
+  if(name==='P_Soft'&&game)content=<SwitchMaterial surfaceStyle={false} effect={effect}><GameArt g={game} kind="portrait" style={{width:'100%',height:'100%'}}/></SwitchMaterial>;
+  if(name==='P_User'||name==='P_UserLeft')content=<SwitchMaterial surfaceStyle={false} effect={effect}><ProfileAvatar size={effect.Size?.X??node.size[0]}/></SwitchMaterial>;
+  if(name==='L_Icon'&&game)content=<SwitchMaterial surfaceStyle={false} effect={effect}><GameArt g={game} kind="portrait" style={{width:'100%',height:'100%'}}/></SwitchMaterial>;
+  if(name==='P_Account_00')content=<SwitchMaterial surfaceStyle={false} effect={effect}><ProfileAvatar size={50}/></SwitchMaterial>;
+  if(/^P_Account_0[123]$/.test(name))return {hidden:true}; // Only the signed-in host account is supplied.
+  if(name==='L_WaitIcon')content=<SwitchLoading {...{effects,animations,modern,dark,enabled}} magnify={node.partMagnify}/>;
+  if(name==='P_BtnBaseInv'||name==='P_BtnFocusKeyInv')return {hidden:!selected,style:{background:panelColor(effect)}};
+  if(name==='P_Line'||name==='L_Line'||name==='P_BtnBase'||name==='P_BtnLine')style.background=panelColor(effect);
+  const picture=native?.nativePictures?.[file]?.[name];
+  if(picture&&node.type==='pic1'&&!content&&!style.background)content=<SwitchMaterial surfaceStyle={false} effect={effect}><SwitchPicture picture={picture}/></SwitchMaterial>;
+  return {content,style,alphaMask:node.type==='pic1'&&!!content&&!style.background,className:name==='P_Account_00'?'dht-switch-menu-account':undefined};
+ }}/>;
+ const rowFile=has('BtnDialogNml')?'BtnDialogNml':has('BtnListNml')?'BtnListNml':has('BtnLinePlateNml')?'BtnLinePlateNml':has('BtnLineNml')?'BtnLineNml':native?'BtnListNml':undefined;
+ const level=props.menu.stack[props.menu.stack.length-1],shortActions=!!native&&(props.menu.stack.length>1||!!level?.body)&&!!level?.items.length&&level.items.length<=3&&level.items.every(item=>item.checked===undefined);
+ const selectionList=!!native&&props.menu.stack.length>1&&!!level?.items.length&&level.items.every(item=>item.checked!==undefined);
+ const count=level?.items.length??0;
+ const actionFile=count===1?'DBtnNml1':count===2?(level?.items[1]?.sub?'DBtnTop1ExBtm1':has('DBtnTop1Btm1')?'DBtnTop1Btm1':'DBtnNml2'):(level?.items[2]?.sub?'DBtnTop1ExBtm2':has('DBtnVertical3')?'DBtnVertical3':has('DBtnTop1Btm2')?'DBtnTop1Btm2':'DBtnNml3');
+ const controls=!!rowFile||has('BtnOpt_Root');
+ const userCard=props.menu.stack[0]?.title==='User';
+ const nativeHeader=userCard&&has('DHdrUserIconNameStatus')?'DHdrUserIconNameStatus':gameDialog&&has('DHdrSoft')?'DHdrSoft':has('DHdrText')?'DHdrText':has('HeadOptGroup')?'HeadOptGroup':native&&!has('DBtmHeaderSub')&&!has('DBtmHeaderNml')?'DHdrText':undefined;
+ const headerFile=nativeHeader??(has('DBtmHeaderSub')?'DBtmHeaderSub':has('DBtmHeaderNml')?'DBtmHeaderNml':undefined);
+ const contentFile=level?.body||!gameDialog?undefined:!!launch&&has('DCntTextWait')?'DCntTextWait':has('DCntIconLauncherText')?'DCntIconLauncherText':has('DCntText')?'DCntText':undefined;
+ const panelSize=(userCard||selectionList)&&native?{X:1280,Y:720}:native?.nativePanes?.DBaseNml?.P_Base?.Size??effects.menuPanel?.Size;
+ const panelStyle={...props.appearance?.panel,...(native?{padding:0,overflowY:'visible' as const}:{}),width:panelSize?.X??770,height:panelSize?.Y??600,minWidth:0,background:'transparent',border:0,boxShadow:'none',transform:native?"translate(-50%,-50%)":`translate(-50%,-50%) ${props.appearance?.panel?.transform??""}`,pointerEvents:props.menu.isOpen?"auto" as const:"none" as const};
+ const accountList=userCard&&!!native;
+ const headerHeight=contentFile?(contentFile==='DCntIconLauncherText'?240:!!launch?330:250):0;
+ const progressPanel=hasDownload?<div data-native-download="" role="progressbar" aria-valuemin={0} aria-valuemax={100} aria-valuenow={download.progress>=0?Math.round(download.progress*100):undefined} style={{position:'relative',height:70}}><SwitchServiceScene file="ProgressBarFraction" size={[480,52]} {...{effects,animations,modern,dark,enabled}} progress={Math.max(0,download.progress)*100} label={`${(download.bytes/1048576).toFixed(1)} / ${(download.total/1048576).toFixed(1)} MB`}/></div>:undefined;
+ const appearance={...props.appearance,...(native?{backdrop:{background:'transparent'},capture:undefined,mask:undefined,bottomShadow:undefined,bottomMask:undefined,bottom:undefined}:{}),panel:panelStyle,...(controls?{item:{position:'relative',height:60,padding:0,margin:'4px 16px',boxShadow:'none',border:0,background:'transparent',pointerEvents:'none'} as CSSProperties,selectedItem:{},touchItem:{},optionBase:{},panel:panelStyle}:{}),...(level?.body||accountList||contentFile||hasDownload?{header:<div className="dht-switch-menu-header" style={{position:'relative',height:level?.body?'auto':accountList?136:headerHeight+(hasDownload?80:0)}}>{level?.body}{accountList&&<SwitchUserList users={[{label:api.user,avatar:status.avatar,status:status.online?"Online":"Offline",notice:!status.online}]} {...{effects,animations,modern,dark,enabled}}/>}{contentFile&&<div style={{position:'relative',height:headerHeight}}>{tree(contentFile,game?.name??props.menu.stack[props.menu.stack.length-1]?.title??'')}</div>}{progressPanel}</div>}:{}),decoration:<>{props.appearance?.decoration}<style>{'@keyframes dhtSwitchWait{to{transform:rotate(360deg)}}'}</style></>};
+ const headerNodes=headerFile?WIDGET_DEFAULTS[modern?'modern':'classic'][headerFile]:undefined;
+ const nativeHeaderSize=nativeHeader?native?.nativePanes?.[nativeHeader]?.N_Root?.Size?.Y??headerNodes?.find(n=>n.name==='N_Root')?.size[1]??74:90;
+ const dialogMotion=native?composeSwitchAnimations(SCENE_MOTION[modern?'modern':'classic'].DBaseNml??[],native.nativeAnimations?.DBaseNml??[],native.animationFiles):animations.filter(a=>a.pane==='menuPanel');
+ return <MenuView {...props} exitDuration={enabled?Math.max(0,...dialogMotion.filter(a=>a.event==="exit").map(a=>a.frames*1000/60)):0} appearance={appearance} renderBody={native?parts=>selectionList?<SwitchSelectionList onBack={()=>props.menu.handle({btn:"b",repeat:false})} title={level.title??""} items={level.items} selected={level.sel} onActivate={props.menu.clickItem} open={props.menu.isOpen} {...{effects,animations,modern,dark,enabled}}/>:<SwitchDialogBody file={accountList?"DBtmBaseNml":"DBaseNml"} {...parts} items={shortActions?<SwitchDialogActions file={actionFile} items={level.items} selected={level.sel} onActivate={props.menu.clickItem} open={props.menu.isOpen} {...{effects,animations,modern,dark,enabled}}/>:accountList?Children.toArray(parts.items).slice(1):parts.items} {...{effects,animations,modern,dark,enabled}} open={props.menu.isOpen} size={[panelSize?.X??770,panelSize?.Y??600]} headerHeight={Math.max(0,nativeHeaderSize)}/>:undefined} wrapPanel={panel=>native?<><SwitchMenuBackdrop open={props.menu.isOpen} {...{effects,animations,modern,dark,enabled}}/>{panel}</>:<SwitchMotionPane pane="menuPanel" {...{animations,enabled}} events={[props.menu.isOpen?'enter':'exit']} style={{pointerEvents:'none'}}><SwitchMenuSurface {...{effects,animations,modern,dark,enabled}}>{panel}</SwitchMenuSurface></SwitchMotionPane>} renderTitle={headerFile?title=>native?<div style={{position:'absolute',left:0,right:0,top:0,height:0}}>{tree(headerFile,title)}</div>:<div style={{position:'relative',height:90}}><div style={nativeHeader?{position:'absolute',left:0,right:0,top:-45}:undefined}>{tree(headerFile,title)}</div>{!nativeHeader&&has('LineHeader_Root')&&tree('LineHeader_Root','')}</div>:undefined} renderItem={controls?(item,selected,touched)=><div style={{position:'absolute',inset:0}}>{tree(item.checked!==undefined&&(native||has('BtnOpt_Root'))?'BtnOpt_Root':rowFile??'BtnDialogNml',item.label,selected,touched,item)}{has('Line_Root')&&<div style={{position:'absolute',left:0,right:0,bottom:0}}>{tree('Line_Root','')}</div>}{has('LinePlateDlg')&&<div style={{position:'absolute',left:0,right:0,bottom:0}}>{tree('LinePlateDlg','')}</div>}</div>:undefined}/>;
+}

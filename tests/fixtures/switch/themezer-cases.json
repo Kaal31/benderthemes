@@ -1,0 +1,279 @@
+[
+  {
+    "id": "103D0",
+    "slug": "splatoon-grafiti-vertical",
+    "category": "Original regression set",
+    "regression": true
+  },
+  {
+    "id": "18573",
+    "slug": "switch-2-home-menu-dark",
+    "category": "Original regression set",
+    "regression": true
+  },
+  {
+    "id": "1E93D",
+    "slug": "forest-pixel-home-menu",
+    "category": "Original regression set",
+    "regression": true
+  },
+  {
+    "id": "1E89E",
+    "slug": "persona-5-ui-home-menu",
+    "category": "Original regression set",
+    "regression": true
+  },
+  {
+    "id": "142A6",
+    "slug": "oled-v2-home",
+    "category": "Original regression set",
+    "regression": true
+  },
+  {
+    "id": "17AE6",
+    "slug": "zelda-40th-home-menu",
+    "category": "Original regression set",
+    "regression": true
+  },
+  {
+    "id": "184DB",
+    "slug": "samurai-home-menu",
+    "category": "Original regression set",
+    "regression": true
+  },
+  {
+    "id": "E62D",
+    "slug": "chainsaw-man-home-menu",
+    "category": "Original regression set",
+    "regression": true
+  },
+  {
+    "id": "3595",
+    "slug": "switch-animated-bg-home-alt",
+    "category": "Animated pixel background and breathing icons",
+    "sourceQuality": "The source has 640 \u00d7 120 pixels per animation frame, displayed at 1280 \u00d7 360 by the authored layout. Live playback now paints the atlas at its final size to avoid Chromium blur from enlarging an animated compositor layer.",
+    "regression": false
+  },
+  {
+    "id": "DE49",
+    "slug": "seamless-v4-home-pan-and-zoom",
+    "category": "Tiled background pan/zoom and gradient borders",
+    "regression": false
+  },
+  {
+    "id": "B145",
+    "slug": "switchcube-home-menu-vertical",
+    "category": "Lava Lamp vertical layout",
+    "regression": false
+  },
+  {
+    "id": "14665",
+    "slug": "metropolis-animated-home-menu",
+    "category": "Animated Metropolis background",
+    "regression": false
+  },
+  {
+    "id": "2FDE",
+    "slug": "nostalgia-vertical-%28home-menu%29",
+    "category": "Vertical layout and translucent sidebar",
+    "regression": false
+  },
+  {
+    "id": "13B5F",
+    "slug": "seamless-reanimated",
+    "category": "Sprite-sheet background animation",
+    "regression": false
+  },
+  {
+    "id": "441B",
+    "slug": "windows-xp-home-menu-%28v19_0%29",
+    "category": "Windows XP interface",
+    "regression": false
+  },
+  {
+    "id": "119CC",
+    "slug": "windows-7-home-menu",
+    "category": "Windows 7 interface",
+    "regression": false
+  },
+  {
+    "id": "6DE7",
+    "slug": "seamless-carriage-in-canyon-home",
+    "category": "Animated scene and spinning translucent icons",
+    "regression": false
+  },
+  {
+    "id": "A20",
+    "slug": "purple-nintendo-switch-animated-home",
+    "category": "Older animated pastel layout",
+    "regression": false
+  },
+  {
+    "id": "9A6",
+    "slug": "project-clean-home",
+    "category": "Hidden applets and custom multicolor icon",
+    "regression": false
+  },
+  {
+    "id": "AFEB",
+    "slug": "2simple-custom-home-two-rows",
+    "category": "Modern two-row grid",
+    "regression": false
+  },
+  {
+    "id": "25DB",
+    "slug": "smash-icons-home-two-rows",
+    "category": "Older two-row grid",
+    "regression": false
+  },
+  {
+    "id": "5361",
+    "slug": "minimal-home-menu-v19_x",
+    "category": "Minimal classic layout",
+    "regression": false
+  },
+  {
+    "id": "9466",
+    "slug": "tentacle-vertical-home-menu",
+    "category": "Tentacle vertical layout",
+    "regression": false
+  },
+  {
+    "id": "977B",
+    "slug": "home-menu",
+    "category": "Alternative Windows layout",
+    "systemColors": "light",
+    "regression": false
+  },
+  {
+    "id": "FFDC",
+    "slug": "ps5-home-menu-final",
+    "category": "PS5-style home layout",
+    "regression": false,
+    "discovery": true,
+    "batch": "native-expansion"
+  },
+  {
+    "id": "FEE2",
+    "slug": "botw-light-grass-home-with-custom-icons",
+    "category": "Light palette and custom Zelda applets",
+    "regression": false,
+    "discovery": true,
+    "batch": "native-expansion",
+    "systemColors": "light"
+  },
+  {
+    "id": "16814",
+    "slug": "cozy-snorlax-adventures-homescreen",
+    "category": "Modern character layout",
+    "regression": false,
+    "discovery": true,
+    "batch": "native-expansion"
+  },
+  {
+    "id": "15FF8",
+    "slug": "horizonos-27-liquid-glass",
+    "category": "Liquid-glass layout",
+    "regression": false,
+    "discovery": true,
+    "batch": "native-expansion"
+  },
+  {
+    "id": "F5E4",
+    "slug": "vertical-lava-lamp-homelayout",
+    "category": "Vertical Lava Lamp home",
+    "regression": false,
+    "discovery": true,
+    "batch": "native-expansion"
+  },
+  {
+    "id": "106EF",
+    "slug": "cartopeia-oled-home",
+    "category": "OLED layout variant",
+    "regression": false,
+    "discovery": true,
+    "batch": "native-expansion"
+  },
+  {
+    "id": "B116",
+    "slug": "black-two-row-compact",
+    "category": "Compact two-row grid",
+    "regression": false,
+    "discovery": true,
+    "batch": "native-expansion"
+  },
+  {
+    "id": "3878",
+    "slug": "nw_homemenu_custom2",
+    "category": "Compact custom home",
+    "regression": false,
+    "discovery": true,
+    "batch": "native-expansion"
+  },
+  {
+    "id": "E9DF",
+    "slug": "blue-menu-home",
+    "category": "Modified two-row palette",
+    "regression": false,
+    "discovery": true,
+    "batch": "native-expansion"
+  },
+  {
+    "id": "7226",
+    "slug": "mk8-home-menu-flow-layout",
+    "category": "Mario Kart Flow dock",
+    "regression": false,
+    "discovery": true,
+    "batch": "native-expansion"
+  },
+  {
+    "id": "1370D",
+    "slug": "kid-home-menu",
+    "category": "Custom character applets",
+    "regression": false,
+    "discovery": true,
+    "batch": "native-expansion"
+  },
+  {
+    "id": "E23D",
+    "slug": "bofa-home-menu",
+    "category": "Rounded Doge layout",
+    "regression": false,
+    "discovery": true,
+    "batch": "native-expansion"
+  },
+  {
+    "id": "75B9",
+    "slug": "seamless-light-in-the-dark-home",
+    "category": "Monochrome wave and animated icons",
+    "regression": false,
+    "discovery": true,
+    "batch": "native-expansion",
+    "systemColors": "light"
+  },
+  {
+    "id": "796D",
+    "slug": "seamless-v2-color-in-the-dark",
+    "category": "Color wave with rotating icons",
+    "regression": false,
+    "discovery": true,
+    "batch": "native-expansion"
+  },
+  {
+    "id": "13696",
+    "slug": "seamless-the-matrix",
+    "category": "Vertical animated Matrix code",
+    "regression": false,
+    "discovery": true,
+    "batch": "native-expansion",
+    "systemColors": "light"
+  },
+  {
+    "id": "5D03",
+    "slug": "jahadtk-pitch-black-home",
+    "category": "Minimal Flow layout",
+    "regression": false,
+    "discovery": true,
+    "batch": "native-expansion"
+  }
+]

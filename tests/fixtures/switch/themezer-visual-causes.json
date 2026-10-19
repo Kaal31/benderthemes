@@ -1,0 +1,691 @@
+{
+  "3595": {
+    "features": [
+      "host-data",
+      "glyphs",
+      "atlas",
+      "text",
+      "animation-files",
+      "native-hud",
+      "native-footer",
+      "native-resources",
+      "picture-shadow",
+      "native-fonts",
+      "texture-motion",
+      "part-overrides"
+    ],
+    "trace": "The wallpaper has 640x120 source frames enlarged by authored transforms. Live atlas rasterization is fixed; source detail, native symbols and label metrics are separate constraints."
+  },
+  "3878": {
+    "features": [
+      "host-data",
+      "glyphs",
+      "slot-adapter",
+      "animation-files",
+      "native-hud",
+      "native-footer",
+      "native-resources",
+      "picture-shadow",
+      "native-fonts",
+      "texture-motion",
+      "part-overrides"
+    ],
+    "trace": "Wallpaper and the lower-right row import. Native footer/HUD subtrees and optional picture masks now supply their source identities. Outer account ordering, cursor shader and host state still differ."
+  },
+  "5361": {
+    "features": [
+      "host-data",
+      "glyphs",
+      "text",
+      "cursor",
+      "animation-files",
+      "native-hud",
+      "native-footer",
+      "native-resources",
+      "picture-shadow",
+      "native-fonts",
+      "texture-motion",
+      "part-overrides"
+    ],
+    "trace": "No wallpaper uses the imported Basic Black scene. Native optional applet/HUD masks improve glyphs; title font, profile count and cursor shader remain distinct from the reference."
+  },
+  "7226": {
+    "features": [
+      "host-data",
+      "glyphs",
+      "cursor",
+      "text",
+      "animation-files",
+      "native-hud",
+      "native-footer",
+      "native-resources",
+      "picture-shadow",
+      "native-fonts",
+      "texture-motion",
+      "part-overrides"
+    ],
+    "trace": "The Flow cover row and header applet band import. The active frame/text use shared cursor and font substitutions; the reference uses different account/game data."
+  },
+  "9466": {
+    "features": [
+      "host-data",
+      "external-art",
+      "glyphs",
+      "text",
+      "slot-adapter",
+      "animation-files",
+      "native-hud",
+      "native-footer",
+      "native-resources",
+      "picture-shadow",
+      "native-fonts",
+      "texture-motion",
+      "part-overrides"
+    ],
+    "trace": "Reference cartridge shells and console labels are embedded in replacement game icons, not in the theme wallpaper/layout. The View All artwork and native text/cursor primitives are separate renderer gaps."
+  },
+  "13696": {
+    "features": [
+      "host-data",
+      "glyphs",
+      "phase",
+      "text",
+      "cursor",
+      "animated-visibility",
+      "animation-files",
+      "native-hud",
+      "native-footer",
+      "native-resources",
+      "picture-shadow",
+      "native-fonts",
+      "texture-motion",
+      "part-overrides"
+    ],
+    "trace": "Fixed FLVI override of initially hidden outer panes: decorations now become visible and move. The Matrix wallpaper runs and the enlarged cover region imports. The reference title depends on native font/balloon behavior, while selection frame and service text use shared adapters."
+  },
+  "14665": {
+    "features": [
+      "host-data",
+      "glyphs",
+      "atlas",
+      "text",
+      "animation-files",
+      "native-hud",
+      "native-footer",
+      "native-resources",
+      "picture-shadow",
+      "native-fonts",
+      "texture-motion",
+      "part-overrides"
+    ],
+    "trace": "Discrete atlas playback and native title hierarchy import. The screenshot pose, artwork content, source resolution and procedural symbols account for remaining separate differences."
+  },
+  "16814": {
+    "features": [
+      "host-data",
+      "glyphs",
+      "cursor",
+      "animation-files",
+      "native-hud",
+      "native-footer",
+      "native-resources",
+      "picture-shadow",
+      "native-fonts",
+      "texture-motion",
+      "part-overrides"
+    ],
+    "trace": "The compact lower-right row and wallpaper preserve their regions. Source artwork, runtime account/clock state and the native cursor/glyph replacements differ."
+  },
+  "18573": {
+    "features": [
+      "host-data",
+      "glyphs",
+      "cursor",
+      "text",
+      "animation-files",
+      "native-hud",
+      "native-footer",
+      "native-resources",
+      "picture-shadow",
+      "native-fonts",
+      "texture-motion",
+      "part-overrides"
+    ],
+    "trace": "The imported nine-slot dock is present. Its symbols and the title use our procedural/font replacements; Cursor3 is still a host focus adapter."
+  },
+  "103D0": {
+    "features": [
+      "host-data",
+      "glyphs",
+      "slot-adapter",
+      "animation-files",
+      "native-hud",
+      "native-footer",
+      "native-resources",
+      "refresh-motion",
+      "picture-shadow",
+      "native-fonts",
+      "texture-motion",
+      "part-overrides"
+    ],
+    "trace": "Vertical title and pane geometry import; reference cartridge badges are part of replacement game artwork. The host still positions the outer game/profile/HUD containers."
+  },
+  "1E93D": {
+    "features": [
+      "host-data",
+      "glyphs",
+      "slot-adapter",
+      "animation-files",
+      "native-hud",
+      "native-footer",
+      "native-resources",
+      "picture-shadow",
+      "native-fonts",
+      "texture-motion",
+      "part-overrides"
+    ],
+    "trace": "The four bottom cover slots are present. The reference account stack contains multiple console users; the host supplies one account, with outer profile geometry handled separately."
+  },
+  "1E89E": {
+    "features": [
+      "host-data",
+      "glyphs",
+      "text",
+      "animation-files",
+      "native-hud",
+      "native-footer",
+      "native-resources",
+      "picture-shadow",
+      "native-fonts",
+      "texture-motion",
+      "part-overrides"
+    ],
+    "trace": "Twelve covers retain three rows. The source profile avatars, clock/battery state and Nintendo font are not part of the NXTheme; the preview uses host values and substitute glyphs."
+  },
+  "142A6": {
+    "features": [
+      "host-data",
+      "glyphs",
+      "cursor",
+      "animation-files",
+      "native-hud",
+      "native-footer",
+      "native-resources",
+      "picture-shadow",
+      "native-fonts",
+      "texture-motion",
+      "part-overrides"
+    ],
+    "trace": "Black background and modern dock are imported; the selected frame is painted by the Cursor3 adapter rather than the complete native cursor layout/material program."
+  },
+  "17AE6": {
+    "features": [
+      "host-data",
+      "glyphs",
+      "cursor",
+      "animation-files",
+      "native-hud",
+      "native-footer",
+      "native-resources",
+      "picture-shadow",
+      "native-fonts",
+      "texture-motion",
+      "part-overrides"
+    ],
+    "trace": "The wallpaper and rounded cover/dock regions import. The native cursor glow and procedural applet masks remain approximations."
+  },
+  "184DB": {
+    "features": [
+      "host-data",
+      "glyphs",
+      "native-widget",
+      "slot-adapter",
+      "animation-files",
+      "native-hud",
+      "native-footer",
+      "native-resources",
+      "picture-shadow",
+      "native-fonts",
+      "texture-motion",
+      "part-overrides"
+    ],
+    "trace": "The native hidden title is respected. Widget pane/material identities now override flattened compatibility aliases; procedural masks and the host profile/HUD containers remain distinct sources of differences."
+  },
+  "E62D": {
+    "features": [
+      "host-data",
+      "glyphs",
+      "native-widget",
+      "animation-files",
+      "native-hud",
+      "native-footer",
+      "native-resources",
+      "picture-shadow",
+      "native-fonts",
+      "texture-motion",
+      "part-overrides"
+    ],
+    "trace": "Basic Black palette 31 supplies gray applet bases and the authored footer has full pane opacity. Native widget identities now avoid applying a resolved compatibility palette twice."
+  },
+  "DE49": {
+    "features": [
+      "host-data",
+      "glyphs",
+      "phase",
+      "text",
+      "animation-files",
+      "native-hud",
+      "native-footer",
+      "native-resources",
+      "picture-shadow",
+      "native-fonts",
+      "texture-motion",
+      "part-overrides"
+    ],
+    "trace": "Comparison focuses All Software. Pan/zoom preserves aspect; the source screenshot and the fixed 9-second capture can show different animation phases."
+  },
+  "B145": {
+    "features": [
+      "host-data",
+      "glyphs",
+      "cursor",
+      "text",
+      "slot-adapter",
+      "animation-files",
+      "native-hud",
+      "native-footer",
+      "native-resources",
+      "picture-shadow",
+      "native-fonts",
+      "texture-motion",
+      "part-overrides"
+    ],
+    "trace": "Portrait game panels import. Native cursor/text primitives are incomplete, and the outer game/profile positions remain host adapters rather than the entire RdtBase runtime."
+  },
+  "2FDE": {
+    "features": [
+      "host-data",
+      "glyphs",
+      "cursor",
+      "slot-adapter",
+      "animation-files",
+      "native-hud",
+      "native-footer",
+      "native-resources",
+      "picture-shadow",
+      "native-fonts",
+      "texture-motion",
+      "part-overrides"
+    ],
+    "trace": "Portrait cover bounds and selection motion import. Outer profile/HUD placement and cursor painting still use host adapters."
+  },
+  "13B5F": {
+    "features": [
+      "host-data",
+      "glyphs",
+      "phase",
+      "native-widget",
+      "animation-files",
+      "native-hud",
+      "native-footer",
+      "native-resources",
+      "picture-shadow",
+      "native-fonts",
+      "texture-motion",
+      "part-overrides"
+    ],
+    "trace": "Comparison focuses All Software. Modern replacement textures are imported; the animated mask pose differs at the captured time and launcher glyphs use procedural paint."
+  },
+  "441B": {
+    "features": [
+      "host-data",
+      "glyphs",
+      "artwork-only",
+      "firmware",
+      "animation-files",
+      "native-hud",
+      "native-footer",
+      "native-resources",
+      "picture-shadow",
+      "native-fonts",
+      "texture-motion",
+      "part-overrides"
+    ],
+    "trace": "This archive declares the default layout and contains no differential layout operations. It cannot specify the exact firmware/NSO arrangement or custom cover content visible in the author's screenshot."
+  },
+  "119CC": {
+    "features": [
+      "host-data",
+      "glyphs",
+      "text",
+      "slot-adapter",
+      "animation-files",
+      "native-hud",
+      "native-footer",
+      "native-resources",
+      "picture-shadow",
+      "native-fonts",
+      "texture-motion",
+      "part-overrides"
+    ],
+    "trace": "The imported HUD pivots now follow native origin fields. Account/title positions remain host services/adapters, and the text uses substitute font metrics."
+  },
+  "6DE7": {
+    "features": [
+      "host-data",
+      "glyphs",
+      "phase",
+      "color-mode",
+      "animation-files",
+      "native-hud",
+      "native-footer",
+      "native-resources",
+      "picture-shadow",
+      "native-fonts",
+      "texture-motion",
+      "part-overrides"
+    ],
+    "trace": "Comparison focuses All Software. The screenshot uses white UI glyphs while the default conversion uses Basic Black palettes; wallpaper brightness cannot determine console color mode."
+  },
+  "A20": {
+    "features": [
+      "host-data",
+      "glyphs",
+      "cursor",
+      "native-widget",
+      "animation-files",
+      "native-hud",
+      "native-footer",
+      "native-resources",
+      "picture-shadow",
+      "native-fonts",
+      "texture-motion",
+      "part-overrides"
+    ],
+    "trace": "Active cover lift and native UV/border-width animation run. Reference Playing/user-switch state and multiple accounts differ from the non-running host fixture."
+  },
+  "9A6": {
+    "features": [
+      "host-data",
+      "glyphs",
+      "slot-adapter",
+      "animation-files",
+      "native-hud",
+      "native-footer",
+      "native-resources",
+      "refresh-motion",
+      "picture-shadow",
+      "native-fonts",
+      "texture-motion",
+      "part-overrides"
+    ],
+    "trace": "The source sets N_Game.Y=+140. The native RefreshIn terminal pose now offsets that group as on the measured runtime, restoring the middle row without theme-specific coordinates. HudTime/HudSignal roots are explicitly hidden in the source but visible in the author reference; the remaining service/reference discrepancy is unresolved."
+  },
+  "AFEB": {
+    "features": [
+      "host-data",
+      "glyphs",
+      "slot-adapter",
+      "animation-files",
+      "native-hud",
+      "native-footer",
+      "native-resources",
+      "picture-shadow",
+      "native-fonts",
+      "texture-motion",
+      "part-overrides"
+    ],
+    "trace": "Two rows import; the reference has a launcher in the twelfth slot. The host fills all twelve positions with its larger game library and positions its launcher separately."
+  },
+  "25DB": {
+    "features": [
+      "host-data",
+      "glyphs",
+      "firmware",
+      "cursor",
+      "animation-files",
+      "native-hud",
+      "native-footer",
+      "native-resources",
+      "picture-shadow",
+      "native-fonts",
+      "texture-motion",
+      "part-overrides"
+    ],
+    "trace": "Two rows import. The reference includes an NSO applet that this archive does not explicitly position; automatic classic six-slot defaults do not reconstruct that historical runtime arrangement."
+  },
+  "977B": {
+    "features": [
+      "host-data",
+      "glyphs",
+      "text",
+      "slot-adapter",
+      "animation-files",
+      "native-hud",
+      "native-footer",
+      "native-resources",
+      "picture-shadow",
+      "native-fonts",
+      "texture-motion",
+      "part-overrides"
+    ],
+    "trace": "Basic White is selected for the reference. The author screenshot has additional account bubbles supplied by console services; our preview has one host account and substitute fonts/symbols."
+  },
+  "FFDC": {
+    "features": [
+      "alpha",
+      "animation-merge",
+      "host-data",
+      "glyphs",
+      "text",
+      "cursor",
+      "animation-files",
+      "native-hud",
+      "native-footer",
+      "native-resources",
+      "picture-shadow",
+      "native-fonts",
+      "texture-motion",
+      "part-overrides"
+    ],
+    "trace": "Fixed: inactive N_Root alpha 2 no longer fades picture descendants that opt out of inherited alpha. Both the 2x inactive row and 4x selected pose render. Remaining title metrics and cursor/HUD primitives are separate from this visibility bug."
+  },
+  "FEE2": {
+    "features": [
+      "host-data",
+      "glyphs",
+      "color-mode",
+      "native-widget",
+      "animation-files",
+      "native-hud",
+      "native-footer",
+      "native-resources",
+      "picture-shadow",
+      "native-fonts",
+      "texture-motion",
+      "part-overrides"
+    ],
+    "trace": "The test fixture forces Basic White, whose palette 31 is white; the reference's applet bases are dark. 'Light grass' describes the wallpaper and does not establish console color mode. The importer must retain the user's system-color choice."
+  },
+  "15FF8": {
+    "features": [
+      "host-data",
+      "glyphs",
+      "cursor",
+      "text",
+      "animation-files",
+      "native-hud",
+      "native-footer",
+      "native-resources",
+      "picture-shadow",
+      "native-fonts",
+      "texture-motion",
+      "part-overrides"
+    ],
+    "trace": "Glass background and both pills import. Profile count comes from host services, while the frame, applet masks and caption metrics remain procedural/substituted."
+  },
+  "F5E4": {
+    "features": [
+      "host-data",
+      "external-art",
+      "glyphs",
+      "text",
+      "slot-adapter",
+      "animation-files",
+      "native-hud",
+      "native-footer",
+      "native-resources",
+      "picture-shadow",
+      "native-fonts",
+      "texture-motion",
+      "part-overrides"
+    ],
+    "trace": "The source layout is shared with the other vertical panel themes. The View All icon and right-edge mark come from unimplemented base-scene primitives/host placement; title metrics are shared renderer behavior, not an asset deformation."
+  },
+  "106EF": {
+    "features": [
+      "alpha",
+      "palette-background",
+      "shader-color",
+      "applet-state",
+      "native-widget",
+      "shadow-programs",
+      "common-dialogs",
+      "host-data",
+      "external-art",
+      "text",
+      "slot-adapter",
+      "animation-files",
+      "native-hud",
+      "native-footer",
+      "native-resources",
+      "native-fonts",
+      "texture-motion",
+      "part-overrides"
+    ],
+    "trace": "282 diagnostics reduced to 228 by accepting finite overbright shader colors and binding SystemAppletPos. Palette-only background now renders black. Remaining entries include 34 shadow-function and 27 knockout bindings, 73 pane geometries, 68 pane visuals, 24 materials and two outer-container Size fields. Reference cartridge artwork requires the author's external SYS-TWEAK/Icongrabber assets."
+  },
+  "B116": {
+    "features": [
+      "host-data",
+      "glyphs",
+      "slot-adapter",
+      "firmware",
+      "animation-files",
+      "native-hud",
+      "native-footer",
+      "native-resources",
+      "picture-shadow",
+      "native-fonts",
+      "texture-motion",
+      "part-overrides"
+    ],
+    "trace": "The six-column grid imports. The reference's middle launcher/control is not reproduced by the current outer launcher/dock adapter; it is not a missing cover download."
+  },
+  "E9DF": {
+    "features": [
+      "host-data",
+      "glyphs",
+      "common-dialogs",
+      "cursor",
+      "slot-adapter",
+      "animation-files",
+      "native-hud",
+      "native-footer",
+      "native-resources",
+      "picture-shadow",
+      "native-fonts",
+      "texture-motion",
+      "part-overrides"
+    ],
+    "trace": "Fourteen unsupported entries bind battery/cursor/footer/balloon panes that the current shared adapters do not mount. The reference focuses the launcher; a game-focused screenshot is not an identical focus-state comparison."
+  },
+  "1370D": {
+    "features": [
+      "host-data",
+      "glyphs",
+      "cursor",
+      "animation-files",
+      "native-hud",
+      "native-footer",
+      "native-resources",
+      "picture-shadow",
+      "native-fonts",
+      "texture-motion",
+      "part-overrides"
+    ],
+    "trace": "Wallpaper, bottom row and upper-left controls import. Account count and selected-game content come from the host; cursor and applet symbols use shared procedural paint."
+  },
+  "E23D": {
+    "features": [
+      "host-data",
+      "glyphs",
+      "text",
+      "slot-adapter",
+      "animation-files",
+      "native-hud",
+      "native-footer",
+      "native-resources",
+      "picture-shadow",
+      "native-fonts",
+      "texture-motion",
+      "part-overrides"
+    ],
+    "trace": "Rounded bottom covers and the footer panel import. The clock pill backing and footer ordering involve base-scene/HUD adapters outside the shared game/widget hierarchy."
+  },
+  "75B9": {
+    "features": [
+      "host-data",
+      "glyphs",
+      "phase",
+      "slot-adapter",
+      "text",
+      "animated-visibility",
+      "animation-files",
+      "native-hud",
+      "native-footer",
+      "native-resources",
+      "picture-shadow",
+      "native-fonts",
+      "texture-motion",
+      "part-overrides"
+    ],
+    "trace": "Fixed FLVI override of initially hidden outer panes: decorations now become visible and move. Both comparisons now focus All Software. Remaining symbol-shape differences and footer overlap involve native applet/launcher and HUD/parts behavior; matching focus removes the misleading enlarged-game difference."
+  },
+  "796D": {
+    "features": [
+      "host-data",
+      "glyphs",
+      "phase",
+      "slot-adapter",
+      "text",
+      "animated-visibility",
+      "animation-files",
+      "native-hud",
+      "native-footer",
+      "native-resources",
+      "picture-shadow",
+      "native-fonts",
+      "texture-motion",
+      "part-overrides"
+    ],
+    "trace": "Fixed FLVI override of initially hidden outer panes: decorations now become visible and move. Both comparisons now focus All Software. Wave playback advances, while the procedural floating shapes, launcher mask and footer metric/state handling remain incomplete."
+  },
+  "5D03": {
+    "features": [
+      "host-data",
+      "glyphs",
+      "cursor",
+      "text",
+      "animation-files",
+      "native-hud",
+      "native-footer",
+      "native-resources",
+      "picture-shadow",
+      "native-fonts",
+      "texture-motion",
+      "part-overrides"
+    ],
+    "trace": "The black scene and lower Flow row import. The selection frame and caption metrics use the same procedural/substitute implementations as the Mario Kart Flow variant."
+  }
+}

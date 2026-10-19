@@ -1,0 +1,23 @@
+{
+  "RdtBtnMyPage.bflyt": [
+    "P_GTNum_00"
+  ],
+  "DBtnTop1ExBtm1.bflyt": [
+    "T_00"
+  ],
+  "DBtnTop1ExBtm2.bflyt": [
+    "T_00"
+  ],
+  "DBtnUserIconNameStatus.bflyt": [
+    "T_00"
+  ],
+  "DBtmSelBox2.bflyt": [
+    "P_BtnBase",
+    "P_BtnBaseInv",
+    "P_BtnDecideKey",
+    "P_BtnLine",
+    "P_BtnTouch",
+    "P_Indicator",
+    "T_00"
+  ]
+}

@@ -1,0 +1,22 @@
+{
+  "classic": {
+    "RdtBase_RefreshIn.bflan": {
+      "firmware": "19.0.1",
+      "sha256": "874f1bc7c51ba965aa696eb099383fa774270164339c7ca3cd1bec94c30dd669"
+    },
+    "RdtBase_RefreshOut.bflan": {
+      "firmware": "19.0.1",
+      "sha256": "99e775a480910b376aedac90e14cbbd7a1a1567b18b3e9362b9882e1e47c5b60"
+    }
+  },
+  "modern": {
+    "RdtBase_RefreshIn.bflan": {
+      "firmware": "22.5.0",
+      "sha256": "874f1bc7c51ba965aa696eb099383fa774270164339c7ca3cd1bec94c30dd669"
+    },
+    "RdtBase_RefreshOut.bflan": {
+      "firmware": "22.5.0",
+      "sha256": "99e775a480910b376aedac90e14cbbd7a1a1567b18b3e9362b9882e1e47c5b60"
+    }
+  }
+}

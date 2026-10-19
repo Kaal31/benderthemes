@@ -1,0 +1,13 @@
+{
+  "name": "texture2ddecoder-wasm",
+  "version": "1.2.6",
+  "source": "https://registry.npmjs.org/texture2ddecoder-wasm/-/texture2ddecoder-wasm-1.2.6.tgz",
+  "repository": "https://github.com/fatal10110/texture2ddecoder-wasm",
+  "wasmSHA256": "2930588947dbe5d98fd6d6683ed4f9a1180da04b191e64cbd82c58e6b98d1364",
+  "glueChanges": [
+    "Browser-only environment",
+    "Use supplied wasmBinary bytes without fetching",
+    "Removed unreachable Node filesystem branch",
+    "Browser location replaces import.meta.url; no external WASM fetch"
+  ]
+}

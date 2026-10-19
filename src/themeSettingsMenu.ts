@@ -28,7 +28,7 @@ import { ICON_SPOTS } from "./engine/manifest";
 import { customizeControls, nameOf, refreshCustomizeLists, SlotControl } from "./customize";
 import { LAYOUT_SLOTS } from "./engine/assets";
 import { PAGES } from "./engine/pages";
-import { listSwitchThemes, switchFxKey } from "./switchThemes";
+import { importSwitchResources, importSwitchThemeFile, listSwitchThemes, switchFxKey } from "./switchThemes";
 import { listWiiuThemes } from "./wiiuThemes";
 import { applyPreset, currentLook, currentPresetId, deleteUserPreset, getPresets, lookPresets, presetGroups, renamePreset, saveUserPreset } from "./presets";
 import { playSound } from "./steam";
@@ -323,6 +323,8 @@ function switchItems(): MenuItem[] {
   const part = (label: string, k: "background" | "icons" | "visuals"): MenuItem =>
     toggle(label, () => !!fx()[k], (v) => updateThemeFx(key(), { [k]: v } as Partial<ThemeFx>), () => !file());
   return [
+    { label: "Import console theme (.nxtheme / pack ZIP)", action: () => void importSwitchThemeFile() },
+    { label: "Import menu resources / fonts", action: () => void importSwitchResources() },
     choice("Switch theme", [{ id: "", name: "None (built-in look)" }, ...lists.switch.map((t) => ({ id: t.id, name: t.name + (t.author ? ` · ${t.author}` : "") }))], file, (v) => updateSettings({ switchTheme: v }), undefined, "Put .nxtheme files in skins/switch (Switch theme folder)"),
     group("Theme parts", () => [
       part("Theme wallpaper", "background"),

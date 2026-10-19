@@ -5,8 +5,8 @@ wiiu_themes.py) or, as Themezer serves them today, a plain zip with the same mem
   info.json    {"Version", "ThemeName", "Author", "LayoutInfo", "Target"}   Target: home, lock, apps,
                news, psl (player select), set (settings), user (my page) ...
   image.jpg / image.png / image.dds   the wallpaper (DDS: DXT1, 1280x720 in practice)
-  layout.json  patches for the console's own layout files (BFLYT, pane positions and colours): it needs
-               the console's firmware to mean anything, so it is NOT used here
+  layout.json / common.json: differential layout and animation patches, converted by switch_layout.py
+               for recognized Home Menu panes; unsupported properties are reported
   album.dds ... small round-icon pictures of the home screen (album, news, shop, controller, settings, power)
 Everything in the file is the theme author's own art: nothing from Nintendo is needed or bundled.
 
@@ -28,9 +28,9 @@ try:
 except Exception:  # pragma: no cover
     wiiu_themes = None
 
-READER_VERSION = 2  # 2: zip-packed .nxtheme (Themezer) read too
+READER_VERSION = 39  # Native dialog families, nested parts, capture panes and cursor shadows.
 MAX_FILE = 48 * 1024 * 1024
-ICON_NAMES = ("album", "news", "shop", "controller", "settings", "power")
+ICON_NAMES = ("album", "news", "shop", "controller", "settings", "power", "nso", "card", "share")
 TARGET_LABELS = {"home": "Home menu", "lock": "Lock screen", "apps": "All software", "news": "News", "psl": "Player select",
                  "set": "Settings", "user": "User page", "shop": "eShop", "album": "Album"}
 _IMG_EXT = {".jpg": "image/jpeg", ".jpeg": "image/jpeg", ".png": "image/png"}
@@ -216,7 +216,7 @@ def read_screen(path, data_url):
             elif base == "preview":
                 res["preview"] = url
             else:
-                res["icons"][base] = url
+                res["icons"][{"nso":"online", "card":"virtualCards", "share":"gameShare"}.get(base, base)] = url
         except Exception as e:  # one broken picture never loses the theme
             res["errors"].append(f"{member}: {e}"[:120])
     try:
@@ -224,6 +224,12 @@ def read_screen(path, data_url):
         res["patches"] = len(lay.get("Files", [])) if isinstance(lay, dict) else 0
     except Exception:
         res["patches"] = 0
+    from switch_layout import convert_layout
+    try:
+        res["conversion"] = convert_layout(a, info["target"])
+    except (ValueError, TypeError, AttributeError, KeyError, OverflowError):
+        res["conversion"] = {"version": 1, "panes": {}, "animations": [], "converted": 0,
+                             "warnings": ["Layout conversion could not read this patch; artwork remains available."]}
     return res
 
 
@@ -329,7 +335,7 @@ def scan_folder(folder, cache_path=None):
 USED_SCREENS = ("home", "apps", "set", "lock")  # the screens the home draws (lock: shown from the Y menu); the others are only listed (they would add MBs)
 
 
-def read_theme(folder, name, data_url, cache_path=None, only=USED_SCREENS):
+def read_theme(folder, name, data_url, cache_path=None, only=USED_SCREENS, resource_folder=None):
     """The theme that the file `name` belongs to: its screens by target (pictures only for `only`, all when None)."""
     path = safe_rel(folder, name)
     first = read_screen(path, data_url) if path else None
@@ -361,4 +367,23 @@ def read_theme(folder, name, data_url, cache_path=None, only=USED_SCREENS):
         for k, v in s["icons"].items():
             icons.setdefault(k, v)
     res["icons"] = icons
+    # Menu picture resources are optional, user-imported local inputs. They are
+    # independent of third-party theme archives and never bundled in a release.
+    try:
+        from switch_resources import read_resources
+        resources=read_resources(resource_folder or folder,data_url)
+        if resource_folder and os.path.realpath(resource_folder)!=os.path.realpath(folder):
+            local=read_resources(folder,data_url)
+            resources['textures'].update(local['textures'])
+            resources['fonts'].update(local['fonts'])
+            for file,panes in local['pictures'].items():resources['pictures'].setdefault(file,{}).update(panes)
+            resources['warnings']+=local['warnings']
+        for screen in res['screens'].values():
+            if screen.get('conversion') is not None:
+                screen['conversion']['nativePictures']=resources['pictures']
+                screen['conversion']['nativeTextures']=resources['textures']
+                screen['conversion']['nativeFonts']=resources['fonts']
+                screen['conversion']['resourceWarnings']=resources['warnings']
+    except (ImportError,OSError,ValueError):
+        pass
     return res

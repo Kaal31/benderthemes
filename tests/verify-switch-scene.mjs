@@ -1,0 +1,30 @@
+import assert from 'node:assert/strict';
+import {build} from 'esbuild';
+import {chromium} from 'playwright';
+import {mkdirSync,writeFileSync} from 'node:fs';
+const entry=`import React from 'react';import {createRoot} from 'react-dom/client';import {SwitchSceneTree} from './src/themes/SwitchSceneTree';import {paneMotionFrame} from './src/themes/switchConversion';
+const n=(name,parent,size,position=[0,0,0],origin=0,rotation=[0,0,0],scale=[1,1])=>({name,parent,size,position,origin,rotation,scale,type:'pan1',alpha:255,visible:true,slot:name});
+const list=[n('RootPane',null,[1000,700]),n('parent','RootPane',[200,100],[100,0,0],0,[0,0,0],[2,1]),n('anchored','parent',[20,20],[0,0,0],33),{...n('instance','RootPane',[100,100],[-100,0,0],0,[0,0,90]),part:'part'},n('back','RootPane',[30,30]),n('front','RootPane',[30,30]),n('hidden','RootPane',[30,30]),n('tilted','RootPane',[40,20],[0,0,0],0,[60,0,0]),n('clipped','RootPane',[30,30],[200,100,0]),n('overflow','clipped',[60,60])];
+window.staticRotationFrame=paneMotionFrame([{pane:'test',event:'enter',frames:1,tracks:[{property:6,keys:[{frame:0,value:2,slope:0}]}]}],0,{Rotation:{X:30,Y:45,Z:60}});
+const parts={part:[n('partRoot',null,[800,600],[0,0,0],0,[0,0,90]),n('partChild','partRoot',[60,20])]};
+const effects={partRoot:{Size:{X:800,Y:600}},hidden:{Visible:false},anchored:{Position:{X:10,Y:0}},front:{white:[255,0,0,255]},back:{white:[0,0,255,255]}};
+createRoot(document.getElementById('root')).render(<div id='mount' style={{position:'absolute',left:500,top:350,width:0,height:0}}><SwitchSceneTree {...{list,parts,effects}} order={{front:0,back:1}} animations={[]} dark enabled={false} events={[]} render={(node,effect)=>({style:node.name==='clipped'?{clipPath:'inset(0)'}:node.name==='overflow'?{background:'red'}:node.name==='front'||node.name==='back'?{background:node.name==='front'?'red':'blue'}:undefined})}/></div>);`;
+const built=await build({stdin:{contents:entry,resolveDir:process.cwd(),loader:'tsx'},bundle:true,write:false,format:'iife',define:{'process.env.NODE_ENV':'"production"'}});
+const browser=await chromium.launch();
+try{
+ const page=await browser.newPage({viewport:{width:1000,height:700}}),errors=[];page.on('pageerror',e=>errors.push(e.message));
+ await page.setContent('<div id="root"></div>');await page.addScriptTag({content:built.outputFiles[0].text});
+ const anchored=await page.locator('[data-scene-pane="anchored"]').boundingBox();
+ assert(Math.abs(anchored.x-820)<1,'Nested parent-origin translation must compose with the ancestor scale: '+JSON.stringify(anchored));assert(Math.abs(anchored.y-340)<1);assert.equal(anchored.width,40);
+ const instanceRoot=await page.locator('[data-scene-pane="partRoot"]').boundingBox();assert(Math.abs(instanceRoot.width-100)<1&&Math.abs(instanceRoot.height-100)<1,'Part instance size must replace standalone editor root size');
+ const part=await page.locator('[data-scene-pane="partChild"]').boundingBox();
+ assert(Math.abs(part.x-390)<1&&Math.abs(part.y-320)<1&&Math.abs(part.width-20)<1&&Math.abs(part.height-60)<1,'Referenced instance transform must be applied once: '+JSON.stringify(part));
+ assert.equal(await page.locator('[data-scene-pane="hidden"]').isVisible(),false);
+ const tilted=await page.locator('[data-scene-pane="tilted"]').boundingBox();assert(Math.abs(tilted.height-10)<.01,'Static X rotation must foreshorten the native quad');assert.match(await page.evaluate(()=>window.staticRotationFrame.transform),/rotateX\(30deg\) rotateY\(45deg\)/,'Animating scale must preserve static X/Y rotation');
+ const siblings=await page.locator('[data-scene-pane="front"]').evaluate(el=>[...el.parentElement.children].filter(c=>c.dataset.scenePane==='front'||c.dataset.scenePane==='back').map(c=>c.dataset.scenePane));assert.deepEqual(siblings,['front','back']);
+ const pixel=await page.screenshot({clip:{x:720,y:250,width:1,height:1}});
+ const outside=await page.evaluate(async data=>{const im=new Image();im.src='data:image/png;base64,'+data;await im.decode();const c=document.createElement('canvas');c.width=c.height=1;const ctx=c.getContext('2d');ctx.drawImage(im,0,0);return [...ctx.getImageData(0,0,1,1).data];},pixel.toString('base64'));assert.deepEqual(outside,[255,255,255,255],'Child paint must be clipped at the native parent boundary');
+ assert.deepEqual(errors,[]);mkdirSync('work/themezer-validation/scene-engine',{recursive:true});await page.screenshot({path:'work/themezer-validation/scene-engine/hierarchy.png'});
+ writeFileSync('work/themezer-validation/scene-engine/results.json',JSON.stringify({anchored,part,siblings,errors},null,2));
+ console.log('PASS shared scene engine: nested pivots/scales, independent patches, part instances, visibility, clipping and sibling order');
+}finally{await browser.close()}
