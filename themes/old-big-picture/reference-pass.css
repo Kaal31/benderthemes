@@ -1,0 +1,48 @@
+/* Second pass: align the 16:9 proportions with the home and library screenshots. */
+:root{font-weight:400}
+body{background-image:linear-gradient(110deg,#03132865,#08253290),url('assets/mainmenu_bg_2.png')}
+body[data-page="home"] header{height:18.6vh;padding-left:6vw}
+body[data-page="home"] .profile{margin-left:9vw}
+body[data-page="home"] .profile-avatar{height:11.6vh;width:6.5vw;max-width:84px;font-size:40px}
+body[data-page="home"] .profile{font-size:28px;gap:10px}
+body[data-page="home"] .profile small{font-size:17px}
+body[data-page="home"] main{height:72.4vh;padding-top:8.7vh}
+.home-tiles{display:flex;position:relative;gap:12px;padding:3px calc((100vw - 23vw)/2);margin: -3px 0 calc(11.7vh - 3px);overflow-x:auto;overflow-y:hidden;scrollbar-width:none;scroll-snap-type:x proximity;mask-image:linear-gradient(to right,transparent,#000 13%,#000 87%,transparent);-webkit-mask-image:linear-gradient(to right,transparent,#000 13%,#000 87%,transparent)}
+.home-tiles::-webkit-scrollbar{display:none}
+.home-tiles .home-tile{flex:0 0 23vw;scroll-snap-align:center;min-width:0}
+.home-tiles .home-tile.web,.home-tiles .home-tile.chat{opacity:1}
+.home-tile{height:18.7vh;border-radius:4px;font-size:30px;gap:0;position:relative;isolation:isolate;overflow:hidden;background:radial-gradient(ellipse at 50% 112%,#39b9df40 0%,#1b8bb128 35%,transparent 73%),linear-gradient(180deg,#13344ce8 0%,#164461e8 58%,#195776ef 100%);box-shadow:inset 0 1px 0 #74c4e50b,inset 0 -1px 0 #6dcdec12;transition:color .18s,box-shadow .18s}
+.home-tile::before{content:none}
+.home-tile::after{content:'';position:absolute;inset:0;z-index:-1;pointer-events:none;background:radial-gradient(ellipse at 50% 108%,#77e9ff50,transparent 70%);opacity:0;transition:opacity .18s}
+.home-tile:hover,.home-tile:focus-visible{background:radial-gradient(ellipse at 50% 112%,#39b9df40 0%,#1b8bb128 35%,transparent 73%),linear-gradient(180deg,#173f58 0%,#1b5573 58%,#216c8b 100%);box-shadow:inset 0 1px 0 #b4edff24,inset 0 -1px 0 #9be8ff35,0 0 18px #37bde72b;color:#65cce6}
+.home-tile:hover::after,.home-tile:focus-visible::after{opacity:1}
+.tile-icon{width:9vw;height:10.5vh}
+.filled-icon{fill:currentColor;stroke-width:1}
+.home-tile.store .filled-icon path{stroke-width:3}
+.home-tile.library .filled-icon{stroke-width:0}
+.home-tile.chat .filled-icon{fill:none;stroke-width:5}
+.home-tile:focus-visible{outline:2px solid #7edff5;box-shadow:inset 0 0 24px #55cdf31c,inset 0 -1px 0 #9be8ff55,0 0 16px #49c7f54d;color:#85def0;text-shadow:0 0 16px #5edfff25}
+.home-recommendations{width:70%;gap:12px;padding:0 3px}
+.recommendation h2{font-size:15px;font-weight:400;margin-bottom:8px;color:#3f86a1}
+.recommendation .game .label{display:none}
+.recommendation .game{position:relative}
+.recommendation .game::after{content:'';position:absolute;right:3px;bottom:3px;width:25px;height:3px;background:#4b8799;border:1px solid #092030}
+body[data-page="library"] header{height:9.3vh;padding:0 3.9vw}
+body[data-page="library"] main{height:84.7vh;padding:1.5vh 2.5vw 0 3.9vw}
+body[data-page="library"] footer{height:6vh}
+body[data-page="library"] .brand{font-size:30px}
+.library-shell{grid-template-columns:22% minmax(0,1fr);gap:16px}
+.library-sidebar{padding:0 3px 0 0}
+.library-sidebar button{font-size:17px;padding:6px 12px;margin:2px 0}
+.library-sidebar h3{margin:14px 0 5px}
+.library-body{padding:0 5px 10px}
+.library-body h2{font-size:25px;font-weight:400;margin-bottom:6px}
+.library-row{gap:9px;margin-bottom:23px;padding:4px 3px 6px}
+.library-row .game{flex-basis:calc((100% - 18px)/3)}
+.library-row:nth-of-type(n+2) .game{flex-basis:calc((100% - 27px)/4)}
+.library-row .game .label{font-size:0;padding:4px 3px}
+.library-row .game small{font-size:16px;font-weight:400;color:#8ab4c5;margin:0}
+.game:focus-visible{outline:3px solid #c3f4ff;box-shadow:0 0 5px 4px #51c4ee80}
+.library-row .game:focus-visible small{color:#d6f2ff}
+@media(max-width:850px){.home-tile{font-size:22px}.recommendation h2{font-size:11px}.library-body h2{font-size:20px}.library-row .game small{font-size:12px}.library-sidebar button{font-size:14px}.home-tile .tile-icon{height:9vh}}
+.home-tile.store .filled-icon{stroke-width:0}.home-tile.library .tile-icon{border-bottom:3px solid currentColor;padding-bottom:4px}.library-row{align-items:flex-start}.library-row .game img{width:100%;height:auto;aspect-ratio:460/215;object-fit:cover}
