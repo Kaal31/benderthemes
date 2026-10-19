@@ -33,11 +33,11 @@ export function getCurrentLanguage(): keyof typeof languages {
  *   t('itemsCount', { count: 5 }) -> '5 itens'
  */
 export function t(
-  key: TranslationKey,
+  key: TranslationKey | (string & {}),
   params?: Record<string, string | number>
 ): string {
   const lang = getCurrentLanguage();
-  let text = languages[lang]?.[key] || languages.en?.[key] || (key as string);
+  let text = (languages[lang] as Record<string, string | undefined>)?.[key] || (languages.en as Record<string, string | undefined>)?.[key] || (key as string);
 
   if (params) {
     for (const [paramKey, paramVal] of Object.entries(params)) {
@@ -77,4 +77,5 @@ export function useLocalization() {
   };
 }
 
+export const lang = t;
 export default t;
