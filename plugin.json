@@ -12,5 +12,9 @@
     ],
     "description": "ThemeHub: console-style home screens for the Steam Deck (PlayStation, Xbox and Nintendo looks), a theme Hub, theme-file importers and Plugin Spotlight.",
     "image": ""
+  },
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/Kaal31/benderthemes.git"
   }
 }

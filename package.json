@@ -38,5 +38,9 @@
         "react-dom"
       ]
     }
+  },
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/Kaal31/benderthemes.git"
   }
 }

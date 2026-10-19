@@ -1,0 +1,295 @@
+[
+  {
+    "repo": "philosiraptor/etherdeck",
+    "name": "USB Ethernet Gadget",
+    "authors": [
+      "philosiraptor"
+    ],
+    "asset": "EtherDeck.zip",
+    "tagPrefix": "",
+    "prerelease": false
+  },
+  {
+    "repo": "BrenticusMaximus/ThemeDeck",
+    "name": "ThemeDeck",
+    "authors": [
+      "BrenticusMaximus",
+      "Your Name"
+    ],
+    "asset": "ThemeDeck-v3.0.2-sleep-wake-fix-2026-09-06.zip",
+    "tagPrefix": "",
+    "prerelease": false
+  },
+  {
+    "repo": "josejuanlr98/youtube-music-for-steam",
+    "name": "YouTube Music",
+    "authors": [
+      "josejuanlr98"
+    ],
+    "asset": "youtube-music-for-steam-0.7.3.zip",
+    "tagPrefix": "",
+    "prerelease": false
+  },
+  {
+    "repo": "joemossjr16/Decky-WiFi-BandLock",
+    "name": "WiFi BandLock",
+    "authors": [
+      "JoeMossJr16",
+      "joemossjr16"
+    ],
+    "asset": "WiFi-BandLock.zip",
+    "tagPrefix": "",
+    "prerelease": false
+  },
+  {
+    "repo": "RedRanger14/decky-nexus",
+    "name": "Nexus Mods",
+    "authors": [
+      "RedRanger14",
+      "Michael Finney"
+    ],
+    "asset": "Nexus-Mods-1.21.5.zip",
+    "tagPrefix": "",
+    "prerelease": false
+  },
+  {
+    "repo": "jmedina21/deck-as-controller",
+    "name": "Deck as Controller",
+    "authors": [
+      "jmedina21"
+    ],
+    "asset": "deck-as-controller.zip",
+    "tagPrefix": "",
+    "prerelease": false
+  },
+  {
+    "repo": "LoZazaMastro/Now-Playing",
+    "name": "Now Playing",
+    "authors": [
+      "LoZazaMastro"
+    ],
+    "asset": "Now-Playing-decky_Installer-2.5.2.zip",
+    "tagPrefix": "",
+    "prerelease": false
+  },
+  {
+    "repo": "artistro08/youtube-cast-receiver",
+    "name": "YouTube Cast Receiver",
+    "authors": [
+      "artistro08"
+    ],
+    "asset": "youtube-cast-receiver.zip",
+    "tagPrefix": "",
+    "prerelease": false
+  },
+  {
+    "repo": "artistro08/decky-youtube-music-player",
+    "name": "YouTube Music Player",
+    "authors": [
+      "artistro08"
+    ],
+    "asset": "youtube-music-player.zip",
+    "tagPrefix": "",
+    "prerelease": false
+  },
+  {
+    "repo": "spmzt/decky-ipv6",
+    "name": "IPv6 Enabler Plugin",
+    "authors": [
+      "spmzt",
+      "Seyed Pouria Mousavizadeh Tehrani"
+    ],
+    "asset": "IPv6.Enabler.Plugin.zip",
+    "tagPrefix": "",
+    "prerelease": false
+  },
+  {
+    "repo": "Featherwolf/EnhancedGV",
+    "name": "EnhancedGV",
+    "authors": [
+      "Featherwolf"
+    ],
+    "asset": "EnhancedGV.zip",
+    "tagPrefix": "",
+    "prerelease": false
+  },
+  {
+    "repo": "koua29/decky-stwebsrv",
+    "name": "STWebSRV",
+    "authors": [
+      "koua29"
+    ],
+    "asset": "STWebSRV.zip",
+    "tagPrefix": "",
+    "prerelease": false
+  },
+  {
+    "repo": "novasound6945/deckygram",
+    "name": "Deckygram",
+    "authors": [
+      "novasound6945",
+      "kissos"
+    ],
+    "asset": "Deckygram-v0.7.7.zip",
+    "tagPrefix": "",
+    "prerelease": false
+  },
+  {
+    "repo": "koua29/decky-fsg",
+    "name": "FSG",
+    "authors": [
+      "koua29"
+    ],
+    "asset": "FSG.zip",
+    "tagPrefix": "",
+    "prerelease": false
+  },
+  {
+    "repo": "nabizzlesjj/steamview",
+    "name": "SteamView",
+    "authors": [
+      "SteamView contributors",
+      "nabizzlesjj"
+    ],
+    "asset": "SteamView-v1.2.1.zip",
+    "tagPrefix": "",
+    "prerelease": false
+  },
+  {
+    "repo": "jeanbottein/DeckaTV",
+    "name": "DeckaTV",
+    "authors": [
+      "jeanbottein",
+      "Jean"
+    ],
+    "asset": "deckatv.zip",
+    "tagPrefix": "",
+    "prerelease": false
+  },
+  {
+    "repo": "embergabor/wavesafe-deck-plugin",
+    "name": "WaveSafe",
+    "authors": [
+      "Ember G\u00e1bor",
+      "embergabor"
+    ],
+    "asset": "WaveSafe.zip",
+    "tagPrefix": "",
+    "prerelease": false
+  },
+  {
+    "repo": "piyush-tyagi-13/ally-vibe-control",
+    "name": "Ally Vibe Control",
+    "authors": [
+      "piyush-tyagi-13",
+      "piyush"
+    ],
+    "asset": "ally-vibe-control-v1.0.5.zip",
+    "tagPrefix": "",
+    "prerelease": false
+  },
+  {
+    "repo": "SpiderNic96/dimensions-toypad-aio",
+    "name": "Dimensions Toypad",
+    "authors": [
+      "SpiderNic96",
+      "MetalNic96"
+    ],
+    "asset": "dimensions-toypad-release.zip",
+    "tagPrefix": "",
+    "prerelease": false
+  },
+  {
+    "repo": "gillrajvir950-wq/deckyshare",
+    "name": "DeckyShare",
+    "authors": [
+      "Gillrv",
+      "gillrajvir950-wq"
+    ],
+    "asset": "DeckyShare.zip",
+    "tagPrefix": "",
+    "prerelease": false
+  },
+  {
+    "repo": "otisabiburada/finally-achievement-plugin",
+    "name": "Finally Achievement Plugin",
+    "authors": [
+      "otisabi",
+      "otisabiburada"
+    ],
+    "asset": "1_6_3.zip",
+    "tagPrefix": "",
+    "prerelease": false
+  },
+  {
+    "repo": "otisabiburada/finally-3d-game-cases-plugin",
+    "name": "Finally 3D Game Cases",
+    "authors": [
+      "otisabiburada",
+      "SANSO"
+    ],
+    "asset": "Finally-3D-Game-Cases-v1.8.2.zip",
+    "tagPrefix": "",
+    "prerelease": false
+  },
+  {
+    "repo": "otisabiburada/decky-youtube-pip",
+    "name": "YouTube PiP",
+    "authors": [
+      "SANSO"
+    ],
+    "asset": "youtube-pip-v0.6.0.zip",
+    "tagPrefix": "",
+    "prerelease": false
+  },
+  {
+    "repo": "ValentineBSAA/ResonaDeck",
+    "name": "ResonaDeck",
+    "authors": [
+      "Valentine"
+    ],
+    "asset": "ResonaDeck-1.2.0-Stable.zip",
+    "tagPrefix": "",
+    "prerelease": false
+  },
+  {
+    "repo": "OpenCloudGaming/OpenNOW",
+    "name": "OpenNOW",
+    "authors": [
+      "OpenCloudGaming"
+    ],
+    "asset": "OpenNOW.zip",
+    "tagPrefix": "decky-v",
+    "prerelease": true
+  },
+  {
+    "repo": "acestronautical/decky-protonvpn",
+    "name": "Proton VPN (Unofficial)",
+    "authors": [
+      "acestronautical"
+    ],
+    "asset": "decky-protonvpn-v0.1.0.zip",
+    "tagPrefix": "",
+    "prerelease": true
+  },
+  {
+    "repo": "BrielleG116/decky-apple-music",
+    "name": "Apple Music",
+    "authors": [
+      "jeffmartinez"
+    ],
+    "asset": "apple-music-plugin.zip",
+    "tagPrefix": "",
+    "prerelease": false
+  },
+  {
+    "repo": "FlashWreck/net-merge-decky",
+    "name": "NetMerge",
+    "authors": [
+      "FlashWreck, sidharthify, rohit267"
+    ],
+    "asset": "net-merge-decky.zip",
+    "tagPrefix": "",
+    "prerelease": false
+  }
+]

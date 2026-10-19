@@ -103,6 +103,9 @@ const backend: Record<string, (...a: any[]) => any> = {
   // Plugin Spotlight search (py_modules/plugin_catalog.py). A small invented fixture, not the real 4 MB list;
   // window.__pluginCatalog replaces it (e.g. { entries: [], installed: [], error: "…" } for the offline note).
   achievement_popup_status: () => ({verified:true,finallyInstalled:!!(window as any).__finallyInstalled}),
+  spotlight_update_status: () => (window as any).__spotlightUpdates ?? { plugins: [], updateAvailable: false },
+  spotlight_remember_source: () => ({ success: true }),
+  spotlight_prepare_update: (id: string) => ({success: true, name: (window as any).__spotlightUpdates?.plugins.find((p: any) => p.id === id)?.name}),
   plugin_catalog: () => (window as any).__pluginCatalog ?? PLUGIN_CATALOG_FIXTURE,
   // Hub > Theme files (py_modules/theme_sources.py). Invented entries; window.__themeSources = { "<kind>:<source>": page }
   // replaces a page (tests inject real backend output with local pictures). Downloads are recorded in __themeSourceDownloads.

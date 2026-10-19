@@ -1649,6 +1649,21 @@ class Plugin:
         import theme_updates
         return await asyncio.get_running_loop().run_in_executor(None, theme_updates.status)
 
+    async def spotlight_update_status(self, refresh: bool = False):
+        import spotlight_updates
+        return await asyncio.to_thread(spotlight_updates.status, os.path.join(_data_dir(), "spotlight-updates"),
+                                       os.path.dirname(decky.DECKY_PLUGIN_DIR), bool(refresh))
+
+    async def spotlight_remember_source(self, repo: str, name: str, author: str, url: str):
+        import spotlight_updates
+        return await asyncio.to_thread(spotlight_updates.remember, os.path.join(_data_dir(), "spotlight-updates"),
+                                       repo, name, author, url)
+
+    async def spotlight_prepare_update(self, ident: str, version: str, url: str):
+        import spotlight_updates
+        return await asyncio.to_thread(spotlight_updates.prepare, os.path.join(_data_dir(), "spotlight-updates"),
+                                       os.path.dirname(decky.DECKY_PLUGIN_DIR), ident, version, url)
+
     async def plugin_prepare_replacement(self, version: str, url: str):
         import theme_updates
         return theme_updates.prepare_replacement(version, url)

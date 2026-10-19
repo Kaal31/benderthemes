@@ -1,3 +1,4 @@
+import { SpotlightUpdates } from "./SpotlightUpdates";
 import { ButtonItem, DropdownItem, PanelSection, PanelSectionRow, ProgressBarWithInfo } from "@decky/ui";
 import { callable } from "@decky/api";
 import { logInfo } from "./diag";
@@ -198,7 +199,7 @@ export function Updates({ onManageThemes }: { onManageThemes: () => void }) {
     <PanelSectionRow><ButtonItem layout="below" disabled={busy || checking} onClick={() => void load()}>{checking ? "Checking…" : "Check for updates"}</ButtonItem></PanelSectionRow>
     {busy && downloading.current && <PanelSectionRow><ProgressBarWithInfo layout="inline" nProgress={progress} sOperationText={message} /></PanelSectionRow>}
     {message && <PanelSectionRow><div style={{ fontSize: 12, overflowWrap: "anywhere" }}>{message}</div></PanelSectionRow>}
-  </PanelSection></>;
+  </PanelSection><SpotlightUpdates/></>;
 }
 
 const COMMUNITY_UPDATE_CSS = `
