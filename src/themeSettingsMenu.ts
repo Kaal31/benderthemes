@@ -443,12 +443,40 @@ export function customizeItems(): MenuItem[] {
       {label:"Upload custom picture…",action:uploadProfilePicture},
       {label:"Use Steam / theme default picture",action:()=>setProfilePicture(undefined)},
     ]),
-    ...(pageBackgrounds.length?[group("Background",()=>pageBackgrounds.map(slotItem))]:[]),
+    ...(pageBackgrounds.length || activeTheme(S())?.id.startsWith("wiiflow-") ? [group("Background",()=>[
+      ...pageBackgrounds.map(slotItem),
+      ...(activeTheme(S())?.id.startsWith("wiiflow-") ? [choice("Fit", [{id:"original",name:"Original"},{id:"extend",name:"Extend"},{id:"fill",name:"Fill"}],
+        () => (S().frameData[activeTheme(S())!.id] as {backgroundFit?:string}|undefined)?.backgroundFit ?? "original",
+        (value) => {const id=activeTheme(S())!.id;updateSettings(p=>({frameData:{...p.frameData,[id]:{...(p.frameData[id] as Record<string,unknown> ?? {}),backgroundFit:value}}}));}),
+        choice("Artwork extension",[{id:"automatic",name:"Automatic (verified mappings)"},{id:"frame",name:"Manual: preserve frame and extend edges"},{id:"off",name:"Off"}],
+          ()=>(S().frameData[activeTheme(S())!.id] as {artworkMapping?:string}|undefined)?.artworkMapping??"automatic",
+          value=>{const id=activeTheme(S())!.id;updateSettings(p=>({frameData:{...p.frameData,[id]:{...(p.frameData[id] as Record<string,unknown>??{}),artworkMapping:value}}}));}),
+        toggle("Extend interface with Fill",()=> (S().frameData[activeTheme(S())!.id] as {extendInterface?:boolean}|undefined)?.extendInterface!==false,
+          value=>{const id=activeTheme(S())!.id;updateSettings(p=>({frameData:{...p.frameData,[id]:{...(p.frameData[id] as Record<string,unknown> ?? {}),extendInterface:value}}}));})] : []),
+    ])] : []),
     ...controls.filter(c=>!c.id.startsWith("wallpaper:")).map(slotItem),
     ...(file.length ? [group("Theme file", () => themeFileItems(S().theme))] : []),
     ...(own.length ? [group("Look options", () => lookOptionItems(S().theme))] : []),
     group(own.some((i) => i.label === "Library") ? "Games shown" : "Library", () => [
       { ...collectionMenu(th), label: "Show in this theme" },
+      ...(activeTheme(S())?.id.startsWith("wiiflow-") ? [toggle("Extend coverflow with Fill",()=> (S().frameData[activeTheme(S())!.id] as {extendCoverflow?:boolean}|undefined)?.extendCoverflow!==false,
+        value=>{const id=activeTheme(S())!.id;updateSettings(p=>({frameData:{...p.frameData,[id]:{...(p.frameData[id] as Record<string,unknown> ?? {}),extendCoverflow:value}}}));})] : []),
+      ...(activeTheme(S())?.id.startsWith("wiiflow-") ? [toggle("Continue cover pattern with Fill",()=> (S().frameData[activeTheme(S())!.id] as {continueCoverPattern?:boolean}|undefined)?.continueCoverPattern!==false,
+        value=>{const id=activeTheme(S())!.id;updateSettings(p=>({frameData:{...p.frameData,[id]:{...(p.frameData[id] as Record<string,unknown> ?? {}),continueCoverPattern:value}}}));})] : []),
+      ...(activeTheme(S())?.id.startsWith("wiiflow-") ? [toggle("Show navigation arrows", () => {
+        const id = activeTheme(S())!.id;
+        return (S().frameData[id] as { hideNavigationArrows?: boolean } | undefined)?.hideNavigationArrows !== true;
+      }, (visible) => {
+        const id = activeTheme(S())!.id;
+        updateSettings((p) => ({ frameData: { ...p.frameData, [id]: { ...(p.frameData[id] as Record<string, unknown> ?? {}), hideNavigationArrows: !visible } } }));
+      })] : []),
+      ...(activeTheme(S())?.id.startsWith("wiiflow-") ? [toggle("Cover title", () => {
+        const id = activeTheme(S())!.id;
+        return (S().frameData[id] as { hideCoverTitle?: boolean } | undefined)?.hideCoverTitle !== true;
+      }, (visible) => {
+        const id = activeTheme(S())!.id;
+        updateSettings((p) => ({ frameData: { ...p.frameData, [id]: { ...(p.frameData[id] as Record<string, unknown> ?? {}), hideCoverTitle: !visible } } }));
+      })] : []),
       toggle("ProtonDB badges (this theme)", () => protonDbEnabled(S()), (v) => updateSettings((p) => ({ protondbThemes: { ...p.protondbThemes, [protonDbThemeKey(S())]: v } }))),
       choice("Icon size", [75, 85, 100, 110].map((v) => ({ id: v, name: `${v}%${v === 100 ? " · default" : ""}` })), () => S().iconSizes?.[th] ?? 100, (v) => updateSettings((p) => ({ iconSizes: { ...p.iconSizes, [th]: v } }))),
       ...(USES.titles.includes(th) ? [choice("Game titles", TITLE_MODES, () => S().titles[th] ?? "show", (v) => updateSettings((p) => ({ titles: { ...p.titles, [th]: v } })))] : []),
