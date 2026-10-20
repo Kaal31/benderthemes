@@ -6,6 +6,7 @@ import tempfile
 import types
 import unittest
 import zipfile
+from unittest.mock import patch
 
 ROOT = Path(__file__).resolve().parents[1]
 sys.path.insert(0, str(ROOT / "py_modules"))
@@ -21,6 +22,14 @@ class DataThemes(unittest.TestCase):
         decky = data_themes.decky
         decky.DECKY_PLUGIN_RUNTIME_DIR = self.tmp.name
         decky.logger = types.SimpleNamespace(warning=lambda *a: None, error=lambda *a: None)
+        import theme_store
+        store_paths = patch.dict(vars(theme_store.decky), {
+            "DECKY_PLUGIN_DIR": self.tmp.name,
+            "DECKY_PLUGIN_RUNTIME_DIR": self.tmp.name,
+            "DECKY_PLUGIN_SETTINGS_DIR": str(Path(self.tmp.name) / "settings"),
+        })
+        store_paths.start()
+        self.addCleanup(store_paths.stop)
         data_themes._cache.clear()
         data_themes._zip_errors.clear()
 
@@ -40,8 +49,17 @@ class DataThemes(unittest.TestCase):
     def test_bundled_examples_are_listed(self):
         ids = {t["id"]: t for t in data_themes.list_themes()}
         self.assertEqual(ids["midnight-ps4"]["source"], "bundled")
-        self.assertIn("deck_ui_navigation.wav", ids["midnight-ps4"]["packs"]["sounds"]["files"])
-        self.assertIn("menu_music.wav", ids["midnight-ps4"]["packs"]["music"]["files"])
+        self.assertEqual(ids["midnight-ps4"]["packs"]["sounds"]["files"], [])
+        self.assertEqual(ids["midnight-ps4"]["packs"]["music"]["files"], [])
+        # Downloaded frame audio becomes available only once materialized.
+        for relative in ("sounds/deck_ui_navigation.wav", "music/menu_music.wav"):
+            media = Path(self.tmp.name) / "defaults/assets/frame-themes/midnight-ps4" / relative
+            media.parent.mkdir(parents=True, exist_ok=True)
+            media.write_bytes(b"audio fixture")
+        data_themes._cache.clear()
+        installed = {t["id"]: t for t in data_themes.list_themes()}
+        self.assertIn("deck_ui_navigation.wav", installed["midnight-ps4"]["packs"]["sounds"]["files"])
+        self.assertIn("menu_music.wav", installed["midnight-ps4"]["packs"]["music"]["files"])
         # the community-interface test theme is a test fixture now, never shipped
         self.assertNotIn("frame-test", ids)
 
