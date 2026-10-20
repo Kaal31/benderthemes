@@ -39,9 +39,11 @@ const MAX_SAVE = 64 * 1024;
 
 /** What an interface may know about a game: no Steam objects, only plain data. */
 function publicGame(g: Game, abs: (u: string) => string) {
-  const art = (list: string[]) => list.slice(0, 3).map(abs);
+  const art = (list: string[]) => [...new Set(list)].map(abs);
   return {
     appid: g.appid,
+    gameid: g.gameid,
+    shortcut: g.shortcut,
     name: g.name,
     installed: g.installed,
     lastPlayed: g.lastPlayed,

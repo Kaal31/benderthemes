@@ -147,3 +147,6 @@ body.away-from-home footer>[data-home-dock]{display:none!important}
 #dashboard footer>[data-home-dock]{touch-action:none;max-width:155px;display:flex;flex-direction:column;align-items:center}
 #dashboard footer>[data-home-dock] .cover-frame,#dashboard footer>[data-home-dock] .ios-app-art{width:73px;height:73px;border-radius:15px;margin:0;flex-shrink:0;-webkit-box-reflect:below 2px linear-gradient(transparent 48%,#fff3)}
 #dashboard footer>[data-home-dock] .app-label{max-width:150px;font-size:14px;line-height:20px}
+
+/* Keep missing artwork useful, and identify Steam shortcuts without guessing CDN IDs. */
+.fallback-icon{display:grid;place-items:center;position:absolute;inset:0;font-size:32px;background:linear-gradient(135deg,#344c65,#172536);color:white}.fallback-icon[hidden]{display:none}.non-steam-badge{position:absolute;z-index:3;top:4px;left:4px;padding:2px 5px;border-radius:4px;background:#101820df;color:#fff;font:10px sans-serif;pointer-events:none}.cover-frame{position:relative}.card img,.cover-frame img{display:block}

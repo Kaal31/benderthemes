@@ -38,6 +38,7 @@ try {
   await page.locator('.dht-market').waitFor({state:'detached'});
   assert.equal(await page.locator('[data-dht-root]').getAttribute('data-dht-theme'), 'minecraft');
   await page.evaluate(() => window.__updateTheme({ minecraftWaitForSwipe: true }));
+  await page.waitForTimeout(500); // Allow the newly activated home to register its menu input.
   await page.keyboard.press('m');
   await page.locator('.dht-menu').getByText('Global settings', {exact:true}).click(); // the Hub entry lives there now
   await page.locator('.dht-menu').getByText('Hub', {exact:true}).waitFor();

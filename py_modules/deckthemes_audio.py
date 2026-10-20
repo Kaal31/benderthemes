@@ -8,6 +8,7 @@ import tempfile
 import threading
 import urllib.request
 import zipfile
+from theme_network import urlopen
 
 API = "https://api.deckthemes.com"
 MAX_DOWNLOAD = 32 * 1024 * 1024
@@ -25,7 +26,7 @@ def entry(ident):
 
 def request(path, limit):
     req = urllib.request.Request(API + path, headers={"User-Agent": "ThemeHub/1.10 DeckThemes-Audio", "Origin": "https://deckthemes.com", "Accept": "application/json, application/zip"})
-    with urllib.request.urlopen(req, timeout=30) as response:
+    with urlopen(req, timeout=30) as response:
         if not response.geturl().startswith(API + "/"):
             raise ValueError("Unexpected audio download redirect")
         if int(response.headers.get("Content-Length", "0")) > limit:
