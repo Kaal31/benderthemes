@@ -1,4 +1,4 @@
-import {PLAZA_POST_INTERVALS,PLAZA_POST_LIFETIME,schedulePlazaPosts} from "./plazaPostTiming";
+import {PLAZA_POST_INTERVALS,PLAZA_POST_LIFETIME,PLAZA_REPLY_DELAY,schedulePlazaPosts} from "./plazaPostTiming";
 import {PlazaPostPolicy} from "./plazaPostPolicy";
 import {createMiiAvatar} from "./miiAvatar";
 import {useSettings} from "../settings";
@@ -8,7 +8,7 @@ import {GameArt,Icon} from "../common";
 import {Game} from "../library";
 import {PLAZA_GEOMETRY} from "./wiiuPlazaGeometry";
 import {ACTIONS,packMiiArm,packMiiOutfit,FACE,HAIR_STYLES,HAT_STYLES,MII_HIP,MII_NECK_Y,MII_WAIST_Y,POSE,POSE_SIZE,faceLayer,footDrop,miiBodyGeometry,miiBodyMaterial,miiBodyScale,miiFaceAtlas,miiFaceGeometry,miiFaceMaterial,miiHair,miiFittedHair,miiHat,miiHead,miiShade,shapeGeometry,strideLength,type ActionName,type Look,type Lod} from "./wiiuPlazaMiiModel";
-import {postFor,replyFor,shotPost} from "./wiiuPlazaPosts";
+import {postFor,replyTo,shotPost} from "./wiiuPlazaPosts";
 import type {FeedPost} from "./wiiuPlazaFeed";
 import {useScreenshots} from "../media";
 
@@ -96,7 +96,7 @@ export function WaraWaraPlaza({iconGlass=false,posts:postsOn=true,postEvery=PLAZ
  // The Miis around a newly selected title turn to it, and some cheer, clap, jump or point (handled in the render loop).
  const focusEvent=useRef<{index:number}|null>(null),liveActive=useRef(active);liveActive.current=active;
  useEffect(()=>{if(!active||calm)return;focusEvent.current={index:selected};},[selected,active]);
- const nextPostId=useRef(0),pendingReply=useRef<Post|null>(null);
+ const nextPostId=useRef(0);
  const selectionPost=useRef<{appid:number;expires:number}|null>(null),selectionLast=useRef(new Map<number,number>());
  const selectedApp=games[selected]?.appid;
  useEffect(()=>{
@@ -110,14 +110,17 @@ export function WaraWaraPlaza({iconGlass=false,posts:postsOn=true,postEvery=PLAZ
  },[selectedApp,active,calm,opening,postsOn,postEvery]);
  // Bubbles expire independently of frequency, leaving quiet gaps at Calm speed.
  useEffect(()=>{if(!posts.length)return;const next=Math.min(...posts.map(p=>p.expires));const timer=setTimeout(()=>setPosts(list=>list.filter(p=>p.expires>Date.now())),Math.max(0,next-Date.now()));return()=>clearTimeout(timer);},[posts]);
- // All post sources share one cadence; changing selection never creates an extra bubble.
+ // Frequency controls conversation starts. Linked replies arrive while their parent is visible.
  useEffect(()=>{
-  if(calm||opening||!postsOn){setPosts([]);pendingReply.current=null;return;}
-  const add=()=>{const crowd=people.current,policy=postPolicy.current;const id=++nextPostId.current,slot=id%2;
+  if(calm||opening||!postsOn){setPosts([]);return;}
+  let replyTimer:ReturnType<typeof setTimeout>|undefined;
+  const add=(other?:Post)=>{if(!other&&replyTimer!==undefined)return;const crowd=people.current,policy=postPolicy.current;const id=++nextPostId.current,slot=other?1-other.slot:id%2;
    // A post with a follow-up is always answered by a Mii nearby; otherwise one answers now and then.
-   const other=pendingReply.current??livePosts.current.find(x=>x.slot!==slot);pendingReply.current=null;const asker=other&&other.id===policy.lastBubble&&!other.reply&&(other.follow||/\?/.test(other.text))?crowd[other.mii]:undefined,follow=asker?other?.follow:undefined;
+   if(other&&(other.expires<=Date.now()||!livePosts.current.some(p=>p.id===other.id)||other.follow&&!policy.allowsText(other.follow)))return;
+   const asker=other&&other.id===policy.lastBubble&&!other.reply&&(other.follow||/\?/.test(other.text))?crowd[other.mii]:undefined;
    const around=(r:number)=>asker?crowd.map((p,i)=>({p,i})).filter(({p})=>p!==asker&&!p.host&&!p.falling&&p.group.visible&&p.group.position.distanceTo(asker.group.position)<r):[];
-   const near=follow?(around(5).length?around(5):around(12)):asker&&Math.random()<.35?around(5):[],reply=near.length>0;
+   const near=asker?(around(5).length?around(5):around(12)):[],reply=near.length>0;
+   if(other&&!reply)return;
    const side=reply?near:crowd.map((p,i)=>({p,i})).filter(({p})=>(slot?p.group.position.x>2&&p.group.position.x<19:p.group.position.x<-2&&p.group.position.x>-19)&&p.group.position.z>-9&&p.group.position.z<16),candidates=side.filter(({p})=>!p.host&&!p.falling&&p.group.visible&&(reply||!liveGames.current.length||p.cluster<liveGames.current.length)&&(reply||policy.allowsGame(liveGames.current[p.cluster]?.appid)));
 
    // Prefer a speaker and bubble direction that leave the covers clear.
@@ -143,16 +146,19 @@ export function WaraWaraPlaza({iconGlass=false,posts:postsOn=true,postEvery=PLAZ
    const oe=other&&postEls.current[other.id];if(oe){const l=parseFloat(oe.style.left),t=parseFloat(oe.style.top),b={x0:l-20,x1:l+oe.offsetWidth+20,y0:t-36-oe.offsetHeight,y1:t+20};covers.push(b,b,b);}
    // About one post in four, for a game with screenshots, shows one of them like a drawing on the real Plaza.
    const shotFor=(g?:Game)=>{const own=g&&!reply&&liveDrawings.current?liveShots.current?.filter(s=>s.appid===g.appid):undefined;return own?.length&&seed%4===1?own[Math.floor(seed/4)%own.length]:undefined;};
-   const scored=pool0.flatMap(c=>{const g=reply?other?.game:item?.game??liveGames.current[c.p.cluster],written=reply||item?undefined:postFor(g,seed,text=>policy.allowsText(text)),shot=item||written?.appSpecific?undefined:shotFor(g),said=reply?{text:follow&&policy.allowsText(follow)?follow:Array.from({length:32},(_,i)=>replyFor(other?.game,seed+i)).find(text=>policy.allowsText(text))??""}:item?{text:item.text}:shot&&g?{text:shotPost(g,seed,shot.caption),shot:shot.url}:written;if(!said)return [];const text=said.text,width=shot?430:Math.min(540,150+text.length*11.5),head=stage?.(c.p.group.position.clone().setY(1.9));if(!text||!policy.allowsText(text))return [];return aligns.map((align,k)=>({c,text,appSpecific:!!written?.appSpecific,shot:'shot' in said?said.shot:undefined,follow:'follow' in said?said.follow:undefined,align,score:(head?hidden(bubbleBox(head,align,width,shot?96:text.length>80?120:96).box,covers,liveSelected.current):0)+k*400}));});
+   const scored=pool0.flatMap(c=>{const g=reply?other?.game:item?.game??liveGames.current[c.p.cluster],written=reply||item?undefined:postFor(g,seed,text=>policy.allowsText(text)),shot=item||written?.appSpecific?undefined:shotFor(g),said=reply?{text:replyTo(other!,seed,text=>policy.allowsText(text))??""}:item?{text:item.text}:shot&&g?{text:shotPost(g,seed,shot.caption),shot:shot.url}:written;if(!said)return [];const text=said.text,width=shot?430:Math.min(540,150+text.length*11.5),head=stage?.(c.p.group.position.clone().setY(1.9));if(!text||!policy.allowsText(text))return [];return aligns.map((align,k)=>({c,text,appSpecific:!!written?.appSpecific,shot:'shot' in said?said.shot:undefined,follow:'follow' in said?said.follow:undefined,align,score:(head?hidden(bubbleBox(head,align,width,shot?96:text.length>80?120:96).box,covers,liveSelected.current):0)+k*400}));});
    if(!scored.length)return;
    scored.forEach(x=>{if(!Number.isFinite(x.score))x.score=1e9;});const eligible=scored.some(x=>x.appSpecific)?scored.filter(x=>x.appSpecific):scored,best=Math.min(...eligible.map(x=>x.score)),pool=eligible.filter(x=>x.score<=best+600),pickd=pool[Math.floor(Math.random()*pool.length)]??scored[0],{p,i}=pickd.c;
    const game=reply?other?.game:item?item.game:liveGames.current[p.cluster];p.wait=Math.max(p.wait,7);p.talk=6.5;
    if(reply&&asker){p.chat=true;p.lookX=asker.group.position.x;p.lookZ=asker.group.position.z;}
    policy.record(pickd.text,game?.appid,item);policy.lastBubble=id;if(selectionDriven)selectionPost.current=null;
    const post:Post={id,slot,align:pickd.align,mii:i,name:item?.name??p.name,kind:item?.kind,text:pickd.text,follow:pickd.follow,game,reply,shot:pickd.shot,expires:Date.now()+PLAZA_POST_LIFETIME};
-   if(!reply&&(post.follow||/\?/.test(post.text)))pendingReply.current=post;
+   if(!reply&&(post.follow||/\?/.test(post.text)&&Math.random()<.35)){
+    replyTimer=setTimeout(()=>{replyTimer=undefined;add(post);},PLAZA_REPLY_DELAY);
+   }
    setPosts(list=>[...list.filter(post=>post.slot!==slot),post]);};
-  return schedulePlazaPosts(add,postEvery);
+  const stop=schedulePlazaPosts(()=>add(),postEvery);
+  return()=>{stop();clearTimeout(replyTimer);};
  },[calm,opening,postsOn,postEvery]);
  // Tips are system hints, not Mii posts: one quiet line at the bottom, changing every few seconds.
  const [tip,setTip]=useState(0);

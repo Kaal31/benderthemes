@@ -81,6 +81,14 @@ export function replyFor(game:Game|undefined,seed:number){const line=REPLIES[see
 
 export type PlazaPost={text:string;follow?:string;appSpecific?:boolean};
 
+/** A written follow-up belongs only to its parent; never replace it when cooling down. */
+export function replyTo(post:{game?:Game;follow?:string},seed:number,allows:(text:string)=>boolean):string|undefined{
+ if(post.follow)return allows(post.follow)?post.follow:undefined;
+ for(let n=0;n<REPLIES.length;n++){const text=replyFor(post.game,seed+n);if(allows(text))return text;}
+ return undefined;
+}
+
+
 /** A post for one Mii about one game. The owner's lines for that appid come first, then the written ones, then the rest.
  *  A follow-up, when there is one, is said next by a Mii standing nearby. */
 export function postFor(game:Game|undefined,seed:number,allows:(text:string)=>boolean=()=>true):PlazaPost|undefined{
