@@ -1,0 +1,316 @@
+{
+  "classic": {
+    "RdtBtnIconGame": {
+      "firmware": "19.0.1",
+      "sha256": "c6a8fc7a2ed168c8e20db471943ae711045ada219103e0677b9901ced2a006b6",
+      "path": "ResidentMenu/blyt/RdtBtnIconGame.bflyt"
+    },
+    "RdtBalloon": {
+      "firmware": "19.0.1",
+      "sha256": "20438f1183a030aaf03f85337b8686706e05ad67b0524d26e0eba159fe93814c",
+      "path": "ResidentMenu/blyt/RdtBalloon.bflyt"
+    },
+    "Footer": {
+      "firmware": "19.0.1",
+      "sha256": "f5e0418b83a4994b8dc20a4e214a76eff1a0aee98dd118e77a400b5a31aa6a59",
+      "path": "common/blyt/Footer.bflyt"
+    },
+    "FooterAll": {
+      "firmware": "19.0.1",
+      "sha256": "7f71ad80c93f6747060149a09899c8736bcfcf6535490ec5153c0da82deaf64a",
+      "path": "common/blyt/FooterAll.bflyt"
+    },
+    "FooterBtn": {
+      "firmware": "19.0.1",
+      "sha256": "d485e63d78c93267ff28f4df82fd699243dd9d365e89373c7614f816af05c948",
+      "path": "common/blyt/FooterBtn.bflyt"
+    },
+    "FooterCtrl": {
+      "firmware": "19.0.1",
+      "sha256": "6e8d261b9984be827ba9e42787b4c70507559fe03bd79d46606d80d045ac1cdf",
+      "path": "common/blyt/FooterCtrl.bflyt"
+    },
+    "LineFooter": {
+      "firmware": "19.0.1",
+      "sha256": "d402a56373bdd80a819aba4e6c66c0e00ea9b192d1149668b089a3f9dc36d296",
+      "path": "common/blyt/LineFooter.bflyt"
+    },
+    "CntrIndicatorS": {
+      "firmware": "19.0.1",
+      "sha256": "bddbdf4f6230f3b7f85fbe39e36059b911eac3349d93a65376795275140ba165",
+      "path": "common/blyt/CntrIndicatorS.bflyt"
+    },
+    "RdtBtnChangeUser": {
+      "firmware": "19.0.1",
+      "sha256": "5b1feb498e07cf7694c5ed1323749c38433e194d74510a3fd090059b3bcb1834",
+      "path": "ResidentMenu/blyt/RdtBtnChangeUser.bflyt"
+    },
+    "RdtProgressBarDl": {
+      "firmware": "19.0.1",
+      "sha256": "00a1a78967afe49ad486c9ced5341683911b5ffe3ba6c7e3269978c6c4bc2119",
+      "path": "ResidentMenu/blyt/RdtProgressBarDl.bflyt"
+    },
+    "RdtProgressBarErr": {
+      "firmware": "19.0.1",
+      "sha256": "c0a92571190750ba9960a3b5576315736d300b8ebf15b947638b7334f3881dac",
+      "path": "ResidentMenu/blyt/RdtProgressBarErr.bflyt"
+    },
+    "RdtProgressBarOffline": {
+      "firmware": "19.0.1",
+      "sha256": "39168d821b38c601d185678856066f8984b3614de632c7d83e3987201f651dfc",
+      "path": "ResidentMenu/blyt/RdtProgressBarOffline.bflyt"
+    },
+    "RdtProgressBar": {
+      "firmware": "19.0.1",
+      "sha256": "3d8c40b7d138ac7b955882c4bc46270b36e13a5046db283fa27d0814479401a1",
+      "path": "ResidentMenu/blyt/RdtProgressBar.bflyt"
+    },
+    "RdtIconDl": {
+      "firmware": "19.0.1",
+      "sha256": "e17e371926fb861724cd109991456b2749786882df5756228f69231578391cd6",
+      "path": "ResidentMenu/blyt/RdtIconDl.bflyt"
+    },
+    "RdtIconErr": {
+      "firmware": "19.0.1",
+      "sha256": "d95710bb7ab47b8e42e06aa606a0e0867af067af5484eecec3a637bbae8554dc",
+      "path": "ResidentMenu/blyt/RdtIconErr.bflyt"
+    },
+    "RdtIconPromotion": {
+      "firmware": "19.0.1",
+      "sha256": "ebd872ae1f2197630725f0ec6d8180ead1b54f0f008b45300ef3d9ead2f4dc9c",
+      "path": "ResidentMenu/blyt/RdtIconPromotion.bflyt"
+    },
+    "ProgressBar": {
+      "firmware": "19.0.1",
+      "sha256": "3ba7d2ecd2bf6d37743d41db22cdf4f58a4876e58dc9a5c881151ff885e84a02",
+      "path": "common/blyt/ProgressBar.bflyt"
+    },
+    "ProgressBarFraction": {
+      "firmware": "19.0.1",
+      "sha256": "9389408d313446a26271f5ec6efa13cf2dbb1ae192f22fd94b90e8d45e74d90b",
+      "path": "common/blyt/ProgressBarFraction.bflyt"
+    },
+    "RdtBalloonSystemApplet": {
+      "firmware": "19.0.1",
+      "sha256": "4521b3d3e89267bd59c7400e3f97d2fadd72c889232d3d3e18280a9ac3821327",
+      "path": "ResidentMenu/blyt/RdtBalloonSystemApplet.bflyt"
+    },
+    "RdtBase": {
+      "firmware": "19.0.1",
+      "sha256": "626be9d9a7f170e700ddd28f9c5bc814390a51c1d21afdc4940174407e329154",
+      "path": "ResidentMenu/blyt/RdtBase.bflyt"
+    },
+    "DBaseNml": {
+      "firmware": "19.0.1",
+      "sha256": "c519b14978e8cc9ce0100c8995fbe5879d4f77ea36878e086a0a525f0e70866d",
+      "path": "common/blyt/DBaseNml.bflyt"
+    },
+    "IconError": {
+      "firmware": "19.0.1",
+      "sha256": "35c7faf8a466791d5146eac45387d2756ffc61af1e32708b238ebca41ec63e9e",
+      "path": "ResidentMenu/blyt/IconError.bflyt"
+    },
+    "RdtIconNewFrd": {
+      "firmware": "19.0.1",
+      "sha256": "baf44808e104a29d02007d865269453fd6f288ab75e0a9290e482e599ca51dc2",
+      "path": "ResidentMenu/blyt/RdtIconNewFrd.bflyt"
+    },
+    "UserIconName": {
+      "firmware": "19.0.1",
+      "sha256": "6359467f7eb8d384910e203881b6cbf84251d1688aca0d0cba5b410fc754948b",
+      "path": "common/blyt/UserIconName.bflyt"
+    },
+    "UserIconNameStatus": {
+      "firmware": "19.0.1",
+      "sha256": "8e5c9d932a9190de76faa2df7fc6fcd3801acb8cc2859d9642e5325ad85c4dfc",
+      "path": "common/blyt/UserIconNameStatus.bflyt"
+    },
+    "DCntUserIconNameStatus": {
+      "firmware": "19.0.1",
+      "sha256": "d7a6ed00fc888f13bbe48e9aa931cd4bed019913d6075a9529ba796e0e0f907b",
+      "path": "common/blyt/DCntUserIconNameStatus.bflyt"
+    },
+    "DBtmBaseNml": {
+      "firmware": "19.0.1",
+      "sha256": "933079d5e7c6a5c66f413fc45e63ba0864a7ad7b3702d6f8ed89f0cc5bb22345",
+      "path": "common/blyt/DBtmBaseNml.bflyt"
+    },
+    "BlurBg": {
+      "firmware": "19.0.1",
+      "sha256": "af6f886ab532a8eb68200576fce0833d527fd3a1c2823b785d8af824a2196870",
+      "path": "common/blyt/BlurBg.bflyt"
+    },
+    "BlurBg2": {
+      "firmware": "19.0.1",
+      "sha256": "09590dd14ce9a80570a35c331f87eda9174f6998e6da02ab45d494f294f9edc3",
+      "path": "common/blyt/BlurBg2.bflyt"
+    },
+    "MaskBlack": {
+      "firmware": "19.0.1",
+      "sha256": "faf5b2503921f2148ed14e95ca0e83d5076c1f23f5c1c6c81481d8fa81a82c5c",
+      "path": "common/blyt/MaskBlack.bflyt"
+    },
+    "SystemAppletFader": {
+      "firmware": "19.0.1",
+      "sha256": "4a900522d5231cfb4c73fd96a006b5cc2dfa11ce2fbec9650d7ffac7f1f457ec",
+      "path": "common/blyt/SystemAppletFader.bflyt"
+    }
+  },
+  "modern": {
+    "RdtBtnIconGame": {
+      "firmware": "22.5.0",
+      "sha256": "7e3cff69615d589cda598c60597e58cdd0abf6c4f36404b73f663d94af89bb3a",
+      "path": "ResidentMenu/blyt/RdtBtnIconGame.bflyt"
+    },
+    "RdtBalloon": {
+      "firmware": "22.5.0",
+      "sha256": "630d08fcdfae617539cbfb53ed5cbe13fd9b61f313d18c60061a6fb227e7db8b",
+      "path": "ResidentMenu/blyt/RdtBalloon.bflyt"
+    },
+    "Footer": {
+      "firmware": "22.5.0",
+      "sha256": "f5e0418b83a4994b8dc20a4e214a76eff1a0aee98dd118e77a400b5a31aa6a59",
+      "path": "common/blyt/Footer.bflyt"
+    },
+    "FooterAll": {
+      "firmware": "22.5.0",
+      "sha256": "7f71ad80c93f6747060149a09899c8736bcfcf6535490ec5153c0da82deaf64a",
+      "path": "common/blyt/FooterAll.bflyt"
+    },
+    "FooterBtn": {
+      "firmware": "22.5.0",
+      "sha256": "d485e63d78c93267ff28f4df82fd699243dd9d365e89373c7614f816af05c948",
+      "path": "common/blyt/FooterBtn.bflyt"
+    },
+    "FooterCtrl": {
+      "firmware": "22.5.0",
+      "sha256": "6e8d261b9984be827ba9e42787b4c70507559fe03bd79d46606d80d045ac1cdf",
+      "path": "common/blyt/FooterCtrl.bflyt"
+    },
+    "LineFooter": {
+      "firmware": "22.5.0",
+      "sha256": "d402a56373bdd80a819aba4e6c66c0e00ea9b192d1149668b089a3f9dc36d296",
+      "path": "common/blyt/LineFooter.bflyt"
+    },
+    "CntrIndicatorS": {
+      "firmware": "22.5.0",
+      "sha256": "bddbdf4f6230f3b7f85fbe39e36059b911eac3349d93a65376795275140ba165",
+      "path": "common/blyt/CntrIndicatorS.bflyt"
+    },
+    "RdtBtnChangeUser": {
+      "firmware": "22.5.0",
+      "sha256": "5b1feb498e07cf7694c5ed1323749c38433e194d74510a3fd090059b3bcb1834",
+      "path": "ResidentMenu/blyt/RdtBtnChangeUser.bflyt"
+    },
+    "RdtProgressBarDl": {
+      "firmware": "22.5.0",
+      "sha256": "00a1a78967afe49ad486c9ced5341683911b5ffe3ba6c7e3269978c6c4bc2119",
+      "path": "ResidentMenu/blyt/RdtProgressBarDl.bflyt"
+    },
+    "RdtProgressBarErr": {
+      "firmware": "22.5.0",
+      "sha256": "c0a92571190750ba9960a3b5576315736d300b8ebf15b947638b7334f3881dac",
+      "path": "ResidentMenu/blyt/RdtProgressBarErr.bflyt"
+    },
+    "RdtProgressBarOffline": {
+      "firmware": "22.5.0",
+      "sha256": "39168d821b38c601d185678856066f8984b3614de632c7d83e3987201f651dfc",
+      "path": "ResidentMenu/blyt/RdtProgressBarOffline.bflyt"
+    },
+    "RdtProgressBar": {
+      "firmware": "22.5.0",
+      "sha256": "3d8c40b7d138ac7b955882c4bc46270b36e13a5046db283fa27d0814479401a1",
+      "path": "ResidentMenu/blyt/RdtProgressBar.bflyt"
+    },
+    "RdtIconDl": {
+      "firmware": "22.5.0",
+      "sha256": "e17e371926fb861724cd109991456b2749786882df5756228f69231578391cd6",
+      "path": "ResidentMenu/blyt/RdtIconDl.bflyt"
+    },
+    "RdtIconErr": {
+      "firmware": "22.5.0",
+      "sha256": "d95710bb7ab47b8e42e06aa606a0e0867af067af5484eecec3a637bbae8554dc",
+      "path": "ResidentMenu/blyt/RdtIconErr.bflyt"
+    },
+    "RdtIconPromotion": {
+      "firmware": "22.5.0",
+      "sha256": "ebd872ae1f2197630725f0ec6d8180ead1b54f0f008b45300ef3d9ead2f4dc9c",
+      "path": "ResidentMenu/blyt/RdtIconPromotion.bflyt"
+    },
+    "ProgressBar": {
+      "firmware": "22.5.0",
+      "sha256": "3ba7d2ecd2bf6d37743d41db22cdf4f58a4876e58dc9a5c881151ff885e84a02",
+      "path": "common/blyt/ProgressBar.bflyt"
+    },
+    "ProgressBarFraction": {
+      "firmware": "22.5.0",
+      "sha256": "9389408d313446a26271f5ec6efa13cf2dbb1ae192f22fd94b90e8d45e74d90b",
+      "path": "common/blyt/ProgressBarFraction.bflyt"
+    },
+    "RdtBalloonSystemApplet": {
+      "firmware": "22.5.0",
+      "sha256": "4521b3d3e89267bd59c7400e3f97d2fadd72c889232d3d3e18280a9ac3821327",
+      "path": "ResidentMenu/blyt/RdtBalloonSystemApplet.bflyt"
+    },
+    "RdtBase": {
+      "firmware": "22.5.0",
+      "sha256": "453f346107e2c13ecae92fb9a7d8c2d839d7ec21f3ccedb771a653772563ca21",
+      "path": "ResidentMenu/blyt/RdtBase.bflyt"
+    },
+    "DBaseNml": {
+      "firmware": "22.5.0",
+      "sha256": "c519b14978e8cc9ce0100c8995fbe5879d4f77ea36878e086a0a525f0e70866d",
+      "path": "common/blyt/DBaseNml.bflyt"
+    },
+    "IconError": {
+      "firmware": "22.5.0",
+      "sha256": "35c7faf8a466791d5146eac45387d2756ffc61af1e32708b238ebca41ec63e9e",
+      "path": "ResidentMenu/blyt/IconError.bflyt"
+    },
+    "RdtIconNewFrd": {
+      "firmware": "22.5.0",
+      "sha256": "baf44808e104a29d02007d865269453fd6f288ab75e0a9290e482e599ca51dc2",
+      "path": "ResidentMenu/blyt/RdtIconNewFrd.bflyt"
+    },
+    "UserIconName": {
+      "firmware": "22.5.0",
+      "sha256": "f9dff1dba457cfea6a87bddb927a1c80b03f3d667fe7c796a85f188497865641",
+      "path": "common/blyt/UserIconName.bflyt"
+    },
+    "UserIconNameStatus": {
+      "firmware": "19.0.1",
+      "sha256": "8e5c9d932a9190de76faa2df7fc6fcd3801acb8cc2859d9642e5325ad85c4dfc",
+      "path": "common/blyt/UserIconNameStatus.bflyt"
+    },
+    "DCntUserIconNameStatus": {
+      "firmware": "19.0.1",
+      "sha256": "d7a6ed00fc888f13bbe48e9aa931cd4bed019913d6075a9529ba796e0e0f907b",
+      "path": "common/blyt/DCntUserIconNameStatus.bflyt"
+    },
+    "DBtmBaseNml": {
+      "firmware": "22.5.0",
+      "sha256": "933079d5e7c6a5c66f413fc45e63ba0864a7ad7b3702d6f8ed89f0cc5bb22345",
+      "path": "common/blyt/DBtmBaseNml.bflyt"
+    },
+    "BlurBg": {
+      "firmware": "22.5.0",
+      "sha256": "af6f886ab532a8eb68200576fce0833d527fd3a1c2823b785d8af824a2196870",
+      "path": "common/blyt/BlurBg.bflyt"
+    },
+    "BlurBg2": {
+      "firmware": "22.5.0",
+      "sha256": "09590dd14ce9a80570a35c331f87eda9174f6998e6da02ab45d494f294f9edc3",
+      "path": "common/blyt/BlurBg2.bflyt"
+    },
+    "MaskBlack": {
+      "firmware": "22.5.0",
+      "sha256": "faf5b2503921f2148ed14e95ca0e83d5076c1f23f5c1c6c81481d8fa81a82c5c",
+      "path": "common/blyt/MaskBlack.bflyt"
+    },
+    "SystemAppletFader": {
+      "firmware": "22.5.0",
+      "sha256": "4a900522d5231cfb4c73fd96a006b5cc2dfa11ce2fbec9650d7ffac7f1f457ec",
+      "path": "common/blyt/SystemAppletFader.bflyt"
+    }
+  }
+}

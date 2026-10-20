@@ -57,4 +57,24 @@ export const FIRMWARE_SKINS = `
 .dht-firmware[data-firmware-theme=iisu] .fw-version strong{color:#4aa6ee}
 .dht-firmware[data-firmware-theme=iisu] button{background:#f2f4f8;color:#2b2f3a;border:1.5px solid #e1e5ee;border-radius:22px;font-weight:600}
 .dht-firmware[data-firmware-theme=iisu] button[data-selected=true]{background:#8fd2ff;color:#0f2a48;border-color:#4aa6ee;outline:none;box-shadow:0 0 0 3px #8fd2ff88}
+
+/* Bundled dashboard update dialogs. */
+.dht-firmware[data-firmware-theme="onyx"]{background:#171719!important;color:#f0f0f0;border:1px solid #777;border-radius:4px;box-shadow:inset 0 1px #ffffff66,0 18px 60px #0009}
+.dht-firmware[data-firmware-theme="onyx"] button{border-radius:4px;background:linear-gradient(#ffffff25,#00000030);color:inherit}.dht-firmware[data-firmware-theme="onyx"] button[data-selected=true]{background:var(--fw-accent);color:#14202c;box-shadow:0 0 12px #ffffff30}
+.dht-firmware[data-firmware-theme="silver"]{background:linear-gradient(#f3f5f7,#aeb8c4)!important;color:#182331;border:2px outset #e4eaf1;border-radius:10px;box-shadow:inset 0 1px #ffffff66,0 18px 60px #0009}
+.dht-firmware[data-firmware-theme="silver"] button{border-radius:4px;background:linear-gradient(#ffffff25,#00000030);color:inherit}.dht-firmware[data-firmware-theme="silver"] button[data-selected=true]{background:var(--fw-accent);color:#14202c;box-shadow:0 0 12px #ffffff30}
+.dht-firmware[data-firmware-theme="blue-glass"]{background:linear-gradient(135deg,#c7edffed,#176394ed)!important;color:#fff;border:2px solid #c5ecff;border-radius:18px;box-shadow:inset 0 1px #ffffff66,0 18px 60px #0009}
+.dht-firmware[data-firmware-theme="blue-glass"] button{border-radius:4px;background:linear-gradient(#ffffff25,#00000030);color:inherit}.dht-firmware[data-firmware-theme="blue-glass"] button[data-selected=true]{background:var(--fw-accent);color:#14202c;box-shadow:0 0 12px #ffffff30}
+.dht-firmware[data-firmware-theme="gameamp"]{background:linear-gradient(#565c58,#222821)!important;color:#d7efbb;border:3px ridge #939e8c;border-radius:3px;box-shadow:inset 0 1px #ffffff66,0 18px 60px #0009}
+.dht-firmware[data-firmware-theme="gameamp"] button{border-radius:4px;background:linear-gradient(#ffffff25,#00000030);color:inherit}.dht-firmware[data-firmware-theme="gameamp"] button[data-selected=true]{background:var(--fw-accent);color:#14202c;box-shadow:0 0 12px #ffffff30}
+.dht-firmware[data-firmware-theme="gamecube"]{background:linear-gradient(145deg,#51416d,#211535)!important;color:#eee5ff;border:3px outset #9981be;border-radius:18px 4px 18px 4px;box-shadow:inset 0 1px #ffffff66,0 18px 60px #0009}
+.dht-firmware[data-firmware-theme="gamecube"] button{border-radius:4px;background:linear-gradient(#ffffff25,#00000030);color:inherit}.dht-firmware[data-firmware-theme="gamecube"] button[data-selected=true]{background:var(--fw-accent);color:#14202c;box-shadow:0 0 12px #ffffff30}
+.dht-firmware[data-firmware-theme="ios6"]{background:linear-gradient(#7186a4,#293d5e)!important;color:#fff;border:2px solid #d6e2f2;border-radius:14px;box-shadow:inset 0 1px #ffffff66,0 18px 60px #0009}
+.dht-firmware[data-firmware-theme="ios6"] button{border-radius:9px;background:linear-gradient(#ffffff25,#00000030);color:inherit}.dht-firmware[data-firmware-theme="ios6"] button[data-selected=true]{background:var(--fw-accent);color:#14202c;box-shadow:0 0 12px #ffffff30}
+.dht-firmware[data-firmware-theme="old-big-picture"]{background:linear-gradient(125deg,#214965,#101e30)!important;color:#e2f3ff;border:1px solid #6496b4;border-radius:2px;box-shadow:inset 0 1px #ffffff66,0 18px 60px #0009}
+.dht-firmware[data-firmware-theme="old-big-picture"] button{border-radius:4px;background:linear-gradient(#ffffff25,#00000030);color:inherit}.dht-firmware[data-firmware-theme="old-big-picture"] button[data-selected=true]{background:var(--fw-accent);color:#14202c;box-shadow:0 0 12px #ffffff30}
+.dht-firmware[data-firmware-theme="santa-express"]{background:linear-gradient(135deg,#641e24,#24120e)!important;color:#fff0cd;border:3px ridge #d6b777;border-radius:16px;box-shadow:inset 0 1px #ffffff66,0 18px 60px #0009}
+.dht-firmware[data-firmware-theme="santa-express"] button{border-radius:4px;background:linear-gradient(#ffffff25,#00000030);color:inherit}.dht-firmware[data-firmware-theme="santa-express"] button[data-selected=true]{background:var(--fw-accent);color:#14202c;box-shadow:0 0 12px #ffffff30}
+.dht-firmware[data-firmware-theme="wiiflow-default"]{background:linear-gradient(#545a60,#22262b)!important;color:#fff;border:2px solid #b8c0c7;border-radius:8px;box-shadow:inset 0 1px #ffffff66,0 18px 60px #0009}
+.dht-firmware[data-firmware-theme="wiiflow-default"] button{border-radius:4px;background:linear-gradient(#ffffff25,#00000030);color:inherit}.dht-firmware[data-firmware-theme="wiiflow-default"] button[data-selected=true]{background:var(--fw-accent);color:#14202c;box-shadow:0 0 12px #ffffff30}
 `;

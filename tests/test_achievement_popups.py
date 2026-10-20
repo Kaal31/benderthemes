@@ -14,6 +14,13 @@ class FinallyDetectionTests(unittest.TestCase):
             plugin=root/"renamed";plugin.mkdir()
             (plugin/"plugin.json").write_text(json.dumps({"name":"Finally Achievement Plugin"}))
             self.assertTrue(module.installed_finally(root)["finallyInstalled"])
+    def test_customizer_manifest_and_folder(self):
+        for folder, manifest in [("renamed", {"name":"Achievement Customizer"}), ("achievement-customizer", None)]:
+            with tempfile.TemporaryDirectory() as path:
+                plugin=Path(path)/folder;plugin.mkdir()
+                if manifest: (plugin/"plugin.json").write_text(json.dumps(manifest))
+                self.assertTrue(module.installed_finally(path)["customizerInstalled"])
+
     def test_missing_root_and_broken_manifest(self):
         with tempfile.TemporaryDirectory() as path:
             root=Path(path)

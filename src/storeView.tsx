@@ -11,11 +11,12 @@ import {castleWindowAppearance,useCastleWindow} from "./themes/castleWindow";
 import { Navigation } from "@decky/ui";
 import { CSSProperties, ReactNode, useEffect, useRef, useState } from "react";
 import { opensKeyboardOnTap, showSteamKeyboard } from "./steamKeyboard";
-import { Press, setModalInput, Stage, useStage } from "./input";
+import { Press, setModalInput, Stage, StageHost, useStage } from "./input";
 import { Game, Library, openSteam } from "./library";
 import { fmtPrice, loadStoreDetails, loadStoreLists, searchStore, STORE_TABS, StoreDetails, StoreItem, StoreTab } from "./store";
 import { TrailerVideo } from "./media";
 import { playSound } from "./steam";
+import {activeTheme} from "./engine/registry";
 import { Settings } from "./settings";
 import { useAssets } from "./assets";
 import { PS1_STORE } from "./themes/ps1Styles";
@@ -70,6 +71,20 @@ interface Skin {
 const ring = (c: string, glow = "") => (on: boolean): CSSProperties => (on ? { boxShadow: `0 0 0 3px ${c}${glow ? `, ${glow}` : ""}`, transform: "scale(1.04)" } : {});
 export function storeSkin(s: Settings): Skin {
   const t = s.theme;
+  if(t==="frame"){
+   const id=activeTheme(s)?.id;
+   const profiles:Record<string,{bg:string;panel:string;text:string;sub:string;accent:string;radius:number;font?:string}>={
+    "old-big-picture":{bg:"radial-gradient(ellipse at top,#164761,#07182c)",panel:"#123b54",text:"#d8edf4",sub:"#84b6ce",accent:"#248eae",radius:2},
+    "blue-glass":{bg:"linear-gradient(135deg,#315774,#6f9bb6 52%,#345e7c)",panel:"linear-gradient(#89b5ce,#345973)",text:"#f0f7fc",sub:"#d4e6f0",accent:"#3d8fc8",radius:10},
+    "ios6":{bg:"repeating-linear-gradient(90deg,#d6dce4 0 3px,#d2d9e2 3px 5px)",panel:"linear-gradient(#fff,#e9edf3)",text:"#233a53",sub:"#526b86",accent:"#367ebc",radius:9},
+    "gameamp":{bg:"linear-gradient(110deg,#e6ebef,#9da7b4 26%,#eef2f6 49%,#b4bdc8)",panel:"linear-gradient(#f2f5fa,#aab7c8)",text:"#172d4b",sub:"#3c536d",accent:"#0059b5",radius:16,font:"'Courier New',monospace"},
+    "santa-express":{bg:"radial-gradient(ellipse at top,#a83724,#490b09 80%)",panel:"linear-gradient(#a62b1c,#570d08)",text:"#fff0da",sub:"#edbc9a",accent:"#cb442e",radius:22},
+    "gamecube":{bg:"radial-gradient(ellipse at center,#34374e,#121522)",panel:"#282d43",text:"#fff",sub:"#b1b6d0",accent:"#8a67ba",radius:2},
+    "wiiflow-default":{bg:"radial-gradient(ellipse at top,#434648,#171919)",panel:"#30383a",text:"#fff",sub:"#c4cccf",accent:"#66848e",radius:4}
+   };
+   const profile=id?profiles[id]:undefined;
+   if(profile)return{title:"Store",sale:"#b0d560",layout:"grid",accentText:"#fff",ring:ring(profile.accent),...profile};
+  }
   const ps = { title: "PlayStation Store", sale: "#f5c518" };
   switch (t) {
     case "wii": case "wiiu": return {title:t==="wii"?"Shopping Channel":"Nintendo-style Shop",sale:"#1f93ba",layout:"grid",bg:"radial-gradient(ellipse at top,#fff,#e6eef3)",font:"Arial,sans-serif",panel:"linear-gradient(#fff,#edf3f7)",text:"#536c7b",sub:"#708895",accent:"#d9f4ff",accentText:"#256a89",radius:t==="wii"?24:18,ring:on=>on?{boxShadow:"0 0 0 3px #37bce9,0 4px 12px #70b9d644"}: {boxShadow:"0 2px 5px #879dab22"}};
@@ -158,7 +173,7 @@ type Zone = "tabs" | "items" | "detail" | "trailer";
 
 export function StoreView({ settings, lib, onClose, onLaunch }: { settings: Settings; lib: Library; onClose: () => void; onLaunch: (g: Game) => void }) {
   const skin = storeSkin(settings);
-  const castleWindow=useCastleWindow(settings,onClose);
+  const castleWindow=useCastleWindow(settings,onClose,"store");
   const close=castleWindow.close;
   const icons = useAssets("xmb-ps3");
   const [lists, setLists] = useState<Record<string, StoreItem[]> | null>(null);
@@ -295,10 +310,10 @@ export function StoreView({ settings, lib, onClose, onLaunch }: { settings: Sett
   }, []);
 
   return (
-    <div ref={castleWindow.ref} className="dht-store" data-dht-store-skin={settings.theme} data-switch-style={settings.theme === "switch" ? style(settings, "switch", "themeColor") : undefined} data-scheme={iisuSchemeAttr(settings)} style={{ position: "absolute", inset: 0, zIndex: 85, background: "#000",...iisuPageVars(settings),...(settings.theme==="castle"?castleWindowAppearance(settings):{}) }}>
+    <div ref={castleWindow.ref} className="dht-store" data-dht-store-skin={settings.theme} data-theme-id={activeTheme(settings)?.id} data-switch-style={settings.theme === "switch" ? style(settings, "switch", "themeColor") : undefined} data-scheme={iisuSchemeAttr(settings)} style={{ position: "absolute", inset: 0, zIndex: 85, background: "#000",...iisuPageVars(settings),...(settings.theme==="castle"?castleWindowAppearance(settings):{}) }}>
       <style>{NINTENDO_STORE_CSS + "\n" + IISU_STORE_CSS}</style>
       {searchOpen && <div className="dht-store-search" style={{position:"absolute",inset:settings.theme==="nazarick"?"10% 0 0":0,zIndex:5,background:skin.bg,color:skin.text,display:"grid",placeItems:"center"}}><form onSubmit={e=>{e.preventDefault();submitSearch();}} style={{width:"65%"}}><h1>{tab === "plugins" ? t("searchPlugins") : tab === "themes" ? t("searchThemes") : t("searchStore")}</h1><input ref={searchBox} autoFocus {...opensKeyboardOnTap} aria-label={tab === "plugins" ? t("searchPlugins") : tab === "themes" ? t("searchThemes") : t("searchStore")} value={searchDraft} onChange={e=>setSearchDraft(e.target.value)} onKeyDown={e=>{e.stopPropagation();if(e.key==="Escape")setSearchOpen(false);}} style={{width:"100%",boxSizing:"border-box",fontSize:28,padding:18,color:skin.text,background:skin.panel,border:`2px solid ${skin.sub}`,borderRadius:skin.radius}}/><button type="submit" style={{fontSize:22,padding:"14px 30px",marginTop:24,background:skin.accent,color:skin.accentText}}>{t("search")}</button><button type="button" onClick={()=>setSearchOpen(false)} style={{fontSize:22,padding:"14px 30px",marginLeft:18}}>{t("back")}</button><p style={{marginTop:22,fontSize:16,color:skin.sub}}>{t("storeSearchPrompt")}</p></form></div>}
-      <Stage background="transparent">
+      <StageHost><Stage background="transparent">
         {settings.theme==="nazarick"&&<><NazarickBackdrop page="store" motion={settings.animations} settings={settings}/><NazarickNavigation page="store" settings={settings} onNavigate={navigateNazarick}/></>}
         <StoreBody
           skin={skin}
@@ -323,7 +338,7 @@ export function StoreView({ settings, lib, onClose, onLaunch }: { settings: Sett
           onAction={(i) => (setDsel(i), actions[i]?.run())}
           onBack={() => (zone === "detail" ? (setZone("items"), setDetail(null)) : zone === "trailer" ? setZone("detail") : close())}
         />
-      </Stage>
+      </Stage></StageHost>
     </div>
   );
 }

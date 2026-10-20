@@ -9,7 +9,10 @@
     "typecheck": "tsc --noEmit",
     "preview": "node preview/build.mjs",
     "package": "python tools/package_release.py",
-    "theme:viewer": "node sdk/viewer/server.mjs"
+    "theme:viewer": "node sdk/viewer/server.mjs",
+    "pretypecheck": "python tools/compile_bundled_themes.py",
+    "prebuild": "python tools/compile_bundled_themes.py",
+    "prepreview": "python tools/compile_bundled_themes.py"
   },
   "devDependencies": {
     "@decky/rollup": "^1.0.2",
@@ -38,5 +41,9 @@
         "react-dom"
       ]
     }
+  },
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/Kaal31/benderthemes.git"
   }
 }

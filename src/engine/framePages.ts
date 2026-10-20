@@ -37,6 +37,7 @@ async function frameImage(url: string): Promise<string> {
   } catch { return ""; }
 }
 
+function storeImage(url:string|undefined){if(!url)return "";try{return typeof document!=="undefined"?new URL(url,document.baseURI).href:url;}catch{return "";}}
 export async function framePageRequest(op: string, args: any, api: HomeApi, downloads: Downloads) {
   switch (op) {
     case "videoSource": {
@@ -83,11 +84,12 @@ export async function framePageRequest(op: string, args: any, api: HomeApi, down
       const tab = args?.tab;
       if (!["featured", "specials", "top", "new", "soon", "search"].includes(tab)) throw Error("Unknown store section");
       const list = tab === "search" ? await searchStore(String(args?.query ?? "").slice(0, 120)) : (await loadStoreLists())[tab] ?? [];
-      return { items: list.slice(0, 40).map(g => ({ ...g, priceText: g.free ? "Free to Play" : fmtPrice(g.price, g.currency) })) };
+      return { items: list.slice(0, 40).map(g => ({ ...g, header:storeImage(g.header), capsule:storeImage(g.capsule), priceText: g.free ? "Free to Play" : fmtPrice(g.price, g.currency) })) };
     }
     case "storeDetails": {
       if (!Number.isSafeInteger(args?.appid) || args.appid <= 0) throw Error("Invalid app");
-      return await loadStoreDetails(args.appid);
+      const detail=await loadStoreDetails(args.appid);
+      return detail?{...detail,header:storeImage(detail.header),screenshots:detail.screenshots.map(storeImage)}:detail;
     }
     case "checkout": {
       if (!Number.isSafeInteger(args?.appid) || args.appid <= 0) throw Error("Invalid app");

@@ -1,4 +1,5 @@
 import { t } from "../i18n";
+import { BackgroundMedia } from "../WallpaperMedia";
 // iiSU-style home (a bonus look after the iiSU emulation frontend for Android):
 // a white (or dark) page with a soft dot grid, rounded square icons in three
 // rows that scroll sideways, mixed-size cards ("Jump back in!", "Been a
@@ -273,7 +274,7 @@ export function IisuHome() {
           {/* background */}
           <div className="dht-iisu-bg" style={{ position: "absolute", inset: 0, background: v("bg", bgMode === "colour" ? `radial-gradient(ellipse at 30% 10%, ${fill}${light ? "55" : "88"} 0%, ${light ? "#f2f3f7" : deep} 60%, ${light ? "#e9eaf0" : "#08070d"} 100%)` : `radial-gradient(${pal.dots} 1.6px, transparent 1.8px) 0 0 / 24px 24px, ${pal.page}`) }} />
           {bgMode === "pattern" && !wall && <Confetti light={light} W={W} H={H} />}
-          {wall && bgMode !== "art" && bgMode !== "blur" && <img src={wall} style={{ position: "absolute", inset: 0, width: W, height: H, objectFit: "cover" }} />}
+          {wall && bgMode !== "art" && bgMode !== "blur" && <BackgroundMedia src={wall} style={{ position: "absolute", inset: 0, width: W, height: H, objectFit: "cover" }} />}
           {bg && (bgMode === "art" || bgMode === "blur" || panelGame) && (
             <div key={bg.appid} className="dht-iisu-art" style={{ position: "absolute", inset: 0, overflow: "hidden", animation: animate ? "dhtIisuFade 500ms ease-out" : "none" }}>
               <GameArt g={bg} kind="hero" style={{ width: W, height: H, ...(bgMode === "blur" && !panelGame ? { filter: "blur(26px) saturate(1.3)", transform: "scale(1.12)" } : {}) }} />

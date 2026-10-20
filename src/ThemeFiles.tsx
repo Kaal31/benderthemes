@@ -8,6 +8,7 @@ import { callable } from "@decky/api";
 import { MutableRefObject, useEffect, useMemo, useRef, useState } from "react";
 import { opensKeyboardOnTap, showSteamKeyboard } from "./steamKeyboard";
 import type { InputHandler } from "./input";
+import { refreshThemeLists } from "./themeSettingsMenu";
 import { resourcesChangedOnClose } from "./marketplaceState";
 import { playSound } from "./steam";
 
@@ -15,14 +16,15 @@ type Source = { id?: string; name: string; url: string; credit: string };
 type Kind = { id: string; label: string; dir: string; exts: string[]; sources: string[] };
 type Kinds = { kinds: Kind[]; sources: Record<string, Source>; notBuilt: { name: string; url: string; kinds: string[]; why: string }[] };
 type FileRef = { name: string; size: number };
-export type SourceItem = { id: string; name: string; author: string; image: string; page: string; downloads?: number; tag?: string; file?: FileRef; files?: FileRef[] | null };
-type Page = { kind: string; page: number; pages: number; total: number; items: SourceItem[]; source: Source; error?: string; skipped?: number };
+export type SourceItem = { id: string; name: string; author: string; image: string; page: string; description?: string; fallbackImage?: string; images?: string[]; externalLinks?: string[]; externalOnly?: boolean; downloads?: number; tag?: string; file?: FileRef; files?: FileRef[] | null };
+type Page = { kind: string; page: number; pages: number; total: number; items: SourceItem[]; source: Source; error?: string; warning?: string; skipped?: number };
 type Progress = { busy: boolean; percent: number; message: string };
 
 const listKinds = callable<[], Kinds>("theme_sources");
 const browse = callable<[kind: string, source: string, query: string, page: number, refresh: boolean], Page>("theme_sources_browse");
 const itemFiles = callable<[kind: string, ident: string], { files: FileRef[]; error?: string }>("theme_sources_files");
 const download = callable<[kind: string, source: string, ident: string, file: string, name: string], { success: boolean; name?: string; already?: boolean; error?: string }>("theme_sources_download");
+const savedDownloads=callable<[kind:string],Record<string,string>>("theme_sources_saved");
 const downloadProgress = callable<[], Progress>("theme_sources_progress");
 
 const openUrl = (url?: string) => { if (url && /^https:\/\//.test(url)) Navigation.NavigateToSteamWeb(url); };
@@ -30,9 +32,9 @@ const mb = (n: number) => n >= 1048576 ? `${(n / 1048576).toFixed(1)} MB` : n ? 
 const KIND_HINT: Record<string, string> = { psp: "PSP", p3t: "PS3", vita: "PS Vita", switch: "Switch", wiiu: "Wii U", "3ds": "3DS", wii: "Wii", xbox: "Xbox" };
 const hintFor = (kind: string) => `Choose it in the ${KIND_HINT[kind] ?? ""} theme's Theme options${kind === "wiiu" ? " (Wii U themes also need your own menu files)" : ""}.`;
 
-export function ThemeFiles({ inputRef }: { inputRef: MutableRefObject<InputHandler | null> }) {
+export function ThemeFiles({ inputRef, initialKind = "psp" }: { inputRef: MutableRefObject<InputHandler | null>; initialKind?: string }) {
   const [kinds, setKinds] = useState<Kinds | null>(null);
-  const [kind, setKind] = useState("psp");
+  const [kind, setKind] = useState(initialKind);
   const [source, setSource] = useState("");
   const [query, setQuery] = useState("");
   const [typed, setTyped] = useState("");
@@ -46,6 +48,9 @@ export function ThemeFiles({ inputRef }: { inputRef: MutableRefObject<InputHandl
   const [files, setFiles] = useState<Record<string, FileRef[] | { error: string }>>({});
   const [busy, setBusy] = useState(false);
   const [progress, setProgress] = useState<Progress | null>(null);
+  const [savedFiles,setSavedFiles]=useState<Record<string,string>>({});
+  const savedKey=(file:FileRef)=>`${kind}:${src}:${current?.id}:${src==="archive"?file.name:""}`;
+  useEffect(()=>{let live=true;savedDownloads(kind).then(rows=>{if(live&&rows)setSavedFiles(previous=>({...previous,...rows}));}).catch(()=>{});return()=>{live=false;};},[kind]);
   const [message, setMessage] = useState<{ text: string; ok?: boolean } | null>(null);
   const gridRef = useRef<HTMLDivElement>(null);
   const detailRef = useRef<HTMLDivElement>(null);
@@ -111,16 +116,22 @@ export function ThemeFiles({ inputRef }: { inputRef: MutableRefObject<InputHandl
       if (!r.success) setMessage({ text: r.error || "Download failed." });
       else {
         setMessage({ ok: true, text: `${r.already ? "Already saved" : "Saved"} to ${kindInfo?.dir}/ as “${r.name}”. ${hintFor(kind)}` });
+        setSavedFiles(previous=>({...previous,[savedKey(file)]:r.name||file.name}));
+        refreshThemeLists();
         resourcesChangedOnClose();
       }
     } catch (e) { if (alive.current) setMessage({ text: String(e) }); }
     finally { if (alive.current) { setBusy(false); setConfirm(null); } }
   };
   // detail buttons: one per file (or one Download), then "Source page"
-  const actions = (fileList ?? []).length + 1;
+  const actions = (current?.externalLinks?.length ?? 0) + (fileList ?? []).length + 1;
   const pressAction = (i: number) => {
+    const links = current?.externalLinks ?? [];
+    if (i < links.length) { openUrl(links[i]); return; }
+    i -= links.length;
     const list = fileList ?? [];
     if (i >= list.length) { openUrl(current?.page); return; }
+    if(savedFiles[savedKey(list[i])])return;
     if (confirm && confirm.name === list[i].name) void startDownload(list[i]);
     else { setConfirm(list[i]); setMessage(null); }
   };
@@ -188,14 +199,15 @@ export function ThemeFiles({ inputRef }: { inputRef: MutableRefObject<InputHandl
     </div>
     <div className="dht-files-sub">
       <span className="dht-files-sources">From {(kindInfo?.sources ?? []).map(s => <button key={s} data-active={s === src} onClick={() => setSource(s)}>{kinds?.sources[s]?.name ?? s}</button>)}{(kindInfo?.sources.length ?? 0) > 1 && <i>{t("xSwitches")}</i>}</span>
-      <span className="dht-files-status" role="status">{loading && !items.length ? "Loading…" : info?.error ? info.error : `${info?.total ?? 0} ${query ? `results for “${query}”` : "themes"} · saved to ${kindInfo?.dir ?? "skins"}/`}</span>
+      <span className="dht-files-status" role="status">{loading && !items.length ? t("loadingDots") : info?.error ? info.error : `${info?.total ?? 0} ${query ? `results for “${query}”` : "themes"}${kind === "wiiflow" ? " · original source posts" : ` · saved to ${kindInfo?.dir ?? "skins"}/`}`}</span>
     </div>
+    {info?.warning && <p className="dht-files-note" role="status">{info.warning}</p>}
     <div className="dht-files-layout">
       <div className="dht-files-grid" ref={gridRef} data-focused={zone === "grid"}>
         {!items.length && !loading && <div className="dht-files-empty"><strong>{info?.error ? t("sourceNotReachable") : t("nothingHereYet")}</strong><span>{info?.error ? t("installedThemeFilesOffline") : query ? t("tryFewerWords") : t("pickAnotherConsole")}</span></div>}
         {items.map((it, i) => <button key={it.id} className="dht-files-card" data-current={i === selected} data-selected={zone === "grid" && i === selected}
           onClick={() => { setSelected(i); setZone("detail"); setAction(0); }} onFocus={() => setSelected(i)}>
-          <span className="dht-files-art">{it.image ? <img src={it.image} alt="" loading="lazy" referrerPolicy="no-referrer" onError={e => { e.currentTarget.style.display = "none"; }} /> : null}<b>{it.name.slice(0, 1)}</b></span>
+          <span className="dht-files-art">{it.image ? <img src={it.image} alt="" loading="lazy" referrerPolicy="no-referrer" onError={e => { if(it.fallbackImage && !e.currentTarget.dataset.fallback){e.currentTarget.dataset.fallback="true";e.currentTarget.src=it.fallbackImage;}else e.currentTarget.style.display = "none"; }} /> : null}<b>{it.name.slice(0, 1)}</b></span>
           <strong>{it.name}</strong>
           <small>{it.author ? `by ${it.author}` : it.tag || srcInfo?.name}{it.downloads ? ` · ↓ ${it.downloads.toLocaleString()}` : ""}</small>
         </button>)}
@@ -204,21 +216,26 @@ export function ThemeFiles({ inputRef }: { inputRef: MutableRefObject<InputHandl
       </div>
       <aside className="dht-files-detail" ref={detailRef} data-focused={zone === "detail"}>
         {current ? <>
-          <div className="dht-files-preview">{current.image ? <img key={current.id} src={current.image} alt={`${current.name} preview`} referrerPolicy="no-referrer" onError={e => { e.currentTarget.style.display = "none"; }} /> : <span>{t("noPreview")}</span>}</div>
+          <div className="dht-files-preview">{current.image ? <img key={current.id} src={current.image} alt={`${current.name} preview`} referrerPolicy="no-referrer" onError={e => { if(current.fallbackImage && !e.currentTarget.dataset.fallback){e.currentTarget.dataset.fallback="true";e.currentTarget.src=current.fallbackImage;}else e.currentTarget.style.display = "none"; }} /> : <span>{t("noPreview")}</span>}</div>
           <h3>{current.name}</h3>
           <small className="dht-files-by">{current.author ? `by ${current.author} · ` : ""}{srcInfo?.name}{current.tag ? ` · ${current.tag}` : ""}</small>
+          {current.fallbackImage && <small className="dht-files-by">If the original image fails, a screenshot of our converted theme is shown.</small>}
+          {current.description && <p className="dht-files-note">{current.description}</p>}
+          {(current.images?.length ?? 0) > 1 && <div style={{display:"flex",gap:6,overflowX:"auto"}}>{current.images!.slice(1).map(url=><img key={url} src={url} alt={`${current.name} screenshot`} loading="lazy" referrerPolicy="no-referrer" style={{width:120,height:90,objectFit:"contain"}} onError={e=>{e.currentTarget.style.display="none"}} />)}</div>}
+          {current.externalOnly && <p className="dht-files-note">Open the author's download page, then import the extracted WiiFlow theme separately. Original image and download links may have expired.</p>}
           {fileList === null ? <p className="dht-files-note">{(files[current.id] as any)?.error ?? t("readingItemFiles")}</p> : <div className="dht-files-actions">
+            {current.externalLinks?.map((url,i)=><button key={url} data-active={zone === "detail" && action === i} onClick={()=>openUrl(url)}>Author download page {i+1} ↗</button>)}
             {fileList.map((f, i) => {
               const asking = confirm?.name === f.name;
               return <div key={f.name || i} className="dht-files-action" data-confirm={asking}>
-                <button className="dht-files-dl" data-active={zone === "detail" && action === i} disabled={busy} onClick={() => { setZone("detail"); setAction(i); pressAction(i); }}>
-                  {busy && asking ? `${progress?.percent ?? 0}% · ${progress?.message || "Downloading…"}` : asking ? `{t("confirmDownloadA")}` : `↓ ${fileList.length > 1 || src === "archive" ? f.name.split("/").pop() : "Download"}${f.size ? ` · ${mb(f.size)}` : ""}`}
+                <button className="dht-files-dl" data-active={zone === "detail" && action === i} disabled={busy||!!savedFiles[savedKey(f)]} onClick={() => { setZone("detail"); setAction(i); pressAction(i); }}>
+                  {savedFiles[savedKey(f)]?"✓ Saved · available in Theme options":busy && asking ? `${progress?.percent ?? 0}% · ${progress?.message || t("downloadingDots")}` : asking ? t("confirmDownloadA") : `↓ ${fileList.length > 1 || src === "archive" ? f.name.split("/").pop() : t("download")}${f.size ? ` · ${mb(f.size)}` : ""}`}
                 </button>
                 {asking && !busy && <p className="dht-files-confirm" role="alertdialog">Download {src === "archive" ? `“${f.name.split("/").pop()}”` : "this theme"} from {srcInfo?.name} into <b>{kindInfo?.dir}/</b>? {src === "archive" ? "It was uploaded by an archive.org user and is not checked by ThemeHub. " : src === "ps3pro" || src === "shenron0" ? "It comes from a public GitHub collection and is not checked by ThemeHub. " : ""}A confirms · B cancels.</p>}
               </div>;
             })}
-            {!fileList.length && <p className="dht-files-note">No {kindInfo?.exts.join(" / ")} files in this item.</p>}
-            <button className="dht-files-page" data-active={zone === "detail" && action === fileList.length} onClick={() => openUrl(current.page)}>{t("sourcePageLink")}</button>
+            {!fileList.length && !current.externalOnly && <p className="dht-files-note">No {kindInfo?.exts.join(" / ")} files in this item.</p>}
+            <button className="dht-files-page" data-active={zone === "detail" && action === fileList.length + (current.externalLinks?.length ?? 0)} onClick={() => openUrl(current.page)}>{t("sourcePageLink")}</button>
           </div>}
           {message && <p className="dht-files-message" data-ok={!!message.ok} role="status">{message.text}</p>}
           <p className="dht-files-credit">{srcInfo?.credit}</p>

@@ -1,0 +1,76 @@
+{
+  "classic": {
+    "Hud": {
+      "firmware": "19.0.1",
+      "sha256": "1dcdc4a8491575f67aea5d15c01f2b54c2a713261cd2fbeb23c960e0f2d3ab7c",
+      "path": "ResidentMenu/blyt/Hud.bflyt"
+    },
+    "HudTime": {
+      "firmware": "19.0.1",
+      "sha256": "5ad595740d72e0f4584b82eba920818bd74d751b351236951bc887856dc7046d",
+      "path": "ResidentMenu/blyt/HudTime.bflyt"
+    },
+    "HudSignal": {
+      "firmware": "19.0.1",
+      "sha256": "857fa344e14661d7ce017bc81ce0a9484a8998fb93793e4825a775e7cd4e3038",
+      "path": "ResidentMenu/blyt/HudSignal.bflyt"
+    },
+    "BatteryConsole": {
+      "firmware": "19.0.1",
+      "sha256": "d0005cbb233fd0f72b1d4f2b33c2f844ef7b5260cbae5082c9dbd0c4d1dfa320",
+      "path": "ResidentMenu/blyt/BatteryConsole.bflyt"
+    },
+    "HudBatteryNum": {
+      "firmware": "19.0.1",
+      "sha256": "98814e41f3da09bc5f147727be8258f05f9d3c00ed9b40f6e16ad58dd3fe941f",
+      "path": "Size"
+    },
+    "GTNumL": {
+      "firmware": "19.0.1",
+      "sha256": "de5147991e4483870f8a65b0b9bb8422d8a46668a55c019e1a896da749909fbb",
+      "path": "ResidentMenu/blyt/GTNumL.bflyt"
+    },
+    "GTNumM": {
+      "firmware": "19.0.1",
+      "sha256": "d99868ac8c3a1b16ac7b991057ffb5674c5c19eaeb13a01aea4be2277026697e",
+      "path": "ResidentMenu/blyt/GTNumM.bflyt"
+    }
+  },
+  "modern": {
+    "Hud": {
+      "firmware": "22.5.0",
+      "sha256": "1dcdc4a8491575f67aea5d15c01f2b54c2a713261cd2fbeb23c960e0f2d3ab7c",
+      "path": "ResidentMenu/blyt/Hud.bflyt"
+    },
+    "HudTime": {
+      "firmware": "22.5.0",
+      "sha256": "5ad595740d72e0f4584b82eba920818bd74d751b351236951bc887856dc7046d",
+      "path": "ResidentMenu/blyt/HudTime.bflyt"
+    },
+    "HudSignal": {
+      "firmware": "22.5.0",
+      "sha256": "857fa344e14661d7ce017bc81ce0a9484a8998fb93793e4825a775e7cd4e3038",
+      "path": "ResidentMenu/blyt/HudSignal.bflyt"
+    },
+    "BatteryConsole": {
+      "firmware": "22.5.0",
+      "sha256": "d0005cbb233fd0f72b1d4f2b33c2f844ef7b5260cbae5082c9dbd0c4d1dfa320",
+      "path": "ResidentMenu/blyt/BatteryConsole.bflyt"
+    },
+    "HudBatteryNum": {
+      "firmware": "22.5.0",
+      "sha256": "98814e41f3da09bc5f147727be8258f05f9d3c00ed9b40f6e16ad58dd3fe941f",
+      "path": "Size"
+    },
+    "GTNumL": {
+      "firmware": "22.5.0",
+      "sha256": "de5147991e4483870f8a65b0b9bb8422d8a46668a55c019e1a896da749909fbb",
+      "path": "ResidentMenu/blyt/GTNumL.bflyt"
+    },
+    "GTNumM": {
+      "firmware": "22.5.0",
+      "sha256": "d99868ac8c3a1b16ac7b991057ffb5674c5c19eaeb13a01aea4be2277026697e",
+      "path": "ResidentMenu/blyt/GTNumM.bflyt"
+    }
+  }
+}

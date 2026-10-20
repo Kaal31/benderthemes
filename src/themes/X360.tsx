@@ -1,4 +1,5 @@
 import { t } from "../i18n";
+import {BackgroundMedia} from "../WallpaperMedia";
 import {ProfileAvatar} from "../ProfileAvatar";
 // Xbox 360 Metro-era dashboard (2011): lowercase pivots across the top and a
 // horizontally scrolling field of flat tiles on the grey V2 background. The
@@ -202,7 +203,7 @@ function X360MetroHome() {
       <Stage background="#d9d9d9">
       <div className="dht-x360-skin" data-dht-from-skin={look.bg || look.accent ? "x360" : undefined} style={{ display: "contents", ...look.vars } as CSSProperties}>
         <div className="dht-x360-bg" style={{ position: "absolute", inset: 0, background: `var(--dht-x360-bg, ${look.bg || a.background ? `url("${look.bgFor(X360_SECTION[pv.name] ?? "home") ?? a.background}") center/cover` : "linear-gradient(180deg, #6e6e6e 0%, #9a9a9a 55%, #c4c4c4 100%)"})` }} />
-        {wall && <img src={wall} style={{ position: "absolute", inset: 0, width: W, height: H, objectFit: "cover" }} />}
+        {wall && <BackgroundMedia src={wall} style={{ position: "absolute", inset: 0, width: W, height: H, objectFit: "cover" }} />}
         {!wall && a["bottom-vignette"] && <img src={a["bottom-vignette"]} aria-hidden="true" style={{ position: "absolute", left: 0, bottom: 0, width: W, height: H * 300 / 720, pointerEvents: "none" }} />}
 
         {/* Xbox 360 logo, top right */}

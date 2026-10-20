@@ -72,6 +72,8 @@ def build():
         relative = path.relative_to(ROOT / "bundle")
         if any(part.startswith(".") for part in relative.parts):
             continue
+        if relative.parts[0] == "skins":
+            continue  # test skins remain archived in the assets repository for import
         assigned = owners(relative)
         if relative.parts[0] == "sounds" and relative.parts[1] in remote_audio:
             for key in assigned:
@@ -122,9 +124,12 @@ def build():
             "url": pack_url(ident, pack_version, target.name),
             "preview": None,
             "poster": None})
+    # Shipped frame interfaces keep code in themes/ and media in immutable
+    # published packs. Rebuilding the old bundle must not drop those entries.
+    catalog["themes"] += [p for p in previous["themes"] if p.get("frameTheme") or (p.get("defaultConsole") and p["id"] not in {t["id"] for t in catalog["themes"]})]
     preview_zip = out / "HubPreviews.zip"
     with zipfile.ZipFile(preview_zip, "w", zipfile.ZIP_DEFLATED) as z:
-        for ident in LABELS:
+        for ident in sorted(set(LABELS) | set(previous.get("gallery", {}).get("themes", []))):
             for ext in ("gif", "jpg"):
                 path = ROOT / f"out/theme-previews/{ident}.{ext}"
                 if path.is_file():
@@ -134,6 +139,11 @@ def build():
     preview_hash = hashlib.sha256(preview_zip.read_bytes()).hexdigest()
     catalog["gallery"] = {"sha256": preview_hash, "size": preview_zip.stat().st_size,
         "url": gallery_url(preview_hash)}
+    pinned_gallery = previous.get("gallery", {})
+    if pinned_gallery.get("themes"):
+        # Source-only builds keep the complete published gallery instead of
+        # replacing it with whichever preview files happen to exist locally.
+        catalog["gallery"] = pinned_gallery
     payload = json.dumps(catalog, indent=2) + "\n"
     (out / "theme-catalog.json").write_text(payload, encoding="utf-8")
     (ROOT / "theme-catalog.json").write_text(payload, encoding="utf-8")
@@ -146,7 +156,7 @@ def offline_catalog():
     for path in sorted((ROOT / "bundle").rglob("*")):
         if path.is_file() and "__pycache__" not in path.parts:
             relative = path.relative_to(ROOT / "bundle")
-            if any(part.startswith(".") for part in relative.parts):
+            if any(part.startswith(".") for part in relative.parts) or relative.parts[0] == "skins":
                 continue
             for key in owners(relative):
                 groups[key].append(relative.as_posix())

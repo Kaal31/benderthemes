@@ -91,6 +91,9 @@ const backend: Record<string, (...a: any[]) => any> = {
   theme_catalog: () => ({ ...((window as any).__themeCatalog || { themes: [] }), progress: (window as any).__downloadProgress || { busy: false, percent: 0, id: "", message: "" } }),
   theme_download_progress: () => (window as any).__downloadProgress || { busy: false, percent: 0, id: "", message: "" },
   theme_install: async (id: string) => {
+    ((window as any).__themeInstallCalls ??= []).push(id);
+    if((window as any).__themeInstallGate)await (window as any).__themeInstallGate;
+    if((window as any).__themeInstallFailure)return {success:false,error:"Preview install failure"};
     for (let percent = 0; percent <= 100; percent += 20) {
       (window as any).__downloadProgress = { busy: percent < 100, percent, id, message: "Preview download…" };
       await new Promise(resolve => setTimeout(resolve, 180));
@@ -102,7 +105,10 @@ const backend: Record<string, (...a: any[]) => any> = {
   theme_remove: (id: string) => { const pack = (window as any).__themeCatalog?.themes.find((p: any) => p.id === id); if (pack) delete pack.installedVersion; return { success: true }; },
   // Plugin Spotlight search (py_modules/plugin_catalog.py). A small invented fixture, not the real 4 MB list;
   // window.__pluginCatalog replaces it (e.g. { entries: [], installed: [], error: "…" } for the offline note).
-  achievement_popup_status: () => ({verified:true,finallyInstalled:!!(window as any).__finallyInstalled}),
+  achievement_popup_status: () => ({verified:true,finallyInstalled:!!(window as any).__finallyInstalled,customizerInstalled:!!(window as any).__customizerInstalled}),
+  spotlight_update_status: () => (window as any).__spotlightUpdates ?? { plugins: [], updateAvailable: false },
+  spotlight_remember_source: () => ({ success: true }),
+  spotlight_prepare_update: (id: string) => ({success: true, name: (window as any).__spotlightUpdates?.plugins.find((p: any) => p.id === id)?.name}),
   plugin_catalog: () => (window as any).__pluginCatalog ?? PLUGIN_CATALOG_FIXTURE,
   // Hub > Theme files (py_modules/theme_sources.py). Invented entries; window.__themeSources = { "<kind>:<source>": page }
   // replaces a page (tests inject real backend output with local pictures). Downloads are recorded in __themeSourceDownloads.
@@ -115,10 +121,13 @@ const backend: Record<string, (...a: any[]) => any> = {
     return { ...base, kind, page: page || 1, total: words.length ? items.length : base.total, items, source: { ...THEME_SOURCES_KINDS.sources[source], id: source } };
   },
   theme_sources_files: (_kind: string, id: string) => ({ files: [{ name: `${id}/Theme One.mym`, size: 420000 }, { name: "Theme Two.csm", size: 7300000 }] }),
+  theme_sources_saved: (kind:string) => Object.fromEntries(Object.entries((window as any).__savedThemeSources??{}).filter(([key])=>key.startsWith(kind+":"))),
   theme_sources_download: async (kind: string, source: string, id: string, file: string, name: string) => {
     ((window as any).__themeSourceDownloads ??= []).push({ kind, source, id, file, name });
     await new Promise(r => setTimeout(r, 300));
-    return { success: true, name: file ? file.split("/").pop() : `${name} (${source} ${id})` };
+    const savedName=file ? file.split("/").pop() : `${name} (${source} ${id})`;
+    ((window as any).__savedThemeSources??={})[`${kind}:${source}:${id}:${source==="archive"?file:""}`]=savedName;
+    return { success: true, name: savedName };
   },
   theme_sources_progress: () => ({ busy: true, percent: 40, message: "1 MB" }),
   plugin_update_status: () => ({ success: true, currentVersion: "1.10.0", releases: [], latest: null, updateAvailable: false, stale: false }),
@@ -134,11 +143,21 @@ const backend: Record<string, (...a: any[]) => any> = {
   log_frontend: (l: string, m: string) => console.log("[backend log]", l, m),
   get_settings: () => (window as any).__previewSettings ?? null,
   set_settings: (s: any) => ((window as any).__previewSettings = s, true),
+  local_music_folders: () => ({ downloads: "/home/deck/Downloads", music: "/home/deck/Music" }),
+  import_local_music: (path: string) => {
+    const w = window as any;
+    (w.__localMusicImports ??= []).push(path);
+    if (w.__localMusicFailure) return { ok: false, error: "Invalid audio" };
+    const folder = "ThemeHub-Local-Music-fixture";
+    w.__testPacks = [...(w.__testPacks ?? []).filter((p:any) => p.folder !== folder), { name: "Local music · song.mp3", folder, files: ["menu_music.mp3"], mappings: {}, ignore: [], music: true }];
+    return { ok: true, folder };
+  },
   list_sound_packs: () => (window as any).__testPacks ?? [],
   deckthemes_audio_catalog: () => (window as any).__deckthemesAudio ?? [],
   install_deckthemes_audio: async (id:string) => {
     const w=window as any;
     (w.__audioDownloadCalls??=[]).push(id);
+    if(w.__audioDownloadGate)await w.__audioDownloadGate;
     if(w.__audioDownloadFailure)return {ok:false,error:"Preview download failure"};
     const entry=w.__deckthemesAudio?.find((p:any)=>p.id===id);
     if(!entry)return {ok:false,error:"Unknown preview audio"};
@@ -148,6 +167,7 @@ const backend: Record<string, (...a: any[]) => any> = {
   },
   media_server: () => (window as any).__testServer ?? null,
   list_data_themes: () => (window as any).__dataThemes ?? { base: null, themes: [] },
+  ensure_frame_media: async () => {if((window as any).__frameMediaGate)await (window as any).__frameMediaGate;return {success:true};},
   get_dial_asset: (n: string) => (window as any).__dialAssets?.[n] ?? null,
   get_assets: (n: string) => (window as any).__testAssets?.[n] ?? {},
   list_wallpapers: () => ({ dir: "~/homebrew/data/DeckHomeThemes/wallpapers", files: [] }),
@@ -200,4 +220,7 @@ export const toaster = { toast(data: any) {
   const timer=setTimeout(dismiss,data.duration??5500);
   return {data,dismiss:()=>{clearTimeout(timer);dismiss();}};
 } };
-export const openFilePicker = async () => ({ path: "", realpath: "" });
+export const openFilePicker = async (...args: any[]) => {
+  ((window as any).__filePickerCalls ??= []).push(args);
+  return (window as any).__filePickerResult ?? { path: "", realpath: "" };
+};

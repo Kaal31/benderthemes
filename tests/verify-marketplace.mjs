@@ -7,7 +7,7 @@ const browser = await launch();
 // the Hub lists every catalog theme plus the built-in themes without a pack of their own (Wii, Switch, 3DS, PS1)
 const catalog = JSON.parse(readFileSync(new URL('../theme-catalog.json', import.meta.url), 'utf8')).themes.filter(p => p.theme);
 const presetsSource = readFileSync(new URL('../src/presets.ts', import.meta.url), 'utf8');
-const builtInDeclaration = presetsSource.match(/export const BUILT_IN_THEMES = (\[[^;]+?\]) as const;/);
+const builtInDeclaration = presetsSource.match(/export const BUILT_IN_THEMES = (\[[^;]*?\]) as const;/);
 assert.ok(builtInDeclaration, 'built-in theme declaration found');
 const BUILT_IN = JSON.parse(builtInDeclaration[1]);
 const baseCards = new Set([...catalog.map(p => p.theme), ...BUILT_IN]).size;
@@ -24,9 +24,9 @@ try {
   const expectedCards = baseCards + bundled;
   assert.equal(await page.locator('.market-card').count(), expectedCards);
   for (const name of ['Blue Glass','GameAmp']) assert.equal(await page.locator('.market-card').filter({hasText:name}).count(),1);
-  // Your themes: every built-in theme is yours without a download (Switch, 3DS and PS1 were missing; iiSU only counted once its pack was downloaded)
+  // Code-only console layouts also stay out of Your themes until downloaded.
   await page.locator('.dht-hub-tabs button', { hasText: 'Your themes' }).click(); await page.waitForTimeout(300);
-  for (const name of ['Switch', 'Nintendo 3DS', 'PS1']) assert.ok(await page.locator('.market-card', { hasText: name }).count(), name + ' is in Your themes');
+  for (const name of ['Switch', 'Nintendo 3DS', 'PS1']) assert.equal(await page.locator('.market-card', { hasText: name }).count(),0,name+' requires a download');
   await page.locator('.dht-hub-tabs button', { hasText: 'Discover' }).click(); await page.waitForTimeout(300);
   // the Hub wears the selected theme (installed in the preview), with the decoration layer and the tokens
   await page.locator('.dht-market.dht-hub[data-hub-styled=true][data-hub-theme=vita]').waitFor();
@@ -38,6 +38,7 @@ try {
   await page.locator('.dht-market').waitFor({state:'detached'});
   assert.equal(await page.locator('[data-dht-root]').getAttribute('data-dht-theme'), 'minecraft');
   await page.evaluate(() => window.__updateTheme({ minecraftWaitForSwipe: true }));
+  await page.waitForTimeout(500); // Allow the newly activated home to register its menu input.
   await page.keyboard.press('m');
   await page.locator('.dht-menu').getByText('Global settings', {exact:true}).click(); // the Hub entry lives there now
   await page.locator('.dht-menu').getByText('Hub', {exact:true}).waitFor();
@@ -62,8 +63,9 @@ try {
   await page.locator('.dht-firmware').waitFor({state:'detached'});
   await page.getByRole('button',{name:'Hub',exact:true}).first().click();
   await page.locator('.market-card img').first().waitFor();
+  const nextCard=await page.locator('.market-card').nth(1).textContent();
   await page.keyboard.press('ArrowRight');
-  assert.match(await page.locator('.market-card[data-selected=true]').textContent(), /PS2/);
+  assert.equal(await page.locator('.market-card[data-selected=true]').textContent(),nextCard);
   await page.keyboard.press('ArrowLeft');
   await page.waitForTimeout(500);
   await page.locator('[data-dht-root]').screenshot({path:'out/theme-previews/marketplace.png'});

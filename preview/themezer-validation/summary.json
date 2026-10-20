@@ -1,0 +1,18 @@
+{
+  "nativeIgnoredPropertyEntries": 29,
+  "redundantAssignmentEntries": 1,
+  "ignoredTargetEntries": 15,
+  "themeCount": 40,
+  "newThemes": 32,
+  "latestBatchThemes": 16,
+  "downloadFailures": 0,
+  "themesWithWarnings": 0,
+  "warningEntries": 0,
+  "distinctWarningMessages": 0,
+  "artworkOnly": 1,
+  "browserErrors": 0,
+  "renderFailures": 0,
+  "interactionChecks": 19,
+  "interactionFailures": 0,
+  "categories": {}
+}

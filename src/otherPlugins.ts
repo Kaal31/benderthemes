@@ -60,6 +60,13 @@ export function currentRoute(): string {
     return "";
   }
 }
+/** Retained home components must yield to another Steam or Decky route. */
+export function themeHomeOwnsRoute(): boolean {
+ try {
+  const path=(globalThis as any).SteamUIStore?.WindowStore?.GamepadUIMainWindowInstance?.m_history?.location?.pathname;
+  return typeof path!=="string" || path==="/library/home" || path==="/deck-home-themes";
+ } catch { return true; }
+}
 /** A game's detail page, where ThemeDeck plays that game's own track. */
 export const onGamePage = (route = currentRoute()) => /^\/library\/app\/\d+/.test(route);
 

@@ -4,6 +4,7 @@ import { callable } from "@decky/api";
 import { Fragment, MutableRefObject, ReactNode, useEffect, useMemo, useRef, useState } from "react";
 import { opensKeyboardOnTap, showSteamKeyboard } from "./steamKeyboard";
 import { SPOTLIGHT_PLUGINS } from "./spotlightCatalog";
+import { rememberSpotlightSource, useSpotlightUpdates, installSpotlightUpdate } from "./SpotlightUpdates";
 import { ExplorerEntry, mergeCatalogue, repoKey, searchCatalogue, SearchItem } from "./pluginSearch";
 import type { InputHandler } from "./input";
 
@@ -23,6 +24,8 @@ export async function installSpotlightPlugin(index: number): Promise<string> {
   if ((window as any).__isThemePreview) return "Preview: Decky would ask you to confirm this plugin installation.";
   const backend = (window as any).DeckyBackend ?? (window.opener as any)?.DeckyBackend;
   if (!backend?.call) throw new Error("Decky installation is unavailable in this window.");
+  const tracked = await rememberSpotlightSource(repo, pluginName, plugin.author, zipUrl);
+  if (!tracked.success) throw new Error(tracked.error || "Could not save the update source.");
   await backend.call("utilities/install_plugin", zipUrl, pluginName, version, "", 1);
   return "Continue in Decky's installation dialog. Decky will download and install the plugin after confirmation.";
 }
@@ -40,6 +43,8 @@ export async function installUnreviewedPlugin(item: SearchItem, confirmations: n
   if ((window as any).__isThemePreview) return "Preview: Decky would ask you to confirm this unreviewed plugin installation.";
   const backend = (window as any).DeckyBackend ?? (window.opener as any)?.DeckyBackend;
   if (!backend?.call) throw new Error("Decky installation is unavailable in this window.");
+  const tracked = await rememberSpotlightSource(item.key, item.name, item.author, item.zipUrl);
+  if (!tracked.success) throw new Error(tracked.error || "Could not save the update source.");
   await backend.call("utilities/install_plugin", item.zipUrl, item.name, item.release || "unknown", "", 1);
   return "Continue in Decky's installation dialog. Decky will download and install the plugin after confirmation.";
 }
@@ -113,6 +118,7 @@ const MAX_RESULTS = 60;
  * controller reaches every button without touch.
  */
 export function PluginSpotlight({ inputRef }: { inputRef: MutableRefObject<InputHandler | null> }) {
+  const updates = useSpotlightUpdates();
   const [query, setQuery] = useState("");
   const [selected, setSelected] = useState(0);
   const [zone, setZone] = useState<"search" | "list" | "panel">("list");
@@ -138,6 +144,7 @@ export function PluginSpotlight({ inputRef }: { inputRef: MutableRefObject<Input
   const ranked = useMemo(() => query.trim() ? searchCatalogue(merged, query) : merged.filter(i => i.source === "spotlight").map(item => ({ item, score: 0 })), [merged, query]);
   const results = ranked.slice(0, MAX_RESULTS).map(r => r.item);
   const current: SearchItem | undefined = results[Math.min(selected, results.length - 1)];
+  const availableUpdate = updates.plugins.find(p => repoKey(p.repo) === current?.key && p.updateAvailable && !p.error);
   useEffect(() => { setSelected(0); }, [query]);
   useEffect(() => {
     setMessage(""); setConfirm(0); setPanelAt(0); detailRef.current?.scrollTo?.({ top: 0 });
@@ -232,6 +239,11 @@ export function PluginSpotlight({ inputRef }: { inputRef: MutableRefObject<Input
           <strong>{item.name}</strong><small>By {item.author || item.repo.split("/")[0]}</small><Badges item={item} /><p>{item.description}</p>
         </button>)}</div>
       <div className="spotlight-detail dht-spotlight-detail" ref={detailRef} data-source={current.source}>
+        {availableUpdate && <><p role="status">Update available: {availableUpdate.currentVersion} → {availableUpdate.version}{availableUpdate.root ? " · Needs root" : ""}</p>
+          <button className="market-primary" disabled={busy} onClick={() => {
+            setBusy(true);
+            void installSpotlightUpdate(availableUpdate).then(() => setMessage("Confirm the update in Decky.")).catch(e => setMessage(String(e))).finally(() => setBusy(false));
+          }}>Update {availableUpdate.name}</button></>}
         {current.image && <img className="dht-spotlight-image" src={current.image} alt="" loading="lazy" referrerPolicy="no-referrer" onError={e => { e.currentTarget.style.display = "none"; }} />}
         <h3>{current.name}</h3>
         <small className="dht-spotlight-by">By {current.author || "unknown"} · {current.repo}</small>

@@ -1,4 +1,5 @@
 import { t } from "../i18n";
+import { BackgroundMedia } from "../WallpaperMedia";
 // Nintendo 3DS HOME Menu: the top screen (wallpaper, status bar, the selected software) above the bottom
 // screen (tab strip, the icon grid with folders and badges, side arrows, scroll handle and the Open bar), both
 // drawn at the console's own 400 × 240 / 320 × 240 pixel sizes and scaled to the Deck. Everything is drawn
@@ -857,7 +858,7 @@ export function N3dsHome() {
         <div className={`dht-n3ds-stack${s.animations ? "" : " dht-n3ds-still"}`} data-screen-layout={s.n3dsTop ?? "show"} data-rows={rows} data-arranging={arranging} style={{ position: "absolute", left, top: topY, width: stackWpx, height: stackHpx, transform: `scale(${k})`, transformOrigin: "0 0", fontFamily: FONT }}>
           {/* ───────── top screen ───────── */}
           {topOn && (
-          <div className="dht-n3ds-top" data-dht-from-skin={topImg || look.top ? "" : undefined} style={{ position: "absolute", left: 0, top: 0, width: split ? bw : SW.top, height: SH, overflow: "hidden", borderRadius: split ? 0 : 3, boxShadow: split ? "none" : "0 0 0 3px #202226, 0 0 0 4.5px #4a4d54, 0 8px 22px #0006", background: look.top?.mode === "solid" ? look.top.color ?? "#eceef2" : "#eceef2", ...(look.top ? wallStyle(topImg, SW.top) : {}) }}>
+          <div className="dht-n3ds-top" data-dht-from-skin={topImg || look.top ? "" : undefined} style={{ position: "absolute", left: 0, top: 0, width: split ? bw : SW.top, height: SH, overflow: "hidden", borderRadius: split ? 0 : 3, boxShadow: split ? "none" : "0 0 0 3px #202226, 0 0 0 4.5px #4a4d54, 0 8px 22px #0006", background: look.top?.mode === "solid" ? look.top.color ?? "#eceef2" : "#eceef2", ...(look.top ? wallStyle(topImg, SW.top) : {}) }}>{wall&&<BackgroundMedia src={wall}/>}
             {!look.top && <div className="dht-n3ds-pattern" style={{ position: "absolute", inset: 0, background: `var(--dht-n3ds-top-bg, ${PATTERN} 8px 4px/100px 100px, linear-gradient(#eff0f3,#e1e3e8 60%,#e9ebef))` }} />}
             <div className="dht-n3ds-status" style={{ position: "absolute", left: 0, right: 0, top: 0, height: 26, background: darkTop ? "linear-gradient(#0008,#0000)" : "linear-gradient(#fffe 55%,#fff0)", color: ink, fontSize: 12.5, fontWeight: 600, textShadow: darkTop ? "0 1px 2px #0009" : "none" }}>
               <div style={{ position: "absolute", left: 4, top: 6 }}><Bars color="#28a9e8" /></div>
@@ -902,7 +903,7 @@ export function N3dsHome() {
           </div>
           )}
           {/* ───────── bottom screen ───────── */}
-          <div className={`dht-n3ds-bottom${arranging ? " dht-n3ds-arranging" : ""}`} data-dht-from-skin={noPanel ? "" : undefined} style={{ position: "absolute", left: botLeft, top: botTop, width: bw, height: SH, overflow: "clip", borderRadius: topOn && !split ? 3 : 0, boxShadow: !topOn || split ? "none" : "0 0 0 3px #202226, 0 0 0 4.5px #4a4d54, 0 8px 22px #0006", ...bottomBg }}>
+          <div className={`dht-n3ds-bottom${arranging ? " dht-n3ds-arranging" : ""}`} data-dht-from-skin={noPanel ? "" : undefined} style={{ position: "absolute", left: botLeft, top: botTop, width: bw, height: SH, overflow: "clip", borderRadius: topOn && !split ? 3 : 0, boxShadow: !topOn || split ? "none" : "0 0 0 3px #202226, 0 0 0 4.5px #4a4d54, 0 8px 22px #0006", ...bottomBg }}>{wall&&s.n3dsTop==="hide"&&<BackgroundMedia src={wall}/>}
             {!noPanel && <div className="dht-n3ds-stripes" style={{ position: "absolute", left: 0, right: 0, bottom: 0, height: 40, background: STRIPES }} />}
             {!noPanel && <div className="dht-n3ds-panel" style={{ position: "absolute", left: PANEL.left, top: PANEL.top, right: -20, height: PANEL.h, borderRadius: "10px 0 0 10px", background: `var(--dht-n3ds-panel, ${panelBg})`, boxShadow: "inset 0 2px 5px #0002, 0 1px 0 #fff9" }} />}
             {/* the grid, clipped to the panel's width */}

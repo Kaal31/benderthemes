@@ -1,0 +1,42 @@
+import assert from 'node:assert/strict';
+import {readFileSync} from 'node:fs';
+import {launch} from './browser.mjs';
+import {startPreviewServer} from '../preview/server.mjs';
+const catalog=JSON.parse(readFileSync('py_modules/deckthemes_audio_catalog.json','utf8'));
+const manifest=JSON.parse(readFileSync('themes/gamecube/theme.json','utf8'));
+const bigPicture=JSON.parse(readFileSync('themes/old-big-picture/theme.json','utf8'));
+const ambienceId='e5875375-c3c0-4ab2-a1d0-5f58f6b5b000';
+const bigPictureId='cadb90ee-b772-493c-8d7d-72443029960a';
+const ids=['cdc948e9-399c-4179-94ff-0f72f9d89fed','e2f01d10-042d-4b8b-af01-f11b044c72cb'];
+assert.deepEqual(catalog.filter(p=>p.installWithTheme).map(p=>p.id).sort(),[...ids,bigPictureId,ambienceId].sort());
+const {server,url}=await startPreviewServer(),browser=await launch();
+try {
+ const page=await browser.newPage({viewport:{width:1280,height:800}}),errors=[];
+ page.on('pageerror',e=>errors.push(e.message));
+ await page.addInitScript(({catalog,manifest,bigPicture})=>{
+   window.__deckthemesAudio=catalog;
+   window.__dataThemes={base:location.origin+'/themes',wrap:location.origin+'/frame-wrap',themes:[{...manifest,source:'bundled'},{...bigPicture,source:'bundled'}]};
+ },{catalog,manifest,bigPicture});
+ await page.goto(url+'?theme=ps4&still=1');
+ await page.waitForFunction(()=>window.__updateTheme);
+ assert.equal(await page.evaluate(()=>window.__audioDownloadCalls?.length??0),0,'other themes do not automatically download GameCube audio');
+ await page.evaluate(()=>window.__updateTheme({theme:'frame',activeTheme:'gamecube',packs:{},musicPacks:{},animations:false}));
+ await page.waitForFunction(()=>window.__audioDownloadCalls?.length===2);
+ await page.waitForFunction(()=>window.__autoPack('frame','music')?.files.includes('menu_music.mp3'));
+ assert.deepEqual((await page.evaluate(()=>window.__audioDownloadCalls)).sort(),[...ids].sort());
+ assert.equal(await page.evaluate(()=>window.__autoPack('frame')?.id),ids[0]);
+ assert.equal(await page.evaluate(()=>window.__autoPack('frame','music')?.id),ids[1]);
+ await page.evaluate(()=>window.__updateTheme({theme:'ps4',activeTheme:'ps4'}));
+ await page.waitForFunction(()=>window.__getThemeSettings().theme==='ps4');
+ await page.evaluate(()=>window.__updateTheme({theme:'frame',activeTheme:'gamecube',musicPacks:{frame:'my-custom-music'}}));
+ await page.waitForFunction(()=>window.__getThemeSettings().activeTheme==='gamecube');
+ assert.equal(await page.evaluate(()=>window.__audioDownloadCalls.length),2,'returning to GameCube reuses cached packs');
+ assert.equal(await page.evaluate(()=>window.__getThemeSettings().musicPacks.frame),'my-custom-music','automatic installation preserves custom selections');
+ await page.evaluate(()=>window.__updateTheme({theme:'frame',activeTheme:'old-big-picture',packs:{},musicPacks:{}}));
+ await page.waitForFunction(()=>window.__audioDownloadCalls.length===4);
+ await page.waitForFunction(()=>window.__autoPack('frame')?.id==='cadb90ee-b772-493c-8d7d-72443029960a');
+ assert.deepEqual((await page.evaluate(()=>window.__audioDownloadCalls.slice(2))).sort(),[bigPictureId,ambienceId].sort());
+ assert.equal(await page.evaluate(()=>window.__autoPack('frame','music')?.id),ambienceId,'Big Picture selects its own ambience');
+ assert.deepEqual(errors,[]);
+ console.log('PASS automatic GameCube downloads use both exact AudioLoader IDs, select original SFX/music, reuse cache and preserve custom choices');
+}finally{await browser.close();server.closeAllConnections();await new Promise(resolve=>server.close(resolve));}

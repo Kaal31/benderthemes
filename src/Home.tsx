@@ -1,4 +1,5 @@
 import { t } from "./i18n";
+import { themeHomeOwnsRoute } from "./otherPlugins";
 import { useSteamScreensaver } from "./screensaver";
 import { ThemeActivity, UiDocument } from "./performance";
 import { DOWNLOAD_CSS, DownloadStatus } from "./downloadUi";
@@ -60,7 +61,9 @@ import { IisuHome } from "./themes/Iisu";
 import { NativeLayout } from "./engine/NativeLayout";
 import { FrameHome } from "./engine/FrameHome";
 import { VideoIntro } from "./engine/VideoIntro";
-import { activeTheme, slotAccent, slotFont, slotUrl, useThemes } from "./engine/registry";
+import { activeTheme, refreshThemes, slotAccent, slotFont, slotUrl, useThemes } from "./engine/registry";
+import { callable } from "@decky/api";
+const ensureShippedMedia=callable<[id:string],{success:boolean;error?:string}>("ensure_frame_media");
 import { LAYOUT_SLOTS } from "./engine/assets";
 import { pageSettings } from "./engine/pages";
 import { useThemeDeckIntegration } from "./themeDeckIntegration";
@@ -193,6 +196,17 @@ function VerifiedThemedHome({ standalone }: { standalone?: boolean }) {
   useEffect(() => {
     let alive = true;
     setState("checking");
+    const shipped=activeTheme(settings);
+    if(shipped?.source==="bundled"){
+      void inventory().then(async installed=>{
+        if(!installed[shipped.id]){if(alive){setState("missing");openMarketplace("frame",{from:"frame"});}return;}
+        const result=await ensureShippedMedia(shipped.id);
+        if(!result.success)throw new Error(result.error||"Theme media unavailable");
+        await refreshThemes();
+        if(alive)setState("ready");
+      }).catch(()=>{if(alive)setState("error");});
+      return()=>{alive=false;};
+    }
     if ((settings.theme === "frame" || settings.theme === "native")) { setState("ready"); return; }
     inventory().then(installed => {
       if (!alive) return;
@@ -202,7 +216,7 @@ function VerifiedThemedHome({ standalone }: { standalone?: boolean }) {
       if (!ready) openMarketplace(settings.theme, { from: settings.theme });
     }).catch(() => { if (alive) { setState("error"); logInfo(`[theme-availability] inventory check failed theme=${settings.theme}`); } });
     return () => { alive = false; };
-  }, [settings.theme, retry]);
+  }, [settings.theme, settings.activeTheme, retry]);
   if (state === "ready") return <ThemedHomeContent standalone={standalone} />;
   return <div data-dht-root="" data-theme-availability={state} style={{position:"fixed",inset:0,zIndex:standalone?900:1,background:"#10151d",color:"#fff",display:"grid",placeItems:"center"}}>
     <ThemeRoot onInput={p => {
@@ -232,13 +246,14 @@ function ThemedHomeContent({ standalone }: { standalone?: boolean }) {
   const root = useRef<HTMLDivElement>(null);
   const [doc, setDoc] = useState<Document | null>(null);
   const [visible, setVisible] = useState(true);
+  const [routeActive,setRouteActive]=useState(themeHomeOwnsRoute);
   useEffect(() => {
     const el = root.current; if (!el || !doc) return;
     let intersects = true;
-    const sync = () => setVisible(intersects && !doc.hidden);
+    const sync = () => {setVisible(intersects && !doc.hidden);setRouteActive(themeHomeOwnsRoute());};
     const observer = new IntersectionObserver(entries => { intersects = entries[0]?.isIntersecting ?? false; sync(); });
-    observer.observe(el); doc.addEventListener("visibilitychange", sync); sync();
-    return () => { observer.disconnect(); doc.removeEventListener("visibilitychange", sync); };
+    observer.observe(el); doc.addEventListener("visibilitychange", sync);const routeTimer=setInterval(sync,250); sync();
+    return () => {clearInterval(routeTimer); observer.disconnect(); doc.removeEventListener("visibilitychange", sync); };
   }, [doc]);
   // Steam's keyboard (STEAM + X, a search box) opens under our fixed home: end the home above it while it is open
   const [kbInset, setKbInset] = useState(0);
@@ -382,7 +397,7 @@ function ThemedHomeContent({ standalone }: { standalone?: boolean }) {
     [lib, s, overlay !== null, destination !== null, launching !== null, market.opened],
   );
 
-  const themeActive = !screensaver && visible && !market.opened && !launching && (!overlay || (s.theme === "minecraft" && overlay.kind === "store")) && (!destination || s.theme === "minecraft");
+  const themeActive = routeActive && !screensaver && visible && !market.opened && !launching && (!overlay || (s.theme === "minecraft" && overlay.kind === "store")) && (!destination || s.theme === "minecraft");
   const render = THEME_COMPONENTS[s.theme] ?? THEME_COMPONENTS.vita;
   // the engine theme's colour and font, for layouts that use --dht-accent / inherit the font
   const accent = tintOf(s) ?? slotAccent(s);
@@ -393,7 +408,7 @@ function ThemedHomeContent({ standalone }: { standalone?: boolean }) {
   const themeSlotStyle = { ...(accent ? { "--dht-accent": accent } : {}), ...lookAccent, ...(themeFont ? { "--dht-font": '"dht-theme-font", "Motiva Sans", sans-serif', fontFamily: "var(--dht-font)" } : {}) } as CSSProperties;
   return (
     // zIndex 1: Steam's own popups (context menus, modals) must paint above us.
-    <div ref={root} data-dht-root="" data-tv={s.tvMode} data-motion={s.animations} data-dht-theme={s.theme} data-dht-preset={currentPresetId(s)} data-dht-skin={skinHook(s) || undefined} data-dht-screensaver={screensaver || undefined} className={`dht-root dht-theme-${s.theme}`} style={{ position: "fixed", inset: 0, bottom: kbInset, zIndex: standalone ? 900 : 1, visibility: screensaver ? "hidden" : undefined, pointerEvents: screensaver ? "none" : undefined, background: "#000", overflow: "hidden", fontFamily: "var(--dht-font, inherit)", userSelect: "none", WebkitUserSelect: "none" }}>
+    <div ref={root} data-dht-root="" data-tv={s.tvMode} data-motion={s.animations} data-dht-theme={s.theme} data-dht-preset={currentPresetId(s)} data-dht-skin={skinHook(s) || undefined} data-dht-screensaver={screensaver || undefined} className={`dht-root dht-theme-${s.theme}`} style={{ position: "fixed", inset: 0, bottom: kbInset, zIndex: standalone ? 900 : 1, visibility: screensaver || !routeActive ? "hidden" : undefined, pointerEvents: screensaver || !routeActive ? "none" : undefined, background: "#000", overflow: "hidden", fontFamily: "var(--dht-font, inherit)", userSelect: "none", WebkitUserSelect: "none" }}>
       <div className="dht-safe-area" style={{position:"absolute",inset:s.tvMode?"3%":"0",...presentationVariables(s),...themeSlotStyle}}>
       {themeFont && <style>{`@font-face{font-family:"dht-theme-font";src:url("${themeFont}")}`}</style>}
       <style>{PRESENTATION_CSS}</style>

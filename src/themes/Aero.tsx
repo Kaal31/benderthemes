@@ -1,4 +1,5 @@
 import { t } from "../i18n";
+import { WallpaperVideo } from "../WallpaperMedia";
 // Aero (bonus): Frutiger-Aero "Steam Deck" desktop. This is the ChatGPT remake
 // the user made from the 1.5 build, ported back into the source: blue glass
 // shell, lime pills, profile + side navigation, hero card with Play, Continue
@@ -397,7 +398,7 @@ export function AeroHome() {
             if (e.key === "Enter") e.preventDefault();
           }}
           style={{ transform: `scale(${W / 1280},${H / 960})`, backgroundImage: wall ? `url("${wall}")` : undefined, ...glass.vars } as CSSProperties}
-        >
+        ><WallpaperVideo src={wall}/>
           <AeroFrame glass={glass.svg} />
           <header className="aero-header">
             <div className="aero-brand">

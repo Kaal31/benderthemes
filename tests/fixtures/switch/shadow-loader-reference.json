@@ -1,0 +1,507 @@
+{
+  "description": "Native material-loader provenance. Absent and 0/1/2 Knockout inputs produce identical shader/geometry data, with no deferred post callbacks. The name is absent in all measured executable segments. Size/Function are positive controls. Scope: measured Classic/Modern loaders and shader input data; unmeasured firmware is not covered.",
+  "profiles": [
+    {
+      "knockoutNameOccurrences": {
+        "0": {
+          "ascii": 0,
+          "utf-16-le": 0
+        },
+        "1": {
+          "ascii": 0,
+          "utf-16-le": 0
+        },
+        "2": {
+          "ascii": 0,
+          "utf-16-le": 0
+        }
+      },
+      "firmware": "19.0.1",
+      "entry": "0x9d0230",
+      "executableSha256": "b18546b9c66dd9142b2984f5f27cf721a82eb38274ab797cef6b91525f59c6ea",
+      "accessorShims": [
+        "material count/index",
+        "shader userdata storage",
+        "USD named lookup",
+        "memset",
+        "post callback capture"
+      ],
+      "runs": [
+        {
+          "knockout": null,
+          "size": 4,
+          "function": 0,
+          "uniforms": {
+            "paneSize": [
+              64.0,
+              40.0
+            ],
+            "shadowDraw": 1,
+            "shadowVolume": 1.0,
+            "shadowSize": 4.0,
+            "shadowFunction": 0
+          },
+          "queries": [
+            "S_BorderColor0",
+            "S_BorderColorSelect0",
+            "S_BorderDrawMode",
+            "S_BorderSize",
+            "S_BorderVolume",
+            "S_ColorOverlay0DrawMode",
+            "S_DropShadowAngle",
+            "S_DropShadowColor",
+            "S_DropShadowColorSelect",
+            "S_DropShadowDistance",
+            "S_DropShadowDrawMode",
+            "S_DropShadowFunction",
+            "S_DropShadowSize",
+            "S_DropShadowVolume",
+            "S_GradationDrawMode",
+            "S_GradationMaskEnable",
+            "S_InnerShadowDrawMode",
+            "S_RoundRadius"
+          ],
+          "outputSha256": "c92e27ff00a1dbf6c9603a84fb0d375d248e5b8a3c295385cc4b28af275368ec",
+          "postCallbackCount": 0
+        },
+        {
+          "knockout": 0,
+          "size": 4,
+          "function": 0,
+          "uniforms": {
+            "paneSize": [
+              64.0,
+              40.0
+            ],
+            "shadowDraw": 1,
+            "shadowVolume": 1.0,
+            "shadowSize": 4.0,
+            "shadowFunction": 0
+          },
+          "queries": [
+            "S_BorderColor0",
+            "S_BorderColorSelect0",
+            "S_BorderDrawMode",
+            "S_BorderSize",
+            "S_BorderVolume",
+            "S_ColorOverlay0DrawMode",
+            "S_DropShadowAngle",
+            "S_DropShadowColor",
+            "S_DropShadowColorSelect",
+            "S_DropShadowDistance",
+            "S_DropShadowDrawMode",
+            "S_DropShadowFunction",
+            "S_DropShadowSize",
+            "S_DropShadowVolume",
+            "S_GradationDrawMode",
+            "S_GradationMaskEnable",
+            "S_InnerShadowDrawMode",
+            "S_RoundRadius"
+          ],
+          "outputSha256": "c92e27ff00a1dbf6c9603a84fb0d375d248e5b8a3c295385cc4b28af275368ec",
+          "postCallbackCount": 0
+        },
+        {
+          "knockout": 1,
+          "size": 4,
+          "function": 0,
+          "uniforms": {
+            "paneSize": [
+              64.0,
+              40.0
+            ],
+            "shadowDraw": 1,
+            "shadowVolume": 1.0,
+            "shadowSize": 4.0,
+            "shadowFunction": 0
+          },
+          "queries": [
+            "S_BorderColor0",
+            "S_BorderColorSelect0",
+            "S_BorderDrawMode",
+            "S_BorderSize",
+            "S_BorderVolume",
+            "S_ColorOverlay0DrawMode",
+            "S_DropShadowAngle",
+            "S_DropShadowColor",
+            "S_DropShadowColorSelect",
+            "S_DropShadowDistance",
+            "S_DropShadowDrawMode",
+            "S_DropShadowFunction",
+            "S_DropShadowSize",
+            "S_DropShadowVolume",
+            "S_GradationDrawMode",
+            "S_GradationMaskEnable",
+            "S_InnerShadowDrawMode",
+            "S_RoundRadius"
+          ],
+          "outputSha256": "c92e27ff00a1dbf6c9603a84fb0d375d248e5b8a3c295385cc4b28af275368ec",
+          "postCallbackCount": 0
+        },
+        {
+          "knockout": 2,
+          "size": 4,
+          "function": 0,
+          "uniforms": {
+            "paneSize": [
+              64.0,
+              40.0
+            ],
+            "shadowDraw": 1,
+            "shadowVolume": 1.0,
+            "shadowSize": 4.0,
+            "shadowFunction": 0
+          },
+          "queries": [
+            "S_BorderColor0",
+            "S_BorderColorSelect0",
+            "S_BorderDrawMode",
+            "S_BorderSize",
+            "S_BorderVolume",
+            "S_ColorOverlay0DrawMode",
+            "S_DropShadowAngle",
+            "S_DropShadowColor",
+            "S_DropShadowColorSelect",
+            "S_DropShadowDistance",
+            "S_DropShadowDrawMode",
+            "S_DropShadowFunction",
+            "S_DropShadowSize",
+            "S_DropShadowVolume",
+            "S_GradationDrawMode",
+            "S_GradationMaskEnable",
+            "S_InnerShadowDrawMode",
+            "S_RoundRadius"
+          ],
+          "outputSha256": "c92e27ff00a1dbf6c9603a84fb0d375d248e5b8a3c295385cc4b28af275368ec",
+          "postCallbackCount": 0
+        },
+        {
+          "knockout": 0,
+          "size": 8,
+          "function": 0,
+          "uniforms": {
+            "paneSize": [
+              64.0,
+              40.0
+            ],
+            "shadowDraw": 1,
+            "shadowVolume": 1.0,
+            "shadowSize": 8.0,
+            "shadowFunction": 0
+          },
+          "queries": [
+            "S_BorderColor0",
+            "S_BorderColorSelect0",
+            "S_BorderDrawMode",
+            "S_BorderSize",
+            "S_BorderVolume",
+            "S_ColorOverlay0DrawMode",
+            "S_DropShadowAngle",
+            "S_DropShadowColor",
+            "S_DropShadowColorSelect",
+            "S_DropShadowDistance",
+            "S_DropShadowDrawMode",
+            "S_DropShadowFunction",
+            "S_DropShadowSize",
+            "S_DropShadowVolume",
+            "S_GradationDrawMode",
+            "S_GradationMaskEnable",
+            "S_InnerShadowDrawMode",
+            "S_RoundRadius"
+          ],
+          "outputSha256": "ffb73f14aa586da08270bc0474fa0138e81dbf71224daab12ef0a5c98c595ee7",
+          "postCallbackCount": 0
+        },
+        {
+          "knockout": 0,
+          "size": 4,
+          "function": 5,
+          "uniforms": {
+            "paneSize": [
+              64.0,
+              40.0
+            ],
+            "shadowDraw": 1,
+            "shadowVolume": 1.0,
+            "shadowSize": 4.0,
+            "shadowFunction": 5
+          },
+          "queries": [
+            "S_BorderColor0",
+            "S_BorderColorSelect0",
+            "S_BorderDrawMode",
+            "S_BorderSize",
+            "S_BorderVolume",
+            "S_ColorOverlay0DrawMode",
+            "S_DropShadowAngle",
+            "S_DropShadowColor",
+            "S_DropShadowColorSelect",
+            "S_DropShadowDistance",
+            "S_DropShadowDrawMode",
+            "S_DropShadowFunction",
+            "S_DropShadowSize",
+            "S_DropShadowVolume",
+            "S_GradationDrawMode",
+            "S_GradationMaskEnable",
+            "S_InnerShadowDrawMode",
+            "S_RoundRadius"
+          ],
+          "outputSha256": "b4262817b3dc85109b450f166e6f38e096dc73ed52c5014615ddc6711550f50b",
+          "postCallbackCount": 0
+        }
+      ],
+      "scope": "Material shader uniform/geometry loader only; does not execute the captured post callback or later draw code."
+    },
+    {
+      "knockoutNameOccurrences": {
+        "0": {
+          "ascii": 0,
+          "utf-16-le": 0
+        },
+        "1": {
+          "ascii": 0,
+          "utf-16-le": 0
+        },
+        "2": {
+          "ascii": 0,
+          "utf-16-le": 0
+        }
+      },
+      "firmware": "22.5.0",
+      "entry": "0xb97ca0",
+      "executableSha256": "84037b3148e4dee45ec6c733eea325fd1d738319f71ab7f26301e3128cdd9a49",
+      "accessorShims": [
+        "material count/index",
+        "shader userdata storage",
+        "USD named lookup",
+        "memset",
+        "post callback capture"
+      ],
+      "runs": [
+        {
+          "knockout": null,
+          "size": 4,
+          "function": 0,
+          "uniforms": {
+            "paneSize": [
+              64.0,
+              40.0
+            ],
+            "shadowDraw": 1,
+            "shadowVolume": 1.0,
+            "shadowSize": 4.0,
+            "shadowFunction": 0
+          },
+          "queries": [
+            "S_BorderColor0",
+            "S_BorderColorSelect0",
+            "S_BorderDrawMode",
+            "S_BorderSize",
+            "S_BorderVolume",
+            "S_ColorOverlay0DrawMode",
+            "S_DropShadowAngle",
+            "S_DropShadowColor",
+            "S_DropShadowColorSelect",
+            "S_DropShadowDistance",
+            "S_DropShadowDrawMode",
+            "S_DropShadowFunction",
+            "S_DropShadowSize",
+            "S_DropShadowVolume",
+            "S_GradationDrawMode",
+            "S_GradationMaskEnable",
+            "S_InnerShadowDrawMode",
+            "S_RoundRadius"
+          ],
+          "outputSha256": "c92e27ff00a1dbf6c9603a84fb0d375d248e5b8a3c295385cc4b28af275368ec",
+          "postCallbackCount": 0
+        },
+        {
+          "knockout": 0,
+          "size": 4,
+          "function": 0,
+          "uniforms": {
+            "paneSize": [
+              64.0,
+              40.0
+            ],
+            "shadowDraw": 1,
+            "shadowVolume": 1.0,
+            "shadowSize": 4.0,
+            "shadowFunction": 0
+          },
+          "queries": [
+            "S_BorderColor0",
+            "S_BorderColorSelect0",
+            "S_BorderDrawMode",
+            "S_BorderSize",
+            "S_BorderVolume",
+            "S_ColorOverlay0DrawMode",
+            "S_DropShadowAngle",
+            "S_DropShadowColor",
+            "S_DropShadowColorSelect",
+            "S_DropShadowDistance",
+            "S_DropShadowDrawMode",
+            "S_DropShadowFunction",
+            "S_DropShadowSize",
+            "S_DropShadowVolume",
+            "S_GradationDrawMode",
+            "S_GradationMaskEnable",
+            "S_InnerShadowDrawMode",
+            "S_RoundRadius"
+          ],
+          "outputSha256": "c92e27ff00a1dbf6c9603a84fb0d375d248e5b8a3c295385cc4b28af275368ec",
+          "postCallbackCount": 0
+        },
+        {
+          "knockout": 1,
+          "size": 4,
+          "function": 0,
+          "uniforms": {
+            "paneSize": [
+              64.0,
+              40.0
+            ],
+            "shadowDraw": 1,
+            "shadowVolume": 1.0,
+            "shadowSize": 4.0,
+            "shadowFunction": 0
+          },
+          "queries": [
+            "S_BorderColor0",
+            "S_BorderColorSelect0",
+            "S_BorderDrawMode",
+            "S_BorderSize",
+            "S_BorderVolume",
+            "S_ColorOverlay0DrawMode",
+            "S_DropShadowAngle",
+            "S_DropShadowColor",
+            "S_DropShadowColorSelect",
+            "S_DropShadowDistance",
+            "S_DropShadowDrawMode",
+            "S_DropShadowFunction",
+            "S_DropShadowSize",
+            "S_DropShadowVolume",
+            "S_GradationDrawMode",
+            "S_GradationMaskEnable",
+            "S_InnerShadowDrawMode",
+            "S_RoundRadius"
+          ],
+          "outputSha256": "c92e27ff00a1dbf6c9603a84fb0d375d248e5b8a3c295385cc4b28af275368ec",
+          "postCallbackCount": 0
+        },
+        {
+          "knockout": 2,
+          "size": 4,
+          "function": 0,
+          "uniforms": {
+            "paneSize": [
+              64.0,
+              40.0
+            ],
+            "shadowDraw": 1,
+            "shadowVolume": 1.0,
+            "shadowSize": 4.0,
+            "shadowFunction": 0
+          },
+          "queries": [
+            "S_BorderColor0",
+            "S_BorderColorSelect0",
+            "S_BorderDrawMode",
+            "S_BorderSize",
+            "S_BorderVolume",
+            "S_ColorOverlay0DrawMode",
+            "S_DropShadowAngle",
+            "S_DropShadowColor",
+            "S_DropShadowColorSelect",
+            "S_DropShadowDistance",
+            "S_DropShadowDrawMode",
+            "S_DropShadowFunction",
+            "S_DropShadowSize",
+            "S_DropShadowVolume",
+            "S_GradationDrawMode",
+            "S_GradationMaskEnable",
+            "S_InnerShadowDrawMode",
+            "S_RoundRadius"
+          ],
+          "outputSha256": "c92e27ff00a1dbf6c9603a84fb0d375d248e5b8a3c295385cc4b28af275368ec",
+          "postCallbackCount": 0
+        },
+        {
+          "knockout": 0,
+          "size": 8,
+          "function": 0,
+          "uniforms": {
+            "paneSize": [
+              64.0,
+              40.0
+            ],
+            "shadowDraw": 1,
+            "shadowVolume": 1.0,
+            "shadowSize": 8.0,
+            "shadowFunction": 0
+          },
+          "queries": [
+            "S_BorderColor0",
+            "S_BorderColorSelect0",
+            "S_BorderDrawMode",
+            "S_BorderSize",
+            "S_BorderVolume",
+            "S_ColorOverlay0DrawMode",
+            "S_DropShadowAngle",
+            "S_DropShadowColor",
+            "S_DropShadowColorSelect",
+            "S_DropShadowDistance",
+            "S_DropShadowDrawMode",
+            "S_DropShadowFunction",
+            "S_DropShadowSize",
+            "S_DropShadowVolume",
+            "S_GradationDrawMode",
+            "S_GradationMaskEnable",
+            "S_InnerShadowDrawMode",
+            "S_RoundRadius"
+          ],
+          "outputSha256": "ffb73f14aa586da08270bc0474fa0138e81dbf71224daab12ef0a5c98c595ee7",
+          "postCallbackCount": 0
+        },
+        {
+          "knockout": 0,
+          "size": 4,
+          "function": 5,
+          "uniforms": {
+            "paneSize": [
+              64.0,
+              40.0
+            ],
+            "shadowDraw": 1,
+            "shadowVolume": 1.0,
+            "shadowSize": 4.0,
+            "shadowFunction": 5
+          },
+          "queries": [
+            "S_BorderColor0",
+            "S_BorderColorSelect0",
+            "S_BorderDrawMode",
+            "S_BorderSize",
+            "S_BorderVolume",
+            "S_ColorOverlay0DrawMode",
+            "S_DropShadowAngle",
+            "S_DropShadowColor",
+            "S_DropShadowColorSelect",
+            "S_DropShadowDistance",
+            "S_DropShadowDrawMode",
+            "S_DropShadowFunction",
+            "S_DropShadowSize",
+            "S_DropShadowVolume",
+            "S_GradationDrawMode",
+            "S_GradationMaskEnable",
+            "S_InnerShadowDrawMode",
+            "S_RoundRadius"
+          ],
+          "outputSha256": "b4262817b3dc85109b450f166e6f38e096dc73ed52c5014615ddc6711550f50b",
+          "postCallbackCount": 0
+        }
+      ],
+      "scope": "Material shader uniform/geometry loader only; does not execute the captured post callback or later draw code."
+    }
+  ]
+}

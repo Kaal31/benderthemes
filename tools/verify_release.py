@@ -19,7 +19,7 @@ settings_source = (root / "src/settings.ts").read_text(encoding="utf-8")
 theme_declaration = settings_source.split("export const THEMES:", 1)[1].split("];", 1)[0]
 layouts = set(re.findall(r'id:\s*"([a-z0-9-]+)"', theme_declaration)) - {"frame", "native"}
 builtins_source = (root / "src/presets.ts").read_text(encoding="utf-8")
-builtins = set(json.loads(re.search(r'export const BUILT_IN_THEMES = (\[[^;]+?\]) as const;', builtins_source).group(1)))
+builtins = set(json.loads(re.search(r'export const BUILT_IN_THEMES = (\[[^;]*?\]) as const;', builtins_source).group(1)))
 available = {theme.get("theme") for theme in catalog["themes"]} | builtins
 assert not layouts - available, f"Themes missing from the release Hub: {sorted(layouts - available)}"
 with zipfile.ZipFile(root / f"out/DeckHomeThemes-v{version}.zip") as plugin:
@@ -32,6 +32,10 @@ with zipfile.ZipFile(root / f"out/DeckHomeThemes-v{version}.zip") as plugin:
     assert json.loads(plugin.read("DeckHomeThemes/package.json"))["version"] == version
     for manifest in (root / "themes").glob("*/theme.json"):
         assert f"DeckHomeThemes/themes/{manifest.parent.name}/theme.json" in plugin.namelist(), f"Bundled theme missing: {manifest.parent.name}"
+    media=json.loads((root/"py_modules/frame_media_catalog.json").read_text())
+    for ident,spec in media.items():
+        for relative in spec["files"]:
+            assert f"DeckHomeThemes/themes/{ident}/{relative}" not in plugin.namelist(), f"Migrated media leaked into plugin ZIP: {ident}/{relative}"
 if PUBLISHED:
     for theme in catalog["themes"]:
         assert theme["url"] == f"https://github.com/Kaal31/deckthemes-assets/releases/download/{theme['id']}-v{theme['version']}/{asset_filename(theme['id'], theme['version'])}"

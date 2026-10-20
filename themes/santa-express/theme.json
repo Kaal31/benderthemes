@@ -1,0 +1,15 @@
+{
+  "schema": 1,
+  "id": "santa-express",
+  "name": "Santa Express",
+  "author": "ThemeHub",
+  "description": "A festive red enamel and frosted chrome dashboard with Santa, warm village lights and a glowing game carousel.",
+  "company": "Community",
+  "layout": "frame",
+  "frame": {
+    "entry": "index.html"
+  },
+  "slots": {
+    "accent": "#ff342b"
+  }
+}

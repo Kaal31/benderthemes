@@ -1,3 +1,4 @@
+import {BackgroundMedia} from "../WallpaperMedia";
 import { GameHero } from "../common";
 import { t } from "../i18n";
 import {ProfileAvatar} from "../ProfileAvatar";
@@ -191,7 +192,7 @@ export function Ps5Home() {
       <Stage background="#000">
         {/* background */}
         <div className="dht-ps5-bg" style={{ position: "absolute", inset: 0, background: `var(--dht-ps5-bg, ${wallCss})` }} />
-        {wall && hubBg !== "solid" && <img src={wall} style={{ position: "absolute", inset: 0, width: W, height: H, objectFit: "cover" }} />}
+        {wall && hubBg !== "solid" && <BackgroundMedia src={wall} style={{ position: "absolute", inset: 0, width: W, height: H, objectFit: "cover" }} />}
         {bg && hubBg !== "solid" && (
           <div key={bg.appid} style={{ position: "absolute", inset: 0, overflow: "hidden", animation: fade === "cut" ? "none" : (fade === "fade" || st<string>("heroScaling") !== "cover") ? "dhtFadeOnly5 450ms ease-out" : "dhtFade5 450ms ease-out" }}>
             <GameHero g={bg} theme="ps5" blurred={hubBg === "blur"} />

@@ -1,0 +1,77 @@
+{
+  "Hud.bflyt": [
+    "L_BatteryConsole",
+    "L_BatteryNum",
+    "L_Signal",
+    "L_Time",
+    "N_BatteryNum",
+    "N_Margin_00",
+    "N_Margin_01",
+    "N_PosBatteryNum",
+    "N_PosSignal",
+    "N_Root",
+    "N_Signal",
+    "N_Time",
+    "RootPane"
+  ],
+  "HudTime.bflyt": [
+    "L_GTNum_00",
+    "L_GTNum_01",
+    "L_GTNum_02",
+    "L_GTNum_03",
+    "N_AMPM",
+    "N_Mark",
+    "N_Num",
+    "N_Root",
+    "P_A",
+    "P_Colon",
+    "P_Comma",
+    "P_Dot",
+    "P_M",
+    "P_P",
+    "RootPane"
+  ],
+  "HudSignal.bflyt": [
+    "N_Signal",
+    "P_Local",
+    "P_Plane",
+    "P_Wifi",
+    "P_WireLine",
+    "RootPane"
+  ],
+  "BatteryConsole.bflyt": [
+    "B_Hit",
+    "L_Num_00",
+    "L_Num_01",
+    "L_Num_02",
+    "N_00",
+    "N_GaugeNml",
+    "N_GaugeOther",
+    "N_Num",
+    "N_Root",
+    "P_BatBase",
+    "P_Charge",
+    "P_Error",
+    "P_GaugeNml",
+    "P_GaugeOther",
+    "P_Ico00",
+    "P_Per",
+    "RootPane"
+  ],
+  "HudBatteryNum.bflyt": [
+    "L_GTNum_00",
+    "L_GTNum_01",
+    "L_GTNum_02",
+    "N_Root",
+    "P_Per",
+    "RootPane"
+  ],
+  "GTNumL.bflyt": [
+    "P_GTNum_00",
+    "RootPane"
+  ],
+  "GTNumM.bflyt": [
+    "P_GTNum_00",
+    "RootPane"
+  ]
+}

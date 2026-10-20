@@ -12,7 +12,7 @@ import { setStyle, style, StyleOption, THEME_STYLES } from "./engine/themeStyles
 import type { MenuItem } from "./common";
 import { collectionMenu } from "./common";
 import { openMarketplace } from "./marketplaceState";
-import { consoleThemeIds } from "./hubStyles";
+import { consoleThemeIds, hubThemeName } from "./hubStyles";
 import { deleteCurrentTheme } from "./themeActions";
 import { openSteam } from "./library";
 import { CASE_THEMES } from "./CaseArt";
@@ -30,7 +30,7 @@ import { ICON_SPOTS } from "./engine/manifest";
 import { customizeControls, nameOf, refreshCustomizeLists, SlotControl } from "./customize";
 import { LAYOUT_SLOTS } from "./engine/assets";
 import { PAGES } from "./engine/pages";
-import { listSwitchThemes, switchFxKey } from "./switchThemes";
+import { importSwitchResources, importSwitchThemeFile, listSwitchThemes, switchFxKey } from "./switchThemes";
 import { listWiiuThemes } from "./wiiuThemes";
 import { applyPreset, currentLook, currentPresetId, deleteUserPreset, getPresets, lookPresets, presetGroups, renamePreset, saveUserPreset } from "./presets";
 import { playSound } from "./steam";
@@ -325,6 +325,8 @@ function switchItems(): MenuItem[] {
   const part = (label: string, k: "background" | "icons" | "visuals"): MenuItem =>
     toggle(label, () => !!fx()[k], (v) => updateThemeFx(key(), { [k]: v } as Partial<ThemeFx>), () => !file());
   return [
+    { label: "Import console theme (.nxtheme / pack ZIP)", action: () => void importSwitchThemeFile() },
+    { label: "Import menu resources / fonts", action: () => void importSwitchResources() },
     choice(t("switchColorTheme"), [{ id: "light", name: t("switchBasicWhite") }, { id: "dark", name: t("switchBasicBlack") }], () => style(S(), "switch", "themeColor"), (v) => setStyle("switch", "themeColor", v)),
     choice(t("switchTheme"), [{ id: "", name: t("switchBuiltInLook") }, ...lists.switch.map((t) => ({ id: t.id, name: t.name + (t.author ? ` · ${t.author}` : "") }))], file, (v) => updateSettings({ switchTheme: v }), undefined, t("switchFolderPrompt")),
     group(t("themeParts"), () => [
@@ -427,6 +429,10 @@ function themeOpt<K extends StandardKey>(label: string, key: K, options: { id: S
 
 /** Customize: the slots of the preset in use that its look draws (capability table), then the look's theme file,
  *  its own options, the library view and pages. */
+function gameCubeSaved(settings: Settings): Record<string, unknown> {
+  const data = settings.frameData.gamecube;
+  return data && typeof data === "object" && !Array.isArray(data) ? data as Record<string, unknown> : {};
+}
 export function customizeItems(): MenuItem[] {
   refreshThemeLists();
   const th = S().theme;
@@ -439,15 +445,44 @@ export function customizeItems(): MenuItem[] {
       {label:t("uploadCustomPicture"),action:uploadProfilePicture},
       {label:t("useDefaultPicture"),action:()=>setProfilePicture(undefined)},
     ]),
-    ...(pageBackgrounds.length?[group(t("background"),()=>pageBackgrounds.map(slotItem))]:[]),
+    ...(pageBackgrounds.length || activeTheme(S())?.id.startsWith("wiiflow-") ? [group(t("background"),()=>[
+      ...pageBackgrounds.map(slotItem),
+      ...(activeTheme(S())?.id.startsWith("wiiflow-") ? [choice(t("fit") || "Fit", [{id:"original",name:t("fitOriginal") || "Original"},{id:"extend",name:t("fitExtend") || "Extend"},{id:"fill",name:t("fillScreen") || "Fill"}],
+        () => (S().frameData[activeTheme(S())!.id] as {backgroundFit?:string}|undefined)?.backgroundFit ?? (activeTheme(S())?.id.startsWith("wiiflow-")?"fill":"original"),
+        (value) => {const id=activeTheme(S())!.id;updateSettings(p=>({frameData:{...p.frameData,[id]:{...(p.frameData[id] as Record<string,unknown> ?? {}),backgroundFit:value}}}));}),
+        choice("Artwork extension",[{id:"automatic",name:"Automatic (verified mappings)"},{id:"frame",name:"Manual: preserve frame and extend edges"},{id:"off",name:"Off"}],
+          ()=>(S().frameData[activeTheme(S())!.id] as {artworkMapping?:string}|undefined)?.artworkMapping??"automatic",
+          value=>{const id=activeTheme(S())!.id;updateSettings(p=>({frameData:{...p.frameData,[id]:{...(p.frameData[id] as Record<string,unknown>??{}),artworkMapping:value}}}));}),
+        toggle("Extend interface with Fill",()=> (S().frameData[activeTheme(S())!.id] as {extendInterface?:boolean}|undefined)?.extendInterface!==false,
+          value=>{const id=activeTheme(S())!.id;updateSettings(p=>({frameData:{...p.frameData,[id]:{...(p.frameData[id] as Record<string,unknown> ?? {}),extendInterface:value}}}));})] : []),
+    ])] : []),
     ...controls.filter(c=>!c.id.startsWith("wallpaper:")).map(slotItem),
     ...(file.length ? [group(t("themeFile"), () => themeFileItems(S().theme))] : []),
     ...(own.length ? [group(t("lookOptions"), () => lookOptionItems(S().theme))] : []),
-    group(t("destLibrary"), () => [
+    group(own.some((i) => i.label === (t("destLibrary") || "Library")) ? (t("gamesShown") || "Games shown") : t("destLibrary"), () => [
       { ...collectionMenu(th), label: t("showInThisTheme") },
+      ...(activeTheme(S())?.id.startsWith("wiiflow-") ? [toggle("Extend coverflow with Fill",()=> (S().frameData[activeTheme(S())!.id] as {extendCoverflow?:boolean}|undefined)?.extendCoverflow!==false,
+        value=>{const id=activeTheme(S())!.id;updateSettings(p=>({frameData:{...p.frameData,[id]:{...(p.frameData[id] as Record<string,unknown> ?? {}),extendCoverflow:value}}}));})] : []),
+      ...(activeTheme(S())?.id.startsWith("wiiflow-") ? [toggle("Continue cover pattern with Fill",()=> (S().frameData[activeTheme(S())!.id] as {continueCoverPattern?:boolean}|undefined)?.continueCoverPattern!==false,
+        value=>{const id=activeTheme(S())!.id;updateSettings(p=>({frameData:{...p.frameData,[id]:{...(p.frameData[id] as Record<string,unknown> ?? {}),continueCoverPattern:value}}}));})] : []),
+      ...(activeTheme(S())?.id.startsWith("wiiflow-") ? [toggle("Show navigation arrows", () => {
+        const id = activeTheme(S())!.id;
+        return (S().frameData[id] as { hideNavigationArrows?: boolean } | undefined)?.hideNavigationArrows !== true;
+      }, (visible) => {
+        const id = activeTheme(S())!.id;
+        updateSettings((p) => ({ frameData: { ...p.frameData, [id]: { ...(p.frameData[id] as Record<string, unknown> ?? {}), hideNavigationArrows: !visible } } }));
+      })] : []),
+      ...(activeTheme(S())?.id.startsWith("wiiflow-") ? [toggle("Cover title", () => {
+        const id = activeTheme(S())!.id;
+        return (S().frameData[id] as { hideCoverTitle?: boolean } | undefined)?.hideCoverTitle !== true;
+      }, (visible) => {
+        const id = activeTheme(S())!.id;
+        updateSettings((p) => ({ frameData: { ...p.frameData, [id]: { ...(p.frameData[id] as Record<string, unknown> ?? {}), hideCoverTitle: !visible } } }));
+      })] : []),
       toggle(t("protonDbBadgesThisTheme"), () => protonDbEnabled(S()), (v) => updateSettings((p) => ({ protondbThemes: { ...p.protondbThemes, [protonDbThemeKey(S())]: v } }))),
       choice(t("iconSize"), [75, 85, 100, 110].map((v) => ({ id: v, name: `${v}%${v === 100 ? ` · ${t("default")}` : ""}` })), () => S().iconSizes?.[th] ?? 100, (v) => updateSettings((p) => ({ iconSizes: { ...p.iconSizes, [th]: v } }))),
       ...(USES.titles.includes(th) ? [choice(t("gameTitles"), TITLE_MODES, () => S().titles[th] ?? "show", (v) => updateSettings((p) => ({ titles: { ...p.titles, [th]: v } })))] : []),
+      ...(th === "frame" && activeTheme(S())?.id === "gamecube" ? [choice(t("gameTitles"), [{ id: "show", name: t("show") || "Show" }, { id: "hide", name: t("hide") || "Hide" }], () => gameCubeSaved(S()).showGameTitle === false ? "hide" : "show", (value) => updateSettings((p) => ({ frameData: { ...p.frameData, gamecube: { ...gameCubeSaved(p), showGameTitle: value !== "hide" } } })))] : []),
       ...(CASE_THEMES.includes(th) ? [choice(t("coverStyle"), [{ id: "flat", name: t("flatCover") }, { id: "case3d", name: t("case3dCover") }], () => S().coverStyles?.[th] ?? "flat", (v) => updateSettings((p) => ({ coverStyles: { ...p.coverStyles, [th]: v as "flat" | "case3d" } })))] : []),
     ]),
     // the themed store's optional sections (src/storeSections.tsx), per theme, hidden by default
@@ -671,7 +706,7 @@ export function globalSettingsItems(): MenuItem[] {
       choice(t("dateFormat"), [{ id: "MDY", name: t("formatMdy") }, { id: "DMY", name: t("formatDmy") }, { id: "YMD", name: t("formatYmd") }], () => getRawSettings().dateFormat, (v) => updateSettings({ dateFormat: v as any })),
       choice(t("backgroundBrightness"), [100, 90, 80, 70, 60, 50].map((v, i) => ({ id: v, name: i ? `−${i} (${v}%)` : t("normal") })), () => getRawSettings().bgBrightness, (v) => updateSettings({ bgBrightness: v })),
       choice(t("animatedBgQuality"), [{ id: "full", name: t("fullResolution") }, { id: "half", name: t("halfResolution") }], () => getRawSettings().bgQuality, (v) => updateSettings({ bgQuality: v as any })),
-      choice(t("hubStyle"), [{ id: "auto", name: t("hubStyleAuto") }, { id: "neutral", name: t("hubStyleNeutral") }, { id: "preview", name: t("hubStylePreview") }, ...consoleThemeIds().map((id) => ({ id, name: THEMES.find((t) => t.id === id)?.name ?? id }))], () => S().hubStyle, (v) => updateSettings({ hubStyle: v })),
+      choice(t("hubStyle"), [{ id: "auto", name: t("hubStyleAuto") }, { id: "neutral", name: t("hubStyleNeutral") }, { id: "preview", name: t("hubStylePreview") }, ...consoleThemeIds().map((id) => ({ id, name: hubThemeName(id) }))], () => S().hubStyle, (v) => updateSettings({ hubStyle: v })),
       toggle(t("themedStore"), () => S().themedStore !== false, (v) => updateSettings({ themedStore: v })),
       toggle(t("deckBadges"), () => S().badges.deck, (v) => updateSettings((p) => ({ badges: { ...p.badges, deck: v } }))),
       toggle(t("hideSteamHeader"), () => S().hideSteamHeader, (v) => updateSettings({ hideSteamHeader: v })),

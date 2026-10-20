@@ -1,16 +1,17 @@
 // Nintendo Switch home-menu themes (.nxtheme), read on the Deck by py_modules/switch_themes.py.
 // A .nxtheme holds the art for one Switch screen (wallpaper + a few round icons); a full theme is
-// several files that share a name, and the backend groups them. Nothing from Nintendo is needed.
-import { callable } from "@decky/api";
+// several files that share a name, and the backend groups them. Recognized layout / animation
+// patches become a semantic scene; unsupported firmware details are reported.
+import { callable, openFilePicker, toaster } from "@decky/api";
 import { useEffect, useState } from "react";
-import { getSettings, themeFx, useSettings } from "./settings";
-import { onResourcesChanged } from "./marketplaceState";
+import { getSettings, themeFx, useSettings, updateSettings } from "./settings";
+import { onResourcesChanged, resourcesChanged } from "./marketplaceState";
 
 export interface SwitchScreen {
   file: string;
   name: string;
   author: string;
-  target: string; // home, apps, set, lock …
+  target: string; // home, apps, set, lock â€¦
   label: string;
   layoutInfo: string;
   background: string | null; // data URL
@@ -18,13 +19,20 @@ export interface SwitchScreen {
   brightness?: number; // average brightness 0..1 when the backend could tell (DDS wallpapers)
   preview?: string;
   errors: string[];
+  conversion?: SwitchConversion;
 }
+export interface SwitchPane { Position?: {X?:number;Y?:number;Z?:number}; Size?: {X?:number;Y?:number}; Scale?: {X?:number;Y?:number}; Rotation?: {X?:number;Y?:number;Z?:number}; Visible?:boolean }
+export interface SwitchTrack { property:number; interpolation:"hermite"|"step"; keys:{frame:number;value:number;slope:number}[] }
+export interface SwitchAnimation { source?:string; pane:string; event:string; frames:number; loop:boolean; tracks:SwitchTrack[] }
+export interface SwitchPicture {source:string;texture:string;material:string;uv:number[];wrapS:number;wrapT:number;transform:number[]}
+export interface SwitchEffect extends SwitchPane {OriginX?:number;OriginY?:number;ParentOriginX?:number;ParentOriginY?:number;paletteState?:number;corners?:Record<string,number[]>;black?:number[];white?:number[];borderWidth?:number;radius?:number;shadow?:number;shadowFunction?:number;borderDraw?:boolean;shadowDraw?:boolean;borderOpacity?:number;shadowOpacity?:number;shadowAngle?:number;shadowDistance?:number;borderColor?:number[];shadowColor?:number[];palette?:{white?:number[];black?:number[];borderColor?:number[];shadowColor?:number[]};texture?:{scaleX:number;scaleY:number;repeatX:boolean;repeatY:boolean;nearest:boolean;mirrorX?:boolean;mirrorY?:boolean;minFilter?:number;magFilter?:number}}
+export interface SwitchConversion {version:number;animationFiles?:string[];nativePictures?:Record<string,Record<string,SwitchPicture>>;nativeTextures?:Record<string,string>;nativeFonts?:Partial<Record<'standard'|'extended'|'extended2',{family:string;source:string;cellRatio?:number}>>;resourceWarnings?:string[];notes?:string[];ignoredProperties?:{file:string;pane:string;name:string;value:number;reason:string;profiles:string[]}[];ignoredTargets?:{file:string;kind:string;name:string;reason:string}[];nativePanes?:Record<string,Record<string,SwitchEffect>>;nativeAnimations?:Record<string,SwitchAnimation[]>;nativeMaterials?:Record<string,Record<string,SwitchEffect>>;paneOrder?:Record<string,Record<string,number>>;childLockBackingBehindGames?:boolean;groups?:Record<string,string[]>;effects?:Record<string,SwitchEffect>;panes:Record<string,SwitchPane>;animations:SwitchAnimation[];converted:number;warnings:string[]}
 export interface SwitchSkin {
   name: string;
   author: string;
   file: string;
   screens: Record<string, SwitchScreen>;
-  otherScreens: string[]; // screens the theme has that the home does not draw (lock, news, user page …)
+  otherScreens: string[]; // screens the theme has that the home does not draw (lock, news, user page â€¦)
   icons: Record<string, string>;
 }
 export interface SwitchListEntry { id: string; name: string; author: string; screens: string[] }
@@ -75,4 +83,28 @@ export async function loadSwitchSkin(name: string): Promise<SwitchSkin | null> {
   const r = (await getSwitch(name).catch(() => null)) ?? null;
   cache.set(name, r);
   return r;
+}
+
+const importConsoleTheme = callable<[path:string],{success:boolean;file?:string;count?:number;error?:string}>("import_switch_theme");
+const importMenuResources = callable<[path:string],{success:boolean;resource?:string;fonts?:number;textures?:number;panes?:number;warnings?:string[];error?:string}>("import_switch_resources");
+export async function importSwitchResources(){
+ try{
+  const picked=await openFilePicker(0 as any,'/home/deck/Downloads',true,true,undefined,['szs','ttf','otf','bfttf','bfotf']);
+  if(!picked?.realpath)return;
+  const result=await importMenuResources(picked.realpath);
+  if(!result.success){toaster.toast({title:'Switch resources import failed',body:result.error??'Invalid menu archive'});return;}
+  cache.clear();resourcesChanged();
+  toaster.toast({title:'Switch resources imported',body:result.fonts?`${result.resource}: local font loaded.`:`${result.resource}: ${result.textures} textures, ${result.panes} pane bindings. ${result.warnings?.length??0} GPU texture formats remain unavailable.`});
+ }catch(error){toaster.toast({title:'Switch resources import failed',body:String(error)});}
+}
+export async function importSwitchThemeFile() {
+  try {
+    const picked=await openFilePicker(0 as any,"/home/deck/Downloads",true,true,undefined,["nxtheme","zip"]);
+    if (!picked?.realpath) return;
+    const result=await importConsoleTheme(picked.realpath);
+    if (!result.success || !result.file) { toaster.toast({title:"Switch theme import failed",body:result.error??"Invalid theme"});return; }
+    cache.clear(); resourcesChanged();
+    updateSettings({switchTheme:result.file});
+    toaster.toast({title:"Switch theme imported",body:`${result.count??1} console theme file(s). Open Options for the conversion report.`});
+  } catch(error) { toaster.toast({title:"Switch theme import failed",body:String(error)}); }
 }

@@ -45,6 +45,11 @@ for (const theme of HERO_SCALING_THEMES) {
   }];
 }
 
+THEME_STYLES.switch = [...(THEME_STYLES.switch ?? []), {
+  key: "consoleConversion", label: "Console theme conversion", group: "Theme file",
+  choices: [{id:true,name:"Convert supported layout and animations"},{id:false,name:"Artwork only"}], def:true,
+},{key:"firmwareLayout",label:"Switch firmware layout",group:"Theme file",choices:[{id:"auto",name:"Automatic - detect from theme"},{id:"classic",name:"Classic Home Menu - six applets"},{id:"modern",name:"Modern Home Menu - nine applets"}],def:"auto"},{key:"clockFormat",label:"Switch clock format",group:"Theme file",choices:[{id:"24",name:"24-hour"},{id:"12",name:"12-hour"}],def:"24"},{key:"firmwareColors",label:"Switch system colors",group:"Theme file",choices:[{id:"auto",name:"Automatic"},{id:"light",name:"Basic White"},{id:"dark",name:"Basic Black"}],def:"auto"}];
+
 /** A theme's own option, or its default. */
 export function style<T extends StyleValue>(s: Settings, theme: ThemeId, key: string): T {
   const own = s.styles?.[theme]?.[key];

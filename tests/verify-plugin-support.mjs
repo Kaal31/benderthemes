@@ -7,6 +7,7 @@ const registry = await readFile(new URL('../src/pluginSupport.ts', import.meta.u
 const compiled = await transform(registry, { loader:'ts', format:'esm' });
 const api = await import(`data:text/javascript;base64,${Buffer.from(compiled.code).toString('base64')}`);
 assert.deepEqual(api.pluginSupport(['CSSLoader','ProtonDB Badges','DeckyXMB','Unknown']).map(p=>p.mode), ['shared','shared','conflict','unknown']);
+assert.deepEqual(api.pluginSupport(['Steamder','Achievement Customizer']).map(p=>p.mode),['native','shared']);
 let invoked = 0;
 const off = api.registerPluginGameActions('example', game=>[{id:'reports',label:'Reports',run:()=>invoked+=game.appid}]);
 const broken = api.registerPluginGameActions('broken',()=>{throw new Error('missing plugin API');});
@@ -19,7 +20,7 @@ const steam = await readFile(new URL('../src/steam.ts', import.meta.url),'utf8')
 const footer = steam.slice(steam.indexOf('const HIDDEN_ATTR'), steam.indexOf('// ───────────── live status'));
 const keyboard = await readFile(new URL('../src/keyboardSkins.ts', import.meta.url),'utf8');
 const detect = keyboard.slice(keyboard.indexOf('const loaderSeen'),keyboard.indexOf('\nfunction apply('));
-const {code} = await transform(`const findClassModule=()=>({FooterLegend:'legend'}); const useEffect=()=>{};
+const {code} = await transform(`const findClassModule=()=>({FooterLegend:'legend'}); const useEffect=()=>{}; const themeHomeOwnsRoute=()=>true; const keyboardClasses=()=>({classes:{Keyboard:"Keyboard"}});
 ${footer.replaceAll('export ','')}
 ${detect.replaceAll('export ','')}
 window.check = () => {

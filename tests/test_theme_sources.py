@@ -133,6 +133,9 @@ class GitHubSourceTests(unittest.TestCase):
             op = FakeOpener(body)
             r = ts.download(d, "p3t", "ps3pro", "files/Alpha_One.p3t", opener=op)
             self.assertEqual(r, {"success": True, "name": "Alpha_One.p3t"})
+            self.assertEqual(ts.saved_downloads(d, "p3t"), {"p3t:ps3pro:files/Alpha_One.p3t:":"Alpha_One.p3t"})
+            os.remove(os.path.join(d,"p3t","Alpha_One.p3t"))
+            self.assertEqual(ts.saved_downloads(d,"p3t"), {})
             self.assertEqual(op.seen, ["https://raw.githubusercontent.com/PS3-Pro/Themes/main/files/Alpha_One.p3t"])
             bad = ts.download(d, "p3t", "ps3pro", "files/B.p3t", opener=FakeOpener(body, "https://evil.example/B.p3t"))
             self.assertIn("unexpected download host", bad["error"])
@@ -230,7 +233,7 @@ class ParseTests(unittest.TestCase):
 
     def test_kinds_listing(self):
         k = ts.kinds()
-        self.assertEqual({x["id"] for x in k["kinds"]}, {"psp", "p3t", "vita", "switch", "wiiu", "3ds", "wii", "xbox"})
+        self.assertEqual({x["id"] for x in k["kinds"]}, {"wiiflow", "psp", "p3t", "vita", "switch", "wiiu", "3ds", "wii", "xbox"})
         for x in k["kinds"]:
             self.assertTrue(all(s in k["sources"] for s in x["sources"]))
 

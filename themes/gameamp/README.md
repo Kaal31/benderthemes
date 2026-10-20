@@ -14,4 +14,4 @@ The upper Library, Theme options, Downloads and Game details shortcuts and the l
 
 ThemeDeck support is shared by the entire host. The theme reports selection through the standard focus bridge and consumes standard audio messages; playback and audio capture live in the host. Existing ThemeDeck assignments play as you browse when its autoplay and ThemeHub’s global focused-game music option are enabled.
 
-Only the lower Home/Store/Friends/Settings button lights turn green when pressed. The last pressed lower button stays green until another lower button is pressed; upper buttons do not change it.
+Lower navigation lights indicate open pages: Store/Friends/Settings stay green while at least one corresponding window is open and return to blue when its last window closes. Multiple stacked pages can light multiple buttons. Home is green when no windows are open. Upper button lights do not change colour.

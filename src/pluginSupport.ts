@@ -9,6 +9,8 @@ export interface PluginSupport {
   detail: string;
 }
 const policies: { match: RegExp; support: PluginSupport }[] = [
+  {match:/^Steamder$/i,support:{id:"steamder",name:"Steamder",mode:"native",detail:"Own route and controller navigation; ThemeHub releases home input and Steam bars on other pages."}},
+  {match:/^Achievement[ _-]Customizer$/i,support:{id:"achievement-customizer",name:"Achievement Customizer",mode:"shared",detail:"ThemeHub yields achievement notifications while Achievement Customizer is installed or loaded."}},
   { match: /finally.*achievement/i, support: { id: "finally", name: "Finally Achievement Plugin", mode: "shared", detail: "ThemeHub achievement popups disable while Finally is installed; Finally settings are untouched." } },
   { match: /^(CSS Loader|CSSLoader)$/i, support: { id: "css-loader", name: "CSS Loader", mode: "shared", detail: "Keyboard themes take priority; custom home uses dht-* style hooks." } },
   { match: /^(ProtonDB Badges|protondb-decky)$/i, support: { id: "protondb", name: "ProtonDB Badges", mode: "shared", detail: "Shared ProtonDB ratings and report actions; plugin badge settings remain on Steam's game page." } },

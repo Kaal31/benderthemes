@@ -118,7 +118,11 @@ Personal preferences aren't part of a preset: clock, volume, animations, TV mode
 
 The interface is a normal web page (HTML, CSS, JavaScript) from the theme folder. `tests/fixtures/themes/frame-test` (a test fixture, not shipped) is a complete example.
 
-### How it is sealed off
+### Bundled native themes
+
+Blue Glass, GameAmp, GameCube, iOS 6 Classic, Old Big Picture, Santa Express and WiiFlow Default use React renderers with direct ThemeRoot controller input and React-owned selection state. They mount in Steam after their media and automatic audio downloads complete. Their styles and assets are reused without running their legacy HTML scripts, shadow-DOM host, or message bridge. Their existing `frame` manifests remain compatible with the standalone SDK viewer. User-installed HTML themes still use the frame renderer below.
+
+### How imported HTML is sealed off
 
 - **Opaque origin:** the page runs in an `<iframe sandbox="allow-scripts">` without `allow-same-origin`. It can't read Steam's page, `SteamClient`, the plugin, cookies or browser storage, and it can't open popups or navigate the top page.
 - **No network:** the plugin's server sends every theme page with this Content-Security-Policy (`py_modules/data_themes.py: frame_csp`):
@@ -194,4 +198,10 @@ Audio extension: `audioLibrary` returns bounded albums and tracks with no filesy
 
 ## Experimental multi-page interfaces
 
-Frame themes may navigate to arbitrary local HTML pages and same-page routes using the bundled ThemeHub SDK. See [FRAME-SDK.md](FRAME-SDK.md) for navigation/back/replace, shared saved data, controller/keyboard handling and animation lifecycle. The sandbox and theme-folder restrictions remain in place. The Block Worlds frame test includes a separate 3D workshop and shared-state preview page.
+Frame themes may navigate to arbitrary local HTML pages and same-page routes using the bundled ThemeHub SDK. See [FRAME-SDK.md](FRAME-SDK.md) for navigation/back/replace, shared saved data, controller/keyboard handling and animation lifecycle. The sandbox and theme-folder restrictions remain in place.
+
+Bundled theme Hub styles have individual palettes under Hub style, including Auto and Preview. The pinned gallery contains animated GIFs and JPEG posters for all 31 shipped looks. Regenerate it with `node tools/capture_theme_previews.mjs`, `python tools/make_theme_gifs.py`, and `python tools/package_gallery.py`; publish only the immutable gallery with `python tools/publish_gallery.py --gallery-only`.
+
+Fresh installs start onboarding with PSP selected. Confirming setup downloads only the chosen theme before activation. All other shipped looks, including code-only console layouts, remain uninstalled until explicitly downloaded in the Hub. Existing downloads and the previously active code-only theme are preserved during migration. Test console skins stay archived in the assets repository for manual import; the default PS3 asset pack no longer includes ZenGarden.p3t.
+
+Archived import-only samples: [Midnight PS4 complete theme ZIP](https://github.com/Kaal31/deckthemes-assets/releases/download/midnight-ps4-import-v1.0.0/ThemeHub-Midnight-PS4-v1.0.0.zip). The original ZenGarden PS3 source files remain in their existing asset releases; the PS3 default pack excludes the optional .p3t skin.

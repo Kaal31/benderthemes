@@ -20,7 +20,7 @@ try {
     await page.locator('[data-dht-root]').waitFor();
     await page.getByRole('button', { name: 'Hub', exact: true }).click();
     await page.locator('.dht-market').waitFor();
-    await key(page, 'e'); await key(page, 'e', 600); // R1 twice: Discover -> Your themes -> Theme files
+    await key(page, 'e'); await key(page, 'e'); await key(page, 'e', 600); // Discover -> Your themes -> Community -> Theme files
     assert.equal(await page.locator('.dht-market').getAttribute('data-hub-tab'), 'files');
     await page.locator('.dht-files-card').first().waitFor();
     assert.match(await page.locator('.dht-files-kinds [data-active=true]').textContent(), /PSP/);
@@ -43,6 +43,8 @@ try {
     const dl = await page.evaluate(() => window.__themeSourceDownloads);
     assert.equal(dl.length, 1); assert.equal(dl[0].kind, 'psp'); assert.equal(dl[0].source, 'pspunk');
     await page.locator('.dht-files-message[data-ok=true]').waitFor();
+    assert.match(await page.locator('.dht-files-dl').first().textContent(),/Saved/);
+    assert.equal(await page.locator('.dht-files-dl').first().isDisabled(),true);
     assert.match(await page.locator('.dht-files-message').textContent(), /skins\/psp\//);
     // X on the console row switches the source; R2 the console
     await key(page, 'Escape'); await key(page, 'ArrowUp'); await key(page, 'ArrowUp');

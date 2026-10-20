@@ -1,7 +1,11 @@
 // Builds preview.html: every theme running in a normal browser with sample games.
 import { build } from "esbuild";
-import { existsSync, readdirSync, readFileSync, writeFileSync } from "fs";
+import { existsSync, readdirSync, readFileSync, writeFileSync, renameSync } from "fs";
 import { execFileSync } from "node:child_process";
+execFileSync(process.env.PYTHON || "python", ["tools/prepare_frame_media.py"], { stdio: "inherit" });
+// A browser may be loading a preview while another check rebuilds it.
+// Publish complete files so it cannot receive a truncated script document.
+function writePreview(path,content){const temporary=path+`.${process.pid}.tmp`;writeFileSync(temporary,content);renameSync(temporary,path);}
 if (existsSync("bundle") && process.env.SKIP_THEME_PACK_BUILD !== "1") execFileSync(process.env.PYTHON || "python", ["tools/package_themes.py"], { stdio: "inherit" });
 const r = await build({
   entryPoints: ["preview/main.tsx"],
@@ -16,6 +20,7 @@ const r = await build({
 const js = r.outputFiles[0].text.replace(/<\/script/g, "<\\/script");
 const previewCatalog = JSON.parse(readFileSync(existsSync("theme-catalog.json") ? "theme-catalog.json" : "asset-catalog.json", "utf8"));
 previewCatalog.themes = previewCatalog.themes.map((pack, i) => ({ ...pack, compatible: true, installedVersion: i < 3 ? pack.version : undefined, preview: `../out/theme-previews/${pack.id}.gif`, poster: `../out/theme-previews/${pack.id}.jpg` }));
+previewCatalog.art=Object.fromEntries((previewCatalog.gallery?.themes??[]).map(id=>[id,{preview:`../out/theme-previews/${id}.gif`,poster:`../out/theme-previews/${id}.jpg`}])) ;
 // personal builds: bundled wallpapers (./bundle/wallpapers) show up in the preview too
 const walls = {};
 if (existsSync("bundle/wallpapers/aero-background.jpg")) walls["aero-background.jpg"] = "../bundle/wallpapers/aero-background.jpg";
@@ -59,7 +64,7 @@ const dataThemes = existsSync("themes") ? readdirSync("themes").filter((d) => ex
   return { ...m, source: "bundled", packs, ...(icons ? { icons } : {}) };
 }) : [];
 const wallJs = `window.__dataThemes={base:location.origin+"/themes",wrap:location.origin+"/frame-wrap",themes:${JSON.stringify(dataThemes)}};window.__testPacks=[${[republicPack, ...suppliedPacks].filter(Boolean).map(p=>JSON.stringify(p)).join(",")}];window.__castleAudio=${JSON.stringify(castleAudio)};window.__bladesAudio=${JSON.stringify(bladesAudio)};window.__testP3t=${JSON.stringify(p3t)};window.__dialAssets=${JSON.stringify(dialAssets)};window.__testWalls=${JSON.stringify(walls)};window.__testAssets=${JSON.stringify(assets)};`;
-writeFileSync(
+writePreview(
   "preview/preview.html",
   `<!doctype html><html><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>Deck Home Themes preview</title><style>html,body{margin:0;background:#0d0f13}</style></head><body><div id="root"></div><script>window.__themeCatalog=${JSON.stringify(previewCatalog)};window.__isThemePreview=true;</script><script>${wallJs}</script><script>${js}</script></body></html>`,
 );
@@ -93,24 +98,24 @@ for (const [theme,names] of Object.entries({
 })) {
   const init = `window.__themePreview=${JSON.stringify(theme)};window.__referenceTitles=${JSON.stringify(names)};window.__referenceArt=${JSON.stringify(referenceArt)};`;
   const html = readFileSync("preview/preview.html","utf8").replace("<script>",`<script>${init}</script><script>`).replace("<title>Deck Home Themes preview</title>",`<title>${theme === "dial" ? "Alien Dial" : theme === "castle" ? "Floating Castle" : theme === "republic" ? "Galactic Republic" : "Aero"} - preview</title>`);
-  writeFileSync(`preview/${theme}-preview.html`,html);
+  writePreview(`preview/${theme}-preview.html`,html);
 }
 
 
 const allTitles=["Cyberpunk 2077","Hades","Elden Ring","Hollow Knight","Stardew Valley","Balatro","Baldur’s Gate 3","DOOM Eternal","Persona 5 Royal","The Witcher 3","Portal 2","Red Dead Redemption 2","Grand Theft Auto V","STAR WARS Jedi: Survivor","STAR WARS Battlefront II","SWORD ART ONLINE Fractured Daydream"];
 const baseHtml=readFileSync("preview/preview.html","utf8");
 const defaultInit=`window.__referenceTitles=${JSON.stringify(allTitles)};window.__referenceArt=${JSON.stringify(referenceArt)};`;
-writeFileSync("preview/preview.html",baseHtml.replace("<script>",`<script>${defaultInit}</script><script>`));
+writePreview("preview/preview.html",baseHtml.replace("<script>",`<script>${defaultInit}</script><script>`));
 const mcInit=`window.__themePreview="minecraft";window.__referenceTitles=${JSON.stringify(allTitles.slice(0,5))};window.__referenceArt=${JSON.stringify(referenceArt)};`;
-writeFileSync("preview/minecraft-preview.html",baseHtml.replace("<script>",`<script>${mcInit}</script><script>`));
+writePreview("preview/minecraft-preview.html",baseHtml.replace("<script>",`<script>${mcInit}</script><script>`));
 // Wii U page used by tests/verify-wara-plaza.mjs, verify-wiiu-intro.mjs and friends (?plaza=1 opens the Plaza)
-writeFileSync("preview/wiiu-preview.html",baseHtml.replace("<script>",`<script>window.__themePreview="wiiu";${defaultInit}</script><script>`));
-writeFileSync("preview/wii-preview.html",baseHtml.replace("<script>",`<script>window.__themePreview="wii";${defaultInit}</script><script>`));
+writePreview("preview/wiiu-preview.html",baseHtml.replace("<script>",`<script>window.__themePreview="wiiu";${defaultInit}</script><script>`));
+writePreview("preview/wii-preview.html",baseHtml.replace("<script>",`<script>window.__themePreview="wii";${defaultInit}</script><script>`));
 
 // Steam on-screen keyboard mock with the keyboard skins (preview/keyboard.ts, tests/verify-keyboard-skins.mjs)
 {
   const kb = await build({ entryPoints: ["preview/keyboard.ts"], bundle: true, write: false, format: "iife", minify: true,
     alias: { "@decky/ui": "./preview/stubs/ui.tsx", "@decky/api": "./preview/stubs/api.ts" }, define: { "process.env.NODE_ENV": '"production"' } });
-  writeFileSync("preview/keyboard.html", `<!doctype html><html><head><meta charset="utf-8"><title>Keyboard skins preview</title><style>html,body{margin:0;width:1280px;height:800px;background:#1b2838 linear-gradient(160deg,#2a475e,#171a21)}</style></head><body><script>window.__isThemePreview=true;</script><script>${kb.outputFiles[0].text.replace(/<\/script/g, "<\\/script")}</script></body></html>`);
+  writePreview("preview/keyboard.html", `<!doctype html><html><head><meta charset="utf-8"><title>Keyboard skins preview</title><style>html,body{margin:0;width:1280px;height:800px;background:#1b2838 linear-gradient(160deg,#2a475e,#171a21)}</style></head><body><script>window.__isThemePreview=true;</script><script>${kb.outputFiles[0].text.replace(/<\/script/g, "<\\/script")}</script></body></html>`);
   console.log("preview/keyboard.html");
 }

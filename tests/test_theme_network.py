@@ -30,3 +30,16 @@ class NetworkTests(unittest.TestCase):
             self.assertEqual(options['timeout'], 7)
             self.assertTrue(options['context'].check_hostname)
             self.assertEqual(options['context'].verify_mode, ssl.CERT_REQUIRED)
+
+    def test_audio_download_uses_system_ca_helper(self):
+        import deckthemes_audio as audio
+        self.assertIs(audio.urlopen, network.urlopen)
+        with patch.object(network, '_urlopen') as request:
+            response = request.return_value.__enter__.return_value
+            response.geturl.return_value = audio.API + '/themes/example'
+            response.headers = {}
+            response.read.return_value = b'{}'
+            self.assertEqual(audio.request('/themes/example', 1024), b'{}')
+            options = request.call_args.kwargs
+            self.assertTrue(options['context'].check_hostname)
+            self.assertEqual(options['context'].verify_mode, ssl.CERT_REQUIRED)

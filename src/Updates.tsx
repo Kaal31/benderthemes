@@ -1,3 +1,4 @@
+import { SpotlightUpdates } from "./SpotlightUpdates";
 import { ButtonItem, DropdownItem, PanelSection, PanelSectionRow, ProgressBarWithInfo } from "@decky/ui";
 import { callable } from "@decky/api";
 import { logInfo } from "./diag";
@@ -67,7 +68,7 @@ export async function installFirmware(release: Release, current: string) {
   } catch (error) { await cancel().catch(() => {}); throw error; }
 }
 
-export function Updates({ onManageThemes }: { onManageThemes: () => void }) {
+export function Updates({ onManageThemes, showCommunityUpdates = true }: { onManageThemes: () => void; showCommunityUpdates?: boolean }) {
   const lang = useLocalization();
   const community = useCommunityUpdates();
   const [themeChecking, setThemeChecking] = useState(false);
@@ -154,7 +155,7 @@ export function Updates({ onManageThemes }: { onManageThemes: () => void }) {
     }
   };
   const order = selected && status ? releaseOrder(selected,status) : 0;
-  return <><PanelSection title={lang("communityThemeUpdates")}>
+  return <><PanelSection title={showCommunityUpdates ? lang("communityThemeUpdates") : "Theme Hub"}>{showCommunityUpdates && <>
     <style>{COMMUNITY_UPDATE_CSS}</style>
     <PanelSectionRow><section className="dht-theme-updates" aria-label="Community update summary" aria-busy={themeChecking}>
       <div className="dht-tu-summary">
@@ -170,8 +171,8 @@ export function Updates({ onManageThemes }: { onManageThemes: () => void }) {
       </article>)}</div>}
       {!!community.errors.length && <div className="dht-tu-notice" role="status"><span aria-hidden="true">!</span><div><strong>{lang("someSourcesOffline")}</strong><p>Showing saved results. Installed themes still work.</p></div></div>}
       <div className="dht-tu-schedule"><span className="dht-tu-dot" aria-hidden="true"/>{lang("autoChecksEvery6Hours")}</div>
-    </section></PanelSectionRow>
-    <PanelSectionRow><div className="dht-tu-action dht-tu-primary"><ButtonItem layout="below" onClick={onManageThemes}>{community.updateCount ? lang("reviewThemeUpdates") : lang("browseCommunityThemes")}</ButtonItem></div></PanelSectionRow>
+    </section></PanelSectionRow></>}
+    <PanelSectionRow><div className="dht-tu-action dht-tu-primary"><ButtonItem layout="below" onClick={onManageThemes}>Theme Hub</ButtonItem></div></PanelSectionRow>
     <PanelSectionRow><div className="dht-tu-action dht-tu-secondary"><ButtonItem layout="below" disabled={themeChecking} onClick={() => { setThemeChecking(true); setThemeError(""); void checkCommunityUpdates(true).catch(e => setThemeError(String(e))).finally(() => setThemeChecking(false)); }}>{themeChecking ? lang("checkingThemes") : lang("checkCommunityThemeUpdates")}</ButtonItem></div></PanelSectionRow>
     {themeError && <PanelSectionRow><div className="dht-tu-error" role="alert">{themeError}</div></PanelSectionRow>}
   </PanelSection><PanelSection title={lang("pluginUpdate")}>
@@ -200,7 +201,7 @@ export function Updates({ onManageThemes }: { onManageThemes: () => void }) {
     <PanelSectionRow><ButtonItem layout="below" disabled={busy || checking} onClick={() => void load()}>{checking ? lang("checking") : lang("checkPluginUpdate")}</ButtonItem></PanelSectionRow>
     {busy && downloading.current && <PanelSectionRow><ProgressBarWithInfo layout="inline" nProgress={progress} sOperationText={message} /></PanelSectionRow>}
     {message && <PanelSectionRow><div style={{ fontSize: 12, overflowWrap: "anywhere" }}>{message}</div></PanelSectionRow>}
-  </PanelSection></>;
+  </PanelSection><SpotlightUpdates/></>;
 }
 
 const COMMUNITY_UPDATE_CSS = `

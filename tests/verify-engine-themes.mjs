@@ -1,3 +1,4 @@
+import {midnightFixture} from "./imported-midnight.mjs";
 // Data themes and the sealed community interface (src/engine, themes/, tests/fixtures/themes/frame-test).
 import { chromium } from "playwright";
 import assert from "node:assert/strict";
@@ -13,10 +14,10 @@ p.on("pageerror", (e) => errors.push(e.message));
 const FIX = "tests/fixtures/themes/frame-test";
 const fixture = { ...JSON.parse(readFileSync(`${FIX}/theme.json`, "utf8")), source: "user", packs: { sounds: { files: readdirSync(`${FIX}/sounds`).filter((f) => f.endsWith(".wav")).sort(), mappings: {}, ignore: [] } } };
 const leaky = { schema: 1, id: "leak-test", name: "Leak test", layout: "frame", frame: { entry: "leak.html" }, source: "user", packs: {} };
-await p.addInitScript(([fixture, leaky]) => {
+await p.addInitScript(([fixture, leaky, midnight]) => {
   let v;
-  Object.defineProperty(window, "__dataThemes", { configurable: true, get: () => v, set: (x) => { v = { ...x, themes: [...x.themes, fixture, leaky] }; } });
-}, [fixture, leaky]);
+  Object.defineProperty(window, "__dataThemes", { configurable: true, get: () => v, set: (x) => { v = { ...x, themes: [...x.themes, fixture, leaky, midnight] }; } });
+}, [fixture, leaky, midnightFixture]);
 // a server the hostile fixture (tests/fixtures/themes/leak-test) tries to reach by navigating its own frame
 const hits = [];
 const catcher = createServer((req, res) => { hits.push(req.url); res.end("got it"); });
@@ -49,12 +50,12 @@ try {
   assert.match(await f.locator('[data-check="storage"]').textContent(), /none/);
   const before = await f.locator("#title").textContent();
   await p.locator("[data-dht-root]").click({ position: { x: 5, y: 5 } }).catch(() => {});
-  await p.keyboard.press("ArrowRight");
+  await p.evaluate(()=>window.dispatchEvent(new KeyboardEvent("keydown",{key:"ArrowRight",bubbles:true})));
   await p.waitForTimeout(300);
   const after = await f.locator("#title").textContent();
   assert.notEqual(after, before, "controller input reaches the interface");
   await p.locator("[data-dht-root]").screenshot({ path: "work/engine-frame.png" });
-  await p.keyboard.press("Enter");
+  await p.evaluate(()=>window.dispatchEvent(new KeyboardEvent("keydown",{key:"Enter",bubbles:true})));
   await p.locator(".dht-launch").waitFor({ timeout: 5000 });
   assert.match(await p.locator(".dht-launch").textContent(), new RegExp(after.slice(0, 8).replace(/[.*+?^${}()|[\]\\]/g, "\\$&")));
   await p.keyboard.press("Escape");

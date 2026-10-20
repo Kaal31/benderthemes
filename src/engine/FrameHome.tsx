@@ -1,6 +1,14 @@
 import { t } from "../i18n";
+import {WiiFlowHome} from "../themes/WiiFlow";
+import {GameCubeHome} from "../themes/GameCube";
+import {GameAmpHome} from "../themes/GameAmp";
+import {GlassHome} from "../themes/Glass";
+import {BigPictureHome} from "../themes/BigPicture";
+import {SantaHome} from "../themes/Santa";
 import { frameRoute, FrameRoute } from "./frameNavigation";
-// The "frame" layout: a community theme's own interface, sealed off from Steam.
+import { ensureThemeAudio } from "../audioDownloads";
+import { callable } from "@decky/api";
+// Shipped themes use direct React renderers. Imported HTML retains the frame host below.
 //
 // The interface is an HTML page from the theme's folder. It runs in an iframe
 // with sandbox="allow-scripts" and no allow-same-origin, so it gets an opaque
@@ -22,7 +30,7 @@ import { useHome } from "../common";
 import { Btn, Hints, Press, ThemeRoot } from "../input";
 import { Game, openSteam, SteamPlace } from "../library";
 import { getSettings, updateSettings } from "../settings";
-import { fmtTime, playSound, SOUND_FILES, SoundKind } from "../steam";
+import { fmtTime, playSound, SOUND_FILES, SoundKind, useSteamStatus } from "../steam";
 import { activeTheme, iconMap, slotAccent, slotUrl, frameUrl } from "./registry";
 import { themeAudioBands } from "../themeAudio";
 import { useDownloads } from "../downloads";
@@ -30,15 +38,18 @@ import { framePageRequest } from "./framePages";
 import { useReportFocus } from "../focus";
 
 export const FRAME_PROTOCOL = 1;
+const ensureMedia=callable<[id:string],{success:boolean;error?:string}>("ensure_frame_media");
 const BUTTONS: Btn[] = ["up", "down", "left", "right", "a", "b", "x", "y", "menu", "l1", "r1"];
 const PLACES: SteamPlace[] = ["library", "store", "friends", "settings", "downloads", "search", "power", "mainmenu"];
 const MAX_SAVE = 64 * 1024;
 
 /** What an interface may know about a game: no Steam objects, only plain data. */
 function publicGame(g: Game, abs: (u: string) => string) {
-  const art = (list: string[]) => list.slice(0, 3).map(abs);
+  const art = (list: string[]) => [...new Set(list)].map(abs);
   return {
     appid: g.appid,
+    gameid: g.gameid,
+    shortcut: g.shortcut,
     name: g.name,
     installed: g.installed,
     lastPlayed: g.lastPlayed,
@@ -49,10 +60,30 @@ function publicGame(g: Game, abs: (u: string) => string) {
 }
 
 export function FrameHome() {
+ const api=useHome(),theme=activeTheme(api.settings);
+ return theme?.source==="bundled"&&["santa-express","old-big-picture","blue-glass","ios6","gameamp","gamecube","wiiflow-default"].includes(theme.id)?<NativeMediaGate id={theme.id}>{theme.id==="wiiflow-default"?<WiiFlowHome/>:theme.id==="santa-express"?<SantaHome/>:theme.id==="old-big-picture"?<BigPictureHome/>:theme.id==="gamecube"?<GameCubeHome/>:theme.id==="gameamp"?<GameAmpHome/>:<GlassHome ios={theme.id==="ios6"}/>}</NativeMediaGate>:<LegacyFrameHome/>;
+}
+function NativeMediaGate({id,children}:{id:string;children:import("react").ReactNode}){
+ const api=useHome();
+ const [state,setState]=useState<{id:string;ready:boolean;error?:string}>({id,ready:false}),[attempt,retry]=useState(0);
+ useEffect(()=>{let alive=true;setState({id,ready:false});void Promise.all([ensureMedia(id),ensureThemeAudio(id)]).then(([media,audio])=>{if(alive)setState({id,ready:media.success&&audio,error:media.error||(!audio?"Could not download theme audio.":undefined)});}).catch(e=>{if(alive)setState({id,ready:false,error:String(e)});});return()=>{alive=false;};},[id,attempt]);
+ return state.id===id&&state.ready?<>{children}</>:<ThemeRoot hints={{a:state.error?"Retry download":undefined,y:"Options"}} onInput={({btn})=>{if(btn==="a"&&state.error){retry(n=>n+1);return true;}if(btn==="y"||btn==="menu"){api.openSettings();return true;}return false;}}><div role="status" style={{padding:48,color:"white"}}>{state.error??"Downloading theme media…"}{state.error&&<button onClick={()=>retry(n=>n+1)}>Retry download</button>}</div></ThemeRoot>;
+}
+function LegacyFrameHome() {
   const api = useHome();
   const downloads = useDownloads();
+  const status = useSteamStatus();
   const requests = useRef({ at: 0, count: 0, pending: 0 });
   const theme = activeTheme(api.settings);
+  const [media,setMedia]=useState<{id?:string;ready:boolean;error?:string}>({ready:false});
+  const [mediaAttempt,setMediaAttempt]=useState(0);
+  useEffect(()=>{
+    let alive=true;
+    setMedia({id:theme?.id,ready:theme?.source!=="bundled"});
+    if(theme?.source==="bundled")void Promise.all([ensureMedia(theme.id),ensureThemeAudio(theme.id)]).then(([result,audioReady])=>{if(alive)setMedia({id:theme.id,ready:result.success&&audioReady,error:result.error||(!audioReady?"Could not download theme audio. Please retry.":undefined)});}).catch(error=>{if(alive)setMedia({id:theme.id,ready:false,error:String(error)});});
+    return()=>{alive=false;};
+  },[theme?.id,theme?.source,mediaAttempt]);
+  const frameAvailable=theme?.source!=="bundled"||(media.id===theme.id&&media.ready);
   const frame = useRef<HTMLIFrameElement>(null);
   const [ready, setReady] = useState<{ handles: Set<Btn>; textInput: boolean } | null>(null);
   const [hints, setHints] = useState<Hints>({});
@@ -81,7 +112,7 @@ export function FrameHome() {
 
   const post = (msg: Record<string, unknown>) => {
     try {
-      frame.current?.contentWindow?.postMessage({ dht: FRAME_PROTOCOL, ...msg, ...(msg.type === "state" ? { active: !(frame.current?.ownerDocument.hidden ?? false) && !api.busy } : {}), clientId: client.current }, "*");
+      frame.current?.contentWindow?.postMessage({ dht: FRAME_PROTOCOL, ...msg, ...(msg.type === "state" ? { active: !(frame.current?.ownerDocument?.hidden ?? false) && !api.busy } : {}), clientId: client.current }, "*");
     } catch {
       /* the frame went away */
     }
@@ -101,6 +132,7 @@ export function FrameHome() {
     return {
       theme: theme ? { id: theme.id, name: theme.name } : null,
       user: api.user,
+      avatar: status.avatar ?? null,
       settings: { clock24: s.clock24, animations: s.animations, sounds: s.sounds, tvMode: s.tvMode, accent: slotAccent(s) ?? null },
       // the theme's slots after mix and match: files from data themes only
       slots: { wallpaper: slotUrl("wallpaper", s) ?? null, bootVideo: slotUrl("bootVideo", s) ?? null, launchVideo: slotUrl("launchVideo", s) ?? null, font: slotUrl("font", s) ?? null, icons: iconMap(s) },
@@ -110,10 +142,10 @@ export function FrameHome() {
       saved: theme ? s.frameData[theme.id] ?? null : null,
       busy: api.busy,
       route: { ...route, canGoBack: routes.length > 1 },
-      active: !(frame.current?.ownerDocument.hidden ?? false) && !api.busy,
+      active: !(frame.current?.ownerDocument?.hidden ?? false) && !api.busy,
       capabilities: { pages: 1, audio: 1, focus: 1, navigation: 1, lifecycle: 1, savePatch: 1 },
     };
-  }, [api.lib, api.settings, api.user, api.busy, theme?.id, ready, routes]);
+  }, [api.lib, api.settings, api.user, api.busy, status.avatar, theme?.id, ready, routes]);
 
   useEffect(() => {
     if (ready) post({ type: "state", ...state });
@@ -136,7 +168,8 @@ export function FrameHome() {
 
   // Messages from the interface. Only our own iframe is listened to.
   useEffect(() => {
-    const view = frame.current?.ownerDocument?.defaultView ?? window;
+    if (!frameAvailable) return;
+    const view = frame.current?.ownerDocument.defaultView ?? window;
     const find = (appid: unknown) => (typeof appid === "number" ? api.lib.byId.get(appid) : undefined);
     const onMessage = (e: MessageEvent) => {
       if (!frame.current || e.source !== frame.current.contentWindow) return;
@@ -232,7 +265,7 @@ export function FrameHome() {
     };
     view.addEventListener("message", onMessage);
     return () => view.removeEventListener("message", onMessage);
-  }, [api, state, theme?.id, downloads, routes]);
+  }, [api, state, theme?.id, downloads, routes, frameAvailable]);
 
   // Legacy interfaces return focus to the host. Interfaces with their own DOM
   // keyboard handler opt in to textInput so search/editor fields keep focus.
@@ -250,10 +283,10 @@ export function FrameHome() {
   useEffect(() => { setReady(null); setFocusedAppid(null); }, [url]);
   useEffect(() => { setRoutes([]); setReady(null); setHints({}); setPageError(false); client.current = null; generation.current++; }, [theme?.id, theme?.revision]);
   useEffect(() => {
-    if (ready || !url) return;
+    if (ready || !url || !frameAvailable) return;
     const timer = setTimeout(() => setPageError(true), 8000);
     return () => clearTimeout(timer);
-  }, [url, ready, reload]);
+  }, [url, ready, reload, frameAvailable]);
 
   const onInput = (p: Press) => {
     if (p.btn === "b" && (!ready || pageError) && back()) return true;
@@ -271,7 +304,7 @@ export function FrameHome() {
   return (
     <ThemeRoot onInput={onInput} hints={{ y: "Options", ...hints }}>
       {pageError && <div role="alert" style={{position:"absolute",inset:0,zIndex:5,background:"#16202bf2",padding:48,color:"white"}}>{t("frameNotConnected")}<button onClick={() => { if (!back()) { setPageError(false); setReady(null); client.current = null; generation.current++; setReload(n => n + 1); } }}>{t("backToWorkingPage")}</button></div>}
-      {url ? (
+      {!frameAvailable ? <div role="status" style={{padding:48,color:"white"}}>{media.error ? `${t("couldNotDownloadThemeMedia") || "Could not download theme media:"} ${media.error}` : t("downloadingThemeMediaDots") || "Downloading theme media…"}{media.error && <button onClick={()=>setMediaAttempt(n=>n+1)}>{t("retryDownload") || "Retry download"}</button>}</div> : url ? (
         <iframe
           ref={frame}
           key={`${url}:${reload}:${theme?.revision ?? ""}`}

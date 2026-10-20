@@ -3,7 +3,7 @@
 Uses out/themes/HubPreviews.zip and asset-catalog.json (whose "gallery" entry must match the zip). Same login as
 tools/publish_assets.py: GH_TOKEN, or the GitHub credential git has stored.
 """
-import hashlib, json, os, subprocess, urllib.request, urllib.error
+import hashlib, json, os, subprocess, sys, urllib.request, urllib.error
 from pathlib import Path
 ROOT = Path(__file__).resolve().parents[1]
 REPO = 'Kaal31/deckthemes-assets'
@@ -38,6 +38,10 @@ r = release(tag, 'Hub preview gallery')
 if not any(a['name'] == 'HubPreviews.zip' for a in r['assets']):
     upload(r, 'HubPreviews.zip', data); print('Uploaded HubPreviews.zip to ' + tag, flush=True)
 else: print('HubPreviews.zip already on ' + tag, flush=True)
+# --gallery-only keeps experimental IDs out of the shared legacy catalogue.
+if "--gallery-only" in sys.argv:
+    print("Published immutable gallery; shared catalogue unchanged", flush=True)
+    raise SystemExit(0)
 # the catalogue goes live only once its gallery is downloadable
 r = release('beta-catalog', 'Beta theme catalogue')
 for a in r['assets']:

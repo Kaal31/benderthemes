@@ -1,5 +1,6 @@
 import { t as tr } from "./i18n";
 import {FIXED_BACKGROUND_PAGES,pageBackgroundRef} from "./pageBackgrounds";
+import {chooseLocalMusic} from "./localMusic";
 import {downloadableAudio,downloadAudio,refreshAudioCatalog} from "./audioDownloads";
 // Customize: the slots of the preset in use, offered only where the look draws them (LAYOUT_SLOTS in
 // src/engine/assets.ts), each with every compatible asset from every installed source, grouped by source.
@@ -136,14 +137,15 @@ function soundControl(kind: "sounds" | "music"): SlotControl {
     group(tr("hubAndAudioLoaderPacks"), packs.filter((p) => !p.folder.startsWith("Theme - "))),
     group(tr("themeFilesGroup"), packs.filter((p) => p.folder.startsWith("Theme - "))),
     ...assetGroups(kind, lists(), t?.id),
-    ...[true,false].map(recommended=>({source: recommended ? tr("deckThemesForTheme") : tr("deckThemesOtherPacks"),items:downloadableAudio().filter(p=>p.kind===kind&&p.themes.some(key=>key===th||key===`${th}:${getSettings().x360.style}`)===recommended).map(p=>{
+    ...[true,false].map(recommended=>({source: recommended ? tr("deckThemesForTheme") : tr("deckThemesOtherPacks"),items:downloadableAudio().filter(p=>p.kind===kind&&p.themes.some(key=>key===t?.id||key===th||key===`${th}:${getSettings().x360.style}`)===recommended).map(p=>{
       const installed=packs.find(pack=>pack.id===p.id);
       return {ref:installed?`@pack/${installed.folder}`:`@deckthemes/${p.id}`,name: `${p.name}${installed ? ` · ${tr("installed")}` : ` · ${tr("download")}`}`};
     })})),
   ].filter((g) => g.items.length);
   const special: Option[] = kind === "sounds"
     ? [{ id: "", name: `${tr("automatic")}${auto ? ` (${auto.name})` : ""}` }, { id: "steam", name: tr("steamSounds") }]
-    : [{ id: "", name: `${tr("automatic")}${auto ? ` (${auto.name})` : ` (${tr("noneFound")})`}` }, { id: "off", name: tr("off") }];
+    : [{ id: "", name: `${tr("automatic")}${auto ? ` (${auto.name})` : ` (${tr("noneFound")})`}` }, { id: "off", name: tr("off") },
+       { id: "@local/downloads", name: tr("chooseMusicDownloads") || "Choose music from Downloads…" }, { id: "@local/music", name: tr("chooseMusicMusic") || "Choose music from Music…" }];
   return {
     id: kind,
     label: kind === "sounds" ? tr("soundEffects") : tr("music"),
@@ -160,6 +162,12 @@ function soundControl(kind: "sounds" | "music"): SlotControl {
     async set(v: string) {
       const key=`${t?.id??th}:${kind}`,revision=(audioSelections.get(key)??0)+1;
       audioSelections.set(key,revision);
+      if (kind === "music" && v.startsWith("@local/")) {
+        const preset = getSettings().userPreset;
+        const folder = await chooseLocalMusic(v === "@local/downloads" ? "downloads" : "music");
+        if (!folder || audioSelections.get(key) !== revision || layout() !== th || look()?.id !== t?.id || getSettings().userPreset !== preset) return;
+        v = `@pack/${folder}`;
+      }
       if(v.startsWith("@deckthemes/")){
         const folder=await downloadAudio(v.slice(12));
         if(!folder||audioSelections.get(key)!==revision)return;

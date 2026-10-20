@@ -86,11 +86,16 @@ class Downloads(unittest.TestCase):
             audio.install(IDENT, self.temp.name, fetch=self.fetch)
         self.assertEqual(list(Path(self.temp.name).iterdir()), [])
 
+    def test_license_preserved(self):
+        self.data = archive(("PSP/LICENSE", b"Original pack license"))
+        result = audio.install(IDENT, self.temp.name, fetch=self.fetch)
+        self.assertEqual((Path(self.temp.name) / result["folder"] / "LICENSE").read_bytes(), b"Original pack license")
+
     def test_catalog_scope(self):
         specs = audio.catalog()
-        self.assertEqual(len(specs), 37)
-        self.assertEqual(len({s["id"] for s in specs}), 37)
-        self.assertEqual(sum(bool(s.get("folders")) for s in specs), 20)
+        self.assertEqual(len(specs), 41)
+        self.assertEqual(len({s["id"] for s in specs}), 41)
+        self.assertEqual(sum(bool(s.get("folders")) for s in specs), 24)
         folders = {f for s in specs for f in s.get("folders", [])}
         self.assertNotIn("DHT Verified Republic", folders)
         self.assertNotIn("Theseus Xbox Dashboard", folders)

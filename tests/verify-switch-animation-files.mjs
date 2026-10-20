@@ -1,0 +1,10 @@
+import assert from 'node:assert/strict';
+import {build} from 'esbuild';
+const b=await build({entryPoints:['src/themes/switchAnimationFiles.ts'],bundle:true,write:false,format:'esm',platform:'node'});
+const {composeSwitchAnimations}=await import('data:text/javascript;base64,'+Buffer.from(b.outputFiles[0].text).toString('base64'));
+const animation=(pane,source)=>({pane,source,event:'active',frames:1,loop:false,tracks:[]});
+const defaults=[animation('root','A.bflan'),animation('icon','A.bflan'),animation('cursor','B.bflan')];
+assert.deepEqual(composeSwitchAnimations(defaults,[animation('root','A.bflan')],['A.bflan']).map(a=>a.pane),['cursor','root']);
+assert.deepEqual(composeSwitchAnimations(defaults,[],['A.bflan']).map(a=>a.pane),['cursor'],'An empty BFLAN must disable every default track from that file');
+assert.equal(composeSwitchAnimations(defaults,[]).length,3,'Old cached themes retain their baseline behavior');
+console.log('PASS whole-file animation replacement: omitted panes, empty files and legacy cached skins');

@@ -17,7 +17,7 @@ import { getUiDocument } from "./cssvars";
 import { getSettings, useSettings, Settings, ThemeId } from "./settings";
 import { onMusicCompress, onSkinPack, skinSoundPack } from "./skins";
 import { encodeOggOpus, opusSupported, parseWav, toBase64 } from "./oggOpus";
-import { holdOtherMusic } from "./otherPlugins";
+import { holdOtherMusic, themeHomeOwnsRoute } from "./otherPlugins";
 import { keyboardClasses, steamDocuments } from "./keyboardSkins";
 import { backgroundMediaKind } from "./backgroundMedia";
 
@@ -99,11 +99,11 @@ export const DEFAULT_WALLPAPER: Partial<Record<ThemeId, string>> = { aero: "aero
 /** The one background of the look on screen (presets v2: the preset's Background choice, from any installed source;
  *  else a wallpapers-folder picture chosen before v2; else the theme's own or the look's default picture), with game
  *  art, brightness and colour applied. null = the look draws its own background. */
-export function useWallpaper(theme: ThemeId, options?:{raw?:boolean;settings?:Settings;gameArt?:boolean;page?:string}): string | null {
+export function useWallpaper(theme: ThemeId, options?:{raw?:boolean;settings?:Settings;gameArt?:boolean;page?:string;defaultWallpaper?:boolean}): string | null {
   const s=options?.settings??getSettings();
   const chosen = s.wallpapers[theme];
   const fromEngine = engine?.background(theme, chosen,s);
-  const ref = options?.page && FIXED_BACKGROUND_PAGES[theme] ? pageBackgroundRef(s,theme,options.page)??"" : fromEngine !== undefined ? fromEngine : chosen ? `@wp/${chosen}` : DEFAULT_WALLPAPER[theme] ? `@wp/${DEFAULT_WALLPAPER[theme]}` : "";
+  const ref = options?.page && FIXED_BACKGROUND_PAGES[theme] ? pageBackgroundRef(s,theme,options.page)??"" : fromEngine !== undefined ? fromEngine : chosen ? `@wp/${chosen}` : options?.defaultWallpaper!==false && DEFAULT_WALLPAPER[theme] ? `@wp/${DEFAULT_WALLPAPER[theme]}` : "";
   const [state, setState] = useState<{ ref: string; url: string | null }>({ ref, url: ref ? wallCache.get(ref) ?? null : null });
   useEffect(() => {
     if (!ref) return setState({ ref, url: null });
@@ -193,6 +193,11 @@ export const SOUND_FILES = {
   end: "deck_ui_bumper_end_02.wav",
   menu: "deck_ui_show_modal.wav",
   close: "deck_ui_hide_modal.wav",
+  sideOpen: "deck_ui_side_menu_fly_in.wav",
+  sideClose: "deck_ui_side_menu_fly_out.wav",
+  sliderUp: "deck_ui_slider_up.wav",
+  sliderDown: "deck_ui_slider_down.wav",
+  misc: "deck_ui_misc_10.wav",
   toggle: "deck_ui_switch_toggle_on.wav",
   // Steam's own notification cues; a pack can map several files to each (the iiSU pack does). Played only from a pack: Steam
   // plays its own sound when the pack has none, so there is no fallback (see playNoticeSound).
@@ -219,6 +224,8 @@ export function setPreviewSound(f: typeof previewSound) {
  * to suggest. Xbox 360 presets have their own entries ("x360:blades" …).
  */
 export const PACK_MATCH: Record<string, { re: RegExp[]; suggest: string }> = {
+  "old-big-picture": {re:[/^Big Picture Mode$/i,/^Steam Big Picture Ambience$/i],suggest:"Big Picture Mode"},
+  gamecube: {re:[/Nintendo GameCube Menu/i],suggest:"Nintendo GameCube Menu SFX"},
   wii: {re:[/^wii(?![ _-]*u)/i],suggest:"Wii Menu Sounds"},
   wiiu: {re:[/wii[ _-]*u/i],suggest:"Wii U Menu Sounds"},
   switch: {re:[/(^|[^a-z0-9])switch([^a-z0-9]|$)/i],suggest:"Switch Menu Sounds"},
@@ -249,6 +256,7 @@ export const PACK_MATCH: Record<string, { re: RegExp[]; suggest: string }> = {
 export type PackKind = "sfx" | "music";
 /** Which PACK_MATCH entry applies (Xbox 360 depends on the chosen dashboard). */
 export function matchKey(theme: ThemeId): string {
+  if (theme === "frame" && ["gamecube", "old-big-picture"].includes(getSettings().activeTheme ?? "")) return getSettings().activeTheme!;
   if (theme === "x360") return `x360:${getSettings().x360?.style ?? "metro"}`;
   return theme === "aero2" ? "aero" : theme;
 }
@@ -971,7 +979,7 @@ function watchSteamChrome(doc: Document, run: () => void): () => void {
 // The themed home stays mounted under other pages (chat, settings): the bar is only ours to hide while it is on screen.
 const homeVisible = (doc: Document) => {
   const r = doc.querySelector<HTMLElement>("[data-dht-root]");
-  return !!r && r.getClientRects().length > 0 && getComputedStyle(r).visibility !== "hidden";
+  return themeHomeOwnsRoute() && !!r && r.getClientRects().length > 0 && getComputedStyle(r).visibility !== "hidden";
 };
 function markFooter(el: HTMLElement, how: "display" | "visibility") {
   if (el.hasAttribute(FOOT_ATTR) || ours(el) || touchesKeyboard(el)) return;

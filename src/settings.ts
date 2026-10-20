@@ -217,6 +217,7 @@ export interface ThemeScreensaver {
   transition: "fade" | "none";
 }
 export interface Settings {
+  personalMii?: {faceShape?:number;beardStyle?:number;moustacheStyle?:number;glassesStyle?:number;earrings?:number;faceStyle?:"drawn"|"detailed";portrait?:string;logoMedia?:"image"|"animated"|"video";decal?:{part:string;point:[number,number,number];normal:[number,number,number];opacity:number;rotation:number;rotationX?:number;rotationY?:number;size:number};accent?:string;logo?:string;logoGame?:string;hat?:number;hatColor?:string;pants?:string;outfit?:number;brows?:number;eyeColor?:string;lipColor?:string;eyeSpacing?:number;eyeY?:number;mouthY?:number;beard?:boolean;moustache?:boolean;name:string;skin:string;hair:string;shirt:string;hairStyle:number;eyes:number;mouth:number;glasses:boolean;female:boolean;height:number;build:number};
   screensaversDisabled?: boolean;
   themeScreensavers?: Record<string, ThemeScreensaver>;
   screensaverSteamBackup?: Record<string, string | number>;
@@ -357,6 +358,7 @@ export interface Settings {
   gameBoot: string;
   /** False only on a fresh install until the first-run flow (Onboarding.tsx) is finished or skipped. */
   onboardingDone: boolean;
+  explicitThemeDownloads?: boolean;
   version: number;
 }
 
@@ -431,7 +433,7 @@ export const DEFAULTS: Settings = {
   videoBackgrounds: {},
   tvMode: false,
   enabled: true,
-  theme: "vita",
+  theme: "psp",
   source: "installed",
   sort: "recent",
   aAction: "theme",
@@ -477,6 +479,7 @@ export const DEFAULTS: Settings = {
   bootIntro: "",
   gameBoot: "",
   onboardingDone: true,
+  explicitThemeDownloads: true,
   themeFx: {},
   version: 2, // 2: presets v2 (stored presets are {id, name, base, theme, diff})
 };

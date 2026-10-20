@@ -4,7 +4,7 @@
 // Users and CSS Loader themes can override any variable on `.dht-market` / `.dht-onboarding`
 // (see CSS-THEMING.md), e.g. `.dht-market { --dht-hub-accent: hotpink !important }`.
 import type { CSSProperties } from "react";
-import { getSettings } from "./settings";
+import { getSettings, THEMES } from "./settings";
 import type { ThemeId } from "./settings";
 import { darken, hex, lighten, PS3_MONTHS, PSP_MONTHS, rgb } from "./color";
 import { BUILTIN_THEMES } from "./engine/builtin";
@@ -55,7 +55,7 @@ const X360: Record<string, HubStyle> = {
   kinect: mk({ light: true, bg: "radial-gradient(ellipse at 60% 26%,#fff 0%,#eef0ec 45%,#d3d8cf 100%)", panel: "#fff", panelHi: "#fff", line: "#ccd2c8", text: "#2c3a28", sub: "#6b7667", cardText: "#2c3a28", cardSub: "#6b7667", accent: "#5dc21e", accentText: "#fff", tab: "#5dc21e", tabText: "#fff", radius: 5, pill: 5, font: '"Segoe UI","Motiva Sans",sans-serif', ring: "0 0 0 4px #5dc21e,0 10px 24px #0003", shadow: "0 2px 8px #0002", track: "-.5px", deco: "kinect", glow: "#5dc21e", tagline: "Wave, point, pick a theme." }),
 };
 
-export const HUB_STYLES: Record<ThemeId, HubStyle> = {
+export const HUB_STYLES: Record<string, HubStyle> = {
   onyx: mk({bg:"repeating-linear-gradient(135deg,#ffffff03 0 1px,transparent 1px 4px),radial-gradient(ellipse at 50% 20%,#27292c,#08090b)",panel:"linear-gradient(#24262a,#111215)",panelHi:"#34373c",accent:"#eeeeef",accentText:"#111",ring:"0 0 0 2px #ddd",radius:18,pill:30,tagline:"Cover flow, dark texture and a circular wheel."}),
   silver: mk({light:true,bg:"linear-gradient(120deg,#eee,#aaa,#fafafa)",panel:"#e5e5e5",panelHi:"#fff",text:"#252525",sub:"#666",cardText:"#252525",cardSub:"#666",accent:"#444",accentText:"#fff",line:"#bbb",tab:"#ddd",tabText:"#222",radius:22,pill:30,ring:"0 0 0 3px #555",tagline:"Turn the wheel. Find your next game."}),
   wii: mk({ light: true, bg: "radial-gradient(ellipse at 50% 0%,#fff 0%,#eef4f8 55%,#d6e4ee 100%)", panel: "linear-gradient(#fff,#eef4f8)", panelHi: "#fff", line: "#c9d8e2", text: "#4d6877", sub: "#778f9d", cardText: "#4d6877", cardSub: "#778f9d", accent: "#37bce9", accentText: "#fff", tab: "#dff3fb", tabText: "#1f8db5", radius: 24, pill: 22, font: '"Trebuchet MS","Segoe UI",Arial,sans-serif', ring: "0 0 0 4px #37bce9,0 6px 16px #5aa9c855", shadow: "0 2px 6px #8aa6b655", track: "-.6px", deco: "wii", glow: "#37bce9", tagline: "Pick a channel and make it yours." }),
@@ -80,6 +80,13 @@ export const HUB_STYLES: Record<ThemeId, HubStyle> = {
   minecraft: mk({ bg: "repeating-conic-gradient(#ffffff03 0% 25%,#00000010 0% 50%) 0 0/32px 32px,#292b2e", panel: "linear-gradient(110deg,#303236,#242629)", panelHi: "linear-gradient(110deg,#3c4046,#2d3034)", line: "#171717", text: "#eee", sub: "#bdbdc2", cardText: "#eee", cardSub: "#bdbdc2", accent: "#5f9a3a", accentText: "#fff", tab: "#326f18", tabText: "#fff", radius: 0, pill: 0, font: 'BlockWorlds,"Courier New",monospace', ring: "0 0 0 3px #171717,0 0 0 6px #82bf50", shadow: "inset 2px 2px #55565a,inset -2px -2px #191b1e", track: "0", deco: "voxel", glow: "#82bf50", tagline: "Craft your home. Pick a world." }),
   ps1: mk({ bg: "linear-gradient(180deg,#14161c,#07080b)", panel: "#1b1e27", panelHi: "#2a2f40", line: "#4b5170", text: "#d9dbe8", sub: "#8c91ac", cardText: "#e4e6f2", cardSub: "#9399b3", accent: "#cfd2e6", accentText: "#111320", tab: "#2f3550", tabText: "#fff", radius: 0, pill: 0, font: '"Courier New",ui-monospace,monospace', ring: "0 0 0 3px #fff,0 0 0 5px #555a7a", shadow: "none", track: "0", upper: true, deco: "dither", glow: "#9aa0c8", tagline: "Insert disc. Pick a theme." }),
   iisu: mk({ bg: "linear-gradient(160deg,#141828,#0a0c14)", panel: "rgba(255,255,255,.07)", panelHi: "rgba(255,255,255,.16)", line: "#ffffff22", text: "#f4f4fa", sub: "#a9aec4", cardText: "#f4f4fa", cardSub: "#aab0c6", accent: "#ff7ab8", accentText: "#2a0a1a", tab: "rgba(255,122,184,.2)", tabText: "#ffb2d6", radius: 22, pill: 22, font: '"Segoe UI","Motiva Sans",system-ui,sans-serif', ring: "0 0 0 3px #ff7ab8,0 0 24px #ff7ab888", shadow: "0 6px 18px #0006", track: "-.8px", deco: "glass", glow: "#ff7ab8", tagline: "Glass icons, pills and colour." }),
+  "blue-glass": mk({"bg": "linear-gradient(140deg,#32586b,#142c3b)", "panel": "#233f51", "panelHi": "#233f51", "accent": "#91d5f6", "accentText": "#10202a", "ring": "0 0 0 3px #91d5f6", "tab": "#233f51", "tabText": "#91d5f6", "deco": "glass", "glow": "#91d5f6", "tagline": "Blue Glass \u00b7 Make it yours."}),
+  "gameamp": mk({"bg": "linear-gradient(160deg,#282b2d,#101213)", "panel": "#242a28", "panelHi": "#242a28", "accent": "#7efa71", "accentText": "#10202a", "ring": "0 0 0 3px #7efa71", "tab": "#242a28", "tabText": "#7efa71", "deco": "grid", "glow": "#7efa71", "tagline": "GameAmp \u00b7 Make it yours."}),
+  "gamecube": mk({"bg": "radial-gradient(ellipse at 50% 25%,#30304c,#08080e)", "panel": "#1d1d32", "panelHi": "#1d1d32", "accent": "#c4b6ff", "accentText": "#10202a", "ring": "0 0 0 3px #c4b6ff", "tab": "#1d1d32", "tabText": "#c4b6ff", "deco": "glass", "glow": "#c4b6ff", "tagline": "GameCube \u00b7 Make it yours."}),
+  "ios6": mk({"bg": "linear-gradient(180deg,#657b91,#263d56)", "panel": "#3b536b", "panelHi": "#3b536b", "accent": "#7cb9ef", "accentText": "#10202a", "ring": "0 0 0 3px #7cb9ef", "tab": "#3b536b", "tabText": "#7cb9ef", "deco": "stripes", "glow": "#7cb9ef", "tagline": "iOS 6 Classic \u00b7 Make it yours."}),
+  "old-big-picture": mk({"bg": "radial-gradient(ellipse at 50% 0%,#235777,#071c35)", "panel": "#123751", "panelHi": "#123751", "accent": "#45c8ee", "accentText": "#10202a", "ring": "0 0 0 3px #45c8ee", "tab": "#123751", "tabText": "#45c8ee", "deco": "glass", "glow": "#45c8ee", "tagline": "Old Big Picture \u00b7 Make it yours."}),
+  "santa-express": mk({"bg": "radial-gradient(ellipse at 50% 0%,#8c2225,#260a0c)", "panel": "#5a171b", "panelHi": "#5a171b", "accent": "#f4cc83", "accentText": "#10202a", "ring": "0 0 0 3px #f4cc83", "tab": "#5a171b", "tabText": "#f4cc83", "deco": "stars", "glow": "#f4cc83", "tagline": "Santa Express \u00b7 Make it yours."}),
+  "wiiflow-default": mk({"bg": "linear-gradient(180deg,#3c4348,#0c1116)", "panel": "#26343d", "panelHi": "#26343d", "accent": "#70d6f0", "accentText": "#10202a", "ring": "0 0 0 3px #70d6f0", "tab": "#26343d", "tabText": "#70d6f0", "deco": "glass", "glow": "#70d6f0", "tagline": "WiiFlow Default \u00b7 Make it yours."}),
   native: DARK,
   frame: mk({bg:"linear-gradient(145deg,#122126,#071217)",panel:"#142b31",panelHi:"#20404a",accent:"#6ee7d4",accentText:"#072621",ring:"0 0 0 2px #6ee7d4",deco:"grid",glow:"#6ee7d4",tagline:"Community interfaces. Make them yours."}),
 };
@@ -92,6 +99,9 @@ export function isConsoleTheme(theme: string | undefined): boolean {
   const t = BUILTIN_THEMES.find((b) => b.layout === theme);
   return !!t && CONSOLE_COMPANIES.includes(t.company as string);
 }
+
+export const BUNDLED_HUB_NAMES: Record<string,string> = {"blue-glass": "Blue Glass", "gameamp": "GameAmp", "gamecube": "GameCube", "ios6": "iOS 6 Classic", "old-big-picture": "Old Big Picture", "santa-express": "Santa Express", "wiiflow-default": "WiiFlow Default"};
+export const hubThemeName=(id:string)=>BUNDLED_HUB_NAMES[id]??THEMES.find(t=>t.id===id)?.name??id;
 
 /** Every registered built-in palette is available as a fixed Hub style. */
 export const consoleThemeIds = (): string[] => Object.keys(HUB_STYLES);

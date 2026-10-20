@@ -32,6 +32,14 @@ class CommunityThemes(unittest.TestCase):
         community.decky.DECKY_PLUGIN_RUNTIME_DIR = str(self.root / "runtime")
         community.decky.DECKY_PLUGIN_SETTINGS_DIR = str(self.root / "settings")
         community.decky.logger = types.SimpleNamespace(warning=lambda *a: None)
+        import theme_store
+        store_paths = patch.dict(vars(theme_store.decky), {
+            "DECKY_PLUGIN_DIR": self.tmp.name,
+            "DECKY_PLUGIN_RUNTIME_DIR": self.tmp.name,
+            "DECKY_PLUGIN_SETTINGS_DIR": str(Path(self.tmp.name) / "settings"),
+        })
+        store_paths.start()
+        self.addCleanup(store_paths.stop)
         data_themes._cache.clear()
         self.version = patch.object(community, "current_version", return_value="1.10.8")
         self.version.start()

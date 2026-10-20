@@ -370,8 +370,8 @@ export const SPOTLIGHT_PLUGINS: SpotlightPlugin[] = [
     "name": "DeckyShare",
     "author": "gillrajvir950-wq",
     "category": "Network",
-    "description": "Wireless two-way file transfer between your Deck and a phone or PC.",
-    "whyFeatured": "Works in any browser on the same Wi-Fi (QR code and a 6-digit code), with resumable transfers and a Game Mode file manager. It opens a local web server on the Deck.",
+    "description": "Transfer files between the Deck and a browser on a phone or PC on your local network.",
+    "whyFeatured": "Transfer files between the Deck and a browser on a phone or PC on your local network.",
     "projectUrl": "https://github.com/gillrajvir950-wq/deckyshare",
     "tags": [
       "files",
@@ -380,25 +380,39 @@ export const SPOTLIGHT_PLUGINS: SpotlightPlugin[] = [
       "network"
     ],
     "image": "https://raw.githubusercontent.com/gillrajvir950-wq/deckyshare/main/ScreenShots/Screenshot%202026-09-13%20at%2011.03.53.png",
-    "version": "v1.2.0",
-    "unreviewed": true
+    "version": "1.3.1",
+    "unreviewed": true,
+    "root": false,
+    "install": {
+      "pluginName": "DeckyShare",
+      "version": "1.3.1",
+      "zipUrl": "https://github.com/gillrajvir950-wq/deckyshare/releases/download/v1.3.1/DeckyShare-v1.3.1.zip"
+    }
   },
   {
     "id": "finally-achievement-plugin",
     "name": "Finally Achievement Plugin",
     "author": "otisabiburada",
     "category": "Achievements",
-    "description": "Achievement popups in 18 templates, with a browser and an on-screen tracker.",
-    "whyFeatured": "Rarity tiers with their own sounds, selectable colours and positions, an achievement browser for the running game and a pinned-achievement tracker.",
+    "description": "Custom achievement popups, an achievement browser and an on-screen tracker.",
+    "whyFeatured": "Custom achievement popups, an achievement browser and an on-screen tracker.",
     "projectUrl": "https://github.com/otisabiburada/finally-achievement-plugin",
     "tags": [
       "style",
       "steam",
       "achievement",
-      "notification"
+      "notification",
+      "steamos"
     ],
-    "version": "v1.4.0",
-    "unreviewed": true
+    "version": "1.6.3",
+    "unreviewed": true,
+    "root": false,
+    "install": {
+      "pluginName": "Finally Achievement Plugin",
+      "version": "1.6.3",
+      "zipUrl": "https://github.com/otisabiburada/finally-achievement-plugin/releases/download/1.6.3/1_6_3.zip"
+    },
+    "image": "https://opengraph.githubassets.com/1/otisabiburada/finally-achievement-plugin"
   },
   {
     "id": "finally-3d-game-cases",
@@ -419,5 +433,237 @@ export const SPOTLIGHT_PLUGINS: SpotlightPlugin[] = [
     ],
     "image": "https://raw.githubusercontent.com/otisabiburada/finally-3d-game-cases-plugin/main/docs/images/library.png",
     "version": "1.8.2"
+  },
+  {
+    "id": "decky-youtube-pip",
+    "name": "YouTube PiP",
+    "author": "SANSO",
+    "projectUrl": "https://github.com/otisabiburada/decky-youtube-pip",
+    "category": "Video",
+    "description": "Watch YouTube over your game; cast from a phone or paste a link.",
+    "whyFeatured": "Watch YouTube over your game; cast from a phone or paste a link.",
+    "tags": [
+      "video",
+      "pip",
+      "youtube",
+      "cast",
+      "utility"
+    ],
+    "root": false,
+    "unreviewed": true,
+    "install": {
+      "pluginName": "YouTube PiP",
+      "version": "0.6.0",
+      "zipUrl": "https://github.com/otisabiburada/decky-youtube-pip/releases/download/0.6.0/youtube-pip-v0.6.0.zip"
+    },
+    "version": "0.6.0"
+  },
+  {
+    "id": "resonadeck",
+    "name": "ResonaDeck",
+    "author": "Valentine",
+    "projectUrl": "https://github.com/ValentineBSAA/ResonaDeck",
+    "category": "Audio",
+    "description": "Browse and play audio from your Plex server, including music, audiobooks and podcasts.",
+    "whyFeatured": "Browse and play audio from your Plex server, including music, audiobooks and podcasts.",
+    "tags": [
+      "audio",
+      "media"
+    ],
+    "root": false,
+    "unreviewed": true,
+    "install": {
+      "pluginName": "ResonaDeck",
+      "version": "1.2.0",
+      "zipUrl": "https://github.com/ValentineBSAA/ResonaDeck/releases/download/1.2.0/ResonaDeck-1.2.0-Stable.zip"
+    },
+    "version": "1.2.0"
+  },
+  {
+    "id": "opennow",
+    "name": "OpenNOW",
+    "author": "OpenCloudGaming",
+    "projectUrl": "https://github.com/OpenCloudGaming/OpenNOW/blob/dev/decky/README.md",
+    "category": "Cloud gaming",
+    "description": "Launch GeForce NOW games from Game Mode. Requires a GeForce NOW account; the plugin installs the OpenNOW app separately.",
+    "whyFeatured": "Launch GeForce NOW games from Game Mode. Requires a GeForce NOW account; the plugin installs the OpenNOW app separately.",
+    "tags": [
+      "cloud gaming"
+    ],
+    "root": false,
+    "unreviewed": true,
+    "install": {
+      "pluginName": "OpenNOW",
+      "version": "0.1.1",
+      "zipUrl": "https://github.com/OpenCloudGaming/OpenNOW/releases/download/decky-v0.1.1/OpenNOW.zip"
+    },
+    "version": "0.1.1"
+  },
+  {
+    "id": "steam-animated-screensaver",
+    "name": "Steam Animated Screensaver",
+    "author": "Alyenax",
+    "projectUrl": "https://github.com/Alyenax/Steam-Animated-Screensaver",
+    "category": "Customization",
+    "description": "Standalone app, not a Decky plugin. Follow the project instructions to install animated artwork screensavers in Steam.",
+    "whyFeatured": "Standalone app, not a Decky plugin. Follow the project instructions to install animated artwork screensavers in Steam.",
+    "tags": [
+      "customization"
+    ],
+    "root": false,
+    "unreviewed": true
+  },
+  {
+    "id": "decky-protonvpn",
+    "name": "Proton VPN (Unofficial)",
+    "author": "acestronautical",
+    "projectUrl": "https://github.com/acestronautical/decky-protonvpn",
+    "category": "Network",
+    "description": "Unofficial Proton VPN integration. Prerelease; follow the project setup instructions for VPN prerequisites.",
+    "whyFeatured": "Unofficial Proton VPN integration. Prerelease; follow the project setup instructions for VPN prerequisites.",
+    "tags": [
+      "vpn",
+      "protonvpn",
+      "utility"
+    ],
+    "root": false,
+    "unreviewed": true,
+    "install": {
+      "pluginName": "Proton VPN (Unofficial)",
+      "version": "0.1.0",
+      "zipUrl": "https://github.com/acestronautical/decky-protonvpn/releases/download/v0.1.0/decky-protonvpn-v0.1.0.zip"
+    },
+    "version": "0.1.0"
+  },
+  {
+    "id": "decky-apple-music",
+    "name": "Apple Music",
+    "author": "jeffmartinez",
+    "projectUrl": "https://github.com/BrielleG116/decky-apple-music",
+    "category": "Audio",
+    "description": "Apple Music playback from Quick Access. Requires an Apple Music account and Widevine setup.",
+    "whyFeatured": "Apple Music playback from Quick Access. Requires an Apple Music account and Widevine setup.",
+    "tags": [
+      "music",
+      "apple music",
+      "audio"
+    ],
+    "root": false,
+    "unreviewed": true,
+    "install": {
+      "pluginName": "Apple Music",
+      "version": "1.0.21",
+      "zipUrl": "https://github.com/BrielleG116/decky-apple-music/releases/download/v1.0.0/apple-music-plugin.zip"
+    },
+    "version": "1.0.21"
+  },
+  {
+    "id": "mutemotion-steamdeck-shim",
+    "name": "MuteMotion SteamDeck",
+    "author": "MuteMotion Team",
+    "projectUrl": "https://github.com/MuteMotion-Tech/MuteMotion-SteamDeck-Shim",
+    "category": "Utility",
+    "description": "Academic proof of concept for IMU motion integration. Requires root and the MuteMotion Core Engine; only a tar.gz release is available.",
+    "whyFeatured": "Academic proof of concept for IMU motion integration. Requires root and the MuteMotion Core Engine; only a tar.gz release is available.",
+    "tags": [
+      "utility"
+    ],
+    "root": true,
+    "unreviewed": true
+  },
+  {
+    "id": "net-merge-decky",
+    "name": "NetMerge",
+    "author": "FlashWreck, sidharthify, rohit267",
+    "projectUrl": "https://github.com/FlashWreck/net-merge-decky",
+    "category": "Network",
+    "description": "Combine multiple network links for parallel transfers. Requires root; follow the project networking setup instructions.",
+    "whyFeatured": "Combine multiple network links for parallel transfers. Requires root; follow the project networking setup instructions.",
+    "tags": [
+      "network",
+      "utilities",
+      "performance"
+    ],
+    "root": true,
+    "unreviewed": true,
+    "install": {
+      "pluginName": "NetMerge",
+      "version": "1.0.2",
+      "zipUrl": "https://github.com/FlashWreck/net-merge-decky/releases/download/v1.0.2/net-merge-decky.zip"
+    },
+    "version": "1.0.2",
+    "image": "https://raw.githubusercontent.com/FlashWreck/net-merge-decky/main/assets/banner.png"
+  },
+  {
+    "id": "achievement-customizer",
+    "name": "Achievement Customizer",
+    "author": "Hector Mendez",
+    "description": "Console-style Steam achievement notifications with custom colors and animations.",
+    "whyFeatured": "Xbox unfold, PlayStation drop, rarity highlights and animated pixel-art presets. ThemeHub automatically yields achievement popups while this plugin is installed or loaded.",
+    "projectUrl": "https://github.com/Hector2242/decky-plugin",
+    "image": "https://raw.githubusercontent.com/Hector2242/decky-plugin/main/assets/store.png",
+    "category": "Customization",
+    "tags": [
+      "achievements",
+      "notifications"
+    ],
+    "version": "v1.0.1",
+    "unreviewed": true,
+    "install": {
+      "pluginName": "Achievement Customizer",
+      "version": "1.0.1",
+      "zipUrl": "https://github.com/Hector2242/decky-plugin/releases/download/v1.0.1/achievement-customizer.zip"
+    }
+  },
+  {
+    "id": "steamos-orphan",
+    "name": "Orphan Finder",
+    "author": "David Lockwood",
+    "description": "Find leftover Steam library folders across internal storage and SD cards.",
+    "whyFeatured": "Find leftover Steam library folders across internal storage and SD cards.",
+    "projectUrl": "https://github.com/deamos/steamos-orphan",
+    "version": "v1.0.1",
+    "unreviewed": true,
+    "root": true,
+    "install": {
+      "pluginName": "Orphan Finder",
+      "version": "1.0.1",
+      "zipUrl": "https://github.com/deamos/steamos-orphan/releases/download/v1.0.1/steamos-orphan.zip"
+    },
+    "aiAssisted": {
+      "note": "The creator discloses AI assistance in development.",
+      "sourceUrl": "https://github.com/deamos/steamos-orphan#-ai-disclosure"
+    }
+  },
+  {
+    "id": "decky-streamer",
+    "name": "Decky Streamer",
+    "author": "Deamos",
+    "description": "Stream Steam Deck gameplay to RTMP services such as Twitch and YouTube.",
+    "whyFeatured": "Stream Steam Deck gameplay to RTMP services such as Twitch and YouTube.",
+    "projectUrl": "https://github.com/deamos/decky-streamer",
+    "version": "v0.1.12",
+    "unreviewed": true,
+    "root": false,
+    "install": {
+      "pluginName": "Decky Streamer",
+      "version": "0.1.12",
+      "zipUrl": "https://github.com/deamos/decky-streamer/releases/download/v0.1.12/decky-streamer.zip"
+    }
+  },
+  {
+    "id": "steamder",
+    "name": "Steamder",
+    "author": "SANSO",
+    "description": "Swipe through your Steam backlog and rediscover games to play.",
+    "whyFeatured": "Backlog, old favorites, installed games and new releases, with touch and controller navigation. Opens its own page while ThemeHub releases home input and Steam’s bars.",
+    "projectUrl": "https://github.com/otisabiburada/steamder",
+    "version": "1.4.3",
+    "unreviewed": true,
+    "install": {
+      "pluginName": "Steamder",
+      "version": "1.4.3",
+      "zipUrl": "https://github.com/otisabiburada/steamder/releases/download/1.4.3/Steamder-v1.4.3.zip"
+    }
   }
 ];

@@ -1,0 +1,1 @@
+{"schema":1,"id":"gamecube","name":"GameCube","author":"ThemeHub","description":"The original glass-cube system menu, with a memory-card-style Steam library.","company":"Nintendo","layout":"frame","frame":{"entry":"index.html"},"slots":{"accent":"#bac4f5"}}

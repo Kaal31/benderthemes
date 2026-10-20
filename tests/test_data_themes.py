@@ -6,6 +6,7 @@ import tempfile
 import types
 import unittest
 import zipfile
+from unittest.mock import patch
 
 ROOT = Path(__file__).resolve().parents[1]
 sys.path.insert(0, str(ROOT / "py_modules"))
@@ -21,6 +22,14 @@ class DataThemes(unittest.TestCase):
         decky = data_themes.decky
         decky.DECKY_PLUGIN_RUNTIME_DIR = self.tmp.name
         decky.logger = types.SimpleNamespace(warning=lambda *a: None, error=lambda *a: None)
+        import theme_store
+        store_paths = patch.dict(vars(theme_store.decky), {
+            "DECKY_PLUGIN_DIR": self.tmp.name,
+            "DECKY_PLUGIN_RUNTIME_DIR": self.tmp.name,
+            "DECKY_PLUGIN_SETTINGS_DIR": str(Path(self.tmp.name) / "settings"),
+        })
+        store_paths.start()
+        self.addCleanup(store_paths.stop)
         data_themes._cache.clear()
         data_themes._zip_errors.clear()
 
@@ -37,12 +46,11 @@ class DataThemes(unittest.TestCase):
             p.write_bytes(b"x")
         return d
 
-    def test_bundled_examples_are_listed(self):
+    def test_shipped_themes_exclude_import_only_test_skins(self):
         ids = {t["id"]: t for t in data_themes.list_themes()}
-        self.assertEqual(ids["midnight-ps4"]["source"], "bundled")
-        self.assertIn("deck_ui_navigation.wav", ids["midnight-ps4"]["packs"]["sounds"]["files"])
-        self.assertIn("menu_music.wav", ids["midnight-ps4"]["packs"]["music"]["files"])
-        # the community-interface test theme is a test fixture now, never shipped
+        self.assertEqual(ids["gamecube"]["source"], "bundled")
+        self.assertEqual(ids["ios6"]["source"], "bundled")
+        self.assertNotIn("midnight-ps4", ids)
         self.assertNotIn("frame-test", ids)
 
     def test_wrapper_keeps_the_interface_in_its_folder(self):

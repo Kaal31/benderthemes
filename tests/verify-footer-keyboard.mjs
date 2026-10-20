@@ -7,6 +7,7 @@ import { chromium } from 'playwright';
 const source = await readFile(new URL('../src/steam.ts', import.meta.url), 'utf8');
 const section = source.slice(source.indexOf('const FOOT_ATTR'), source.indexOf('// ───────────── live status'));
 const { code } = await transform(`
+const themeHomeOwnsRoute = () => window.routeOwnsHome !== false;
 const findClassModule = () => ({ FooterLegend: 'steam-footer-legend' });
 const steamDocuments = () => [];
 const keyboardClasses = () => ({ classes: { Keyboard: 'hashed-keyboard', VirtualKeyboardContainer: 'hashed-container' } });
@@ -24,6 +25,10 @@ try {
   const footer = page.locator('#footer');
   await page.evaluate(() => window.start('hide'));
   assert.equal(await footer.evaluate(el => el.style.visibility), 'hidden');
+  await page.evaluate(()=>window.routeOwnsHome=false);
+  await page.waitForFunction(()=>document.querySelector('#footer').style.visibility==='');
+  await page.evaluate(()=>window.routeOwnsHome=true);
+  await page.waitForFunction(()=>document.querySelector('#footer').style.visibility==='hidden');
   // Focus must restore synchronously, before the keyboard even mounts.
   assert.equal(await page.evaluate(() => {
     document.querySelector('#dm').focus();

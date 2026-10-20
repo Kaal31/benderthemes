@@ -236,11 +236,11 @@
     {
       "id": "ps3",
       "name": "PS3",
-      "version": "1.0.1",
+      "version": "1.0.2",
       "theme": "ps3",
       "description": "Artwork, sounds and optional skins for PS3.",
       "minPluginVersion": "1.10.2",
-      "size": 16161285,
+      "size": 7482385,
       "resources": [
         "assets/xmb-monochrome/CREDITS.txt",
         "assets/xmb-monochrome/apps.png",
@@ -298,15 +298,15 @@
         "assets/xmb-ps3/update.png",
         "assets/xmb-ps3/user.png",
         "assets/xmb-ps3/video.png",
-        "skins/p3t/ZenGarden.p3t",
         "sounds/PS3 Menu Music/menu_music.mp3",
         "sounds/PS3 Menu Music/pack.json"
       ],
-      "unpackedSize": 16348218,
-      "sha256": "6771bcd4c9c8625d3faebfa35e00970ef928f10a0840d0a84c9c83047c165793",
-      "url": "https://github.com/Kaal31/deckthemes-assets/releases/download/ps3-v1.0.1/ThemeAssets-PS3-v1.0.1.zip",
+      "unpackedSize": 7533066,
+      "sha256": "168a760856dffe5d5f366f952dc3ee4e0d022d023694f25d0f248218b2034645",
+      "url": "https://github.com/Kaal31/deckthemes-assets/releases/download/ps3-v1.0.2/ThemeAssets-PS3-v1.0.2.zip",
       "preview": null,
-      "poster": null
+      "poster": null,
+      "defaultConsole": true
     },
     {
       "id": "psp",
@@ -1520,7 +1520,10 @@
       "sha256": "04f6c30d95a80d18a0591a486f3a64a811a652c17785ab5c3436b27483edf6a9",
       "url": "https://github.com/Kaal31/deckthemes-assets/releases/download/iisu-v1.0.0/ThemeAssets-iiSU-v1.0.0.zip",
       "preview": null,
-      "poster": null
+      "poster": null,
+      "audioPacks": [
+        "db4bf996-bf29-47fb-892d-52e2fe87637d"
+      ]
     },
     {
       "id": "minecraft",
@@ -1632,11 +1635,308 @@
       "url": "https://github.com/Kaal31/deckthemes-assets/releases/download/extras-v1.0.1/ThemeAssets-Extra-Resources-v1.0.1.zip",
       "preview": null,
       "poster": null
+    },
+    {
+      "id": "blue-glass",
+      "name": "Blue Glass",
+      "version": "1.0.0",
+      "theme": null,
+      "frameTheme": "blue-glass",
+      "description": "Downloadable media for Blue Glass.",
+      "minPluginVersion": "1.10.10",
+      "size": 734371,
+      "resources": [
+        "assets/frame-themes/blue-glass/test-video.mp4"
+      ],
+      "unpackedSize": 736839,
+      "sha256": "c416cac6fcede29282ec34786070f7dc7944f709691370487d3b8b2dc3812a96",
+      "url": "https://github.com/Kaal31/deckthemes-assets/releases/download/blue-glass-v1.0.0/ThemeAssets-blue-glass-v1.0.0.zip",
+      "preview": null,
+      "poster": null,
+      "audioPacks": []
+    },
+    {
+      "id": "gamecube",
+      "name": "GameCube",
+      "version": "1.0.0",
+      "theme": null,
+      "frameTheme": "gamecube",
+      "description": "Downloadable media for GameCube.",
+      "minPluginVersion": "1.10.10",
+      "size": 3062393,
+      "resources": [
+        "assets/frame-themes/gamecube/assets/generated-glass-v2.png",
+        "assets/frame-themes/gamecube/assets/generated-glass.png"
+      ],
+      "unpackedSize": 3619846,
+      "sha256": "209af10d2720e521b098b4705dbeb4c70fe69ab03f1e39926283155d214c6280",
+      "url": "https://github.com/Kaal31/deckthemes-assets/releases/download/gamecube-v1.0.0/ThemeAssets-gamecube-v1.0.0.zip",
+      "preview": null,
+      "poster": null,
+      "audioPacks": [
+        "cdc948e9-399c-4179-94ff-0f72f9d89fed",
+        "e2f01d10-042d-4b8b-af01-f11b044c72cb"
+      ]
+    },
+    {
+      "id": "ios6",
+      "name": "iOS 6 Classic",
+      "version": "1.0.0",
+      "theme": null,
+      "frameTheme": "ios6",
+      "description": "Downloadable media for iOS 6 Classic.",
+      "minPluginVersion": "1.10.10",
+      "size": 910590,
+      "resources": [
+        "assets/frame-themes/ios6/test-video.mp4",
+        "assets/frame-themes/ios6/wallpaper.jpg"
+      ],
+      "unpackedSize": 914121,
+      "sha256": "3a62999caf5688d420b8cbe739b02e7bd53d90cf637739878743f085118df28a",
+      "url": "https://github.com/Kaal31/deckthemes-assets/releases/download/ios6-v1.0.0/ThemeAssets-ios6-v1.0.0.zip",
+      "preview": null,
+      "poster": null,
+      "audioPacks": []
+    },
+    {
+      "id": "old-big-picture",
+      "name": "Old Big Picture",
+      "version": "1.0.0",
+      "theme": null,
+      "frameTheme": "old-big-picture",
+      "description": "Downloadable media for Old Big Picture.",
+      "minPluginVersion": "1.10.10",
+      "size": 2127083,
+      "resources": [
+        "assets/frame-themes/old-big-picture/assets/downloads.png",
+        "assets/frame-themes/old-big-picture/assets/exit.png",
+        "assets/frame-themes/old-big-picture/assets/generic_800.png",
+        "assets/frame-themes/old-big-picture/assets/homeglow.png",
+        "assets/frame-themes/old-big-picture/assets/icon_cart.png",
+        "assets/frame-themes/old-big-picture/assets/icon_community_hub.png",
+        "assets/frame-themes/old-big-picture/assets/mainmenu_bg_2.png",
+        "assets/frame-themes/old-big-picture/assets/settings.png",
+        "assets/frame-themes/old-big-picture/assets/steam_home.png",
+        "assets/frame-themes/old-big-picture/sounds/activation.wav",
+        "assets/frame-themes/old-big-picture/sounds/focus_change.wav",
+        "assets/frame-themes/old-big-picture/sounds/txting_press_b.wav"
+      ],
+      "unpackedSize": 2305449,
+      "sha256": "8ddc35eaef96e598c64f7b288e9a9b100d3160197b7596c29fcc70a15bff7b69",
+      "url": "https://github.com/Kaal31/deckthemes-assets/releases/download/old-big-picture-v1.0.0/ThemeAssets-old-big-picture-v1.0.0.zip",
+      "preview": null,
+      "poster": null,
+      "audioPacks": [
+        "cadb90ee-b772-493c-8d7d-72443029960a",
+        "e5875375-c3c0-4ab2-a1d0-5f58f6b5b000"
+      ]
+    },
+    {
+      "id": "santa-express",
+      "name": "Santa Express",
+      "version": "1.0.0",
+      "theme": null,
+      "frameTheme": "santa-express",
+      "description": "Downloadable media for Santa Express.",
+      "minPluginVersion": "1.10.10",
+      "size": 19364095,
+      "resources": [
+        "assets/frame-themes/santa-express/background.png",
+        "assets/frame-themes/santa-express/button-glass.png",
+        "assets/frame-themes/santa-express/button-home.png",
+        "assets/frame-themes/santa-express/cola-metal.png",
+        "assets/frame-themes/santa-express/cola-panel-v2.png",
+        "assets/frame-themes/santa-express/cola-panel.png",
+        "assets/frame-themes/santa-express/holiday-music.mp3",
+        "assets/frame-themes/santa-express/lever-housing.png",
+        "assets/frame-themes/santa-express/lever-knob.png"
+      ],
+      "unpackedSize": 19901364,
+      "sha256": "8cca065bfce7a995278be105019559605bf7b60eef7515f3c5aa2074124e1f05",
+      "url": "https://github.com/Kaal31/deckthemes-assets/releases/download/santa-express-v1.0.0/ThemeAssets-santa-express-v1.0.0.zip",
+      "preview": null,
+      "poster": null,
+      "audioPacks": []
+    },
+    {
+      "id": "wiiflow-default",
+      "name": "WiiFlow Default",
+      "version": "1.0.0",
+      "theme": null,
+      "frameTheme": "wiiflow-default",
+      "description": "Downloadable media for WiiFlow Default.",
+      "minPluginVersion": "1.10.10",
+      "size": 392217,
+      "resources": [
+        "assets/frame-themes/wiiflow-default/assets/background.png",
+        "assets/frame-themes/wiiflow-default/assets/btnconfig.png",
+        "assets/frame-themes/wiiflow-default/assets/btnconfigs.png",
+        "assets/frame-themes/wiiflow-default/assets/btndvd.png",
+        "assets/frame-themes/wiiflow-default/assets/btndvds.png",
+        "assets/frame-themes/wiiflow-default/assets/EXO2MED.TTF",
+        "assets/frame-themes/wiiflow-default/assets/favoritesoff.png",
+        "assets/frame-themes/wiiflow-default/assets/favoritesoffs.png",
+        "assets/frame-themes/wiiflow-default/assets/font.ttf",
+        "assets/frame-themes/wiiflow-default/assets/vapors.png"
+      ],
+      "unpackedSize": 1586228,
+      "sha256": "8437966b4ed66f6f45d744333cf833bf4fb691d485b182db7b5f8a3b802ec609",
+      "url": "https://github.com/Kaal31/deckthemes-assets/releases/download/wiiflow-default-v1.0.0/ThemeAssets-wiiflow-default-v1.0.0.zip",
+      "preview": null,
+      "poster": null,
+      "audioPacks": []
+    },
+    {
+      "id": "onyx",
+      "name": "Onyx",
+      "theme": "onyx",
+      "version": "1.0.0",
+      "description": "Default Onyx theme. Download to add it to your themes.",
+      "minPluginVersion": "1.10.2",
+      "size": 226,
+      "unpackedSize": 84,
+      "resources": [
+        "assets/theme-defaults/onyx.json"
+      ],
+      "sha256": "e0140d1c15753172c9e58ee9c4654d46f3b93e18a4af1aaa6bb22a2a7a944937",
+      "url": "https://github.com/Kaal31/deckthemes-assets/releases/download/onyx-v1.0.0/ThemeAssets-onyx-v1.0.0.zip",
+      "defaultConsole": true
+    },
+    {
+      "id": "silver",
+      "name": "Silver",
+      "theme": "silver",
+      "version": "1.0.0",
+      "description": "Default Silver theme. Download to add it to your themes.",
+      "minPluginVersion": "1.10.2",
+      "size": 231,
+      "unpackedSize": 88,
+      "resources": [
+        "assets/theme-defaults/silver.json"
+      ],
+      "sha256": "96fccaaf74a5c7fa6240beef00e925cdf18ea78052ab16886fb98019d4c7bbca",
+      "url": "https://github.com/Kaal31/deckthemes-assets/releases/download/silver-v1.0.0/ThemeAssets-silver-v1.0.0.zip",
+      "defaultConsole": true
+    },
+    {
+      "id": "wii",
+      "name": "Wii",
+      "theme": "wii",
+      "version": "1.0.0",
+      "description": "Default Wii theme. Download to add it to your themes.",
+      "minPluginVersion": "1.10.2",
+      "size": 223,
+      "unpackedSize": 82,
+      "resources": [
+        "assets/theme-defaults/wii.json"
+      ],
+      "sha256": "835c4c54002a029e5e27d11d37daf08c9df6da55090d0a5f466b79186935b603",
+      "url": "https://github.com/Kaal31/deckthemes-assets/releases/download/wii-v1.0.0/ThemeAssets-Wii-v1.0.0.zip",
+      "defaultConsole": true
+    },
+    {
+      "id": "switch",
+      "name": "Switch",
+      "theme": "switch",
+      "version": "1.0.0",
+      "description": "Default Switch theme. Download to add it to your themes.",
+      "minPluginVersion": "1.10.2",
+      "size": 232,
+      "unpackedSize": 88,
+      "resources": [
+        "assets/theme-defaults/switch.json"
+      ],
+      "sha256": "afe2dbc6ffa2d57235ffd796081c09e8fa6efa63700106cabc547c8d2edc4b94",
+      "url": "https://github.com/Kaal31/deckthemes-assets/releases/download/switch-v1.0.0/ThemeAssets-switch-v1.0.0.zip",
+      "defaultConsole": true
+    },
+    {
+      "id": "n3ds",
+      "name": "Nintendo 3DS",
+      "theme": "n3ds",
+      "version": "1.0.0",
+      "description": "Default Nintendo 3DS theme. Download to add it to your themes.",
+      "minPluginVersion": "1.10.2",
+      "size": 237,
+      "unpackedSize": 92,
+      "resources": [
+        "assets/theme-defaults/n3ds.json"
+      ],
+      "sha256": "5aed943a886c3181941ce07f81d684d6b3c9eef19090bd55709c52eb8b78b460",
+      "url": "https://github.com/Kaal31/deckthemes-assets/releases/download/n3ds-v1.0.0/ThemeAssets-n3ds-v1.0.0.zip",
+      "defaultConsole": true
+    },
+    {
+      "id": "ps1",
+      "name": "PS1",
+      "theme": "ps1",
+      "version": "1.0.0",
+      "description": "Default PS1 theme. Download to add it to your themes.",
+      "minPluginVersion": "1.10.2",
+      "size": 224,
+      "unpackedSize": 82,
+      "resources": [
+        "assets/theme-defaults/ps1.json"
+      ],
+      "sha256": "59627a5b346fd0494eb1637695790cd8c5ff4e4d09f7a4906c5030e84b4505b1",
+      "url": "https://github.com/Kaal31/deckthemes-assets/releases/download/ps1-v1.0.0/ThemeAssets-ps1-v1.0.0.zip",
+      "defaultConsole": true
+    },
+    {
+      "id": "gameamp",
+      "name": "GameAmp",
+      "theme": null,
+      "version": "1.0.0",
+      "description": "Default GameAmp theme. Download to add it to your themes.",
+      "minPluginVersion": "1.10.2",
+      "size": 236,
+      "unpackedSize": 90,
+      "resources": [
+        "assets/theme-defaults/gameamp.json"
+      ],
+      "sha256": "0205331f2e0ddeaf105494654864346172789f68c53a5d6c8534bbd9ddda685c",
+      "url": "https://github.com/Kaal31/deckthemes-assets/releases/download/gameamp-v1.0.0/ThemeAssets-gameamp-v1.0.0.zip",
+      "defaultConsole": true,
+      "frameTheme": "gameamp",
+      "codeOnly": true
     }
   ],
   "gallery": {
-    "sha256": "124e4a52e42104f94d4099847935482e2ef77cff6fa64a6f5a794fb27794b6de",
-    "size": 12769868,
-    "url": "https://github.com/Kaal31/deckthemes-assets/releases/download/gallery-124e4a52e42104f9/HubPreviews.zip"
+    "sha256": "1da8226e07675122dff802e903bd8539c3008a89a5610d7e7dbb1eeeab0b5932",
+    "size": 16050284,
+    "url": "https://github.com/Kaal31/deckthemes-assets/releases/download/gallery-1da8226e07675122/HubPreviews.zip",
+    "themes": [
+      "aero",
+      "aero2",
+      "blue-glass",
+      "castle",
+      "dial",
+      "gameamp",
+      "gamecube",
+      "iisu",
+      "ios6",
+      "minecraft",
+      "n3ds",
+      "nazarick",
+      "old-big-picture",
+      "onyx",
+      "pain",
+      "ps1",
+      "ps2",
+      "ps3",
+      "ps4",
+      "ps5",
+      "psp",
+      "republic",
+      "santa-express",
+      "silver",
+      "switch",
+      "vita",
+      "wii",
+      "wiiflow-default",
+      "wiiu",
+      "x360",
+      "xbox"
+    ]
   }
 }

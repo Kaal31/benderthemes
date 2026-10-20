@@ -11,7 +11,7 @@ import { applyPreset, getPresets } from "./presets";
 import { useEffect, useRef, useState } from "react";
 import { InputHandler, pushModalInput } from "./input";
 import { getSettings, THEMES, ThemeId, updateSettings, useSettings } from "./settings";
-import { consoleThemeIds, hubStyle, hubThemeKey, hubVarsCss, HUB_DECO_CSS, resolveHubTheme } from "./hubStyles";
+import { BUNDLED_HUB_NAMES, consoleThemeIds, hubThemeName, hubStyle, hubThemeKey, hubVarsCss, HUB_DECO_CSS, resolveHubTheme } from "./hubStyles";
 import { playThemeIntro } from "./themeIntro";
 import { closeMarketplace, resourcesChanged, useResourceRevision } from "./marketplaceState";
 import { playSound } from "./steam";
@@ -27,7 +27,7 @@ function BonusFeatureBadges({id}:{id:string}) {
   return <div className="dht-hub-feature-badges" aria-label={t("bonusFeatures")}>{features.map(feature=><span key={feature} className="dht-hub-feature-badge" data-feature={feature} title={BONUS_FEATURE_LABELS[feature].description}>{BONUS_FEATURE_LABELS[feature].label}</span>)}</div>;
 }
 
-export type ThemePack = { id: string; name: string; theme: ThemeId | null; description: string; size: number; version: string; installedVersion?: string; compatible: boolean; preview?: string; poster?: string; builtIn?: boolean; localThemeId?: string; uiOverhaul?: boolean; community?: { repo: string; id: string; themeId?: string; updateAvailable: boolean } };
+export type ThemePack = { id: string; name: string; theme: ThemeId | null; description: string; size: number; version: string; installedVersion?: string; compatible: boolean; preview?: string; poster?: string; builtIn?: boolean; localThemeId?: string; frameTheme?:string; uiOverhaul?: boolean; community?: { repo: string; id: string; themeId?: string; updateAvailable: boolean } };
 type CommunitySource = { repo: string; themes: { id: string; themeId?: string; name: string; description: string; size?: number; version: string; installedVersion?: string; compatible: boolean; preview?: string; uiOverhaul?: boolean; updateAvailable: boolean; layout?: ThemeId }[] };
 const communityList = callable<[], { sources: CommunitySource[] }>("community_themes");
 const communityPackage = callable<[repo: string, id: string, action: string], { ok: boolean; error?: string; themeId?: string }>("community_package");
@@ -79,16 +79,16 @@ export function Marketplace({ requested, from, initialTab }: { requested?: Theme
   const s = useSettings();
   const revision = useResourceRevision();
   const [inv, setInv] = useState<Record<string, string> | null>(null);
-  const reloadInventory = () => inventory().then(i => { if (alive.current) setInv(i || {}); }).catch(() => {});
+  const reloadInventory = () => inventory().then(i => { if (alive.current) setInv(i||{}); }).catch(() => {});
   useEffect(() => { void reloadInventory(); }, [revision]);
   // Hub style "Preview": the theme of the card focused in Discover (cards with a theme, as `filtered` below)
-  const discoverFocus = tab === "discover" ? packs.filter(p => !!p.theme && !p.community)[selected]?.theme ?? null : null;
-  const resolved = resolveHubTheme(s.hubStyle, from ? s.theme : undefined, inv, discoverFocus);
+  const discoverFocus = tab === "discover" ? (()=>{const p=packs.filter(p => !!p.theme && !p.community)[selected];return p?.localThemeId??p?.theme??null;})() : null;
+  const resolved = resolveHubTheme(s.hubStyle, from ? (s.activeTheme in BUNDLED_HUB_NAMES ? s.activeTheme : s.theme) : undefined, inv, discoverFocus);
   const styled = resolved.theme ? { theme: resolved.theme, x360: s.x360?.style } : null;
   const source = resolved.source;
   const styleChoice = s.hubStyle || "auto";
   const styleOptions = [{ id: "auto", name: "Auto" }, { id: "neutral", name: "Neutral" }, { id: "preview", name: "Preview" },
-    ...consoleThemeIds().filter(id => (inv ? !!inv[id] : false) || id === styleChoice).map(id => ({ id, name: THEMES.find(t => t.id === id)?.name ?? id }))];
+    ...consoleThemeIds().filter(id => (inv ? !!inv[id] : false) || id === styleChoice).map(id => ({ id, name: hubThemeName(id) }))];
   const cycleStyle = () => {
     const i = styleOptions.findIndex(o => o.id === styleChoice);
     updateSettings({ hubStyle: styleOptions[(i + 1) % styleOptions.length].id });
@@ -99,6 +99,7 @@ export function Marketplace({ requested, from, initialTab }: { requested?: Theme
   const installedOnly = tab === "yours";
   const filtered = packs.filter(p => !!p.theme && (!p.community || installedOnly) && (!installedOnly || !!p.installedVersion || (!!p.builtIn && !s.hiddenThemes?.includes(p.theme))));
   const current = filtered[Math.min(selected, Math.max(0, filtered.length - 1))];
+  const isActive = (p: ThemePack) => s.enabled && !!p.installedVersion && (p.localThemeId ? p.localThemeId === s.activeTheme : p.community ? p.community.themeId === s.activeTheme : (!s.activeTheme || s.activeTheme === p.theme) && p.theme === s.theme);
   const load = async (refresh = false) => {
     setLoading(true);
     try {
@@ -111,11 +112,13 @@ export function Marketplace({ requested, from, initialTab }: { requested?: Theme
         size: t.size ?? 0, version: t.version, installedVersion: t.installedVersion, compatible: t.compatible, preview: t.preview, poster: t.preview, uiOverhaul: t.uiOverhaul,
         community: { repo: source.repo, id: t.id, themeId: t.themeId, updateAvailable: t.updateAvailable }
       } satisfies ThemePack)));
-      const localThemes: ThemePack[] = allThemes().filter(entry => entry.source === "bundled" && !/test/i.test(entry.name)).map(entry => ({
-        id: `local:${entry.id}`, localThemeId: entry.id, name: entry.name, theme: entry.layout, description: entry.description ?? t("bundledCommunityTheme"),
-        size: 0, version: "bundled", installedVersion: "bundled", compatible: true
+      const localThemes: ThemePack[] = allThemes().filter(th => th.source === "bundled" && !/test/i.test(th.name)).map(th => ({
+        id: `local:${th.id}`, name: th.name, description: th.description ?? t("bundledCommunityTheme"),
+        size: 0, version: "bundled", compatible: true, ...result.art?.[th.id],
+        ...result.themes.find(p=>p.frameTheme===th.id), localThemeId:th.id, theme:th.layout,
+        installedVersion:result.themes.some(p=>p.frameTheme===th.id)?result.themes.find(p=>p.frameTheme===th.id)?.installedVersion:"bundled"
       }));
-      setPacks([...withBuiltIns(result.themes, result.art), ...localThemes, ...installed]); setError(result.error || "");
+      setPacks([...withBuiltIns(result.themes.filter(p=>!p.frameTheme), result.art), ...localThemes, ...installed]); setError(result.error || "");
       setProgress(result.progress); setBusy(result.progress.busy);
     } catch (e) { if (alive.current) setError(`Cannot load themes: ${e}`); }
     finally { if (alive.current) setLoading(false); }
@@ -144,10 +147,11 @@ export function Marketplace({ requested, from, initialTab }: { requested?: Theme
     return () => clearInterval(timer);
   }, [busy]);
   const activate = async () => {
-    if (!current || busy || loading || !current.compatible) return;
+    if (!current || busy || loading || !current.compatible || (isActive(current) && upToDate(current))) return;
     setBusy(true); setMessage(""); const before = getSettings().theme;
     try {
       if (current.community || current.localThemeId) {
+        if(current.frameTheme)await ensurePackInstalled(current);
         let themeId = current.community?.themeId ?? current.localThemeId;
         if (current.community?.updateAvailable) {
           const result = await communityPackage(current.community.repo, current.community.id, "install");
@@ -161,7 +165,7 @@ export function Marketplace({ requested, from, initialTab }: { requested?: Theme
         return;
       }
       await ensurePackInstalled(current);
-      if (current.theme) updateSettings(s => ({ theme: current.theme!, enabled: true, hiddenThemes: (s.hiddenThemes || []).filter(t => t !== current.theme) }));
+      if (current.theme) updateSettings(s => ({ theme: current.theme!, activeTheme: "", enabled: true, hiddenThemes: (s.hiddenThemes || []).filter(t => t !== current.theme) }));
       closeMarketplace(); resourcesChanged();
       if (current.theme) playThemeIntro(current.theme, { switched: before !== current.theme });
     } catch (e) { if (alive.current) { setMessage(String(e)); void reloadInventory(); } }
@@ -176,7 +180,7 @@ export function Marketplace({ requested, from, initialTab }: { requested?: Theme
         if (!result.ok) throw new Error(result.error || t("uninstallFailed"));
         await refreshThemes(); invalidateCommunityUpdates(); await load(); setMessage(t("themeUninstalled")); return;
       }
-      await deleteTheme(current.theme);
+      await deleteTheme(current.theme, current.localThemeId ? current.id : undefined, current.localThemeId);
       await load(); void reloadInventory(); setMessage(t("themeDeletedHidden"));
     } catch (e) { if (alive.current) setMessage(String(e)); }
     finally { if (alive.current) setBusy(false); }
@@ -247,7 +251,7 @@ export function Marketplace({ requested, from, initialTab }: { requested?: Theme
     {updatesOpen ? <section ref={updatesRoot} className="dht-hub-updates" aria-label="Hub updates"><h2>Updates</h2><Updates onManageThemes={() => goTab("yours")}/></section> : tab === "community" ? <CommunityThemes inputRef={tabInput}/> : tab === "spotlight" ? <PluginSpotlight inputRef={tabInput}/> : tab === "files" ? <ThemeFiles inputRef={tabInput}/> : <main className="dht-hub-body"><div className="market-grid dht-hub-grid" ref={listRef}>
       {!filtered.length && <p className="dht-hub-empty">{loading ? t("hubLoading") : installedOnly ? t("hubNoThemes") : t("hubNothingHere")}</p>}
       {filtered.map((pack, i) => {
-        const state = pack.community?.updateAvailable ? t("update") : (pack.localThemeId ? pack.localThemeId === s.activeTheme : pack.community ? pack.community.themeId === s.activeTheme : pack.theme === s.theme) && (pack.installedVersion || pack.builtIn) ? t("active") : pack.installedVersion ? (upToDate(pack) || pack.installedVersion === "built-in" ? t("installed") : t("update")) : extrasMissing(pack) ? t("builtIn") : "";
+        const state = pack.community?.updateAvailable ? t("update") : isActive(pack) ? t("active") : pack.installedVersion ? (upToDate(pack) || pack.installedVersion === "built-in" ? t("installed") : t("update")) : extrasMissing(pack) ? t("builtIn") : "";
         return <button key={pack.id} className="market-card dht-hub-card" data-selected={i === selected} onClick={() => setSelected(i)} onFocus={() => setSelected(i)}>
           <div className="market-art dht-hub-art" data-theme={pack.id}>{pack.poster ? <img src={pack.poster} alt="" loading="lazy" onError={e => { e.currentTarget.style.display = "none"; }} /> : <span>{pack.name}</span>}{state && <em className="dht-hub-state" data-state={state.toLowerCase()}>{state}</em>}</div>
           <div className="market-card-title"><strong>{pack.name}</strong>{pack.size > 0 && <span>{(pack.size / 1048576).toFixed(1)} MB</span>}</div>
@@ -263,9 +267,9 @@ export function Marketplace({ requested, from, initialTab }: { requested?: Theme
         <dl><div><dt>{t("downloadFact")}</dt><dd>{current.size ? `${(current.size / 1048576).toFixed(1)} MB` : t("builtIn")}</dd></div><div><dt>{t("versionFact")}</dt><dd>{current.version}</dd></div><div><dt>{t("availableOffline")}</dt><dd>{current.installedVersion ? t("readyToPlay") : t("afterDownload")}</dd></div></dl>
       </div>
       <div className="dht-hub-detail-actions">
-        <button className="market-primary dht-hub-primary" disabled={busy || loading || !current.compatible} onClick={() => void activate()}>{busy ? `${progress?.percent || 0}% · ${progress?.message || t("preparing")}` : !current.compatible ? t("comingSoon") : upToDate(current) ? t("activateTheme") : current.installedVersion ? t("updateTheme") : extrasMissing(current) ? t("downloadExtrasActivate") : t("downloadTheme")}<kbd>A</kbd></button>
+        <button className="market-primary dht-hub-primary" disabled={busy || loading || !current.compatible || (isActive(current) && upToDate(current))} onClick={() => void activate()}>{busy ? `${progress?.percent || 0}% · ${progress?.message || t("preparing")}` : !current.compatible ? t("comingSoon") : isActive(current) && upToDate(current) ? t("active") : upToDate(current) ? t("activateTheme") : current.installedVersion ? t("updateTheme") : extrasMissing(current) ? t("downloadExtrasActivate") : t("downloadTheme")}<kbd>A</kbd></button>
         {busy && <progress max={100} value={progress?.percent || 0} />}
-        {(current.installedVersion || current.builtIn) && !current.localThemeId && <button className="market-remove dht-hub-remove" disabled={busy || (current.community ? current.community.themeId === s.activeTheme : current.theme === s.theme)} onClick={() => void deletePack()}>{t("deleteTheme")}</button>}
+        {(current.installedVersion || current.builtIn) && <button className="market-remove dht-hub-remove" disabled={busy || isActive(current)} onClick={() => void deletePack()}>{t("deleteTheme")}</button>}
         <small>{t("updatesActivateImmediately")}</small>
       </div>
     </>}</aside></main>}

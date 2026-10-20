@@ -1,0 +1,1828 @@
+[
+  {
+    "id": "103D0",
+    "slug": "splatoon-grafiti-vertical",
+    "category": "Original regression set",
+    "regression": true,
+    "page": "https://themezer.net/switch/themes/splatoon-grafiti-vertical-103D0",
+    "title": "Splatoon Grafiti Vertical",
+    "reference": "https://img.themezer.net/unsafe/hd/plain/s3://switch/themes/10b10c41-37b6-45e7-9fe1-524e23682d09/preview.jpg?hash=l%2BY7Lp35jP0S%2FsCCeVBgaaB8pauNbghJX4duvyDgdtg%3D",
+    "converted": 200,
+    "warnings": [],
+    "warningCount": 0,
+    "artworkOnly": false,
+    "animationCount": 34,
+    "ignoredTargets": [],
+    "ignoredProperties": [],
+    "ignoredAssignments": [],
+    "notes": [
+      "Unreferenced animation group has no playback binding: blyt/BgNml.bflyt:G_ZBG",
+      "Unreferenced animation group has no playback binding: blyt/RdtBtnIconGame.bflyt:G_ActiveMigush",
+      "Unreferenced animation group has no playback binding: blyt/RdtBtnIconGame.bflyt:G_ActiveMigush",
+      "Unreferenced animation group has no playback binding: blyt/RdtBtnIconGame.bflyt:G_ActiveMigush"
+    ],
+    "coverCount": 9,
+    "assessment": "All exported fixture properties now have mappings and behavior checks, including four palette states, parental-pane geometry and animations. Base-version geometry, texture primitives and visual parity still need separate review.",
+    "errors": [],
+    "tiles": 11,
+    "interactionChecks": []
+  },
+  {
+    "id": "18573",
+    "slug": "switch-2-home-menu-dark",
+    "category": "Original regression set",
+    "regression": true,
+    "page": "https://themezer.net/switch/themes/switch-2-home-menu-dark-18573",
+    "title": "Switch 2 Home Menu Dark",
+    "reference": "https://img.themezer.net/unsafe/hd/plain/s3://switch/themes/bbcee050-0095-40e0-a194-72fd8bfb17f6/preview.jpg?hash=0LcO6tcTV%2Faro4V0UJzW1xUiGcak38k3m3ut%2F7KJBxQ%3D",
+    "converted": 56,
+    "warnings": [],
+    "warningCount": 0,
+    "artworkOnly": false,
+    "animationCount": 0,
+    "ignoredTargets": [],
+    "ignoredProperties": [],
+    "ignoredAssignments": [],
+    "notes": [],
+    "coverCount": 9,
+    "assessment": "Partial: dark background and dock shell convert; tile spacing, title alignment, cursor and custom dock icons differ.",
+    "errors": [],
+    "tiles": 11,
+    "interactionChecks": []
+  },
+  {
+    "id": "1E93D",
+    "slug": "forest-pixel-home-menu",
+    "category": "Original regression set",
+    "regression": true,
+    "page": "https://themezer.net/switch/themes/forest-pixel-home-menu-1E93D",
+    "title": "Forest Pixel Home Menu",
+    "reference": "https://img.themezer.net/unsafe/hd/plain/s3://switch/themes/7963b582-2b6c-4782-9f5e-6fd45ff2bc84/preview.jpg?hash=MxsnhL1l4rf6H70EIS1Bq7H3wVGzyF4be6jHicRUrqg%3D",
+    "converted": 62,
+    "warnings": [],
+    "warningCount": 0,
+    "artworkOnly": false,
+    "animationCount": 0,
+    "ignoredTargets": [],
+    "ignoredProperties": [],
+    "ignoredAssignments": [],
+    "notes": [],
+    "coverCount": 4,
+    "assessment": "Bottom square cover placement is now converted; account stack, HUD, title and remaining firmware styling still differ.",
+    "errors": [],
+    "tiles": 5,
+    "interactionChecks": []
+  },
+  {
+    "id": "1E89E",
+    "slug": "persona-5-ui-home-menu",
+    "category": "Original regression set",
+    "regression": true,
+    "page": "https://themezer.net/switch/themes/persona-5-ui-home-menu-1E89E",
+    "title": "Persona 5 UI - Home Menu",
+    "reference": "https://img.themezer.net/unsafe/hd/plain/s3://switch/themes/87bd9895-77db-4cfe-a63c-e1dcff595367/preview.jpg?hash=7mofnZhMSk40R%2F32wcDQ259Y5qVqxQwK8AX0dbs1eIY%3D",
+    "converted": 132,
+    "warnings": [],
+    "warningCount": 0,
+    "artworkOnly": false,
+    "animationCount": 1,
+    "ignoredTargets": [],
+    "ignoredProperties": [],
+    "ignoredAssignments": [],
+    "notes": [],
+    "coverCount": 12,
+    "assessment": "The three-row game grid now converts; profile/HUD, selected-title treatment and firmware details still differ.",
+    "errors": [],
+    "tiles": 12,
+    "interactionChecks": []
+  },
+  {
+    "id": "142A6",
+    "slug": "oled-v2-home",
+    "category": "Original regression set",
+    "regression": true,
+    "page": "https://themezer.net/switch/themes/oled-v2-home-142A6",
+    "title": "OLED v2 Home",
+    "reference": "https://img.themezer.net/unsafe/hd/plain/s3://switch/themes/9016164e-4b78-4894-aec8-9698c59b4977/preview.jpg?hash=0lhHHrNI0fMLAM5WQPwlXmHUhiddwMJuek2BD1N1EpU%3D",
+    "converted": 79,
+    "warnings": [],
+    "warningCount": 0,
+    "artworkOnly": false,
+    "animationCount": 0,
+    "ignoredTargets": [],
+    "ignoredProperties": [],
+    "ignoredAssignments": [],
+    "notes": [
+      "Unreferenced animation group has no playback binding: blyt/RdtBtnFullLauncher.bflyt:Limaaa_G_Active"
+    ],
+    "coverCount": 9,
+    "assessment": "Black wallpaper and horizontal row convert; cover sizing, selected frame, title and modern applet dock still differ.",
+    "errors": [],
+    "tiles": 11,
+    "interactionChecks": []
+  },
+  {
+    "id": "17AE6",
+    "slug": "zelda-40th-home-menu",
+    "category": "Original regression set",
+    "regression": true,
+    "page": "https://themezer.net/switch/themes/zelda-40th-home-menu-17AE6",
+    "title": "Zelda 40th - Home Menu",
+    "reference": "https://img.themezer.net/unsafe/hd/plain/s3://switch/themes/5488bd90-d67e-4a3e-9396-88445dd15969/preview.jpg?hash=W1QbDERBsbBNXuABfbrUYdDTVJ%2FHE9H9LR6lhOPa%2FCA%3D",
+    "converted": 64,
+    "warnings": [],
+    "warningCount": 0,
+    "artworkOnly": false,
+    "animationCount": 0,
+    "ignoredTargets": [],
+    "ignoredProperties": [],
+    "ignoredAssignments": [],
+    "notes": [
+      "Unreferenced animation group has no playback binding: blyt/RdtBtnFullLauncher.bflyt:Limaaa_G_Active"
+    ],
+    "coverCount": 9,
+    "assessment": "Wallpaper converts; cover sizing/spacing, selection frame, title and dock differ from the reference.",
+    "errors": [],
+    "tiles": 11,
+    "interactionChecks": []
+  },
+  {
+    "id": "184DB",
+    "slug": "samurai-home-menu",
+    "category": "Original regression set",
+    "regression": true,
+    "page": "https://themezer.net/switch/themes/samurai-home-menu-184DB",
+    "title": "Samurai (Home Menu)",
+    "reference": "https://img.themezer.net/unsafe/hd/plain/s3://switch/themes/d53ed911-f5ba-445b-ba95-802bdb8c728d/preview.jpg?hash=gQm3dohwSEgC8ESOYjC2Vvuqnw9YkyqWJ8iKnFh66Bk%3D",
+    "converted": 62,
+    "warnings": [],
+    "warningCount": 0,
+    "artworkOnly": false,
+    "animationCount": 0,
+    "ignoredTargets": [],
+    "ignoredProperties": [],
+    "ignoredAssignments": [],
+    "notes": [],
+    "coverCount": 4,
+    "assessment": "All exported fixture properties now have mappings and behavior checks; screenshot differences can still remain in fonts, artwork content and firmware details.",
+    "errors": [],
+    "tiles": 5,
+    "interactionChecks": []
+  },
+  {
+    "id": "E62D",
+    "slug": "chainsaw-man-home-menu",
+    "category": "Original regression set",
+    "regression": true,
+    "page": "https://themezer.net/switch/themes/chainsaw-man-home-menu-E62D",
+    "title": "Chainsaw Man Home Menu",
+    "reference": "https://img.themezer.net/unsafe/hd/plain/s3://switch/themes/16ba0087-3a28-4729-89cc-97fa5d20058d/preview.jpg?hash=CuAe5%2BZb3bLC0tT8aTw2ZPFljRbr0qQNlUElBcAHUoc%3D",
+    "converted": 62,
+    "warnings": [],
+    "warningCount": 0,
+    "artworkOnly": false,
+    "animationCount": 0,
+    "ignoredTargets": [],
+    "ignoredProperties": [],
+    "ignoredAssignments": [],
+    "notes": [],
+    "coverCount": 4,
+    "assessment": "All exported fixture properties now have mappings and behavior checks; visual parity remains a separate acceptance check.",
+    "errors": [],
+    "tiles": 5,
+    "interactionChecks": []
+  },
+  {
+    "id": "3595",
+    "slug": "switch-animated-bg-home-alt",
+    "category": "Animated pixel background and breathing icons",
+    "sourceQuality": "The source has 640 × 120 pixels per animation frame, displayed at 1280 × 360 by the authored layout. Live playback now paints the atlas at its final size to avoid Chromium blur from enlarging an animated compositor layer.",
+    "regression": false,
+    "page": "https://themezer.net/switch/themes/switch-animated-bg-home-alt-3595",
+    "title": "Switch - Animated BG Home Alt",
+    "reference": "https://img.themezer.net/unsafe/hd/plain/s3://switch/themes/4bf514eb-9809-4e55-af8c-c1bfdbaa6f91/preview.jpg?hash=aDCseTYJDdDd%2BK9MJQCWTYBTFrYaEMCKIcEcRwYzNcc%3D",
+    "converted": 179,
+    "warnings": [],
+    "warningCount": 0,
+    "artworkOnly": false,
+    "animationCount": 30,
+    "ignoredTargets": [],
+    "ignoredProperties": [],
+    "ignoredAssignments": [],
+    "notes": [
+      "Unreferenced animation group has no playback binding: blyt/BgNml.bflyt:G_ZBG"
+    ],
+    "coverCount": 9,
+    "assessment": "Shared native game/title trees now place the selected title below the covers and preserve independent artwork, backing and focus panes. Wallpaper UVs are centered and sprite transitions hold complete frames; the authored launcher backing restores the blue footer. Native origin decoding aligns clock/network/battery in the footer. Symbol metrics, artwork and some applet positions still differ. Live atlas playback now paints into a viewport-sized layer, avoiding Chromium down-rasterization at narrow widths. Source frames remain 640 × 120, displayed at 1280 × 360 by the author. Running and paused poses match at widths 550 and 1304.",
+    "errors": [],
+    "tiles": 11,
+    "interactionChecks": []
+  },
+  {
+    "id": "DE49",
+    "slug": "seamless-v4-home-pan-and-zoom",
+    "category": "Tiled background pan/zoom and gradient borders",
+    "regression": false,
+    "page": "https://themezer.net/switch/themes/seamless-v4-home-pan-and-zoom-DE49",
+    "title": "Seamless V4 - Home - Pan and Zoom",
+    "reference": "https://img.themezer.net/unsafe/hd/plain/s3://switch/themes/c3857856-8144-469a-ab6f-bcb23d76e9f9/preview.jpg?hash=yvNvaaQHlwSioMp7L5R0D%2BXcYlx0%2FuunI%2FuP1cly6YY%3D",
+    "converted": 370,
+    "warnings": [],
+    "warningCount": 0,
+    "artworkOnly": false,
+    "animationCount": 87,
+    "ignoredTargets": [],
+    "ignoredProperties": [],
+    "ignoredAssignments": [],
+    "notes": [
+      "Unreferenced animation group has no playback binding: blyt/BgNml.bflyt:G_ZBG"
+    ],
+    "coverCount": 12,
+    "assessment": "Pan/zoom starts before the first paint and preserves wallpaper proportions. Custom applet sizes, rounded launcher ring/dots and stationary navigation are restored. All Software retains the current cover page and uses the native focus tree. Phase, HUD metrics and game/account data still differ.",
+    "errors": [],
+    "tiles": 5,
+    "interactionChecks": []
+  },
+  {
+    "id": "B145",
+    "slug": "switchcube-home-menu-vertical",
+    "category": "Lava Lamp vertical layout",
+    "regression": false,
+    "page": "https://themezer.net/switch/themes/switchcube-home-menu-vertical-B145",
+    "title": "SWITCHCUBE - Home Menu Vertical",
+    "reference": "https://img.themezer.net/unsafe/hd/plain/s3://switch/themes/da15eedb-5eb4-43d2-a92f-8bc44e66eb37/preview.jpg?hash=tf2nSjGM25JgNaKFe93wh7SepPy0m4txIbiL6284alw%3D",
+    "converted": 130,
+    "warnings": [],
+    "warningCount": 0,
+    "artworkOnly": false,
+    "animationCount": 0,
+    "ignoredTargets": [],
+    "ignoredProperties": [],
+    "ignoredAssignments": [],
+    "notes": [
+      "Unreferenced animation group has no playback binding: blyt/RdtBtnIconGame.bflyt:G_ActiveMigush",
+      "Unreferenced animation group has no playback binding: blyt/RdtBtnIconGame.bflyt:G_ActiveMigush",
+      "Unreferenced animation group has no playback binding: blyt/RdtBtnIconGame.bflyt:G_ActiveMigush"
+    ],
+    "coverCount": 5,
+    "assessment": "Native tooltip/balloon hierarchy places the title below the portrait cover; text width follows the selected label. Vertical covers and independent cursor/launcher bounds render. HUD/profile positions, selection treatment and artwork content still differ from the reference.",
+    "errors": [],
+    "tiles": 5,
+    "interactionChecks": []
+  },
+  {
+    "id": "14665",
+    "slug": "metropolis-animated-home-menu",
+    "category": "Animated Metropolis background",
+    "regression": false,
+    "page": "https://themezer.net/switch/themes/metropolis-animated-home-menu-14665",
+    "title": "Metropolis Animated - Home Menu",
+    "reference": "https://img.themezer.net/unsafe/hd/plain/s3://switch/themes/2334b234-5937-41e2-9eda-395c9caac180/preview.jpg?hash=ZOyoQIR5mBLpmsw4bkv5wAVI%2FbvhubXO5qIXlC6P5uA%3D",
+    "converted": 179,
+    "warnings": [],
+    "warningCount": 0,
+    "artworkOnly": false,
+    "animationCount": 30,
+    "ignoredTargets": [],
+    "ignoredProperties": [],
+    "ignoredAssignments": [],
+    "notes": [
+      "Unreferenced animation group has no playback binding: blyt/BgNml.bflyt:G_ZBG"
+    ],
+    "coverCount": 9,
+    "assessment": "Shared native game/title trees now place the selected title below the covers and preserve independent artwork, backing and focus panes. Centered atlas sampling and complete-frame transitions replace sliding/inverted rows. The authored launcher backing restores the black footer. Remaining differences include HUD details, original firmware primitives and game content. Live atlas playback uses a viewport-sized paint layer to prevent narrow-window blur.",
+    "errors": [],
+    "tiles": 11,
+    "interactionChecks": []
+  },
+  {
+    "id": "2FDE",
+    "slug": "nostalgia-vertical-%28home-menu%29",
+    "category": "Vertical layout and translucent sidebar",
+    "regression": false,
+    "page": "https://themezer.net/switch/themes/nostalgia-vertical-%28home-menu%29-2FDE",
+    "title": "Nostalgia Vertical (home menu)",
+    "reference": "https://img.themezer.net/unsafe/hd/plain/s3://switch/themes/2c36dca4-4591-4a87-a44a-a005d071f11e/preview.jpg?hash=MruTyvB4CILMjrLavMh9AEdTnbooq%2BE9NlZpcN%2BgJsU%3D",
+    "converted": 154,
+    "warnings": [],
+    "warningCount": 0,
+    "artworkOnly": false,
+    "animationCount": 36,
+    "ignoredTargets": [],
+    "ignoredProperties": [],
+    "ignoredAssignments": [],
+    "notes": [],
+    "coverCount": 9,
+    "assessment": "Vertical cover placement is close, with focus motion applied. Profile/HUD placement, title placement and some applet symbols still differ.",
+    "errors": [],
+    "tiles": 11,
+    "interactionChecks": []
+  },
+  {
+    "id": "13B5F",
+    "slug": "seamless-reanimated",
+    "category": "Sprite-sheet background animation",
+    "regression": false,
+    "page": "https://themezer.net/switch/themes/seamless-reanimated-13B5F",
+    "title": "Seamless - ReAnimated",
+    "reference": "https://img.themezer.net/unsafe/hd/plain/s3://switch/themes/44716e86-ef1f-446c-8e80-56e15391f857/preview.jpg?hash=mVrsOPZmybM96PShd332IqXsIKk9fR15%2FTCOl%2FxBGy0%3D",
+    "converted": 378,
+    "warnings": [],
+    "warningCount": 0,
+    "artworkOnly": false,
+    "animationCount": 65,
+    "ignoredTargets": [],
+    "ignoredProperties": [],
+    "ignoredAssignments": [],
+    "notes": [],
+    "coverCount": 12,
+    "assessment": "Modern replacement textures now supply the moving masks, including one-pixel quads without baseline displacement or enlarged SVG-filter artifacts. The initial resume sequence and discrete atlas frames play. The comparison focuses All Software; phase, source firmware details, title/HUD metrics and account/game data still differ.",
+    "errors": [],
+    "tiles": 5,
+    "interactionChecks": []
+  },
+  {
+    "id": "441B",
+    "slug": "windows-xp-home-menu-%28v19_0%29",
+    "category": "Windows XP interface",
+    "regression": false,
+    "page": "https://themezer.net/switch/themes/windows-xp-home-menu-%28v19_0%29-441B",
+    "title": "Windows XP - Home Menu (v19.0)",
+    "reference": "https://img.themezer.net/unsafe/hd/plain/s3://switch/themes/88ef0f7a-b9cc-4645-bd2f-2d758c7f93f4/preview.jpg?hash=lZMvMQguXaF%2BBxvbqJZm9sIdHc%2B%2FfNmow%2Bh0hFbkq2I%3D",
+    "converted": 0,
+    "warnings": [],
+    "warningCount": 0,
+    "artworkOnly": true,
+    "animationCount": 0,
+    "ignoredTargets": [],
+    "ignoredProperties": [],
+    "ignoredAssignments": [],
+    "notes": [],
+    "coverCount": 9,
+    "assessment": "Artwork-only source: the archive declares the default layout and contains no custom layout operations. Portrait covers, profile/HUD placement and applet symbols differ from the reference; zero warnings does not establish custom-layout coverage.",
+    "errors": [],
+    "tiles": 11,
+    "interactionChecks": []
+  },
+  {
+    "id": "119CC",
+    "slug": "windows-7-home-menu",
+    "category": "Windows 7 interface",
+    "regression": false,
+    "page": "https://themezer.net/switch/themes/windows-7-home-menu-119CC",
+    "title": "Windows 7 - Home menu",
+    "reference": "https://img.themezer.net/unsafe/hd/plain/s3://switch/themes/1f5eb8ea-68fb-49a9-b875-7a0668ad2448/preview.jpg?hash=sql964%2BhhhmHzTziVijeuEf0K3gdJVTuSaQYSV7LojM%3D",
+    "converted": 118,
+    "warnings": [],
+    "warningCount": 0,
+    "artworkOnly": false,
+    "animationCount": 26,
+    "ignoredTargets": [],
+    "ignoredProperties": [],
+    "ignoredAssignments": [],
+    "notes": [],
+    "coverCount": 9,
+    "assessment": "Cover row and Windows wallpaper render. Correct native pane-origin decoding aligns the clock, battery and network along the header. Profile/title composition, procedural symbol metrics and game data still differ.",
+    "errors": [],
+    "tiles": 11,
+    "interactionChecks": []
+  },
+  {
+    "id": "6DE7",
+    "slug": "seamless-carriage-in-canyon-home",
+    "category": "Animated scene and spinning translucent icons",
+    "regression": false,
+    "page": "https://themezer.net/switch/themes/seamless-carriage-in-canyon-home-6DE7",
+    "title": "Seamless - Carriage in Canyon - Home",
+    "reference": "https://img.themezer.net/unsafe/hd/plain/s3://switch/themes/d2bec1b7-0bfb-4dfb-8c9c-432303134722/preview.jpg?hash=Lj421cxB02Pg18rwF%2FwPinsbeGNMBGVKIFiwLpa%2Fm4E%3D",
+    "converted": 366,
+    "warnings": [],
+    "warningCount": 0,
+    "artworkOnly": false,
+    "animationCount": 73,
+    "ignoredTargets": [],
+    "ignoredProperties": [],
+    "ignoredAssignments": [],
+    "notes": [
+      "Unreferenced animation group has no playback binding: blyt/RdtBtnShop.bflyt:my_Shop",
+      "Unreferenced animation group has no playback binding: blyt/BgNml.bflyt:G_ZBG"
+    ],
+    "coverCount": 12,
+    "assessment": "Wallpaper pan starts on initial Home entry. Modern replacement applet images are imported, stationary cover slots page without overlap, and this comparison focuses All Software. HUD/profile metrics, game/account data and phase still differ.",
+    "errors": [],
+    "tiles": 5,
+    "interactionChecks": []
+  },
+  {
+    "id": "A20",
+    "slug": "purple-nintendo-switch-animated-home",
+    "category": "Older animated pastel layout",
+    "regression": false,
+    "page": "https://themezer.net/switch/themes/purple-nintendo-switch-animated-home-A20",
+    "title": "Purple Nintendo Switch ANIMATED Home",
+    "reference": "https://img.themezer.net/unsafe/hd/plain/s3://switch/themes/a3170d6e-e7fc-4ead-9494-8cbd33528d79/preview.jpg?hash=2HwNfbttUwzKulY8%2Bnaf6FcoCwIy6GsgLsEj%2BqIT0WU%3D",
+    "converted": 110,
+    "warnings": [],
+    "warningCount": 0,
+    "artworkOnly": false,
+    "animationCount": 16,
+    "ignoredTargets": [],
+    "ignoredProperties": [],
+    "ignoredAssignments": [],
+    "notes": [],
+    "coverCount": 8,
+    "assessment": "The selected enlarged cover now paints above neighboring covers. Focus/backing corner geometry matches the art, and the clock stays in the top pill. Profile count, fonts, service labels and artwork differ from the reference.",
+    "errors": [],
+    "tiles": 9,
+    "interactionChecks": []
+  },
+  {
+    "id": "9A6",
+    "slug": "project-clean-home",
+    "category": "Hidden applets and custom multicolor icon",
+    "regression": false,
+    "page": "https://themezer.net/switch/themes/project-clean-home-9A6",
+    "title": "Project Clean - Home",
+    "reference": "https://img.themezer.net/unsafe/hd/plain/s3://switch/themes/36eab37c-1087-4b31-a0e3-6b847cd03665/preview.jpg?hash=09lqkzhfVgvj9vzlPIKJMNY6mXsKP4IMsvleLbirr9w%3D",
+    "converted": 82,
+    "warnings": [],
+    "warningCount": 0,
+    "artworkOnly": false,
+    "animationCount": 12,
+    "ignoredTargets": [],
+    "ignoredProperties": [],
+    "ignoredAssignments": [],
+    "notes": [],
+    "coverCount": 9,
+    "assessment": "Native RefreshIn terminal motion now restores the middle cover row generically. Source patches explicitly hide HudTime/HudSignal roots that are visible in the reference; that service/reference discrepancy remains unresolved. Font, title/cursor treatment and profile state still differ.",
+    "errors": [],
+    "tiles": 11,
+    "interactionChecks": []
+  },
+  {
+    "id": "AFEB",
+    "slug": "2simple-custom-home-two-rows",
+    "category": "Modern two-row grid",
+    "regression": false,
+    "page": "https://themezer.net/switch/themes/2simple-custom-home-two-rows-AFEB",
+    "title": "2Simple Custom - Home (Two Rows)",
+    "reference": "https://img.themezer.net/unsafe/hd/plain/s3://switch/themes/0b0b081c-35a9-4b23-b0df-fc9b70f14a23/preview.jpg?hash=hWT4DOKyq8e%2BgT6ayOFJYxhW9s2Pr5YgRmouNhYm%2FIA%3D",
+    "converted": 100,
+    "warnings": [],
+    "warningCount": 0,
+    "artworkOnly": false,
+    "animationCount": 18,
+    "ignoredTargets": [],
+    "ignoredProperties": [],
+    "ignoredAssignments": [],
+    "notes": [],
+    "coverCount": 11,
+    "assessment": "Two rows and selection motion render. Default profile-pane geometry keeps the account in the header rather than between game rows. Row spacing, title/HUD metrics, source game content and launcher placement still differ.",
+    "errors": [],
+    "tiles": 11,
+    "interactionChecks": []
+  },
+  {
+    "id": "25DB",
+    "slug": "smash-icons-home-two-rows",
+    "category": "Older two-row grid",
+    "regression": false,
+    "page": "https://themezer.net/switch/themes/smash-icons-home-two-rows-25DB",
+    "title": "Smash Icons (home, two rows)",
+    "reference": "https://img.themezer.net/unsafe/hd/plain/s3://switch/themes/eb09e5f1-a8eb-4839-9e59-c06db9566fcd/preview.jpg?hash=%2BPtIdxOKa%2BLhwDcOb7bFPLC%2BSuhwAPo0T49F2%2BQM1KQ%3D",
+    "converted": 44,
+    "warnings": [],
+    "warningCount": 0,
+    "artworkOnly": false,
+    "animationCount": 0,
+    "ignoredTargets": [],
+    "ignoredProperties": [],
+    "ignoredAssignments": [],
+    "notes": [],
+    "coverCount": 12,
+    "assessment": "Two square-cover rows and material colors render. Remaining differences include HUD/profile position, game content, title and missing modern applet in the automatic classic layout.",
+    "errors": [],
+    "tiles": 12,
+    "interactionChecks": []
+  },
+  {
+    "id": "5361",
+    "slug": "minimal-home-menu-v19_x",
+    "category": "Minimal classic layout",
+    "regression": false,
+    "page": "https://themezer.net/switch/themes/minimal-home-menu-v19_x-5361",
+    "title": "MINIMAL HOME MENU V19.x",
+    "reference": "https://img.themezer.net/unsafe/hd/plain/s3://switch/themes/02dfe243-1e19-47f3-b254-0f6b9f897871/preview.jpg?hash=00HcE6Jyt%2F4sb6RF1qyUPfo5L2aZqCOROiWVKs1Kq9s%3D",
+    "converted": 41,
+    "warnings": [],
+    "warningCount": 0,
+    "artworkOnly": false,
+    "animationCount": 0,
+    "ignoredTargets": [
+      {
+        "file": "blyt/RdtBase.bflyt",
+        "kind": "material",
+        "name": "T_Main",
+        "reason": "absent-in-supported-bases"
+      }
+    ],
+    "ignoredProperties": [],
+    "ignoredAssignments": [],
+    "notes": [
+      "Native installer ignores absent material: blyt/RdtBase.bflyt:T_Main (supported Classic/Modern bases)."
+    ],
+    "coverCount": 9,
+    "assessment": "Basic Black fallback now supplies the dark scene when no wallpaper is included. Title, profile/HUD, glyphs and cover treatment still differ from the reference.",
+    "errors": [],
+    "tiles": 11,
+    "interactionChecks": []
+  },
+  {
+    "id": "9466",
+    "slug": "tentacle-vertical-home-menu",
+    "category": "Tentacle vertical layout",
+    "regression": false,
+    "page": "https://themezer.net/switch/themes/tentacle-vertical-home-menu-9466",
+    "title": "Tentacle Vertical - Home Menu",
+    "reference": "https://img.themezer.net/unsafe/hd/plain/s3://switch/themes/1ea4af3a-0ea9-465a-80f0-04e04faeaff5/preview.jpg?hash=JmwNO1eXN4lX9gg%2FTZ6itchDitX2xus5wNL9N7NsPjQ%3D",
+    "converted": 130,
+    "warnings": [],
+    "warningCount": 0,
+    "artworkOnly": false,
+    "animationCount": 0,
+    "ignoredTargets": [],
+    "ignoredProperties": [],
+    "ignoredAssignments": [],
+    "notes": [
+      "Unreferenced animation group has no playback binding: blyt/RdtBtnIconGame.bflyt:G_ActiveMigush",
+      "Unreferenced animation group has no playback binding: blyt/RdtBtnIconGame.bflyt:G_ActiveMigush",
+      "Unreferenced animation group has no playback binding: blyt/RdtBtnIconGame.bflyt:G_ActiveMigush"
+    ],
+    "coverCount": 5,
+    "assessment": "Native tooltip/balloon hierarchy places the title below the portrait cover; text width follows the selected label. Vertical cover row, custom launcher primitives and pane materials render. Native console labels embedded in reference artwork, HUD/profile placement and selection treatment still differ.",
+    "errors": [],
+    "tiles": 5,
+    "interactionChecks": []
+  },
+  {
+    "id": "977B",
+    "slug": "home-menu",
+    "category": "Alternative Windows layout",
+    "systemColors": "light",
+    "regression": false,
+    "page": "https://themezer.net/switch/themes/home-menu-977B",
+    "title": "home menu",
+    "reference": "https://img.themezer.net/unsafe/hd/plain/s3://switch/themes/bc26cdaf-fb55-4c8b-b387-6e5f9e475f12/preview.jpg?hash=UjEOUNFJLEvVWazzb7WVqGWkONnoB6WA0UNWvFcLxts%3D",
+    "converted": 170,
+    "warnings": [],
+    "warningCount": 0,
+    "artworkOnly": false,
+    "animationCount": 39,
+    "ignoredTargets": [],
+    "ignoredProperties": [],
+    "ignoredAssignments": [],
+    "notes": [],
+    "coverCount": 9,
+    "assessment": "Shared native title hierarchy restores the footer caption with its palette color; applet state dimensions, persistent Album caption and Basic White comparison are retained. Native texture/font details, source game content and account services still differ.",
+    "errors": [],
+    "tiles": 11,
+    "interactionChecks": []
+  },
+  {
+    "id": "FFDC",
+    "slug": "ps5-home-menu-final",
+    "category": "PS5-style home layout",
+    "regression": false,
+    "discovery": true,
+    "batch": "native-expansion",
+    "page": "https://themezer.net/switch/themes/ps5-home-menu-final-FFDC",
+    "title": "PS5 Home Menu Final",
+    "reference": "https://img.themezer.net/unsafe/hd/plain/s3://switch/themes/30eb97a7-ebbb-4f03-9827-cf1e90fae38c/preview.jpg?hash=DPI2e256Ts%2FZonxRtHBpcfix0BBzsW1Up0JFWjSFh%2FI%3D",
+    "converted": 96,
+    "warnings": [],
+    "warningCount": 0,
+    "artworkOnly": false,
+    "animationCount": 4,
+    "ignoredTargets": [],
+    "ignoredProperties": [],
+    "ignoredAssignments": [],
+    "notes": [
+      "Unreferenced animation group has no playback binding: blyt/RdtBtnIconGame.bflyt:NSX_G_Inactive",
+      "Unreferenced animation group has no playback binding: blyt/RdtBtnIconGame.bflyt:NSX_G_Inactive",
+      "Unreferenced animation group has no playback binding: blyt/RdtBtnIconGame.bflyt:NSX_G_Inactive",
+      "Unreferenced animation group has no playback binding: blyt/RdtBtnIconGame.bflyt:NSX_G_Inactive"
+    ],
+    "coverCount": 9,
+    "assessment": "Fixed in the shared importer/renderer: native alpha flags preserve the smaller inactive cover row while the selected cover enlarges. Whole-file BFLAN replacements remove omitted default tracks; repeated entries within one file retain independent channels. Optional local HUD/applet masks improve symbols. Optional local fonts now supply native title metrics. Cursor3 shader and host account count still differ.",
+    "errors": [],
+    "tiles": 11,
+    "interactionChecks": [
+      {
+        "id": "FFDC",
+        "width": 1304,
+        "errors": [],
+        "backgroundPlayers": 0,
+        "navigation": [
+          "Cyberpunk 2077",
+          "Hades",
+          "Elden Ring"
+        ],
+        "selectedArtwork": {
+          "x": 549.0343627929688,
+          "y": 308.53436279296875,
+          "width": 153.9000244140625,
+          "height": 153.9000244140625
+        },
+        "pass": true
+      }
+    ]
+  },
+  {
+    "id": "FEE2",
+    "slug": "botw-light-grass-home-with-custom-icons",
+    "category": "Light palette and custom Zelda applets",
+    "regression": false,
+    "discovery": true,
+    "batch": "native-expansion",
+    "systemColors": "light",
+    "page": "https://themezer.net/switch/themes/botw-light-grass-home-with-custom-icons-FEE2",
+    "title": "botw light grass home with custom icons",
+    "reference": "https://img.themezer.net/unsafe/hd/plain/s3://switch/themes/0bb0c4d0-1389-4c5b-a136-8318611c4ddf/preview.jpg?hash=Y9jyyrxhFtsHJBjXLuJgzqPJ6iNNaqdVAyajz4YRzhI%3D",
+    "converted": 99,
+    "warnings": [],
+    "warningCount": 0,
+    "artworkOnly": false,
+    "animationCount": 3,
+    "ignoredTargets": [],
+    "ignoredProperties": [],
+    "ignoredAssignments": [],
+    "notes": [],
+    "coverCount": 8,
+    "assessment": "Wallpaper and bottom square-cover row render in the expected regions. The reference has dark custom applet bases; the converted light-system bases are white and some custom symbols differ. Profile count, clock position and footer ordering also differ.",
+    "errors": [],
+    "tiles": 9,
+    "interactionChecks": [
+      {
+        "id": "FEE2",
+        "width": 1304,
+        "errors": [],
+        "backgroundPlayers": 0,
+        "navigation": [
+          "Cyberpunk 2077",
+          "Hades",
+          "Elden Ring"
+        ],
+        "selectedArtwork": {
+          "x": 328,
+          "y": 652,
+          "width": 128,
+          "height": 128
+        },
+        "pass": true
+      }
+    ]
+  },
+  {
+    "id": "16814",
+    "slug": "cozy-snorlax-adventures-homescreen",
+    "category": "Modern character layout",
+    "regression": false,
+    "discovery": true,
+    "batch": "native-expansion",
+    "page": "https://themezer.net/switch/themes/cozy-snorlax-adventures-homescreen-16814",
+    "title": "Cozy Snorlax Adventures Homescreen",
+    "reference": "https://img.themezer.net/unsafe/hd/plain/s3://switch/themes/8eb5f7f6-6578-4a26-9475-ccf2d1ad9987/preview.jpg?hash=Z1tMOvNGvP8DY6YL%2BsBnjaUgvAqqWVT2Hwm8jlb7gPg%3D",
+    "converted": 57,
+    "warnings": [],
+    "warningCount": 0,
+    "artworkOnly": false,
+    "animationCount": 0,
+    "ignoredTargets": [],
+    "ignoredProperties": [],
+    "ignoredAssignments": [],
+    "notes": [],
+    "coverCount": 6,
+    "assessment": "Wallpaper proportions and compact lower-right cover row broadly follow the reference. Selection frame, some applet glyphs, profile/HUD details and source artwork differ; this is not a parity pass.",
+    "errors": [],
+    "tiles": 7,
+    "interactionChecks": [
+      {
+        "id": "16814",
+        "width": 1304,
+        "errors": [],
+        "backgroundPlayers": 0,
+        "navigation": [
+          "Cyberpunk 2077",
+          "Hades",
+          "Elden Ring"
+        ],
+        "selectedArtwork": {
+          "x": 754.6243896484375,
+          "y": 680.6243896484375,
+          "width": 94.719970703125,
+          "height": 94.719970703125
+        },
+        "pass": true
+      }
+    ]
+  },
+  {
+    "id": "15FF8",
+    "slug": "horizonos-27-liquid-glass",
+    "category": "Liquid-glass layout",
+    "regression": false,
+    "discovery": true,
+    "batch": "native-expansion",
+    "page": "https://themezer.net/switch/themes/horizonos-27-liquid-glass-15FF8",
+    "title": "HorizonOS 27 - Liquid Glass",
+    "reference": "https://img.themezer.net/unsafe/hd/plain/s3://switch/themes/99099e04-8d28-4fca-b8be-ad315818bee0/preview.jpg?hash=JZPEspVfjafThhlo%2F1I4CUfn1%2B0v4BnEa9YBxJWub6w%3D",
+    "converted": 44,
+    "warnings": [],
+    "warningCount": 0,
+    "artworkOnly": false,
+    "animationCount": 0,
+    "ignoredTargets": [],
+    "ignoredProperties": [],
+    "ignoredAssignments": [],
+    "notes": [],
+    "coverCount": 9,
+    "assessment": "Glass wallpaper, large cover row, top-right HUD pill and lower applet pill render. Selected-cover frame, applet symbols/colors and account count differ from the reference.",
+    "errors": [],
+    "tiles": 11,
+    "interactionChecks": [
+      {
+        "id": "15FF8",
+        "width": 1304,
+        "errors": [],
+        "backgroundPlayers": 0,
+        "navigation": [
+          "Cyberpunk 2077",
+          "Hades",
+          "Elden Ring"
+        ],
+        "selectedArtwork": {
+          "x": 659,
+          "y": 332,
+          "width": 256,
+          "height": 256
+        },
+        "pass": true
+      }
+    ]
+  },
+  {
+    "id": "F5E4",
+    "slug": "vertical-lava-lamp-homelayout",
+    "category": "Vertical Lava Lamp home",
+    "regression": false,
+    "discovery": true,
+    "batch": "native-expansion",
+    "page": "https://themezer.net/switch/themes/vertical-lava-lamp-homelayout-F5E4",
+    "title": "Vertical Lava Lamp - HomeLayout",
+    "reference": "https://img.themezer.net/unsafe/hd/plain/s3://switch/themes/49b2e22b-8145-42bb-83fe-f70272820d11/preview.jpg?hash=4JafUiuPtxLaul3A%2B%2FPZecs9OlyTEXsw45QEvSJoOWY%3D",
+    "converted": 130,
+    "warnings": [],
+    "warningCount": 0,
+    "artworkOnly": false,
+    "animationCount": 0,
+    "ignoredTargets": [],
+    "ignoredProperties": [],
+    "ignoredAssignments": [],
+    "notes": [
+      "Unreferenced animation group has no playback binding: blyt/RdtBtnIconGame.bflyt:G_ActiveMigush",
+      "Unreferenced animation group has no playback binding: blyt/RdtBtnIconGame.bflyt:G_ActiveMigush",
+      "Unreferenced animation group has no playback binding: blyt/RdtBtnIconGame.bflyt:G_ActiveMigush"
+    ],
+    "coverCount": 5,
+    "assessment": "Vertical covers and rounded main/app tray panels render. Selected-title placement and scale differ, the View All glyph is missing, and a stray clipped mark appears at the right edge of the cover panel. Source artwork and account content also differ.",
+    "errors": [],
+    "tiles": 5,
+    "interactionChecks": [
+      {
+        "id": "F5E4",
+        "width": 1304,
+        "errors": [],
+        "backgroundPlayers": 0,
+        "navigation": [
+          "Cyberpunk 2077",
+          "Hades",
+          "Elden Ring"
+        ],
+        "selectedArtwork": {
+          "x": 559.6964111328125,
+          "y": 329.5523681640625,
+          "width": 184.575927734375,
+          "height": 276.864013671875
+        },
+        "pass": true
+      }
+    ]
+  },
+  {
+    "id": "106EF",
+    "slug": "cartopeia-oled-home",
+    "category": "OLED layout variant",
+    "regression": false,
+    "discovery": true,
+    "batch": "native-expansion",
+    "page": "https://themezer.net/switch/themes/cartopeia-oled-home-106EF",
+    "title": "Cartopeia-OLED Home",
+    "reference": "https://img.themezer.net/unsafe/hd/plain/s3://switch/themes/852d2a39-3b12-4459-b281-59eedcdd57b4/preview.jpg?hash=MEPVDicJ97U8aZfVn5D%2BaNzGVpCEz9liglzQDY75lMM%3D",
+    "converted": 552,
+    "warnings": [],
+    "warningCount": 0,
+    "artworkOnly": false,
+    "animationCount": 37,
+    "ignoredTargets": [],
+    "ignoredProperties": [
+      {
+        "file": "blyt/Cursor3.bflyt",
+        "pane": "P_Grow",
+        "name": "S_DropShadowKnockout",
+        "value": 2,
+        "reason": "not-consumed-by-measured-native-loader",
+        "profiles": [
+          "19.0.1",
+          "22.5.0"
+        ]
+      },
+      {
+        "file": "blyt/DBaseNml.bflyt",
+        "pane": "P_Base",
+        "name": "S_DropShadowKnockout",
+        "value": 0,
+        "reason": "not-consumed-by-measured-native-loader",
+        "profiles": [
+          "19.0.1",
+          "22.5.0"
+        ]
+      },
+      {
+        "file": "blyt/RdtBtnCtrl.bflyt",
+        "pane": "P_Form",
+        "name": "S_DropShadowKnockout",
+        "value": 1,
+        "reason": "not-consumed-by-measured-native-loader",
+        "profiles": [
+          "19.0.1",
+          "22.5.0"
+        ]
+      },
+      {
+        "file": "blyt/RdtBtnCtrl.bflyt",
+        "pane": "P_Stick",
+        "name": "S_DropShadowKnockout",
+        "value": 1,
+        "reason": "not-consumed-by-measured-native-loader",
+        "profiles": [
+          "19.0.1",
+          "22.5.0"
+        ]
+      },
+      {
+        "file": "blyt/RdtBtnCtrl.bflyt",
+        "pane": "P_Y",
+        "name": "S_DropShadowKnockout",
+        "value": 1,
+        "reason": "not-consumed-by-measured-native-loader",
+        "profiles": [
+          "19.0.1",
+          "22.5.0"
+        ]
+      },
+      {
+        "file": "blyt/RdtBtnCtrl.bflyt",
+        "pane": "P_X",
+        "name": "S_DropShadowKnockout",
+        "value": 1,
+        "reason": "not-consumed-by-measured-native-loader",
+        "profiles": [
+          "19.0.1",
+          "22.5.0"
+        ]
+      },
+      {
+        "file": "blyt/RdtBtnCtrl.bflyt",
+        "pane": "P_A",
+        "name": "S_DropShadowKnockout",
+        "value": 1,
+        "reason": "not-consumed-by-measured-native-loader",
+        "profiles": [
+          "19.0.1",
+          "22.5.0"
+        ]
+      },
+      {
+        "file": "blyt/RdtBtnCtrl.bflyt",
+        "pane": "P_B",
+        "name": "S_DropShadowKnockout",
+        "value": 1,
+        "reason": "not-consumed-by-measured-native-loader",
+        "profiles": [
+          "19.0.1",
+          "22.5.0"
+        ]
+      },
+      {
+        "file": "blyt/RdtBalloonSystemApplet.bflyt",
+        "pane": "T_Main",
+        "name": "S_DropShadowKnockout",
+        "value": 0,
+        "reason": "not-consumed-by-measured-native-loader",
+        "profiles": [
+          "19.0.1",
+          "22.5.0"
+        ]
+      },
+      {
+        "file": "blyt/RdtBtnFullLauncher.bflyt",
+        "pane": "P_Pict_03",
+        "name": "S_DropShadowKnockout",
+        "value": 1,
+        "reason": "not-consumed-by-measured-native-loader",
+        "profiles": [
+          "19.0.1",
+          "22.5.0"
+        ]
+      },
+      {
+        "file": "blyt/RdtBtnPvr.bflyt",
+        "pane": "P_PictMask",
+        "name": "S_DropShadowKnockout",
+        "value": 1,
+        "reason": "not-consumed-by-measured-native-loader",
+        "profiles": [
+          "19.0.1",
+          "22.5.0"
+        ]
+      },
+      {
+        "file": "blyt/RdtBtnPvr.bflyt",
+        "pane": "P_Pict_00",
+        "name": "S_DropShadowKnockout",
+        "value": 1,
+        "reason": "not-consumed-by-measured-native-loader",
+        "profiles": [
+          "19.0.1",
+          "22.5.0"
+        ]
+      },
+      {
+        "file": "blyt/RdtBtnIconGame.bflyt",
+        "pane": "T_Suspend",
+        "name": "S_DropShadowKnockout",
+        "value": 1,
+        "reason": "not-consumed-by-measured-native-loader",
+        "profiles": [
+          "19.0.1",
+          "22.5.0"
+        ]
+      },
+      {
+        "file": "blyt/RdtBase.bflyt",
+        "pane": "T_Blank",
+        "name": "S_DropShadowKnockout",
+        "value": 1,
+        "reason": "not-consumed-by-measured-native-loader",
+        "profiles": [
+          "19.0.1",
+          "22.5.0"
+        ]
+      },
+      {
+        "file": "blyt/HudSignal.bflyt",
+        "pane": "P_Plane",
+        "name": "S_DropShadowKnockout",
+        "value": 1,
+        "reason": "not-consumed-by-measured-native-loader",
+        "profiles": [
+          "19.0.1",
+          "22.5.0"
+        ]
+      },
+      {
+        "file": "blyt/HudSignal.bflyt",
+        "pane": "P_Wifi",
+        "name": "S_DropShadowKnockout",
+        "value": 1,
+        "reason": "not-consumed-by-measured-native-loader",
+        "profiles": [
+          "19.0.1",
+          "22.5.0"
+        ]
+      },
+      {
+        "file": "blyt/HudSignal.bflyt",
+        "pane": "P_Local",
+        "name": "S_DropShadowKnockout",
+        "value": 1,
+        "reason": "not-consumed-by-measured-native-loader",
+        "profiles": [
+          "19.0.1",
+          "22.5.0"
+        ]
+      },
+      {
+        "file": "blyt/HudSignal.bflyt",
+        "pane": "P_WireLine",
+        "name": "S_DropShadowKnockout",
+        "value": 1,
+        "reason": "not-consumed-by-measured-native-loader",
+        "profiles": [
+          "19.0.1",
+          "22.5.0"
+        ]
+      },
+      {
+        "file": "blyt/RdtBalloonCtrl.bflyt",
+        "pane": "P_Base",
+        "name": "S_DropShadowKnockout",
+        "value": 1,
+        "reason": "not-consumed-by-measured-native-loader",
+        "profiles": [
+          "19.0.1",
+          "22.5.0"
+        ]
+      },
+      {
+        "file": "blyt/RdtBalloon.bflyt",
+        "pane": "P_Card",
+        "name": "S_DropShadowKnockout",
+        "value": 1,
+        "reason": "not-consumed-by-measured-native-loader",
+        "profiles": [
+          "19.0.1",
+          "22.5.0"
+        ]
+      },
+      {
+        "file": "blyt/RdtBalloon.bflyt",
+        "pane": "P_Color",
+        "name": "S_DropShadowKnockout",
+        "value": 1,
+        "reason": "not-consumed-by-measured-native-loader",
+        "profiles": [
+          "19.0.1",
+          "22.5.0"
+        ]
+      },
+      {
+        "file": "blyt/RdtBtnNtf.bflyt",
+        "pane": "P_PictNtf_00",
+        "name": "S_DropShadowKnockout",
+        "value": 1,
+        "reason": "not-consumed-by-measured-native-loader",
+        "profiles": [
+          "19.0.1",
+          "22.5.0"
+        ]
+      },
+      {
+        "file": "blyt/RdtBtnNtf.bflyt",
+        "pane": "P_PictNtf_01",
+        "name": "S_DropShadowKnockout",
+        "value": 1,
+        "reason": "not-consumed-by-measured-native-loader",
+        "profiles": [
+          "19.0.1",
+          "22.5.0"
+        ]
+      },
+      {
+        "file": "blyt/RdtBtnShop.bflyt",
+        "pane": "P_Pict",
+        "name": "S_DropShadowKnockout",
+        "value": 1,
+        "reason": "not-consumed-by-measured-native-loader",
+        "profiles": [
+          "19.0.1",
+          "22.5.0"
+        ]
+      },
+      {
+        "file": "blyt/RdtBtnPow.bflyt",
+        "pane": "P_Pict_00",
+        "name": "S_DropShadowKnockout",
+        "value": 1,
+        "reason": "not-consumed-by-measured-native-loader",
+        "profiles": [
+          "19.0.1",
+          "22.5.0"
+        ]
+      },
+      {
+        "file": "blyt/RdtBtnPow.bflyt",
+        "pane": "P_Pict_01",
+        "name": "S_DropShadowKnockout",
+        "value": 1,
+        "reason": "not-consumed-by-measured-native-loader",
+        "profiles": [
+          "19.0.1",
+          "22.5.0"
+        ]
+      },
+      {
+        "file": "blyt/RdtBtnChangeUser.bflyt",
+        "pane": "P_Pict",
+        "name": "S_DropShadowKnockout",
+        "value": 1,
+        "reason": "not-consumed-by-measured-native-loader",
+        "profiles": [
+          "19.0.1",
+          "22.5.0"
+        ]
+      },
+      {
+        "file": "blyt/RdtBtnChangeUser.bflyt",
+        "pane": "T_00",
+        "name": "S_DropShadowKnockout",
+        "value": 1,
+        "reason": "not-consumed-by-measured-native-loader",
+        "profiles": [
+          "19.0.1",
+          "22.5.0"
+        ]
+      },
+      {
+        "file": "blyt/BatteryConsole.bflyt",
+        "pane": "P_Charge",
+        "name": "S_DropShadowKnockout",
+        "value": 1,
+        "reason": "not-consumed-by-measured-native-loader",
+        "profiles": [
+          "19.0.1",
+          "22.5.0"
+        ]
+      }
+    ],
+    "ignoredAssignments": [],
+    "notes": [
+      "Native loader no-op: blyt/Cursor3.bflyt:P_Grow.S_DropShadowKnockout=2; absent/0/1/2 yield identical shader and geometry inputs in both measured bases. This is not a converted shader operation.",
+      "Native loader no-op: blyt/DBaseNml.bflyt:P_Base.S_DropShadowKnockout=0; absent/0/1/2 yield identical shader and geometry inputs in both measured bases. This is not a converted shader operation.",
+      "Native loader no-op: blyt/RdtBtnCtrl.bflyt:P_Form.S_DropShadowKnockout=1; absent/0/1/2 yield identical shader and geometry inputs in both measured bases. This is not a converted shader operation.",
+      "Native loader no-op: blyt/RdtBtnCtrl.bflyt:P_Stick.S_DropShadowKnockout=1; absent/0/1/2 yield identical shader and geometry inputs in both measured bases. This is not a converted shader operation.",
+      "Native loader no-op: blyt/RdtBtnCtrl.bflyt:P_Y.S_DropShadowKnockout=1; absent/0/1/2 yield identical shader and geometry inputs in both measured bases. This is not a converted shader operation.",
+      "Native loader no-op: blyt/RdtBtnCtrl.bflyt:P_X.S_DropShadowKnockout=1; absent/0/1/2 yield identical shader and geometry inputs in both measured bases. This is not a converted shader operation.",
+      "Native loader no-op: blyt/RdtBtnCtrl.bflyt:P_A.S_DropShadowKnockout=1; absent/0/1/2 yield identical shader and geometry inputs in both measured bases. This is not a converted shader operation.",
+      "Native loader no-op: blyt/RdtBtnCtrl.bflyt:P_B.S_DropShadowKnockout=1; absent/0/1/2 yield identical shader and geometry inputs in both measured bases. This is not a converted shader operation.",
+      "Native loader no-op: blyt/RdtBalloonSystemApplet.bflyt:T_Main.S_DropShadowKnockout=0; absent/0/1/2 yield identical shader and geometry inputs in both measured bases. This is not a converted shader operation.",
+      "Native loader no-op: blyt/RdtBtnFullLauncher.bflyt:P_Pict_03.S_DropShadowKnockout=1; absent/0/1/2 yield identical shader and geometry inputs in both measured bases. This is not a converted shader operation.",
+      "Native loader no-op: blyt/RdtBtnPvr.bflyt:P_PictMask.S_DropShadowKnockout=1; absent/0/1/2 yield identical shader and geometry inputs in both measured bases. This is not a converted shader operation.",
+      "Native loader no-op: blyt/RdtBtnPvr.bflyt:P_Pict_00.S_DropShadowKnockout=1; absent/0/1/2 yield identical shader and geometry inputs in both measured bases. This is not a converted shader operation.",
+      "Native loader no-op: blyt/RdtBtnIconGame.bflyt:T_Suspend.S_DropShadowKnockout=1; absent/0/1/2 yield identical shader and geometry inputs in both measured bases. This is not a converted shader operation.",
+      "Native loader no-op: blyt/RdtBase.bflyt:T_Blank.S_DropShadowKnockout=1; absent/0/1/2 yield identical shader and geometry inputs in both measured bases. This is not a converted shader operation.",
+      "Native loader no-op: blyt/HudSignal.bflyt:P_Plane.S_DropShadowKnockout=1; absent/0/1/2 yield identical shader and geometry inputs in both measured bases. This is not a converted shader operation.",
+      "Native loader no-op: blyt/HudSignal.bflyt:P_Wifi.S_DropShadowKnockout=1; absent/0/1/2 yield identical shader and geometry inputs in both measured bases. This is not a converted shader operation.",
+      "Native loader no-op: blyt/HudSignal.bflyt:P_Local.S_DropShadowKnockout=1; absent/0/1/2 yield identical shader and geometry inputs in both measured bases. This is not a converted shader operation.",
+      "Native loader no-op: blyt/HudSignal.bflyt:P_WireLine.S_DropShadowKnockout=1; absent/0/1/2 yield identical shader and geometry inputs in both measured bases. This is not a converted shader operation.",
+      "Native loader no-op: blyt/RdtBalloonCtrl.bflyt:P_Base.S_DropShadowKnockout=1; absent/0/1/2 yield identical shader and geometry inputs in both measured bases. This is not a converted shader operation.",
+      "Native loader no-op: blyt/RdtBalloon.bflyt:P_Card.S_DropShadowKnockout=1; absent/0/1/2 yield identical shader and geometry inputs in both measured bases. This is not a converted shader operation.",
+      "Native loader no-op: blyt/RdtBalloon.bflyt:P_Color.S_DropShadowKnockout=1; absent/0/1/2 yield identical shader and geometry inputs in both measured bases. This is not a converted shader operation.",
+      "Native loader no-op: blyt/RdtBtnNtf.bflyt:P_PictNtf_00.S_DropShadowKnockout=1; absent/0/1/2 yield identical shader and geometry inputs in both measured bases. This is not a converted shader operation.",
+      "Native loader no-op: blyt/RdtBtnNtf.bflyt:P_PictNtf_01.S_DropShadowKnockout=1; absent/0/1/2 yield identical shader and geometry inputs in both measured bases. This is not a converted shader operation.",
+      "Native loader no-op: blyt/RdtBtnShop.bflyt:P_Pict.S_DropShadowKnockout=1; absent/0/1/2 yield identical shader and geometry inputs in both measured bases. This is not a converted shader operation.",
+      "Native loader no-op: blyt/RdtBtnPow.bflyt:P_Pict_00.S_DropShadowKnockout=1; absent/0/1/2 yield identical shader and geometry inputs in both measured bases. This is not a converted shader operation.",
+      "Native loader no-op: blyt/RdtBtnPow.bflyt:P_Pict_01.S_DropShadowKnockout=1; absent/0/1/2 yield identical shader and geometry inputs in both measured bases. This is not a converted shader operation.",
+      "Native loader no-op: blyt/RdtBtnChangeUser.bflyt:P_Pict.S_DropShadowKnockout=1; absent/0/1/2 yield identical shader and geometry inputs in both measured bases. This is not a converted shader operation.",
+      "Native loader no-op: blyt/RdtBtnChangeUser.bflyt:T_00.S_DropShadowKnockout=1; absent/0/1/2 yield identical shader and geometry inputs in both measured bases. This is not a converted shader operation.",
+      "Native loader no-op: blyt/BatteryConsole.bflyt:P_Charge.S_DropShadowKnockout=1; absent/0/1/2 yield identical shader and geometry inputs in both measured bases. This is not a converted shader operation."
+    ],
+    "coverCount": 9,
+    "assessment": "All exported entries now have bindings or an explicit measured native-loader no-op: 58 remaining renderer/runtime bindings were added; 29 Knockout values remain separately visible and do not count as converted shaders. Native dialog families, nested button material, live backdrops, cursor shadows and compositor capture transitions are tested. Cartridge shells require external SYS-TWEAK/Icongrabber artwork. Full cursor texture animation, native window/stencil composition and host/reference data differences still limit screenshot parity.",
+    "errors": [],
+    "tiles": 11,
+    "interactionChecks": [
+      {
+        "id": "106EF",
+        "width": 1304,
+        "errors": [],
+        "backgroundPlayers": 0,
+        "navigation": [
+          "Cyberpunk 2077",
+          "Hades",
+          "Elden Ring"
+        ],
+        "selectedArtwork": {
+          "x": 641.8991088867188,
+          "y": 252.94320678710938,
+          "width": 290.2017822265625,
+          "height": 435.3027038574219
+        },
+        "pass": true
+      }
+    ]
+  },
+  {
+    "id": "B116",
+    "slug": "black-two-row-compact",
+    "category": "Compact two-row grid",
+    "regression": false,
+    "discovery": true,
+    "batch": "native-expansion",
+    "page": "https://themezer.net/switch/themes/black-two-row-compact-B116",
+    "title": "black two row compact",
+    "reference": "https://img.themezer.net/unsafe/hd/plain/s3://switch/themes/7d942f7a-393f-4af3-9994-f6cd6de9c473/preview.jpg?hash=7YfTHtrl9oogwwtiM%2BaYipoTUILDak%2FywcdL8z1jUWo%3D",
+    "converted": 43,
+    "warnings": [],
+    "warningCount": 0,
+    "artworkOnly": false,
+    "animationCount": 0,
+    "ignoredTargets": [],
+    "ignoredProperties": [],
+    "ignoredAssignments": [],
+    "notes": [],
+    "coverCount": 12,
+    "assessment": "Compact six-column/two-row placement and dark wallpaper render close to the reference. The launcher glyph is absent from the middle applet group; footer ordering, glyph metrics, selection treatment and source artwork differ.",
+    "errors": [],
+    "tiles": 12,
+    "interactionChecks": [
+      {
+        "id": "B116",
+        "width": 1304,
+        "errors": [],
+        "backgroundPlayers": 0,
+        "navigation": [
+          "Cyberpunk 2077",
+          "Hades",
+          "Elden Ring"
+        ],
+        "selectedArtwork": {
+          "x": 463.8526306152344,
+          "y": 221.79013061523438,
+          "width": 184.57595825195312,
+          "height": 184.57598876953125
+        },
+        "pass": true
+      }
+    ]
+  },
+  {
+    "id": "3878",
+    "slug": "nw_homemenu_custom2",
+    "category": "Compact custom home",
+    "regression": false,
+    "discovery": true,
+    "batch": "native-expansion",
+    "page": "https://themezer.net/switch/themes/nw_homemenu_custom2-3878",
+    "title": "nw_homemenu_custom2",
+    "reference": "https://img.themezer.net/unsafe/hd/plain/s3://switch/themes/b6b6ca40-3bf0-4dd3-9313-7712d9bdbcf3/preview.jpg?hash=k0pNc9UO3MPXqSfkPAqDT%2BdFcWge4A4vssB3mfXGi%2Bw%3D",
+    "converted": 51,
+    "warnings": [],
+    "warningCount": 0,
+    "artworkOnly": false,
+    "animationCount": 0,
+    "ignoredTargets": [],
+    "ignoredProperties": [],
+    "ignoredAssignments": [],
+    "notes": [],
+    "coverCount": 6,
+    "assessment": "Custom wallpaper preserves proportions and the small lower-right cover row renders. Account/HUD ordering, launcher glyph, dim applet styling and selection treatment still differ.",
+    "errors": [],
+    "tiles": 7,
+    "interactionChecks": [
+      {
+        "id": "3878",
+        "width": 1304,
+        "errors": [],
+        "backgroundPlayers": 0,
+        "navigation": [
+          "Cyberpunk 2077",
+          "Hades",
+          "Elden Ring"
+        ],
+        "selectedArtwork": {
+          "x": 754.6243896484375,
+          "y": 680.6243896484375,
+          "width": 94.719970703125,
+          "height": 94.719970703125
+        },
+        "pass": true
+      }
+    ]
+  },
+  {
+    "id": "E9DF",
+    "slug": "blue-menu-home",
+    "category": "Modified two-row palette",
+    "regression": false,
+    "discovery": true,
+    "batch": "native-expansion",
+    "page": "https://themezer.net/switch/themes/blue-menu-home-E9DF",
+    "title": "Blue Menu - Home",
+    "reference": "https://img.themezer.net/unsafe/hd/plain/s3://switch/themes/b96602f5-2315-42f4-a879-4353618f7c06/preview.jpg?hash=yBqEXt6%2BSL6zS%2BEIiJk9MtU9vIVxU5qtBKFHMRxvAAw%3D",
+    "converted": 183,
+    "warnings": [],
+    "warningCount": 0,
+    "artworkOnly": false,
+    "animationCount": 0,
+    "ignoredTargets": [
+      {
+        "file": "blyt/FooterAll.bflyt",
+        "kind": "material",
+        "name": "N_Left",
+        "reason": "absent-in-supported-bases"
+      },
+      {
+        "file": "blyt/FooterAll.bflyt",
+        "kind": "material",
+        "name": "L_Line_00",
+        "reason": "absent-in-supported-bases"
+      },
+      {
+        "file": "blyt/FooterAll.bflyt",
+        "kind": "material",
+        "name": "L_Line_01",
+        "reason": "absent-in-supported-bases"
+      },
+      {
+        "file": "blyt/FooterAll.bflyt",
+        "kind": "material",
+        "name": "L_Line_02",
+        "reason": "absent-in-supported-bases"
+      },
+      {
+        "file": "blyt/FooterCtrl.bflyt",
+        "kind": "material",
+        "name": "L_Indi_00",
+        "reason": "absent-in-supported-bases"
+      },
+      {
+        "file": "blyt/BatteryConsole.bflyt",
+        "kind": "pane",
+        "name": "P_GTNum_00",
+        "reason": "absent-in-supported-bases"
+      },
+      {
+        "file": "blyt/Cursor3.bflyt",
+        "kind": "material",
+        "name": "P_Per",
+        "reason": "absent-in-supported-bases"
+      },
+      {
+        "file": "blyt/Cursor3.bflyt",
+        "kind": "material",
+        "name": "P_GTNum_00",
+        "reason": "absent-in-supported-bases"
+      },
+      {
+        "file": "blyt/HudBatteryNum.bflyt",
+        "kind": "material",
+        "name": "L_GTNum_00",
+        "reason": "absent-in-supported-bases"
+      },
+      {
+        "file": "blyt/HudBatteryNum.bflyt",
+        "kind": "material",
+        "name": "L_GTNum_01",
+        "reason": "absent-in-supported-bases"
+      },
+      {
+        "file": "blyt/HudBatteryNum.bflyt",
+        "kind": "material",
+        "name": "L_GTNum_02",
+        "reason": "absent-in-supported-bases"
+      },
+      {
+        "file": "blyt/RdtBalloon.bflyt",
+        "kind": "pane",
+        "name": "W_FadeC",
+        "reason": "absent-in-supported-bases"
+      },
+      {
+        "file": "blyt/RdtBalloon.bflyt",
+        "kind": "pane",
+        "name": "W_FadeLT",
+        "reason": "absent-in-supported-bases"
+      },
+      {
+        "file": "blyt/RdtBalloon.bflyt",
+        "kind": "material",
+        "name": "W_FadeC",
+        "reason": "absent-in-supported-bases"
+      }
+    ],
+    "ignoredProperties": [],
+    "ignoredAssignments": [
+      {
+        "file": "blyt/RdtBalloon.bflyt",
+        "kind": "material",
+        "name": "W_FadeLT",
+        "fields": [
+          "BackgroundColor"
+        ],
+        "reason": "unchanged-in-supported-bases"
+      }
+    ],
+    "notes": [
+      "Native installer ignores absent material: blyt/FooterAll.bflyt:N_Left (supported Classic/Modern bases).",
+      "Native installer ignores absent material: blyt/FooterAll.bflyt:L_Line_00 (supported Classic/Modern bases).",
+      "Native installer ignores absent material: blyt/FooterAll.bflyt:L_Line_01 (supported Classic/Modern bases).",
+      "Native installer ignores absent material: blyt/FooterAll.bflyt:L_Line_02 (supported Classic/Modern bases).",
+      "Native installer ignores absent material: blyt/FooterCtrl.bflyt:L_Indi_00 (supported Classic/Modern bases).",
+      "Native installer ignores absent pane: blyt/BatteryConsole.bflyt:P_GTNum_00 (supported Classic/Modern bases).",
+      "Native installer ignores absent material: blyt/Cursor3.bflyt:P_Per (supported Classic/Modern bases).",
+      "Native installer ignores absent material: blyt/Cursor3.bflyt:P_GTNum_00 (supported Classic/Modern bases).",
+      "Native installer ignores absent material: blyt/HudBatteryNum.bflyt:L_GTNum_00 (supported Classic/Modern bases).",
+      "Native installer ignores absent material: blyt/HudBatteryNum.bflyt:L_GTNum_01 (supported Classic/Modern bases).",
+      "Native installer ignores absent material: blyt/HudBatteryNum.bflyt:L_GTNum_02 (supported Classic/Modern bases).",
+      "Native installer ignores absent pane: blyt/RdtBalloon.bflyt:W_FadeC (supported Classic/Modern bases).",
+      "Native installer ignores absent pane: blyt/RdtBalloon.bflyt:W_FadeLT (supported Classic/Modern bases).",
+      "Native installer ignores absent material: blyt/RdtBalloon.bflyt:W_FadeC (supported Classic/Modern bases).",
+      "Redundant native material assignment: blyt/RdtBalloon.bflyt:W_FadeLT matches every measured base. No operation was converted; changed values still require a renderer binding."
+    ],
+    "coverCount": 12,
+    "assessment": "Native window/stencil composition remains incomplete. The common footer hierarchy and glyph resources now convert; absent input names are listed separately as native no-ops. The gallery still needs matched focus, font and service state for parity. Its exported white W_FadeLT assignment matches both measured defaults and is listed as redundant, not converted; native window/stencil composition still needs separate visual validation.",
+    "errors": [],
+    "tiles": 12,
+    "interactionChecks": [
+      {
+        "id": "E9DF",
+        "width": 1304,
+        "errors": [],
+        "backgroundPlayers": 0,
+        "navigation": [
+          "Cyberpunk 2077",
+          "Hades",
+          "Elden Ring"
+        ],
+        "selectedArtwork": {
+          "x": 474.97412109375,
+          "y": 209.22412109375,
+          "width": 158.2080078125,
+          "height": 158.2080078125
+        },
+        "pass": true
+      }
+    ]
+  },
+  {
+    "id": "7226",
+    "slug": "mk8-home-menu-flow-layout",
+    "category": "Mario Kart Flow dock",
+    "regression": false,
+    "discovery": true,
+    "batch": "native-expansion",
+    "page": "https://themezer.net/switch/themes/mk8-home-menu-flow-layout-7226",
+    "title": "MK8 - Home Menu Flow Layout",
+    "reference": "https://img.themezer.net/unsafe/hd/plain/s3://switch/themes/376a7bea-b794-4046-8681-787e6a7fe8a0/preview.jpg?hash=20nHecwuX83CZtqbmL%2F1544DTT91sPVza00L%2BvggXdY%3D",
+    "converted": 118,
+    "warnings": [],
+    "warningCount": 0,
+    "artworkOnly": false,
+    "animationCount": 26,
+    "ignoredTargets": [],
+    "ignoredProperties": [],
+    "ignoredAssignments": [],
+    "notes": [],
+    "coverCount": 9,
+    "assessment": "Flow-style lower cover row and top applet/HUD band render. Selection size/frame, title styling, applet symbols and clock placement differ. Source game/profile data differs.",
+    "errors": [],
+    "tiles": 11,
+    "interactionChecks": [
+      {
+        "id": "7226",
+        "width": 1304,
+        "errors": [],
+        "backgroundPlayers": 0,
+        "navigation": [
+          "Cyberpunk 2077",
+          "Hades",
+          "Elden Ring"
+        ],
+        "selectedArtwork": {
+          "x": 646.5257568359375,
+          "y": 506.2757873535156,
+          "width": 240.417236328125,
+          "height": 240.41720581054688
+        },
+        "pass": true
+      }
+    ]
+  },
+  {
+    "id": "1370D",
+    "slug": "kid-home-menu",
+    "category": "Custom character applets",
+    "regression": false,
+    "discovery": true,
+    "batch": "native-expansion",
+    "page": "https://themezer.net/switch/themes/kid-home-menu-1370D",
+    "title": "KID-Home Menu",
+    "reference": "https://img.themezer.net/unsafe/hd/plain/s3://switch/themes/de7eb307-c2db-4599-8acb-dd5dda925351/preview.jpg?hash=PA9HT2OjTLckNV7LidGfil77szA3y6iAkpqwWO8KTvQ%3D",
+    "converted": 29,
+    "warnings": [],
+    "warningCount": 0,
+    "artworkOnly": false,
+    "animationCount": 0,
+    "ignoredTargets": [],
+    "ignoredProperties": [],
+    "ignoredAssignments": [],
+    "notes": [],
+    "coverCount": 9,
+    "assessment": "Wallpaper, lower game row and upper-left applet band render. Selected frame and procedural glyph metrics differ; the reference has multiple accounts and different artwork.",
+    "errors": [],
+    "tiles": 11,
+    "interactionChecks": [
+      {
+        "id": "1370D",
+        "width": 1304,
+        "errors": [],
+        "backgroundPlayers": 0,
+        "navigation": [
+          "Cyberpunk 2077",
+          "Hades",
+          "Elden Ring"
+        ],
+        "selectedArtwork": {
+          "x": 579,
+          "y": 520,
+          "width": 256,
+          "height": 256
+        },
+        "pass": true
+      }
+    ]
+  },
+  {
+    "id": "E23D",
+    "slug": "bofa-home-menu",
+    "category": "Rounded Doge layout",
+    "regression": false,
+    "discovery": true,
+    "batch": "native-expansion",
+    "page": "https://themezer.net/switch/themes/bofa-home-menu-E23D",
+    "title": "BoFA Home menu",
+    "reference": "https://img.themezer.net/unsafe/hd/plain/s3://switch/themes/c2f7f3df-26a4-495f-bf8a-87029855d5a6/preview.jpg?hash=jU7Ps4CxljKsWoiRtakXVsCJ5HdDfRF9ix5uAE377Z8%3D",
+    "converted": 119,
+    "warnings": [],
+    "warningCount": 0,
+    "artworkOnly": false,
+    "animationCount": 3,
+    "ignoredTargets": [],
+    "ignoredProperties": [],
+    "ignoredAssignments": [],
+    "notes": [],
+    "coverCount": 8,
+    "assessment": "Rounded lower covers, translucent footer panel and upper-right applet cluster render. The reference clock has a pill backing that is absent in the conversion; footer ordering, title metrics, profile count and icon treatment differ.",
+    "errors": [],
+    "tiles": 9,
+    "interactionChecks": [
+      {
+        "id": "E23D",
+        "width": 1304,
+        "errors": [],
+        "backgroundPlayers": 0,
+        "navigation": [
+          "Cyberpunk 2077",
+          "Hades",
+          "Elden Ring"
+        ],
+        "selectedArtwork": {
+          "x": 328,
+          "y": 652,
+          "width": 128,
+          "height": 128
+        },
+        "pass": true
+      }
+    ]
+  },
+  {
+    "id": "75B9",
+    "slug": "seamless-light-in-the-dark-home",
+    "category": "Monochrome wave and animated icons",
+    "regression": false,
+    "discovery": true,
+    "batch": "native-expansion",
+    "systemColors": "light",
+    "page": "https://themezer.net/switch/themes/seamless-light-in-the-dark-home-75B9",
+    "title": "Seamless - Light in the Dark - Home",
+    "reference": "https://img.themezer.net/unsafe/hd/plain/s3://switch/themes/90bc04c9-b154-4101-8bcd-0892c925686c/preview.jpg?hash=fmyjnxxk6xBf8G8rmoc4%2BlAkzxte5S%2Bl04Rgk2SNWxw%3D",
+    "converted": 380,
+    "warnings": [],
+    "warningCount": 0,
+    "artworkOnly": false,
+    "animationCount": 75,
+    "ignoredTargets": [],
+    "ignoredProperties": [],
+    "ignoredAssignments": [],
+    "notes": [
+      "Unreferenced animation group has no playback binding: blyt/BgNml.bflyt:G_ZBG"
+    ],
+    "coverCount": 12,
+    "assessment": "Fixed in the shared renderer: FLVI can reveal initially hidden decoration panes, restoring moving symbols. The comparison focuses All Software like the reference. Symbol masks and launcher focus treatment remain approximate; footer clock/controller overlap and contrast still differ. Account/game content and animation phase differ.",
+    "errors": [],
+    "tiles": 5,
+    "interactionChecks": [
+      {
+        "id": "75B9",
+        "width": 1304,
+        "errors": [],
+        "backgroundPlayers": 1,
+        "navigation": [
+          "Cyberpunk 2077",
+          "Hades",
+          "Elden Ring"
+        ],
+        "selectedArtwork": {
+          "x": 291.25830078125,
+          "y": 669.8624267578125,
+          "width": 91.4833984375,
+          "height": 91.4833984375
+        },
+        "pass": true
+      },
+      {
+        "id": "75B9",
+        "width": 550,
+        "errors": [],
+        "backgroundPlayers": 1,
+        "navigation": [
+          "Cyberpunk 2077",
+          "Hades",
+          "Elden Ring"
+        ],
+        "selectedArtwork": {
+          "x": 125.15217590332031,
+          "y": 544.3154907226562,
+          "width": 40.80500793457031,
+          "height": 40.80499267578125
+        },
+        "pass": true
+      }
+    ]
+  },
+  {
+    "id": "796D",
+    "slug": "seamless-v2-color-in-the-dark",
+    "category": "Color wave with rotating icons",
+    "regression": false,
+    "discovery": true,
+    "batch": "native-expansion",
+    "page": "https://themezer.net/switch/themes/seamless-v2-color-in-the-dark-796D",
+    "title": "Seamless V2 - Color in the Dark",
+    "reference": "https://img.themezer.net/unsafe/hd/plain/s3://switch/themes/1ddd29ba-6adc-4c19-b1f2-5b46845e5bda/preview.jpg?hash=QmKZS%2BxOqteXqCW55UYhRtpHcVa2gq0qYAsY04o9MrI%3D",
+    "converted": 403,
+    "warnings": [],
+    "warningCount": 0,
+    "artworkOnly": false,
+    "animationCount": 75,
+    "ignoredTargets": [],
+    "ignoredProperties": [],
+    "ignoredAssignments": [],
+    "notes": [
+      "Unreferenced animation group has no playback binding: blyt/BgNml.bflyt:G_ZBG"
+    ],
+    "coverCount": 12,
+    "assessment": "Fixed in the shared renderer: initially hidden decorative panes can become visible through FLVI and their motion now paints. The comparison focuses All Software. Symbol shapes, launcher focus treatment, footer placement and contrast remain inaccurate; account/game data and phase differ.",
+    "errors": [],
+    "tiles": 5,
+    "interactionChecks": [
+      {
+        "id": "796D",
+        "width": 1304,
+        "errors": [],
+        "backgroundPlayers": 1,
+        "navigation": [
+          "Cyberpunk 2077",
+          "Hades",
+          "Elden Ring"
+        ],
+        "selectedArtwork": {
+          "x": 291.25164794921875,
+          "y": 669.833740234375,
+          "width": 91.4967041015625,
+          "height": 91.4967041015625
+        },
+        "pass": true
+      },
+      {
+        "id": "796D",
+        "width": 550,
+        "errors": [],
+        "backgroundPlayers": 1,
+        "navigation": [
+          "Cyberpunk 2077",
+          "Hades",
+          "Elden Ring"
+        ],
+        "selectedArtwork": {
+          "x": 126.7567138671875,
+          "y": 551.5579223632812,
+          "width": 37.59593200683594,
+          "height": 37.595947265625
+        },
+        "pass": true
+      }
+    ]
+  },
+  {
+    "id": "13696",
+    "slug": "seamless-the-matrix",
+    "category": "Vertical animated Matrix code",
+    "regression": false,
+    "discovery": true,
+    "batch": "native-expansion",
+    "systemColors": "light",
+    "page": "https://themezer.net/switch/themes/seamless-the-matrix-13696",
+    "title": "Seamless - The Matrix",
+    "reference": "https://img.themezer.net/unsafe/hd/plain/s3://switch/themes/ddea48bc-b846-4cba-9f55-40441ec7ea01/preview.jpg?hash=c5fTQbMOp6AI%2F0Pm6K1w%2BBfZufYY%2FJgYkkKvwvTGAGU%3D",
+    "converted": 388,
+    "warnings": [],
+    "warningCount": 0,
+    "artworkOnly": false,
+    "animationCount": 70,
+    "ignoredTargets": [],
+    "ignoredProperties": [],
+    "ignoredAssignments": [],
+    "notes": [
+      "Unreferenced animation group has no playback binding: blyt/BgNml.bflyt:G_ZBG"
+    ],
+    "coverCount": 12,
+    "assessment": "Matrix wallpaper, enlarged selection and title render. FLVI now reveals initially hidden animated elements. Native symbol/cursor shapes, footer treatment and service text remain approximate; background phase and host data differ from the reference.",
+    "errors": [],
+    "tiles": 13,
+    "interactionChecks": [
+      {
+        "id": "13696",
+        "width": 1304,
+        "errors": [],
+        "backgroundPlayers": 1,
+        "navigation": [
+          "Cyberpunk 2077",
+          "Hades",
+          "Elden Ring"
+        ],
+        "selectedArtwork": {
+          "x": 309.360595703125,
+          "y": 683.3375854492188,
+          "width": 55.27880859375,
+          "height": 85.3248291015625
+        },
+        "pass": true
+      },
+      {
+        "id": "13696",
+        "width": 550,
+        "errors": [],
+        "backgroundPlayers": 1,
+        "navigation": [
+          "Cyberpunk 2077",
+          "Hades",
+          "Elden Ring"
+        ],
+        "selectedArtwork": {
+          "x": 132.6441650390625,
+          "y": 557.0996704101562,
+          "width": 25.821029663085938,
+          "height": 35.06317138671875
+        },
+        "pass": true
+      }
+    ]
+  },
+  {
+    "id": "5D03",
+    "slug": "jahadtk-pitch-black-home",
+    "category": "Minimal Flow layout",
+    "regression": false,
+    "discovery": true,
+    "batch": "native-expansion",
+    "page": "https://themezer.net/switch/themes/jahadtk-pitch-black-home-5D03",
+    "title": "JahadTK Pitch Black Home",
+    "reference": "https://img.themezer.net/unsafe/hd/plain/s3://switch/themes/96e10031-8bb5-424e-b5c8-2662ff489152/preview.jpg?hash=Y9RalWp2kvANbxiafV2YOgL7AMFyrNtXWg7v6r2sAWI%3D",
+    "converted": 118,
+    "warnings": [],
+    "warningCount": 0,
+    "artworkOnly": false,
+    "animationCount": 26,
+    "ignoredTargets": [],
+    "ignoredProperties": [],
+    "ignoredAssignments": [],
+    "notes": [],
+    "coverCount": 9,
+    "assessment": "Black wallpaper, lower Flow cover row and top applet group render. Selected title and frame, clock placement and glyph treatment differ. Source game/account data differs.",
+    "errors": [],
+    "tiles": 11,
+    "interactionChecks": [
+      {
+        "id": "5D03",
+        "width": 1304,
+        "errors": [],
+        "backgroundPlayers": 0,
+        "navigation": [
+          "Cyberpunk 2077",
+          "Hades",
+          "Elden Ring"
+        ],
+        "selectedArtwork": {
+          "x": 645.111328125,
+          "y": 504.861328125,
+          "width": 243.24609375,
+          "height": 243.24609375
+        },
+        "pass": true
+      }
+    ]
+  }
+]

@@ -100,10 +100,8 @@ hub.on('dispose', () => { loop.dispose(); releaseGpuResources(); });
 
 Activity reflects document visibility and host busy state. Audio-spectrum posting pauses while hidden or busy. `animation()` caps moving draws, respects reduced motion, draws static scenes on invalidation, and stops scheduling while inactive. Authors must use these events/helpers for their own timers and media; the sandbox cannot enforce a CPU/GPU budget on arbitrary scripts. Before navigating, flush any debounced saves and clean up page-owned work.
 
-## Test example
+## Testing
 
-`themes/block-worlds-frame` includes a home, `pages/workshop.html` with a 3D scene/notebook and same-page routes, and `pages/preview.html` reading shared data with route parameters and missing-page recovery. Build its SDK/vendor and theme ZIP with `node tools/package_block_worlds_frame.mjs`.
-
-Run `node tests/verify-frame-navigation.mjs` after `npm run preview` to verify routing, separate documents, back/replace, saved data, recovery and restricted navigation. Steam Deck focus, OS keyboard and renderer behavior still require hardware testing.
+Run `node tests/verify-sdk-viewer.mjs` to verify the standalone viewer with its test fixture. Steam Deck focus, OS keyboard and renderer behavior still require hardware testing.
 
 For a complete working starter, service reference, packaging instructions and community Hub publishing status, see [CUSTOM-THEMES.md](CUSTOM-THEMES.md).

@@ -92,3 +92,17 @@ footer button:active,footer button.pressed{background:linear-gradient(#a2c9e644 
 #dashboard .page-search:focus-visible{outline:1px solid #b4d5e8;outline-offset:1px;box-shadow:inset 0 2px 3px #24496544!important}
 /* Buttons show no additional focus outline. */
 #dashboard :is(.page-button,.page-tabs button,.page-search-form button,.setting-toggle,.volume-controls button,.audio-track,.audio-controls button,.audio-extra button,.widget-controls button,.widget-open,.video-surface button,.view-all):is(.selected,:focus-visible){outline:none!important;outline-offset:0}
+
+/* Keep missing artwork useful, and identify Steam shortcuts without guessing CDN IDs. */
+.fallback-icon{display:grid;place-items:center;position:absolute;inset:0;font-size:32px;background:linear-gradient(135deg,#344c65,#172536);color:white}.fallback-icon[hidden]{display:none}.non-steam-badge{position:absolute;z-index:3;top:4px;left:4px;padding:2px 5px;border-radius:4px;background:#101820df;color:#fff;font:10px sans-serif;pointer-events:none}.cover-frame{position:relative}.card img,.cover-frame img{display:block}
+
+/* Use the Deck's extra 16:10 height between the header, recent shelf and dock. */
+main.apps-panel{height:calc(379px + var(--home-extra,0px))}
+#apps{height:calc(319px + var(--home-extra,0px));max-height:calc(319px + var(--home-extra,0px))}
+
+/* Reflect the framed artwork, without mirroring its title or controller outline. */
+#shelf .cover{-webkit-box-reflect:unset}
+#shelf .cover-frame{-webkit-box-reflect:below 4px linear-gradient(transparent 75%,#ffffff30)}
+#shelf .repositioning .cover-frame,.drag-ghost .cover-frame{-webkit-box-reflect:unset}
+
+#destination .store-feature .feature-caption{color:#fff;text-shadow:0 1px 3px #000a}

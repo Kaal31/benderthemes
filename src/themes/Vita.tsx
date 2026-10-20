@@ -1,4 +1,5 @@
 import { t } from "../i18n";
+import {BackgroundMedia} from "../WallpaperMedia";
 import { GameHero } from "../common";
 // PS Vita home: pages of bubbles scrolled vertically, user folders (and Steam
 // collections as folders), rearranging, and a LiveArea gate for each game.
@@ -105,7 +106,7 @@ function VitaBackground({ page, skin, animate }: { page: number; skin: VitaSkin 
             "var(--dht-vita-bg, radial-gradient(ellipse 75% 22% at 35% 64%, rgba(190,245,255,0.55), transparent 70%), radial-gradient(ellipse 90% 45% at 20% 100%, rgba(110,225,255,0.65), transparent 70%), linear-gradient(176deg, #031d42 0%, #08427e 26%, #1477bd 48%, #33b2e6 66%, #49c9ef 78%, #2696d6 100%))",
         }}
       />
-      {img && <img key={img.slice(-40)} src={img} data-dht-from-skin={skinBg ? "" : undefined} style={{ position: "absolute", inset: 0, width: "100%", height: "100%", objectFit: "cover" }} />}
+      {img && <BackgroundMedia key={img.slice(-40)} src={img} data-dht-from-skin={skinBg ? "" : undefined} style={{ position: "absolute", inset: 0, width: "100%", height: "100%", objectFit: "cover" }} />}
       {!img && <AnimCanvas width={W} height={H} animate={animate} fps={24} draw={drawVitaWave} />}
     </div>
   );

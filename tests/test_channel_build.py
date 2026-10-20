@@ -70,8 +70,11 @@ class ChannelBuildTests(unittest.TestCase):
         experimental = (ROOT / ".github/workflows/experimental.yml").read_text()
         for line in beta.splitlines():
             if line.strip().startswith("- run:") and "package" not in line:
-                if "verify-audio-packaging.py" not in line:
+                if not any(tool in line for tool in ("verify-audio-packaging.py", "capture_theme_previews.mjs", "make_theme_gifs.py")):
                     self.assertIn(line, experimental)
+        self.assertIn("run: python tools/fetch_gallery.py", experimental)
+        self.assertNotIn("run: node tools/capture_theme_previews.mjs", experimental)
+        self.assertNotIn("run: python tools/make_theme_gifs.py", experimental)
         self.assertIn("branches: [experimental]", experimental)
         self.assertIn("USE_PUBLISHED_ASSETS: '1'", experimental)
         self.assertIn("SKIP_THEME_PACK_BUILD: '1'", experimental)

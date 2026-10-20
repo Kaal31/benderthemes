@@ -1,0 +1,24 @@
+<!doctype html>
+<html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>GameCube</title><link rel="stylesheet" href="style.css"></head><body>
+<main id="screen" data-page="home">
+<section id="home" aria-label="Main Menu">
+ <div class="cube-wrap"><div class="cube" id="cube">
+ <div class="inner-scene" aria-hidden="true">
+  <div class="inside-orbit orbit-one"></div><div class="inside-orbit orbit-two"></div>
+  <div class="inside-clock"><div class="clock-dial"></div><div class="clock-hand hour-hand"></div><div class="clock-hand minute-hand"></div><div class="clock-hand second-hand"></div><b class="clock-hub"></b></div>
+  <div class="inside-calendar"><div class="calendar-binding"></div><span id="inside-month"></span><strong id="inside-day"></strong><small id="inside-weekday"></small></div>
+  <div class="inside-disc"></div><div class="inside-blocks"><i></i><i></i><i></i><i></i></div>
+ </div>
+ <div class="cube-face face-front">
+ <button class="cube-label top" data-page="play" aria-label="Game Play">Game Play</button><button class="cube-label left" data-page="options" aria-label="Options">Options</button><button class="cube-label right" data-page="calendar" aria-label="Calendar">Calendar</button><button class="cube-label bottom" data-page="library" aria-label="Memory Card">Memory Card</button>
+ </div>
+ <div class="cube-face face-top"><span>Game Play</span><div class="state-blocks pink-blocks"></div><div class="play-face-art" id="play-face-art"></div><div class="face-band" id="play-face-name"></div></div>
+ <div class="cube-face face-left"><span>Options</span><div class="state-blocks green-blocks"></div><div class="option-band">Sound <b>Stereo</b></div><div class="option-band lower">Screen Position <b>➜ 00</b></div></div>
+ <div class="cube-face face-right"><span>Calendar</span><div class="calendar-scene"><div id="calendar-date-band"></div><div class="gold-clock"><div class="fixed-clock-markers" aria-hidden="true"><i class="fixed-marker marker-top"></i><i class="fixed-marker marker-left"></i><i class="fixed-marker marker-right"></i><i class="fixed-marker marker-bottom"></i></div><div class="gold-hand" id="gold-hour"></div><div class="gold-hand" id="gold-minute"></div><div class="gold-hand" id="gold-second"></div></div><div id="calendar-time-band"></div></div></div>
+ <div class="cube-face face-bottom"><span>Memory Card</span><div class="memory-face-slots"><div><div class="mini-block-grid"></div><b>A</b></div><div><div class="mini-block-grid"></div><b>B</b></div></div></div>
+ <div class="cube-face face-back"></div>
+ </div></div><button id="calendar-confirm" hidden>A ··· Confirm</button><button id="calendar-cancel" hidden>B ··· Cancel</button><p class="menu-hint"><span class="stick" aria-label="Control Stick">◎</span><span id="menu-caption">··· Menu Selection</span></p>
+</section>
+<section id="panel" hidden><header><button id="back" aria-label="Back to Main Menu">◀</button><h1 id="heading"></h1></header><div id="content"></div><footer><span><b class="a-button">A</b> <span data-bitmap>Confirm</span></span><span><b class="b-button">B</b> <span data-bitmap>Return</span></span><span id="extra-hint"></span></footer></section>
+<div id="notice" role="status" hidden></div>
+</main><script src="theme-bridge.js"></script><script src="startup-scene.js"></script><script src="intro.js"></script><script src="app.js"></script></body></html>

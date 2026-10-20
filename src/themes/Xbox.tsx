@@ -1,4 +1,5 @@
 import { t, getCurrentLanguage } from "../i18n";
+import {BackgroundMedia} from "../WallpaperMedia";
 import { openDestination } from "../destinations";
 // Original Xbox dashboard: the glowing green orb with its jelly shells and
 // orbit rings, round pods beside chamfered menu bars, the wireframe sphere
@@ -507,7 +508,7 @@ export function XboxHome() {
       <Stage background="#061402">
         <style>{CSS}{look.css}</style>
         {!wall && look.bgColor && <div className="dht-xbox-bg" data-dht-from-skin="xbox" style={{ position: "absolute", inset: 0, background: look.bgColor }} />}
-        {wall ? <img src={wall} className="dht-xbox-bg" data-dht-from-skin={userWall ? undefined : "xbox"} style={{ position: "absolute", inset: 0, width: W, height: H, objectFit: "cover" }} /> : look.bgColor ? null : <Backdrop W={W} H={H} cx={ox} cy={oy} animate={s.animations} plain={st("wall") === "plain"} tint={tint}/>}
+        {wall ? <BackgroundMedia src={wall} className="dht-xbox-bg" data-dht-from-skin={userWall ? undefined : "xbox"} style={{ position: "absolute", inset: 0, width: W, height: H, objectFit: "cover" }} /> : look.bgColor ? null : <Backdrop W={W} H={H} cx={ox} cy={oy} animate={s.animations} plain={st("wall") === "plain"} tint={tint}/>}
 
         {screen === "main" && (
           <div key="main" style={{ ...main, filter: tint }}>

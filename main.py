@@ -908,13 +908,20 @@ def _read_switch_cached(name: str):
             break
     if not folder_src:
         return None
-    make = lambda: switch_themes.read_theme(folder_src, name, _data_url, index)
+    resource_folder = _switch_dir()
+    make = lambda: switch_themes.read_theme(folder_src, name, _data_url, index, resource_folder=resource_folder)
     try:
         # the key covers every file of the theme's folder level, so adding a screen refreshes it
         parts = []
         for n in switch_themes._list_files(folder_src):
             st = os.stat(os.path.join(folder_src, *n.split("/")))
             parts.append(f"{n}:{st.st_size}:{st.st_mtime_ns}")
+        for root in sorted(set((folder_src,resource_folder))):
+            for resource in ('common','ResidentMenu','FontStandard','FontExtended','FontExtended2'):
+                resource_path=os.path.join(root,'.resources',resource+'.json')
+                if os.path.isfile(resource_path):
+                    resource_stat=os.stat(resource_path)
+                    parts.append(f"resources:{root}:{resource}:{resource_stat.st_size}:{resource_stat.st_mtime_ns}")
         text = f"{folder_src}|{name}|{switch_themes.READER_VERSION}|{'|'.join(parts)}"
     except Exception:
         return make()
@@ -1641,6 +1648,10 @@ class Plugin:
         import theme_sources
         return await asyncio.to_thread(theme_sources.download, _skin_dir(), str(kind), str(source), str(ident), str(file or ""), str(name or ""))
 
+    async def theme_sources_saved(self, kind: str):
+        import theme_sources
+        return await asyncio.to_thread(theme_sources.saved_downloads, _skin_dir(), str(kind))
+
     async def theme_sources_progress(self):
         import theme_sources
         return theme_sources.progress()
@@ -1648,6 +1659,21 @@ class Plugin:
     async def plugin_update_status(self):
         import theme_updates
         return await asyncio.get_running_loop().run_in_executor(None, theme_updates.status)
+
+    async def spotlight_update_status(self, refresh: bool = False):
+        import spotlight_updates
+        return await asyncio.to_thread(spotlight_updates.status, os.path.join(_data_dir(), "spotlight-updates"),
+                                       os.path.dirname(decky.DECKY_PLUGIN_DIR), bool(refresh))
+
+    async def spotlight_remember_source(self, repo: str, name: str, author: str, url: str):
+        import spotlight_updates
+        return await asyncio.to_thread(spotlight_updates.remember, os.path.join(_data_dir(), "spotlight-updates"),
+                                       repo, name, author, url)
+
+    async def spotlight_prepare_update(self, ident: str, version: str, url: str):
+        import spotlight_updates
+        return await asyncio.to_thread(spotlight_updates.prepare, os.path.join(_data_dir(), "spotlight-updates"),
+                                       os.path.dirname(decky.DECKY_PLUGIN_DIR), ident, version, url)
 
     async def plugin_prepare_replacement(self, version: str, url: str):
         import theme_updates
@@ -1696,19 +1722,22 @@ class Plugin:
         try:
             with open(_settings_path(), "r", encoding="utf-8") as f:
                 data = json.load(f)
+            if isinstance(data, dict) and not data.get("explicitThemeDownloads"):
+                # Keep an existing user's active code-only look available through
+                # the switch to explicit downloads, without enabling other looks.
+                ident = data.get("activeTheme") or data.get("theme")
+                if data.get("enabled", True) and ident in {"onyx", "silver", "wii", "switch", "n3ds", "ps1", "gameamp"}:
+                    import theme_store
+                    destination = theme_store.root() / ident
+                    if not (destination / "installed.json").is_file():
+                        destination.mkdir(parents=True, exist_ok=True)
+                        (destination / "installed.json").write_text(json.dumps({"id": ident, "version": "1.0.0", "resources": []}))
+                data["explicitThemeDownloads"] = True
+                await self.set_settings(data)
             return data if isinstance(data, dict) else None
         except FileNotFoundError:
-            # First run: if the zip came with a bundled .p3t, preselect it for the PS3 theme.
-            bundled = sorted(n for n in os.listdir(_bundled_dir("p3t")) if n.lower().endswith(".p3t")) if os.path.isdir(_bundled_dir("p3t")) else []
-            first = {}
-            if bundled:
-                first["xmb"] = {"p3t": bundled[0]}
-            vdir = _bundled_dir("vita")
-            vita = sorted(os.listdir(vdir)) if os.path.isdir(vdir) else []
-            if vita:
-                first["vita"] = {"skin": vita[0]}
-            first["onboardingDone"] = False  # fresh install: the first-run flow shows once
-            return first
+            # First-time setup downloads only the theme confirmed by the user.
+            return {"theme": "psp", "activeTheme": "", "onboardingDone": False, "explicitThemeDownloads": True}
         except Exception as e:
             decky.logger.error(f"failed to read settings: {e}")
             return None
@@ -1735,7 +1764,7 @@ class Plugin:
     # ───── AudioLoader packs ─────
     async def deckthemes_audio_catalog(self):
         import deckthemes_audio
-        return [{k: v for k, v in p.items() if k in ("id", "name", "kind", "themes")} for p in deckthemes_audio.catalog()]
+        return [{k: v for k, v in p.items() if k in ("id", "name", "kind", "themes", "installWithTheme")} for p in deckthemes_audio.catalog()]
 
     async def install_deckthemes_audio(self, ident: str):
         import deckthemes_audio
@@ -1745,6 +1774,17 @@ class Plugin:
             return {"ok": True, **result}
         except Exception as error:
             decky.logger.warning(f"DeckThemes audio install failed: {error}")
+            return {"ok": False, "error": str(error)}
+
+    async def local_music_folders(self):
+        import local_music
+        return local_music.folders(decky.DECKY_USER_HOME)
+
+    async def import_local_music(self, path: str):
+        import local_music
+        try:
+            return await asyncio.to_thread(local_music.import_file, str(path), decky.DECKY_USER_HOME, _sounds_dir())
+        except Exception as error:
             return {"ok": False, "error": str(error)}
 
     async def list_sound_packs(self):
@@ -2023,6 +2063,14 @@ class Plugin:
             decky.logger.warning(f"vita theme music failed: {e}")
         return r
 
+    async def import_switch_theme(self, path: str):
+        import switch_import
+        return await asyncio.to_thread(switch_import.import_theme, path, _switch_dir())
+
+    async def import_switch_resources(self, path: str):
+        import switch_resources
+        return await asyncio.to_thread(switch_resources.import_resources, path, _switch_dir())
+
     async def list_switch_themes(self):
         folder = _switch_dir()
         os.makedirs(folder, exist_ok=True)
@@ -2197,7 +2245,7 @@ class Plugin:
         for key, ext in (("video", ".mp4"), ("poster", ".jpg")):
             path = _resource("cinematic/" + name + ext)
             if os.path.isfile(path):
-                ident = "cinematic-" + name + "-" + key
+                ident = "cinematic-" + name + "-" + key + ext
                 _vi.files[ident] = path
                 result[key] = f"http://127.0.0.1:{_vi.port}/{_vi.token}/f/{ident}"
         return result
@@ -2213,6 +2261,13 @@ class Plugin:
             themes = []
         wrap = base[:-2] + "/w" if base else None  # community interfaces open through their wrapper page
         return {"base": base, "wrap": wrap, "themes": themes, "dir": data_themes.user_root(), "errors": data_themes.zip_errors()}
+
+    async def ensure_frame_media(self, ident: str):
+        import frame_media
+        try:
+            return await asyncio.to_thread(frame_media.ensure, str(ident))
+        except Exception as error:
+            return {"success": False, "error": str(error)}
 
     async def import_data_theme(self, path):
         """Quick Access → Add a theme: copy a picked theme .zip into the themes folder (checked first)."""

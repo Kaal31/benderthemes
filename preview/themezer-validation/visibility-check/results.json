@@ -1,0 +1,163 @@
+[
+  {
+    "id": "75B9",
+    "pane": "L_BtnNoti",
+    "frame": 0,
+    "visible": true,
+    "pass": true
+  },
+  {
+    "id": "75B9",
+    "pane": "L_BtnNoti",
+    "frame": 640,
+    "visible": false,
+    "pass": true
+  },
+  {
+    "id": "75B9",
+    "pane": "L_BtnLR",
+    "frame": 320,
+    "visible": true,
+    "pass": true
+  },
+  {
+    "id": "75B9",
+    "pane": "L_BtnLR",
+    "frame": 0,
+    "visible": false,
+    "pass": true
+  },
+  {
+    "id": "75B9",
+    "pane": "L_BtnShop",
+    "frame": 640,
+    "visible": true,
+    "pass": true
+  },
+  {
+    "id": "75B9",
+    "pane": "L_BtnShop",
+    "frame": 0,
+    "visible": false,
+    "pass": true
+  },
+  {
+    "id": "75B9",
+    "pane": "L_BtnSplay",
+    "frame": 0,
+    "visible": true,
+    "pass": true
+  },
+  {
+    "id": "75B9",
+    "pane": "L_BtnSplay",
+    "frame": 320,
+    "visible": false,
+    "pass": true
+  },
+  {
+    "id": "75B9",
+    "pane": "L_BtnVgc",
+    "frame": 0,
+    "visible": true,
+    "pass": true
+  },
+  {
+    "id": "796D",
+    "pane": "L_BtnNoti",
+    "frame": 0,
+    "visible": true,
+    "pass": true
+  },
+  {
+    "id": "796D",
+    "pane": "L_BtnNoti",
+    "frame": 640,
+    "visible": false,
+    "pass": true
+  },
+  {
+    "id": "796D",
+    "pane": "L_BtnLR",
+    "frame": 320,
+    "visible": true,
+    "pass": true
+  },
+  {
+    "id": "796D",
+    "pane": "L_BtnLR",
+    "frame": 0,
+    "visible": false,
+    "pass": true
+  },
+  {
+    "id": "796D",
+    "pane": "L_BtnShop",
+    "frame": 640,
+    "visible": true,
+    "pass": true
+  },
+  {
+    "id": "796D",
+    "pane": "L_BtnShop",
+    "frame": 0,
+    "visible": false,
+    "pass": true
+  },
+  {
+    "id": "796D",
+    "pane": "L_BtnSplay",
+    "frame": 0,
+    "visible": true,
+    "pass": true
+  },
+  {
+    "id": "796D",
+    "pane": "L_BtnSplay",
+    "frame": 320,
+    "visible": false,
+    "pass": true
+  },
+  {
+    "id": "796D",
+    "pane": "L_BtnVgc",
+    "frame": 0,
+    "visible": true,
+    "pass": true
+  },
+  {
+    "id": "13696",
+    "pane": "L_BtnSplay",
+    "frame": 0,
+    "visible": true,
+    "pass": true
+  },
+  {
+    "id": "13696",
+    "pane": "L_BtnVgc",
+    "frame": 0,
+    "visible": true,
+    "pass": true
+  },
+  {
+    "id": "13696",
+    "pane": "L_BtnShop",
+    "frame": 0,
+    "visible": true,
+    "pass": true
+  },
+  {
+    "id": "13696",
+    "pane": "L_BtnNoti",
+    "frame": 0,
+    "visible": true,
+    "pass": true
+  },
+  {
+    "id": "13696",
+    "pane": "L_BtnLR",
+    "frame": 0,
+    "visible": true,
+    "pass": true
+  }
+]

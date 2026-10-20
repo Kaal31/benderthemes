@@ -10,6 +10,11 @@ export const WII_CSS=`
 .nt-wii[data-motion=true] .nt-tile[data-focus=true]{animation:nt-wii-pulse .9s ease-in-out infinite alternate}
 @keyframes nt-wii-pulse{from{box-shadow:0 0 0 2px #c4f0ff,0 0 5px #1ca4e740}to{box-shadow:0 0 0 4px #9fe3ff,0 0 18px #1ca4e7b0}}
 .nt-wii .nt-tile{overflow:visible}.nt-wii .nt-tile>:first-child{border-radius:inherit;overflow:hidden}
+/* Keep the artwork and glass in the same fixed aperture; balloons and hands remain outside it. */
+.nt-wii-art-frame{position:absolute;inset:0;display:block;border-radius:inherit;overflow:hidden;isolation:isolate}
+.nt-wii-art{position:absolute;inset:0;display:block}
+.nt-wii .nt-channel{position:absolute;inset:0;width:100%;overflow:hidden}
+.nt-wii .nt-tile:after{z-index:1}
 .nt-wii .nt-tile .nt-game-label{top:auto;bottom:calc(100% - 38px);left:50%;right:auto;width:max-content;max-width:430px;translate:-50% 0;padding:9px 30px;border-radius:30px;background:#fff;border:2px solid #c9ced1;box-shadow:0 3px 8px #3a556640;color:#4d5257;text-shadow:none;font-size:30px;overflow:visible;z-index:3;opacity:0;scale:.4;transform-origin:50% 100%;transition:opacity .12s,scale .12s}
 .nt-wii .nt-tile[data-focus=true] .nt-game-label{opacity:1;scale:1;transition:opacity .15s .4s,scale .2s cubic-bezier(.3,1.5,.6,1) .4s}
 .nt-wii .nt-pages{display:none}
@@ -26,7 +31,7 @@ export const WII_CSS=`
 .nt-wii[data-zoom=true] .nt-channel small{font-size:12px}
 .nt-wii[data-zoom=true] .nt-empty-word{font-size:34px}
 .nt-wii[data-highlight=steady] .nt-tile[data-focus=true]{animation:none;box-shadow:0 0 0 3px #b1ecff,0 0 12px #1ca4e790}
-.nt-wii[data-preview=moving][data-motion=true] .nt-tile[data-focus=true]>:not(.nt-game-label):not(.nt-wii-hand){animation:nt-wii-preview 7s ease-in-out infinite alternate}
+.nt-wii[data-preview=moving][data-motion=true] .nt-tile[data-focus=true] .nt-wii-art{animation:nt-wii-preview 7s ease-in-out infinite alternate}
 @keyframes nt-wii-preview{from{scale:1.02;translate:0 0}to{scale:1.16;translate:-4% -3%}}
 .dht-wii-wallpaper{position:absolute;inset:0;z-index:-1;pointer-events:none;background:var(--dht-wii-wallpaper,var(--dht-wii-skin-wallpaper,none)) center/var(--dht-wii-wallpaper-size,cover) no-repeat}
 .nt-wii-hand-skin{width:76px;height:76px;rotate:0deg;right:4%;bottom:0}.nt-wii-hand-skin img{position:absolute;inset:0;width:100%;height:100%;object-fit:contain}.nt-wii-hand-skin .nt-wii-hand-b{display:none}.nt-wii .nt-tile:active .nt-wii-hand-skin .nt-wii-hand-b{display:block}.nt-wii .nt-tile:active .nt-wii-hand-skin .nt-wii-hand-a{display:none}

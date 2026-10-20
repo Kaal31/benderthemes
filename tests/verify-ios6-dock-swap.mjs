@@ -1,0 +1,8 @@
+import {chromium} from 'playwright';import assert from 'node:assert/strict';
+const b=await chromium.launch(),p=await b.newPage({viewport:{width:1280,height:720}});await p.goto('http://127.0.0.1:8776/ios6-browser-preview.html');const f=p.frameLocator('#theme');await f.locator('#apps .game-app').first().waitFor();await p.evaluate(()=>{window.saves=[];addEventListener('message',e=>{if(e.data?.type==='save')saves.push(e.data.data)})});
+async function swap(a,z){const x=await a.boundingBox(),y=await z.boundingBox();await p.mouse.move(x.x+x.width/2,x.y+x.height/2);await p.mouse.down();await p.waitForTimeout(600);await p.mouse.move(y.x+y.width/2,y.y+y.height/2,{steps:1});await p.mouse.up();await p.waitForTimeout(550);}
+const game=await f.locator('#apps .game-app').first().getAttribute('data-layout-key');await swap(f.locator('#apps .game-app').first(),f.locator('footer [data-home-dock]').first());assert.equal(await f.locator('footer [data-home-dock]').first().getAttribute('data-layout-key'),game);assert.equal(await f.locator('#apps [data-layout-key="nav:library"]').count(),1);assert.ok((await p.evaluate(()=>saves.at(-1))).dockOrder.includes(game));await swap(f.locator('footer [data-home-dock]').first(),f.locator('#apps [data-layout-key="nav:library"]'));assert.equal(await f.locator('footer [data-home-dock]').first().getAttribute('data-layout-key'),'nav:library');assert.equal(await f.locator('#apps [data-layout-key="'+game+'"]').count(),1);await f.locator('footer [data-home-dock][data-place=library]').click();assert.equal(await f.locator('#library-grid').isVisible(),true);await b.close();console.log('PASS Home to dock swap, dock to Home swap, saved dock order, dock navigation');
+
+
+
+

@@ -5,7 +5,9 @@ import {launch} from './browser.mjs';
 const base=new URL('../',import.meta.url);
 const gif=Buffer.from('R0lGODlhAQABAIAAAAAAAP///yH5BAEAAAAALAAAAAABAAEAAAIBRAA7','base64');
 const png=await readFile(new URL('preview/intro-xbox.png',base));
-const video=await readFile(new URL('themes/blue-glass/test-video.mp4',base));
+import {execFileSync} from 'node:child_process';
+execFileSync('python', ['tools/prepare_frame_media.py'], {cwd:new URL('../',import.meta.url),stdio:'inherit'});
+const video=await readFile(new URL('out/frame-media/blue-glass/test-video.mp4',base));
 const media=[{file:'media/'+'a'.repeat(64)+'.gif',video:false},{file:'media/'+'b'.repeat(64)+'.png',video:false}];
 let catalog={media,duration:3,fit:'contain',transition:'fade'};
 const server=http.createServer(async(req,res)=>{
