@@ -1648,6 +1648,10 @@ class Plugin:
         import theme_sources
         return await asyncio.to_thread(theme_sources.download, _skin_dir(), str(kind), str(source), str(ident), str(file or ""), str(name or ""))
 
+    async def theme_sources_saved(self, kind: str):
+        import theme_sources
+        return await asyncio.to_thread(theme_sources.saved_downloads, _skin_dir(), str(kind))
+
     async def theme_sources_progress(self):
         import theme_sources
         return theme_sources.progress()

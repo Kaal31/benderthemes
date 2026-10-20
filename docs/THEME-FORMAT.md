@@ -120,7 +120,7 @@ The interface is a normal web page (HTML, CSS, JavaScript) from the theme folder
 
 ### Bundled native themes
 
-Blue Glass, GameAmp, GameCube, iOS 6 Classic, Old Big Picture, Santa Express and WiiFlow Default ship as compiled native DOM renderers. They mount directly in Steam with scoped styles and direct host services, after their media and automatic audio downloads complete. Their existing `frame` manifests remain compatible with the standalone SDK viewer. User-installed HTML themes still use the frame renderer below.
+Blue Glass, GameAmp, GameCube, iOS 6 Classic, Old Big Picture, Santa Express and WiiFlow Default use React renderers with direct ThemeRoot controller input and React-owned selection state. They mount in Steam after their media and automatic audio downloads complete. Their styles and assets are reused without running their legacy HTML scripts, shadow-DOM host, or message bridge. Their existing `frame` manifests remain compatible with the standalone SDK viewer. User-installed HTML themes still use the frame renderer below.
 
 ### How imported HTML is sealed off
 

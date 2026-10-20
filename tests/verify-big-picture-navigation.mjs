@@ -9,33 +9,33 @@ try{
  page.on('pageerror',e=>errors.push(e.message));
  await page.goto(url+'?theme=vita&still=1');await page.locator('[data-dht-root]').waitFor();
  await page.evaluate(()=>window.__updateTheme({theme:'frame',activeTheme:'old-big-picture',animations:false}));
- const host=page.locator('[data-native-theme="old-big-picture"][data-theme-connected=true]');await host.waitFor();
- await host.locator('.home-tile.library[data-themehub-focused]').waitFor();
- await page.waitForFunction(()=>{const image=document.querySelector('[data-native-theme]').shadowRoot.querySelector('#steam-avatar');return image?.complete&&image.naturalWidth>0&&!image.hidden;});
- assert.equal(await host.locator('#avatar-initial').isVisible(),false);
+ const host=page.locator('[data-react-theme="old-big-picture"]');await host.waitFor();
+ await host.locator('.home-tile.library[data-selected=true]').waitFor();
+ await page.waitForFunction(()=>{const image=document.querySelector('[data-react-theme]').querySelector('#steam-avatar');return image?.complete&&image.naturalWidth>0&&!image.hidden;});
+ assert.equal(await host.locator('#steam-avatar').evaluate(n=>n.complete&&n.naturalWidth>0),true);
  // Steam may restore focus to its outer Focusable after every D-pad event.
- const controller=async key=>{await page.evaluate(key=>{document.querySelector('[data-native-theme]').shadowRoot.activeElement?.blur();window.dispatchEvent(new KeyboardEvent('keydown',{key,bubbles:true}));},key);};
+ const controller=async key=>{await page.evaluate(key=>{document.activeElement?.blur();window.dispatchEvent(new KeyboardEvent('keydown',{key,bubbles:true}));},key);};
  await host.locator('.profile').focus();
  await controller('ArrowDown');
- await host.locator('.home-tile[data-themehub-focused]').waitFor();
+ await host.locator('.home-tile[data-selected=true]').waitFor();
  await host.locator('.home-tile.library').focus();
- await controller('ArrowRight');await host.locator('.home-tile.community[data-themehub-focused]').waitFor();
- await controller('ArrowLeft');await host.locator('.home-tile.library[data-themehub-focused]').waitFor();
+ await controller('ArrowRight');await host.locator('.home-tile.community[data-selected=true]').waitFor();
+ await controller('ArrowLeft');await host.locator('.home-tile.library[data-selected=true]').waitFor();
  // Each single D-pad press updates selection, and both end tiles are centered completely.
  for(const motion of [false,true]){
   await page.evaluate(animations=>window.__updateTheme({animations}),motion);
   await host.locator('.home-tile.library').focus();
   for(const [key,target] of [['ArrowLeft','store'],['ArrowLeft','web'],['ArrowRight','store'],['ArrowRight','library'],['ArrowRight','community'],['ArrowRight','chat'],['ArrowLeft','community'],['ArrowLeft','library']]){
-   await controller(key);assert.equal(await host.locator(`.home-tile.${target}[data-themehub-focused]`).count(),1,'one press selects '+target);
-   await page.waitForFunction(target=>{const s=document.querySelector('[data-native-theme]').shadowRoot,n=s.querySelector('.home-tile.'+target),track=n.parentElement,a=n.getBoundingClientRect(),b=track.getBoundingClientRect();return a.left>=b.left-1&&a.right<=b.right+1&&Math.abs((a.left+a.width/2)-(b.left+b.width/2))<2;},target);
+   await controller(key);assert.equal(await host.locator(`.home-tile.${target}[data-selected=true]`).count(),1,'one press selects '+target);
+   await page.waitForFunction(target=>{const s=document.querySelector('[data-react-theme]'),n=s.querySelector('.home-tile.'+target),track=s,a=n.getBoundingClientRect(),b=track.getBoundingClientRect();return a.left>=b.left-1&&a.right<=b.right+1&&Math.abs((a.left+a.width/2)-(b.left+b.width/2))<2;},target);
   }
  }
  await page.evaluate(()=>window.__updateTheme({animations:false}));
  // Real keyboard events must be handled once, without also reaching host input.
- await page.keyboard.press('ArrowRight');await host.locator('.home-tile.community[data-themehub-focused]').waitFor();
- await page.keyboard.press('ArrowLeft');await host.locator('.home-tile.library[data-themehub-focused]').waitFor();
- await controller('ArrowDown');await host.locator('.game[data-themehub-focused]').waitFor();
- await controller('Enter');await host.locator('.classic-play').waitFor();
+ await page.keyboard.press('ArrowRight');await host.locator('.home-tile.community[data-selected=true]').waitFor();
+ await page.keyboard.press('ArrowLeft');await host.locator('.home-tile.library[data-selected=true]').waitFor();
+ await controller('ArrowDown');await host.locator('.game[data-selected=true]').waitFor();
+ await controller('Enter');await page.locator('.dht-destination[data-place=game]').waitFor();
  await controller('Escape');await host.locator('.home-tiles').waitFor();
  for(const [width,height] of [[1280,800],[1280,720],[960,600]]){
    await page.setViewportSize({width,height});

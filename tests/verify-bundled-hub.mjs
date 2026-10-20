@@ -8,7 +8,7 @@ try{
  const page=await browser.newPage({viewport:{width:1304,height:930}}),errors=[];page.on('pageerror',e=>errors.push(e.message));await page.goto(url+'?theme=vita&still=1');await page.locator('[data-dht-root]').waitFor();
  for(const [id,name] of Object.entries(names)){
   await page.evaluate(id=>window.__updateTheme({theme:'frame',activeTheme:id,hubStyle:'auto',animations:false}),id);
-  await page.locator(`[data-native-theme="${id}"][data-theme-connected=true]`).waitFor();
+  await page.locator(`[data-react-theme="${id}"]`).waitFor();
   await page.getByRole('button',{name:'Hub (from this home)',exact:true}).click();
   await page.locator(`.dht-market[data-hub-theme="${id}"][data-hub-source=auto]`).waitFor();
   await page.evaluate(id=>window.__updateTheme({hubStyle:id}),id);await page.getByRole('button',{name:`Hub style: ${name}`,exact:true}).waitFor();await page.locator(`.dht-market[data-hub-theme="${id}"][data-hub-source=setting]`).waitFor();

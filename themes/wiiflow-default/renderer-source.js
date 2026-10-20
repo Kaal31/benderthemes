@@ -135,13 +135,13 @@ import {interfaceExtension} from './interfaceExtension.js';
    e.group.updateMatrix();e.mirror.matrix.multiplyMatrices(reflectionMatrix,e.group.matrix);e.mirror.matrixWorldNeedsUpdate=true;
   }if(flow)moving=flow.frame(now,ease,still,entries)||moving;extension?.viewport(renderer,camera);renderer.render(scene,camera);
   const reflectionAlpha=flow?flow.reflectionAlpha():.2;
-  if(reflectionAlpha>0){
+  if(reflectionAlpha>0&&!moving){
   const width=renderer.domElement.width,height=renderer.domElement.height;if(reflectedCanvas.width!==width||reflectedCanvas.height!==height){reflectedCanvas.width=width;reflectedCanvas.height=height;}
   const ctx=reflectedContext,floor=height*314/480;ctx.clearRect(0,0,width,height);
   ctx.save();ctx.beginPath();ctx.rect(0,floor,width,height-floor);ctx.clip();ctx.translate(0,2*floor);ctx.scale(1,-1);ctx.drawImage(renderer.domElement,0,0);ctx.restore();
   ctx.save();ctx.globalCompositeOperation='destination-in';const fade=ctx.createLinearGradient(0,floor,0,height);fade.addColorStop(0,'rgba(0,0,0,'+reflectionAlpha+')');fade.addColorStop(1,'rgba(0,0,0,0)');ctx.fillStyle=fade;ctx.fillRect(0,0,width,height);ctx.restore();
   }else if(!reflectedCanvas.hidden){reflectedContext.clearRect(0,0,reflectedCanvas.width,reflectedCanvas.height);reflectedCanvas.hidden=true;}
-  if(reflectionAlpha>0)reflectedCanvas.hidden=false;
+  if(reflectionAlpha>0)reflectedCanvas.hidden=moving;
   if(moving)invalidate();
  }
  function invalidate(){if(active&&!document.hidden&&!window.WiiFlowImport?.sourceMenuOpen&&!raf)raf=requestAnimationFrame(draw);}
@@ -179,7 +179,7 @@ import {interfaceExtension} from './interfaceExtension.js';
  const motionToggle=document.createElement('button');motionToggle.id='animation-speed';motionToggle.type='button';
  function updateMotion(){motionToggle.textContent='Motion: '+(fastMotion?'Fast':'Smooth');motionToggle.setAttribute('aria-pressed',String(fastMotion));}
  motionToggle.onclick=()=>{fastMotion=!fastMotion;motionRestored=true;window.ThemeHub.save({fastMotion});updateMotion();};document.querySelector('header').append(motionToggle);updateMotion();
- function receiveArtState(state){document.body.classList.toggle('hide-navigation-arrows',state.saved?.hideNavigationArrows===true);extension?.setState(state.saved);applyBackgroundFit(state.saved?.backgroundFit);document.getElementById('title').style.visibility=state.saved?.hideCoverTitle===true?'hidden':'';if(!motionRestored){fastMotion=state.saved?.fastMotion===true;motionRestored=true;updateMotion();}if(!logoRestored){flattenedLogos=state.saved?.flattenedLogos===true;logoRestored=true;updateLogoStyle();}for(const game of state.games||[]){gameData.set(String(game.appid),game);if(game.art?.logo?.[0])logos.set(String(game.appid),game.art.logo[0]);}for(const entry of entries.values())paintBack(entry);sync();}
+ function receiveArtState(state){document.body.classList.toggle('hide-navigation-arrows',state.saved?.hideNavigationArrows===true);const saved={backgroundFit:'fill',...state.saved};extension?.setState(saved);applyBackgroundFit(saved.backgroundFit);document.getElementById('title').style.visibility=state.saved?.hideCoverTitle===true?'hidden':'';if(!motionRestored){fastMotion=state.saved?.fastMotion===true;motionRestored=true;updateMotion();}if(!logoRestored){flattenedLogos=state.saved?.flattenedLogos===true;logoRestored=true;updateLogoStyle();}for(const game of state.games||[]){gameData.set(String(game.appid),game);if(game.art?.logo?.[0])logos.set(String(game.appid),game.art.logo[0]);}sync();}
  window.ThemeHub.on('state',receiveArtState);if(window.ThemeHub.state)receiveArtState(window.ThemeHub.state);
  window.ThemeHub.on('activity',value=>{active=value;if(active)invalidate();else{cancelAnimationFrame(raf);raf=0;}});
  document.addEventListener('visibilitychange',()=>{active=!document.hidden;if(active)invalidate();});

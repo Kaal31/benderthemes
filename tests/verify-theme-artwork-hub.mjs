@@ -16,16 +16,16 @@ try{
  });
  for(const id of ['blue-glass','ios6','santa-express']){
    await page.evaluate(id=>window.__updateTheme({theme:'frame',activeTheme:id,animations:false}),id);
-   const host=page.locator(`[data-native-theme="${id}"][data-theme-connected=true]`);await host.waitFor();
+   const host=page.locator(`[data-react-theme="${id}"]`);await host.waitFor();
    const tile=host.locator('button[aria-label="Dolphin Emulator"]').first();
    await tile.locator('img').waitFor();
-   await page.waitForFunction(id=>{const s=document.querySelector(`[data-native-theme="${id}"]`).shadowRoot;const img=s.querySelector('button[aria-label="Dolphin Emulator"] img');return img?.complete&&img.naturalWidth>0;},id);
+   await page.waitForFunction(id=>{const s=document.querySelector(`[data-react-theme="${id}"]`);const img=s.querySelector('button[aria-label="Dolphin Emulator"] img');return img?.complete&&img.naturalWidth>0;},id);
    assert.equal(await tile.locator('.non-steam-badge').textContent(),'Non-Steam');
-   assert.equal(await tile.locator('.fallback-icon').isVisible(),false,'placeholder hidden after successful fallback');
+   assert.equal(await tile.locator('img').evaluate(n=>n.complete&&n.naturalWidth>0),true,'shared GameArt walks through every fallback URL');
    for(const [width,height] of [[1280,800],[1280,720],[960,600]]){
      await page.setViewportSize({width,height});
      await page.evaluate(()=>new Promise(resolve=>requestAnimationFrame(()=>requestAnimationFrame(resolve))));
-     await page.waitForFunction(id=>{const host=document.querySelector(`[data-native-theme="${id}"]`),stage=host.shadowRoot.querySelector(id==='santa-express'?'#stage':'#dashboard');const a=host.getBoundingClientRect(),b=stage.getBoundingClientRect();return ['x','y','width','height'].every(k=>Math.abs(a[k]-b[k])<1);},id);
+     await page.waitForFunction(id=>{const host=document.querySelector(`[data-react-theme="${id}"]`),stage=host.querySelector(id==='santa-express'?'#stage':'#dashboard');const a=host.getBoundingClientRect(),b=stage.getBoundingClientRect();return ['x','y','width','height'].every(k=>Math.abs(a[k]-b[k])<1);},id);
    }
    if(id==='santa-express')await host.screenshot({path:'out/native-themes/santa-express-avatar.png'});
    console.log('PASS artwork fallback beyond third URL, non-Steam label and viewport fit:',id);

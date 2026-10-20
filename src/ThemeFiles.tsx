@@ -7,6 +7,7 @@ import { callable } from "@decky/api";
 import { MutableRefObject, useEffect, useMemo, useRef, useState } from "react";
 import { opensKeyboardOnTap, showSteamKeyboard } from "./steamKeyboard";
 import type { InputHandler } from "./input";
+import { refreshThemeLists } from "./themeSettingsMenu";
 import { resourcesChangedOnClose } from "./marketplaceState";
 import { playSound } from "./steam";
 
@@ -22,6 +23,7 @@ const listKinds = callable<[], Kinds>("theme_sources");
 const browse = callable<[kind: string, source: string, query: string, page: number, refresh: boolean], Page>("theme_sources_browse");
 const itemFiles = callable<[kind: string, ident: string], { files: FileRef[]; error?: string }>("theme_sources_files");
 const download = callable<[kind: string, source: string, ident: string, file: string, name: string], { success: boolean; name?: string; already?: boolean; error?: string }>("theme_sources_download");
+const savedDownloads=callable<[kind:string],Record<string,string>>("theme_sources_saved");
 const downloadProgress = callable<[], Progress>("theme_sources_progress");
 
 const openUrl = (url?: string) => { if (url && /^https:\/\//.test(url)) Navigation.NavigateToSteamWeb(url); };
@@ -45,6 +47,9 @@ export function ThemeFiles({ inputRef, initialKind = "psp" }: { inputRef: Mutabl
   const [files, setFiles] = useState<Record<string, FileRef[] | { error: string }>>({});
   const [busy, setBusy] = useState(false);
   const [progress, setProgress] = useState<Progress | null>(null);
+  const [savedFiles,setSavedFiles]=useState<Record<string,string>>({});
+  const savedKey=(file:FileRef)=>`${kind}:${src}:${current?.id}:${src==="archive"?file.name:""}`;
+  useEffect(()=>{let live=true;savedDownloads(kind).then(rows=>{if(live&&rows)setSavedFiles(previous=>({...previous,...rows}));}).catch(()=>{});return()=>{live=false;};},[kind]);
   const [message, setMessage] = useState<{ text: string; ok?: boolean } | null>(null);
   const gridRef = useRef<HTMLDivElement>(null);
   const detailRef = useRef<HTMLDivElement>(null);
@@ -110,6 +115,8 @@ export function ThemeFiles({ inputRef, initialKind = "psp" }: { inputRef: Mutabl
       if (!r.success) setMessage({ text: r.error || "Download failed." });
       else {
         setMessage({ ok: true, text: `${r.already ? "Already saved" : "Saved"} to ${kindInfo?.dir}/ as “${r.name}”. ${hintFor(kind)}` });
+        setSavedFiles(previous=>({...previous,[savedKey(file)]:r.name||file.name}));
+        refreshThemeLists();
         resourcesChangedOnClose();
       }
     } catch (e) { if (alive.current) setMessage({ text: String(e) }); }
@@ -123,6 +130,7 @@ export function ThemeFiles({ inputRef, initialKind = "psp" }: { inputRef: Mutabl
     i -= links.length;
     const list = fileList ?? [];
     if (i >= list.length) { openUrl(current?.page); return; }
+    if(savedFiles[savedKey(list[i])])return;
     if (confirm && confirm.name === list[i].name) void startDownload(list[i]);
     else { setConfirm(list[i]); setMessage(null); }
   };
@@ -219,8 +227,8 @@ export function ThemeFiles({ inputRef, initialKind = "psp" }: { inputRef: Mutabl
             {fileList.map((f, i) => {
               const asking = confirm?.name === f.name;
               return <div key={f.name || i} className="dht-files-action" data-confirm={asking}>
-                <button className="dht-files-dl" data-active={zone === "detail" && action === i} disabled={busy} onClick={() => { setZone("detail"); setAction(i); pressAction(i); }}>
-                  {busy && asking ? `${progress?.percent ?? 0}% · ${progress?.message || "Downloading…"}` : asking ? `Confirm download · A` : `↓ ${fileList.length > 1 || src === "archive" ? f.name.split("/").pop() : "Download"}${f.size ? ` · ${mb(f.size)}` : ""}`}
+                <button className="dht-files-dl" data-active={zone === "detail" && action === i} disabled={busy||!!savedFiles[savedKey(f)]} onClick={() => { setZone("detail"); setAction(i); pressAction(i); }}>
+                  {savedFiles[savedKey(f)]?"✓ Saved · available in Theme options":busy && asking ? `${progress?.percent ?? 0}% · ${progress?.message || "Downloading…"}` : asking ? `Confirm download · A` : `↓ ${fileList.length > 1 || src === "archive" ? f.name.split("/").pop() : "Download"}${f.size ? ` · ${mb(f.size)}` : ""}`}
                 </button>
                 {asking && !busy && <p className="dht-files-confirm" role="alertdialog">Download {src === "archive" ? `“${f.name.split("/").pop()}”` : "this theme"} from {srcInfo?.name} into <b>{kindInfo?.dir}/</b>? {src === "archive" ? "It was uploaded by an archive.org user and is not checked by ThemeHub. " : src === "ps3pro" || src === "shenron0" ? "It comes from a public GitHub collection and is not checked by ThemeHub. " : ""}A confirms · B cancels.</p>}
               </div>;

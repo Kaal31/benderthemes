@@ -3,7 +3,7 @@
  const hub=window.ThemeHub,$=id=>document.getElementById(id);
  let showGameTitle=true,themeOptionsOpen=false,gamePlayOptionsOpen=false;
  let games=[],selected=0,page='home',filter='all',option=0,initialized=false,noticeTimer,transitionTimer,transitioning=false,clockOffset=0,calendarEditing=false,editField=0,editGroup=0,draft=null,faceEditing=false,soundMode='Stereo',screenPosition=0,saveMenu=false,saveAction=0,memoryTimer,dateAnimationTimer,faceEnteredAt=0;
- const resize=()=>document.documentElement.style.setProperty('--scale',Math.min(innerWidth/960,innerHeight/720));resize();addEventListener('resize',resize);
+ const resize=()=>{const scale=Math.min(innerWidth/960,innerHeight/720);document.documentElement.style.setProperty('--scale',scale);$('screen').style.width=(innerWidth/scale)+'px';$('screen').style.height=(innerHeight/scale)+'px';};resize();addEventListener('resize',resize);
  const list=()=>games.filter(g=>filter!=='installed'||g.installed);
  const current=()=>list()[selected];
  function sound(name='move'){hub.sound(name);}

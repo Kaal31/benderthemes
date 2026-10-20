@@ -3,7 +3,7 @@ import { createReadStream, existsSync, readFileSync, statSync } from "node:fs";
 import { resolve, extname, sep } from "node:path";
 import { fileURLToPath } from "node:url";
 const root = resolve(fileURLToPath(new URL("..", import.meta.url)));
-const types = { ".html":"text/html", ".js":"text/javascript", ".css":"text/css", ".json":"application/json", ".jpg":"image/jpeg", ".png":"image/png", ".gif":"image/gif", ".webp":"image/webp", ".mp4":"video/mp4", ".wav":"audio/wav", ".ogg":"audio/ogg", ".mp3":"audio/mpeg", ".woff2":"font/woff2", ".svg":"image/svg+xml", ".ttf":"font/ttf" };
+const types = { ".html":"text/html", ".js":"text/javascript", ".css":"text/css", ".json":"application/json", ".jpg":"image/jpeg", ".png":"image/png", ".gif":"image/gif", ".webp":"image/webp", ".mp4":"video/mp4", ".webm":"video/webm", ".wav":"audio/wav", ".ogg":"audio/ogg", ".mp3":"audio/mpeg", ".woff2":"font/woff2", ".svg":"image/svg+xml", ".ttf":"font/ttf" };
 // The same policy the plugin's server sends (py_modules/data_themes.py), with the preview's addresses.
 export function frameCsp(origin, id) {
   const own = `${origin}/themes/${id}/`, themes = `${origin}/themes/`;
@@ -47,7 +47,7 @@ export async function startPreviewServer(port = 0) {
         return;
       }
       const path = name.startsWith("/themes/") ? themePath(name.slice("/themes".length)) : resolve(root, "." + (name === "/" ? "/preview/preview.html" : name));
-      if (!path || !path.startsWith(root + sep) || !["preview", "bundle", "assets", "out", "themes", "tests/fixtures/themes"].some(dir => path.startsWith(resolve(root, dir) + sep))) { res.writeHead(403); res.end(); return; }
+      if (!path || !path.startsWith(root + sep) || !["preview", "bundle", "assets", "out", "themes", "tests/fixtures/themes", "tests/fixtures/media"].some(dir => path.startsWith(resolve(root, dir) + sep))) { res.writeHead(403); res.end(); return; }
       const st = statSync(path); if (!st.isFile()) throw new Error();
       const headers = { "Content-Type": types[extname(path)] || "application/octet-stream", "Content-Length": st.size };
       // data-theme pages run sealed, as on the Deck (py_modules/data_themes.py: frame_csp)

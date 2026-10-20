@@ -1,3 +1,4 @@
+import {BackgroundMedia} from "../WallpaperMedia";
 import { GameHero } from "../common";
 import {ProfileAvatar} from "../ProfileAvatar";
 // PS4 home: a function area (top icons) above a horizontal row of square
@@ -199,7 +200,7 @@ export function Ps4Home() {
     <ThemeRoot onInput={onInput} hints={{ a: "Select", y: "Options", menu: "Options" }}>
       <Stage background="#04122e">
         <div className="dht-ps4-bg" style={{ position: "absolute", inset: 0, background: "var(--dht-ps4-bg, radial-gradient(ellipse at 70% 20%, #2f8be0 0%, transparent 55%), linear-gradient(170deg, #0a3a86 0%, #0b2a63 45%, #061637 100%))" }} />
-        {wall && <img src={wall} style={{ position: "absolute", inset: 0, width: W, height: H, objectFit: "cover" }} />}
+        {wall && <BackgroundMedia src={wall} style={{ position: "absolute", inset: 0, width: W, height: H, objectFit: "cover" }} />}
         {!wall && <AnimCanvas width={W} height={H} animate={s.animations} draw={drawPs4Bg} fps={24} />}
         {s.ps4GameBackgrounds && bgGame && (
           <div className="dht-ps4-game-background" key={bgGame.appid} style={{ position: "absolute", inset: 0, animation: "dhtFade 500ms ease-out" }}>

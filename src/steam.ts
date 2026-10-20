@@ -99,11 +99,11 @@ export const DEFAULT_WALLPAPER: Partial<Record<ThemeId, string>> = { aero: "aero
 /** The one background of the look on screen (presets v2: the preset's Background choice, from any installed source;
  *  else a wallpapers-folder picture chosen before v2; else the theme's own or the look's default picture), with game
  *  art, brightness and colour applied. null = the look draws its own background. */
-export function useWallpaper(theme: ThemeId, options?:{raw?:boolean;settings?:Settings;gameArt?:boolean;page?:string}): string | null {
+export function useWallpaper(theme: ThemeId, options?:{raw?:boolean;settings?:Settings;gameArt?:boolean;page?:string;defaultWallpaper?:boolean}): string | null {
   const s=options?.settings??getSettings();
   const chosen = s.wallpapers[theme];
   const fromEngine = engine?.background(theme, chosen,s);
-  const ref = options?.page && FIXED_BACKGROUND_PAGES[theme] ? pageBackgroundRef(s,theme,options.page)??"" : fromEngine !== undefined ? fromEngine : chosen ? `@wp/${chosen}` : DEFAULT_WALLPAPER[theme] ? `@wp/${DEFAULT_WALLPAPER[theme]}` : "";
+  const ref = options?.page && FIXED_BACKGROUND_PAGES[theme] ? pageBackgroundRef(s,theme,options.page)??"" : fromEngine !== undefined ? fromEngine : chosen ? `@wp/${chosen}` : options?.defaultWallpaper!==false && DEFAULT_WALLPAPER[theme] ? `@wp/${DEFAULT_WALLPAPER[theme]}` : "";
   const [state, setState] = useState<{ ref: string; url: string | null }>({ ref, url: ref ? wallCache.get(ref) ?? null : null });
   useEffect(() => {
     if (!ref) return setState({ ref, url: null });

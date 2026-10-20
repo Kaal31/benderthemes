@@ -446,7 +446,7 @@ export function customizeItems(): MenuItem[] {
     ...(pageBackgrounds.length || activeTheme(S())?.id.startsWith("wiiflow-") ? [group("Background",()=>[
       ...pageBackgrounds.map(slotItem),
       ...(activeTheme(S())?.id.startsWith("wiiflow-") ? [choice("Fit", [{id:"original",name:"Original"},{id:"extend",name:"Extend"},{id:"fill",name:"Fill"}],
-        () => (S().frameData[activeTheme(S())!.id] as {backgroundFit?:string}|undefined)?.backgroundFit ?? "original",
+        () => (S().frameData[activeTheme(S())!.id] as {backgroundFit?:string}|undefined)?.backgroundFit ?? (activeTheme(S())?.id.startsWith("wiiflow-")?"fill":"original"),
         (value) => {const id=activeTheme(S())!.id;updateSettings(p=>({frameData:{...p.frameData,[id]:{...(p.frameData[id] as Record<string,unknown> ?? {}),backgroundFit:value}}}));}),
         choice("Artwork extension",[{id:"automatic",name:"Automatic (verified mappings)"},{id:"frame",name:"Manual: preserve frame and extend edges"},{id:"off",name:"Off"}],
           ()=>(S().frameData[activeTheme(S())!.id] as {artworkMapping?:string}|undefined)?.artworkMapping??"automatic",

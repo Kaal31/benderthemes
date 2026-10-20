@@ -1,5 +1,6 @@
 import sys
 import unittest
+from unittest.mock import patch
 from pathlib import Path
 sys.path.insert(0, str(Path(__file__).resolve().parents[1] / 'py_modules'))
 import gbatemp_themes as gt
@@ -38,6 +39,13 @@ class CatalogTests(unittest.TestCase):
         with self.assertRaises(ValueError): gt.parse('<html>Forbidden</html>', gt.THREADS[0])
         self.assertEqual(gt.public_url('http://127.0.0.1/test'), '')
         self.assertEqual(gt.public_url('javascript:alert(1)'), '')
+
+    def test_default_browse_does_not_wait_for_remote_threads(self):
+        ts._cache.clear()
+        with patch.object(ts, "_fetch", side_effect=AssertionError("must not wait for live GBAtemp")):
+            result = ts.browse("wiiflow", "gbatemp")
+        self.assertGreater(result["total"], 0)
+        self.assertNotIn("error", result)
 
     def test_unavailable_source_uses_labeled_snapshot(self):
         ts._cache.clear()

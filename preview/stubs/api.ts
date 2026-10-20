@@ -121,10 +121,13 @@ const backend: Record<string, (...a: any[]) => any> = {
     return { ...base, kind, page: page || 1, total: words.length ? items.length : base.total, items, source: { ...THEME_SOURCES_KINDS.sources[source], id: source } };
   },
   theme_sources_files: (_kind: string, id: string) => ({ files: [{ name: `${id}/Theme One.mym`, size: 420000 }, { name: "Theme Two.csm", size: 7300000 }] }),
+  theme_sources_saved: (kind:string) => Object.fromEntries(Object.entries((window as any).__savedThemeSources??{}).filter(([key])=>key.startsWith(kind+":"))),
   theme_sources_download: async (kind: string, source: string, id: string, file: string, name: string) => {
     ((window as any).__themeSourceDownloads ??= []).push({ kind, source, id, file, name });
     await new Promise(r => setTimeout(r, 300));
-    return { success: true, name: file ? file.split("/").pop() : `${name} (${source} ${id})` };
+    const savedName=file ? file.split("/").pop() : `${name} (${source} ${id})`;
+    ((window as any).__savedThemeSources??={})[`${kind}:${source}:${id}:${source==="archive"?file:""}`]=savedName;
+    return { success: true, name: savedName };
   },
   theme_sources_progress: () => ({ busy: true, percent: 40, message: "1 MB" }),
   plugin_update_status: () => ({ success: true, currentVersion: "1.10.0", releases: [], latest: null, updateAvailable: false, stale: false }),

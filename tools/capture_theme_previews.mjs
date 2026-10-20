@@ -22,7 +22,7 @@ try {
   await page.waitForTimeout(800);
   for (const theme of themes) {
     await page.evaluate(({theme,isBundled}) => window.__updateTheme(s=>({ theme:isBundled?"frame":theme,activeTheme:isBundled?theme:"",animations:false,frameData:theme==="wiiflow-default"?{...s.frameData,[theme]:{...s.frameData[theme],backgroundFit:"fill",extendCoverflow:true,extendInterface:true}}:s.frameData })), {theme,isBundled:bundled.includes(theme)});
-    if(bundled.includes(theme))await page.locator(`[data-native-theme="${theme}"][data-theme-connected=true]`).waitFor();
+    if(bundled.includes(theme))await page.locator(`[data-react-theme="${theme}"]`).waitFor();
     await page.waitForTimeout(350);
     // A gallery image must show the home, never its startup or first-run dialog.
     for(const selector of ['.dht-console-startup','.dht-intro','.nt-boot']){
@@ -35,7 +35,7 @@ try {
     const root = page.locator("[data-dht-root]");
     const bounds=await root.boundingBox();
     if(Math.abs(bounds.width/ bounds.height-1.6)>.01)throw Error(`${theme}: preview is not the full 16:10 home`);
-    if(theme==="wiiflow-default")await page.waitForFunction(()=>{const s=document.querySelector('[data-native-theme]').shadowRoot,bg=s.querySelector('#wiiflow-background'),canvas=s.querySelector('#case-renderer');return bg&&getComputedStyle(bg).display==='block'&&canvas?.getBoundingClientRect().width>=document.querySelector('[data-native-theme]').clientWidth-1;});
+    if(theme==="wiiflow-default")await page.waitForFunction(()=>{const s=document.querySelector('[data-react-theme]'),bg=s.querySelector('#wiiflow-background'),canvas=s.querySelector('#case-renderer');return bg&&getComputedStyle(bg).display==='block'&&canvas?.getBoundingClientRect().width>=document.querySelector('[data-react-theme]').clientWidth-1;});
     await page.screenshot({clip:bounds, path: `out/theme-previews/${theme}.png`, animations:"disabled" });
     const frames = `out/theme-previews/frames/${theme}`;
     mkdirSync(frames, { recursive: true });

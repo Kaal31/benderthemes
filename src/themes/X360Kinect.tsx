@@ -1,3 +1,4 @@
+import {BackgroundMedia} from "../WallpaperMedia";
 import {customProfilePicture} from "../profilePicture";
 // Xbox 360 Kinect dashboard (2010), rebuilt from the Kinect-era dashboard in
 // thedev0ps/Xbox-360-Dashboard-Archive. Layout follows its XUI scenes on a
@@ -173,7 +174,7 @@ export function KinectHome() {
   return (
     <ThemeRoot onInput={onInput} hints={{ a: "Select", y: "Options" }}>
       <Stage background="#7fb21a">
-        {wall || look.bg || a.background ? <img src={wall ?? look.bgFor(X360_SECTION[chan.id] ?? "home") ?? a.background} className="dht-x360n-bg" data-dht-from-skin={!wall && look.bg ? "x360" : undefined} style={{ position: "absolute", inset: 0, width: W, height: H, objectFit: "cover" }} /> : <div className="dht-x360n-bg" style={{ position: "absolute", inset: 0, background: "radial-gradient(ellipse at 50% 45%, #d4ef2a 0%, #8cc21c 45%, #3f7d10 100%)" }} />}
+        {wall || look.bg || a.background ? <BackgroundMedia src={wall ?? look.bgFor(X360_SECTION[chan.id] ?? "home") ?? a.background} className="dht-x360n-bg" data-dht-from-skin={!wall && look.bg ? "x360" : undefined} style={{ position: "absolute", inset: 0, width: W, height: H, objectFit: "cover" }} /> : <div className="dht-x360n-bg" style={{ position: "absolute", inset: 0, background: "radial-gradient(ellipse at 50% 45%, #d4ef2a 0%, #8cc21c 45%, #3f7d10 100%)" }} />}
         <div style={{ position: "absolute", left: ox, top: oy, width: 1280, height: 720, transform: `scale(${k})`, transformOrigin: "0 0", fontFamily: FONT, color: INK }}>
           {/* channel list: current name lowest and 1.2× larger, the following ones above it about 35px apart */}
           <div style={{ position: "absolute", left: LIST_X, top: 0, width: 800, height: ROW_Y, overflow: "hidden" }}>

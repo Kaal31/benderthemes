@@ -330,7 +330,7 @@ def _fetch(source, url, data=None, limit=MAX_JSON):
     if data is not None:
         headers["Content-Type"] = "application/json"
     req = urllib.request.Request(url, data=data, headers=headers)
-    with _opener(source).open(req, timeout=TIMEOUT) as r:
+    with _opener(source).open(req, timeout=8 if source == "gbatemp" else TIMEOUT) as r:
         body = r.read(limit + 1)
     if len(body) > limit:
         raise ValueError("response too large")
@@ -367,6 +367,7 @@ def kinds():
 
 def browse(kind, source, query="", page=1, refresh=False, fetch_json=None, fetch_text=None, now=time.time):
     """One page of entries: {items, page, pages, total, source, error?}. Never raises."""
+    live_gbatemp = refresh or fetch_text is not None
     fetch_json = fetch_json or _fetch_json
     fetch_text = fetch_text or (lambda s, u: _fetch(s, u).decode("utf-8", "replace"))
     query = _text(query, 80)
@@ -381,6 +382,10 @@ def browse(kind, source, query="", page=1, refresh=False, fetch_json=None, fetch
         if source == "gbatemp":
             from gbatemp_themes import THREADS, parse
             def load():
+                from pathlib import Path
+                snapshot = json.loads(Path(__file__).with_name("gbatemp_wiiflow_index.json").read_text(encoding="utf-8"))
+                if not live_gbatemp:
+                    return snapshot["items"], list(THREADS)
                 items, failures = [], []
                 for thread in THREADS:
                     try:
@@ -397,10 +402,10 @@ def browse(kind, source, query="", page=1, refresh=False, fetch_json=None, fetch
                 for item in items:
                     if fallbacks.get(item["id"]): item["fallbackImage"] = fallbacks[item["id"]]
                 return items, failures
-            every, failures = _cached(("gbatemp",), load, now, refresh)
+            every, failures = _cached(("gbatemp", live_gbatemp), load, now, refresh)
             words = query.lower().split()
             hits = [i for i in every if all(w in (i["name"]+" "+i["description"]+" "+i["author"]).lower() for w in words)]
-            res = {"items": hits[(page-1)*PAGE_SIZE:page*PAGE_SIZE], "total": len(hits), "pages": max(1, -(-len(hits)//PAGE_SIZE)), "skipped": len(failures), "warning": "Some GBAtemp pages are unavailable. Showing available entries or the saved index from 2026-10-17; older links may have expired." if failures else ""}
+            res = {"items": hits[(page-1)*PAGE_SIZE:page*PAGE_SIZE], "total": len(hits), "pages": max(1, -(-len(hits)//PAGE_SIZE)), "skipped": len(failures), "warning": "Showing the saved public GBAtemp index from 2026-10-17. Refresh tries live pages; older links may have expired." if not live_gbatemp else "Some GBAtemp pages are unavailable. Showing available entries or the saved index from 2026-10-17; older links may have expired." if failures else ""}
         elif source == "themezer":
             def load():
                 data = fetch_json("themezer", THEMEZER_API, json.dumps({"query": _themezer_query(kind, query, page)}).encode())
@@ -562,6 +567,50 @@ def _zip_has(path, test):
         return False
 
 
+def saved_downloads(skins_dir, kind):
+    """Only report recorded downloads whose saved files still exist."""
+    if kind not in KINDS: return {}
+    try:
+        with open(os.path.join(skins_dir, ".theme-source-downloads.json"), encoding="utf-8") as handle:
+            rows = json.load(handle)
+        if not isinstance(rows, dict): return {}
+    except (OSError, ValueError):
+        return {}
+    root = os.path.realpath(skins_dir)
+    saved = {}
+    for key, value in rows.items():
+        if not isinstance(key, str) or not key.startswith(kind + ":") or not isinstance(value, str): continue
+        path = os.path.realpath(os.path.join(root, value))
+        try:
+            if os.path.commonpath([root, path]) == root and os.path.isfile(path): saved[key] = os.path.basename(path)
+        except ValueError:
+            continue
+    return saved
+
+
+def _remember_download(skins_dir, kind, source, ident, file, name):
+    import tempfile
+    target = os.path.join(skins_dir, ".theme-source-downloads.json")
+    try:
+        with open(target, encoding="utf-8") as handle: rows = json.load(handle)
+        if not isinstance(rows, dict): rows = {}
+    except (OSError, ValueError): rows = {}
+    rows[f"{kind}:{source}:{ident}:{file if source == 'archive' else ''}"] = os.path.join(KINDS[kind]["dir"], name)
+    temporary = None
+    try:
+        with tempfile.NamedTemporaryFile(mode="w", encoding="utf-8", dir=skins_dir, prefix=".theme-source-", delete=False) as handle:
+            temporary = handle.name
+            json.dump(rows, handle)
+        os.replace(temporary, target)
+    except OSError:
+        # The file is already installed; optional UI metadata must not turn it into a failed download.
+        pass
+    finally:
+        if temporary and os.path.exists(temporary):
+            try: os.remove(temporary)
+            except OSError: pass
+
+
 def download(skins_dir, kind, source, ident, file="", name="", opener=None):
     """Download one confirmed theme file into <skins_dir>/<kind dir>/. -> {success, name?, already?, error?}."""
     try:
@@ -591,7 +640,7 @@ def download(skins_dir, kind, source, ident, file="", name="", opener=None):
             if source == "themezer":  # "<name> (Themezer <id>)": Themezer's own names repeat the title and target
                 given = f"{_text(re.sub(r'[/\\]+', ' ', name or ''), 80) or 'Theme'} (Themezer {ident.upper()}){ext}"
             out_name = safe_file_name(given or name, ext, "Theme")
-            tmp = os.path.join(folder, f".download-{os.getpid()}-{int(time.time() * 1000)}.part")
+            tmp = os.path.join(folder, f".download-{os.getpid()}-{int(time.time() * 1000)}.part{ext}")
             done = 0
             with open(tmp, "wb") as f:
                 while True:
@@ -612,6 +661,7 @@ def download(skins_dir, kind, source, ident, file="", name="", opener=None):
             if os.path.isfile(target) and os.path.getsize(target) == done:
                 os.remove(tmp)
                 tmp = None
+                _remember_download(skins_dir, kind, source, ident, file, out_name)
                 return {"success": True, "name": out_name, "already": True}
             stem, ext2 = os.path.splitext(out_name)
             n = 2
@@ -621,6 +671,7 @@ def download(skins_dir, kind, source, ident, file="", name="", opener=None):
             target = os.path.join(folder, out_name)
         os.replace(tmp, target)
         tmp = None
+        _remember_download(skins_dir, kind, source, ident, file, out_name)
         return {"success": True, "name": out_name}
     except Exception as e:
         return {"success": False, "error": f"Download failed: {e}" if isinstance(e, ValueError) else f"Download failed ({type(e).__name__})."}

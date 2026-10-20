@@ -1,3 +1,4 @@
+import {BackgroundMedia} from "../WallpaperMedia";
 import {customProfilePicture} from "../profilePicture";
 // Xbox 360 New Xbox Experience (2008), rebuilt from the 9199 dashboard in
 // thedev0ps/Xbox-360-Dashboard-Archive. Measurements come from its XUI scenes
@@ -172,7 +173,7 @@ export function NxeHome() {
   return (
     <ThemeRoot onInput={onInput} hints={{ a: "Select", y: "Options" }}>
       <Stage background="#9fb98c">
-        {wall || look.bg || a.background ? <img src={wall ?? look.bgFor(X360_SECTION[chan.id] ?? "home") ?? a.background} className="dht-x360n-bg" data-dht-from-skin={!wall && look.bg ? "x360" : undefined} style={{ position: "absolute", inset: 0, width: W, height: H, objectFit: "cover" }} /> : <div className="dht-x360n-bg" style={{ position: "absolute", inset: 0, background: "linear-gradient(180deg,#4f8f1d 0%,#a8c88a 35%,#e8edf0 55%,#b6b8ba 100%)" }} />}
+        {wall || look.bg || a.background ? <BackgroundMedia src={wall ?? look.bgFor(X360_SECTION[chan.id] ?? "home") ?? a.background} className="dht-x360n-bg" data-dht-from-skin={!wall && look.bg ? "x360" : undefined} style={{ position: "absolute", inset: 0, width: W, height: H, objectFit: "cover" }} /> : <div className="dht-x360n-bg" style={{ position: "absolute", inset: 0, background: "linear-gradient(180deg,#4f8f1d 0%,#a8c88a 35%,#e8edf0 55%,#b6b8ba 100%)" }} />}
         <div style={{ position: "absolute", left: ox, top: oy, width: 1280, height: 720, transform: `scale(${k})`, transformOrigin: "0 0", fontFamily: FONT, color: "#fff" }}>
           {/* Horizon: the light band the panels stand on */}
           {a["aura-horizon"] && <img src={a["aura-horizon"]} aria-hidden="true" style={{ position: "absolute", left: -217, top: PANEL_TOP + PANEL_H - 40, width: 1714, height: 86, opacity: 0.45, pointerEvents: "none" }} />}

@@ -97,3 +97,7 @@ html.no-theme-motion .side .metal.is-pressed{animation:none}
 
 /* Keep missing artwork useful, and identify Steam shortcuts without guessing CDN IDs. */
 .fallback-icon{display:grid;place-items:center;position:absolute;inset:0;font-size:32px;background:linear-gradient(135deg,#344c65,#172536);color:white}.fallback-icon[hidden]{display:none}.non-steam-badge{position:absolute;z-index:3;top:4px;left:4px;padding:2px 5px;border-radius:4px;background:#101820df;color:#fff;font:10px sans-serif;pointer-events:none}.cover-frame{position:relative}.card img,.cover-frame img{display:block}
+
+/* A centered cover carousel, without a scrolling window or horizontal scrollbar. */
+#carousel{position:relative;display:block;overflow:clip;padding:20px 0;height:310px;perspective:1100px;touch-action:pan-y}
+#carousel .card{position:absolute;left:50%;top:50%;margin:0;transition:transform .22s ease,box-shadow .22s ease;will-change:transform}

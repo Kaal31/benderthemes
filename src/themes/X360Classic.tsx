@@ -1,3 +1,4 @@
+import {BackgroundMedia} from "../WallpaperMedia";
 import {customProfilePicture} from "../profilePicture";
 import { BLADE_BOUNDARIES } from "./bladeBoundaries";
 import { BladesAtmosphere } from "./BladesAtmosphere";
@@ -148,7 +149,7 @@ export function BladesHome() {
         `}</style>
         <div className="dht-blades" style={{position:"absolute",inset:0}}>
           <div className="dht-blades-page-fill" data-blade={b.id} style={{position:"absolute",inset:0,clipPath:pageOutline,backgroundImage:texture(`background-${gradient}`),backgroundSize:"100% 100%",backgroundColor:b.light,zIndex:10,pointerEvents:"none"}}>
-            {wall&&<img src={wall} alt="" className="dht-blades-wall" style={{position:"absolute",inset:0,width:"100%",height:"100%",objectFit:"cover"}}/>}
+            {wall&&<BackgroundMedia src={wall} className="dht-blades-wall" style={{position:"absolute",inset:0,width:"100%",height:"100%",objectFit:"cover"}}/>}
             {!wall&&<BladesAtmosphere assets={original} animate={s.animations}/>}
             <div style={{position:"absolute",inset:0,backgroundImage:texture(`background-${gradient}-alpha`),backgroundSize:"100% 100%"}}/>
           </div>

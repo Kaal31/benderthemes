@@ -1,3 +1,5 @@
+import {backgroundMediaKind} from "../backgroundMedia";
+import {BackgroundMedia} from "../WallpaperMedia";
 import { GameHero } from "../common";
 import {customProfilePicture} from "../profilePicture";
 import { frameLoop, useThemeActive } from "../performance";
@@ -277,12 +279,12 @@ function XmbBackground({ variant, color, animate, now, skin, fx, month = now.get
       ? `radial-gradient(ellipse at 30% 35%, ${rgb(lighten(mid, 0.12))} 0%, transparent 60%), linear-gradient(180deg, ${rgb(top)} 0%, ${rgb(mid)} 55%, ${rgb(bot)} 100%)`
       : `radial-gradient(ellipse at 48% 30%, rgba(255,255,255,0.14), transparent 62%), linear-gradient(180deg, ${rgb(top)} 0%, ${rgb(top)} 22%, ${rgb(mix(top, bot, 0.5))} 68%, ${rgb(bot)} 100%)`;
   const slideshow = slides.length ? (
-    <XmbSlides urls={slides} animate={animate} fx={fx} staticSlides={!!skin?.staticSlides} fallback={wall ? <img src={wall} style={{ position: "absolute", inset: 0, width: "100%", height: "100%", objectFit: "cover" }} /> : (cssWave ? <AnimCanvas className="dht-xmb-wave" width={W} height={H} animate={animate} fps={30} draw={variant === "ps3" ? drawPs3Wave : drawPspWave} /> : null)} />
+    <XmbSlides urls={slides} animate={animate} fx={fx} staticSlides={!!skin?.staticSlides} fallback={wall ? <BackgroundMedia src={wall} style={{ position: "absolute", inset: 0, width: "100%", height: "100%", objectFit: "cover" }} /> : (cssWave ? <AnimCanvas className="dht-xmb-wave" width={W} height={H} animate={animate} fps={30} draw={variant === "ps3" ? drawPs3Wave : drawPspWave} /> : null)} />
   ) : null;
   return (
     <div style={{ position: "absolute", inset: 0 }}>
       <div className="dht-xmb-bg" style={{ position: "absolute", inset: 0, background: `var(--dht-xmb-bg, ${bg})` }} />
-      {skin?.scene && fx.background && cssPspScene !== "off" ? (
+      {skin?.scene && (!userWall||backgroundMediaKind(userWall)==="image") && fx.background && cssPspScene !== "off" ? (
         <PspThemeBg fps={cssPspFps} scene={skin.scene} background={skin.backgrounds[0] ?? null} wallpaper={userWall ?? ((skin as P3tSkin & { wallpaper?: boolean }).wallpaper ? skin.backgrounds[0] ?? null : null)} animate={animate && fx.sceneAnim} wave={fx.wave && cssWave} level={Number.isFinite(cssPspLevel) ? clamp(cssPspLevel, 0, 100) : fx.waveLevel} tint={skin.stock ? PSP_FIRMWARE_MONTHS[month] : null} waveTint={skin.stock ? PSP_FIRMWARE_WAVE[month] : null} />
       ) : slides.length ? (
         rafScene && fx.background ? (
@@ -291,7 +293,7 @@ function XmbBackground({ variant, color, animate, now, skin, fx, month = now.get
         ) : slideshow
       ) : wall ? (
         <>
-          <img src={wall} data-dht-from-skin={userWall ? undefined : ""} style={{ position: "absolute", inset: 0, width: "100%", height: "100%", objectFit: "cover" }} />
+          <BackgroundMedia src={wall} data-dht-from-skin={userWall ? undefined : ""} style={{ position: "absolute", inset: 0, width: "100%", height: "100%", objectFit: "cover" }} />
           {/* your own wallpaper is dimmed for legibility; a theme's background is shown as the console shows it */}
           {userWall && <div style={{ position: "absolute", inset: 0, background: "rgba(0,0,0,0.3)" }} />}
         </>
