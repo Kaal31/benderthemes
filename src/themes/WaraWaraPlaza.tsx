@@ -1,3 +1,4 @@
+import {PLAZA_POST_INTERVALS,PLAZA_POST_LIFETIME,schedulePlazaPosts} from "./plazaPostTiming";
 import {PlazaPostPolicy} from "./plazaPostPolicy";
 import {createMiiAvatar} from "./miiAvatar";
 import {useSettings} from "../settings";
@@ -55,7 +56,7 @@ type Person={group:THREE.Group;headMatrix?:THREE.Matrix4;phase:number;cluster:nu
  colors:{shirt:THREE.Color;pants:THREE.Color;skin:THREE.Color;hair:THREE.Color;hat:THREE.Color};look:Look;face:Face;
  act:Act;prev:Act;blend:number;blendDur:number;pose:Float32Array;poseB:Float32Array;stride:number;idleStyle:number;energy:number;speed:number;runChance:number;running:boolean;headYaw:number;headPitch:number;
  focusUntil:number;camUntil:number;focusX:number;focusZ:number;huddle:{x:number;z:number;until:number}|null;queue:{name:ActionName;at:number}|null;blinkIn:number;blinking:number;talk:number;lod:number;debug:{act:ActionName;x:number;z:number;rot:number}|null;eyeCell:number;mouthCell:number};
-type Post={id:number;slot:number;align:number;mii:number;name:string;text:string;follow?:string;game?:Game;reply?:boolean;shot?:string;kind?:string};
+type Post={id:number;slot:number;align:number;mii:number;name:string;text:string;follow?:string;game?:Game;reply?:boolean;shot?:string;kind?:string;expires:number};
 
 // Opening, matched to TV captures of the console: the camera starts close on a lone Mii
 // waving in the middle of an empty Plaza, then pulls back and up while the titles fly in
@@ -77,7 +78,7 @@ const SPARKLES=Array.from({length:18},(_,i)=>({left:`${(i*37)%100}%`,delay:`${-(
 // Square icon art like the console's: the game's background art with its logo on top, so nothing gets cropped.
 function IconArt({g}:{g:Game}){return <><GameArt flat g={g} kind="hero" fit="cover" style={{width:'100%',height:'100%'}}/><GameArt flat g={g} kind="logo" fit="contain" style={{position:'absolute',left:'9%',top:'14%',width:'82%',height:'72%',filter:'drop-shadow(0 1px 2px #000a)'}}/></>;}
 
-export function WaraWaraPlaza({iconGlass=false,posts:postsOn=true,postEvery=4200,drawings=true,crowd:crowdSize=1,games,selected,active,motion,hold=false,floorTexture,flatFloor=false,positions,tips,editing,onMove,onFocus,onPick,view:viewProp="console",marks="rings",feed=[]}:{iconGlass?:boolean;feed?:FeedPost[];posts?:boolean;postEvery?:number;drawings?:boolean;crowd?:number;view?:PlazaView;marks?:"rings"|"shadows"|"both";games:Game[];selected:number;active:boolean;motion:boolean;hold?:boolean;flatFloor?:boolean;floorTexture?:string;positions:Record<string,Spot>;tips:boolean;editing:boolean;onMove:(id:number,pos:Spot)=>void;onFocus:(i:number)=>void;onPick:(i:number)=>void}){
+export function WaraWaraPlaza({iconGlass=false,posts:postsOn=true,postEvery=PLAZA_POST_INTERVALS.calm,drawings=true,crowd:crowdSize=1,games,selected,active,motion,hold=false,floorTexture,flatFloor=false,positions,tips,editing,onMove,onFocus,onPick,view:viewProp="console",marks="rings",feed=[]}:{iconGlass?:boolean;feed?:FeedPost[];posts?:boolean;postEvery?:number;drawings?:boolean;crowd?:number;view?:PlazaView;marks?:"rings"|"shadows"|"both";games:Game[];selected:number;active:boolean;motion:boolean;hold?:boolean;flatFloor?:boolean;floorTexture?:string;positions:Record<string,Spot>;tips:boolean;editing:boolean;onMove:(id:number,pos:Spot)=>void;onFocus:(i:number)=>void;onPick:(i:number)=>void}){
  const personalMii=useSettings().personalMii;
  const [drag,setDrag]=useState<{id:number;pos:Spot}|null>(null),[posts,setPosts]=useState<Post[]>([]);
  const dragState=useRef<{id:number;startX:number;startY:number;moved:boolean}|null>(null),suppress=useRef(false);
@@ -95,23 +96,26 @@ export function WaraWaraPlaza({iconGlass=false,posts:postsOn=true,postEvery=4200
  // The Miis around a newly selected title turn to it, and some cheer, clap, jump or point (handled in the render loop).
  const focusEvent=useRef<{index:number}|null>(null),liveActive=useRef(active);liveActive.current=active;
  useEffect(()=>{if(!active||calm)return;focusEvent.current={index:selected};},[selected,active]);
- const selectionPost=useRef<{appid:number;expires:number}|null>(null),selectionLast=useRef(new Map<number,number>()),addSelectionPost=useRef<(()=>void)|null>(null);
+ const nextPostId=useRef(0),pendingReply=useRef<Post|null>(null);
+ const selectionPost=useRef<{appid:number;expires:number}|null>(null),selectionLast=useRef(new Map<number,number>());
  const selectedApp=games[selected]?.appid;
  useEffect(()=>{
   selectionPost.current=null;
   if(!active||calm||opening||!postsOn||selectedApp===undefined)return;
   const timer=setTimeout(()=>{
    const now=Date.now();if(now-(selectionLast.current.get(selectedApp)??0)<20000||Math.random()>=.85)return;
-   selectionLast.current.set(selectedApp,now);selectionPost.current={appid:selectedApp,expires:now+10000};addSelectionPost.current?.();
+   selectionLast.current.set(selectedApp,now);selectionPost.current={appid:selectedApp,expires:now+postEvery*2};
   },2000+Math.floor(Math.random()*3001));
   return()=>clearTimeout(timer);
- },[selectedApp,active,calm,opening,postsOn]);
- // Posts: one bubble on each side of the Plaza, replaced in turn every few seconds.
+ },[selectedApp,active,calm,opening,postsOn,postEvery]);
+ // Bubbles expire independently of frequency, leaving quiet gaps at Calm speed.
+ useEffect(()=>{if(!posts.length)return;const next=Math.min(...posts.map(p=>p.expires));const timer=setTimeout(()=>setPosts(list=>list.filter(p=>p.expires>Date.now())),Math.max(0,next-Date.now()));return()=>clearTimeout(timer);},[posts]);
+ // All post sources share one cadence; changing selection never creates an extra bubble.
  useEffect(()=>{
-  if(calm||opening||!postsOn){setPosts([]);return;}let id=0;
-  const add=()=>{const crowd=people.current,policy=postPolicy.current;id++;const slot=id%2;
+  if(calm||opening||!postsOn){setPosts([]);pendingReply.current=null;return;}
+  const add=()=>{const crowd=people.current,policy=postPolicy.current;const id=++nextPostId.current,slot=id%2;
    // A post with a follow-up is always answered by a Mii nearby; otherwise one answers now and then.
-   const other=livePosts.current.find(x=>x.slot!==slot),asker=other&&other.id===policy.lastBubble&&!other.reply&&(other.follow||/\?/.test(other.text))?crowd[other.mii]:undefined,follow=asker?other?.follow:undefined;
+   const other=pendingReply.current??livePosts.current.find(x=>x.slot!==slot);pendingReply.current=null;const asker=other&&other.id===policy.lastBubble&&!other.reply&&(other.follow||/\?/.test(other.text))?crowd[other.mii]:undefined,follow=asker?other?.follow:undefined;
    const around=(r:number)=>asker?crowd.map((p,i)=>({p,i})).filter(({p})=>p!==asker&&!p.host&&!p.falling&&p.group.visible&&p.group.position.distanceTo(asker.group.position)<r):[];
    const near=follow?(around(5).length?around(5):around(12)):asker&&Math.random()<.35?around(5):[],reply=near.length>0;
    const side=reply?near:crowd.map((p,i)=>({p,i})).filter(({p})=>(slot?p.group.position.x>2&&p.group.position.x<19:p.group.position.x<-2&&p.group.position.x>-19)&&p.group.position.z>-9&&p.group.position.z<16),candidates=side.filter(({p})=>!p.host&&!p.falling&&p.group.visible&&(reply||!liveGames.current.length||p.cluster<liveGames.current.length)&&(reply||policy.allowsGame(liveGames.current[p.cluster]?.appid)));
@@ -133,20 +137,22 @@ export function WaraWaraPlaza({iconGlass=false,posts:postsOn=true,postEvery=4200
      policy.authors.set(author,speaker.i);item=entry;pool0=[speaker];break;
     }
    }
+   if(!pool0.length&&!reply&&!item)pool0=side.filter(({p})=>!p.host&&!p.falling&&p.group.visible&&p.cluster<liveGames.current.length);
    if(!pool0.length)return;
    const stage=stageRef.current,covers=coverBoxes(coverEls.current),seed=Math.floor(Math.random()*997),aligns=slot?[.18,.5,.82]:[.82,.5,.18];
    const oe=other&&postEls.current[other.id];if(oe){const l=parseFloat(oe.style.left),t=parseFloat(oe.style.top),b={x0:l-20,x1:l+oe.offsetWidth+20,y0:t-36-oe.offsetHeight,y1:t+20};covers.push(b,b,b);}
    // About one post in four, for a game with screenshots, shows one of them like a drawing on the real Plaza.
    const shotFor=(g?:Game)=>{const own=g&&!reply&&liveDrawings.current?liveShots.current?.filter(s=>s.appid===g.appid):undefined;return own?.length&&seed%4===1?own[Math.floor(seed/4)%own.length]:undefined;};
-   const scored=pool0.flatMap(c=>{const g=item?.game??liveGames.current[c.p.cluster],shot=item?undefined:shotFor(g),said=reply?{text:follow??replyFor(other?.game,seed)}:item?{text:item.text}:shot&&g?{text:shotPost(g,seed,shot.caption),shot:shot.url}:postFor(g,seed),text=said.text,width=shot?430:Math.min(540,150+text.length*11.5),head=stage?.(c.p.group.position.clone().setY(1.9));if(!reply&&!policy.allowsText(text))return [];return aligns.map((align,k)=>({c,text,shot:'shot' in said?said.shot:undefined,follow:'follow' in said?said.follow:undefined,align,score:(head?hidden(bubbleBox(head,align,width,shot?96:text.length>80?120:96).box,covers,liveSelected.current):0)+k*400}));});
+   const scored=pool0.flatMap(c=>{const g=reply?other?.game:item?.game??liveGames.current[c.p.cluster],written=reply||item?undefined:postFor(g,seed,text=>policy.allowsText(text)),shot=item||written?.appSpecific?undefined:shotFor(g),said=reply?{text:follow&&policy.allowsText(follow)?follow:Array.from({length:32},(_,i)=>replyFor(other?.game,seed+i)).find(text=>policy.allowsText(text))??""}:item?{text:item.text}:shot&&g?{text:shotPost(g,seed,shot.caption),shot:shot.url}:written;if(!said)return [];const text=said.text,width=shot?430:Math.min(540,150+text.length*11.5),head=stage?.(c.p.group.position.clone().setY(1.9));if(!text||!policy.allowsText(text))return [];return aligns.map((align,k)=>({c,text,appSpecific:!!written?.appSpecific,shot:'shot' in said?said.shot:undefined,follow:'follow' in said?said.follow:undefined,align,score:(head?hidden(bubbleBox(head,align,width,shot?96:text.length>80?120:96).box,covers,liveSelected.current):0)+k*400}));});
    if(!scored.length)return;
-   scored.forEach(x=>{if(!Number.isFinite(x.score))x.score=1e9;});const best=Math.min(...scored.map(x=>x.score)),pool=scored.filter(x=>x.score<=best+600),pickd=pool[Math.floor(Math.random()*pool.length)]??scored[0],{p,i}=pickd.c;
+   scored.forEach(x=>{if(!Number.isFinite(x.score))x.score=1e9;});const eligible=scored.some(x=>x.appSpecific)?scored.filter(x=>x.appSpecific):scored,best=Math.min(...eligible.map(x=>x.score)),pool=eligible.filter(x=>x.score<=best+600),pickd=pool[Math.floor(Math.random()*pool.length)]??scored[0],{p,i}=pickd.c;
    const game=reply?other?.game:item?item.game:liveGames.current[p.cluster];p.wait=Math.max(p.wait,7);p.talk=6.5;
    if(reply&&asker){p.chat=true;p.lookX=asker.group.position.x;p.lookZ=asker.group.position.z;}
    policy.record(pickd.text,game?.appid,item);policy.lastBubble=id;if(selectionDriven)selectionPost.current=null;
-   setPosts(list=>[...list.filter(post=>post.slot!==slot),{id,slot,align:pickd.align,mii:i,name:item?.name??p.name,kind:item?.kind,text:pickd.text,follow:pickd.follow,game,reply,shot:pickd.shot}]);};
-  addSelectionPost.current=add;
-  const first=setTimeout(add,2800),second=setTimeout(add,4800),timer=setInterval(add,postEvery);return()=>{addSelectionPost.current=null;clearTimeout(first);clearTimeout(second);clearInterval(timer);};
+   const post:Post={id,slot,align:pickd.align,mii:i,name:item?.name??p.name,kind:item?.kind,text:pickd.text,follow:pickd.follow,game,reply,shot:pickd.shot,expires:Date.now()+PLAZA_POST_LIFETIME};
+   if(!reply&&(post.follow||/\?/.test(post.text)))pendingReply.current=post;
+   setPosts(list=>[...list.filter(post=>post.slot!==slot),post]);};
+  return schedulePlazaPosts(add,postEvery);
  },[calm,opening,postsOn,postEvery]);
  // Tips are system hints, not Mii posts: one quiet line at the bottom, changing every few seconds.
  const [tip,setTip]=useState(0);

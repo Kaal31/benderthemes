@@ -79,15 +79,19 @@ const fill=(line:string,game:Game,hours:number)=>line.replace(/\{game\}/g,game.n
 /** A short reply to someone else's post about the same game. */
 export function replyFor(game:Game|undefined,seed:number){const line=REPLIES[seed%REPLIES.length];return game?fill(line,game,0):line.replace(/\{game\}/g,"that");}
 
-export type PlazaPost={text:string;follow?:string};
+export type PlazaPost={text:string;follow?:string;appSpecific?:boolean};
 
 /** A post for one Mii about one game. The owner's lines for that appid come first, then the written ones, then the rest.
  *  A follow-up, when there is one, is said next by a Mii standing nearby. */
-export function postFor(game:Game|undefined,seed:number):PlazaPost{
- const r=(seed*7919+13)%100,mine=game?USER_POSTS[game.appid]:undefined;
- if(mine?.length&&r<60){const [text,follow]=mine[seed%mine.length];return {text,follow};}
- if(r>=60&&r<78&&USER_GENERAL.length){const [text,follow]=USER_GENERAL[seed%USER_GENERAL.length];return {text,follow};}
- return {text:writtenPost(game,seed)};
+export function postFor(game:Game|undefined,seed:number,allows:(text:string)=>boolean=()=>true):PlazaPost|undefined{
+ const choose=(rows:PlazaPost[])=>{for(let n=0;n<rows.length;n++){const row=rows[(seed+n)%rows.length];if(allows(row.text))return row;}return undefined;};
+ // Exhaust unused app-specific writing before considering general conversation.
+ const mine=game?USER_POSTS[game.appid]:undefined,own=game?GAME_POSTS[game.appid]:undefined;
+ const custom=choose((mine??[]).map(([text,follow])=>({text,follow,appSpecific:true})));if(custom)return custom;
+ const written=choose((own??[]).map(text=>({text,appSpecific:true})));if(written)return written;
+ const general=choose(USER_GENERAL.map(([text,follow])=>({text,follow})));if(general)return general;
+ for(let n=0;n<256;n++){const text=writtenPost(game,seed+n);if(allows(text))return {text};}
+ return undefined;
 }
 
 function writtenPost(game:Game|undefined,seed:number){

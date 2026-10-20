@@ -27,6 +27,7 @@ jobs:
           python-version: '3.12'
       - run: npm ci
       - run: npm run typecheck
+      - run: node tests/verify-plaza-post-policy.mjs
       - run: node tests/verify-preset-company.mjs
       - run: node tests/verify-controller-compatibility.mjs
       - run: python -m unittest discover -s tests -p "test_*.py"
@@ -70,6 +71,7 @@ jobs:
       - run: node tests/verify-native-controller-ownership.mjs
       - run: node tests/verify-gamecube-native.mjs
       - run: node tests/verify-native-app-order.mjs
+      - run: node tests/verify-plaza-post-frequency.mjs
       - run: node tests/verify-background-playback.mjs
       - run: node tests/verify-wiiflow-background.mjs
       - run: node tests/verify-wiiflow-scrolling.mjs
