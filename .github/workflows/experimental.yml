@@ -81,8 +81,8 @@ jobs:
       - run: node tests/verify-community-updates.mjs
       - run: node tests/verify-channel-updater.mjs
       - run: node tests/verify-audio-downloads-browser.mjs
-      - run: node tools/capture_theme_previews.mjs
-      - run: python tools/make_theme_gifs.py
+      - name: Verify published Hub previews
+        run: python tools/fetch_gallery.py
       - run: node tests/verify-bundled-hub.mjs
       - run: node tests/verify-spotlight-install.mjs
       - run: node tests/verify-spotlight-ui.mjs
