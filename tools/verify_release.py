@@ -19,7 +19,7 @@ settings_source = (root / "src/settings.ts").read_text(encoding="utf-8")
 theme_declaration = settings_source.split("export const THEMES:", 1)[1].split("];", 1)[0]
 layouts = set(re.findall(r'id:\s*"([a-z0-9-]+)"', theme_declaration)) - {"frame", "native"}
 builtins_source = (root / "src/presets.ts").read_text(encoding="utf-8")
-builtins = set(json.loads(re.search(r'export const BUILT_IN_THEMES = (\[[^;]+?\]) as const;', builtins_source).group(1)))
+builtins = set(json.loads(re.search(r'export const BUILT_IN_THEMES = (\[[^;]*?\]) as const;', builtins_source).group(1)))
 available = {theme.get("theme") for theme in catalog["themes"]} | builtins
 assert not layouts - available, f"Themes missing from the release Hub: {sorted(layouts - available)}"
 with zipfile.ZipFile(root / f"out/DeckHomeThemes-v{version}.zip") as plugin:

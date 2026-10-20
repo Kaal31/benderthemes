@@ -86,9 +86,13 @@ def catalog(refresh=False):
     # New frame media are pinned in the plugin catalogue. Older clients keep
     # using the shared beta catalogue without learning unsupported pack IDs.
     shipped = read_json(Path(decky.DECKY_PLUGIN_DIR) / "theme-catalog.json")
+    if shipped.get("gallery", {}).get("themes") and _catalog is not None:
+        _catalog = {**_catalog, "gallery": shipped["gallery"]}
     merged = {p["id"]: p for p in (_catalog or {}).get("themes", [])}
     for pack in shipped.get("themes", []):
-        if pack.get("frameTheme") and pack["id"] not in merged:
+        previous = merged.get(pack["id"])
+        if (pack.get("frameTheme") and previous is None) or (pack.get("defaultConsole") and
+                (previous is None or version_key(pack["version"]) > version_key(previous["version"]))):
             merged[pack["id"]] = pack
     if merged:
         validate_catalog({"schema": 1, "themes": list(merged.values())})

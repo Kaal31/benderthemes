@@ -196,7 +196,9 @@ function VerifiedThemedHome({ standalone }: { standalone?: boolean }) {
     setState("checking");
     const shipped=activeTheme(settings);
     if(shipped?.source==="bundled"){
-      void ensureShippedMedia(shipped.id).then(async result=>{
+      void inventory().then(async installed=>{
+        if(!installed[shipped.id]){if(alive){setState("missing");openMarketplace("frame",{from:"frame"});}return;}
+        const result=await ensureShippedMedia(shipped.id);
         if(!result.success)throw new Error(result.error||"Theme media unavailable");
         await refreshThemes();
         if(alive)setState("ready");

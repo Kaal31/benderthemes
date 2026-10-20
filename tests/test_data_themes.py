@@ -46,21 +46,11 @@ class DataThemes(unittest.TestCase):
             p.write_bytes(b"x")
         return d
 
-    def test_bundled_examples_are_listed(self):
+    def test_shipped_themes_exclude_import_only_test_skins(self):
         ids = {t["id"]: t for t in data_themes.list_themes()}
-        self.assertEqual(ids["midnight-ps4"]["source"], "bundled")
-        self.assertEqual(ids["midnight-ps4"]["packs"].get("sounds", {}).get("files", []), [])
-        self.assertEqual(ids["midnight-ps4"]["packs"].get("music", {}).get("files", []), [])
-        # Downloaded frame audio becomes available only once materialized.
-        for relative in ("sounds/deck_ui_navigation.wav", "music/menu_music.wav"):
-            media = Path(self.tmp.name) / "defaults/assets/frame-themes/midnight-ps4" / relative
-            media.parent.mkdir(parents=True, exist_ok=True)
-            media.write_bytes(b"audio fixture")
-        data_themes._cache.clear()
-        installed = {t["id"]: t for t in data_themes.list_themes()}
-        self.assertIn("deck_ui_navigation.wav", installed["midnight-ps4"]["packs"]["sounds"]["files"])
-        self.assertIn("menu_music.wav", installed["midnight-ps4"]["packs"]["music"]["files"])
-        # the community-interface test theme is a test fixture now, never shipped
+        self.assertEqual(ids["gamecube"]["source"], "bundled")
+        self.assertEqual(ids["ios6"]["source"], "bundled")
+        self.assertNotIn("midnight-ps4", ids)
         self.assertNotIn("frame-test", ids)
 
     def test_wrapper_keeps_the_interface_in_its_folder(self):

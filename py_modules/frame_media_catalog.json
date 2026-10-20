@@ -22,24 +22,6 @@
     ],
     "version": "1.0.0"
   },
-  "midnight-ps4": {
-    "pack": "midnight-ps4",
-    "files": [
-      "music/menu_music.wav",
-      "sounds/deck_ui_bumper_end_02.wav",
-      "sounds/deck_ui_default_activation.wav",
-      "sounds/deck_ui_hide_modal.wav",
-      "sounds/deck_ui_into_game_detail.wav",
-      "sounds/deck_ui_launch_game.wav",
-      "sounds/deck_ui_navigation.wav",
-      "sounds/deck_ui_out_of_game_detail.wav",
-      "sounds/deck_ui_show_modal.wav",
-      "sounds/deck_ui_tab_transition_01.wav",
-      "sounds/deck_ui_tile_scroll.wav",
-      "wallpaper.jpg"
-    ],
-    "version": "1.0.0"
-  },
   "old-big-picture": {
     "pack": "old-big-picture",
     "files": [

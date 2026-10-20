@@ -1718,19 +1718,22 @@ class Plugin:
         try:
             with open(_settings_path(), "r", encoding="utf-8") as f:
                 data = json.load(f)
+            if isinstance(data, dict) and not data.get("explicitThemeDownloads"):
+                # Keep an existing user's active code-only look available through
+                # the switch to explicit downloads, without enabling other looks.
+                ident = data.get("activeTheme") or data.get("theme")
+                if data.get("enabled", True) and ident in {"onyx", "silver", "wii", "switch", "n3ds", "ps1", "gameamp"}:
+                    import theme_store
+                    destination = theme_store.root() / ident
+                    if not (destination / "installed.json").is_file():
+                        destination.mkdir(parents=True, exist_ok=True)
+                        (destination / "installed.json").write_text(json.dumps({"id": ident, "version": "1.0.0", "resources": []}))
+                data["explicitThemeDownloads"] = True
+                await self.set_settings(data)
             return data if isinstance(data, dict) else None
         except FileNotFoundError:
-            # First run: if the zip came with a bundled .p3t, preselect it for the PS3 theme.
-            bundled = sorted(n for n in os.listdir(_bundled_dir("p3t")) if n.lower().endswith(".p3t")) if os.path.isdir(_bundled_dir("p3t")) else []
-            first = {}
-            if bundled:
-                first["xmb"] = {"p3t": bundled[0]}
-            vdir = _bundled_dir("vita")
-            vita = sorted(os.listdir(vdir)) if os.path.isdir(vdir) else []
-            if vita:
-                first["vita"] = {"skin": vita[0]}
-            first["onboardingDone"] = False  # fresh install: the first-run flow shows once
-            return first
+            # First-time setup downloads only the theme confirmed by the user.
+            return {"theme": "psp", "activeTheme": "", "onboardingDone": False, "explicitThemeDownloads": True}
         except Exception as e:
             decky.logger.error(f"failed to read settings: {e}")
             return None

@@ -236,11 +236,11 @@
     {
       "id": "ps3",
       "name": "PS3",
-      "version": "1.0.1",
+      "version": "1.0.2",
       "theme": "ps3",
       "description": "Artwork, sounds and optional skins for PS3.",
       "minPluginVersion": "1.10.2",
-      "size": 16161285,
+      "size": 7482385,
       "resources": [
         "assets/xmb-monochrome/CREDITS.txt",
         "assets/xmb-monochrome/apps.png",
@@ -298,15 +298,15 @@
         "assets/xmb-ps3/update.png",
         "assets/xmb-ps3/user.png",
         "assets/xmb-ps3/video.png",
-        "skins/p3t/ZenGarden.p3t",
         "sounds/PS3 Menu Music/menu_music.mp3",
         "sounds/PS3 Menu Music/pack.json"
       ],
-      "unpackedSize": 16348218,
-      "sha256": "6771bcd4c9c8625d3faebfa35e00970ef928f10a0840d0a84c9c83047c165793",
-      "url": "https://github.com/Kaal31/deckthemes-assets/releases/download/ps3-v1.0.1/ThemeAssets-PS3-v1.0.1.zip",
+      "unpackedSize": 7533066,
+      "sha256": "168a760856dffe5d5f366f952dc3ee4e0d022d023694f25d0f248218b2034645",
+      "url": "https://github.com/Kaal31/deckthemes-assets/releases/download/ps3-v1.0.2/ThemeAssets-PS3-v1.0.2.zip",
       "preview": null,
-      "poster": null
+      "poster": null,
+      "defaultConsole": true
     },
     {
       "id": "psp",
@@ -1699,36 +1699,6 @@
       "audioPacks": []
     },
     {
-      "id": "midnight-ps4",
-      "name": "Midnight (PS4 layout)",
-      "version": "1.0.0",
-      "theme": null,
-      "frameTheme": "midnight-ps4",
-      "description": "Downloadable media for Midnight (PS4 layout).",
-      "minPluginVersion": "1.10.10",
-      "size": 1449603,
-      "resources": [
-        "assets/frame-themes/midnight-ps4/music/menu_music.wav",
-        "assets/frame-themes/midnight-ps4/sounds/deck_ui_bumper_end_02.wav",
-        "assets/frame-themes/midnight-ps4/sounds/deck_ui_default_activation.wav",
-        "assets/frame-themes/midnight-ps4/sounds/deck_ui_hide_modal.wav",
-        "assets/frame-themes/midnight-ps4/sounds/deck_ui_into_game_detail.wav",
-        "assets/frame-themes/midnight-ps4/sounds/deck_ui_launch_game.wav",
-        "assets/frame-themes/midnight-ps4/sounds/deck_ui_navigation.wav",
-        "assets/frame-themes/midnight-ps4/sounds/deck_ui_out_of_game_detail.wav",
-        "assets/frame-themes/midnight-ps4/sounds/deck_ui_show_modal.wav",
-        "assets/frame-themes/midnight-ps4/sounds/deck_ui_tab_transition_01.wav",
-        "assets/frame-themes/midnight-ps4/sounds/deck_ui_tile_scroll.wav",
-        "assets/frame-themes/midnight-ps4/wallpaper.jpg"
-      ],
-      "unpackedSize": 1691049,
-      "sha256": "711c26df7441253551196b265ecc64aa637bf49b79fa8c66d049d8e1b6b9846e",
-      "url": "https://github.com/Kaal31/deckthemes-assets/releases/download/midnight-ps4-v1.0.0/ThemeAssets-midnight-ps4-v1.0.0.zip",
-      "preview": null,
-      "poster": null,
-      "audioPacks": []
-    },
-    {
       "id": "old-big-picture",
       "name": "Old Big Picture",
       "version": "1.0.0",
@@ -1815,11 +1785,158 @@
       "preview": null,
       "poster": null,
       "audioPacks": []
+    },
+    {
+      "id": "onyx",
+      "name": "Onyx",
+      "theme": "onyx",
+      "version": "1.0.0",
+      "description": "Default Onyx theme. Download to add it to your themes.",
+      "minPluginVersion": "1.10.2",
+      "size": 226,
+      "unpackedSize": 84,
+      "resources": [
+        "assets/theme-defaults/onyx.json"
+      ],
+      "sha256": "e0140d1c15753172c9e58ee9c4654d46f3b93e18a4af1aaa6bb22a2a7a944937",
+      "url": "https://github.com/Kaal31/deckthemes-assets/releases/download/onyx-v1.0.0/ThemeAssets-onyx-v1.0.0.zip",
+      "defaultConsole": true
+    },
+    {
+      "id": "silver",
+      "name": "Silver",
+      "theme": "silver",
+      "version": "1.0.0",
+      "description": "Default Silver theme. Download to add it to your themes.",
+      "minPluginVersion": "1.10.2",
+      "size": 231,
+      "unpackedSize": 88,
+      "resources": [
+        "assets/theme-defaults/silver.json"
+      ],
+      "sha256": "96fccaaf74a5c7fa6240beef00e925cdf18ea78052ab16886fb98019d4c7bbca",
+      "url": "https://github.com/Kaal31/deckthemes-assets/releases/download/silver-v1.0.0/ThemeAssets-silver-v1.0.0.zip",
+      "defaultConsole": true
+    },
+    {
+      "id": "wii",
+      "name": "Wii",
+      "theme": "wii",
+      "version": "1.0.0",
+      "description": "Default Wii theme. Download to add it to your themes.",
+      "minPluginVersion": "1.10.2",
+      "size": 223,
+      "unpackedSize": 82,
+      "resources": [
+        "assets/theme-defaults/wii.json"
+      ],
+      "sha256": "835c4c54002a029e5e27d11d37daf08c9df6da55090d0a5f466b79186935b603",
+      "url": "https://github.com/Kaal31/deckthemes-assets/releases/download/wii-v1.0.0/ThemeAssets-Wii-v1.0.0.zip",
+      "defaultConsole": true
+    },
+    {
+      "id": "switch",
+      "name": "Switch",
+      "theme": "switch",
+      "version": "1.0.0",
+      "description": "Default Switch theme. Download to add it to your themes.",
+      "minPluginVersion": "1.10.2",
+      "size": 232,
+      "unpackedSize": 88,
+      "resources": [
+        "assets/theme-defaults/switch.json"
+      ],
+      "sha256": "afe2dbc6ffa2d57235ffd796081c09e8fa6efa63700106cabc547c8d2edc4b94",
+      "url": "https://github.com/Kaal31/deckthemes-assets/releases/download/switch-v1.0.0/ThemeAssets-switch-v1.0.0.zip",
+      "defaultConsole": true
+    },
+    {
+      "id": "n3ds",
+      "name": "Nintendo 3DS",
+      "theme": "n3ds",
+      "version": "1.0.0",
+      "description": "Default Nintendo 3DS theme. Download to add it to your themes.",
+      "minPluginVersion": "1.10.2",
+      "size": 237,
+      "unpackedSize": 92,
+      "resources": [
+        "assets/theme-defaults/n3ds.json"
+      ],
+      "sha256": "5aed943a886c3181941ce07f81d684d6b3c9eef19090bd55709c52eb8b78b460",
+      "url": "https://github.com/Kaal31/deckthemes-assets/releases/download/n3ds-v1.0.0/ThemeAssets-n3ds-v1.0.0.zip",
+      "defaultConsole": true
+    },
+    {
+      "id": "ps1",
+      "name": "PS1",
+      "theme": "ps1",
+      "version": "1.0.0",
+      "description": "Default PS1 theme. Download to add it to your themes.",
+      "minPluginVersion": "1.10.2",
+      "size": 224,
+      "unpackedSize": 82,
+      "resources": [
+        "assets/theme-defaults/ps1.json"
+      ],
+      "sha256": "59627a5b346fd0494eb1637695790cd8c5ff4e4d09f7a4906c5030e84b4505b1",
+      "url": "https://github.com/Kaal31/deckthemes-assets/releases/download/ps1-v1.0.0/ThemeAssets-ps1-v1.0.0.zip",
+      "defaultConsole": true
+    },
+    {
+      "id": "gameamp",
+      "name": "GameAmp",
+      "theme": null,
+      "version": "1.0.0",
+      "description": "Default GameAmp theme. Download to add it to your themes.",
+      "minPluginVersion": "1.10.2",
+      "size": 236,
+      "unpackedSize": 90,
+      "resources": [
+        "assets/theme-defaults/gameamp.json"
+      ],
+      "sha256": "0205331f2e0ddeaf105494654864346172789f68c53a5d6c8534bbd9ddda685c",
+      "url": "https://github.com/Kaal31/deckthemes-assets/releases/download/gameamp-v1.0.0/ThemeAssets-gameamp-v1.0.0.zip",
+      "defaultConsole": true,
+      "frameTheme": "gameamp",
+      "codeOnly": true
     }
   ],
   "gallery": {
-    "sha256": "124e4a52e42104f94d4099847935482e2ef77cff6fa64a6f5a794fb27794b6de",
-    "size": 12769868,
-    "url": "https://github.com/Kaal31/deckthemes-assets/releases/download/gallery-124e4a52e42104f9/HubPreviews.zip"
+    "sha256": "28437de2450a073af2d82569dbf2b1b31db65a97823064f8f1b05abb25c69aec",
+    "size": 17875135,
+    "url": "https://github.com/Kaal31/deckthemes-assets/releases/download/gallery-28437de2450a073a/HubPreviews.zip",
+    "themes": [
+      "aero",
+      "aero2",
+      "blue-glass",
+      "castle",
+      "dial",
+      "gameamp",
+      "gamecube",
+      "iisu",
+      "ios6",
+      "minecraft",
+      "n3ds",
+      "nazarick",
+      "old-big-picture",
+      "onyx",
+      "pain",
+      "ps1",
+      "ps2",
+      "ps3",
+      "ps4",
+      "ps5",
+      "psp",
+      "republic",
+      "santa-express",
+      "silver",
+      "switch",
+      "vita",
+      "wii",
+      "wiiflow-default",
+      "wiiu",
+      "x360",
+      "xbox"
+    ]
   }
 }

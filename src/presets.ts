@@ -51,20 +51,18 @@ onThemesChanged(() => listeners.forEach((l) => l()));
 // Downloaded theme packs (theme_inventory) plus the themes that ship inside the plugin. The switchers (L1 hold, L2 / R2)
 // and the Quick Access Look list only offer looks whose console is here: never a deleted or not yet downloaded theme. null = not read yet.
 const remoteInventory = callable<[], Record<string, string>>("theme_inventory");
-const inventoryCatalog = callable<[refresh: boolean], { themes: Array<{ id: string; theme: string | null }> }>("theme_catalog");
-/** The themes whose look ships inside the plugin (Wii U and iiSU also have an optional pack of extras in the Hub). */
-export const BUILT_IN_THEMES = ["onyx", "silver", "wii", "wiiu", "switch", "n3ds", "ps1", "iisu"] as const;
-const BUILT_IN: Record<string, string> = Object.fromEntries(BUILT_IN_THEMES.map((id) => [id, "built-in"]));
+/** No layout is implicitly installed: every shipped look has a downloadable pack. */
+export const BUILT_IN_THEMES = [] as const;
 let downloaded: Record<string, string> | null = null;
 export async function refreshInventory(): Promise<Record<string, string>> {
-  const [remote, catalog] = await Promise.all([remoteInventory(), inventoryCatalog(false)]);
-  const requiresPack = new Set(catalog.themes.filter(p => p.theme).map(p => p.theme));
-  downloaded = { ...Object.fromEntries(Object.entries(BUILT_IN).filter(([id]) => !requiresPack.has(id))), ...(remote ?? {}) };
+  const remote = await remoteInventory();
+  downloaded = { ...(remote ?? {}) };
   return downloaded;
 }
 /** A console (layout) whose pack is downloaded or built in; true until the inventory has been read. */
 export const isDownloaded = (layout: string) => !!downloaded?.[layout];
-const switchable = (list: Preset[]) => list.filter((p) => p.theme === "native" || p.theme === "frame" || isDownloaded(p.theme));
+export const presetAvailable = (p: Preset) => (p.theme === "native" || p.theme === "frame") ? (allThemes().find(t=>t.id===p.dataTheme)?.source==="user" || isDownloaded(p.dataTheme??"")) : isDownloaded(p.theme);
+const switchable = (list: Preset[]) => list.filter(presetAvailable);
 /** The presets the switchers step through: getPresets() without the consoles that are not downloaded. */
 export const switchPresets = (s: Settings = getSettings()) => switchable(getPresets(s));
 

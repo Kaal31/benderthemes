@@ -58,6 +58,7 @@ jobs:
         env:
           SKIP_THEME_PACK_BUILD: '1'
       - run: node tests/verify-performance-ui.mjs
+      - run: node tests/verify-onboarding-download.mjs
       - run: node tests/verify-bundled-native.mjs
       - run: node tests/verify-screensaver-settings-ui.mjs
       - run: node tests/verify-hero-scaling.mjs
@@ -74,6 +75,7 @@ jobs:
       - run: node tests/verify-audio-downloads-browser.mjs
       - run: node tools/capture_theme_previews.mjs
       - run: python tools/make_theme_gifs.py
+      - run: node tests/verify-bundled-hub.mjs
       - run: node tests/verify-spotlight-install.mjs
       - run: node tests/verify-spotlight-ui.mjs
       - run: node tests/verify-marketplace.mjs

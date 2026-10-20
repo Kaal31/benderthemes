@@ -56,7 +56,7 @@ class OnboardingSettingsTests(unittest.TestCase):
 
     def test_existing_settings_do_not(self):
         got = self.run_get(b'{"theme": "ps4"}')
-        self.assertEqual(got, {"theme": "ps4"})  # no flag: the front end treats a missing flag as done
+        self.assertEqual(got, {"theme": "ps4", "explicitThemeDownloads": True})  # no flag: the front end treats a missing flag as done
 
     def test_corrupt_or_odd_files_do_not(self):
         for raw in (b"{not json", b"", b"[1, 2]", b"\xff\xfe\x00bad"):

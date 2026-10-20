@@ -10,7 +10,7 @@ import { applyPreset, getPresets } from "./presets";
 import { useEffect, useRef, useState } from "react";
 import { InputHandler, pushModalInput } from "./input";
 import { getSettings, THEMES, ThemeId, updateSettings, useSettings } from "./settings";
-import { consoleThemeIds, hubStyle, hubThemeKey, hubVarsCss, HUB_DECO_CSS, resolveHubTheme } from "./hubStyles";
+import { BUNDLED_HUB_NAMES, consoleThemeIds, hubThemeName, hubStyle, hubThemeKey, hubVarsCss, HUB_DECO_CSS, resolveHubTheme } from "./hubStyles";
 import { playThemeIntro } from "./themeIntro";
 import { closeMarketplace, resourcesChanged, useResourceRevision } from "./marketplaceState";
 import { playSound } from "./steam";
@@ -72,16 +72,16 @@ export function Marketplace({ requested, from, initialTab }: { requested?: Theme
   const s = useSettings();
   const revision = useResourceRevision();
   const [inv, setInv] = useState<Record<string, string> | null>(null);
-  const reloadInventory = () => inventory().then(i => { if (alive.current) setInv(i || {}); }).catch(() => {});
+  const reloadInventory = () => inventory().then(i => { if (alive.current) setInv(i||{}); }).catch(() => {});
   useEffect(() => { void reloadInventory(); }, [revision]);
   // Hub style "Preview": the theme of the card focused in Discover (cards with a theme, as `filtered` below)
-  const discoverFocus = tab === "discover" ? packs.filter(p => !!p.theme && !p.community)[selected]?.theme ?? null : null;
-  const resolved = resolveHubTheme(s.hubStyle, from ? s.theme : undefined, inv, discoverFocus);
+  const discoverFocus = tab === "discover" ? (()=>{const p=packs.filter(p => !!p.theme && !p.community)[selected];return p?.localThemeId??p?.theme??null;})() : null;
+  const resolved = resolveHubTheme(s.hubStyle, from ? (s.activeTheme in BUNDLED_HUB_NAMES ? s.activeTheme : s.theme) : undefined, inv, discoverFocus);
   const styled = resolved.theme ? { theme: resolved.theme, x360: s.x360?.style } : null;
   const source = resolved.source;
   const styleChoice = s.hubStyle || "auto";
   const styleOptions = [{ id: "auto", name: "Auto" }, { id: "neutral", name: "Neutral" }, { id: "preview", name: "Preview" },
-    ...consoleThemeIds().filter(id => (inv ? !!inv[id] : false) || id === styleChoice).map(id => ({ id, name: THEMES.find(t => t.id === id)?.name ?? id }))];
+    ...consoleThemeIds().filter(id => (inv ? !!inv[id] : false) || id === styleChoice).map(id => ({ id, name: hubThemeName(id) }))];
   const cycleStyle = () => {
     const i = styleOptions.findIndex(o => o.id === styleChoice);
     updateSettings({ hubStyle: styleOptions[(i + 1) % styleOptions.length].id });
@@ -106,7 +106,7 @@ export function Marketplace({ requested, from, initialTab }: { requested?: Theme
       } satisfies ThemePack)));
       const localThemes: ThemePack[] = allThemes().filter(t => t.source === "bundled" && !/test/i.test(t.name)).map(t => ({
         id: `local:${t.id}`, name: t.name, description: t.description ?? "Bundled community theme",
-        size: 0, version: "bundled", compatible: true,
+        size: 0, version: "bundled", compatible: true, ...result.art?.[t.id],
         ...result.themes.find(p=>p.frameTheme===t.id), localThemeId:t.id, theme:t.layout,
         installedVersion:result.themes.some(p=>p.frameTheme===t.id)?result.themes.find(p=>p.frameTheme===t.id)?.installedVersion:"bundled"
       }));

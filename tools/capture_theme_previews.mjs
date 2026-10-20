@@ -2,7 +2,8 @@ import { chromium } from "playwright";
 import { mkdirSync } from "node:fs";
 import { startPreviewServer } from "../preview/server.mjs";
 // Wii, Wii U and iiSU: Hub previews only (no firmware update prompt)
-const hubOnly = ["wii","wiiu","iisu"];
+const bundled=["blue-glass","gameamp","gamecube","ios6","old-big-picture","santa-express","wiiflow-default"];
+const hubOnly = ["wii","wiiu","iisu","onyx","silver","switch","n3ds","ps1",...bundled];
 const themes = [...hubOnly, "vita","ps2","ps3","psp","ps4","ps5","xbox","x360","aero","aero2","dial","castle","republic","minecraft","pain","nazarick"];
 mkdirSync("out/theme-previews", { recursive: true });
 const browser = await chromium.launch({ headless: true });
@@ -16,7 +17,8 @@ try {
   await page.locator("[data-dht-root]").waitFor();
   await page.waitForTimeout(800);
   for (const theme of themes) {
-    await page.evaluate(theme => window.__updateTheme({ theme, animations: true }), theme);
+    await page.evaluate(({theme,isBundled}) => window.__updateTheme({ theme:isBundled?"frame":theme,activeTheme:isBundled?theme:"",animations:true }), {theme,isBundled:bundled.includes(theme)});
+    if(bundled.includes(theme))await page.locator(`[data-native-theme="${theme}"][data-theme-connected=true]`).waitFor();
     await page.waitForTimeout(650);
     const root = page.locator("[data-dht-root]");
     await root.screenshot({ path: `out/theme-previews/${theme}.png` });
@@ -34,7 +36,7 @@ try {
   await page.locator("[data-dht-root]").screenshot({ path: "out/theme-previews/marketplace.png" });
   await page.locator(".market-close").click();
   for (const theme of themes.filter(t => !hubOnly.includes(t))) {
-    await page.evaluate(theme => window.__updateTheme({ theme }), theme);
+    await page.evaluate(theme => window.__updateTheme({ theme,activeTheme:"" }), theme);
     await page.getByRole("button", { name: "Preview firmware update", exact: true }).click();
     // the PSP look shows the PSP's own system-update dialog (.dht-psp-dialog) instead of the firmware card
     const psp = theme === "psp";
@@ -43,5 +45,5 @@ try {
     await page.locator(psp ? ".dht-psp-dialog .pd-buttons button" : ".fw-actions button").last().click();
   }
   if (errors.length) throw new Error([...new Set(errors)].join("\n"));
-  console.log("All 19 themes and 16 firmware prompts captured without page errors.");
+  console.log("All 31 themes and 16 firmware prompts captured without page errors.");
 } finally { await browser.close(); server.close(); }

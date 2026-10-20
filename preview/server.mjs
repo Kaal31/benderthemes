@@ -27,7 +27,7 @@ export function frameWrapper(origin, id, entry) {
 function themePath(rest) {
   const media=resolve(root,"out/frame-media","."+rest);
   if(media.startsWith(resolve(root,"out/frame-media")+sep)&&existsSync(media))return media;
-  for (const dir of ["themes", "tests/fixtures/themes"]) {
+  for (const dir of ["themes", "tests/fixtures/themes", "out/import-fixtures"]) {
     const base = resolve(root, dir);
     const path = resolve(base, "." + rest);
     if (path.startsWith(base + sep) && existsSync(path)) return path;

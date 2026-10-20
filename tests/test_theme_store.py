@@ -29,6 +29,21 @@ def archive(files):
 
 
 class ThemeStoreTests(unittest.TestCase):
+    def test_shipped_gallery_keeps_new_theme_previews_with_legacy_catalog(self):
+        pinned = {"themes": ["gamecube", "ios6"], "sha256": "a" * 64, "size": 100, "url": "pinned-gallery"}
+        (self.plugin / "theme-catalog.json").write_text(json.dumps({"schema": 1, "themes": [], "gallery": pinned}))
+        store._catalog = {"schema": 1, "themes": [], "gallery": {"url": "legacy-gallery"}}
+        store.catalog()
+        self.assertEqual(store._catalog["gallery"], pinned)
+
+    def test_shipped_default_console_pack_replaces_legacy_test_skin_pack(self):
+        clean = {**self.pack, "version": "1.10.1", "defaultConsole": True,
+                 "url": self.pack["url"].replace("1.10.0", "1.10.1")}
+        (self.plugin / "theme-catalog.json").write_text(json.dumps({"schema": 1, "themes": [clean]}))
+        store._catalog = {"schema": 1, "themes": [self.pack]}
+        result = store.catalog()
+        self.assertEqual(result["themes"][0]["version"], "1.10.1")
+
     def setUp(self):
         self.temp = tempfile.TemporaryDirectory()
         self.addCleanup(self.temp.cleanup)

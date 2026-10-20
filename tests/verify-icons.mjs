@@ -1,3 +1,4 @@
+import {addImportedMidnight} from "./imported-midnight.mjs";
 // Icons slot: a theme's icon set, mixed into another theme, and single icons picked for one spot.
 import { chromium } from "playwright";
 import assert from "node:assert/strict";
@@ -5,6 +6,7 @@ import { startPreviewServer } from "../preview/server.mjs";
 const { server, url } = await startPreviewServer(0);
 const b = await chromium.launch(process.env.CHROMIUM ? { executablePath: process.env.CHROMIUM } : {});
 const p = await b.newPage({ viewport: { width: 1304, height: 890 } });
+await addImportedMidnight(p);
 const errors = [];
 p.on("pageerror", (e) => errors.push(e.message));
 const icon = (spot) => p.evaluate((n) => [...document.querySelectorAll(`[data-dht-root] img[data-dht-icon="${n}"]`)].map((i) => i.getAttribute("src")), spot);

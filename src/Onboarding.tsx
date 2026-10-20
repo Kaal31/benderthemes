@@ -7,13 +7,14 @@ import { useEffect, useMemo, useRef, useState } from "react";
 import { pushModalInput } from "./input";
 import { getSettings, THEMES, ThemeId, updateSettings } from "./settings";
 import { hubStyle, hubThemeKey, hubVarsCss, HUB_DECO_CSS, HUB_STYLES } from "./hubStyles";
+import { ensurePackInstalled, themeCatalog, themeDownloadProgress } from "./themePacks";
 import { inventory } from "./Marketplace";
 import { playThemeIntro } from "./themeIntro";
 import { playSound } from "./steam";
 import { loadLibrary } from "./library";
 import { Img } from "./common";
 
-const CHOICES = THEMES.filter((t) => t.id !== "frame");
+const CHOICES = THEMES.filter((t) => t.id !== "frame" && t.id !== "native");
 
 export function Onboarding() {
   const start = Math.max(0, CHOICES.findIndex((t) => t.id === getSettings().theme));
@@ -21,19 +22,32 @@ export function Onboarding() {
   const [sel, setSel] = useState(start);
   const [installed, setInstalled] = useState<Record<string, string> | null>(null);
   const listRef = useRef<HTMLDivElement>(null);
+  const [busy,setBusy]=useState(false), [error,setError]=useState(""),[progress,setProgress]=useState("");
+  const installing=useRef(false);
+  useEffect(()=>{if(!busy)return;const timer=setInterval(()=>{void themeDownloadProgress().then(p=>setProgress(`${p.percent}% � ${p.message}`)).catch(()=>{});},500);return()=>clearInterval(timer);},[busy]);
   useEffect(() => { let live = true; inventory().then((i) => live && setInstalled(i || {})).catch(() => live && setInstalled({})); return () => { live = false; }; }, []);
   useEffect(() => { listRef.current?.querySelector('[data-selected="true"]')?.scrollIntoView({ block: "nearest" }); }, [sel, step]);
   const chosen = CHOICES[sel];
   const isInstalled = (id: string) => !!installed?.[id];
-  const finish = (pick: boolean) => {
+  const finish = async (pick: boolean) => {
+    if(installing.current)return;
+    installing.current=true;setBusy(true);setError("");setProgress("Preparing download�");
     const theme = pick ? chosen.id : getSettings().theme;
-    updateSettings({ onboardingDone: true, theme: theme as ThemeId, enabled: true });
-    // an installed theme plays its intro as it appears; one that still has to be downloaded plays it after the Hub installs it
-    if (pick && isInstalled(theme)) playThemeIntro(theme, { fresh: true });
+    try{
+      if(!isInstalled(theme)){
+        const catalog=await themeCatalog(false);
+        const pack=catalog.themes.find(p=>p.theme===theme);
+        if(!pack)throw new Error("This theme is unavailable. Choose another theme or retry.");
+        await ensurePackInstalled(pack);
+      }
+      updateSettings({ onboardingDone: true, theme: theme as ThemeId, activeTheme:"", enabled: true });
+      playThemeIntro(theme, { fresh: true });
+    }catch(e){setError(String(e));}finally{installing.current=false;setBusy(false);}
   };
   const act = useRef({ step, sel, finish });
   act.current = { step, sel, finish };
   useEffect(() => pushModalInput((p) => {
+    if(installing.current)return true;
     const a = act.current;
     if (p.btn === "a" && !p.repeat) { playSound("select"); if (a.step < 2) setStep(a.step + 1); else a.finish(true); }
     else if (p.btn === "b" && !p.repeat) { playSound("back"); if (a.step === 0) a.finish(false); else setStep(a.step - 1); }
@@ -48,9 +62,10 @@ export function Onboarding() {
   // previews their own registered palette without that console-only restriction.
   const shown = previewTheme === "x360" ? hubStyle(previewTheme, s.x360?.style) : HUB_STYLES[previewTheme];
   const key = previewTheme === "x360" ? hubThemeKey(previewTheme, s.x360?.style) : previewTheme;
-  const go = () => (step < 2 ? setStep(step + 1) : finish(true));
+  const go = () => {if(!installing.current){if(step<2)setStep(step+1);else void finish(true);}};
   return (
     <div className="dht-onboarding" data-hub-theme={key} data-step={step} data-motion={s.animations} role="dialog" aria-modal="true" aria-label="Welcome">
+      {error&&<div role="alert" style={{position:"absolute",top:20,zIndex:5,color:"#ffc7c7"}}>{error}</div>}
       <style>{hubVarsCss()}{HUB_DECO_CSS}{ONBOARDING_CSS}</style>
       <div className="dht-hub-deco" data-deco={shown.deco} aria-hidden="true" />
       <div className="dht-ob-dots" aria-hidden="true">{[0, 1, 2].map((i) => <i key={i} data-on={i <= step} />)}</div>
@@ -81,7 +96,7 @@ export function Onboarding() {
             {sampleGames.length > 0 && <small className="dht-ob-library-note">Cover examples from your library</small>}
             <h2>{chosen.name}</h2>
             <p>{chosen.blurb}</p>
-            <small>{installed && !installed[chosen.id] ? "Downloaded from the Hub in the next moment." : "Built in. You can change it any time from Theme options or the Hub."}</small>
+            <small>{installed && !installed[chosen.id] ? "Downloads when you confirm. Other themes stay in the Hub." : "Already downloaded. You can change it later from the Hub."}</small>
             <button className="dht-ob-primary" onClick={() => setStep(2)}>Choose {chosen.name}</button>
           </div>
         </div>
@@ -91,8 +106,8 @@ export function Onboarding() {
         <span className="dht-ob-eyebrow">ALL SET</span>
         <h1>{chosen.name}</h1>
         <p>{shown.tagline}</p>
-        <p className="dht-ob-sub">{installed && !installed[chosen.id] ? "The Hub opens next to download it, then its intro plays." : "Your home opens with its own intro. Press any button to skip it."}</p>
-        <button className="dht-ob-primary" onClick={() => finish(true)}>{installed && !installed[chosen.id] ? "Open the Hub" : "Start"}</button>
+        <p className="dht-ob-sub">{installed && !installed[chosen.id] ? "Only this theme will download before its home opens. Other themes stay available in the Hub." : "Your home opens with its own intro. Press any button to skip it."}</p>
+        <button className="dht-ob-primary" disabled={busy} onClick={() => void finish(true)}>{busy ? progress : installed && !installed[chosen.id] ? `Download ${chosen.name} & start` : "Start"}</button>
         <small>Later on the home: hold L1 + ▲▼ to change console, L1 + ◀▶ for its other looks and theme files.</small>
         <small>Ⓐ Start · Ⓑ Back</small>
       </section>}

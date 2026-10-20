@@ -358,6 +358,7 @@ export interface Settings {
   gameBoot: string;
   /** False only on a fresh install until the first-run flow (Onboarding.tsx) is finished or skipped. */
   onboardingDone: boolean;
+  explicitThemeDownloads?: boolean;
   version: number;
 }
 
@@ -432,7 +433,7 @@ export const DEFAULTS: Settings = {
   videoBackgrounds: {},
   tvMode: false,
   enabled: true,
-  theme: "vita",
+  theme: "psp",
   source: "installed",
   sort: "recent",
   aAction: "theme",
@@ -478,6 +479,7 @@ export const DEFAULTS: Settings = {
   bootIntro: "",
   gameBoot: "",
   onboardingDone: true,
+  explicitThemeDownloads: true,
   themeFx: {},
   version: 2, // 2: presets v2 (stored presets are {id, name, base, theme, diff})
 };

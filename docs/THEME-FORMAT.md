@@ -199,3 +199,9 @@ Audio extension: `audioLibrary` returns bounded albums and tracks with no filesy
 ## Experimental multi-page interfaces
 
 Frame themes may navigate to arbitrary local HTML pages and same-page routes using the bundled ThemeHub SDK. See [FRAME-SDK.md](FRAME-SDK.md) for navigation/back/replace, shared saved data, controller/keyboard handling and animation lifecycle. The sandbox and theme-folder restrictions remain in place.
+
+Bundled theme Hub styles have individual palettes under Hub style, including Auto and Preview. The pinned gallery contains animated GIFs and JPEG posters for all 31 shipped looks. Regenerate it with `node tools/capture_theme_previews.mjs`, `python tools/make_theme_gifs.py`, and `python tools/package_gallery.py`; publish only the immutable gallery with `python tools/publish_gallery.py --gallery-only`.
+
+Fresh installs start onboarding with PSP selected. Confirming setup downloads only the chosen theme before activation. All other shipped looks, including code-only console layouts, remain uninstalled until explicitly downloaded in the Hub. Existing downloads and the previously active code-only theme are preserved during migration. Test console skins stay archived in the assets repository for manual import; the default PS3 asset pack no longer includes ZenGarden.p3t.
+
+Archived import-only samples: [Midnight PS4 complete theme ZIP](https://github.com/Kaal31/deckthemes-assets/releases/download/midnight-ps4-import-v1.0.0/ThemeHub-Midnight-PS4-v1.0.0.zip). The original ZenGarden PS3 source files remain in their existing asset releases; the PS3 default pack excludes the optional .p3t skin.

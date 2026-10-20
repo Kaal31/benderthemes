@@ -11,7 +11,7 @@ import { setStyle, style, StyleOption, THEME_STYLES } from "./engine/themeStyles
 import type { MenuItem } from "./common";
 import { collectionMenu } from "./common";
 import { openMarketplace } from "./marketplaceState";
-import { consoleThemeIds } from "./hubStyles";
+import { consoleThemeIds, hubThemeName } from "./hubStyles";
 import { deleteCurrentTheme } from "./themeActions";
 import { openSteam } from "./library";
 import { CASE_THEMES } from "./CaseArt";
@@ -676,7 +676,7 @@ export function globalSettingsItems(): MenuItem[] {
       choice("Date format", [{ id: "MDY", name: "Month / day / year" }, { id: "DMY", name: "Day / month / year" }, { id: "YMD", name: "Year / month / day" }], () => getRawSettings().dateFormat, (v) => updateSettings({ dateFormat: v as any })),
       choice("Background brightness", [100, 90, 80, 70, 60, 50].map((v, i) => ({ id: v, name: i ? `−${i} (${v}%)` : "Normal" })), () => getRawSettings().bgBrightness, (v) => updateSettings({ bgBrightness: v })),
       choice("Animated background quality", [{ id: "full", name: "Full resolution" }, { id: "half", name: "Half resolution · saves battery" }], () => getRawSettings().bgQuality, (v) => updateSettings({ bgQuality: v as any })),
-      choice("Hub style", [{ id: "auto", name: "Auto (theme it was opened on)" }, { id: "neutral", name: "Neutral" }, { id: "preview", name: "Preview (the theme focused in Discover)" }, ...consoleThemeIds().map((id) => ({ id, name: THEMES.find((t) => t.id === id)?.name ?? id }))], () => S().hubStyle, (v) => updateSettings({ hubStyle: v })),
+      choice("Hub style", [{ id: "auto", name: "Auto (theme it was opened on)" }, { id: "neutral", name: "Neutral" }, { id: "preview", name: "Preview (the theme focused in Discover)" }, ...consoleThemeIds().map((id) => ({ id, name: hubThemeName(id) }))], () => S().hubStyle, (v) => updateSettings({ hubStyle: v })),
       toggle("Themed store", () => S().themedStore !== false, (v) => updateSettings({ themedStore: v })),
       toggle("Steam Deck compatibility badges", () => S().badges.deck, (v) => updateSettings((p) => ({ badges: { ...p.badges, deck: v } }))),
       toggle("Hide Steam's top bar", () => S().hideSteamHeader, (v) => updateSettings({ hideSteamHeader: v })),

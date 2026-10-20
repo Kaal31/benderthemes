@@ -92,6 +92,8 @@ const backend: Record<string, (...a: any[]) => any> = {
   theme_download_progress: () => (window as any).__downloadProgress || { busy: false, percent: 0, id: "", message: "" },
   theme_install: async (id: string) => {
     ((window as any).__themeInstallCalls ??= []).push(id);
+    if((window as any).__themeInstallGate)await (window as any).__themeInstallGate;
+    if((window as any).__themeInstallFailure)return {success:false,error:"Preview install failure"};
     for (let percent = 0; percent <= 100; percent += 20) {
       (window as any).__downloadProgress = { busy: percent < 100, percent, id, message: "Preview download…" };
       await new Promise(resolve => setTimeout(resolve, 180));

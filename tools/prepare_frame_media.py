@@ -12,7 +12,7 @@ def prepare():
     catalog=json.loads((ROOT/"asset-catalog.json").read_text())
     for pack in catalog["themes"]:
         ident=pack.get("frameTheme")
-        if not ident:continue
+        if not ident or pack.get("codeOnly"):continue
         filename=pack["url"].rsplit("/",1)[-1]
         expected=f"https://github.com/Kaal31/deckthemes-assets/releases/download/{ident}-v{pack['version']}/{filename}"
         if pack["url"]!=expected or not ident.replace("-","").isalnum():raise ValueError("Invalid frame media source")

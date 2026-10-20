@@ -20,6 +20,7 @@ const r = await build({
 const js = r.outputFiles[0].text.replace(/<\/script/g, "<\\/script");
 const previewCatalog = JSON.parse(readFileSync(existsSync("theme-catalog.json") ? "theme-catalog.json" : "asset-catalog.json", "utf8"));
 previewCatalog.themes = previewCatalog.themes.map((pack, i) => ({ ...pack, compatible: true, installedVersion: i < 3 ? pack.version : undefined, preview: `../out/theme-previews/${pack.id}.gif`, poster: `../out/theme-previews/${pack.id}.jpg` }));
+previewCatalog.art=Object.fromEntries((previewCatalog.gallery?.themes??[]).map(id=>[id,{preview:`../out/theme-previews/${id}.gif`,poster:`../out/theme-previews/${id}.jpg`}])) ;
 // personal builds: bundled wallpapers (./bundle/wallpapers) show up in the preview too
 const walls = {};
 if (existsSync("bundle/wallpapers/aero-background.jpg")) walls["aero-background.jpg"] = "../bundle/wallpapers/aero-background.jpg";
