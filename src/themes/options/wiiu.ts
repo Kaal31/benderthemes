@@ -71,7 +71,7 @@ export const OPTIONS: StyleOption[] = [
       { id: "normal", name: "Normal" },
       { id: "busy", name: "Busy" },
     ],
-    def: "normal",
+    def: "calm",
   },
   {
     key: "drawings",

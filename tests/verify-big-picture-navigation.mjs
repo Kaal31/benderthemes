@@ -21,15 +21,20 @@ try{
  await host.locator('.home-tile.library').focus();
  await controller('ArrowRight');await host.locator('.home-tile.community[data-selected=true]').waitFor();
  await controller('ArrowLeft');await host.locator('.home-tile.library[data-selected=true]').waitFor();
- // Each single D-pad press updates selection, and both end tiles are centered completely.
+ // Each single D-pad press updates selection, and end tiles stay visible without overscrolling the row.
  for(const motion of [false,true]){
   await page.evaluate(animations=>window.__updateTheme({animations}),motion);
   await host.locator('.home-tile.library').focus();
   for(const [key,target] of [['ArrowLeft','store'],['ArrowLeft','web'],['ArrowRight','store'],['ArrowRight','library'],['ArrowRight','community'],['ArrowRight','chat'],['ArrowLeft','community'],['ArrowLeft','library']]){
    await controller(key);assert.equal(await host.locator(`.home-tile.${target}[data-selected=true]`).count(),1,'one press selects '+target);
-   await page.waitForFunction(target=>{const s=document.querySelector('[data-react-theme]'),n=s.querySelector('.home-tile.'+target),track=s,a=n.getBoundingClientRect(),b=track.getBoundingClientRect();return a.left>=b.left-1&&a.right<=b.right+1&&Math.abs((a.left+a.width/2)-(b.left+b.width/2))<2;},target);
+   await page.waitForFunction(target=>{const s=document.querySelector('[data-react-theme]'),n=s.querySelector('.home-tile.'+target),track=s,a=n.getBoundingClientRect(),b=track.getBoundingClientRect();return a.left>=b.left-1&&a.right<=b.right+1;},target);
   }
  }
+ await host.locator('.home-tile.web').focus();await page.waitForTimeout(200);
+ const leftEdge=await host.locator('.home-tile.web').boundingBox();const main=await host.locator('main').boundingBox();assert.ok(leftEdge.x<main.x+main.width*.15,'First tile stays at the left edge rather than moving to the center');
+ await host.locator('.home-tile.chat').focus();await page.waitForTimeout(200);
+ const rightEdge=await host.locator('.home-tile.chat').boundingBox();assert.ok(rightEdge.x+rightEdge.width>main.x+main.width*.85,'Last tile stays at the right edge rather than moving to the center');
+ await host.locator('.home-tile.library').focus();
  await page.evaluate(()=>window.__updateTheme({animations:false}));
  // Real keyboard events must be handled once, without also reaching host input.
  await page.keyboard.press('ArrowRight');await host.locator('.home-tile.community[data-selected=true]').waitFor();
