@@ -6,8 +6,9 @@ import { loadedPluginNames } from "./pluginPresence";
 import { loadLibrary } from "./library";
 import { parseUnlocks, Unlock, UnlockTracker } from "./achievementUnlocks";
 
-const installationStatus = callable<[], { verified: boolean; finallyInstalled: boolean }>("achievement_popup_status");
-const finallyLoaded = () => loadedPluginNames().some(n => /finally.*achievement/i.test(n));
+const installationStatus = callable<[], { verified: boolean; finallyInstalled: boolean; customizerInstalled?: boolean }>("achievement_popup_status");
+const finallyLoaded = () => loadedPluginNames().some(n => /finally.*achievement|^achievement[ _-]customizer$/i.test(n));
+let popupOwner = "Finally";
 let installed: boolean | null = null;
 let emitPreview: ((achievement: Unlock) => void) | undefined;
 let lastStatus = "Checking installed plugins…";
@@ -73,11 +74,12 @@ export function startAchievementPopups(): () => void {
       if (!lastCheck || Date.now() - lastCheck > 15000) {
         const status = await bounded(installationStatus());
         if (stopped) return;
-        installed = status?.verified ? !!status.finallyInstalled : null;
+        installed = status?.verified ? !!(status.finallyInstalled || status.customizerInstalled) : null;
+        popupOwner = status?.customizerInstalled ? "Achievement Customizer" : loadedPluginNames().some(n=>/^achievement[ _-]customizer$/i.test(n)) ? "Achievement Customizer" : "Finally";
         lastCheck = Date.now();
       }
       if (!enabled() || achievementPopupsBlocked()) {
-        lastStatus = !enabled() ? "Disabled" : installed === null ? "Installed-plugin check unavailable" : "Disabled while Finally is installed";
+        lastStatus = !enabled() ? "Disabled" : installed === null ? "Installed-plugin check unavailable" : `Disabled while ${popupOwner} is installed or loaded`;
         suppress(); return;
       }
       lastStatus = "Active · follows the selected theme";

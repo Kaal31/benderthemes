@@ -105,7 +105,7 @@ const backend: Record<string, (...a: any[]) => any> = {
   theme_remove: (id: string) => { const pack = (window as any).__themeCatalog?.themes.find((p: any) => p.id === id); if (pack) delete pack.installedVersion; return { success: true }; },
   // Plugin Spotlight search (py_modules/plugin_catalog.py). A small invented fixture, not the real 4 MB list;
   // window.__pluginCatalog replaces it (e.g. { entries: [], installed: [], error: "…" } for the offline note).
-  achievement_popup_status: () => ({verified:true,finallyInstalled:!!(window as any).__finallyInstalled}),
+  achievement_popup_status: () => ({verified:true,finallyInstalled:!!(window as any).__finallyInstalled,customizerInstalled:!!(window as any).__customizerInstalled}),
   spotlight_update_status: () => (window as any).__spotlightUpdates ?? { plugins: [], updateAvailable: false },
   spotlight_remember_source: () => ({ success: true }),
   spotlight_prepare_update: (id: string) => ({success: true, name: (window as any).__spotlightUpdates?.plugins.find((p: any) => p.id === id)?.name}),

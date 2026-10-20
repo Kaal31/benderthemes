@@ -158,3 +158,5 @@ body.away-from-home footer>[data-home-dock]{display:none!important}
 .still .springboard-dots button:before{transition:none}
 @media(prefers-reduced-motion:reduce){.springboard-dots button:before{transition:none}}
 #dashboard>header{z-index:3}.quick-pull,.nc-title{touch-action:none}
+
+#destination .store-feature .feature-caption{color:#fff;text-shadow:0 1px 3px #000a}

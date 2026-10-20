@@ -60,6 +60,9 @@ jobs:
       - run: node tests/verify-performance-ui.mjs
       - run: node tests/verify-onboarding-download.mjs
       - run: node tests/verify-bundled-native.mjs
+      - run: node tests/verify-plugin-route-handoff.mjs
+      - run: node tests/verify-castle-category-state.mjs
+      - run: node tests/verify-bundled-store-layout.mjs
       - run: node tests/verify-big-picture-navigation.mjs
       - run: node tests/verify-ios-touch-navigation.mjs
       - run: node tests/verify-home-scaling.mjs

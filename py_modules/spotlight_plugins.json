@@ -291,5 +291,45 @@
     "asset": "net-merge-decky.zip",
     "tagPrefix": "",
     "prerelease": false
+  },
+  {
+    "repo": "Hector2242/decky-plugin",
+    "name": "Achievement Customizer",
+    "authors": [
+      "Hector Mendez"
+    ],
+    "asset": "achievement-customizer.zip",
+    "tagPrefix": "v",
+    "prerelease": false
+  },
+  {
+    "repo": "deamos/steamos-orphan",
+    "name": "Orphan Finder",
+    "authors": [
+      "David Lockwood"
+    ],
+    "asset": "steamos-orphan.zip",
+    "tagPrefix": "v",
+    "prerelease": false
+  },
+  {
+    "repo": "deamos/decky-streamer",
+    "name": "Decky Streamer",
+    "authors": [
+      "Deamos"
+    ],
+    "asset": "decky-streamer.zip",
+    "tagPrefix": "v",
+    "prerelease": false
+  },
+  {
+    "repo": "otisabiburada/steamder",
+    "name": "Steamder",
+    "authors": [
+      "SANSO"
+    ],
+    "asset": "Steamder-v1.4.3.zip",
+    "tagPrefix": "",
+    "prerelease": false
   }
 ]

@@ -4,7 +4,7 @@
   let sequence=1000000000;const pending=new Map();
   function request(op,args={}){return new Promise((resolve,reject)=>{const requestId=++sequence;const timer=setTimeout(()=>{pending.delete(requestId);reject(Error('Live pages require the updated ThemeHub plugin.'));},18000);pending.set(requestId,{resolve,reject,timer});parent.postMessage({dht:1,type:'pageRequest',requestId,op,args},'*');});}
   window.addEventListener('message',e=>{if(e.source!==parent||e.data?.dht!==1||e.data.type!=='pageResult')return;const m=e.data,p=pending.get(m.requestId);if(!p)return;pending.delete(m.requestId);clearTimeout(p.timer);if(m.error)p.reject(Error(m.error));else p.resolve(m.data);});
-  const picture=(src,cls='')=>{const img=el('img',cls);try{const u=new URL(src,location.href);if(['http:','https:','data:','blob:','file:'].includes(u.protocol))img.src=u.href;}catch{}img.alt='';img.onerror=()=>img.classList.add('missing-image');return img;};
+  const picture=(src,cls='')=>{const img=el('img',cls);try{const u=new URL(src,location.href);if(['http:','https:','data:','blob:','file:'].includes(u.protocol))img.src=u.href;}catch{}img.alt='';img.onerror=()=>{img.classList.add('missing-image');img.style.visibility='hidden';};return img;};
   const art=g=>g?.art?.landscape?.[0]||g?.art?.hero?.[0]||g?.art?.portrait?.[0];
   const button=(text,fn,cls='page-button')=>{const b=el('button',cls,text);b.onclick=fn;return b;};
   const message=(root,title,body)=>{const n=el('div','page-empty');n.append(el('h2','',title),el('p','',body));root.append(n);};

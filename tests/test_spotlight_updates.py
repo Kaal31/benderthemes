@@ -57,6 +57,11 @@ class SpotlightUpdatesTests(unittest.TestCase):
         self.status()
         self.assertEqual(len(self.calls), 2)
 
+    def test_underscore_root_flag(self):
+        self.manifest["flags"] = ["_root"]
+        updates.write(self.folder / "plugin.json", self.manifest)
+        self.assertTrue(updates.installed(self.plugins, [self.source])[0]["root"])
+
     def test_deckyup_install_updates_are_detected(self):
         self.status()
         updates.write(self.folder / "package.json", {"version": "1.1.0"})

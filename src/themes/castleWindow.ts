@@ -1,9 +1,16 @@
-import {CSSProperties,useEffect,useRef} from "react";
+import {CSSProperties,useEffect,useRef,useState} from "react";
 import {Settings} from "../settings";
-export const castleWindowStyle:CSSProperties={inset:"13.3% 3.6% 7% 18.6%",background:"linear-gradient(115deg,#faffffd6,#edf6ffad 55%,#dbeaf28c)",backdropFilter:"blur(7px)",border:"1px solid #ffffffe6",boxShadow:"inset 0 1px 2px white,0 10px 40px #355c7133",clipPath:"polygon(0 0,calc(100% - 20px) 0,100% 20px,100% calc(100% - 24px),calc(100% - 24px) 100%,0 100%)",fontFamily:"Cardinal,sans-serif",transformStyle:"preserve-3d",overflow:"hidden"};
-export const castleWindowAppearance=(s:Settings):CSSProperties=>({...castleWindowStyle,...(s.castleWindows==="layered"?{inset:"15% 2.4% 5% 20%",background:"linear-gradient(115deg,#faffff9c,#edf6ff70 55%,#dbeaf25c)",backdropFilter:"blur(3px)",boxShadow:"inset 0 1px 2px white,0 22px 55px #254c7155",transform:"perspective(1600px) translateZ(24px) rotateY(-2deg)"}:{})});
+export const castleWindowStyle:CSSProperties={inset:"13.3% 3.6% 20% 18.6%",background:"linear-gradient(115deg,#faffffd6,#edf6ffad 55%,#dbeaf28c)",backdropFilter:"blur(7px)",border:"1px solid #ffffffe6",boxShadow:"inset 0 1px 2px white,0 10px 40px #355c7133",clipPath:"polygon(0 0,calc(100% - 20px) 0,100% 20px,100% calc(100% - 24px),calc(100% - 24px) 100%,0 100%)",fontFamily:"Cardinal,sans-serif",transformStyle:"preserve-3d",overflow:"hidden"};
+export const castleWindowAppearance=(s:Settings):CSSProperties=>({...castleWindowStyle,...(s.castleWindows==="layered"?{inset:"15% 2.4% 20% 20%",background:"linear-gradient(115deg,#faffff9c,#edf6ff70 55%,#dbeaf25c)",backdropFilter:"blur(3px)",boxShadow:"inset 0 1px 2px white,0 22px 55px #254c7155",transform:"perspective(1600px) translateZ(24px) rotateY(-2deg)"}:{})});
 export const returnToCastleHome=()=>window.dispatchEvent(new Event("dht-castle-home"));
-export function useCastleWindow(settings:Settings,onClose:()=>void){
+const castlePages=new Map<symbol,string>();
+const pageListeners=new Set<(page:string)=>void>();
+const currentCastlePage=()=>[...castlePages.values()].slice(-1)[0]??"home";
+const publishCastlePage=()=>pageListeners.forEach(fn=>fn(currentCastlePage()));
+export function useCastlePage(){const [page,setPage]=useState(currentCastlePage);useEffect(()=>{pageListeners.add(setPage);setPage(currentCastlePage());return()=>{pageListeners.delete(setPage);};},[]);return page;}
+export function useCastleWindow(settings:Settings,onClose:()=>void,page="home"){
+ const pageId=useRef(Symbol("castle-page"));
+ useEffect(()=>{if(settings.theme!=="castle")return;const id=pageId.current;castlePages.set(id,page);publishCastlePage();return()=>{castlePages.delete(id);publishCastlePage();};},[settings.theme,page]);
  const ref=useRef<HTMLDivElement>(null),closing=useRef(false),animation=useRef<Animation|undefined>(undefined);
  const closeTimer=useRef<ReturnType<typeof setTimeout>|undefined>(undefined);
  useEffect(()=>()=>{clearTimeout(closeTimer.current);},[]);

@@ -14,6 +14,7 @@ const skins = await readFile('src/keyboardSkins.ts', 'utf8');
 const docs = skins.slice(skins.indexOf('export function steamDocuments'), skins.indexOf('const loaderSeen'));
 const section = source.slice(source.indexOf('const HIDDEN_ATTR'), source.indexOf('// ───────────── live status'));
 const { code } = await transform(`
+const themeHomeOwnsRoute = () => window.routeOwnsHome !== false;
 const getUiDocument = () => document;
 const findClassModule = () => window.unknownFooter ? null : ({ FooterLegend:'steam-footer-legend' });
 const keyboardClasses = () => ({ classes:{ Keyboard:'_45rH7-kY4P2uVEb3TxZhm', VirtualKeyboardContainer:'_33MO29eFMotoHmrmT1-6sw' } });

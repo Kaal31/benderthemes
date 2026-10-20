@@ -116,7 +116,7 @@ def installed(plugins_dir, records):
                 except OSError:
                     pass  # updates still work if metadata is read-only
             result.append({**source, "id": folder.name, "name": name, "author": author, "currentVersion": version,
-                           "root": "root" in manifest.get("flags", [])})
+                           "root": bool({"root", "_root"}.intersection(manifest.get("flags", [])))})
             break
     return result
 
@@ -162,7 +162,7 @@ def inspect_zip(raw, plugin):
         version = package.get("version")
         if not version_key(version):
             raise ValueError("Release has no supported version")
-        return version, "root" in manifest.get("flags", [])
+        return version, bool({"root", "_root"}.intersection(manifest.get("flags", [])))
 
 
 def latest(plugin, fetch=download):

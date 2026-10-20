@@ -593,5 +593,77 @@ export const SPOTLIGHT_PLUGINS: SpotlightPlugin[] = [
     },
     "version": "1.0.2",
     "image": "https://raw.githubusercontent.com/FlashWreck/net-merge-decky/main/assets/banner.png"
+  },
+  {
+    "id": "achievement-customizer",
+    "name": "Achievement Customizer",
+    "author": "Hector Mendez",
+    "description": "Console-style Steam achievement notifications with custom colors and animations.",
+    "whyFeatured": "Xbox unfold, PlayStation drop, rarity highlights and animated pixel-art presets. ThemeHub automatically yields achievement popups while this plugin is installed or loaded.",
+    "projectUrl": "https://github.com/Hector2242/decky-plugin",
+    "image": "https://raw.githubusercontent.com/Hector2242/decky-plugin/main/assets/store.png",
+    "category": "Customization",
+    "tags": [
+      "achievements",
+      "notifications"
+    ],
+    "version": "v1.0.1",
+    "unreviewed": true,
+    "install": {
+      "pluginName": "Achievement Customizer",
+      "version": "1.0.1",
+      "zipUrl": "https://github.com/Hector2242/decky-plugin/releases/download/v1.0.1/achievement-customizer.zip"
+    }
+  },
+  {
+    "id": "steamos-orphan",
+    "name": "Orphan Finder",
+    "author": "David Lockwood",
+    "description": "Find leftover Steam library folders across internal storage and SD cards.",
+    "whyFeatured": "Find leftover Steam library folders across internal storage and SD cards.",
+    "projectUrl": "https://github.com/deamos/steamos-orphan",
+    "version": "v1.0.1",
+    "unreviewed": true,
+    "root": true,
+    "install": {
+      "pluginName": "Orphan Finder",
+      "version": "1.0.1",
+      "zipUrl": "https://github.com/deamos/steamos-orphan/releases/download/v1.0.1/steamos-orphan.zip"
+    },
+    "aiAssisted": {
+      "note": "The creator discloses AI assistance in development.",
+      "sourceUrl": "https://github.com/deamos/steamos-orphan#-ai-disclosure"
+    }
+  },
+  {
+    "id": "decky-streamer",
+    "name": "Decky Streamer",
+    "author": "Deamos",
+    "description": "Stream Steam Deck gameplay to RTMP services such as Twitch and YouTube.",
+    "whyFeatured": "Stream Steam Deck gameplay to RTMP services such as Twitch and YouTube.",
+    "projectUrl": "https://github.com/deamos/decky-streamer",
+    "version": "v0.1.12",
+    "unreviewed": true,
+    "root": false,
+    "install": {
+      "pluginName": "Decky Streamer",
+      "version": "0.1.12",
+      "zipUrl": "https://github.com/deamos/decky-streamer/releases/download/v0.1.12/decky-streamer.zip"
+    }
+  },
+  {
+    "id": "steamder",
+    "name": "Steamder",
+    "author": "SANSO",
+    "description": "Swipe through your Steam backlog and rediscover games to play.",
+    "whyFeatured": "Backlog, old favorites, installed games and new releases, with touch and controller navigation. Opens its own page while ThemeHub releases home input and Steam’s bars.",
+    "projectUrl": "https://github.com/otisabiburada/steamder",
+    "version": "1.4.3",
+    "unreviewed": true,
+    "install": {
+      "pluginName": "Steamder",
+      "version": "1.4.3",
+      "zipUrl": "https://github.com/otisabiburada/steamder/releases/download/1.4.3/Steamder-v1.4.3.zip"
+    }
   }
 ];

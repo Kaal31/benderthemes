@@ -17,7 +17,7 @@ import { getUiDocument } from "./cssvars";
 import { getSettings, useSettings, Settings, ThemeId } from "./settings";
 import { onMusicCompress, onSkinPack, skinSoundPack } from "./skins";
 import { encodeOggOpus, opusSupported, parseWav, toBase64 } from "./oggOpus";
-import { holdOtherMusic } from "./otherPlugins";
+import { holdOtherMusic, themeHomeOwnsRoute } from "./otherPlugins";
 import { keyboardClasses, steamDocuments } from "./keyboardSkins";
 import { backgroundMediaKind } from "./backgroundMedia";
 
@@ -979,7 +979,7 @@ function watchSteamChrome(doc: Document, run: () => void): () => void {
 // The themed home stays mounted under other pages (chat, settings): the bar is only ours to hide while it is on screen.
 const homeVisible = (doc: Document) => {
   const r = doc.querySelector<HTMLElement>("[data-dht-root]");
-  return !!r && r.getClientRects().length > 0 && getComputedStyle(r).visibility !== "hidden";
+  return themeHomeOwnsRoute() && !!r && r.getClientRects().length > 0 && getComputedStyle(r).visibility !== "hidden";
 };
 function markFooter(el: HTMLElement, how: "display" | "visibility") {
   if (el.hasAttribute(FOOT_ATTR) || ours(el) || touchesKeyboard(el)) return;

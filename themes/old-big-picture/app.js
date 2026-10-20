@@ -23,8 +23,25 @@
  function back(){sound('back');if(page==='store-detail'&&previous==='detail'){page='detail';previous='library';generation++;render();focusFirst();}else if(page==='detail'||page==='store-detail')go(previous);else if(page==='preferences'||page==='controllers')go('settings');else if(page==='chat')go('friends');else if(page==='photo')go('media');else if(page!=='home')go('home');else hub.open('steamHome');}
  const extraPages=window.ClassicPages({hub,root,el,button,artwork,card,go,details,notify,service,state:()=>state,page:()=>page,selected:()=>selected,token:()=>generation});
  document.querySelectorAll('[data-page]').forEach(n=>n.onclick=()=>{sound('select');go(n.dataset.page);});document.querySelectorAll('[data-open]').forEach(n=>n.onclick=()=>['settings','downloads','power'].includes(n.dataset.open)?go(n.dataset.open):hub.open(n.dataset.open));
- root.addEventListener('focusin',e=>{const n=e.target.closest('button');if(n?.classList.contains('home-tile')){const track=n.parentElement;track.scrollTo({left:n.offsetLeft-(track.clientWidth-n.offsetWidth)/2,behavior:state?.settings?.animations===false||matchMedia('(prefers-reduced-motion: reduce)').matches?'instant':'smooth'});}else if(n)n.scrollIntoView({block:'nearest',inline:'nearest',behavior:'instant'});});
- hub.on('input',({btn})=>{if(btn==='b')back();else if(btn==='y'||btn==='menu')hub.open('options');else if(btn==='x'){const id=selected?.appid||Number(document.activeElement?.dataset.appid);if(id&&(state.games||[]).some(g=>g.appid===id))hub.launch(id);}else if(btn==='l1'||btn==='r1'){const pages=['store','library','community'];const index=pages.indexOf(page);go(pages[(index+(btn==='r1'?1:2)+3)%3]);}});
+ // One focus/scroll owner for the horizontal home carousel. Generic nearest scrolling
+ // otherwise fights its centered layout and leaves the end tiles partly hidden.
+ let lastControl=null,lastHome='library';
+ function focusControl(node){if(!node)return;node.focus({preventScroll:true});if(node.classList.contains('home-tile')){const track=node.parentElement;track.scrollTo({left:Math.max(0,node.offsetLeft-(track.clientWidth-node.offsetWidth)/2),behavior:state?.settings?.animations===false||matchMedia('(prefers-reduced-motion: reduce)').matches?'instant':'smooth'});}else node.scrollIntoView({block:'nearest',inline:'nearest',behavior:'instant'});}
+ document.addEventListener('focusin',e=>{const node=e.target.closest('button,input,select,a[href]');if(!node)return;lastControl?.removeAttribute('data-themehub-focused');lastControl=node;node.setAttribute('data-themehub-focused','');if(node.classList.contains('home-tile'))lastHome=['web','store','library','community','chat'].find(k=>node.classList.contains(k))||'library';});
+ function navigateControl(btn){const nodes=[...document.querySelectorAll('button,input,select,a[href]')].filter(n=>!n.disabled&&!n.closest('[inert]')&&n.getClientRects().length),focused=nodes.includes(document.activeElement)?document.activeElement:nodes.includes(lastControl)?lastControl:null;
+  if(btn==='a'){(focused||root.querySelector('.home-tile.library')||nodes[0])?.click();return;}
+  if(!focused){focusControl(root.querySelector('.home-tile.library')||nodes[0]);return;}
+  if(page==='home'&&focused.classList.contains('profile')&&btn==='down'){focusControl(root.querySelector('.home-tile.'+lastHome)||root.querySelector('.home-tile.library'));return;}
+  if(focused.classList.contains('home-tile')){
+   const tiles=[...root.querySelectorAll('.home-tile')],at=tiles.indexOf(focused);
+   if(btn==='left'||btn==='right'){focusControl(tiles[Math.max(0,Math.min(tiles.length-1,at+(btn==='right'?1:-1)))]);return;}
+   if(btn==='up'){focusControl(document.querySelector('.profile'));return;}
+   if(btn==='down'){const games=[...root.querySelectorAll('.recommendation .game')];focusControl(games[Math.max(0,Math.min(games.length-1,at-1))]);return;}
+  }
+  const r=focused.getBoundingClientRect(),x=r.x+r.width/2,y=r.y+r.height/2,h=['left','right'].includes(btn),sign=['left','up'].includes(btn)?-1:1;
+  const next=nodes.filter(n=>n!==focused).map(n=>{const b=n.getBoundingClientRect(),dx=b.x+b.width/2-x,dy=b.y+b.height/2-y;return{n,p:(h?dx:dy)*sign,off:Math.abs(h?dy:dx)};}).filter(v=>v.p>2).sort((a,b)=>(a.p+a.off*2)-(b.p+b.off*2))[0]?.n;focusControl(next);
+ }
+ hub.on('input',({btn})=>{if(['left','right','up','down','a'].includes(btn)){navigateControl(btn);return;}if(btn==='b')back();else if(btn==='y'||btn==='menu')hub.open('options');else if(btn==='x'){const id=selected?.appid||Number(document.activeElement?.dataset.appid);if(id&&(state.games||[]).some(g=>g.appid===id))hub.launch(id);}else if(btn==='l1'||btn==='r1'){const pages=['store','library','community'];const index=pages.indexOf(page);go(pages[(index+(btn==='r1'?1:2)+3)%3]);}});
  function clock(){document.getElementById('clock').textContent=new Date().toLocaleTimeString([],{hour:'2-digit',minute:'2-digit',hour12:state?.settings?.clock24===false});}
  hub.on('state',s=>{const first=!state;state=s;document.getElementById('user').textContent=typeof s.user==='string'?s.user:s.user?.name||'Steam';
  const avatar=document.getElementById('steam-avatar'),initial=document.getElementById('avatar-initial'),url=s.avatar||s.user?.avatar;
@@ -34,5 +51,5 @@ document.body.classList.toggle('no-motion',s.settings?.animations===false);clock
  hub.on('activity',active=>{clearInterval(clockTimer);if(active){clock();clockTimer=setInterval(clock,30000);}});
  hub.on('error',notify);hub.on('dispose',()=>{clearInterval(clockTimer);clearTimeout(noticeTimer);});
  clockTimer=setInterval(clock,30000);
- hub.connect({keyboard:true,focusNavigation:true,autoBack:false});
+ hub.connect({keyboard:true,focusNavigation:false,autoBack:false});
 })();

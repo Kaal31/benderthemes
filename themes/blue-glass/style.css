@@ -104,3 +104,5 @@ main.apps-panel{height:calc(379px + var(--home-extra,0px))}
 #shelf .cover{-webkit-box-reflect:unset}
 #shelf .cover-frame{-webkit-box-reflect:below 4px linear-gradient(transparent 75%,#ffffff30)}
 #shelf .repositioning .cover-frame,.drag-ghost .cover-frame{-webkit-box-reflect:unset}
+
+#destination .store-feature .feature-caption{color:#fff;text-shadow:0 1px 3px #000a}

@@ -21,6 +21,16 @@ try{
  await host.locator('.home-tile.library').focus();
  await controller('ArrowRight');await host.locator('.home-tile.community[data-themehub-focused]').waitFor();
  await controller('ArrowLeft');await host.locator('.home-tile.library[data-themehub-focused]').waitFor();
+ // Each single D-pad press updates selection, and both end tiles are centered completely.
+ for(const motion of [false,true]){
+  await page.evaluate(animations=>window.__updateTheme({animations}),motion);
+  await host.locator('.home-tile.library').focus();
+  for(const [key,target] of [['ArrowLeft','store'],['ArrowLeft','web'],['ArrowRight','store'],['ArrowRight','library'],['ArrowRight','community'],['ArrowRight','chat'],['ArrowLeft','community'],['ArrowLeft','library']]){
+   await controller(key);assert.equal(await host.locator(`.home-tile.${target}[data-themehub-focused]`).count(),1,'one press selects '+target);
+   await page.waitForFunction(target=>{const s=document.querySelector('[data-native-theme]').shadowRoot,n=s.querySelector('.home-tile.'+target),track=n.parentElement,a=n.getBoundingClientRect(),b=track.getBoundingClientRect();return a.left>=b.left-1&&a.right<=b.right+1&&Math.abs((a.left+a.width/2)-(b.left+b.width/2))<2;},target);
+  }
+ }
+ await page.evaluate(()=>window.__updateTheme({animations:false}));
  // Real keyboard events must be handled once, without also reaching host input.
  await page.keyboard.press('ArrowRight');await host.locator('.home-tile.community[data-themehub-focused]').waitFor();
  await page.keyboard.press('ArrowLeft');await host.locator('.home-tile.library[data-themehub-focused]').waitFor();

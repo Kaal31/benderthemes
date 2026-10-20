@@ -9,7 +9,7 @@ import {castleWindowAppearance,useCastleWindow} from "./themes/castleWindow";
 import { Navigation } from "@decky/ui";
 import { CSSProperties, ReactNode, useEffect, useRef, useState } from "react";
 import { opensKeyboardOnTap, showSteamKeyboard } from "./steamKeyboard";
-import { Press, setModalInput, Stage, useStage } from "./input";
+import { Press, setModalInput, Stage, StageHost, useStage } from "./input";
 import { Game, Library, openSteam } from "./library";
 import { fmtPrice, loadStoreDetails, loadStoreLists, searchStore, STORE_TABS, StoreDetails, StoreItem, StoreTab } from "./store";
 import { TrailerVideo } from "./media";
@@ -123,7 +123,7 @@ type Zone = "tabs" | "items" | "detail" | "trailer";
 
 export function StoreView({ settings, lib, onClose, onLaunch }: { settings: Settings; lib: Library; onClose: () => void; onLaunch: (g: Game) => void }) {
   const skin = storeSkin(settings);
-  const castleWindow=useCastleWindow(settings,onClose);
+  const castleWindow=useCastleWindow(settings,onClose,"store");
   const close=castleWindow.close;
   const icons = useAssets("xmb-ps3");
   const [lists, setLists] = useState<Record<string, StoreItem[]> | null>(null);
@@ -263,7 +263,7 @@ export function StoreView({ settings, lib, onClose, onLaunch }: { settings: Sett
     <div ref={castleWindow.ref} className="dht-store" data-dht-store-skin={settings.theme} data-scheme={iisuSchemeAttr(settings)} style={{ position: "absolute", inset: 0, zIndex: 85, background: "#000",...iisuPageVars(settings),...(settings.theme==="castle"?castleWindowAppearance(settings):{}) }}>
       <style>{NINTENDO_STORE_CSS + "\n" + IISU_STORE_CSS}</style>
       {searchOpen && <div className="dht-store-search" style={{position:"absolute",inset:settings.theme==="nazarick"?"10% 0 0":0,zIndex:5,background:skin.bg,color:skin.text,display:"grid",placeItems:"center"}}><form onSubmit={e=>{e.preventDefault();submitSearch();}} style={{width:"65%"}}><h1>{tab === "plugins" ? "Search plugins" : tab === "themes" ? "Search themes" : "Search Store"}</h1><input ref={searchBox} autoFocus {...opensKeyboardOnTap} aria-label={tab === "plugins" ? "Search plugins" : tab === "themes" ? "Search themes" : "Search Store"} value={searchDraft} onChange={e=>setSearchDraft(e.target.value)} onKeyDown={e=>{e.stopPropagation();if(e.key==="Escape")setSearchOpen(false);}} style={{width:"100%",boxSizing:"border-box",fontSize:28,padding:18,color:skin.text,background:skin.panel,border:`2px solid ${skin.sub}`,borderRadius:skin.radius}}/><button type="submit" style={{fontSize:22,padding:"14px 30px",marginTop:24,background:skin.accent,color:skin.accentText}}>Search</button><button type="button" onClick={()=>setSearchOpen(false)} style={{fontSize:22,padding:"14px 30px",marginLeft:18}}>Back</button><p style={{marginTop:22,fontSize:16,color:skin.sub}}>Ⓐ Keyboard · Ⓨ Search · Ⓑ Back</p></form></div>}
-      <Stage background="transparent">
+      <StageHost><Stage background="transparent">
         {settings.theme==="nazarick"&&<><NazarickBackdrop page="store" motion={settings.animations} settings={settings}/><NazarickNavigation page="store" settings={settings} onNavigate={navigateNazarick}/></>}
         <StoreBody
           skin={skin}
@@ -288,7 +288,7 @@ export function StoreView({ settings, lib, onClose, onLaunch }: { settings: Sett
           onAction={(i) => (setDsel(i), actions[i]?.run())}
           onBack={() => (zone === "detail" ? (setZone("items"), setDetail(null)) : zone === "trailer" ? setZone("detail") : close())}
         />
-      </Stage>
+      </Stage></StageHost>
     </div>
   );
 }

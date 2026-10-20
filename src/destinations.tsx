@@ -11,7 +11,7 @@ import { Navigation } from "@decky/ui";
 import { Badges, protonDbEnabled } from "./badges";
 import { useProtonDbPresent } from "./pluginPresence";
 import { pluginGameActions } from "./pluginSupport";
-import { Press, pushModalInput, spatial, Stage } from "./input";
+import { Press, pushModalInput, spatial, Stage, StageHost } from "./input";
 import { Settings, updateSettings } from "./settings";
 import { playSound, useSteamStatus } from "./steam";
 import { storeSkin } from "./storeView";
@@ -36,7 +36,7 @@ export function DestinationView({destination,settings:homeSettings,lib,onClose,o
   const settings=pageSettings(homeSettings,pageOf(page.place));
   const protonDbDetected = useProtonDbPresent();
   const skin=storeSkin(settings);
-  const {ref:surfaceRef,close:closeSurface}=useCastleWindow(settings,onClose);
+  const {ref:surfaceRef,close:closeSurface}=useCastleWindow(settings,onClose,page.place);
   const [history,setHistory]=useState<Destination[]>([]);
   const [sel,setSel]=useState(0);
   const [query,setQuery]=useState("");
@@ -113,7 +113,7 @@ export function DestinationView({destination,settings:homeSettings,lib,onClose,o
   useEffect(()=>{listRef.current?.querySelector("[data-selected=true]")?.scrollIntoView({block:"nearest",inline:"nearest"});},[current,page.place]);
   const itemStyle:CSSProperties={display:"flex",alignItems:"center",gap:22,padding:"16px 22px",minHeight:68,boxSizing:"border-box",borderRadius:skin.radius,border:"1px solid transparent",color:skin.text,width:"100%",textAlign:"left",font:"inherit",cursor:"pointer"};
   const menuVariant=settings.theme==="ps3"||settings.theme==="psp"?"xmb":settings.theme;
-  return <div ref={surfaceRef} className="dht-destination" data-theme={settings.theme} data-place={page.place} data-variant={settings.theme==="x360"?settings.x360?.style??"metro":undefined} data-n3ds-top={settings.theme==="n3ds"?(settings.n3dsTop==="hide"?"hide":"show"):undefined} data-scheme={iisuSchemeAttr(settings)} style={{position:"absolute",inset:0,zIndex:85,...iisuPageVars(settings),...(settings.theme==="castle"?castleWindowAppearance(settings):{})}}><Stage background={skin.bg}><style>{PAGE_LOOKS}</style>
+  return <div ref={surfaceRef} className="dht-destination" data-theme={settings.theme} data-place={page.place} data-variant={settings.theme==="x360"?settings.x360?.style??"metro":undefined} data-n3ds-top={settings.theme==="n3ds"?(settings.n3dsTop==="hide"?"hide":"show"):undefined} data-scheme={iisuSchemeAttr(settings)} style={{position:"absolute",inset:0,zIndex:85,...iisuPageVars(settings),...(settings.theme==="castle"?castleWindowAppearance(settings):{})}}><StageHost><Stage background={skin.bg}><style>{PAGE_LOOKS}</style>
     {settings.theme==="nazarick"&&<><NazarickBackdrop page={page.place} motion={settings.animations} settings={settings}/><NazarickNavigation page={page.place} settings={settings} onNavigate={navigateNazarick}/></>}
     <div className={settings.theme==="nazarick"?"naz-content dht-page-frame":"dht-page-frame"} style={{position:"absolute",inset:"5% 6%",color:skin.text,fontFamily:skin.font??'"Segoe UI",Arial,sans-serif',display:"flex",flexDirection:"column",gap:18}}>
       <header className="dht-page-header" style={{display:"flex",alignItems:"center",gap:24,color:skin.tabText??skin.text}}>{settings.theme!=="nazarick"&&<button className="dht-page-back" onClick={back} style={{...itemStyle,width:"auto",minHeight:48,background:skin.panel}}>‹ Back</button>}<h1 className="dht-page-title" data-focus-label={page.place==="library"||page.place==="search"?rows[current]?.label??"":undefined} style={{fontSize:38,fontWeight:400,margin:0}}>{game?.name??names[page.place]}</h1></header>
@@ -128,5 +128,5 @@ export function DestinationView({destination,settings:homeSettings,lib,onClose,o
       </div>}</div></div>
       <footer className="dht-page-footer" style={{fontSize:19,color:skin.tabText??skin.text}}>{settings.theme==="nazarick"?"A · Select　 L1 / R1 · Categories　":"A · Select　 B · Back　"}{page.place==="library"||page.place==="search"?"Y · Search":""}</footer>
     </div><MenuView menu={menu} variant={menuVariant}/>
-  </Stage></div>;
+  </Stage></StageHost></div>;
 }
