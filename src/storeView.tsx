@@ -61,7 +61,7 @@ export function storeSkin(s: Settings): Skin {
     "old-big-picture":{bg:"radial-gradient(ellipse at top,#164761,#07182c)",panel:"#123b54",text:"#d8edf4",sub:"#84b6ce",accent:"#248eae",radius:2},
     "blue-glass":{bg:"linear-gradient(135deg,#315774,#6f9bb6 52%,#345e7c)",panel:"linear-gradient(#89b5ce,#345973)",text:"#f0f7fc",sub:"#d4e6f0",accent:"#3d8fc8",radius:10},
     "ios6":{bg:"repeating-linear-gradient(90deg,#d6dce4 0 3px,#d2d9e2 3px 5px)",panel:"linear-gradient(#fff,#e9edf3)",text:"#233a53",sub:"#526b86",accent:"#367ebc",radius:9},
-    "gameamp":{bg:"linear-gradient(110deg,#e6ebef,#9da7b4 26%,#eef2f6 49%,#b4bdc8)",panel:"linear-gradient(#073d82,#052257)",text:"#e3edff",sub:"#3c536d",accent:"#0059b5",radius:16,font:"'Courier New',monospace"},
+    "gameamp":{bg:"linear-gradient(110deg,#e6ebef,#9da7b4 26%,#eef2f6 49%,#b4bdc8)",panel:"linear-gradient(#f2f5fa,#aab7c8)",text:"#172d4b",sub:"#3c536d",accent:"#0059b5",radius:16,font:"'Courier New',monospace"},
     "santa-express":{bg:"radial-gradient(ellipse at top,#a83724,#490b09 80%)",panel:"linear-gradient(#a62b1c,#570d08)",text:"#fff0da",sub:"#edbc9a",accent:"#cb442e",radius:22},
     "gamecube":{bg:"radial-gradient(ellipse at center,#34374e,#121522)",panel:"#282d43",text:"#fff",sub:"#b1b6d0",accent:"#8a67ba",radius:2},
     "wiiflow-default":{bg:"radial-gradient(ellipse at top,#434648,#171919)",panel:"#30383a",text:"#fff",sub:"#c4cccf",accent:"#66848e",radius:4}
