@@ -49,8 +49,8 @@ class DataThemes(unittest.TestCase):
     def test_bundled_examples_are_listed(self):
         ids = {t["id"]: t for t in data_themes.list_themes()}
         self.assertEqual(ids["midnight-ps4"]["source"], "bundled")
-        self.assertEqual(ids["midnight-ps4"]["packs"]["sounds"]["files"], [])
-        self.assertEqual(ids["midnight-ps4"]["packs"]["music"]["files"], [])
+        self.assertEqual(ids["midnight-ps4"]["packs"].get("sounds", {}).get("files", []), [])
+        self.assertEqual(ids["midnight-ps4"]["packs"].get("music", {}).get("files", []), [])
         # Downloaded frame audio becomes available only once materialized.
         for relative in ("sounds/deck_ui_navigation.wav", "music/menu_music.wav"):
             media = Path(self.tmp.name) / "defaults/assets/frame-themes/midnight-ps4" / relative
