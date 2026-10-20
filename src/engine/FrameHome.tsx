@@ -24,7 +24,7 @@ import { useHome } from "../common";
 import { Btn, Hints, Press, ThemeRoot } from "../input";
 import { Game, openSteam, SteamPlace } from "../library";
 import { getSettings, updateSettings } from "../settings";
-import { fmtTime, playSound, SOUND_FILES, SoundKind } from "../steam";
+import { fmtTime, playSound, SOUND_FILES, SoundKind, useSteamStatus } from "../steam";
 import { activeTheme, iconMap, slotAccent, slotUrl, frameUrl, themeFileUrl } from "./registry";
 import { themeAudioBands } from "../themeAudio";
 import { useDownloads } from "../downloads";
@@ -56,6 +56,7 @@ function publicGame(g: Game, abs: (u: string) => string) {
 export function FrameHome() {
   const api = useHome();
   const downloads = useDownloads();
+  const status = useSteamStatus();
   const requests = useRef({ at: 0, count: 0, pending: 0 });
   const theme = activeTheme(api.settings);
   const [media,setMedia]=useState<{id?:string;ready:boolean;error?:string}>({ready:false});
@@ -118,6 +119,7 @@ export function FrameHome() {
     return {
       theme: theme ? { id: theme.id, name: theme.name } : null,
       user: api.user,
+      avatar: status.avatar ?? null,
       settings: { clock24: s.clock24, animations: s.animations, sounds: s.sounds, tvMode: s.tvMode, accent: slotAccent(s) ?? null },
       // the theme's slots after mix and match: files from data themes only
       slots: { wallpaper: slotUrl("wallpaper", s) ?? null, bootVideo: slotUrl("bootVideo", s) ?? null, launchVideo: slotUrl("launchVideo", s) ?? null, font: slotUrl("font", s) ?? null, icons: iconMap(s) },
@@ -130,7 +132,7 @@ export function FrameHome() {
       active: !((nativePort.current?.ownerDocument??frame.current?.ownerDocument)?.hidden ?? false) && !api.busy,
       capabilities: { pages: 1, audio: 1, focus: 1, navigation: 1, lifecycle: 1, savePatch: 1 },
     };
-  }, [api.lib, api.settings, api.user, api.busy, theme?.id, ready, routes]);
+  }, [api.lib, api.settings, api.user, api.busy, status.avatar, theme?.id, ready, routes]);
 
   useEffect(() => {
     if (ready) post({ type: "state", ...state });

@@ -26,10 +26,20 @@
     if (state && !state.capabilities?.navigation) { emit('error','This host does not support theme page navigation.'); return; }
     send({type:'navigate',path,params,replace});
   }
+  // Steam can return DOM focus to the host Focusable between controller events.
+  // Preserve the theme's last control instead of restarting at its profile button.
+  let lastFocused = null;
+  document.addEventListener('focusin', e => {
+    const target = e.target.closest?.('button,a[href],input,select,textarea,[tabindex="0"]');
+    if (!target) return;
+    lastFocused?.removeAttribute('data-themehub-focused');
+    lastFocused = target;
+    target.setAttribute('data-themehub-focused', '');
+  });
   function input(message) {
     if (options.focusNavigation) {
       const nodes = [...document.querySelectorAll('button,a[href],input,select,textarea,[tabindex="0"]')].filter(n => !n.disabled && !n.closest('[inert]') && n.getClientRects().length);
-      const focused = nodes.includes(document.activeElement) ? document.activeElement : null;
+      const focused = nodes.includes(document.activeElement) ? document.activeElement : nodes.includes(lastFocused) ? lastFocused : null;
       if (message.btn === 'a') { const target = focused ?? nodes[0]; target?.focus(); target?.click(); }
       else if (['up','down','left','right'].includes(message.btn)) {
         let target = nodes[0];
@@ -90,7 +100,7 @@
   document.addEventListener('keydown',e => {
     if (!options.keyboard || e.defaultPrevented || e.target.matches?.('input,textarea,select,[contenteditable]')) return;
     const btn = {ArrowUp:'up',ArrowDown:'down',ArrowLeft:'left',ArrowRight:'right',Enter:'a',Escape:'b',x:'x',y:'y',m:'menu',q:'l1',e:'r1'}[e.key];
-    if (btn) { e.preventDefault(); input({btn,repeat:e.repeat}); }
+    if (btn) { e.preventDefault(); e.stopPropagation(); input({btn,repeat:e.repeat}); }
   });
   window.addEventListener('pagehide',() => { clearInterval(hello); activity(false); cancelRequests('Theme page closed.'); emit('dispose'); });
   window.ThemeHub = {

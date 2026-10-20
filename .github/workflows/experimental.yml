@@ -60,6 +60,9 @@ jobs:
       - run: node tests/verify-performance-ui.mjs
       - run: node tests/verify-onboarding-download.mjs
       - run: node tests/verify-bundled-native.mjs
+      - run: node tests/verify-big-picture-navigation.mjs
+      - run: node tests/verify-ios-touch-navigation.mjs
+      - run: node tests/verify-wiiflow-background.mjs
       - run: node tests/verify-theme-artwork-hub.mjs
       - run: node tests/verify-screensaver-settings-ui.mjs
       - run: node tests/verify-hero-scaling.mjs

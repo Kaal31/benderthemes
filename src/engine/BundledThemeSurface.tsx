@@ -57,10 +57,10 @@ export function BundledThemeSurface({ id, base, port, onMessage }: {
       const node=doc.createElement(tag,options);
       const setAttribute=node.setAttribute.bind(node);
       node.setAttribute=(name,value)=>setAttribute(name,["src","href","poster"].includes(name)?absolute(value):value);
-      for(const key of ["src","href","poster"]){
+      for(const key of (tag.toLowerCase()==="style"?["src","href","poster","textContent"]:["src","href","poster"])){
         let prototype=Object.getPrototypeOf(node),descriptor:PropertyDescriptor|undefined;
         while(prototype&&!descriptor){descriptor=Object.getOwnPropertyDescriptor(prototype,key);prototype=Object.getPrototypeOf(prototype);}
-        if(descriptor?.get&&descriptor?.set){const {get,set}=descriptor;Object.defineProperty(node,key,{configurable:true,get:()=>get.call(node),set:(value:string)=>set.call(node,absolute(String(value)))});}
+        if(descriptor?.get&&descriptor?.set){const {get,set}=descriptor;Object.defineProperty(node,key,{configurable:true,get:()=>get.call(node),set:(value:string)=>set.call(node,key==="textContent"?css(String(value)):absolute(String(value)))});}
       }
       return node;
     };
@@ -71,8 +71,9 @@ export function BundledThemeSurface({ id, base, port, onMessage }: {
       if(key==="head")return html;
       if(key==="defaultView")return scopeWindow;
       if(key==="activeElement")return shadow.activeElement ?? body;
+      if(key==="dispatchEvent")return (event:Event)=>body.dispatchEvent(event);
       if(key==="getElementById")return (ident:string)=>shadow.getElementById(ident);
-      if(key==="querySelector"||key==="querySelectorAll")return (selector:string)=>(shadow[key] as any)(selector.replace(/\bhtml\b/g,"[data-theme-html]").replace(/\bbody\b/g,"[data-theme-body]"));
+      if(key==="querySelector"||key==="querySelectorAll")return (selector:string)=>(shadow[key] as any)(selector.replace(/(^|[\s,>+~])html(?=$|[\s.#:[>+~,])/g,"$1[data-theme-html]").replace(/(^|[\s,>+~])body(?=$|[\s.#:[>+~,])/g,"$1[data-theme-body]"));
       if(key==="addEventListener")return (name:string,listener:EventListener,options?:AddEventListenerOptions|boolean)=>listen(name==="visibilitychange"?doc:body,name,listener,options);
       if(key==="removeEventListener")return (name:string,listener:EventListener,options?:boolean)=>{doc.removeEventListener(name,listener,options);body.removeEventListener(name,listener,options);};
       const value=(doc as any)[key];return typeof value==="function"?value.bind(doc):value;

@@ -1,0 +1,39 @@
+import assert from 'node:assert/strict';
+import {mkdirSync} from 'node:fs';
+import {launch} from './browser.mjs';
+import {startPreviewServer} from '../preview/server.mjs';
+const {server,url}=await startPreviewServer(),browser=await launch();
+mkdirSync('out/native-themes',{recursive:true});
+try{
+ const page=await browser.newPage({viewport:{width:1280,height:800}}),errors=[];
+ page.on('pageerror',e=>errors.push(e.message));
+ await page.goto(url+'?theme=vita&still=1');await page.locator('[data-dht-root]').waitFor();
+ await page.evaluate(()=>window.__updateTheme({theme:'frame',activeTheme:'old-big-picture',animations:false}));
+ const host=page.locator('[data-native-theme="old-big-picture"][data-theme-connected=true]');await host.waitFor();
+ await host.locator('.home-tile.library[data-themehub-focused]').waitFor();
+ await page.waitForFunction(()=>{const image=document.querySelector('[data-native-theme]').shadowRoot.querySelector('#steam-avatar');return image?.complete&&image.naturalWidth>0&&!image.hidden;});
+ assert.equal(await host.locator('#avatar-initial').isVisible(),false);
+ // Steam may restore focus to its outer Focusable after every D-pad event.
+ const controller=async key=>{await page.evaluate(key=>{document.querySelector('[data-native-theme]').shadowRoot.activeElement?.blur();window.dispatchEvent(new KeyboardEvent('keydown',{key,bubbles:true}));},key);};
+ await host.locator('.profile').focus();
+ await controller('ArrowDown');
+ await host.locator('.home-tile[data-themehub-focused]').waitFor();
+ await host.locator('.home-tile.library').focus();
+ await controller('ArrowRight');await host.locator('.home-tile.community[data-themehub-focused]').waitFor();
+ await controller('ArrowLeft');await host.locator('.home-tile.library[data-themehub-focused]').waitFor();
+ // Real keyboard events must be handled once, without also reaching host input.
+ await page.keyboard.press('ArrowRight');await host.locator('.home-tile.community[data-themehub-focused]').waitFor();
+ await page.keyboard.press('ArrowLeft');await host.locator('.home-tile.library[data-themehub-focused]').waitFor();
+ await controller('ArrowDown');await host.locator('.game[data-themehub-focused]').waitFor();
+ await controller('Enter');await host.locator('.classic-play').waitFor();
+ await controller('Escape');await host.locator('.home-tiles').waitFor();
+ for(const [width,height] of [[1280,800],[1280,720],[960,600]]){
+   await page.setViewportSize({width,height});
+   const glyphs=await host.locator('footer b').evaluateAll(nodes=>nodes.map(n=>{const style=getComputedStyle(n),rect=n.getBoundingClientRect(),range=document.createRange();range.selectNodeContents(n);const text=range.getBoundingClientRect();return{align:style.alignItems,justify:style.justifyContent,padding:style.padding,line:style.lineHeight,deltaX:Math.abs((rect.left+rect.width/2)-(text.left+text.width/2)),deltaY:Math.abs((rect.top+rect.height/2)-(text.top+text.height/2))};}));
+   assert.equal(glyphs.length,4);
+   for(const glyph of glyphs){assert.equal(glyph.align,'center');assert.equal(glyph.justify,'center');assert.equal(glyph.padding,'0px');assert.ok(glyph.deltaX<1);assert.ok(glyph.deltaY<2);}
+ }
+ await host.screenshot({path:'out/native-themes/old-big-picture-navigation.png'});
+ assert.deepEqual(errors,[]);
+ console.log('PASS: profile avatar, carousel navigation after host focus resets, single keyboard input, game detail/back and centered footer glyphs');
+}finally{await browser.close();server.closeAllConnections();server.close();}

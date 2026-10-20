@@ -1,7 +1,11 @@
 (() => {
  const grid=document.getElementById('apps');let page=0,pages=1,gesture=null,blockUntil=0;
  const reduced=()=>document.body.classList.contains('still')||matchMedia('(prefers-reduced-motion:reduce)').matches;
- function dots(){const host=document.querySelector('.springboard-dots');if(!host)return;host.replaceChildren();for(let i=0;i<pages;i++){const b=document.createElement('button');b.textContent='●';b.setAttribute('aria-label','Home page '+(i+1));b.setAttribute('aria-current',String(i===page));b.classList.toggle('on',i===page);b.onclick=()=>go(i);b.addEventListener('pointerup',e=>{if(e.pointerType==='touch'){e.preventDefault();go(i);}});host.append(b);}}
+ function dots(){const host=document.querySelector('.springboard-dots');if(!host)return;
+ // Keep dot elements mounted so their size transitions on a page change.
+ if(host.children.length!==pages||[...host.children].some(n=>n.tagName!=='BUTTON')){host.replaceChildren();for(let i=0;i<pages;i++){const b=document.createElement('button');b.setAttribute('aria-label','Home page '+(i+1));b.onclick=()=>go(i);b.addEventListener('pointerup',e=>{if(e.pointerType==='touch'){e.preventDefault();go(i);}});host.append(b);}}
+ [...host.children].forEach((b,i)=>{b.setAttribute('aria-current',String(i===page));b.classList.toggle('on',i===page);});}
+
  function layout(){const width=grid.clientWidth||1280,col=(width-140)/6;let slot=0;for(const n of grid.children){const span=n.classList.contains('home-player')?2:1;if(slot%6+span>6)slot+=6-slot%6;const p=Math.floor(slot/18),within=slot%18;Object.assign(n.style,{position:'absolute',left:(p*width+70+(within%6)*col+(span===1?(col-140)/2:0))+'px',top:(58+Math.floor(within/6)*155)+'px',width:(span===1?140:col*2-20)+'px'});slot+=span;}pages=Math.max(1,Math.ceil(slot/18));grid.style.setProperty('--page-count',pages);page=Math.min(page,pages-1);dots();}
  function go(next,instant=false){page=Math.max(0,Math.min(pages-1,next));grid.scrollTo({left:page*grid.clientWidth,top:0,behavior:instant||reduced()?'instant':'smooth'});dots();}
  new MutationObserver(()=>layout()).observe(grid,{childList:true});window.addEventListener('resize',()=>{layout();go(page,true);});

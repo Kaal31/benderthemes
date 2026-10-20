@@ -46,3 +46,11 @@ body[data-page="library"] .brand{font-size:30px}
 .library-row .game:focus-visible small{color:#d6f2ff}
 @media(max-width:850px){.home-tile{font-size:22px}.recommendation h2{font-size:11px}.library-body h2{font-size:20px}.library-row .game small{font-size:12px}.library-sidebar button{font-size:14px}.home-tile .tile-icon{height:9vh}}
 .home-tile.store .filled-icon{stroke-width:0}.home-tile.library .tile-icon{border-bottom:3px solid currentColor;padding-bottom:4px}.library-row{align-items:flex-start}.library-row .game img{width:100%;height:auto;aspect-ratio:460/215;object-fit:cover}
+
+/* Keep controller selection visible when Steam temporarily owns DOM focus. */
+button[data-themehub-focused]{outline:3px solid #c3f4ff;outline-offset:2px;box-shadow:0 0 12px #51c4ee80}
+.home-tile[data-themehub-focused]{color:#85def0;background-color:#216c8b}
+.profile-avatar{position:relative;overflow:hidden;flex-shrink:0}
+.profile-avatar img{display:block;width:100%;height:100%;object-fit:cover}
+.profile-avatar img[hidden],.profile-avatar span[hidden]{display:none}
+footer b{display:inline-flex;align-items:center;justify-content:center;flex:none;padding:0;line-height:1;font-family:Arial,sans-serif;font-weight:600;letter-spacing:0;text-indent:0;vertical-align:middle}
