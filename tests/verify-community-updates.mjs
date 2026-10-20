@@ -28,7 +28,7 @@ try {
   await page.getByRole('region', { name: 'Hub updates' }).getByRole('heading', { name: '2 updates available', exact: true }).waitFor();
   mkdirSync('out/community-previews', { recursive: true });
   await page.screenshot({ path: 'out/community-previews/hub-updates-panel.png' });
-  await page.getByRole('button', { name: 'Review theme updates', exact: true }).click();
+  await page.getByRole('button', { name: 'Theme Hub', exact: true }).click();
   await page.getByRole('tab', { name: /Your themes/ }).click();
   await page.locator('.dht-hub-card').filter({ hasText: 'Neon Drive · sample' }).click();
   await page.getByRole('button', { name: 'Update theme', exact: false }).waitFor();

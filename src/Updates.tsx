@@ -67,7 +67,7 @@ export async function installFirmware(release: Release, current: string) {
   } catch (error) { await cancel().catch(() => {}); throw error; }
 }
 
-export function Updates({ onManageThemes }: { onManageThemes: () => void }) {
+export function Updates({ onManageThemes, showCommunityUpdates = true }: { onManageThemes: () => void; showCommunityUpdates?: boolean }) {
   const community = useCommunityUpdates();
   const [themeChecking, setThemeChecking] = useState(false);
   const [themeError, setThemeError] = useState("");
@@ -153,7 +153,7 @@ export function Updates({ onManageThemes }: { onManageThemes: () => void }) {
     }
   };
   const order = selected && status ? releaseOrder(selected,status) : 0;
-  return <><PanelSection title="Community theme updates">
+  return <><PanelSection title={showCommunityUpdates ? "Community theme updates" : "Theme Hub"}>{showCommunityUpdates && <>
     <style>{COMMUNITY_UPDATE_CSS}</style>
     <PanelSectionRow><section className="dht-theme-updates" aria-label="Community update summary" aria-busy={themeChecking}>
       <div className="dht-tu-summary">
@@ -169,9 +169,9 @@ export function Updates({ onManageThemes }: { onManageThemes: () => void }) {
       </article>)}</div>}
       {!!community.errors.length && <div className="dht-tu-notice" role="status"><span aria-hidden="true">!</span><div><strong>Some sources are offline</strong><p>Showing saved results. Installed themes still work.</p></div></div>}
       <div className="dht-tu-schedule"><span className="dht-tu-dot" aria-hidden="true"/>Automatic checks every 6 hours</div>
-    </section></PanelSectionRow>
-    <PanelSectionRow><div className="dht-tu-action dht-tu-primary"><ButtonItem layout="below" onClick={onManageThemes}>{community.updateCount ? "Review theme updates" : "Browse community themes"}</ButtonItem></div></PanelSectionRow>
-    <PanelSectionRow><div className="dht-tu-action dht-tu-secondary"><ButtonItem layout="below" disabled={themeChecking} onClick={() => { setThemeChecking(true); setThemeError(""); void checkCommunityUpdates(true).catch(e => setThemeError(String(e))).finally(() => setThemeChecking(false)); }}>{themeChecking ? "Checking themes…" : "Check community theme updates"}</ButtonItem></div></PanelSectionRow>
+    </section></PanelSectionRow></>}
+    <PanelSectionRow><div className="dht-tu-action dht-tu-primary"><ButtonItem layout="below" onClick={onManageThemes}>Theme Hub</ButtonItem></div></PanelSectionRow>
+    <PanelSectionRow><div className="dht-tu-action dht-tu-secondary"><ButtonItem layout="below" disabled={themeChecking} onClick={() => { setThemeChecking(true); setThemeError(""); void checkCommunityUpdates(true).catch(e => setThemeError(String(e))).finally(() => setThemeChecking(false)); }}>{themeChecking ? "Checking themes…" : "Check theme updates"}</ButtonItem></div></PanelSectionRow>
     {themeError && <PanelSectionRow><div className="dht-tu-error" role="alert">{themeError}</div></PanelSectionRow>}
   </PanelSection><PanelSection title="Plugin updates">
     <PanelSectionRow><div style={{ fontSize: 12, lineHeight: 1.5 }}>

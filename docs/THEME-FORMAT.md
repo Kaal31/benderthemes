@@ -118,7 +118,11 @@ Personal preferences aren't part of a preset: clock, volume, animations, TV mode
 
 The interface is a normal web page (HTML, CSS, JavaScript) from the theme folder. `tests/fixtures/themes/frame-test` (a test fixture, not shipped) is a complete example.
 
-### How it is sealed off
+### Bundled native themes
+
+Blue Glass, GameAmp, GameCube, iOS 6 Classic, Old Big Picture, Santa Express and WiiFlow Default ship as compiled native DOM renderers. They mount directly in Steam with scoped styles and direct host services, after their media and automatic audio downloads complete. Their existing `frame` manifests remain compatible with the standalone SDK viewer. User-installed HTML themes still use the frame renderer below.
+
+### How imported HTML is sealed off
 
 - **Opaque origin:** the page runs in an `<iframe sandbox="allow-scripts">` without `allow-same-origin`. It can't read Steam's page, `SteamClient`, the plugin, cookies or browser storage, and it can't open popups or navigate the top page.
 - **No network:** the plugin's server sends every theme page with this Content-Security-Policy (`py_modules/data_themes.py: frame_csp`):

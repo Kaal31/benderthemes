@@ -10,3 +10,6 @@ preview/*.html
 /promo/
 asset-source.json
 release-channel.json
+
+# Compiled trusted bundled theme code
+src/engine/bundledThemes.generated.ts

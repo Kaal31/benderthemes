@@ -49,5 +49,6 @@ export function ensureThemeAudio(themeId:string):Promise<boolean> {
     return results.every(Boolean);
   })().catch(()=>false);
   automatic.set(themeId,{at:Date.now(),promise});
+  void promise.then(ok=>{if(!ok&&automatic.get(themeId)?.promise===promise)automatic.delete(themeId);});
   return promise;
 }

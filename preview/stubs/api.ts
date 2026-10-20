@@ -152,6 +152,7 @@ const backend: Record<string, (...a: any[]) => any> = {
   install_deckthemes_audio: async (id:string) => {
     const w=window as any;
     (w.__audioDownloadCalls??=[]).push(id);
+    if(w.__audioDownloadGate)await w.__audioDownloadGate;
     if(w.__audioDownloadFailure)return {ok:false,error:"Preview download failure"};
     const entry=w.__deckthemesAudio?.find((p:any)=>p.id===id);
     if(!entry)return {ok:false,error:"Unknown preview audio"};
@@ -161,7 +162,7 @@ const backend: Record<string, (...a: any[]) => any> = {
   },
   media_server: () => (window as any).__testServer ?? null,
   list_data_themes: () => (window as any).__dataThemes ?? { base: null, themes: [] },
-  ensure_frame_media: () => ({success:true}),
+  ensure_frame_media: async () => {if((window as any).__frameMediaGate)await (window as any).__frameMediaGate;return {success:true};},
   get_dial_asset: (n: string) => (window as any).__dialAssets?.[n] ?? null,
   get_assets: (n: string) => (window as any).__testAssets?.[n] ?? {},
   list_wallpapers: () => ({ dir: "~/homebrew/data/DeckHomeThemes/wallpapers", files: [] }),

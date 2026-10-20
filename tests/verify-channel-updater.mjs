@@ -12,7 +12,7 @@ const stubs={
 
 };
 
-const bundle=await build({stdin:{contents:`import React from 'react';import {createRoot} from 'react-dom/client';import {Updates,installType} from './src/Updates';window.installType=installType;createRoot(document.getElementById('root')).render(React.createElement(Updates,{onManageThemes:()=>{window.managedThemes=true;}}));`,resolveDir:process.cwd(),loader:'tsx'},bundle:true,write:false,format:'iife',jsx:'automatic',plugins:[{name:'decky-fixtures',setup(b){b.onResolve({filter:/^@decky\//},a=>({path:a.path,namespace:'fixture'}));b.onLoad({filter:/.*/,namespace:'fixture'},a=>({contents:stubs[a.path],loader:'tsx',resolveDir:process.cwd()}));}}]});
+const bundle=await build({stdin:{contents:`import React from 'react';import {createRoot} from 'react-dom/client';import {Updates,installType} from './src/Updates';window.installType=installType;createRoot(document.getElementById('root')).render(React.createElement(Updates,{showCommunityUpdates:false,onManageThemes:()=>{window.managedThemes=true;}}));`,resolveDir:process.cwd(),loader:'tsx'},bundle:true,write:false,format:'iife',jsx:'automatic',plugins:[{name:'decky-fixtures',setup(b){b.onResolve({filter:/^@decky\//},a=>({path:a.path,namespace:'fixture'}));b.onLoad({filter:/.*/,namespace:'fixture'},a=>({contents:stubs[a.path],loader:'tsx',resolveDir:process.cwd()}));}}]});
 
 const browser=await launch();
 
@@ -33,7 +33,9 @@ try{
  await page.addScriptTag({content:bundle.outputFiles[0].text});
 
  const channel=page.getByLabel('Release channel');await channel.waitFor();
- await page.getByRole('button',{name:'Browse community themes',exact:true}).click();
+ assert.equal(await page.getByRole('heading',{name:/up to date|updates available/}).count(),0,'QAM community badge removed');
+ await page.getByRole('button',{name:'Check theme updates',exact:true}).waitFor();
+ await page.getByRole('button',{name:'Theme Hub',exact:true}).click();
  assert.equal(await page.evaluate(()=>window.managedThemes),true,'community section opens Hub theme management');
 
  assert.equal(await channel.inputValue(),'beta','installed channel selected instead of globally newest stable');

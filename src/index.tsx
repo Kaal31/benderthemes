@@ -110,7 +110,7 @@ function Panel() {
 
   return (
     <>
-      <Updates onManageThemes={() => { openMarketplace(); Navigation.Navigate(ROUTE); Navigation.CloseSideMenus(); }} />
+      <Updates showCommunityUpdates={false} onManageThemes={() => { openMarketplace(); Navigation.Navigate(ROUTE); Navigation.CloseSideMenus(); }} />
       <PanelSection title="Screensavers">
         <PanelSectionRow><ScreensaverStatus /></PanelSectionRow>
         <PanelSectionRow><ToggleField label="Disable screensavers" description="Disable all Steam screensavers while ThemeHub is loaded. Overrides every theme’s screensaver." checked={s.screensaversDisabled===true} onChange={screensaversDisabled=>updateSettings({screensaversDisabled})}/></PanelSectionRow>
