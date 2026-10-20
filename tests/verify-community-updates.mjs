@@ -38,7 +38,11 @@ try {
   await page.getByRole('button', { name: 'Open Community', exact: true }).click();
   await page.getByRole('tab', { name: /Your themes/ }).click();
   await page.locator('.dht-hub-card').filter({ hasText: 'Neon Drive · sample' }).click();
-  await page.getByRole('button', { name: 'Activate theme', exact: false }).waitFor();
+  const active = page.getByRole('button', { name: /^Active/ });
+  await active.waitFor();
+  assert.equal(await active.isDisabled(), true, 'the active theme cannot be activated again');
+  assert.equal(await page.getByRole('button', { name: 'Activate theme', exact: false }).count(), 0);
+  assert.equal(await page.getByRole('button', { name: 'Delete theme', exact: true }).isDisabled(), true, 'switch away before deleting the active theme');
   mkdirSync('out/community-previews', { recursive: true });
   await page.screenshot({ path: 'out/community-previews/update-system.png' });
   assert.deepEqual(errors, []);
