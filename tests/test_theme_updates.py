@@ -127,12 +127,12 @@ class UpdateTests(unittest.TestCase):
         settings.write_text('{"theme":"minecraft"}')
         updates.prepare_replacement("1.9.10", updates.asset_url("1.9.10"))
         import theme_uninstall
-        with patch.object(theme_uninstall, "decky", updates.decky):
+        with patch.object(module, "decky", updates.decky), patch.object(theme_uninstall, "decky", updates.decky):
             asyncio.run(module.Plugin()._uninstall())
         self.assertEqual(json.loads(settings.read_text()), {"theme": "minecraft"})
         updates.clear_replacement()
         import theme_uninstall
-        with patch.object(theme_uninstall, "decky", updates.decky):
+        with patch.object(module, "decky", updates.decky), patch.object(theme_uninstall, "decky", updates.decky):
             asyncio.run(module.Plugin()._uninstall())
         self.assertEqual(json.loads(settings.read_text()), {"theme": "minecraft"})
 
