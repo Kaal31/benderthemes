@@ -7,8 +7,15 @@ try{
  const root=page.locator('.dht-oldbigpicture');await root.waitFor();
  assert.equal(await root.locator('iframe').count(),0);assert.equal(await page.locator('iframe').count(),0);
  assert.equal(await root.locator('.home-tile').count(),5);
+ const initialScroll=await root.locator('.home-tiles').evaluate(n=>n.scrollLeft);
  await page.keyboard.press('ArrowRight');await root.locator('.home-tile.community:focus').waitFor();
+ assert.ok(Math.abs(await root.locator('.home-tiles').evaluate(n=>n.scrollLeft)-initialScroll)<2);
  await page.keyboard.press('ArrowLeft');await root.locator('.home-tile.library:focus').waitFor();
+ await page.keyboard.press('ArrowLeft');await root.locator('.home-tile.store:focus').waitFor();
+ assert.ok(Math.abs(await root.locator('.home-tiles').evaluate(n=>n.scrollLeft)-initialScroll)<2);
+ await page.keyboard.press('ArrowLeft');await root.locator('.home-tile.web:focus').waitFor();
+ await page.waitForFunction(initial=>{const t=document.querySelector('.dht-oldbigpicture .home-tiles');return t.scrollLeft<initial-100;},initialScroll);
+ await root.getByRole('button',{name:'◉ Home',exact:true}).click();
  await root.screenshot({path:'../../Old-Big-Picture-native-preview.png'});
  await root.locator('.home-tile.library').click();await root.locator('.library-row .game').first().waitFor();
  await root.getByLabel('Search library').fill('Portal');await root.locator('.grid .game').first().click();await root.locator('.classic-play').waitFor();
