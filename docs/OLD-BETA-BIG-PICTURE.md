@@ -15,3 +15,10 @@ The sheet retains up to 20 covers, with additional covers mounted near the curre
 Home: Left/Right select categories, A enters. Recent: Left/Right browse, A opens the selected title, Down focuses View All Games. Games: Left/Right move one column; Up/Down move one game. B returns to Recent, then the sheet. LB opens Web, RB opens Friends, Y/Menu opens theme options. Mouse controls work as well.
 
 `old-beta-big-picture-check.mjs` validates separate native registration, persistent cover identity through the sheet-to-carousel change, recent selection, grid, game-details return, reverse navigation, reduced motion and zero iframes. `old-beta-big-picture-motion-capture.mjs` records controlled transition frames. Captures and a GIF are under `out/old-beta-big-picture/`. Typecheck, production build and the original Old Big Picture native smoke check passed. Hardware validation on Steam Deck is still outstanding.
+
+
+## Layered sheet and lighting pass
+
+Compared original 720p frames at 0:11.1 (Store), 0:12.2 (Library), and 0:13.1 (Community). These are distinct sheets: Store art, library art and live friends/status respectively. The native home now keeps all three planes in the scene and changes their depth, tilt and opacity with the category. Store uses available Store listing art, falling back to library art when Store data is unavailable; Community uses actual friend data with initial-based avatars when no image is supplied. Cover depth/scale variation and staggered transitions add the layered quality visible in the recording.
+
+Two blue light fields move with the selected category, independently of the covers. The category highlight slides across the buttons with a shorter easing than the sheets, and the selected button grows slightly. Cover flattening and redistribution retain the same library DOM nodes, with short per-column delays. Reduced-motion and disabled animations also suppress pseudo-element highlight motion. `old-beta-big-picture-layers-check.mjs` verifies the category-specific planes, light/highlight movement and retreat of the secondary sheets when entering the carousel.
