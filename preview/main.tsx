@@ -262,7 +262,8 @@ function App() {
             {p.label}
           </button>
         ))}
-        <span style={{ opacity: 0.65, marginLeft: 10 }}>Arrows = D-pad · Enter = Ⓐ · Esc = Ⓑ · X · Y = △/Options · M = ≡ · Q/E = L1/R1 · Z/C = L2/R2 (presets)</span>
+        {s.theme === 'old-big-picture' && <div aria-label="Preview controller" style={{display:'flex',gap:5}}>{([[9,'↑'],[10,'↓'],[11,'←'],[12,'→'],[1,'A'],[2,'B'],[3,'X'],[4,'Y']] as const).map(([button,label])=><button key={button} aria-label={`Controller ${label}`} onPointerDown={e=>e.preventDefault()} onClick={()=>window.dispatchEvent(new CustomEvent('preview-controller-input',{detail:button}))}>{label}</button>)}</div>}
+        <span style={{ opacity: 0.65, marginLeft: 10 }}>Arrows = D-pad · Enter = Ⓐ · Esc = Ⓑ · X · Y = △/Options · M = ≡ · Q/E = L1/R1 · Z/C = L2/R2 (presets). Old Big Picture: scroll down to enter Library.</span>
       </div>
       <div style={{ position: "relative", width: size.w, height: size.h, margin: "0 12px", transform: "translateZ(0)", overflow: "hidden", borderRadius: 10, boxShadow: "0 10px 40px #000" }}>
         {s.enabled || marketplace.opened ? <ThemedHome standalone /> : <div style={{ padding: 70, background: "#162331", height: "100%", boxSizing: "border-box" }}><h1>Steam Home restored</h1><p>The deleted theme is hidden. Open Hub to download it again.</p><button onClick={() => openMarketplace()}>Open Hub</button></div>}
@@ -288,6 +289,7 @@ function App() {
 (window as any).__consoleRows = () => consoleRows().map((r) => ({ key: r.key, label: r.label, presets: r.presets.map((p) => ({ id: p.id, name: variantLabel(r, p) })) }));
 (window as any).__l1Held = () => l1Held();
 window.addEventListener("keydown", (e) => {
+  if ((e.target as HTMLElement)?.closest('input,textarea,select,[contenteditable="true"]')) return;
   const layouts = THEMES.filter((t) => t.id !== "frame");
   const n = Number(e.key);
   if (n >= 1 && n <= layouts.length) updateSettings({ theme: layouts[n - 1].id, activeTheme: "" });

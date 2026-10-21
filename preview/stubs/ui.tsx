@@ -18,11 +18,12 @@ if (typeof window !== "undefined") {
   window.addEventListener("keydown", (k) => {
     const top = stack[stack.length - 1]?.current;
     if (!top) return;
+    if ((k.target as HTMLElement)?.closest('input,textarea,select,[contenteditable="true"]') && k.key !== 'Escape') return;
     const r = k.repeat;
     const dirs: Record<string, number> = { ArrowUp: 9, ArrowDown: 10, ArrowLeft: 11, ArrowRight: 12 };
     if (dirs[k.key]) return k.preventDefault(), top.onGamepadDirection?.(ev(dirs[k.key], r));
     const key = k.key.toLowerCase();
-    if (k.key === "Enter" || key === "a") return top.onOKButton?.(ev(1, r));
+    if (k.key === "Enter" || key === "a") return k.preventDefault(), top.onOKButton?.(ev(1, r));
     if (k.key === "Escape" || k.key === "Backspace" || key === "b") {
       const e = ev(2, r);
       top.onButtonDown?.(e);
@@ -43,6 +44,32 @@ if (typeof window !== "undefined") {
     if (key === "q") top?.onButtonUp?.(ev(5, false));
     if (key === "e") top?.onButtonUp?.(ev(6, false));
   });
+  const dispatchPreviewButton=(button:number,repeat=false)=>{
+    const top=stack[stack.length-1]?.current;if(!top)return;
+    const e=ev(button,repeat);
+    if([9,10,11,12].includes(button))top.onGamepadDirection?.(e);
+    else if(button===1)top.onOKButton?.(e);
+    else if(button===3)top.onSecondaryButton?.(e);
+    else if(button===4)top.onOptionsButton?.(e);
+    else if(button===14)top.onMenuButton?.(e);
+    else top.onButtonDown?.(e);
+  };
+  window.addEventListener('preview-controller-input',(event:Event)=>dispatchPreviewButton((event as CustomEvent<number>).detail));
+  let previous=new Set<number>(),lastDirection=0;
+  const pollGamepad=(now:number)=>{
+    if(!document.hidden){
+      const pad=Array.from(navigator.getGamepads?.()??[]).find(p=>p?.connected);
+      const down=new Set<number>();
+      if(pad){for(const [i,button] of [[0,1],[1,2],[2,3],[3,4],[4,5],[5,6],[6,7],[7,8],[9,14],[12,9],[13,10],[14,11],[15,12]])if(pad.buttons[i]?.pressed)down.add(button);
+       if(pad.axes[0]<-.55)down.add(11);if(pad.axes[0]>.55)down.add(12);if(pad.axes[1]<-.55)down.add(9);if(pad.axes[1]>.55)down.add(10);
+      }
+      for(const button of down){const repeat=previous.has(button);if(!repeat||([9,10,11,12].includes(button)&&now-lastDirection>180)){dispatchPreviewButton(button,repeat);if([9,10,11,12].includes(button))lastDirection=now;}}
+      for(const button of previous)if(!down.has(button))stack[stack.length-1]?.current.onButtonUp?.(ev(button,false));
+      previous=down;
+    }
+    requestAnimationFrame(pollGamepad);
+  };
+  requestAnimationFrame(pollGamepad);
 }
 
 export function Focusable(props: any) {
