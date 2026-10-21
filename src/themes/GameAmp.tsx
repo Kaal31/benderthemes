@@ -1,3 +1,4 @@
+import {setStyle} from "../engine/themeStyles";
 import {useEffect,useRef,useState} from 'react';
 import {useHome} from '../common';
 import {ThemeRoot} from '../input';
@@ -7,7 +8,7 @@ import {framePageRequest} from '../engine/framePages';
 import {playSound} from '../steam';
 import {openSteam} from '../library';
 import {updateSettings} from '../settings';
-import {themeAudioBands} from '../themeAudio';
+import {themeAudioBands,themeAudioWaveform,themeAudioSpectrum} from '../themeAudio';
 import {markup,styles} from './gameamp/markup';
 import {createGameAmpPages} from './gameamp/pages';
 import {mountGameAmp} from './gameamp/runtime';
@@ -27,7 +28,7 @@ export function GameAmpHome(){
   scoped.addEventListener=(type:string,fn:any)=>{root.addEventListener(type,fn,true);handlers.push(()=>root.removeEventListener(type,fn,true));};
   const view:any={location:W.location,addEventListener:(type:string,fn:any)=>{const listener=(event:Event)=>{fn(event);if(event.defaultPrevented)event.stopPropagation();};root.addEventListener(type,listener);handlers.push(()=>root.removeEventListener(type,listener));}};
   const size={width:el.clientWidth,height:el.clientHeight};
-  const services=(op:string,args:any={})=>framePageRequest(op,args,live.current.api,live.current.downloads);
+  const services=async(op:string,args:any={})=>{if(op==='gameampVisualizer'){if(!['bars','waveform'].includes(args.value))throw Error('Unknown visualizer');setStyle('gameamp','visualizerMode',args.value);return {mode:args.value};}return framePageRequest(op,args,live.current.api,live.current.downloads);};
   const emit=(m:any)=>{const a=live.current.api;if(disposed)return;switch(m.type){
    case 'focus':setFocused(m.appid===null?null:a.lib.byId.has(m.appid)?m.appid:null);break;
    case 'launch':{const g=a.lib.byId.get(m.appid);if(g)a.activate(g,()=>a.launch(g));break;}
@@ -40,7 +41,7 @@ export function GameAmpHome(){
   const pages=createGameAmpPages(scoped,services,W.location,timers);
   runtime.current=mountGameAmp(scoped,view,pages,services,emit,size,timers);
   const resize=new ResizeObserver(()=>{size.width=el.clientWidth;size.height=el.clientHeight;runtime.current?.resize();});resize.observe(el);
-  const meter=W.setInterval(()=>runtime.current?.audio(themeAudioBands()),50);
+  const meter=W.setInterval(()=>runtime.current?.audio(themeAudioBands(),themeAudioWaveform(),themeAudioSpectrum()),50);
   runtime.current.state({games:live.current.api.lib.games,settings:live.current.api.settings,saved:live.current.api.settings.frameData.gameamp,capabilities:{pages:1}});
   return()=>{disposed=true;resize.disconnect();W.clearInterval(meter);runtime.current?.destroy();runtime.current=null;handlers.forEach(f=>f());timeouts.forEach(id=>W.clearTimeout(id));intervals.forEach(id=>W.clearInterval(id));root.replaceChildren();};
  },[]);

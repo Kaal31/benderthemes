@@ -6,7 +6,7 @@ try{
  await page.goto('http://127.0.0.1:8769/gameamp-native-preview.html');await page.locator('#dashboard').waitFor();
  assert.equal(await page.locator('iframe').count(),0);
  await page.locator('.game').nth(1).click();await page.locator('#play').click();assert(await page.evaluate(()=>nativeCalls.some(c=>c[0]==='launch'&&c[1]===620)));
- await page.locator('footer [data-open=store]').click();await page.locator('footer [data-open=friends]').click();await page.locator('.transport [data-open=library]').click();
+ const dockBefore=await page.locator('footer').boundingBox();await page.locator('footer [data-open=store]').click();assert.deepEqual(await page.locator('footer').boundingBox(),dockBefore);await page.locator('footer [data-open=friends]').click();await page.locator('.transport [data-open=library]').click();
  const windows=page.locator('.page-window:not([hidden])');assert.equal(await windows.count(),3);await windows.nth(2).locator('.amp-library-card').first().click();assert.equal(await windows.count(),4);
  await windows.nth(3).locator('.amp-game-detail').waitFor();assert.equal(await page.locator('footer button.page-open').count(),2);
  for(let i=3;i>=0;i--)await windows.nth(i).locator('.window-close').click();assert(await page.locator('#home').evaluate(e=>e.classList.contains('page-open')));

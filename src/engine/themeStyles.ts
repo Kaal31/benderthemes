@@ -1,3 +1,4 @@
+import { OPTIONS as gameamp } from "../themes/options/gameamp";
 // Each theme's own options: a short list per theme (src/themes/options/<theme>.ts)
 // describing choices that stay true to that console. The values are saved per
 // theme in settings.styles, so they follow the theme wherever it draws: the home,
@@ -27,7 +28,7 @@ export type StyleOption = {
   def: StyleValue;
 };
 
-export const THEME_STYLES: Partial<Record<ThemeId, StyleOption[]>> = { onyx, silver, wii, wiiu, ps2, ps5, xbox, aero, aero2, pain, nazarick, ps1, iisu };
+export const THEME_STYLES: Partial<Record<ThemeId, StyleOption[]>> = { gameamp, onyx, silver, wii, wiiu, ps2, ps5, xbox, aero, aero2, pain, nazarick, ps1, iisu };
 
 // Only layouts with game hero backgrounds expose this control. Cover tiles and
 // console wallpapers keep their own sizing.

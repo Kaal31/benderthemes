@@ -9,3 +9,5 @@ Existing settings selecting `frame` with activeTheme `gameamp` migrate to layout
 Install ThemeHub-GameAmp-native.zip as a plugin update, then select GameAmp. The small GameAmp-theme.zip is only a manifest and requires this native host. Other community iframe themes remain supported.
 
 Rebuild the standalone sample preview with `node gameamp-native-preview.mjs`, serve the repository, and open gameamp-native-preview.html. Run `node gameamp-native-check.mjs` against localhost:8769. Sample services are confined to the preview. Production build/typechecking and browser checks do not replace real Steam Deck testing.
+
+GameAmp options → Audio → Visualizer selects Frequency bars (default) or Waveform, saved only to this theme. Frequency bars adapt the displayed range to audible frequencies and amplify quiet detail; the corner meter keeps its original frequency mapping. The installed-game “Ready to Play” subtitle is removed.
