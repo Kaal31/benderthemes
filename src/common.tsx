@@ -462,6 +462,20 @@ export function MenuView({
   const [retained,setRetained]=useState<MenuLevel|undefined>();
   const liveTop=menu.stack[menu.stack.length-1];
   useEffect(()=>{
+    if(variant==="old-big-picture"&&liveTop)setRetained(liveTop);
+  },[variant,liveTop]);
+  useEffect(()=>{
+    if(variant!=="old-big-picture")return;
+    const node=panel.current;if(!node)return;
+    const disabled=!getSettings().animations||window.matchMedia("(prefers-reduced-motion: reduce)").matches;
+    if(disabled){if(!menu.isOpen)setRetained(undefined);return;}
+    const opened={opacity:1,transform:"translateX(0)"};
+    const closed={opacity:0,transform:"translateX(-45px)"};
+    const motion=node.animate(menu.isOpen?[closed,opened]:[opened,closed],{duration:menu.isOpen?220:170,easing:"cubic-bezier(.2,.7,.2,1)",fill:"both"});
+    motion.onfinish=()=>{if(!menu.isOpen)setRetained(undefined);};
+    return()=>motion.cancel();
+  },[menu.isOpen,variant]);
+  useEffect(()=>{
     if(variant!=="castle")return;
     if(liveTop)setRetained(liveTop);
     const node=panel.current;if(!node)return;
@@ -479,7 +493,7 @@ export function MenuView({
     const timer=setTimeout(()=>setRetained(undefined),exitDuration);
     return()=>clearTimeout(timer);
   },[liveTop,exitDuration]);
-  if (!menu.isOpen && !((variant==="castle"||exitDuration>0)&&retained)) return null;
+  if (!menu.isOpen && !((variant==="castle"||variant==="old-big-picture"||exitDuration>0)&&retained)) return null;
   const top = liveTop ?? retained!;
   const styles: Record<string, { panel: CSSProperties; item: (sel: boolean, dis?: boolean) => CSSProperties; title?: CSSProperties }> = {
     wii: {
