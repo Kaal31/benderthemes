@@ -310,5 +310,21 @@ class DownloadTests(unittest.TestCase):
         self.assertEqual(ts.safe_file_name("x.exe", ".mym", "T"), "x.exe.mym")
 
 
+class GbatempOfflineIndexTests(unittest.TestCase):
+    def test_saved_index_needs_no_network_or_live_parser(self):
+        from unittest.mock import patch
+        import builtins
+        real_import = builtins.__import__
+        def guarded(name, *args, **kwargs):
+            if name == "gbatemp_themes":
+                raise ImportError("Live parser unavailable")
+            return real_import(name, *args, **kwargs)
+        ts._cache.clear()
+        with patch("builtins.__import__", side_effect=guarded), patch.object(ts, "_fetch", side_effect=AssertionError("Must not fetch")):
+            result = ts.browse("wiiflow", "gbatemp")
+        self.assertNotIn("error", result)
+        self.assertGreater(result["total"], 0)
+
+
 if __name__ == "__main__":
     unittest.main()

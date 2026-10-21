@@ -70,6 +70,7 @@ jobs:
       - run: node tests/verify-bundled-viewport.mjs
       - run: node tests/verify-native-controller-ownership.mjs
       - run: node tests/verify-gamecube-native.mjs
+      - run: node tests/verify-mii-controller.mjs
       - run: node tests/verify-native-app-order.mjs
       - run: node tests/verify-plaza-post-frequency.mjs
       - run: node tests/verify-background-playback.mjs
