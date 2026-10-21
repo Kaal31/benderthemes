@@ -1,17 +1,11 @@
-# GameAmp
+# GameAmp — native theme
 
-A Steam Deck ThemeHub theme inspired by the supplied silver-and-blue media-player dashboard. Built for 1280 × 800 with automatic scaling, live game art, play time, recently played games, launch/install, game details and Steam navigation.
+GameAmp is a built-in native ThemeHub layout. It mounts directly inside Steam UI with scoped styles; there is no iframe, frame sandbox, postMessage, or remotely loaded theme script.
 
-Import `GameAmp-theme.zip` with ThemeHub → Add a theme from a file, then select GameAmp. Alternatively copy this folder into `~/homebrew/data/DeckHomeThemes/themes/` and Rescan. Requires a ThemeHub host supporting frame themes; theme audio sliders require the live-page settings bridge.
+Install the updated `ThemeHub-GameAmp-native.zip` through Decky Developer → Install Plugin from ZIP, then select GameAmp. The small theme manifest alone requires the updated host; it cannot install native code into an older host.
 
-D-pad left/right selects a game; A launches or installs. X opens the styled game details window, Y opens theme options, B returns to Steam, L1/R1 moves five games. Down enters transport/audio controls, then Recently Played, then the bottom navigation. Up/Down moves through recent entries; A launches the focused game and X opens its details. The existing blue highlight follows focus; the list scrolls without a visible scrollbar. Up returns. Touch selects covers; Play launches the selection. Double-click also launches.
+Existing frame GameAmp selections migrate to the native layout, preserving the selected game. The native component uses the shared Home API, controller input, focused-game ThemeDeck integration, spectrum service and page services directly.
 
-The mixer controls ThemeHub navigation sound and theme music. Game and voice volume open Steam settings. Both visualizers show a decorative idle animation when silent and switch to real theme music and navigation sound levels via the updated host audio bridge (20 updates/second). They return to idle shortly after sound stops. It cannot measure system/game audio. Install the companion `ThemeHub-GameAmp.zip` for this bridge. Older hosts retain the idle animation. The host does not expose battery, developer, achievements or session length, so the dashboard shows available library data instead. No sample games are included in the installed theme. Browser preview data is explicitly marked.
+Library, game details, theme options, downloads, Store, Friends and Settings retain their chrome windows. Both button rows can stack pages. Each window closes with its own ×. Lower LEDs stay green while their matching windows are open; Home is green when none are open. The meters animate while idle and react to measured audio. No microphone or system audio capture is used.
 
-Browser and bridge checks do not replace on-device Steam Deck verification.
-
-The upper Library, Theme options, Downloads and Game details shortcuts and the lower Store, Friends and Settings buttons each open a styled chrome window above Home. Library supports search and installed filtering; choosing a game stacks its details window. Downloads supports live pause/resume. Both button rows remain accessible while windows are open, so either row can stack another page; each window has its own × close button. Focused windows come to the front. B does not dismiss windows. Controller navigation follows the top window; reach the dock with the D-pad, Tab or touch to open another window.
-
-ThemeDeck support is shared by the entire host. The theme reports selection through the standard focus bridge and consumes standard audio messages; playback and audio capture live in the host. Existing ThemeDeck assignments play as you browse when its autoplay and ThemeHub’s global focused-game music option are enabled.
-
-Lower navigation lights indicate open pages: Store/Friends/Settings stay green while at least one corresponding window is open and return to blue when its last window closes. Multiple stacked pages can light multiple buttons. Home is green when no windows are open. Upper button lights do not change colour.
+Native React preview uses explicit sample service data. Browser checks do not replace Steam Deck hardware testing.

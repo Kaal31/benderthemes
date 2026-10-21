@@ -1,16 +1,14 @@
-/* Full community pages; live data is supplied by the validated host bridge. */
-(() => {
-  const el=(tag,cls,text)=>{const n=document.createElement(tag);if(cls)n.className=cls;if(text!==undefined)n.textContent=text;return n;};
-  let sequence=1000000000;const pending=new Map();
-  function request(op,args={}){return new Promise((resolve,reject)=>{const requestId=++sequence;const timer=setTimeout(()=>{pending.delete(requestId);reject(Error('Live pages require the updated ThemeHub plugin.'));},18000);pending.set(requestId,{resolve,reject,timer});parent.postMessage({dht:1,type:'pageRequest',requestId,op,args},'*');});}
-  window.addEventListener('message',e=>{if(e.source!==parent||e.data?.dht!==1||e.data.type!=='pageResult')return;const m=e.data,p=pending.get(m.requestId);if(!p)return;pending.delete(m.requestId);clearTimeout(p.timer);if(m.error)p.reject(Error(m.error));else p.resolve(m.data);});
-  const picture=(src,cls='')=>{const img=el('img',cls);try{const u=new URL(src,location.href);if(['http:','https:','data:','blob:','file:'].includes(u.protocol))img.src=u.href;}catch{}img.alt='';img.onerror=()=>{img.classList.add('missing-image');img.style.visibility='hidden';};return img;};
+// @ts-nocheck
+export function createGameAmpPages(document,request,location,timers){
+ const {setTimeout,clearTimeout,setInterval,clearInterval}=timers;
+ const el=(tag,cls,text)=>{const n=document.createElement(tag);if(cls)n.className=cls;if(text!==undefined)n.textContent=text;return n;};
+  const picture=(src,cls='')=>{const img=el('img',cls);try{const u=new URL(src,location.href);if(['http:','https:','data:','blob:','file:'].includes(u.protocol))img.src=u.href;}catch{}img.alt='';img.onerror=()=>img.classList.add('missing-image');return img;};
   const art=g=>g?.art?.landscape?.[0]||g?.art?.hero?.[0]||g?.art?.portrait?.[0];
   const button=(text,fn,cls='page-button')=>{const b=el('button',cls,text);b.onclick=fn;return b;};
   const message=(root,title,body)=>{const n=el('div','page-empty');n.append(el('h2','',title),el('p','',body));root.append(n);};
   const bytes=n=>n>=1073741824?(n/1073741824).toFixed(1)+' GB':(n/1048576).toFixed(1)+' MB';
   function mount(root,page,ctx){
-    root.className='full-page';root.id='page-actions';let alive=true,revision=0;const cleanup=()=>{alive=false;revision++;};
+    root.className='full-page';root.classList.add('page-actions');let alive=true,revision=0;const cleanup=()=>{alive=false;revision++;};
     const toolbar=el('div','page-toolbar'),content=el('div','page-content');root.append(toolbar,content);
     const status=el('span','page-status',ctx.preview?'Preview · Sample content':'Live Steam data');toolbar.append(status);
     function fail(error,again){content.replaceChildren();message(content,'Unable to load',error.message);content.append(button('Try again',again));}
@@ -54,5 +52,6 @@
     function viewer(src,title){const overlay=el('div','media-lightbox');overlay.append(picture(src),el('span','',title),button('Close ×',()=>overlay.remove()));root.append(overlay);overlay.querySelector('button').focus();}
     return cleanup;
   }
-  window.GameAmpPages={mount};
-})();
+
+return {mount};
+}

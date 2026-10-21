@@ -4,15 +4,15 @@ await mkdir('../work/gameamp-capture',{recursive:true});
 const browser=await chromium.launch({args:['--autoplay-policy=no-user-gesture-required']});
 const context=await browser.newContext({viewport:{width:960,height:600},recordVideo:{dir:'../work/gameamp-capture',size:{width:960,height:600}}});
 const page=await context.newPage();
-await page.goto('http://127.0.0.1:8769/gameamp-browser-preview.html');
-const frame=page.frameLocator('#theme');
+await page.goto('http://127.0.0.1:8769/gameamp-native-preview.html');
+const frame=page;
 await frame.locator('.game').first().waitFor();
 await page.mouse.move(950,590);
 await page.waitForTimeout(1300);
 await frame.locator('.game').nth(1).click();await page.waitForTimeout(650);
 await frame.locator('.game').nth(2).click();await page.waitForTimeout(650);
 await frame.locator('.game').nth(3).click();await page.waitForTimeout(650);
-const input=btn=>page.evaluate(btn=>document.getElementById('theme').contentWindow.postMessage({dht:1,type:'input',btn},'*'),btn);
+const input=btn=>page.evaluate(btn=>window.nativeInput({btn}),btn);
 await input('down');await input('down');
 for(let i=0;i<6;i++){await input('down');await page.waitForTimeout(130);}
 await page.waitForTimeout(550);

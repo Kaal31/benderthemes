@@ -1,27 +1,49 @@
-import {useState} from "react";
-import {GameArt, useHome} from "../common";
-import {Press, Stage, ThemeRoot, useStage} from "../input";
-import {useReportFocus} from "../focus";
-import {openSteam} from "../library";
-import {fmtTime, playSound, useClock} from "../steam";
-import {updateSettings} from "../settings";
-import {NativeVisuals} from "./NativeVisuals";
-export function GameAmpHome(){return <Stage><GameAmpSurface/></Stage>;}
-function GameAmpSurface(){
- const api=useHome(),{W,H}=useStage(),clock=useClock(),games=api.lib.games,[selected,setSelected]=useState(0),[nav,setNav]=useState(-1);
- const index=Math.min(selected,Math.max(0,games.length-1)),game=games[index],page=Math.floor(index/6);
- useReportFocus(nav<0?game:undefined);
- const move=(d:number)=>{if(games.length)setSelected(i=>(i+d%games.length+games.length)%games.length);playSound("move");};
- const launch=()=>{if(game)api.activate(game,()=>api.launch(game));};
- const actions=[()=>setNav(-1),()=>openSteam("store"),()=>openSteam("friends"),api.openSettings];
- const input=({btn}:Press)=>{if(api.busy)return false;if(btn==="y"||btn==="menu"){api.openSettings();return true;}if(btn==="b"){if(nav>=0){setNav(-1);return true;}return false;}if(btn==="x"){if(game)api.details(game);return true;}if(btn==="up"){setNav(-1);return true;}if(btn==="down"){setNav(0);return true;}if(btn==="a"){if(nav<0)launch();else actions[nav]();return true;}if(btn==="left"||btn==="right"){if(nav<0)move(btn==="right"?1:-1);else setNav(i=>(i+(btn==="right"?1:3))%4);return true;}if(btn==="l1"||btn==="r1"){move(btn==="r1"?6:-6);return true;}return false;};
- return <ThemeRoot onInput={input} hints={{a:"Play",x:"Details",y:"Options"}}><NativeVisuals id="gameamp"><style>{`.dht-native-gameamp #shelf{display:grid;grid-template-columns:repeat(6,minmax(0,1fr));height:100%}.dht-native-gameamp #shelf .game{height:166px;min-height:166px;min-width:0;width:100%;overflow:hidden}.dht-native-gameamp #shelf .game img{height:132px!important;object-fit:contain}`}</style><main id="dashboard" style={{left:(W-1280*Math.min(W/1280,H/800))/2,top:(H-800*Math.min(W/1280,H/800))/2,transform:`scale(${Math.min(W/1280,H/800)})`}}>
-  <header className="titlebar"><span className="emblem">◈</span><i/><h1>GAMEAMP</h1><i/><button aria-label="Return to Steam" onClick={api.showSteamHome}>×</button></header>
-  <section className="player metal"><div className="display lcd"><div id="album" className="album">{game&&<GameArt g={game} kind="portrait" flat style={{width:"100%",height:"100%"}}/>}</div><div className="now"><h2 id="game-title">{game?.name??"YOUR LIBRARY"}</h2><p>STEAM DECK / GAMEAMP</p><p>{game?.shortcut?"NON-STEAM GAME":game?.installed?"READY TO PLAY":"NOT INSTALLED"}</p><div id="visualizer">{Array.from({length:20},(_,i)=><i key={i} style={{height:`${20+(i*37)%70}%`,animationDelay:`${i*-.13}s`}}/>)}</div></div><dl><div><dt>PLAY TIME</dt><dd>{Math.floor((game?.playtime??0)/60)}h</dd></div><div><dt>LIBRARY</dt><dd>{games.length} GAMES</dd></div></dl><div className="clock-panel"><time>{fmtTime(clock,api.settings.clock24)}</time><span>STEAM DECK <b className="led"/></span></div></div>
-   <div className="transport"><button className="round" onClick={()=>move(-1)} aria-label="Previous game">◀◀</button><button id="play" className="play" onClick={launch}><span>▶</span><strong>PLAY</strong><b className="led"/></button><button className="round" onClick={()=>move(1)} aria-label="Next game">▶▶</button><span className="separator"/><button className="round" onClick={()=>openSteam("library")}>▤</button><button className="round" onClick={api.openSettings}>⚙</button><button className="round" onClick={()=>openSteam("downloads")}>⇩</button><button className="round" onClick={()=>game&&api.details(game)}>ℹ</button><div className="transport-note">{index+1} / {games.length}</div></div>
-  </section>
-  <section className="library metal"><h2 className="tab">LIBRARY</h2><div className="library-inner"><button className="arrow" onClick={()=>move(-6)}>◀</button><div id="shelf">{games.slice(page*6,(page+1)*6).map((g,i)=><button key={g.appid} className={`game ${index===page*6+i&&nav<0?"selected":""}`} data-appid={g.appid} onClick={()=>{setSelected(page*6+i);api.activate(g,()=>api.launch(g));}}><GameArt g={g} kind="portrait" flat style={{width:"100%",height:"calc(100% - 30px)",objectFit:"cover"}}/><span>{g.name}</span></button>)}</div><button className="arrow" onClick={()=>move(6)}>▶</button></div></section>
-  <div className="lower"><section className="recent metal"><h2 className="tab">RECENTLY PLAYED</h2><div className="lcd playlist">{games.slice(0,10).map((g,i)=><button className="recent-row" key={g.appid} onClick={()=>{setSelected(i);setNav(-1);}}><span>{i+1}</span><GameArt g={g} kind="landscape" flat style={{width:30,height:27}}/><span className="recent-name">{g.name}</span><small>{Math.floor(g.playtime/60)}h</small></button>)}</div></section><section className="audio metal"><h2 className="tab">AUDIO</h2><div className="audio-heading"><button onClick={()=>updateSettings({sounds:!api.settings.sounds})}>SOUND {api.settings.sounds?"ON":"OFF"}</button><div className="lcd audio-readout">THEME AUDIO</div></div><div className="mixer"><div className="scale">100%<br/><br/>50%<br/><br/>0%</div>{(["sfxVolume","musicVolume"] as const).map((key,i)=><label key={key}><input type="range" min={0} max={100} value={api.settings[key]} onChange={e=>updateSettings({[key]:Number(e.target.value)})}/><span>{i?"MUSIC":"SFX"}</span></label>)}<div className="mixer-info"><strong>STEAM AUDIO</strong><p>Game & voice volume</p><button onClick={()=>openSteam("settings")}>SYSTEM ↗</button></div></div></section></div>
-  <footer className="metal">{["HOME","STORE","FRIENDS","SETTINGS"].map((label,i)=><button key={label} className={nav===i?"active":""} data-selected={nav===i} onClick={actions[i]}>{label}<b className="led"/></button>)}</footer>
- </main></NativeVisuals></ThemeRoot>;
+import {useEffect,useRef,useState} from 'react';
+import {useHome} from '../common';
+import {ThemeRoot} from '../input';
+import {useReportFocus} from '../focus';
+import {useDownloads} from '../downloads';
+import {framePageRequest} from '../engine/framePages';
+import {playSound} from '../steam';
+import {openSteam} from '../library';
+import {updateSettings} from '../settings';
+import {themeAudioBands} from '../themeAudio';
+import {markup,styles} from './gameamp/markup';
+import {createGameAmpPages} from './gameamp/pages';
+import {mountGameAmp} from './gameamp/runtime';
+
+/** Native host-owned UI. No iframe, postMessage, remote script, or frame sandbox. */
+export function GameAmpHome(){
+ const api=useHome(),downloads=useDownloads(),host=useRef<HTMLDivElement>(null),runtime=useRef<any>(null);
+ const live=useRef({api,downloads});live.current={api,downloads};
+ const [focused,setFocused]=useState<number|null>(null);
+ useReportFocus(focused===null?undefined:api.lib.byId.get(focused));
+ useEffect(()=>{
+  const el=host.current;if(!el)return;
+  const root=el.shadowRoot??el.attachShadow({mode:'open'}),doc=el.ownerDocument,W=doc.defaultView!;
+  root.innerHTML='<style>'+styles+'</style>'+markup;
+  const handlers:Array<()=>void>=[],timeouts=new Set<number>(),intervals=new Set<number>();let disposed=false;
+  const scoped:any={getElementById:(id:string)=>root.getElementById(id),querySelector:(s:string)=>root.querySelector(s),querySelectorAll:(s:string)=>root.querySelectorAll(s),createElement:doc.createElement.bind(doc),get activeElement(){return root.activeElement;},body:el};
+  scoped.addEventListener=(type:string,fn:any)=>{root.addEventListener(type,fn,true);handlers.push(()=>root.removeEventListener(type,fn,true));};
+  const view:any={location:W.location,addEventListener:(type:string,fn:any)=>{const listener=(event:Event)=>{fn(event);if(event.defaultPrevented)event.stopPropagation();};root.addEventListener(type,listener);handlers.push(()=>root.removeEventListener(type,listener));}};
+  const size={width:el.clientWidth,height:el.clientHeight};
+  const services=(op:string,args:any={})=>framePageRequest(op,args,live.current.api,live.current.downloads);
+  const emit=(m:any)=>{const a=live.current.api;if(disposed)return;switch(m.type){
+   case 'focus':setFocused(m.appid===null?null:a.lib.byId.has(m.appid)?m.appid:null);break;
+   case 'launch':{const g=a.lib.byId.get(m.appid);if(g)a.activate(g,()=>a.launch(g));break;}
+   case 'details':{const g=a.lib.byId.get(m.appid);if(g)a.details(g);break;}
+   case 'sound':playSound(m.name);break;
+   case 'save':updateSettings(p=>({frameData:{...p.frameData,gameamp:m.data}}));break;
+   case 'open':if(m.place==='options')a.openSettings();else if(m.place==='steamHome')a.showSteamHome();else openSteam(m.place);break;
+  }};
+  const timers={setTimeout:(fn:any,ms:number)=>{const id=W.setTimeout(()=>{timeouts.delete(id);if(!disposed)fn();},ms);timeouts.add(id);return id;},clearTimeout:(id:number)=>{W.clearTimeout(id);timeouts.delete(id);},setInterval:(fn:any,ms:number)=>{const id=W.setInterval(()=>{if(!disposed)fn();},ms);intervals.add(id);return id;},clearInterval:(id:number)=>{W.clearInterval(id);intervals.delete(id);}};
+  const pages=createGameAmpPages(scoped,services,W.location,timers);
+  runtime.current=mountGameAmp(scoped,view,pages,services,emit,size,timers);
+  const resize=new ResizeObserver(()=>{size.width=el.clientWidth;size.height=el.clientHeight;runtime.current?.resize();});resize.observe(el);
+  const meter=W.setInterval(()=>runtime.current?.audio(themeAudioBands()),50);
+  runtime.current.state({games:live.current.api.lib.games,settings:live.current.api.settings,saved:live.current.api.settings.frameData.gameamp,capabilities:{pages:1}});
+  return()=>{disposed=true;resize.disconnect();W.clearInterval(meter);runtime.current?.destroy();runtime.current=null;handlers.forEach(f=>f());timeouts.forEach(id=>W.clearTimeout(id));intervals.forEach(id=>W.clearInterval(id));root.replaceChildren();};
+ },[]);
+ useEffect(()=>{runtime.current?.state({games:api.lib.games,settings:api.settings,saved:api.settings.frameData.gameamp,capabilities:{pages:1}});},[api.lib,api.settings]);
+ return <ThemeRoot onInput={p=>{if(api.busy)return false;runtime.current?.input(p.btn);return true;}} hints={{a:'Select',x:'Game details',y:'Theme options'}}><div ref={host} style={{position:'absolute',inset:0,overflow:'hidden',background:'#080d15'}}/></ThemeRoot>;
 }

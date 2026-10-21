@@ -8,6 +8,9 @@ IDS=('blue-glass','gameamp','gamecube','ios6','santa-express','wiiflow-default')
 def generate():
  styles={}
  for ident in IDS:
+  if ident == "gameamp":
+   styles[ident] = ""  # Native GameAmp owns its scoped styles in src/themes/gameamp.
+   continue
   folder=ROOT/'themes'/ident
   html=(folder/'index.html').read_text(encoding='utf-8')
   parts=[]

@@ -1,3 +1,4 @@
+import {GameAmpHome} from "./themes/GameAmp";
 import { OldBigPictureHome } from "./themes/OldBigPicture";
 import {themeHomeOwnsRoute} from "./otherPlugins";
 import { useSteamScreensaver } from "./screensaver";
@@ -75,6 +76,7 @@ const skinHook = (s: ReturnType<typeof getSettings>) => {
 };
 
 const THEME_COMPONENTS: Record<ThemeId, () => ReactNode> = {
+  gameamp: () => <GameAmpHome />,
   "old-big-picture": () => <OldBigPictureHome />,
   native: () => <NativeLayout />,
   onyx: () => <SilverHome dark />,

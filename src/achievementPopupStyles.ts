@@ -10,6 +10,7 @@ export interface PopupStyle {
 const sony = "Trophy earned!";
 /** Every built-in layout has an explicit profile; no silent family fallback. */
 export const POPUP_STYLES: Record<ThemeId, PopupStyle> = {
+  gameamp:{name:"GameAmp",accent:"#66cbff",background:"linear-gradient(#123c70,#041b3d)",color:"#e3efff",radius:9,badgeRadius:"5px",border:"3px ridge #b8c9da",font:"monospace",layout:"desktop"},
  "old-big-picture":{name:"Old Big Picture",accent:"#62c9e3",background:"#12334d",color:"#c4e9f4",radius:2,badgeRadius:"2px",border:"1px solid #448ca9"},
   ps1: { name: "PS1", accent: "#b42125", background: "linear-gradient(#e3dfd4,#ada99d)", color: "#262421", radius: 2, badgeRadius: "0", border: "3px ridge #e9e4da", font: "monospace", layout: "desktop", pattern: "repeating-linear-gradient(0deg,#00000009 0 1px,transparent 1px 3px)" },
   ps2: { name: "PS2", accent: "#72dbff", background: "linear-gradient(120deg,#010307,#102738 65%,#010307)", color: "#c6ebff", radius: 0, badgeRadius: "2px", border: "1px solid #57b9e775", font: "monospace", layout: "terminal", pattern: "repeating-linear-gradient(90deg,transparent 0 23px,#3fbce112 23px 24px)" },

@@ -1,4 +1,4 @@
-"""Package the local GameAmp theme and its companion host, without changing catalogs."""
+"""Package the native GameAmp host and its optional data-only manifest."""
 from pathlib import Path
 import zipfile
 
@@ -21,3 +21,5 @@ for name in ["GameAmp-theme.zip", "ThemeHub-GameAmp.zip"]:
         assert z.testzip() is None
         assert len(z.namelist()) == len(set(z.namelist()))
     print(name, (destination / name).stat().st_size, "bytes; verified")
+import shutil
+shutil.copyfile(destination / 'ThemeHub-GameAmp.zip', destination / 'ThemeHub-GameAmp-native.zip')
