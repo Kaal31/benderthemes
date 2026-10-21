@@ -21,7 +21,8 @@ const slots: Record<ThemeId, CSSProperties> = {
   aero:{left:"28%",top:"63%"}, aero2:{left:"28%",top:"63%"},
   dial:{left:"6%",bottom:"17%"}, castle:{left:"6%",top:"64%"}, republic:{left:"24%",top:"62%"},
   minecraft:{left:"5%",top:"11%"}, pain:{left:"31%",top:"44%"}, nazarick:{left:"34%",top:"54%"},
-  iisu:{left:"5%",top:"23%"}, native:{right:"4%",top:"12%"}, frame:{right:"4%",top:"12%"},
+  iisu:{left:"5%",top:"23%"}, native:{right:"4%",top:"12%"}, ios6: {right:"4%",top:"12%"},
+  frame:{right:"4%",top:"12%"},
 };
 const looks: Record<ThemeId, {bg:string; ink:string; radius:string; font?:string}> = {
   gameamp:{bg:"linear-gradient(#e5edf6,#9aabba)",ink:"#062652",radius:"8px"},
@@ -52,6 +53,7 @@ const looks: Record<ThemeId, {bg:string; ink:string; radius:string; font?:string
   nazarick:{bg:"#130b1bea",ink:"#dec68e",radius:"2px",font:"Georgia,serif"},
   iisu:{bg:"#ffffffb8",ink:"#314350",radius:"999px"},
   native:{bg:"#171d29e8",ink:"#f4f6ff",radius:"8px"},
+  ios6: {bg:"#171d29e8",ink:"#f4f6ff",radius:"8px"},
   frame:{bg:"#171d29e8",ink:"#f4f6ff",radius:"8px"},
 };
 export const PLUGIN_BADGE_CSS = Object.entries(looks).map(([theme,k]) =>

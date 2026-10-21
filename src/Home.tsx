@@ -1,3 +1,4 @@
+import { IOS6Home } from "./themes/IOS6";
 import {GameAmpHome} from "./themes/GameAmp";
 import { SantaHome } from "./themes/Santa";
 import { OldBigPictureHome } from "./themes/OldBigPicture";
@@ -83,6 +84,7 @@ const THEME_COMPONENTS: Record<ThemeId, () => ReactNode> = {
   native: () => <NativeLayout />,
   onyx: () => <SilverHome dark />,
   silver: () => <SilverHome />,
+  ios6: () => <IOS6Home />,
   frame: () => <FrameHome />,
   wii: () => <NintendoHome kind="wii"/>,
   wiiu: () => <NintendoHome kind="wiiu"/>,

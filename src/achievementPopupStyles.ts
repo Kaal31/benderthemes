@@ -37,6 +37,7 @@ export const POPUP_STYLES: Record<ThemeId, PopupStyle> = {
   pain: { name: "Six Paths", accent: "#c796fa", background: "radial-gradient(ellipse at 12% 50%,#67488b,#1b1230 60%,#09060f)", color: "#f0e7ff", radius: 28, badgeRadius: "50%", border: "1px solid #c796fa90", pattern: "repeating-radial-gradient(circle at 44px 50%,transparent 0 10px,#b382e615 10px 11px)" },
   minecraft: { name: "Block Worlds", accent: "#8fd65a", background: "linear-gradient(#504331,#2e271d)", color: "#fff", radius: 0, badgeRadius: "0", border: "4px ridge #958774", font: "monospace", pattern: "repeating-linear-gradient(90deg,#ffffff03 0 8px,transparent 8px 16px)", shadow: "4px 4px 0 #0009" },
   iisu: { name: "iiSU", accent: "#83d8f6", background: "linear-gradient(125deg,#252e46,#111a2f)", color: "#e3f2ff", radius: 22, badgeRadius: "12px", border: "2px solid #83d8f650", pattern: "radial-gradient(circle at 90% 25%,#a49dfa20,transparent 40%)" },
+  ios6:  { name: "Community", accent: "#62b6ff", background: "linear-gradient(130deg,#202e42,#0f1724)", color: "#e4efff", radius: 12, badgeRadius: "8px", border: "1px solid #62b6ff80", layout: "standard" },
   frame: { name: "Community", accent: "#62b6ff", background: "linear-gradient(130deg,#202e42,#0f1724)", color: "#e4efff", radius: 12, badgeRadius: "8px", border: "1px solid #62b6ff80", layout: "standard" },
   native: { name: "Community native layout", accent: "#62b6ff", background: "linear-gradient(130deg,#202e42,#0f1724)", color: "#e4efff", radius: 12, badgeRadius: "8px", border: "1px solid #62b6ff80", layout: "standard" },
 };

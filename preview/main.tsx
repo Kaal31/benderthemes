@@ -78,7 +78,7 @@ const bugCases = new URLSearchParams(location.search).has("bugs");
 const HIDDEN_ID = 5003;
 if (bugCases) {
   const mkShortcut = (appid: number, name: string, ago: number, mins: number) => ({
-    appid, app_type: 1073741824, display_name: name, rt_last_time_played: now - ago, minutes_playtime_forever: mins, installed: true, steam_deck_compat_category: 0, __art: art(name, appid % 7),
+    appid, app_type: 1073741824, display_name: name, rt_last_time_played: now - ago, minutes_playtime_forever: mins, installed: true, steam_deck_compat_category: 0, __art: themedPreview === "ios6" ? {portrait:[],landscape:[],hero:[],logo:[]} : art(name, appid % 7),
   });
   apps.splice(1, 0,
     mkShortcut(5001, "Dolphin Emulator", 1800, 0), // playtime lives in the app details only
@@ -180,6 +180,7 @@ const initialTheme = (params.get("theme") as ThemeId) || themedPreview || "vita"
 
 seedSettings({
   theme: initialTheme,
+  ...(themedPreview === "ios6" && params.has("folders") ? {frameData:{ios6:{folders:[{id:"demo-games",name:"Games",items:["game:1000","game:1001","game:1002"]}],order:["system:settings","system:downloads","system:recent","folder:demo-games"]}}} : {}),
   onboardingDone: params.get("onboarding") !== "1",
   ...(params.get("hubstyle") ? { hubStyle: params.get("hubstyle")! } : {}),
   tvMode: params.get("tvMode")==="1",
@@ -254,11 +255,11 @@ function App() {
   const [size, setSize] = useState({ w: 1280, h: 800 });
   useEffect(() => {
     const fit = () => {
-      const availW = window.innerWidth - 24;
-      const availH = window.innerHeight - 70;
-      const ah = Number(new URLSearchParams(location.search).get("h")) || 800; // ?h=960 previews a 4:3 screen
+      const availW = window.innerWidth - (themedPreview === "ios6" ? 0 : 24);
+      const availH = window.innerHeight - (themedPreview === "ios6" ? 0 : 70);
+      const ah = Number(new URLSearchParams(location.search).get("h")) || (themedPreview === "ios6" ? 720 : 800); // ?h=960 previews a 4:3 screen
       const k = Math.min(availW / 1280, availH / ah, 1.5);
-      setSize({ w: Math.round(1280 * k), h: Math.round(ah * k) });
+      setSize(themedPreview === "ios6" ? { w: window.innerWidth, h: window.innerHeight } : { w: Math.round(1280 * k), h: Math.round(ah * k) });
     };
     fit();
     window.addEventListener("resize", fit);
@@ -266,7 +267,7 @@ function App() {
   }, []);
   return (
     <div style={{ font: "14px system-ui", color: "#ddd" }}>
-      <div id="bar" style={{ display: "flex", gap: 6, alignItems: "center", padding: "10px 12px", flexWrap: "wrap" }}>
+      <div id="bar" style={{ display: themedPreview === "ios6" ? "none" : "flex", gap: 6, alignItems: "center", padding: "10px 12px", flexWrap: "wrap" }}>
         <b style={{ marginRight: 8 }}>Deck Home Themes preview</b>
         <button onClick={() => openMarketplace()}>Hub</button>
         {s.theme === "silver" && <button onClick={() => window.dispatchEvent(new Event("preview-steam-button"))}>Steam button</button>}
@@ -289,7 +290,7 @@ function App() {
         <span style={{ opacity: 0.65, marginLeft: 10 }}>Arrows = D-pad · Enter = Ⓐ · Esc = Ⓑ · X · Y = △/Options · M = ≡ · Q/E = L1/R1 · Z/C = L2/R2 (presets). Old Big Picture: LB = Web · RB = Chat · Select Library to enter.</span>
       </div>
       {s.theme==='old-big-picture'&&<ControllerTest/>}
-      <div style={{ position: "relative", width: size.w, height: size.h, margin: "0 12px", transform: "translateZ(0)", overflow: "hidden", borderRadius: 10, boxShadow: "0 10px 40px #000" }}>
+      <div style={{ position: "relative", width: size.w, height: size.h, margin: themedPreview === "ios6" ? "0" : "0 12px", transform: "translateZ(0)", overflow: "hidden", borderRadius: themedPreview === "ios6" ? 0 : 10, boxShadow: "0 10px 40px #000" }}>
         {s.enabled || marketplace.opened ? <ThemedHome standalone /> : <div style={{ padding: 70, background: "#162331", height: "100%", boxSizing: "border-box" }}><h1>Steam Home restored</h1><p>The deleted theme is hidden. Open Hub to download it again.</p><button onClick={() => openMarketplace()}>Open Hub</button></div>}
       </div>
       <Toast />

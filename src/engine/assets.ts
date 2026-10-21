@@ -59,6 +59,7 @@ export const LAYOUT_SLOTS: Record<ThemeId, LayoutCaps> = {
   nazarick: caps(true, true, false, [], {videoBackground:true,gameArt:false,tint:false}),
   iisu: caps(true, true, true, ["--dht-iisu-ring", "--dht-iisu-accent-fill"], { tint: false }),
   native: caps(true, true, true, ["--dht-accent"]),
+  ios6:  caps(true, true, true, ["--dht-accent"], { gameArt: false, tint: false, brightness: false }),
   frame: caps(true, true, true, ["--dht-accent"], { gameArt: false, tint: false, brightness: false }),
 };
 export const slotOffered = (layout: ThemeId, slot: AssetSlot): boolean => {

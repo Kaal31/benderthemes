@@ -14,7 +14,7 @@ This recreates Notification Center’s interactions using available Steam servic
 
 ## Install and test
 
-Install iOS6-Classic-theme.zip through ThemeHub’s theme-file importer. Live notifications/weather/stocks/social operations require the companion ThemeHub-iOS6-live-pages.zip plugin update. Existing Library, Store, Friends, Downloads, Settings, audio/video players, Home widgets, rearranging and Recent tray are retained.
+Install ThemeHub-iOS6-native.zip as the plugin update. iOS 6 is now a built-in React theme: its UI mounts directly in the Steam page, with scoped DOM styles and direct calls to the plugin services. No iframe, HTML page navigation or cross-window messaging is used. Existing iOS 6 selections and saved layouts migrate automatically. The theme-only ZIP now selects the built-in ios6 layout and requires this plugin version. Existing Library, Store, Friends, Downloads, Settings, audio/video players, Home widgets, rearranging and Recent tray are retained.
 
 The interactive browser preview uses clearly labelled sample notifications, weather and quotes; these are never substituted for live Deck data. Emulated-touch tests cover pull-down, grouped alerts, two-step clear, weather configuration/expansion and cancellation of social drafts. Production build and service validation are checked. Real Steam Deck validation remains outstanding.
 
@@ -25,3 +25,9 @@ Wallpaper and earlier visual references are in REFERENCES.md. Apple’s original
 Home uses horizontal, finger-following pages with six columns and three rows. Swipe left/right or tap the page dots; controller selection follows pages. Hold an icon to rearrange it, then drag to a page edge to move between pages. Home does not scroll vertically.
 
 Hold a Home or glass-dock icon, then drag it onto an icon in the other area to exchange their slots. The dock keeps four icons; music and video widgets stay in the Home grid. Dock assignments and Home order are saved.
+
+Native UI sources are src/themes/IOS6.tsx and ios6NativeMount.ts. Run python tools/build_ios6_native.py after editing the theme UI assets to regenerate ios6NativeRuntime.ts. The generator bundles trusted source at build time, without eval or runtime script injection. Native browser preview: /preview/ios6-preview.html.
+
+Folders: hold an icon, drag over another icon's center, pause briefly for the grouping highlight, and release. Tap the folder to open its linen drawer; edit the title to rename it. Hold and drag an icon outside the drawer to return it to Home. Folders support up to 12 icons and can be swapped into the glass dock. Saved folders survive theme changes. Dropping near an icon's edge keeps the ordinary reorder behavior.
+
+Settings: Icon size offers a live slider and Small, Default and Large presets. The saved value applies to Home icons and folder contents; dock artwork scales within the shelf height while dock slots remain stationary. Default restores the original 99px Home icons.

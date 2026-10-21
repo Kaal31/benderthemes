@@ -119,3 +119,5 @@ writePreview("preview/wii-preview.html",baseHtml.replace("<script>",`<script>win
   writePreview("preview/keyboard.html", `<!doctype html><html><head><meta charset="utf-8"><title>Keyboard skins preview</title><style>html,body{margin:0;width:1280px;height:800px;background:#1b2838 linear-gradient(160deg,#2a475e,#171a21)}</style></head><body><script>window.__isThemePreview=true;</script><script>${kb.outputFiles[0].text.replace(/<\/script/g, "<\\/script")}</script></body></html>`);
   console.log("preview/keyboard.html");
 }
+
+writePreview("preview/ios6-preview.html",baseHtml.replace("<script>",`<script>window.__themePreview="ios6";${defaultInit}</script><script>`));

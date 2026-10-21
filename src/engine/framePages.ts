@@ -2,7 +2,7 @@
 // or arbitrary Steam methods; all data comes from the plugin's existing services.
 import { Navigation } from "@decky/ui";
 import { fetchNoCors } from "@decky/api";
-import { readFriends } from "../activity";
+import { readFriends, readNotices } from "../activity";
 import { Downloads, pauseDownload, resumeDownload } from "../downloads";
 import { loadScreenshots, loadVideos, recordingPlan } from "../media";
 import { loadStoreLists, loadStoreDetails, searchStore, fmtPrice } from "../store";
@@ -40,6 +40,38 @@ async function frameImage(url: string): Promise<string> {
 function storeImage(url:string|undefined){if(!url)return "";try{return typeof document!=="undefined"?new URL(url,document.baseURI).href:url;}catch{return "";}}
 export async function framePageRequest(op: string, args: any, api: HomeApi, downloads: Downloads) {
   switch (op) {
+    case "notifications": return { items: readNotices().slice(0, 150) };
+    case "weather": {
+      const city = String(args?.city ?? "").trim().slice(0, 80);
+      if (!city) throw Error("Enter a city");
+      const result = await fetchNoCors(`https://geocoding-api.open-meteo.com/v1/search?name=${encodeURIComponent(city)}&count=1&language=en&format=json`);
+      const place = (await result.json())?.results?.[0];
+      if (!place || !Number.isFinite(place.latitude) || !Number.isFinite(place.longitude)) throw Error("City not found");
+      const response = await fetchNoCors(`https://api.open-meteo.com/v1/forecast?latitude=${place.latitude}&longitude=${place.longitude}&current=temperature_2m,weather_code&daily=temperature_2m_max,temperature_2m_min&timezone=auto&forecast_days=3`);
+      const w = await response.json();
+      return { city: place.name, temperature: w.current.temperature_2m, code: w.current.weather_code, high: w.daily.temperature_2m_max[0], low: w.daily.temperature_2m_min[0], forecast: w.daily.time.map((day: string, i: number) => ({ day, high: w.daily.temperature_2m_max[i], low: w.daily.temperature_2m_min[i] })) };
+    }
+    case "stocks": {
+      const symbols = Array.isArray(args?.symbols) ? args.symbols.slice(0, 6) : ["AAPL", "MSFT", "SPY"];
+      const items = await Promise.all(symbols.map(async (symbol: unknown) => {
+        if (typeof symbol !== "string" || !/^[A-Z^][A-Z0-9.^-]{0,11}$/.test(symbol)) throw Error("Invalid symbol");
+        try {
+          const r = await fetchNoCors(`https://query1.finance.yahoo.com/v8/finance/chart/${encodeURIComponent(symbol)}?interval=1d&range=5d`);
+          const meta = (await r.json())?.chart?.result?.[0]?.meta;
+          if (!Number.isFinite(meta?.regularMarketPrice)) return { symbol, unavailable: true };
+          const previous = meta.chartPreviousClose ?? meta.previousClose;
+          return { symbol, price: meta.regularMarketPrice, change: previous ? (meta.regularMarketPrice - previous) / previous * 100 : 0, currency: meta.currency, asOf: meta.regularMarketTime };
+        } catch { return { symbol, unavailable: true }; }
+      }));
+      return { items };
+    }
+    case "social": {
+      const text = encodeURIComponent(String(args?.text ?? "").slice(0, 280));
+      if (args?.network === "twitter") Navigation.NavigateToSteamWeb(`https://twitter.com/intent/tweet?text=${text}`);
+      else if (args?.network === "facebook") Navigation.NavigateToSteamWeb("https://www.facebook.com/");
+      else throw Error("Unsupported social network");
+      return { ok: true };
+    }
     case "videoSource": {
       const v = (await loadVideos()).find(v => v.id === args?.id);
       if (!v) throw Error("Video is no longer available");

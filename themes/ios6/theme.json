@@ -5,10 +5,7 @@
   "author": "ThemeHub",
   "description": "Classic SpringBoard with a linen Notification Center, weather, stocks and grouped Steam alerts.",
   "company": "Community",
-  "layout": "frame",
-  "frame": {
-    "entry": "index.html"
-  },
+  "layout": "ios6",
   "slots": {
     "accent": "#3b75b5"
   }
