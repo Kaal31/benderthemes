@@ -77,6 +77,17 @@ function artFor(a: any): Game["art"] {
   };
 }
 
+/** Square Steam/shortcut icons, when the running client exposes them. */
+export function gameIconUrls(game:Game):string[]{
+ const app=game.overview,urls=tryList(["GetCustomIconURLs","GetIconURLForApp","GetCachedIconURLForApp"],app);
+ for(const value of [app?.icon_data,app?.icon_hash,app?.img_icon_url,app?.icon]){
+  if(typeof value!=="string"||!value)continue;
+  if(/^(https?:|data:image\/|steam:)/i.test(value))urls.push(value);
+  else if(!game.shortcut&&/^[a-f0-9]{40}$/i.test(value))urls.push(`https://cdn.cloudflare.steamstatic.com/steamcommunity/public/images/apps/${game.appid}/${value}.jpg`);
+ }
+ return [...new Set(urls)];
+}
+
 function toGame(a: any): Game | null {
   if (!a) return null;
   const t = a.app_type;

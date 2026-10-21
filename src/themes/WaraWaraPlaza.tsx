@@ -1,3 +1,4 @@
+import {WiiuGameIcon} from "./WiiuGameIcon";
 import {PLAZA_POST_INTERVALS,PLAZA_POST_LIFETIME,PLAZA_REPLY_DELAY,schedulePlazaPosts} from "./plazaPostTiming";
 import {PlazaPostPolicy} from "./plazaPostPolicy";
 import {createMiiAvatar} from "./miiAvatar";
@@ -76,7 +77,7 @@ const SPARKLES=Array.from({length:18},(_,i)=>({left:`${(i*37)%100}%`,delay:`${-(
 // After the opening the crowd mills around each title, and two Miis at a time show a
 // post about the title they stand by.
 // Square icon art like the console's: the game's background art with its logo on top, so nothing gets cropped.
-function IconArt({g}:{g:Game}){return <><GameArt flat g={g} kind="hero" fit="cover" style={{width:'100%',height:'100%'}}/><GameArt flat g={g} kind="logo" fit="contain" style={{position:'absolute',left:'9%',top:'14%',width:'82%',height:'72%',filter:'drop-shadow(0 1px 2px #000a)'}}/></>;}
+function IconArt({g}:{g:Game}){return <WiiuGameIcon game={g}/>;}
 
 export function WaraWaraPlaza({iconGlass=false,posts:postsOn=true,postEvery=PLAZA_POST_INTERVALS.calm,drawings=true,crowd:crowdSize=1,games,selected,active,motion,hold=false,floorTexture,flatFloor=false,positions,tips,editing,onMove,onFocus,onPick,view:viewProp="console",marks="rings",feed=[]}:{iconGlass?:boolean;feed?:FeedPost[];posts?:boolean;postEvery?:number;drawings?:boolean;crowd?:number;view?:PlazaView;marks?:"rings"|"shadows"|"both";games:Game[];selected:number;active:boolean;motion:boolean;hold?:boolean;flatFloor?:boolean;floorTexture?:string;positions:Record<string,Spot>;tips:boolean;editing:boolean;onMove:(id:number,pos:Spot)=>void;onFocus:(i:number)=>void;onPick:(i:number)=>void}){
  const personalMii=useSettings().personalMii;
