@@ -4,7 +4,7 @@ const browser=await launch();
 try{
  const page=await browser.newPage({viewport:{width:1440,height:1100}}),errors=[];page.on('pageerror',e=>errors.push(e.message));
  await page.goto('http://127.0.0.1:8793/preview/preview.html?theme=old-big-picture');
- const root=page.locator('.dht-oldbigpicture');await root.waitFor();
+ const root=page.locator('.dht-oldbigpicture:not([data-transition-snapshot])');await root.waitFor();
  assert.equal(await root.locator('iframe').count(),0);assert.equal(await page.locator('iframe').count(),0);
  assert.equal(await root.locator('.home-tile').count(),5);
  const initialScroll=await root.locator('.home-tiles').evaluate(n=>n.scrollLeft);

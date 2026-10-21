@@ -26,3 +26,7 @@ The interactive browser preview uses 12 real game header images already present 
 Second visual pass (2026-10-17): matched home tile edge placement, 18.7%-height tiles, wider original-style icon silhouettes, larger profile header, and the three-artwork strip without duplicate game titles. Matched the library's narrower header, left sidebar position, three-cover Continue playing row and four-cover older-games rows. Retained accessible card names even where visual title labels are hidden. Remaining differences include the neutral avatar, redrawn icons, host-data-based recommendation labels, and system font.
 
 Additional pages: see PAGES.md for per-page sources and functionality. Game details, Store products, settings and friends use direct screenshot references; other pages adapt the same visual system. Browser chat and music state are explicitly simulated.
+
+## Video-based page motion
+
+Reference: the user-provided Spyrex video, Big Picture for Gaming Mode, around 21.10–21.37 seconds. Sampled frames show the home retreating upward while Library rises from below. Native navigation now uses a 270 ms vertical reveal with cubic-bezier(.16,.72,.22,1), reverses on Back, preserves outgoing carousel/list scroll offsets, and removes the inert visual snapshot when finished. Animations are skipped when disabled, hidden, or reduced motion is requested. The timing is an approximation from the filmed 30 fps screen, not an extracted original animation constant.
