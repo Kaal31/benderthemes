@@ -62,5 +62,22 @@ export const OLD_BETA_CSS=`
 .dht-oldbeta .beta-ambient i{position:absolute;display:block;width:var(--dot-size);aspect-ratio:1;border-radius:50%;background:radial-gradient(circle at 40% 40%,#b6e4f5aa,#78acd061 45%,#5d93be10 74%,transparent 76%);opacity:var(--dot-alpha);filter:blur(1.1px);animation:beta-ambient-float var(--dot-time) linear infinite;animation-delay:var(--dot-delay)}
 .dht-oldbeta .beta-ambient i:nth-child(6n){background:transparent;border:1px solid #9ed5ef;filter:blur(1.8px)}
 @keyframes beta-ambient-float{0%{transform:translate3d(-8px,75px,0) scale(.8);opacity:0}18%{opacity:var(--dot-alpha)}80%{opacity:var(--dot-alpha)}100%{transform:translate3d(25px,-115px,0) scale(1.12);opacity:0}}
+
+/* Idle community movement uses the independent translate/rotate properties,
+   leaving the category-sweep and page-unfold transforms free to animate. */
+.dht-oldbeta .beta-community-sheet{animation:beta-community-orbit 46s ease-in-out infinite alternate}
+.dht-oldbeta .beta-sheet-friend{animation:beta-friend-scroll var(--friend-time,38s) ease-in-out infinite alternate;animation-delay:var(--friend-phase,0s)}
+@keyframes beta-community-orbit{from{translate:-7px 4px;rotate:-1deg}to{translate:9px -6px;rotate:1.1deg}}
+@keyframes beta-friend-scroll{0%{translate:-12px 14px;rotate:-.8deg}50%{translate:0 -3px;rotate:0deg}100%{translate:14px -18px;rotate:1deg}}
+.dht-oldbeta:not([data-mode=sheet]) .beta-community-sheet,.dht-oldbeta:not([data-mode=sheet]) .beta-sheet-friend,.dht-oldbeta:not([data-category="2"]) .beta-community-sheet,.dht-oldbeta:not([data-category="2"]) .beta-sheet-friend{animation-play-state:paused}
+.dht-oldbeta .beta-rear-sheet-1{opacity:.48}.dht-oldbeta .beta-rear-sheet-2{opacity:.3}
+.dht-oldbeta .beta-rear-cover:nth-child(3n){animation:beta-cover-hover 17s ease-in-out infinite alternate}.dht-oldbeta .beta-rear-cover:nth-child(3n+1){animation:beta-cover-hover 23s -8s ease-in-out infinite alternate-reverse}
+.dht-oldbeta:not([data-mode=sheet]) .beta-rear-cover{animation-play-state:paused}
+/* Broad blue haze and soft bokeh from the unobstructed 0:06–0:09 frames. */
+.dht-oldbeta{background:radial-gradient(ellipse at 93% 3%,#6389b285,transparent 54%),radial-gradient(ellipse at 45% 40%,#23497677,transparent 64%),linear-gradient(115deg,#0b1830,#142d50 58%,#1e3e65)}
+.dht-oldbeta .beta-ambient{mask-image:linear-gradient(#000b,#000 30%,#000 88%,#0009)}
+.dht-oldbeta .beta-ambient::before{content:'';position:absolute;inset:-15%;background:radial-gradient(ellipse at 80% 22%,#85b0dc10,transparent 40%),radial-gradient(ellipse at 22% 70%,#58a2d00c,transparent 40%);filter:blur(22px);animation:beta-atmosphere 35s ease-in-out infinite alternate}
+@keyframes beta-atmosphere{from{translate:-1% 0;opacity:.6}to{translate:2% -1%;opacity:1}}
+.dht-oldbeta .beta-ambient i{filter:blur(1.7px)}.dht-oldbeta .beta-ambient i:nth-child(6n){border-color:#8dc1e88c;filter:blur(2px)}
 .dht-oldbeta.no-motion *,.dht-oldbeta.no-motion *::before,.dht-oldbeta.no-motion *::after{transition:none!important;animation:none!important;scroll-behavior:auto!important}@media(prefers-reduced-motion:reduce){.dht-oldbeta *,.dht-oldbeta *::before,.dht-oldbeta *::after{transition:none!important;animation:none!important;scroll-behavior:auto!important}}
 `;
