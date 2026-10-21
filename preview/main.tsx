@@ -242,9 +242,12 @@ function ControllerTest() {
   const focus=()=>{window.focus();document.querySelector<HTMLElement>('.dht-oldbeta[data-mode=sheet] .beta-categories button[aria-pressed=true], .dht-oldbeta:not([data-mode=sheet]) .beta-cover[data-selected=true], .dht-oldbigpicture:not([data-transition-snapshot]) .library-body .game, .dht-oldbigpicture:not([data-transition-snapshot]) .home-tile.library, .dht-oldbigpicture:not([data-transition-snapshot]) main button')?.focus({preventScroll:true});};
   return <div aria-label="Controller testing" style={{padding:'10px 14px',margin:'0 12px 10px',background:'#14374b',border:'1px solid #3b829d',display:'flex',gap:12,alignItems:'center',flexWrap:'wrap'}}>
     <button onClick={focus}>Focus preview controls</button>
+    <div aria-label="Preview navigation buttons" style={{display:'flex',gap:6,alignItems:'center'}}>
+      {([[11,'←'],[9,'↑'],[10,'↓'],[12,'→'],[1,'A / Enter'],[2,'B / Back']] as const).map(([button,label])=><button key={button} aria-label={`Preview navigation ${label}`} title={button===11?'Scroll left':button===12?'Scroll right':label} onPointerDown={e=>e.preventDefault()} onClick={()=>window.dispatchEvent(new CustomEvent('preview-controller-input',{detail:button}))} style={{minWidth:38,padding:'8px 12px',background:'#285c75',color:'#d9f4ff',border:'1px solid #6fa7bc',borderRadius:3,cursor:'pointer'}}>{label}</button>)}
+    </div>
     <span role="status" aria-label="Controller status">{status}</span>
     <span>D-pad / left stick: move · A: select · B: back · X: play · Y: options</span>
-    <span>Keyboard: arrow keys · Enter · Escape · X · Y. Click the preview first.</span>
+    <span>Keyboard: hold ← / → to scroll · ↑ / ↓ to move · Enter to select · Escape to go back. Page Up / Page Down also scroll.</span>
   </div>;
 }
 

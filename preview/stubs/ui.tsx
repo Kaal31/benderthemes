@@ -20,7 +20,7 @@ if (typeof window !== "undefined") {
     if (!top) return;
     if ((k.target as HTMLElement)?.closest('input,textarea,select,[contenteditable="true"]') && k.key !== 'Escape') return;
     const r = k.repeat;
-    const dirs: Record<string, number> = { ArrowUp: 9, ArrowDown: 10, ArrowLeft: 11, ArrowRight: 12 };
+    const dirs: Record<string, number> = { ArrowUp: 9, ArrowDown: 10, ArrowLeft: 11, ArrowRight: 12, PageUp: 11, PageDown: 12 };
     if (dirs[k.key]) return k.preventDefault(), top.onGamepadDirection?.(ev(dirs[k.key], r));
     const key = k.key.toLowerCase();
     if (k.key === "Enter" || key === "a") return k.preventDefault(), top.onOKButton?.(ev(1, r));
@@ -62,7 +62,7 @@ if (typeof window !== "undefined") {
       const pad=pads.find(p=>p.buttons.some(b=>b.pressed)||p.axes.some(a=>Math.abs(a)>.55))??pads[0];
       const down=new Set<number>();
       if(pad){for(const [i,button] of [[0,1],[1,2],[2,3],[3,4],[4,5],[5,6],[6,7],[7,8],[9,14],[12,9],[13,10],[14,11],[15,12]])if(pad.buttons[i]?.pressed)down.add(button);
-       if(pad.axes[0]<-.55)down.add(11);if(pad.axes[0]>.55)down.add(12);if(pad.axes[1]<-.55)down.add(9);if(pad.axes[1]>.55)down.add(10);
+       if(pad.axes[0]<-.55||pad.axes[2]<-.55)down.add(11);if(pad.axes[0]>.55||pad.axes[2]>.55)down.add(12);if(pad.axes[1]<-.55||pad.axes[3]<-.55)down.add(9);if(pad.axes[1]>.55||pad.axes[3]>.55)down.add(10);
       }
       for(const button of down){const repeat=previous.has(button);if(!repeat||([9,10,11,12].includes(button)&&now-lastDirection>180)){dispatchPreviewButton(button,repeat);if([9,10,11,12].includes(button))lastDirection=now;}}
       for(const button of previous)if(!down.has(button))stack[stack.length-1]?.current.onButtonUp?.(ev(button,false));
