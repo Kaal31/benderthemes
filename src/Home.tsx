@@ -1,4 +1,5 @@
 import {GameAmpHome} from "./themes/GameAmp";
+import { SantaHome } from "./themes/Santa";
 import { OldBigPictureHome } from "./themes/OldBigPicture";
 import {themeHomeOwnsRoute} from "./otherPlugins";
 import { useSteamScreensaver } from "./screensaver";
@@ -77,6 +78,7 @@ const skinHook = (s: ReturnType<typeof getSettings>) => {
 
 const THEME_COMPONENTS: Record<ThemeId, () => ReactNode> = {
   gameamp: () => <GameAmpHome />,
+  "santa-express": () => <SantaHome />,
   "old-big-picture": () => <OldBigPictureHome />,
   native: () => <NativeLayout />,
   onyx: () => <SilverHome dark />,

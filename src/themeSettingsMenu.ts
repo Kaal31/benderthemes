@@ -454,6 +454,10 @@ export function customizeItems(): MenuItem[] {
         toggle("Extend interface with Fill",()=> (S().frameData[activeTheme(S())!.id] as {extendInterface?:boolean}|undefined)?.extendInterface!==false,
           value=>{const id=activeTheme(S())!.id;updateSettings(p=>({frameData:{...p.frameData,[id]:{...(p.frameData[id] as Record<string,unknown> ?? {}),extendInterface:value}}}));})] : []),
     ])] : []),
+    ...(th === "santa-express" ? [group("Appearance", () => [
+      toggle("Show game title", () => (S().frameData["santa-express"] as {showGameTitle?:boolean}|undefined)?.showGameTitle !== false,
+        visible => updateSettings(p => ({frameData:{...p.frameData,"santa-express":{...(p.frameData["santa-express"] as Record<string,unknown>??{}),showGameTitle:visible}}}))),
+    ])] : []),
     ...controls.filter(c=>!c.id.startsWith("wallpaper:")).map(slotItem),
     ...(file.length ? [group("Theme file", () => themeFileItems(S().theme))] : []),
     ...(own.length ? [group("Look options", () => lookOptionItems(S().theme))] : []),

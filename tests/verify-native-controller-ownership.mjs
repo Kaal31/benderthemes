@@ -7,7 +7,7 @@ try{
  const page=await browser.newPage({viewport:{width:1304,height:930}}),errors=[];page.on('pageerror',e=>errors.push(e.message));
  await page.goto(url+'?theme=onyx&still=1');await page.locator('[data-dht-root]').waitFor();
  for(const id of ['old-big-picture','santa-express']){
-  await page.evaluate(id=>window.__updateTheme({theme:'frame',activeTheme:id,animations:true}),id);
+  await page.evaluate(id=>window.__updateTheme({theme:['santa-express','old-big-picture'].includes(id)?id:'frame',activeTheme:id,animations:true}),id);
   const host=page.locator(`[data-react-theme="${id}"]`);await host.waitFor();
   const selected=id==='old-big-picture'?'.home-tile.library[data-selected=true]':'.card[aria-current=true]';await host.locator(selected).waitFor();
   // Real Steam D-pad messages reach the outer Focusable, represented by window keyboard events here.

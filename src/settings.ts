@@ -19,7 +19,7 @@ export const VITA_LOOKS: { id: VitaLook; name: string }[] = [
   { id: "sakura", name: "Sakura" },
 ];
 
-export type ThemeId = "gameamp" | "old-big-picture" | "native" | "onyx" | "silver" | "frame" | "wii" | "wiiu" | "switch" | "n3ds" | "vita" | "ps2" | "ps3" | "psp" | "ps4" | "ps5" | "x360" | "aero" | "aero2" | "xbox" | "dial" | "castle" | "republic" | "minecraft" | "pain" | "nazarick" | "ps1" | "iisu";
+export type ThemeId = "gameamp" | "santa-express" | "old-big-picture" | "native" | "onyx" | "silver" | "frame" | "wii" | "wiiu" | "switch" | "n3ds" | "vita" | "ps2" | "ps3" | "psp" | "ps4" | "ps5" | "x360" | "aero" | "aero2" | "xbox" | "dial" | "castle" | "republic" | "minecraft" | "pain" | "nazarick" | "ps1" | "iisu";
 export type StyleValue = string | number | boolean;
 export type SortMode = "recent" | "alpha" | "playtime";
 export type AAction = "theme" | "launch" | "details";
@@ -38,6 +38,7 @@ export const showTitle = (s: { titles: Partial<Record<ThemeId, TitleMode>> }, th
 
 export const THEMES: { id: ThemeId; name: string; blurb: string }[] = [
   {id:"gameamp",name:"GameAmp",blurb:"Chrome media-player dashboard with stacked windows and reactive meters"},
+  {id:"santa-express",name:"Santa Express",blurb:"Native Christmas dashboard with chrome controls, snowfall and music"},
   {id:"old-big-picture",name:"Old Big Picture",blurb:"Classic Steam blue dashboard, carousel and native library pages"},
   {id:"onyx",name:"Onyx Wheel (bonus)",blurb:"Black textured body, cover flow and circular touch navigation"},
   {id:"silver",name:"Silver Wheel (bonus)",blurb:"Brushed aluminum, reflected covers and circular wheel navigation"},
@@ -503,6 +504,7 @@ export function onSettingsChange(l: () => void): () => void {
 export const cleanSettings = (saved: any): Settings => merge(saved);
 function merge(saved: any): Settings {
   const s: any = { ...DEFAULTS, ...(saved && typeof saved === "object" ? saved : {}) };
+  if(s.theme === "frame" && s.activeTheme === "santa-express") s.theme = "santa-express";
   if(s.theme === "frame" && s.activeTheme === "old-big-picture") s.theme = "old-big-picture";
   s.protondbThemes = Object.fromEntries(Object.entries(s.protondbThemes && typeof s.protondbThemes === "object" ? s.protondbThemes : {}).filter(([key,value])=>key.length>0&&key.length<=64&&typeof value==="boolean").slice(0,500));
   if (s.theme === "frame" && s.activeTheme === "gameamp") s.theme = "gameamp";

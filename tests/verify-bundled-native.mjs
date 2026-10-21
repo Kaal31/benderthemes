@@ -9,7 +9,7 @@ try{
  const page=await browser.newPage({viewport:{width:1280,height:800}}),errors=[];page.on('pageerror',e=>errors.push(e.message));
  await page.goto(url+'?theme=vita&still=1');await page.locator('[data-dht-root]').waitFor();
  for(const id of ids){
-  await page.evaluate(id=>window.__updateTheme({theme:'frame',activeTheme:id,animations:false}),id);
+  await page.evaluate(id=>window.__updateTheme({theme:['santa-express','old-big-picture'].includes(id)?id:'frame',activeTheme:id,animations:false}),id);
   await page.locator(`[data-react-theme="${id}"]`).waitFor();
   assert.equal(await page.locator('[data-dht-root] iframe').count(),0,id+' has no iframe');
   assert.equal(await page.locator('[data-react-theme]').evaluate(n=>n.shadowRoot),null,id+' has no HTML compatibility runtime');
