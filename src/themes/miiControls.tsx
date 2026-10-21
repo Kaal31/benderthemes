@@ -48,6 +48,7 @@ export const MII_CONTROLS_CSS=`
 .personal-mii .mii-palette-window{padding:14px;border-top:1px solid #d7e7ef;transform-origin:top;animation:mii-palette-unfurl .18s ease-out}
 .personal-mii .mii-palette .mii-palette-done{display:block;width:100%;height:38px;margin-top:14px;font-size:15px;border:1px solid #b5d5e4;background:#eff9fd;color:#1688ac}
 .personal-mii .mii-palette .mii-palette-toggle:focus-visible{outline-offset:-4px;transform:none}
+.personal-mii .mii-model-tools{display:flex;flex-shrink:0;gap:6px;margin:8px 0}.personal-mii .mii-model-tools button{flex:1;min-width:0;padding:8px 4px;font-size:13px}.personal-mii .mii-model-tools button[aria-pressed=true]{background:#d9f5fc;border-color:#2bb6da;color:#087da5}
 @keyframes mii-palette-unfurl{from{opacity:0;transform:translateY(-6px) scaleY(.94)}to{opacity:1;transform:none}}
 @media(prefers-reduced-motion:reduce){.personal-mii .mii-palette-window{animation:none}.personal-mii .mii-palette-toggle b{transition:none}}
 `;
