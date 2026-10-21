@@ -43,5 +43,24 @@ export const OLD_BETA_CSS=`
 .dht-oldbeta[data-opening=true] .beta-categories{top:5%;opacity:.35;pointer-events:none}.dht-oldbeta[data-opening=true] .beta-header{opacity:0;pointer-events:none}
 .dht-oldbeta[data-mode=recent] .beta-view-all{animation:beta-controls-reveal 360ms 180ms both}
 @keyframes beta-controls-reveal{from{opacity:0;filter:blur(3px)}to{opacity:1;filter:blur(0)}}
+
+/* Independent rear cover planes keep their depth while the front unfolds. */
+.dht-oldbeta .beta-stacked-sheets{position:absolute;left:0;top:0;transform-style:preserve-3d;pointer-events:none;opacity:0;transition:opacity 330ms,transform 560ms;transform:translateZ(-90px) scale(.94)}
+.dht-oldbeta[data-mode=sheet] .beta-stacked-sheets{opacity:1;transform:translateZ(-30px) scale(1)}
+.dht-oldbeta .beta-rear-sheet{position:absolute;left:0;top:0;transform-style:preserve-3d;pointer-events:none}
+.dht-oldbeta .beta-rear-sheet-1{transform:translate3d(-25px,30px,-55px) rotateZ(-3deg);opacity:.42;animation:beta-rear-one 14s ease-in-out infinite alternate}
+.dht-oldbeta .beta-rear-sheet-2{transform:translate3d(24px,60px,-115px) rotateZ(3deg);opacity:.23;animation:beta-rear-two 19s ease-in-out infinite alternate}
+.dht-oldbeta .beta-rear-cover{position:absolute;left:0;top:0;background:#23415b;box-shadow:0 2px 5px #020e2170}.dht-oldbeta .beta-rear-cover img{display:block;object-fit:cover;filter:saturate(.4) brightness(.72)}
+@keyframes beta-rear-one{from{transform:translate3d(-25px,30px,-55px) rotateZ(-3deg)}to{transform:translate3d(-14px,22px,-45px) rotateZ(-1.9deg)}}
+@keyframes beta-rear-two{from{transform:translate3d(24px,60px,-115px) rotateZ(3deg)}to{transform:translate3d(12px,68px,-125px) rotateZ(4.2deg)}}
+.dht-oldbeta[data-mode=sheet] .beta-cover{animation:beta-cover-hover 11s ease-in-out infinite alternate;animation-delay:calc(var(--tile-delay)*-40)}
+@keyframes beta-cover-hover{from{translate:0 0}to{translate:2px -4px}}
+.dht-oldbeta:not([data-mode=sheet]) .beta-rear-sheet{animation-play-state:paused}
+/* Faint defocused circles drifting through the blue atmosphere. */
+.dht-oldbeta{background:radial-gradient(ellipse at 88% 7%,#4e709a80,transparent 51%),radial-gradient(ellipse at 53% 40%,#1c3d69,transparent 68%),linear-gradient(125deg,#0c1933,#152e51 60%,#18385e)}
+.dht-oldbeta .beta-ambient{position:absolute;inset:0;overflow:hidden;pointer-events:none;mask-image:radial-gradient(ellipse at center,#000 35%,#0008 80%,transparent)}
+.dht-oldbeta .beta-ambient i{position:absolute;display:block;width:var(--dot-size);aspect-ratio:1;border-radius:50%;background:radial-gradient(circle at 40% 40%,#b6e4f5aa,#78acd061 45%,#5d93be10 74%,transparent 76%);opacity:var(--dot-alpha);filter:blur(1.1px);animation:beta-ambient-float var(--dot-time) linear infinite;animation-delay:var(--dot-delay)}
+.dht-oldbeta .beta-ambient i:nth-child(6n){background:transparent;border:1px solid #9ed5ef;filter:blur(1.8px)}
+@keyframes beta-ambient-float{0%{transform:translate3d(-8px,75px,0) scale(.8);opacity:0}18%{opacity:var(--dot-alpha)}80%{opacity:var(--dot-alpha)}100%{transform:translate3d(25px,-115px,0) scale(1.12);opacity:0}}
 .dht-oldbeta.no-motion *,.dht-oldbeta.no-motion *::before,.dht-oldbeta.no-motion *::after{transition:none!important;animation:none!important;scroll-behavior:auto!important}@media(prefers-reduced-motion:reduce){.dht-oldbeta *,.dht-oldbeta *::before,.dht-oldbeta *::after{transition:none!important;animation:none!important;scroll-behavior:auto!important}}
 `;
