@@ -1,3 +1,4 @@
+import { SANTA_PAGE_STYLES } from "./themes/santaPageStyles";
 import {NazarickNavigation,NazarickPage,nextNazarickPage} from "./themes/NazarickNavigation";
 import {NazarickBackdrop} from "./themes/NazarickBackdrop";
 import {castleWindowAppearance,useCastleWindow} from "./themes/castleWindow";
@@ -55,8 +56,8 @@ interface Skin {
 const ring = (c: string, glow = "") => (on: boolean): CSSProperties => (on ? { boxShadow: `0 0 0 3px ${c}${glow ? `, ${glow}` : ""}`, transform: "scale(1.04)" } : {});
 export function storeSkin(s: Settings): Skin {
   const t = s.theme;
-  if(t==="frame"){
-   const id=activeTheme(s)?.id;
+  if(t==="frame"||t==="santa-express"){
+   const id=t==="santa-express"?t:activeTheme(s)?.id;
    const profiles:Record<string,{bg:string;panel:string;text:string;sub:string;accent:string;radius:number;font?:string}>={
     "old-big-picture":{bg:"radial-gradient(ellipse at top,#164761,#07182c)",panel:"#123b54",text:"#d8edf4",sub:"#84b6ce",accent:"#248eae",radius:2},
     "blue-glass":{bg:"linear-gradient(135deg,#315774,#6f9bb6 52%,#345e7c)",panel:"linear-gradient(#89b5ce,#345973)",text:"#f0f7fc",sub:"#d4e6f0",accent:"#3d8fc8",radius:10},
@@ -275,7 +276,7 @@ export function StoreView({ settings, lib, onClose, onLaunch }: { settings: Sett
   }, []);
 
   return (
-    <div ref={castleWindow.ref} className="dht-store" data-dht-store-skin={settings.theme} data-theme-id={activeTheme(settings)?.id} data-scheme={iisuSchemeAttr(settings)} style={{ position: "absolute", inset: 0, zIndex: 85, background: "#000",...iisuPageVars(settings),...(settings.theme==="castle"?castleWindowAppearance(settings):{}) }}>
+    <div ref={castleWindow.ref} className="dht-store" data-dht-store-skin={settings.theme} data-theme-id={activeTheme(settings)?.id} data-scheme={iisuSchemeAttr(settings)} style={{ position: "absolute", inset: 0, zIndex: 85, background: "#000",...iisuPageVars(settings),...(settings.theme==="castle"?castleWindowAppearance(settings):{}) }}><style>{SANTA_PAGE_STYLES}</style>
       <style>{NINTENDO_STORE_CSS + "\n" + IISU_STORE_CSS}</style>
       {searchOpen && <div className="dht-store-search" style={{position:"absolute",inset:settings.theme==="nazarick"?"10% 0 0":0,zIndex:5,background:skin.bg,color:skin.text,display:"grid",placeItems:"center"}}><form onSubmit={e=>{e.preventDefault();submitSearch();}} style={{width:"65%"}}><h1>{tab === "plugins" ? "Search plugins" : tab === "themes" ? "Search themes" : "Search Store"}</h1><input ref={searchBox} autoFocus {...opensKeyboardOnTap} aria-label={tab === "plugins" ? "Search plugins" : tab === "themes" ? "Search themes" : "Search Store"} value={searchDraft} onChange={e=>setSearchDraft(e.target.value)} onKeyDown={e=>{e.stopPropagation();if(e.key==="Escape")setSearchOpen(false);}} style={{width:"100%",boxSizing:"border-box",fontSize:28,padding:18,color:skin.text,background:skin.panel,border:`2px solid ${skin.sub}`,borderRadius:skin.radius}}/><button type="submit" style={{fontSize:22,padding:"14px 30px",marginTop:24,background:skin.accent,color:skin.accentText}}>Search</button><button type="button" onClick={()=>setSearchOpen(false)} style={{fontSize:22,padding:"14px 30px",marginLeft:18}}>Back</button><p style={{marginTop:22,fontSize:16,color:skin.sub}}>Ⓐ Keyboard · Ⓨ Search · Ⓑ Back</p></form></div>}
       <StageHost><Stage background="transparent">

@@ -567,6 +567,11 @@ export function MenuView({
       title: { color: "#c8d2ff", fontSize: 18, padding: "0 30px 10px" },
     },
   };
+  styles["santa-express"] = {
+    panel:{position:"absolute",left:"50%",top:"50%",transform:"translate(-50%,-50%)",width:650,maxHeight:"86%",padding:"24px 26px",background:"radial-gradient(ellipse at 20% 0%,#b7482d66,transparent 65%),linear-gradient(#711b13,#300806)",border:"5px ridge #dac2a3",borderRadius:28,boxShadow:"0 20px 60px #170000aa,inset 0 1px 2px #ffe4b566",color:"#fff0d7"},
+    item:(on,disabled)=>({fontSize:21,padding:"13px 18px",margin:"5px 0",borderRadius:16,color:disabled?"#927369":"#fff0d7",background:on?"linear-gradient(#b1462b,#6b170e)":"linear-gradient(#83261966,#37090755)",border:on?"2px solid #ffe0af":"2px solid #b77c5544",boxShadow:on?"0 0 0 2px #a32914,0 0 15px #e65e2533":"inset 0 1px #ffe3b51a"}),
+    title:{fontFamily:"Georgia,serif",fontSize:29,padding:"5px 4px 18px",marginBottom:14,color:"#ffe6bd",borderBottom:"1px solid #dbac7866"},
+  };
   styles["old-big-picture"] = {
     panel:{position:"absolute",left:"8%",top:"9%",width:"70%",maxWidth:900,padding:"24px 28px",background:"linear-gradient(135deg,#1c5068f5,#09263ff8)",border:"1px solid #68b3cc",boxShadow:"0 0 30px #42bfe62b,0 20px 60px #0008",fontFamily:'"Segoe UI",Arial,sans-serif'},
     item:(on,disabled)=>({fontSize:21,padding:"11px 18px",margin:"2px 0",color:disabled?"#53798b":on?"#15374b":"#99c8db",background:on?"linear-gradient(90deg,#b6e6f0,#6cb8d1)":"#1c4c6570",boxShadow:on?"0 0 9px #76d5ef55":"none",borderRadius:0}),

@@ -124,7 +124,7 @@ export function resolveHubTheme(setting: string | undefined, from: string | unde
   }
   const fixed = s !== "auto";
   const t = fixed ? s : from;
-  const ok = !!t && hasHubStyle(t) && !!inv?.[t];
+  const ok = !!t && hasHubStyle(t) && (t === "santa-express" || !!inv?.[t]);
   return { theme: ok ? (t as string) : null, source: ok ? (fixed ? "setting" : "auto") : "none" };
 }
 
@@ -188,6 +188,10 @@ export const HUB_DECO_CSS = `
 .dht-hub-deco[data-deco=meadow]::after{inset:0;background:radial-gradient(ellipse 160px 46px at 30% 5%,#fffc 0,transparent 70%),radial-gradient(ellipse 220px 54px at 74% 12%,#fffb 0,transparent 70%),radial-gradient(ellipse 140px 40px at 52% 34%,#ffffff88 0,transparent 70%),radial-gradient(circle at 82% 18%,#c8ff5055 0,transparent 16%)}
 .dht-hub-deco[data-deco=sky]::before{inset:0;background:radial-gradient(ellipse 280px 70px at 14% 18%,#fff 0,transparent 70%),radial-gradient(ellipse 340px 80px at 78% 10%,#fffe 0,transparent 70%),radial-gradient(ellipse 300px 70px at 58% 86%,#fffd 0,transparent 70%),radial-gradient(ellipse 240px 60px at 6% 78%,#fffc 0,transparent 70%)}
 .dht-hub-deco[data-deco=sky]::after{left:0;right:0;bottom:0;height:34%;background:linear-gradient(0deg,#ffffffcc,transparent)}
+.dht-market[data-hub-theme="santa-express"]{--dht-hub-bg:radial-gradient(ellipse at 20% 0%,#ae3d2855,transparent 65%),linear-gradient(#6d1a12,#250605);--dht-hub-panel:linear-gradient(#8c2b1d,#45100b);--dht-hub-panel-hi:linear-gradient(#b2482d,#752012);--dht-hub-accent:#f2d3a1;--dht-hub-accent-text:#471109;--dht-hub-ring:0 0 0 2px #ffe1ad,0 0 16px #ff613044}
+.dht-market[data-hub-theme="santa-express"] .market-panel,.dht-market[data-hub-theme="santa-express"] .market-toolbar{border:3px ridge #cdb295;border-radius:22px;box-shadow:inset 0 1px #ffe3b555,0 6px 18px #1c000055}
+.dht-market[data-hub-theme="santa-express"] h1{font-family:Georgia,serif;color:#ffe9c6;text-shadow:0 2px 3px #260000}
+.dht-market[data-hub-theme="santa-express"] button{border-radius:16px;box-shadow:inset 0 1px #ffe8c333}
 .dht-market[data-hub-theme^=aero] .market-close{background:#0a3a9a66;border:1px solid #ffffff77}
 .dht-market[data-hub-theme^=aero] h1,.dht-market[data-hub-theme^=aero] .market-toolbar button{text-shadow:0 1px 2px #00205088}
 .dht-hub-deco[data-deco=bubbles]::before{inset:0;background:radial-gradient(circle at 14% 82%,#ffffff40 0 26px,transparent 28px),radial-gradient(circle at 30% 64%,#ffffff2c 0 44px,transparent 46px),radial-gradient(circle at 62% 90%,#ffffff33 0 36px,transparent 38px),radial-gradient(circle at 84% 70%,#ffffff2a 0 60px,transparent 62px),radial-gradient(circle at 92% 24%,#ffffff22 0 30px,transparent 32px),radial-gradient(circle at 8% 30%,#ffffff22 0 22px,transparent 24px);animation:dht-hub-rise 18s linear infinite}

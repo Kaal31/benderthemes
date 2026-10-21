@@ -455,7 +455,7 @@ export function customizeItems(): MenuItem[] {
           value=>{const id=activeTheme(S())!.id;updateSettings(p=>({frameData:{...p.frameData,[id]:{...(p.frameData[id] as Record<string,unknown> ?? {}),extendInterface:value}}}));})] : []),
     ])] : []),
     ...(th === "santa-express" ? [group("Appearance", () => [
-      toggle("Show game title", () => (S().frameData["santa-express"] as {showGameTitle?:boolean}|undefined)?.showGameTitle !== false,
+      toggle("Show game title", () => (S().frameData["santa-express"] as {showGameTitle?:boolean}|undefined)?.showGameTitle === true,
         visible => updateSettings(p => ({frameData:{...p.frameData,"santa-express":{...(p.frameData["santa-express"] as Record<string,unknown>??{}),showGameTitle:visible}}}))),
     ])] : []),
     ...controls.filter(c=>!c.id.startsWith("wallpaper:")).map(slotItem),

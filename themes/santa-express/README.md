@@ -10,4 +10,4 @@ The profile picture is rendered beneath a chrome/glass mask using Steam's native
 
 Snow library: mkalygin/snowflakes, MIT; attribution in vendor/. Artwork was prepared using built-in imagegen from the user-supplied reference. Music is supplied by the user.
 
-Theme options → Appearance → Show game title hides the entire plaque above the covers, including the game counter, without moving the carousel. Enabled by default and saved only for Santa Express.
+Theme options → Appearance → Show game title hides the entire plaque above the covers, including the game counter, without moving the carousel. Hidden by default and saved only for Santa Express.
