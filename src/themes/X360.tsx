@@ -67,7 +67,7 @@ function X360MetroHome() {
     // home
     const home: XTile[] = [];
     if (games[0]) home.push({ key: "h0", x: 0, y: 0, w: 560, h: 315, label: games[0].name, game: games[0], art: "hero", run: play(games[0]) });
-    else home.push(sys("h0", 0, 0, 560, 315, "steam library", "library", () => openSteam("library")));
+    else home.push(sys("h0", 0, 0, 560, 315, t("steamLibrary").toLowerCase(), "library", () => openSteam("library")));
     [1, 2, 3, 4].forEach((n, k) => {
       const g = games[n];
       const x = 575 + (k % 2) * 285;
@@ -75,20 +75,20 @@ function X360MetroHome() {
       if (g) home.push({ key: `h${n}`, x, y, w: 270, h: 150, label: g.name, game: g, art: "landscape", run: play(g) });
     });
     const smalls: [string, IconName, () => void][] = [
-      ["my games", "game", () => setPivot(2)],
-      ["steam store", "store", () => openSteam("store")],
-      ["friends", "friends", () => openSteam("friends")],
-      ["downloads", "download", () => openSteam("downloads")],
+      [t("myGames").toLowerCase(), "game", () => setPivot(2)],
+      [t("destSteamStore").toLowerCase(), "store", () => openSteam("store")],
+      [t("destFriends").toLowerCase(), "friends", () => openSteam("friends")],
+      [t("destDownloads").toLowerCase(), "download", () => openSteam("downloads")],
     ];
     smalls.forEach(([label, icon, run], k) => home.push(sys(`hs${k}`, k * 285, 335, 270, 120, label, icon, run, k === 0 ? GREEN : "#2d2d2d")));
     // social
     const social: XTile[] = [
       sys("me", 0, 0, 300, 455, api.user, "user", () => openSteam("friends")),
-      sys("fr", 315, 0, 270, 220, "friends", "friends", () => openSteam("friends"), "#2d2d2d"),
-      sys("chat", 315, 235, 270, 220, "messages", "bell", () => openSteam("friends"), "#2d2d2d"),
+      sys("fr", 315, 0, 270, 220, t("destFriends").toLowerCase(), "friends", () => openSteam("friends"), "#2d2d2d"),
+      sys("chat", 315, 235, 270, 220, t("messages").toLowerCase(), "bell", () => openSteam("friends"), "#2d2d2d"),
     ];
     // games: two rows of box art
-    const gtiles: XTile[] = [sys("gl", 0, 0, 220, 455, "game library", "library", () => openSteam("library"))];
+    const gtiles: XTile[] = [sys("gl", 0, 0, 220, 455, t("destLibrary").toLowerCase(), "library", () => openSteam("library"))];
     games.forEach((g, i) => {
       const col = Math.floor(i / 2);
       const row = i % 2;
@@ -96,26 +96,26 @@ function X360MetroHome() {
     });
     // apps
     const apps: XTile[] = [
-      sys("web", 0, 0, 270, 220, "internet explorer", "globe", () => openSteam("browser")),
-      sys("media", 0, 235, 270, 220, "pictures", "photo", () => api.openMedia(), "#2d2d2d"),
-      sys("store2", 285, 0, 270, 220, "marketplace", "store", () => openSteam("store"), "#2d2d2d"),
-      sys("dl2", 285, 235, 270, 220, "active downloads", "download", () => openSteam("downloads"), "#2d2d2d"),
+      sys("web", 0, 0, 270, 220, t("internetExplorer").toLowerCase(), "globe", () => openSteam("browser")),
+      sys("media", 0, 235, 270, 220, t("pictures").toLowerCase(), "photo", () => api.openMedia(), "#2d2d2d"),
+      sys("store2", 285, 0, 270, 220, t("marketplace").toLowerCase(), "store", () => openSteam("store"), "#2d2d2d"),
+      sys("dl2", 285, 235, 270, 220, t("activeDownloads").toLowerCase(), "download", () => openSteam("downloads"), "#2d2d2d"),
     ];
     api.lib.apps.forEach((g, i) => apps.push({ key: `a${g.appid}`, x: 570 + Math.floor(i / 2) * 285, y: (i % 2) * 235, w: 270, h: 220, label: g.name, game: g, art: "landscape", run: () => api.launch(g) }));
     // settings
     const settings: XTile[] = [
-      sys("theme", 0, 0, 270, 220, "presets", "palette", themes),
-      sys("hs", 0, 235, 270, 220, "home settings", "gear", api.openSettings, "#2d2d2d"),
-      sys("sys", 285, 0, 270, 220, "system", "steam", () => openSteam("settings"), "#2d2d2d"),
-      sys("pw", 285, 235, 270, 220, "turn off", "power", () => openSteam("power"), "#2d2d2d"),
-      sys("steamhome", 570, 0, 270, 220, "home", "home", api.showSteamHome, "#2d2d2d"),
+      sys("theme", 0, 0, 270, 220, t("presets").toLowerCase(), "palette", themes),
+      sys("hs", 0, 235, 270, 220, t("homeSettings").toLowerCase(), "gear", api.openSettings, "#2d2d2d"),
+      sys("sys", 285, 0, 270, 220, t("system").toLowerCase(), "steam", () => openSteam("settings"), "#2d2d2d"),
+      sys("pw", 285, 235, 270, 220, t("turnOff").toLowerCase(), "power", () => openSteam("power"), "#2d2d2d"),
+      sys("steamhome", 570, 0, 270, 220, t("home").toLowerCase(), "home", api.showSteamHome, "#2d2d2d"),
     ];
     return [
-      { name: "social", tiles: social },
-      { name: "home", tiles: home },
-      { name: "games", tiles: gtiles },
-      { name: "apps", tiles: apps },
-      { name: "settings", tiles: settings },
+      { id: "social", name: t("social").toLowerCase(), tiles: social },
+      { id: "home", name: t("homeTab").toLowerCase(), tiles: home },
+      { id: "games", name: t("tabGames").toLowerCase(), tiles: gtiles },
+      { id: "apps", name: t("apps").toLowerCase(), tiles: apps },
+      { id: "settings", name: t("destSettings").toLowerCase(), tiles: settings },
     ];
   }, [api.lib, api.user, s.theme]);
 
@@ -137,9 +137,9 @@ function X360MetroHome() {
   const options = () => {
     const g = cur?.game;
     const extra: MenuItem[] = [
-      { label: "presets", sub: () => themeMenu(s.theme, api.switchTheme, THEMES) },
-      { label: "home settings", action: api.openSettings },
-      { label: "home", action: api.showSteamHome },
+      { label: t("presets"), sub: () => themeMenu(s.theme, api.switchTheme, THEMES) },
+      { label: t("homeScreenSettings"), action: api.openSettings },
+      { label: t("destMainMenu"), action: api.showSteamHome },
     ];
     menu.open(g ? [{ label: t("play"), action: () => api.launch(g) }, { label: t("watchTrailer"), action: () => api.playTrailer(g) }, { label: t("gameDetails"), action: () => api.details(g) }, { label: t("gameOptions"), action: () => api.nativeMenu(g) }, ...extra] : extra, g ? g.name : t("options"));
   };
@@ -199,10 +199,10 @@ function X360MetroHome() {
   const label: CSSProperties = { position: "absolute", left: 10, bottom: 8, right: 10, color: "#fff", fontSize: 17, whiteSpace: "nowrap", overflow: "hidden", textOverflow: "ellipsis", fontFamily: FONT };
 
   return (
-    <ThemeRoot onInput={onInput} hints={{ a: "Select", y: "Options", menu: "Options" }}>
+    <ThemeRoot onInput={onInput} hints={{ a: t("select"), y: t("options"), menu: t("options") }}>
       <Stage background="#d9d9d9">
       <div className="dht-x360-skin" data-dht-from-skin={look.bg || look.accent ? "x360" : undefined} style={{ display: "contents", ...look.vars } as CSSProperties}>
-        <div className="dht-x360-bg" style={{ position: "absolute", inset: 0, background: `var(--dht-x360-bg, ${look.bg || a.background ? `url("${look.bgFor(X360_SECTION[pv.name] ?? "home") ?? a.background}") center/cover` : "linear-gradient(180deg, #6e6e6e 0%, #9a9a9a 55%, #c4c4c4 100%)"})` }} />
+        <div className="dht-x360-bg" style={{ position: "absolute", inset: 0, background: `var(--dht-x360-bg, ${look.bg || a.background ? `url("${look.bgFor(X360_SECTION[pv.id] ?? "home") ?? a.background}") center/cover` : "linear-gradient(180deg, #6e6e6e 0%, #9a9a9a 55%, #c4c4c4 100%)"})` }} />
         {wall && <BackgroundMedia src={wall} style={{ position: "absolute", inset: 0, width: W, height: H, objectFit: "cover" }} />}
         {!wall && a["bottom-vignette"] && <img src={a["bottom-vignette"]} aria-hidden="true" style={{ position: "absolute", left: 0, bottom: 0, width: W, height: H * 300 / 720, pointerEvents: "none" }} />}
 
@@ -223,14 +223,14 @@ function X360MetroHome() {
         {/* pivots */}
         <div style={{ position: "absolute", left: X0, top: 104, display: "flex", gap: 38, fontFamily: FONT, transition: "transform 250ms ease-out", transform: `translateX(${-Math.max(0, pivot - 1) * 120}px)` }}>
           {pivots.map((pv2, i) => (
-            <span key={pv2.name} className="dht-x360-pivot" data-selected={i === pivot} style={{ fontSize: 40, fontWeight: 300, letterSpacing: -0.5, color: i === pivot ? "#fff" : "rgba(255,255,255,0.5)", textShadow: SHADOW, textDecoration: onBar && i === pivot ? "underline" : "none", textUnderlineOffset: 8 }}>
+            <span key={pv2.id} className="dht-x360-pivot" data-selected={i === pivot} style={{ fontSize: 40, fontWeight: 300, letterSpacing: -0.5, color: i === pivot ? "#fff" : "rgba(255,255,255,0.5)", textShadow: SHADOW, textDecoration: onBar && i === pivot ? "underline" : "none", textUnderlineOffset: 8 }}>
               {pv2.name}
             </span>
           ))}
         </div>
 
         {/* tiles */}
-        <div style={{ position: "absolute", left: X0, top: Y0, transform: `translateX(${-scroll*tileScale}px) scale(${tileScale})`, transformOrigin:"0 0", transition: "transform 250ms ease-out" }} key={pv.name}>
+        <div style={{ position: "absolute", left: X0, top: Y0, transform: `translateX(${-scroll*tileScale}px) scale(${tileScale})`, transformOrigin:"0 0", transition: "transform 250ms ease-out" }} key={pv.id}>
           {pv.tiles.map((t, i) => {
             const on = i === sel && !onBar;
             if (t.x - scroll > W || t.x + t.w - scroll < -X0) return null;
@@ -287,7 +287,7 @@ function X360MetroHome() {
         )}
         {/* button legend */}
         <div style={{ position: "absolute", left: 90 * k, bottom: Math.max(16, H - Y0 - 455 * tileScale - 140), display: "flex", gap: 30, alignItems: "center", fontFamily: FONT, fontSize: 18, color: "#fff", textShadow: SHADOW }}>
-          {([["legend-a", "select"], ["legend-y", "options"]] as const).map(([img, text]) => (
+          {([["legend-a", t("select").toLowerCase()], ["legend-y", t("options").toLowerCase()]] as const).map(([img, text]) => (
             <span key={img} style={{ display: "flex", alignItems: "center", gap: 6 }}>{a[img] && <img src={a[img]} style={{ width: 32, height: 32 }} />}{text}</span>
           ))}
         </div>

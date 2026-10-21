@@ -50,7 +50,7 @@ export function KinectHome() {
   // your avatar: your own exported model if you added one, otherwise the first visit opens the creator
   const { spec: mine, model, editing, setEditing } = useMyAvatar(s, api.user);
   const presets = () => menu.open(themeMenu(s.theme, api.switchTheme, THEMES), t("presets"), { page: true });
-  const play = (g: Game): Slot => ({ key: `g${g.appid}`, label: g.name, sub: `${fmtPlaytime(g.playtime, g.lastPlayed, true)} · Last played ${fmtLastPlayed(g.lastPlayed)}`, game: g, run: () => api.activate(g, () => api.launch(g)) });
+  const play = (g: Game): Slot => ({ key: `g${g.appid}`, label: g.name, sub: `${fmtPlaytime(g.playtime, g.lastPlayed, true)} · ${t("lastPlayedVal", { val: fmtLastPlayed(g.lastPlayed) })}`, game: g, run: () => api.activate(g, () => api.launch(g)) });
 
   // Kinect-era channel names; the slots open Steam's equivalents.
   const channels: Channel[] = [
@@ -173,7 +173,7 @@ export function KinectHome() {
   );
 
   return (
-    <ThemeRoot onInput={onInput} hints={{ a: "Select", y: "Options" }}>
+    <ThemeRoot onInput={onInput} hints={{ a: t("select"), y: t("options") }}>
       <Stage background="#7fb21a">
         {wall || look.bg || a.background ? <BackgroundMedia src={wall ?? look.bgFor(X360_SECTION[chan.id] ?? "home") ?? a.background} className="dht-x360n-bg" data-dht-from-skin={!wall && look.bg ? "x360" : undefined} style={{ position: "absolute", inset: 0, width: W, height: H, objectFit: "cover" }} /> : <div className="dht-x360n-bg" style={{ position: "absolute", inset: 0, background: "radial-gradient(ellipse at 50% 45%, #d4ef2a 0%, #8cc21c 45%, #3f7d10 100%)" }} />}
         <div style={{ position: "absolute", left: ox, top: oy, width: 1280, height: 720, transform: `scale(${k})`, transformOrigin: "0 0", fontFamily: FONT, color: INK }}>
@@ -213,8 +213,8 @@ export function KinectHome() {
           </div>
           {/* button legend */}
           <div style={{ position: "absolute", left: LIST_X, top: 632, height: 32, display: "flex", gap: 34, alignItems: "center", fontSize: 18, textShadow: TEXT_SHADOW }}>
-            {legend(a["legend-a"], "A", "#3fb83f", "Select")}
-            {legend(a["legend-y"], "Y", "#e9c31d", "Options")}
+            {legend(a["legend-a"], "A", "#3fb83f", t("select"))}
+            {legend(a["legend-y"], "Y", "#e9c31d", t("options"))}
           </div>
         </div>
         {editing && <AvatarEditor name={api.user} initial={mine} firstRun={editing === "first"} start={editing === "import" ? "import" : undefined} model={model} motion={s.animations} onDone={(spec) => (spec && saveAvatar(spec), setEditing(null))} />}

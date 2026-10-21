@@ -1,3 +1,4 @@
+import { t } from "../i18n";
 import {customProfilePicture} from "../profilePicture";
 // The NXE avatar creator (2008), after the console's own: a short intro, the
 // "Choose an avatar as a starting point" line-up under a spotlight, then the
@@ -64,40 +65,46 @@ const removeAvatar = callable<[what: string], { success: boolean }>("x360_avatar
 /** The avatar entries for a dashboard's Y menu. */
 export function avatarMenu(model: string | undefined, setEditing: (e: Editing) => void): MenuItem[] {
   return [
-    { label: "Edit My Avatar", action: () => setEditing("edit") },
-    { label: "Create on 360sona", action: openSona },
-    { label: "Import Avatar", action: () => setEditing("import") },
-    ...(model ? [{ label: "Remove Imported Avatar", action: () => void removeAvatar("model").then(() => resourcesChanged()) }] : []),
+    { label: t("editMyAvatar"), action: () => setEditing("edit") },
+    { label: t("createOn360sona"), action: openSona },
+    { label: t("importAvatar"), action: () => setEditing("import") },
+    ...(model ? [{ label: t("removeImportedAvatar"), action: () => void removeAvatar("model").then(() => resourcesChanged()) }] : []),
   ];
 }
 
 type Cat = { key: keyof AvatarSpec; label: string; framing: "head" | "body"; colors?: number[]; names?: readonly string[] };
-const FEATURES: Cat[] = [
-  { key: "hair", label: "Hairstyles", framing: "head", names: OPTIONS.hair },
-  { key: "hairColor", label: "Hair Color", framing: "head", colors: HAIR_COLORS },
-  { key: "eyes", label: "Eyes", framing: "head", names: OPTIONS.eyes },
-  { key: "eyeColor", label: "Eye Color", framing: "head", colors: EYE_COLORS },
-  { key: "brows", label: "Eyebrows", framing: "head", names: OPTIONS.brows },
-  { key: "nose", label: "Nose", framing: "head", names: OPTIONS.nose },
-  { key: "mouth", label: "Mouth", framing: "head", names: OPTIONS.mouth },
-  { key: "ears", label: "Ears", framing: "head", names: OPTIONS.ears },
-  { key: "facialHair", label: "Facial Hair", framing: "head", names: OPTIONS.facialHair },
-  { key: "face", label: "Face Shape", framing: "head", names: OPTIONS.face },
-  { key: "skin", label: "Skin Color", framing: "body", colors: SKIN_COLORS },
-  { key: "body", label: "Body Type", framing: "body", names: OPTIONS.body },
-  { key: "height", label: "Height", framing: "body", names: OPTIONS.height },
-  { key: "build", label: "Build", framing: "body", names: OPTIONS.build },
+const getFeatures = (): Cat[] => [
+  { key: "hair", label: t("catHairstyles"), framing: "head", names: OPTIONS.hair },
+  { key: "hairColor", label: t("catHairColor"), framing: "head", colors: HAIR_COLORS },
+  { key: "eyes", label: t("catEyes"), framing: "head", names: OPTIONS.eyes },
+  { key: "eyeColor", label: t("catEyeColor"), framing: "head", colors: EYE_COLORS },
+  { key: "brows", label: t("catEyebrows"), framing: "head", names: OPTIONS.brows },
+  { key: "nose", label: t("catNose"), framing: "head", names: OPTIONS.nose },
+  { key: "mouth", label: t("catMouth"), framing: "head", names: OPTIONS.mouth },
+  { key: "ears", label: t("catEars"), framing: "head", names: OPTIONS.ears },
+  { key: "facialHair", label: t("catFacialHair"), framing: "head", names: OPTIONS.facialHair },
+  { key: "face", label: t("catFaceShape"), framing: "head", names: OPTIONS.face },
+  { key: "skin", label: t("catSkinColor"), framing: "body", colors: SKIN_COLORS },
+  { key: "body", label: t("catBodyType"), framing: "body", names: OPTIONS.body },
+  { key: "height", label: t("catHeight"), framing: "body", names: OPTIONS.height },
+  { key: "build", label: t("catBuild"), framing: "body", names: OPTIONS.build },
 ];
-const CLOTHES: Cat[] = [
-  { key: "top", label: "Tops", framing: "body", names: OPTIONS.top },
-  { key: "topColor", label: "Top Color", framing: "body", colors: CLOTH_COLORS },
-  { key: "top2Color", label: "Trim Color", framing: "body", colors: CLOTH_COLORS },
-  { key: "bottom", label: "Bottoms", framing: "body", names: OPTIONS.bottom },
-  { key: "bottomColor", label: "Bottoms Color", framing: "body", colors: CLOTH_COLORS },
-  { key: "shoes", label: "Shoes", framing: "body", names: OPTIONS.shoes },
-  { key: "shoeColor", label: "Shoe Color", framing: "body", colors: CLOTH_COLORS },
+const getClothes = (): Cat[] => [
+  { key: "top", label: t("catTops"), framing: "body", names: OPTIONS.top },
+  { key: "topColor", label: t("catTopColor"), framing: "body", colors: CLOTH_COLORS },
+  { key: "top2Color", label: t("catTrimColor"), framing: "body", colors: CLOTH_COLORS },
+  { key: "bottom", label: t("catBottoms"), framing: "body", names: OPTIONS.bottom },
+  { key: "bottomColor", label: t("catBottomsColor"), framing: "body", colors: CLOTH_COLORS },
+  { key: "shoes", label: t("catShoes"), framing: "body", names: OPTIONS.shoes },
+  { key: "shoeColor", label: t("catShoeColor"), framing: "body", colors: CLOTH_COLORS },
 ];
-const MENU = ["Change My Features", "Change My Clothes", "Start Over", "Use a 360sona Avatar", "Save and Exit"] as const;
+const getMenu = () => [
+  { id: "features", label: t("changeMyFeatures") },
+  { id: "clothes", label: t("changeMyClothes") },
+  { id: "startOver", label: t("startOver") },
+  { id: "sona", label: t("use360sonaAvatar") },
+  { id: "exit", label: t("saveAndExit") },
+];
 const LINEUP = 11;
 const hex = (c: number) => `#${c.toString(16).padStart(6, "0")}`;
 
@@ -122,24 +129,24 @@ export function AvatarEditor({ name, initial, firstRun, start, model, motion = t
   }, [step.s]);
   type SonaItem = { label: string; sub: string; run: () => void };
   const sonaItems: SonaItem[] = [
-    { label: "Create on 360sona", sub: "Opens 360sona.com in Steam's browser. Make your avatar, choose Export a 3D model (and Save as gamerpic), then come back here", run: () => (openSona(), setNote("When the download has finished, come back and pick MyAvatar.glb below")) },
+    { label: t("createOn360sona"), sub: t("createOn360sonaDesc"), run: () => (openSona(), setNote(t("sonaWhenDownloadFinished"))) },
     ...(found ?? []).map((f) => ({
       label: f.name,
-      sub: `${f.kind === "model" ? `3D model${f.animations ? `, ${f.animations} animations` : ""}` : "Gamer picture"} · ${(f.size / 1048576).toFixed(1)} MB · ${new Date(f.mtime * 1000).toLocaleString()}`,
+      sub: `${f.kind === "model" ? `${t("sona3DModel")}${f.animations ? t("sonaAnimationsCount", { count: f.animations }) : ""}` : t("gamerPicture")} · ${(f.size / 1048576).toFixed(1)} MB · ${new Date(f.mtime * 1000).toLocaleString()}`,
       run: () => {
-        setNote("Importing…");
+        setNote(t("sonaImporting"));
         importAvatar(f.path)
           .then((r) => {
-            if (!r?.success) return setNote(r?.error || "That file couldn't be used");
+            if (!r?.success) return setNote(r?.error || t("sonaFileCouldNotBeUsed"));
             resourcesChanged();
-            setNote(r.kind === "model" ? "Your avatar has been imported" : "Your gamer picture has been imported");
+            setNote(r.kind === "model" ? t("avatarImported") : t("gamerpicImported"));
             if (r.kind === "model") setTimeout(() => onDone(firstRun ? initial : undefined), 900);
           })
-          .catch(() => setNote("That file couldn't be used"));
+          .catch(() => setNote(t("sonaFileCouldNotBeUsed")));
       },
     })),
-    { label: "Look Again", sub: "Search Downloads, the Desktop and SD cards for .glb models and gamerpics", run: () => (setFound(null), scanAvatars().then((r) => setFound(Array.isArray(r) ? r : []))) },
-    ...(model ? [{ label: "Remove Imported Avatar", sub: "Go back to the avatar made in this editor", run: () => void removeAvatar("model").then(() => (resourcesChanged(), setNote("The imported avatar has been removed"))) }] : []),
+    { label: t("lookAgain"), sub: t("lookAgainDesc"), run: () => (setFound(null), scanAvatars().then((r) => setFound(Array.isArray(r) ? r : []))) },
+    ...(model ? [{ label: t("removeImportedAvatar"), sub: t("removeImportedAvatarDesc"), run: () => void removeAvatar("model").then(() => (resourcesChanged(), setNote(t("importedAvatarRemoved")))) }] : []),
   ];
   const [spec, setSpec] = useState(initial);
   const [lineup, setLineup] = useState<AvatarSpec[]>(() => Array.from({ length: LINEUP }, () => randomAvatar()));
@@ -148,6 +155,7 @@ export function AvatarEditor({ name, initial, firstRun, start, model, motion = t
   const [gridSel, setGridSel] = useState(0);
   const [optSel, setOptSel] = useState(0);
   const [kept, setKept] = useState(spec); // what an options page reverts to
+  const menuItems = getMenu();
 
   // ── intro: plays once, any button skips it ──
   useEffect(() => {
@@ -156,7 +164,7 @@ export function AvatarEditor({ name, initial, firstRun, start, model, motion = t
     return () => clearTimeout(t);
   }, [step.s]);
 
-  const cats = step.s === "grid" || step.s === "options" ? (step.which === "features" ? FEATURES : CLOTHES) : [];
+  const cats = step.s === "grid" || step.s === "options" ? (step.which === "features" ? getFeatures() : getClothes()) : [];
   const cat = step.s === "options" ? step.cat : undefined;
   const count = cat ? RANGE[cat.key] : 0;
 
@@ -197,7 +205,7 @@ export function AvatarEditor({ name, initial, firstRun, start, model, motion = t
     }
     if (step.s === "menu") {
       if (k === "up" || k === "down") {
-        const n = Math.max(0, Math.min(MENU.length - 1, menuSel + (k === "up" ? -1 : 1)));
+        const n = Math.max(0, Math.min(menuItems.length - 1, menuSel + (k === "up" ? -1 : 1)));
         n !== menuSel ? (setMenuSel(n), move()) : playSound("end");
       } else if (k === "a") {
         playSound("select");
@@ -249,7 +257,7 @@ export function AvatarEditor({ name, initial, firstRun, start, model, motion = t
   const ox = (W - 1280 * k) / 2;
   const oy = (H - 720 * k) / 2;
 
-  const title = step.s === "grid" ? (step.which === "features" ? "My Features" : "My Clothes") : cat ? cat.label : step.s === "menu" ? "Avatar Editor" : step.s === "sona" ? "360sona Avatar" : "";
+  const title = step.s === "grid" ? (step.which === "features" ? t("myFeatures") : t("myClothes")) : cat ? cat.label : step.s === "menu" ? t("avatarEditor") : step.s === "sona" ? t("sonaAvatar") : "";
   const subtitle = step.s === "grid" ? cats[gridSel]?.label : cat ? optionName(cat, optSel) : "";
 
   return (
@@ -270,15 +278,15 @@ export function AvatarEditor({ name, initial, firstRun, start, model, motion = t
       <div style={{ position: "absolute", left: ox, top: oy, width: 1280, height: 720, transform: `scale(${k})`, transformOrigin: "0 0" }}>
         {step.s === "lineup" && (
           <>
-            <div style={{ position: "absolute", left: 0, right: 0, top: 46, textAlign: "center", fontSize: 26, textShadow: SHADOW }}>Choose an avatar as a starting point</div>
+            <div style={{ position: "absolute", left: 0, right: 0, top: 46, textAlign: "center", fontSize: 26, textShadow: SHADOW }}>{t("chooseAvatarStartingPoint")}</div>
           </>
         )}
         {step.s !== "lineup" && step.s !== "intro" && <div style={{ position: "absolute", left: 64, top: 40, fontSize: 26, textShadow: SHADOW }}>{name}</div>}
 
         {step.s === "menu" && (
           <div style={{ position: "absolute", left: 800, top: 180, display: "flex", flexDirection: "column", gap: 12 }}>
-            {MENU.map((m, i) => (
-              <div key={m} data-selected={i === menuSel} style={{ ...tile(i === menuSel), width: 330, height: 62, display: "flex", alignItems: "center", padding: "0 22px", fontSize: 21 }}>{m}</div>
+            {menuItems.map((m, i) => (
+              <div key={m.id} data-selected={i === menuSel} style={{ ...tile(i === menuSel), width: 330, height: 62, display: "flex", alignItems: "center", padding: "0 22px", fontSize: 21 }}>{m.label}</div>
             ))}
           </div>
         )}
@@ -286,7 +294,7 @@ export function AvatarEditor({ name, initial, firstRun, start, model, motion = t
         {step.s === "sona" && (
           <div className="dht-x360-avatar-sona" style={{ position: "absolute", left: 700, top: 40, width: 520 }}>
             <div style={{ fontSize: 24, textShadow: SHADOW, marginBottom: 6 }}>{title}</div>
-            <div style={{ fontSize: 14, opacity: 0.85, textShadow: SHADOW, marginBottom: 14, minHeight: 18 }}>{note || (found === null ? "Looking in Downloads…" : found.length ? "Pick the file you exported" : "No exported avatar found in Downloads yet")}</div>
+            <div style={{ fontSize: 14, opacity: 0.85, textShadow: SHADOW, marginBottom: 14, minHeight: 18 }}>{note || (found === null ? t("lookingInDownloads") : found.length ? t("pickFileExported") : t("noExportedAvatarFound"))}</div>
             <div style={{ display: "flex", flexDirection: "column", gap: 8 }}>
               {sonaItems.slice(Math.max(0, sonaSel - 5), Math.max(0, sonaSel - 5) + 7).map((it) => {
                 const on = it === sonaItems[sonaSel];
@@ -298,7 +306,7 @@ export function AvatarEditor({ name, initial, firstRun, start, model, motion = t
                 );
               })}
             </div>
-            <div style={{ fontSize: 12, opacity: 0.7, marginTop: 12, textShadow: SHADOW }}>360sona is an independent fan project, not affiliated with Microsoft. Its exports are for your own personal use.</div>
+            <div style={{ fontSize: 12, opacity: 0.7, marginTop: 12, textShadow: SHADOW }}>{t("sonaDisclaimer")}</div>
           </div>
         )}
         {(step.s === "grid" || step.s === "options") && (
@@ -313,9 +321,9 @@ export function AvatarEditor({ name, initial, firstRun, start, model, motion = t
         {/* legend */}
         {step.s !== "intro" && (
           <div style={{ position: "absolute", left: 64, top: 650, display: "flex", gap: 30, alignItems: "center", fontSize: 17, textShadow: SHADOW }}>
-            <Legend img={legend["legend-a"]} letter="A" color="#3fb83f" text="Select" />
-            {step.s === "lineup" && <Legend img={legend["legend-x"]} letter="X" color="#2f6fc4" text="More Choices" />}
-            <Legend img={legend["legend-b"]} letter="B" color="#d23a2a" text={step.s === "menu" ? (firstRun ? "Save and Exit" : "Exit") : step.s === "lineup" && firstRun ? "Skip" : "Back"} />
+            <Legend img={legend["legend-a"]} letter="A" color="#3fb83f" text={t("select")} />
+            {step.s === "lineup" && <Legend img={legend["legend-x"]} letter="X" color="#2f6fc4" text={t("moreChoices")} />}
+            <Legend img={legend["legend-b"]} letter="B" color="#d23a2a" text={step.s === "menu" ? (firstRun ? t("saveAndExit") : t("exit")) : step.s === "lineup" && firstRun ? t("skip") : t("back")} />
           </div>
         )}
       </div>
@@ -342,7 +350,7 @@ function gridNav(i: number, n: number, k: Press["btn"]): number | undefined {
 
 function optionName(c: Cat, v: number) {
   if (c.names) return c.names[v] ?? "";
-  return `Color ${v + 1}`;
+  return t("colorNumber", { val: v + 1 });
 }
 
 type Item = { label: string; color?: number; thumb?: () => string; check?: boolean };
@@ -395,7 +403,7 @@ function Grid({ items, sel }: { items: Item[]; sel: number }) {
           );
         })}
       </div>
-      <div style={{ position: "absolute", left: 0, top: 120 + 3 * 118 + 16, width: 340, textAlign: "center", fontSize: 14, opacity: 0.75, textShadow: SHADOW }}>Page {page + 1} of {pages}</div>
+      <div style={{ position: "absolute", left: 0, top: 120 + 3 * 118 + 16, width: 340, textAlign: "center", fontSize: 14, opacity: 0.75, textShadow: SHADOW }}>{t("pageOf", { page: page + 1, pages })}</div>
     </div>
   );
 }

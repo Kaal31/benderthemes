@@ -47,7 +47,7 @@ export function NxeHome() {
   // your avatar: your own exported model if you added one, otherwise the first visit opens the creator
   const { spec: mine, model, gamerpic, editing, setEditing } = useMyAvatar(s, api.user);
   const presets = () => menu.open(themeMenu(s.theme, api.switchTheme, THEMES), t("presets"), { page: true });
-  const play = (g: Game): Slot => ({ key: `g${g.appid}`, label: g.name, sub: `${fmtPlaytime(g.playtime, g.lastPlayed, true)} · Last played ${fmtLastPlayed(g.lastPlayed)}`, game: g, run: () => api.activate(g, () => api.launch(g)) });
+  const play = (g: Game): Slot => ({ key: `g${g.appid}`, label: g.name, sub: `${fmtPlaytime(g.playtime, g.lastPlayed, true)} · ${t("lastPlayedVal", { val: fmtLastPlayed(g.lastPlayed) })}`, game: g, run: () => api.activate(g, () => api.launch(g)) });
 
   // NXE channel names; the panels behind them open Steam's equivalents.
   const channels: Channel[] = [
@@ -172,7 +172,7 @@ export function NxeHome() {
   );
 
   return (
-    <ThemeRoot onInput={onInput} hints={{ a: "Select", y: "Options" }}>
+    <ThemeRoot onInput={onInput} hints={{ a: t("select"), y: t("options") }}>
       <Stage background="#9fb98c">
         {wall || look.bg || a.background ? <BackgroundMedia src={wall ?? look.bgFor(X360_SECTION[chan.id] ?? "home") ?? a.background} className="dht-x360n-bg" data-dht-from-skin={!wall && look.bg ? "x360" : undefined} style={{ position: "absolute", inset: 0, width: W, height: H, objectFit: "cover" }} /> : <div className="dht-x360n-bg" style={{ position: "absolute", inset: 0, background: "linear-gradient(180deg,#4f8f1d 0%,#a8c88a 35%,#e8edf0 55%,#b6b8ba 100%)" }} />}
         <div style={{ position: "absolute", left: ox, top: oy, width: 1280, height: 720, transform: `scale(${k})`, transformOrigin: "0 0", fontFamily: FONT, color: "#fff" }}>
@@ -207,8 +207,8 @@ export function NxeHome() {
 
           {/* button legend */}
           <div style={{ position: "absolute", left: SAFE_X, top: 632, height: 32, display: "flex", gap: 34, alignItems: "center", fontSize: 18, color: "#ebebeb", textShadow: "0 1px 1px rgba(15,15,15,.5)" }}>
-            {legend(a["legend-a"], "A", "#3fb83f", "Select")}
-            {legend(a["legend-y"], "Y", "#e9c31d", "Options")}
+            {legend(a["legend-a"], "A", "#3fb83f", t("select"))}
+            {legend(a["legend-y"], "Y", "#e9c31d", t("options"))}
           </div>
 
           {/* your avatar, standing on the floor in front of the far panels */}

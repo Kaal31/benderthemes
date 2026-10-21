@@ -386,7 +386,7 @@ export function XboxHome() {
   const T = WORDS[langKey as Lang];
   const vis = Number(st("rows")) || 5;
 
-  const lists = [{ id: "all", name: "All Games", games: api.lib.games }, ...api.lib.collections.map((c) => ({ id: c.id, name: c.name, games: c.games }))];
+  const lists = [{ id: "all", name: t("allGames"), games: api.lib.games }, ...api.lib.collections.map((c) => ({ id: c.id, name: c.name, games: c.games }))];
   const [lsel, setLsel] = useRemembered("xb-list", 0);
   const [gsel, setGsel] = useRemembered("xb-game", 0);
   const list = lists[clamp(lsel, 0, lists.length - 1)];
@@ -504,7 +504,7 @@ export function XboxHome() {
   const main: CSSProperties = { position: "absolute", inset: 0, animation: s.animations ? "dhtXbIn 380ms ease-out" : undefined };
 
   return (
-    <ThemeRoot onInput={onInput} hints={{ a: "Select", b: "Back", y: "Options" }}>
+    <ThemeRoot onInput={onInput} hints={{ a: t("select"), b: t("back"), y: t("options") }}>
       <Stage background="#061402">
         <style>{CSS}{look.css}</style>
         {!wall && look.bgColor && <div className="dht-xbox-bg" data-dht-from-skin="xbox" style={{ position: "absolute", inset: 0, background: look.bgColor }} />}
