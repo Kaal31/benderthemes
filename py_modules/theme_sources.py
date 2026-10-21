@@ -380,12 +380,12 @@ def browse(kind, source, query="", page=1, refresh=False, fetch_json=None, fetch
         return {**base, "error": "This source has no themes of that kind."}
     try:
         if source == "gbatemp":
-            from gbatemp_themes import THREADS, parse
             def load():
                 from pathlib import Path
                 snapshot = json.loads(Path(__file__).with_name("gbatemp_wiiflow_index.json").read_text(encoding="utf-8"))
                 if not live_gbatemp:
-                    return snapshot["items"], list(THREADS)
+                    return snapshot["items"], []
+                from gbatemp_themes import THREADS, parse
                 items, failures = [], []
                 for thread in THREADS:
                     try:
