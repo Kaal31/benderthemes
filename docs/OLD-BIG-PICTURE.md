@@ -41,3 +41,10 @@ The 1:49–2:13 settings sequence informed the compact three-column settings ind
 The 2:24 power sequence informed an overlaid power dialog that keeps the current screen visible, makes background controls inert, and restores focus when dismissed. Resume and Exit Big Picture work directly; Sleep / Restart / Shut Down opens Steam’s power menu. The reference’s obsolete Exit Steam and Log Out controls are not simulated. The video shows Store and Community loading screens rather than their loaded page contents; those frames were not treated as evidence of unseen layouts.
 
 Validation: typecheck and native preview checks, including focused-cover/sidebar geometry, controller navigation, Back restoration, Display/Storage routes, modal dismissal/focus, browser address entry, reduced motion, and zero iframes. Visual captures are under out/old-big-picture-reference.
+
+
+## Browser edges and options
+
+Home’s Web and Chat edge tiles carry LB/RB prompts and open their corresponding pages when focused. LB/RB also open these from Home. Web/Friends transitions use horizontal movement; Library retains the vertical reveal. Home mouse-wheel input no longer opens Library. Browser Favorites matches the 0:49–0:51 MingeBag reference with History / Current / Favorites tabs and five website tiles; visits are tracked for this mounted session and open in Steam’s browser. Remote pages are not embedded in an iframe.
+
+Store and product loading use the three staggered cyan bars seen around 0:32/0:43, with a static reduced-motion fallback. Theme options now have a dedicated classic blue/cyan MenuView style, and the Hub uses matching square cards, gradients and cyan focus lighting. The footer Home button uses a contained focus highlight. Browser-edge, history, wheel, menu and Hub checks are in old-big-picture-edge-pages-check.mjs.

@@ -553,6 +553,11 @@ export function MenuView({
       title: { color: "#c8d2ff", fontSize: 18, padding: "0 30px 10px" },
     },
   };
+  styles["old-big-picture"] = {
+    panel:{position:"absolute",left:"8%",top:"9%",width:"70%",maxWidth:900,padding:"24px 28px",background:"linear-gradient(135deg,#1c5068f5,#09263ff8)",border:"1px solid #68b3cc",boxShadow:"0 0 30px #42bfe62b,0 20px 60px #0008",fontFamily:'"Segoe UI",Arial,sans-serif'},
+    item:(on,disabled)=>({fontSize:21,padding:"11px 18px",margin:"2px 0",color:disabled?"#53798b":on?"#15374b":"#99c8db",background:on?"linear-gradient(90deg,#b6e6f0,#6cb8d1)":"#1c4c6570",boxShadow:on?"0 0 9px #76d5ef55":"none",borderRadius:0}),
+    title:{fontSize:26,fontWeight:300,padding:"5px 0 20px",color:"#c4e4ef",borderBottom:"1px solid #609bb052",marginBottom:14},
+  };
   styles.wiiu = styles.wii;
   styles.ps1 = PS1_MENU;
   styles.iisu = IISU_MENU;

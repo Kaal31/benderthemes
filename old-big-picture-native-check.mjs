@@ -13,8 +13,7 @@ try{
  await page.keyboard.press('ArrowLeft');await root.locator('.home-tile.library:focus').waitFor();
  await page.keyboard.press('ArrowLeft');await root.locator('.home-tile.store:focus').waitFor();
  assert.ok(Math.abs(await root.locator('.home-tiles').evaluate(n=>n.scrollLeft)-initialScroll)<2);
- await page.keyboard.press('ArrowLeft');await root.locator('.home-tile.web:focus').waitFor();
- await page.waitForFunction(initial=>{const t=document.querySelector('.dht-oldbigpicture .home-tiles');return t.scrollLeft<initial-100;},initialScroll);
+ await page.keyboard.press('ArrowLeft');await root.locator('.browser-menu').waitFor();await page.waitForFunction(()=>!document.querySelector('[data-transition-snapshot]'));
  await root.getByRole('button',{name:'◉ Home',exact:true}).click();
  await root.screenshot({path:'../../Old-Big-Picture-native-preview.png'});
  await root.locator('.home-tile.library').click();await root.locator('.library-row .game').first().waitFor();

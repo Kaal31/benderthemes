@@ -286,7 +286,7 @@ function App() {
           </button>
         ))}
         {s.theme === 'old-big-picture' && <div aria-label="Preview controller" style={{display:'flex',gap:5}}>{([[9,'↑'],[10,'↓'],[11,'←'],[12,'→'],[1,'A'],[2,'B'],[3,'X'],[4,'Y']] as const).map(([button,label])=><button key={button} aria-label={`Controller ${label}`} onPointerDown={e=>e.preventDefault()} onClick={()=>window.dispatchEvent(new CustomEvent('preview-controller-input',{detail:button}))}>{label}</button>)}</div>}
-        <span style={{ opacity: 0.65, marginLeft: 10 }}>Arrows = D-pad · Enter = Ⓐ · Esc = Ⓑ · X · Y = △/Options · M = ≡ · Q/E = L1/R1 · Z/C = L2/R2 (presets). Old Big Picture: scroll down to enter Library.</span>
+        <span style={{ opacity: 0.65, marginLeft: 10 }}>Arrows = D-pad · Enter = Ⓐ · Esc = Ⓑ · X · Y = △/Options · M = ≡ · Q/E = L1/R1 · Z/C = L2/R2 (presets). Old Big Picture: LB = Web · RB = Chat · Select Library to enter.</span>
       </div>
       {s.theme==='old-big-picture'&&<ControllerTest/>}
       <div style={{ position: "relative", width: size.w, height: size.h, margin: "0 12px", transform: "translateZ(0)", overflow: "hidden", borderRadius: 10, boxShadow: "0 10px 40px #000" }}>

@@ -10,10 +10,10 @@ try{
  await p.getByRole('button',{name:'Controller A',exact:true}).click();await r.locator('.library-shell').waitFor();await p.waitForFunction(()=>!document.querySelector('[data-transition-snapshot]'));
  const search=r.getByLabel('Search library');await search.click();await search.pressSequentially('Hades 1');assert.equal(await search.inputValue(),'Hades 1');assert.equal(await r.getAttribute('data-page'),'library');await search.fill('');
  await p.getByRole('button',{name:'Controller B',exact:true}).click();await r.locator('.home-tile.library').waitFor();await p.waitForFunction(()=>!document.querySelector('[data-transition-snapshot]'));
- await r.locator('.home-tile.library').hover();await p.mouse.wheel(0,120);await r.locator('.library-shell').waitFor();await p.waitForFunction(()=>!document.querySelector('[data-transition-snapshot]'));
+ await r.locator('.home-tile.library').hover();await p.mouse.wheel(0,120);assert.equal(await r.getAttribute('data-page'),'home');await r.locator('.home-tile.library').click();await r.locator('.library-shell').waitFor();await p.waitForFunction(()=>!document.querySelector('[data-transition-snapshot]'));
  await r.getByRole('button',{name:'Games',exact:true}).click();const pane=r.locator('.library-body');await pane.hover();await p.mouse.wheel(0,400);await p.waitForFunction(()=>document.querySelector('.dht-oldbigpicture:not([data-transition-snapshot]) .library-body').scrollTop>0);
  await p.getByRole('button',{name:'Controller B',exact:true}).click();await r.locator('.home-tile.library:focus').waitFor();await p.waitForFunction(()=>!document.querySelector('[data-transition-snapshot]'));
  await p.evaluate(()=>window.__testPad.buttons[0]=true);await r.locator('.library-shell').waitFor();await p.evaluate(()=>window.__testPad.buttons[0]=false);await p.waitForFunction(()=>!document.querySelector('[data-transition-snapshot]'));
  await p.evaluate(()=>window.__testPad.buttons[1]=true);await r.locator('.home-tile.library').waitFor();await p.evaluate(()=>window.__testPad.buttons[1]=false);
- assert.deepEqual(errors,[]);console.log('PASS: on-screen D-pad/A/B, literal search typing, home wheel navigation, library scrolling and physical gamepad A/B polling.');
+ assert.deepEqual(errors,[]);console.log('PASS: on-screen D-pad/A/B, literal search typing, home wheel stays on Home, library scrolling and physical gamepad A/B polling.');
 }finally{await b.close();}
