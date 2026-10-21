@@ -95,6 +95,18 @@ export const OPTIONS: StyleOption[] = [
     def: "normal",
   },
   {
+    key: "plazaArtwork",
+    label: "Artwork",
+    group: "WaraWara Plaza",
+    choices: [
+      { id: "square", name: "Square cover crops" },
+      { id: "covers", name: "Full box covers" },
+      { id: "landscape", name: "Fitted landscape" },
+      { id: "logos", name: "Game logos / square icons" },
+    ],
+    def: "square",
+  },
+  {
     key: "iconGlass",
     label: "Icon edges",
     group: "WaraWara Plaza",
