@@ -3,7 +3,7 @@ import {mkdirSync} from 'node:fs';
 mkdirSync('out/native-themes',{recursive:true});
 import {launch} from './browser.mjs';
 import {startPreviewServer} from '../preview/server.mjs';
-const ids=['wiiflow-default','santa-express','ios6','old-big-picture','blue-glass','gameamp'];
+const ids=['santa-express','ios6','old-big-picture','blue-glass','gameamp'];
 const {server,url}=await startPreviewServer();const browser=await launch();
 try{
  const page=await browser.newPage({viewport:{width:1280,height:800}}),errors=[];page.on('pageerror',e=>errors.push(e.message));

@@ -12,15 +12,15 @@ try{
  });
  await page.goto(url+'?theme=vita&still=1');await page.locator('[data-dht-root]').waitFor();
  await page.evaluate(()=>window.__updateTheme({theme:'frame',activeTheme:'wiiflow-default',animations:true}));
- const host=page.locator('[data-react-theme="wiiflow-default"]');await host.waitFor();await host.locator('#case-renderer').waitFor();
+ const host=page.locator('[data-native-theme="wiiflow-default"]');await host.waitFor();await host.locator('#case-renderer').waitFor();
  await page.waitForTimeout(2000);
  const before=await page.evaluate(()=>window.__coverBackPaints);
  await page.evaluate(()=>window.__updateTheme({clock24:false}));await page.waitForTimeout(250);
  assert.equal(await page.evaluate(()=>window.__coverBackPaints),before,'clock/settings updates must not repaint all case textures');
  await page.evaluate(()=>window.__reflectionCopies=0);
- const start=await host.locator('.selection').getAttribute('data-appid');
+ const start=await host.locator('#title').innerText();
  for(let i=0;i<6;i++){await page.evaluate(()=>window.dispatchEvent(new KeyboardEvent('keydown',{key:'ArrowRight',bubbles:true})));await page.waitForTimeout(70);}
- assert.notEqual(await host.locator('.selection').getAttribute('data-appid'),start);
+ assert.notEqual(await host.locator('#title').innerText(),start);
  const copies=await page.evaluate(()=>window.__reflectionCopies);assert.ok(copies<6,`scrolling must avoid per-frame GPU readbacks, got ${copies}`);
  console.log('PASS WiiFlow selection advances, settings preserve case textures, reflections avoid per-frame readbacks during scrolling');
 }finally{await browser.close();server.closeAllConnections();server.close();}

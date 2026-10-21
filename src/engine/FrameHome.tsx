@@ -1,4 +1,3 @@
-import {WiiFlowHome} from "../themes/WiiFlow";
 import {GameAmpHome} from "../themes/GameAmp";
 import {GlassHome} from "../themes/Glass";
 import {BigPictureHome} from "../themes/BigPicture";
@@ -60,7 +59,7 @@ function publicGame(g: Game, abs: (u: string) => string) {
 
 export function FrameHome() {
  const api=useHome(),theme=activeTheme(api.settings);
- return theme?.source==="bundled"&&["santa-express","old-big-picture","blue-glass","ios6","gameamp","wiiflow-default"].includes(theme.id)?<NativeMediaGate id={theme.id}>{theme.id==="wiiflow-default"?<WiiFlowHome/>:theme.id==="santa-express"?<SantaHome/>:theme.id==="old-big-picture"?<BigPictureHome/>:theme.id==="gameamp"?<GameAmpHome/>:<GlassHome ios={theme.id==="ios6"}/>}</NativeMediaGate>:<LegacyFrameHome/>;
+ return theme?.source==="bundled"&&["santa-express","old-big-picture","blue-glass","ios6","gameamp"].includes(theme.id)?<NativeMediaGate id={theme.id}>{theme.id==="santa-express"?<SantaHome/>:theme.id==="old-big-picture"?<BigPictureHome/>:theme.id==="gameamp"?<GameAmpHome/>:<GlassHome ios={theme.id==="ios6"}/>}</NativeMediaGate>:<LegacyFrameHome/>;
 }
 function NativeMediaGate({id,children}:{id:string;children:import("react").ReactNode}){
  const api=useHome();
@@ -86,7 +85,7 @@ function LegacyFrameHome() {
   const frame = useRef<HTMLIFrameElement>(null);
   const nativePort=useRef<NativeThemePort|null>(null);
   const nativeReceive=useRef<((message:Record<string,unknown>)=>void)|null>(null);
-  const isNative=theme?.source==="bundled"&&theme.id==="gamecube"&&hasBundledRenderer(theme.id);
+  const isNative=theme?.source==="bundled"&&["gamecube","wiiflow-default"].includes(theme.id)&&hasBundledRenderer(theme.id);
   const [ready, setReady] = useState<{ handles: Set<Btn>; textInput: boolean } | null>(null);
   const [hints, setHints] = useState<Hints>({});
   const [focusedAppid, setFocusedAppid] = useState<number | null>(null);

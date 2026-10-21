@@ -11,13 +11,13 @@ try{
  for(const [id,selector] of Object.entries(targets)){
   const native=!['onyx','aero','nazarick'].includes(id);
   await page.evaluate(({id,native})=>window.__updateTheme({theme:native?'frame':id,activeTheme:native?id:'',animations:false}),{id,native});
-  const area=native?page.locator(id==='gamecube'?'[data-native-theme="gamecube"]':`[data-react-theme="${id}"]`):page.locator('[data-dht-root]');await area.waitFor();
+  const area=native?page.locator(['gamecube','wiiflow-default'].includes(id)?`[data-native-theme="${id}"]`:`[data-react-theme="${id}"]`):page.locator('[data-dht-root]');await area.waitFor();
   for(const [width,height] of [[1280,800],[1280,720],[960,600]]){
    await page.setViewportSize({width,height});
    await page.waitForFunction(({native,selector,width,height,id})=>{
     const host=native?document.querySelector('[data-react-theme],[data-native-theme]'):null,parent=host?.shadowRoot??host??document;
     const node=parent?.matches?.(selector)?parent:parent?.querySelector(selector);if(!node)return false;const b=node.getBoundingClientRect();
-    if(id==='gamecube'||id==='santa-express'){const a=host.getBoundingClientRect();return Math.abs(a.x)<1&&Math.abs(a.y)<1&&Math.abs(a.width-width)<1&&Math.abs(a.height-height)<1&&b.x>=-1&&b.y>=-1&&b.right<=width+1&&b.bottom<=height+1;}
+    if(['gamecube','wiiflow-default','santa-express','gameamp'].includes(id)){const a=host.getBoundingClientRect();return Math.abs(a.x)<1&&Math.abs(a.y)<1&&Math.abs(a.width-width)<1&&Math.abs(a.height-height)<1&&b.x>=-1&&b.y>=-1&&b.right<=width+1&&b.bottom<=height+1;}
     return Math.abs(b.x)<1&&Math.abs(b.y)<1&&Math.abs(b.width-width)<1&&Math.abs(b.height-height)<1;
    },{native,selector,width,height,id});
   }
