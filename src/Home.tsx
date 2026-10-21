@@ -1,3 +1,4 @@
+import { OldBigPictureHome } from "./themes/OldBigPicture";
 import {themeHomeOwnsRoute} from "./otherPlugins";
 import { useSteamScreensaver } from "./screensaver";
 import { ThemeActivity, UiDocument } from "./performance";
@@ -74,6 +75,7 @@ const skinHook = (s: ReturnType<typeof getSettings>) => {
 };
 
 const THEME_COMPONENTS: Record<ThemeId, () => ReactNode> = {
+  "old-big-picture": () => <OldBigPictureHome />,
   native: () => <NativeLayout />,
   onyx: () => <SilverHome dark />,
   silver: () => <SilverHome />,
@@ -196,6 +198,7 @@ function VerifiedThemedHome({ standalone }: { standalone?: boolean }) {
     let alive = true;
     setState("checking");
     const shipped=activeTheme(settings);
+    if(settings.theme === "old-big-picture"){setState("ready");return;}
     if(shipped?.source==="bundled"){
       void inventory().then(async installed=>{
         if(!installed[shipped.id]){if(alive){setState("missing");openMarketplace("frame",{from:"frame"});}return;}

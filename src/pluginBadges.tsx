@@ -7,6 +7,7 @@ import { Settings, ThemeId } from "./settings";
 // Fallback slots belong to the layouts, rather than a universal corner overlay.
 // Existing in-layout badges take precedence when they are visible for this game.
 const slots: Record<ThemeId, CSSProperties> = {
+ "old-big-picture":{right:"4%",bottom:"12%"},
   onyx:{left:"50%",top:"56%",transform:"translateX(-50%)"}, silver:{left:"21%",top:"43%"},
   wii:{left:"50%",top:"2.5%",transform:"translateX(-50%)"},
   wiiu:{left:"50%",top:"75%",transform:"translateX(-50%)"},
@@ -21,6 +22,7 @@ const slots: Record<ThemeId, CSSProperties> = {
   iisu:{left:"5%",top:"23%"}, native:{right:"4%",top:"12%"}, frame:{right:"4%",top:"12%"},
 };
 const looks: Record<ThemeId, {bg:string; ink:string; radius:string; font?:string}> = {
+ "old-big-picture":{bg:"#12334d",ink:"#a5dcf0",radius:"2px"},
   onyx:{bg:"linear-gradient(#262b32ee,#101318ee)",ink:"#eef5ff",radius:"7px"},
   silver:{bg:"linear-gradient(#f4f5f8,#b7bcc6)",ink:"#262c35",radius:"6px"},
   wii:{bg:"linear-gradient(#fff,#e4f4fb)",ink:"#4c788a",radius:"999px"},

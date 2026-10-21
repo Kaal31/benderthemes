@@ -16,6 +16,7 @@ const t = (id: string, name: string, company: ThemeManifest["company"], layout: 
 });
 
 export const BUILTIN_THEMES: ThemeManifest[] = [
+  t("old-big-picture", "Old Big Picture", "Bonus", "old-big-picture"),
   t("onyx", "Onyx Wheel (bonus)", "Bonus", "onyx"),
   t("silver", "Silver Wheel (bonus)", "Bonus", "silver"),
   t("wii", "Wii", "Nintendo", "wii"),

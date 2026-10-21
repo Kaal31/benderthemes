@@ -19,7 +19,7 @@ export const VITA_LOOKS: { id: VitaLook; name: string }[] = [
   { id: "sakura", name: "Sakura" },
 ];
 
-export type ThemeId = "native" | "onyx" | "silver" | "frame" | "wii" | "wiiu" | "switch" | "n3ds" | "vita" | "ps2" | "ps3" | "psp" | "ps4" | "ps5" | "x360" | "aero" | "aero2" | "xbox" | "dial" | "castle" | "republic" | "minecraft" | "pain" | "nazarick" | "ps1" | "iisu";
+export type ThemeId = "old-big-picture" | "native" | "onyx" | "silver" | "frame" | "wii" | "wiiu" | "switch" | "n3ds" | "vita" | "ps2" | "ps3" | "psp" | "ps4" | "ps5" | "x360" | "aero" | "aero2" | "xbox" | "dial" | "castle" | "republic" | "minecraft" | "pain" | "nazarick" | "ps1" | "iisu";
 export type StyleValue = string | number | boolean;
 export type SortMode = "recent" | "alpha" | "playtime";
 export type AAction = "theme" | "launch" | "details";
@@ -37,6 +37,7 @@ export const showTitle = (s: { titles: Partial<Record<ThemeId, TitleMode>> }, th
 };
 
 export const THEMES: { id: ThemeId; name: string; blurb: string }[] = [
+  {id:"old-big-picture",name:"Old Big Picture",blurb:"Classic Steam blue dashboard, carousel and native library pages"},
   {id:"onyx",name:"Onyx Wheel (bonus)",blurb:"Black textured body, cover flow and circular touch navigation"},
   {id:"silver",name:"Silver Wheel (bonus)",blurb:"Brushed aluminum, reflected covers and circular wheel navigation"},
   {id:"wii",name:"Wii",blurb:"Channel grid, curved system bar and channel launch banners"},
@@ -501,6 +502,7 @@ export function onSettingsChange(l: () => void): () => void {
 export const cleanSettings = (saved: any): Settings => merge(saved);
 function merge(saved: any): Settings {
   const s: any = { ...DEFAULTS, ...(saved && typeof saved === "object" ? saved : {}) };
+  if(s.theme === "frame" && s.activeTheme === "old-big-picture") s.theme = "old-big-picture";
   s.protondbThemes = Object.fromEntries(Object.entries(s.protondbThemes && typeof s.protondbThemes === "object" ? s.protondbThemes : {}).filter(([key,value])=>key.length>0&&key.length<=64&&typeof value==="boolean").slice(0,500));
   s.themeDeckFocusMusic = s.themeDeckFocusMusic !== false;
   s.profilePictures=Object.fromEntries(Object.entries(s.profilePictures&&typeof s.profilePictures==="object"?s.profilePictures:{}).filter(([k,v])=>k.length<128&&typeof v==="string"&&v.length<500000&&/^data:image\/png;base64,/.test(v)));

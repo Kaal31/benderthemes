@@ -224,7 +224,7 @@ export function setPreviewSound(f: typeof previewSound) {
  * to suggest. Xbox 360 presets have their own entries ("x360:blades" …).
  */
 export const PACK_MATCH: Record<string, { re: RegExp[]; suggest: string }> = {
-  "old-big-picture": {re:[/^Big Picture Mode$/i,/^Steam Big Picture Ambience$/i],suggest:"Big Picture Mode"},
+  "old-big-picture": {re:[/^Old Big Picture UI$/i,/^Big Picture Mode$/i,/^Steam Big Picture Ambience$/i],suggest:"Big Picture Mode"},
   gamecube: {re:[/Nintendo GameCube Menu/i],suggest:"Nintendo GameCube Menu SFX"},
   wii: {re:[/^wii(?![ _-]*u)/i],suggest:"Wii Menu Sounds"},
   wiiu: {re:[/wii[ _-]*u/i],suggest:"Wii U Menu Sounds"},

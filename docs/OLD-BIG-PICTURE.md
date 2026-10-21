@@ -1,3 +1,11 @@
+# Old Big Picture — built-in native React theme
+
+Registered as the `old-big-picture` layout in Home.tsx and builtin.ts. Rendered by src/themes/OldBigPicture.tsx in the same React tree as the other built-in themes. No iframe, HTML entry, SDK bridge, postMessage, or frame page service is used. Existing frame selections migrate to this layout.
+
+Library/actions use HomeApi, friends and achievements use activity hooks, downloads use useDownloads, Store uses store.ts, screenshots/videos use media hooks, music uses musicPlayer, settings use updateSettings, and controller input uses ThemeRoot. Full Steam chat/controller configuration opens native Steam interfaces.
+
+Artwork is embedded in oldBigPictureAssets.ts to avoid a frame asset-server dependency; CSS is scoped to .dht-oldbigpicture. Original sounds live under defaults/sounds/Old Big Picture UI and use the shared sound settings/lifecycle. Valve retains rights to original client assets.
+
 # Reference comparison
 
 Compared visually against:

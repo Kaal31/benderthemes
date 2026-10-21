@@ -1,6 +1,5 @@
 import {GameAmpHome} from "../themes/GameAmp";
 import {GlassHome} from "../themes/Glass";
-import {BigPictureHome} from "../themes/BigPicture";
 import {SantaHome} from "../themes/Santa";
 import { BundledThemeSurface, hasBundledRenderer, NativeThemePort } from "./BundledThemeSurface";
 import { frameRoute, FrameRoute } from "./frameNavigation";
@@ -59,7 +58,7 @@ function publicGame(g: Game, abs: (u: string) => string) {
 
 export function FrameHome() {
  const api=useHome(),theme=activeTheme(api.settings);
- return theme?.source==="bundled"&&["santa-express","old-big-picture","blue-glass","ios6","gameamp"].includes(theme.id)?<NativeMediaGate id={theme.id}>{theme.id==="santa-express"?<SantaHome/>:theme.id==="old-big-picture"?<BigPictureHome/>:theme.id==="gameamp"?<GameAmpHome/>:<GlassHome ios={theme.id==="ios6"}/>}</NativeMediaGate>:<LegacyFrameHome/>;
+ return theme?.source==="bundled"&&["santa-express","blue-glass","ios6","gameamp"].includes(theme.id)?<NativeMediaGate id={theme.id}>{theme.id==="santa-express"?<SantaHome/>:theme.id==="gameamp"?<GameAmpHome/>:<GlassHome ios={theme.id==="ios6"}/>}</NativeMediaGate>:<LegacyFrameHome/>;
 }
 function NativeMediaGate({id,children}:{id:string;children:import("react").ReactNode}){
  const api=useHome();

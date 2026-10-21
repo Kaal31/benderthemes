@@ -3,7 +3,7 @@ import json
 from pathlib import Path
 import re
 ROOT=Path(__file__).resolve().parents[1]
-IDS=('blue-glass','gameamp','gamecube','ios6','old-big-picture','santa-express','wiiflow-default')
+IDS=('blue-glass','gameamp','gamecube','ios6','santa-express','wiiflow-default')
 
 def generate():
  styles={}

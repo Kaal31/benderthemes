@@ -31,6 +31,7 @@ const caps = (background: boolean, icons: boolean, font: boolean, accent: string
  *  icons = draws the shared <Icon> glyphs where an icon set can replace them; font = its text follows --dht-font;
  *  accent = the variables its focus / highlight colour reads. */
 export const LAYOUT_SLOTS: Record<ThemeId, LayoutCaps> = {
+  "old-big-picture": caps(true, true, true),
   onyx: caps(false, true, false),
   silver: caps(false, true, false),
   wii: caps(true, true, false, [], { gameArt: false, tint: true }),

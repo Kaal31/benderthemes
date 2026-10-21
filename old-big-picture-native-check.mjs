@@ -1,0 +1,26 @@
+import assert from 'node:assert/strict';
+import {launch} from './tests/browser.mjs';
+const browser=await launch();
+try{
+ const page=await browser.newPage({viewport:{width:1440,height:1100}}),errors=[];page.on('pageerror',e=>errors.push(e.message));
+ await page.goto('http://127.0.0.1:8793/preview/preview.html?theme=old-big-picture');
+ const root=page.locator('.dht-oldbigpicture');await root.waitFor();
+ assert.equal(await root.locator('iframe').count(),0);assert.equal(await page.locator('iframe').count(),0);
+ assert.equal(await root.locator('.home-tile').count(),5);
+ await page.keyboard.press('ArrowRight');await root.locator('.home-tile.community:focus').waitFor();
+ await page.keyboard.press('ArrowLeft');await root.locator('.home-tile.library:focus').waitFor();
+ await root.screenshot({path:'../../Old-Big-Picture-native-preview.png'});
+ await root.locator('.home-tile.library').click();await root.locator('.library-row .game').first().waitFor();
+ await root.getByLabel('Search library').fill('Portal');await root.locator('.grid .game').first().click();await root.locator('.classic-play').waitFor();
+ await root.getByLabel('settings',{exact:true}).click();await root.locator('.settings-columns').waitFor();
+ await root.getByRole('button',{name:'Interface',exact:true}).click();await root.locator('.preference-form').waitFor();
+ await root.getByLabel('24-hour clock').check();assert.ok(await root.getByLabel('24-hour clock').isChecked());
+ await root.getByLabel('downloads',{exact:true}).click();await root.getByRole('heading',{name:'Downloads',exact:true}).waitFor();
+ await root.getByRole('button',{name:'◉ Home',exact:true}).click();await root.locator('.home-tile.store').click();await root.locator('.store-feature').waitFor();
+ await root.locator('.store-feature .game').click();await root.locator('.product-media').waitFor();
+ await root.getByRole('button',{name:'◉ Home',exact:true}).click();await root.locator('.home-tile.community').click();await root.locator('.friends-grid').waitFor();
+ await root.getByRole('button',{name:'◉ Home',exact:true}).click();
+ await page.setViewportSize({width:1280,height:900});
+ const geometry=await root.evaluate(n=>({w:n.clientWidth,scroll:n.scrollWidth,tiles:[...n.querySelectorAll('.home-tile')].map(t=>t.getBoundingClientRect().width)}));assert.ok(geometry.scroll<=geometry.w);assert.ok(geometry.tiles.every(x=>Math.abs(x-geometry.tiles[0])<1));
+ assert.deepEqual(errors,[]);console.log('PASS: built-in React theme, zero iframes, real home/library/detail/store/friends/preferences/download pages.');
+}finally{await browser.close();}
