@@ -14,3 +14,5 @@ release-channel.json
 # Generated visual styles and snow shader for native React themes
 src/engine/bundledStyles.generated.ts
 src/themes/santaSnow.generated.ts
+
+src/engine/bundledThemes.generated.ts

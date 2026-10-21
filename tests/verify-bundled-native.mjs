@@ -3,7 +3,7 @@ import {mkdirSync} from 'node:fs';
 mkdirSync('out/native-themes',{recursive:true});
 import {launch} from './browser.mjs';
 import {startPreviewServer} from '../preview/server.mjs';
-const ids=['wiiflow-default','gamecube','santa-express','ios6','old-big-picture','blue-glass','gameamp'];
+const ids=['wiiflow-default','santa-express','ios6','old-big-picture','blue-glass','gameamp'];
 const {server,url}=await startPreviewServer();const browser=await launch();
 try{
  const page=await browser.newPage({viewport:{width:1280,height:800}}),errors=[];page.on('pageerror',e=>errors.push(e.message));
@@ -27,16 +27,16 @@ try{
  await delayed.addInitScript(()=>{
    window.__frameMediaGate=new Promise(r=>window.releaseMedia=r);
    window.__audioDownloadGate=new Promise(r=>window.releaseAudio=r);
-   window.__deckthemesAudio=[{id:'native-audio-fixture',name:'Native theme audio',kind:'music',themes:['gamecube'],installWithTheme:true}];
+   window.__deckthemesAudio=[{id:'native-audio-fixture',name:'Native theme audio',kind:'music',themes:['gameamp'],installWithTheme:true}];
  });
  await delayed.goto(url+'?theme=vita&still=1');await delayed.locator('[data-dht-root]').waitFor();
- await delayed.evaluate(()=>window.__updateTheme({theme:'frame',activeTheme:'gamecube',animations:false}));
+ await delayed.evaluate(()=>window.__updateTheme({theme:'frame',activeTheme:'gameamp',animations:false}));
  await delayed.evaluate(()=>releaseMedia());
  await delayed.waitForFunction(()=>window.__audioDownloadCalls?.includes('native-audio-fixture'));
  assert.equal(await delayed.locator('[data-react-theme]').count(),0,'does not mount before audio finishes');
  await delayed.waitForTimeout(8500);
  assert.equal(await delayed.getByText('This page did not connect to ThemeHub.',{exact:false}).count(),0,'no connection timeout during audio download');
  await delayed.evaluate(()=>releaseAudio());
- await delayed.locator('[data-react-theme="gamecube"]').waitFor();
+ await delayed.locator('[data-react-theme="gameamp"]').waitFor();
  assert.deepEqual(delayedErrors,[]);console.log('PASS delayed audio completes before native theme opens');await delayed.close();
 }finally{await browser.close();server.closeAllConnections();server.close();}
