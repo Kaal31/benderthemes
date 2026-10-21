@@ -527,7 +527,7 @@ export function VitaHome() {
       const f = it.folder;
       items.push({ label: t("open"), action: () => enter(it) });
       items.push({ label: t("rename"), action: () => renameFolder(f) });
-      items.push({ label: t("colour"), sub: () => FOLDER_COLORS.map((c, i) => ({ label: ["Blue", "Orange", "Green", "Pink", "Purple", "Mint", "Yellow", "Red"][i], checked: f.color === c, action: () => recolorFolder(f.id, c) })) });
+      items.push({ label: t("colour"), sub: () => FOLDER_COLORS.map((c, i) => ({ label: [t("colorBlue"), t("colorOrange"), t("colorGreen"), t("colorPink"), t("colorPurple"), t("colorMint"), t("colorYellow"), t("colorRed")][i], checked: f.color === c, action: () => recolorFolder(f.id, c) })) });
       items.push({ label: t("deleteFolder"), action: () => deleteFolder(f.id) });
     }
     if (!openFolder && it) items.push({ label: t("rearrange"), action: () => setMoving(list) });
@@ -897,7 +897,7 @@ export function VitaHome() {
   };
   const swipeTarget = drag && Math.abs(drag) > 60 ? clamp(page + (drag < 0 ? 1 : -1), 0, pages - 1) : null;
 
-  const hints = live ? { a: t("selected"), b: t("close") } : moving ? { a: t("done") } : { a: t("open"), x: t("start"), y: t("options"), menu: t("options") };
+  const hints = live ? { a: t("select"), b: t("close") } : moving ? { a: t("done") } : { a: t("open"), x: t("start"), y: t("options"), menu: t("options") };
 
   return (
     <ThemeRoot onInput={onInput} hints={hints}>

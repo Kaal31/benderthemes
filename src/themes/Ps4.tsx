@@ -199,7 +199,7 @@ export function Ps4Home() {
   });
 
   return (
-    <ThemeRoot onInput={onInput} hints={{ a: t("selected"), y: t("options"), menu: t("options") }}>
+    <ThemeRoot onInput={onInput} hints={{ a: g ? t("start") : t("select"), y: t("options"), menu: t("options") }}>
       <Stage background="#04122e">
         <div className="dht-ps4-bg" style={{ position: "absolute", inset: 0, background: "var(--dht-ps4-bg, radial-gradient(ellipse at 70% 20%, #2f8be0 0%, transparent 55%), linear-gradient(170deg, #0a3a86 0%, #0b2a63 45%, #061637 100%))" }} />
         {wall && <BackgroundMedia src={wall} style={{ position: "absolute", inset: 0, width: W, height: H, objectFit: "cover" }} />}

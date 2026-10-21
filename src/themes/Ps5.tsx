@@ -188,7 +188,7 @@ export function Ps5Home() {
   const scrolledDown = zone === "cards";
 
   return (
-    <ThemeRoot onInput={onInput} hints={{ a: g ? t("play") : t("selected"), y: t("options"), menu: t("options") }}>
+    <ThemeRoot onInput={onInput} hints={{ a: g ? t("play") : t("select"), y: t("options"), menu: t("options") }}>
       <Stage background="#000">
         {/* background */}
         <div className="dht-ps5-bg" style={{ position: "absolute", inset: 0, background: `var(--dht-ps5-bg, ${wallCss})` }} />

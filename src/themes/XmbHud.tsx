@@ -193,13 +193,13 @@ export function XmbMusicScreen({ W, H, art, k = 1, accentText }: { W: number; H:
       {/* status and time */}
       <div style={{ position: "absolute", left: colX, top: H / 2 + 26 * u, width: colW, color: "var(--dht-xmb-text, #fff)" }}>
         <div className="dht-xmb-music-controls" style={{ display: "flex", alignItems: "center", gap: 2 * u, marginBottom: 7 * u }}>
-          <button type="button" aria-label="Previous" onClick={() => musicPlayer.prev()}>⏮</button>
+          <button type="button" aria-label={t("previous")} onClick={() => musicPlayer.prev()}>⏮</button>
           <button type="button" aria-label={t("rewind10s")} onClick={() => musicPlayer.seek(-10)}>⏪</button>
-          <button type="button" aria-label={p.playing ? "Pause" : "Play"} onClick={() => musicPlayer.toggle()}><Glyph d={p.playing ? G.pause : G.play} size={12 * u} /></button>
+          <button type="button" aria-label={p.playing ? t("pause") : t("play")} onClick={() => musicPlayer.toggle()}><Glyph d={p.playing ? G.pause : G.play} size={12 * u} /></button>
           <button type="button" aria-label={t("forward10s")} onClick={() => musicPlayer.seek(10)}>⏩</button>
-          <button type="button" aria-label="Next" onClick={() => musicPlayer.next()}>⏭</button>
-          <button type="button" aria-label="Shuffle" aria-pressed={p.shuffle} onClick={() => musicPlayer.setShuffle(!p.shuffle)}><Glyph d={G.shuffle} size={10 * u} on={p.shuffle} /></button>
-          <button type="button" aria-label={`Repeat ${p.repeat}`} aria-pressed={p.repeat !== "off"} onClick={() => musicPlayer.cycleRepeat()}>
+          <button type="button" aria-label={t("next")} onClick={() => musicPlayer.next()}>⏭</button>
+          <button type="button" aria-label={t("shuffle")} aria-pressed={p.shuffle} onClick={() => musicPlayer.setShuffle(!p.shuffle)}><Glyph d={G.shuffle} size={10 * u} on={p.shuffle} /></button>
+          <button type="button" aria-label={`${t("repeat")} ${p.repeat}`} aria-pressed={p.repeat !== "off"} onClick={() => musicPlayer.cycleRepeat()}>
             <Glyph d={G.repeat} size={10 * u} on={p.repeat !== "off"} />
             {p.repeat === "one" && <span style={{ ...text, fontSize: font(5) }}>1</span>}
           </button>

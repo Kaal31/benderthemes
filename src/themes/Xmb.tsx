@@ -755,16 +755,16 @@ export function XmbHome({ variant }: { variant: Variant }) {
   const folderItems = (games: Game[]) => () => games.map(gameItem);
 
   const cats: XCat[] = useMemo(() => {
-    const themeItems = (): XItem[] => presetGroups().map(group=>({key:group.name,label:group.name,icon:"folder",children:()=>group.presets.map(p=>({key:p.id,label:p.label,icon:"palette",sub:p.id===currentPresetId()?"Current preset":undefined,action:()=>applyPreset(p)}))}));
+    const themeItems = (): XItem[] => presetGroups().map(group=>({key:group.name,label:group.name,icon:"folder",children:()=>group.presets.map(p=>({key:p.id,label:p.label,icon:"palette",sub:p.id===currentPresetId()?t("currentPreset"):undefined,action:()=>applyPreset(p)}))}));
     const colorItems = (): XItem[] => [
-      { key: "c-auto", label: "Automatic (by month)", icon: "palette", sub: colorIdx < 0 ? "Selected" : undefined, action: () => setColor(-1) },
-      ...MONTH_NAMES.map((m, i) => ({ key: `c-${i}`, label: m, icon: "palette" as IconName, sub: colorIdx === i ? "Selected" : undefined, action: () => setColor(i) })),
+      { key: "c-auto", label: t("automaticByMonth"), icon: "palette", sub: colorIdx < 0 ? t("selected") : undefined, action: () => setColor(-1) },
+      ...MONTH_NAMES.map((m, i) => ({ key: `c-${i}`, label: t(m), icon: "palette" as IconName, sub: colorIdx === i ? t("selected") : undefined, action: () => setColor(i) })),
     ];
     const setColor = (i: number) => updateSettings((p) => ({ xmb: { ...p.xmb, [variant === "ps3" ? "ps3Color" : "pspColor"]: i } }));
     const games: XItem[] = [];
     games.push({ key: "lib", p3t: "icon_gamedata", label: t("destLibrary"), icon: "library", sub: t("allGamesAndCollections"), action: () => openSteam("library") });
     if (s.xmb.collectionFolders) {
-      for (const c of api.lib.collections) games.push({ key: `col-${c.id}`, label: c.name, icon: "folder", p3t: "icon_savedata", sub: `${c.games.length} items`, children: folderItems(c.games) });
+      for (const c of api.lib.collections) games.push({ key: `col-${c.id}`, label: c.name, icon: "folder", p3t: "icon_savedata", sub: t("itemsCount", { count: c.games.length }), children: folderItems(c.games) });
     }
     const firstGame = games.length;
     api.lib.games.forEach((g) => games.push(gameItem(g)));
@@ -775,7 +775,7 @@ export function XmbHome({ variant }: { variant: Variant }) {
       p3t: "icon_setting",
       items: [
         { key: "theme", p3t: "icon_theme_setting", label: t("presets"), icon: "palette", sub: t("presetsDesc"), children: themeItems },
-        { key: "color", p3t: "icon_display_setting", label: t("backgroundColour"), icon: "palette", sub: colorIdx < 0 ? t("automatic") : MONTH_NAMES[colorIdx], children: colorItems },
+        { key: "color", p3t: "icon_display_setting", label: t("backgroundColour"), icon: "palette", sub: colorIdx < 0 ? t("automatic") : t(MONTH_NAMES[colorIdx]), children: colorItems },
         { key: "clock", p3t: "icon_datetime_setting", label: t("dateTimeSettings"), icon: "clock", sub: s.clock24 ? t("clock24") : t("clock12"), action: () => updateSettings({ clock24: !s.clock24 }) },
         { key: "sfx", p3t: "icon_sound_setting", label: t("soundSettings"), icon: "sound", sub: s.sounds ? t("sfxOn") : t("sfxOff"), action: () => updateSettings({ sounds: !s.sounds }) },
         { key: "tsound", p3t: "icon_sound_setting", label: t("trailerSound"), icon: "video", sub: s.trailers.sound ? t("trailerSoundOn") : t("trailerSoundOff"), action: () => updateSettings((p) => ({ trailers: { ...p.trailers, sound: !p.trailers.sound } })) },
@@ -830,10 +830,10 @@ export function XmbHome({ variant }: { variant: Variant }) {
           key: `ph${appid}`,
           visual: "photoShots",
           label: name,
-          sub: `${list.length} screenshot${list.length === 1 ? "" : "s"}`,
+          sub: t("screenshotsCount", { count: list.length }),
           icon: "photo",
           p3t: "icon_photo_album_default",
-          children: () => list.map((sh, i) => ({ key: sh.url, label: sh.created ? new Date(sh.created * 1000).toLocaleString() : `Screenshot ${i + 1}`, sub: name, image: sh.url, icon: "photo" as IconName, action: () => api.openMedia(appid, i) })),
+          children: () => list.map((sh, i) => ({ key: sh.url, label: sh.created ? new Date(sh.created * 1000).toLocaleString() : t("screenshotIndex", { index: i + 1 }), sub: name, image: sh.url, icon: "photo" as IconName, action: () => api.openMedia(appid, i) })),
         });
       }
     }
@@ -843,17 +843,17 @@ export function XmbHome({ variant }: { variant: Variant }) {
     if (s.trailers.video)
       videoItems.push({
         key: "trailers",
-        label: "Game Trailers",
+        label: t("gameTrailers"),
         icon: "folder",
         p3t: "icon_video",
         sub: t("skinStoreTrailers"),
-        children: () => api.lib.games.filter((g) => !g.shortcut).map((g) => ({ key: `v${g.appid}`, label: g.name, sub: "Trailer", game: g, trailer: true })),
+        children: () => api.lib.games.filter((g) => !g.shortcut).map((g) => ({ key: `v${g.appid}`, label: g.name, sub: t("trailer"), game: g, trailer: true })),
       });
-    if (vids === null) videoItems.push({ key: "vload", label: "Looking for videos…", icon: "video", p3t: "icon_video", visual: "loading" });
+    if (vids === null) videoItems.push({ key: "vload", label: t("lookingForVideos"), icon: "video", p3t: "icon_video", visual: "loading" });
     else {
       for (const v of vids) {
         const g = v.appid ? api.lib.byId.get(v.appid) : undefined;
-        const kind = v.kind === "clip" ? "Clip" : v.kind === "recording" ? "Recording" : v.folder;
+        const kind = v.kind === "clip" ? t("clip") : v.kind === "recording" ? t("recording") : v.folder;
         const date = v.created ? new Date(v.created * 1000).toLocaleDateString() : "";
         videoItems.push({
           key: `lv${v.id}`,
@@ -876,7 +876,7 @@ export function XmbHome({ variant }: { variant: Variant }) {
     const extrasOn = variant === "psp" && !!skin?.icons?.icon_extras
       && (!cb || cb.tilt != null || (cb.row ? !!cb.marks?.icon_extras : pngDim(skin.icons.icon_extras)?.[0] === cb.w));
     if (api.lib.apps.length && !extrasOn)
-      network.items.push({ key: "apps", p3t: "icon_setting_item", label: "Applications", icon: "apps", sub: `${api.lib.apps.length} apps`, children: () => api.lib.apps.map((g) => ({ key: `a${g.appid}`, label: g.name, game: g, sub: "Application" })) });
+      network.items.push({ key: "apps", p3t: "icon_setting_item", label: t("applications"), icon: "apps", sub: t("appsCount", { count: api.lib.apps.length }), children: () => api.lib.apps.map((g) => ({ key: `a${g.appid}`, label: g.name, game: g, sub: t("application") })) });
     // Music: soundtracks and music files on the Deck, one folder per album, played by the music player
     const playAlbum = (al: MusicAlbum, i: number) => {
       musicPlayer.play(al, i);
@@ -884,10 +884,10 @@ export function XmbHome({ variant }: { variant: Variant }) {
     };
     const musicItems: XItem[] = [];
     if (player.album) {
-      const t = player.album.tracks[player.index];
-      musicItems.push({ key: "m-now", label: t?.title ?? "Now Playing", icon: "music", p3t: "icon_music", visual: "musicTrack", sub: `Now playing · ${player.album.name}`, track: { album: player.album.id, index: player.index }, action: () => (variant === "psp" ? musicPlayer.show(true) : musicPlayer.toggle()) });
+      const tTrk = player.album.tracks[player.index];
+      musicItems.push({ key: "m-now", label: tTrk?.title ?? t("nowPlaying"), icon: "music", p3t: "icon_music", visual: "musicTrack", sub: `${t("nowPlaying")} · ${player.album.name}`, track: { album: player.album.id, index: player.index }, action: () => (variant === "psp" ? musicPlayer.show(true) : musicPlayer.toggle()) });
     }
-    if (music === null) musicItems.push({ key: "m-load", label: "Looking for music…", icon: "music", p3t: "icon_music", visual: "loading" });
+    if (music === null) musicItems.push({ key: "m-load", label: t("lookingForMusic"), icon: "music", p3t: "icon_music", visual: "loading" });
     else {
       for (const al of music)
         musicItems.push({
@@ -897,14 +897,14 @@ export function XmbHome({ variant }: { variant: Variant }) {
           p3t: "icon_music",
           visual: al.cover ? undefined : "musicAlbum",
           image: al.cover || undefined,
-          sub: [`${al.tracks.length} track${al.tracks.length === 1 ? "" : "s"}`, al.artist, al.source === "steam" ? "Steam soundtrack" : "Music folder"].filter(Boolean).join(" · "),
+          sub: [t("tracksCount", { count: al.tracks.length }), al.artist, al.source === "steam" ? t("steamSoundtrack") : t("musicFolder")].filter(Boolean).join(" · "),
           children: () => al.tracks.map((t, i) => ({ key: `tr${t.id}`, label: t.title, icon: "music" as IconName, p3t: "icon_music", visual: "musicTrack" as XmbVisual, sub: [al.name, t.disc].filter(Boolean).join(" · "), track: { album: al.id, index: i }, action: () => playAlbum(al, i) })),
         });
       if (!music.length) musicItems.push({ key: "m-none", label: t("noMusic"), icon: "music", p3t: "icon_music", visual: "unknown", sub: t("noMusicDesc") });
     }
     musicItems.push({ key: "player", label: t("musicPlayer"), icon: "music", p3t: "icon_music", sub: t("musicPlayerDesc"), action: () => openDestination({ place: "music" }) });
     const music_: XCat = { key: "music", label: t("catMusic"), icon: "music", p3t: "icon_music", items: musicItems };
-    const psn: XCat = {key:"psn",label:"PlayStation Network",icon:"psn",p3t:"icon_psn",items:[{key:"store",label:t("playstationStore"),sub:t("steamStoreCatalog"),icon:"store",p3t:"icon_store",action:()=>openSteam("store")},{key:"account",label:t("account"),icon:"user",p3t:"icon_user",action:()=>openSteam("friends")}]};
+    const psn: XCat = {key:"psn",label:t("playstationNetwork"),icon:"psn",p3t:"icon_psn",items:[{key:"store",label:t("playstationStore"),sub:t("steamStoreCatalog"),icon:"store",p3t:"icon_store",action:()=>openSteam("store")},{key:"account",label:t("account"),icon:"user",p3t:"icon_user",action:()=>openSteam("friends")}]};
     const tv: XCat = {key:"tv",label:t("tvVideoServices"),icon:"tv",p3t:"icon_tv",items:[{key:"trailers",label:t("gameTrailers"),icon:"video",p3t:"icon_video",children:()=>api.lib.games.filter(g=>!g.shortcut).map(g=>({key:`tr${g.appid}`,label:g.name,game:g,trailer:true}))},...api.lib.apps.map(g=>({key:`app${g.appid}`,label:g.name,game:g,icon:"apps" as IconName}))]};
     // a PSP opens every category on its top entry; the PS3 starts the Game column on the first game
     const game: XCat = { key: "game", label: t("catGame"), icon: "game", p3t: "icon_game", items: games, start: variant === "psp" ? 0 : Math.min(firstGame, games.length - 1) };
@@ -913,15 +913,15 @@ export function XmbHome({ variant }: { variant: Variant }) {
       const shortcuts = api.lib.games.filter((g) => g.shortcut);
       const extras: XCat = {
         key: "extras",
-        label: "Extras",
+        label: t("extras"),
         icon: "plus",
         p3t: "icon_extras",
         items: [
-          ...(shortcuts.length ? [{ key: "x-short", label: "Non-Steam Games", icon: "folder" as IconName, p3t: "icon_savedata", sub: `${shortcuts.length} shortcuts`, children: () => shortcuts.map(gameItem) }] : []),
-          ...(api.lib.apps.length ? [{ key: "x-apps", label: "Applications", icon: "apps" as IconName, p3t: "icon_setting_item", sub: `${api.lib.apps.length} apps`, children: () => api.lib.apps.map((g) => ({ key: `a${g.appid}`, label: g.name, game: g, sub: "Application" })) }] : []),
-          { key: "x-search", label: "Search", icon: "search", p3t: "icon_inet_search", sub: "Search Steam", action: () => openSteam("search") },
-          { key: "x-notes", label: "Notifications", icon: "bell", p3t: "icon_rss", action: () => openSteam("notifications") },
-          { key: "x-qam", label: "Steam Quick Access", icon: "dots", sub: "Steam's side menu: notifications, plugins, options for all themes", action: () => openSteam("qam") },
+          ...(shortcuts.length ? [{ key: "x-short", label: t("nonSteamGames"), icon: "folder" as IconName, p3t: "icon_savedata", sub: t("shortcutsCount", { count: shortcuts.length }), children: () => shortcuts.map(gameItem) }] : []),
+          ...(api.lib.apps.length ? [{ key: "x-apps", label: t("applications"), icon: "apps" as IconName, p3t: "icon_setting_item", sub: t("appsCount", { count: api.lib.apps.length }), children: () => api.lib.apps.map((g) => ({ key: `a${g.appid}`, label: g.name, game: g, sub: t("application") })) }] : []),
+          { key: "x-search", label: t("destSearch"), icon: "search", p3t: "icon_inet_search", sub: t("searchSteam"), action: () => openSteam("search") },
+          { key: "x-notes", label: t("destNotifications"), icon: "bell", p3t: "icon_rss", action: () => openSteam("notifications") },
+          { key: "x-qam", label: t("steamQuickAccess"), icon: "dots", sub: t("steamQuickAccessDesc"), action: () => openSteam("qam") },
         ],
       };
       return extrasOn ? [settingsCat, extras, photo, music_, video, game, network, psn] : [settingsCat, photo, music_, video, game, network, psn];
@@ -984,7 +984,7 @@ export function XmbHome({ variant }: { variant: Variant }) {
     const name = (id: number) => api.lib.byId.get(id)?.name ?? `App ${id}`;
     const done = downloads.items.find((d) => d.completed && before.get(d.appid) && !before.get(d.appid)!.completed);
     const started = downloads.items.find((d) => d.active && !d.completed && !before.get(d.appid)?.active);
-    const msg = done ? `Download complete: ${name(done.appid)}` : started ? `Downloading: ${name(started.appid)}` : "";
+    const msg = done ? t("downloadCompleteApp", { name: name(done.appid) }) : started ? t("downloadingApp", { name: name(started.appid) }) : "";
     if (msg) setInfoMsg(msg);
   }, [downloads]);
   useEffect(() => {
@@ -1023,8 +1023,8 @@ export function XmbHome({ variant }: { variant: Variant }) {
 
   const options = () => {
     const extra: MenuItem[] = [
-      { label: "Presets", sub: () => themeMenu(s.theme, api.switchTheme, THEMES) },
-      { label: "Home", action: api.showSteamHome },
+      { label: t("presets"), sub: () => themeMenu(s.theme, api.switchTheme, THEMES) },
+      { label: t("destMainMenu"), action: api.showSteamHome },
     ];
     // music (a track, the album folders, "Now Playing", "Music Player"): the options of the console's music player —
     // Shuffle and Repeat like the PS3's mini control panel, Crossfade like its Music Settings
@@ -1402,7 +1402,7 @@ export function XmbHome({ variant }: { variant: Variant }) {
                 {dlOf(it) && !dlOf(it)!.completed && (
                   <XmbBar value={dlOf(it)!.progress} w={Math.min(W - itemX - 240, 300 * (L.font / 22))} h={Math.max(4, L.subFont * 0.32)} base={art?.dlBase ?? art?.progressBase} fill={art?.dlBar ?? art?.progressBar} style={{ marginTop: 2, opacity: dlOf(it)!.paused ? 0.6 : 1 }} />
                 )}
-                {selected && it.game && <span style={{ ...label, fontSize: L.subFont - 2, opacity: 0.65 }}>Last played: {fmtLastPlayed(it.game.lastPlayed)}</span>}
+                {selected && it.game && <span style={{ ...label, fontSize: L.subFont - 2, opacity: 0.65 }}>{t("lastPlayedVal", { val: fmtLastPlayed(it.game.lastPlayed) })}</span>}
                 {selected && it.game && <Badges g={it.game} size={L.subFont - 4} style={{ marginTop: 4 }} />}
               </div>
             </div>

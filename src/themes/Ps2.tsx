@@ -353,7 +353,7 @@ export function Ps2Home() {
         if (b === "up" || b === "down") mv(isel, setIsel, infoOpts.length, b === "up" ? -1 : 1);
         else if (b === "a") {
           const o = infoOpts[isel];
-          if (o?.label === "Start" && g) api.activate(g, () => api.launch(g));
+          if (isel === 0 && g) api.activate(g, () => api.launch(g));
           else o?.run();
         } else if (b === "b") go("card");
         return true;
@@ -386,7 +386,7 @@ export function Ps2Home() {
   const firstRow = Math.max(0, row - 1);
 
   const hints =
-    screen === "main" ? { a: "Enter" } : screen === "card" ? { a: "Information", b: "Back", x: "Start", y: "Options" } : { a: "Enter", b: "Back" };
+    screen === "main" ? { a: t("enter") } : screen === "card" ? { a: t("information"), b: t("back"), x: t("start"), y: t("options") } : { a: t("enter"), b: t("back") };
 
   return (
     <ThemeRoot onInput={onInput} hints={hints}>
@@ -402,10 +402,12 @@ export function Ps2Home() {
 
         {screen === "main" && (
           <div style={{ position: "absolute", left: W * 0.54, top: H * 0.44, display: "flex", flexDirection: "column", gap: 14, animation: "dhtIn2 500ms" }}>
-            {["Browser", "System Configuration"].map((label, i) => (
-              <div key={label} className="dht-ps2-item" data-selected={msel === i} style={{ display: "flex", alignItems: "center", gap: 26 }}>
-                
-                <span style={text(msel === i, 28)}>{L(label)}</span>
+            {[
+              { key: "Browser", label: t("browser") },
+              { key: "System Configuration", label: t("systemConfiguration") },
+            ].map((it, i) => (
+              <div key={it.key} className="dht-ps2-item" data-selected={msel === i} style={{ display: "flex", alignItems: "center", gap: 26 }}>
+                <span style={text(msel === i, 28)}>{lang === "ja" ? JA[it.key] : it.label}</span>
               </div>
             ))}
           </div>
@@ -477,7 +479,7 @@ export function Ps2Home() {
 
         {screen === "config" && (
           <div style={{ position: "absolute", inset: 0, animation: "dhtIn2 300ms" }}>
-            <div style={{ position: "absolute", left: 60, top: 36, ...text(true, 26) }}>{L("System Configuration")}</div>
+            <div style={{ position: "absolute", left: 60, top: 36, ...text(true, 26) }}>{lang === "ja" ? JA["System Configuration"] : t("systemConfiguration")}</div>
             <div style={{ position: "absolute", left: W * 0.2, top: H * 0.2, width: W * 0.6, display: "flex", flexDirection: "column", gap: 4 }}>
               {configOpts.map((o, i) => (
                 <div key={o.label} className="dht-ps2-item" data-selected={i === csel} style={{ display: "flex", justifyContent: "space-between", padding: "12px 24px", background: i === csel ? "linear-gradient(90deg, rgba(80,110,255,0.35), rgba(80,110,255,0))" : "none", borderLeft: i === csel ? "3px solid #9fb4ff" : "3px solid transparent" }}>
