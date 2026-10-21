@@ -5,7 +5,7 @@ const b=await launch();try{
  await p.goto('http://127.0.0.1:8793/preview/preview.html?theme=old-big-picture');
  const r=p.locator('.dht-oldbigpicture:not([data-transition-snapshot])'),settled=()=>p.waitForFunction(()=>!document.querySelector('[data-transition-snapshot]'));
  await r.locator('.home-tile.library').waitFor();await r.locator('.home-tile.library').hover();await p.mouse.wheel(0,400);await p.waitForTimeout(350);assert.equal(await r.getAttribute('data-page'),'home');
- assert.equal(await r.locator('.web .edge-prompt').innerText(),'LB');assert.equal(await r.locator('.chat .edge-prompt').innerText(),'RB');
+ assert.equal(await r.locator('.edge-left').innerText(),'LB');assert.equal(await r.locator('.edge-right').innerText(),'RB');
  await p.keyboard.press('ArrowLeft');await p.keyboard.press('ArrowLeft');await r.locator('.browser-menu').waitFor();await settled();assert.equal(await r.getAttribute('data-page'),'web');assert.equal(await r.locator('.web-favorite').count(),5);
  await r.getByRole('tab',{name:'HISTORY',exact:true}).click();assert.ok((await r.locator('[role=tabpanel]').innerText()).includes('No pages'));await r.getByRole('tab',{name:'FAVORITES',exact:true}).click();await r.locator('.web-favorite').first().click();await r.getByRole('tab',{name:'HISTORY',exact:true}).click();assert.ok((await r.locator('[role=tabpanel]').innerText()).includes('google.com'));
  await p.keyboard.press('Escape');await settled();await r.locator('.home-tile.library').waitFor();
