@@ -58,7 +58,8 @@ if (typeof window !== "undefined") {
   let previous=new Set<number>(),lastDirection=0;
   const pollGamepad=(now:number)=>{
     if(!document.hidden){
-      const pad=Array.from(navigator.getGamepads?.()??[]).find(p=>p?.connected);
+      const pads=Array.from(navigator.getGamepads?.()??[]).filter((p):p is Gamepad=>!!p?.connected);
+      const pad=pads.find(p=>p.buttons.some(b=>b.pressed)||p.axes.some(a=>Math.abs(a)>.55))??pads[0];
       const down=new Set<number>();
       if(pad){for(const [i,button] of [[0,1],[1,2],[2,3],[3,4],[4,5],[5,6],[6,7],[7,8],[9,14],[12,9],[13,10],[14,11],[15,12]])if(pad.buttons[i]?.pressed)down.add(button);
        if(pad.axes[0]<-.55)down.add(11);if(pad.axes[0]>.55)down.add(12);if(pad.axes[1]<-.55)down.add(9);if(pad.axes[1]>.55)down.add(10);
