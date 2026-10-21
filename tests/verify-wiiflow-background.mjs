@@ -9,7 +9,8 @@ try{
  await page.goto(url+'?theme=vita&still=1');await page.locator('[data-dht-root]').waitFor();
  await page.evaluate(()=>window.__updateTheme({theme:'frame',activeTheme:'wiiflow-default',animations:false,frameData:{'wiiflow-default':{backgroundFit:'fill'}}}));
  const host=page.locator('[data-native-theme="wiiflow-default"]');await host.waitFor();
- await page.keyboard.press('ArrowDown');await page.waitForFunction(()=>getComputedStyle(document.querySelector('[data-native-theme]').shadowRoot.querySelector('footer')).opacity==='1');
+ await host.locator('.cover').first().waitFor({state:'attached'});
+ await page.evaluate(()=>window.dispatchEvent(new KeyboardEvent('keydown',{key:'ArrowDown',bubbles:true})));await page.waitForFunction(()=>getComputedStyle(document.querySelector('[data-native-theme]').shadowRoot.querySelector('footer')).opacity==='1');
  const background=host.locator('#wiiflow-background');await background.waitFor({state:'visible'});
  for(const [width,height] of [[1280,800],[1280,720],[960,600]]){
    await page.setViewportSize({width,height});
