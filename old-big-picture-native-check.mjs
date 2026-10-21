@@ -20,7 +20,7 @@ try{
  await root.locator('.home-tile.library').click();await root.locator('.library-row .game').first().waitFor();
  await root.getByLabel('Search library').fill('Portal');await root.locator('.grid .game').first().click();await root.locator('.classic-play').waitFor();
  await root.getByLabel('settings',{exact:true}).click();await root.locator('.settings-columns').waitFor();
- await root.getByRole('button',{name:'Interface',exact:true}).click();await root.locator('.preference-form').waitFor();
+ await root.getByRole('button',{name:'Interface',exact:true}).first().click();await root.locator('.preference-form').waitFor();
  await root.getByLabel('24-hour clock').check();assert.ok(await root.getByLabel('24-hour clock').isChecked());
  await root.getByLabel('downloads',{exact:true}).click();await root.getByRole('heading',{name:'Downloads',exact:true}).waitFor();
  await root.getByRole('button',{name:'◉ Home',exact:true}).click();await root.locator('.home-tile.store').click();await root.locator('.store-feature').waitFor();

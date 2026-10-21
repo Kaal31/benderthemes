@@ -30,3 +30,14 @@ Additional pages: see PAGES.md for per-page sources and functionality. Game deta
 ## Video-based page motion
 
 Reference: the user-provided Spyrex video, Big Picture for Gaming Mode, around 21.10–21.37 seconds. Sampled frames show the home retreating upward while Library rises from below. Native navigation now uses a 270 ms vertical reveal with cubic-bezier(.16,.72,.22,1), reverses on Back, preserves outgoing carousel/list scroll offsets, and removes the inert visual snapshot when finished. Animations are skipped when disabled, hidden, or reduced motion is requested. The timing is an approximation from the filmed 30 fps screen, not an extracted original animation constant.
+
+
+## MingeBag video comparison (2026-10-21)
+
+Inspected the attached 2:29.82 video, “Old Steam Big Picture - MingeBag”, using timestamped frames. At 14–29 seconds the user focuses covers without opening a game detail page: the sidebar retracts, the current row expands, and the selected cover gains a cyan caption and slight scale increase. The native theme now animates these separately from whole-page navigation (240 ms sidebar, 190 ms row size, 160 ms cover focus; approximations from the recording). Back from game details restores the chosen title and list position. Reduced-motion and the theme animation toggle disable these effects.
+
+The 1:49–2:13 settings sequence informed the compact three-column settings index and new Display and Disk Management views. Display reports the current browser/host screen geometry; output changes open Steam display settings. Disk Management lists actual installed library games with working game-management actions and a Steam storage settings link. No storage capacities are fabricated. The browser page accepts a web address and opens it through Steam navigation. System configuration remains owned by current Steam; the removed legacy client settings cannot be restored merely by styling them.
+
+The 2:24 power sequence informed an overlaid power dialog that keeps the current screen visible, makes background controls inert, and restores focus when dismissed. Resume and Exit Big Picture work directly; Sleep / Restart / Shut Down opens Steam’s power menu. The reference’s obsolete Exit Steam and Log Out controls are not simulated. The video shows Store and Community loading screens rather than their loaded page contents; those frames were not treated as evidence of unseen layouts.
+
+Validation: typecheck and native preview checks, including focused-cover/sidebar geometry, controller navigation, Back restoration, Display/Storage routes, modal dismissal/focus, browser address entry, reduced motion, and zero iframes. Visual captures are under out/old-big-picture-reference.
