@@ -33,6 +33,7 @@ const caps = (background: boolean, icons: boolean, font: boolean, accent: string
 export const LAYOUT_SLOTS: Record<ThemeId, LayoutCaps> = {
   gameamp: caps(false, false, false, [], { gameArt: false, tint: false, brightness: false }),
   "santa-express": caps(true, true, true),
+  "old-beta-big-picture": caps(true, true, true),
   "old-big-picture": caps(true, true, true),
   onyx: caps(false, true, false),
   silver: caps(false, true, false),

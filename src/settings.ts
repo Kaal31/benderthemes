@@ -19,7 +19,7 @@ export const VITA_LOOKS: { id: VitaLook; name: string }[] = [
   { id: "sakura", name: "Sakura" },
 ];
 
-export type ThemeId = "ios6" | "gameamp" | "santa-express" | "old-big-picture" | "native" | "onyx" | "silver" | "frame" | "wii" | "wiiu" | "switch" | "n3ds" | "vita" | "ps2" | "ps3" | "psp" | "ps4" | "ps5" | "x360" | "aero" | "aero2" | "xbox" | "dial" | "castle" | "republic" | "minecraft" | "pain" | "nazarick" | "ps1" | "iisu";
+export type ThemeId = "ios6" | "gameamp" | "santa-express" | "old-big-picture" | "old-beta-big-picture" | "native" | "onyx" | "silver" | "frame" | "wii" | "wiiu" | "switch" | "n3ds" | "vita" | "ps2" | "ps3" | "psp" | "ps4" | "ps5" | "x360" | "aero" | "aero2" | "xbox" | "dial" | "castle" | "republic" | "minecraft" | "pain" | "nazarick" | "ps1" | "iisu";
 export type StyleValue = string | number | boolean;
 export type SortMode = "recent" | "alpha" | "playtime";
 export type AAction = "theme" | "launch" | "details";
@@ -40,6 +40,7 @@ export const THEMES: { id: ThemeId; name: string; blurb: string }[] = [
   {id:"ios6",name:"iOS 6 Classic",blurb:"Native iPad SpringBoard, reflective dock and Notification Center"},
   {id:"gameamp",name:"GameAmp",blurb:"Chrome media-player dashboard with stacked windows and reactive meters"},
   {id:"santa-express",name:"Santa Express",blurb:"Native Christmas dashboard with chrome controls, snowfall and music"},
+  {id:"old-beta-big-picture",name:"Old Beta Big Picture",blurb:"Early Steam Big Picture with a transforming cover sheet and games carousel"},
   {id:"old-big-picture",name:"Old Big Picture",blurb:"Classic Steam blue dashboard, carousel and native library pages"},
   {id:"onyx",name:"Onyx Wheel (bonus)",blurb:"Black textured body, cover flow and circular touch navigation"},
   {id:"silver",name:"Silver Wheel (bonus)",blurb:"Brushed aluminum, reflected covers and circular wheel navigation"},

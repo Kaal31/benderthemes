@@ -18,6 +18,7 @@ const t = (id: string, name: string, company: ThemeManifest["company"], layout: 
 export const BUILTIN_THEMES: ThemeManifest[] = [
   t("ios6", "iOS 6 Classic", "Community", "ios6"),
   t("gameamp", "GameAmp", "Bonus", "gameamp"),
+  t("old-beta-big-picture", "Old Beta Big Picture", "Bonus", "old-beta-big-picture"),
   t("old-big-picture", "Old Big Picture", "Bonus", "old-big-picture"),
   t("onyx", "Onyx Wheel (bonus)", "Bonus", "onyx"),
   t("silver", "Silver Wheel (bonus)", "Bonus", "silver"),

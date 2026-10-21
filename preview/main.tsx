@@ -239,7 +239,7 @@ function ControllerTest() {
     };
     update();const timer=setInterval(update,100);return()=>clearInterval(timer);
   },[]);
-  const focus=()=>{window.focus();document.querySelector<HTMLElement>('.dht-oldbigpicture:not([data-transition-snapshot]) .library-body .game, .dht-oldbigpicture:not([data-transition-snapshot]) .home-tile.library, .dht-oldbigpicture:not([data-transition-snapshot]) main button')?.focus({preventScroll:true});};
+  const focus=()=>{window.focus();document.querySelector<HTMLElement>('.dht-oldbeta[data-mode=sheet] .beta-categories button[aria-pressed=true], .dht-oldbeta:not([data-mode=sheet]) .beta-cover[data-selected=true], .dht-oldbigpicture:not([data-transition-snapshot]) .library-body .game, .dht-oldbigpicture:not([data-transition-snapshot]) .home-tile.library, .dht-oldbigpicture:not([data-transition-snapshot]) main button')?.focus({preventScroll:true});};
   return <div aria-label="Controller testing" style={{padding:'10px 14px',margin:'0 12px 10px',background:'#14374b',border:'1px solid #3b829d',display:'flex',gap:12,alignItems:'center',flexWrap:'wrap'}}>
     <button onClick={focus}>Focus preview controls</button>
     <span role="status" aria-label="Controller status">{status}</span>
@@ -286,10 +286,10 @@ function App() {
             {p.label}
           </button>
         ))}
-        {s.theme === 'old-big-picture' && <div aria-label="Preview controller" style={{display:'flex',gap:5}}>{([[9,'↑'],[10,'↓'],[11,'←'],[12,'→'],[1,'A'],[2,'B'],[3,'X'],[4,'Y']] as const).map(([button,label])=><button key={button} aria-label={`Controller ${label}`} onPointerDown={e=>e.preventDefault()} onClick={()=>window.dispatchEvent(new CustomEvent('preview-controller-input',{detail:button}))}>{label}</button>)}</div>}
+        {(s.theme === 'old-big-picture'||s.theme === 'old-beta-big-picture') && <div aria-label="Preview controller" style={{display:'flex',gap:5}}>{([[9,'↑'],[10,'↓'],[11,'←'],[12,'→'],[1,'A'],[2,'B'],[3,'X'],[4,'Y']] as const).map(([button,label])=><button key={button} aria-label={`Controller ${label}`} onPointerDown={e=>e.preventDefault()} onClick={()=>window.dispatchEvent(new CustomEvent('preview-controller-input',{detail:button}))}>{label}</button>)}</div>}
         <span style={{ opacity: 0.65, marginLeft: 10 }}>Arrows = D-pad · Enter = Ⓐ · Esc = Ⓑ · X · Y = △/Options · M = ≡ · Q/E = L1/R1 · Z/C = L2/R2 (presets). Old Big Picture: LB = Web · RB = Chat · Select Library to enter.</span>
       </div>
-      {s.theme==='old-big-picture'&&<ControllerTest/>}
+      {(s.theme==='old-big-picture'||s.theme==='old-beta-big-picture')&&<ControllerTest/>}
       <div style={{ position: "relative", width: size.w, height: size.h, margin: themedPreview === "ios6" ? "0" : "0 12px", transform: "translateZ(0)", overflow: "hidden", borderRadius: themedPreview === "ios6" ? 0 : 10, boxShadow: "0 10px 40px #000" }}>
         {s.enabled || marketplace.opened ? <ThemedHome standalone /> : <div style={{ padding: 70, background: "#162331", height: "100%", boxSizing: "border-box" }}><h1>Steam Home restored</h1><p>The deleted theme is hidden. Open Hub to download it again.</p><button onClick={() => openMarketplace()}>Open Hub</button></div>}
       </div>

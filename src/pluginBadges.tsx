@@ -9,6 +9,7 @@ import { Settings, ThemeId } from "./settings";
 const slots: Record<ThemeId, CSSProperties> = {
   gameamp:{right:"4%",top:"14%"},
  "santa-express":{right:"15%",top:"34%"},
+ "old-beta-big-picture":{right:"4%",bottom:"12%"},
  "old-big-picture":{right:"4%",bottom:"12%"},
   onyx:{left:"50%",top:"56%",transform:"translateX(-50%)"}, silver:{left:"21%",top:"43%"},
   wii:{left:"50%",top:"2.5%",transform:"translateX(-50%)"},
@@ -27,6 +28,7 @@ const slots: Record<ThemeId, CSSProperties> = {
 const looks: Record<ThemeId, {bg:string; ink:string; radius:string; font?:string}> = {
   gameamp:{bg:"linear-gradient(#e5edf6,#9aabba)",ink:"#062652",radius:"8px"},
  "santa-express":{bg:"#5c100c",ink:"#ffe4bb",radius:"18px"},
+ "old-beta-big-picture":{bg:"#12334d",ink:"#a5dcf0",radius:"2px"},
  "old-big-picture":{bg:"#12334d",ink:"#a5dcf0",radius:"2px"},
   onyx:{bg:"linear-gradient(#262b32ee,#101318ee)",ink:"#eef5ff",radius:"7px"},
   silver:{bg:"linear-gradient(#f4f5f8,#b7bcc6)",ink:"#262c35",radius:"6px"},

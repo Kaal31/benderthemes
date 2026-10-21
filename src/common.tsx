@@ -462,10 +462,10 @@ export function MenuView({
   const [retained,setRetained]=useState<MenuLevel|undefined>();
   const liveTop=menu.stack[menu.stack.length-1];
   useEffect(()=>{
-    if(variant==="old-big-picture"&&liveTop)setRetained(liveTop);
+    if((variant==="old-big-picture"||variant==="old-beta-big-picture")&&liveTop)setRetained(liveTop);
   },[variant,liveTop]);
   useEffect(()=>{
-    if(variant!=="old-big-picture")return;
+    if(variant!=="old-big-picture"&&variant!=="old-beta-big-picture")return;
     const node=panel.current;if(!node)return;
     const disabled=!getSettings().animations||window.matchMedia("(prefers-reduced-motion: reduce)").matches;
     if(disabled){if(!menu.isOpen)setRetained(undefined);return;}
@@ -493,7 +493,7 @@ export function MenuView({
     const timer=setTimeout(()=>setRetained(undefined),exitDuration);
     return()=>clearTimeout(timer);
   },[liveTop,exitDuration]);
-  if (!menu.isOpen && !((variant==="castle"||variant==="old-big-picture"||exitDuration>0)&&retained)) return null;
+  if (!menu.isOpen && !((variant==="castle"||(variant==="old-big-picture"||variant==="old-beta-big-picture")||exitDuration>0)&&retained)) return null;
   const top = liveTop ?? retained!;
   const styles: Record<string, { panel: CSSProperties; item: (sel: boolean, dis?: boolean) => CSSProperties; title?: CSSProperties }> = {
     wii: {
@@ -577,6 +577,7 @@ export function MenuView({
     item:(on,disabled)=>({fontSize:21,padding:"11px 18px",margin:"2px 0",color:disabled?"#53798b":on?"#15374b":"#99c8db",background:on?"linear-gradient(90deg,#b6e6f0,#6cb8d1)":"#1c4c6570",boxShadow:on?"0 0 9px #76d5ef55":"none",borderRadius:0}),
     title:{fontSize:26,fontWeight:300,padding:"5px 0 20px",color:"#c4e4ef",borderBottom:"1px solid #609bb052",marginBottom:14},
   };
+  styles["old-beta-big-picture"] = styles["old-big-picture"];
   styles.wiiu = styles.wii;
   styles.ps1 = PS1_MENU;
   styles.iisu = IISU_MENU;

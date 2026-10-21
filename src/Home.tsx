@@ -1,6 +1,7 @@
 import { IOS6Home } from "./themes/IOS6";
 import {GameAmpHome} from "./themes/GameAmp";
 import { SantaHome } from "./themes/Santa";
+import { OldBetaBigPictureHome } from "./themes/OldBetaBigPicture";
 import { OldBigPictureHome } from "./themes/OldBigPicture";
 import {themeHomeOwnsRoute} from "./otherPlugins";
 import { useSteamScreensaver } from "./screensaver";
@@ -80,6 +81,7 @@ const skinHook = (s: ReturnType<typeof getSettings>) => {
 const THEME_COMPONENTS: Record<ThemeId, () => ReactNode> = {
   gameamp: () => <GameAmpHome />,
   "santa-express": () => <SantaHome />,
+  "old-beta-big-picture": () => <OldBetaBigPictureHome />,
   "old-big-picture": () => <OldBigPictureHome />,
   native: () => <NativeLayout />,
   onyx: () => <SilverHome dark />,
@@ -204,7 +206,7 @@ function VerifiedThemedHome({ standalone }: { standalone?: boolean }) {
     let alive = true;
     setState("checking");
     const shipped=activeTheme(settings);
-    if(settings.theme === "old-big-picture"){setState("ready");return;}
+    if((settings.theme === "old-big-picture" || settings.theme === "old-beta-big-picture")){setState("ready");return;}
     if(shipped?.source==="bundled"){
       void inventory().then(async installed=>{
         if(!installed[shipped.id]){if(alive){setState("missing");openMarketplace("frame",{from:"frame"});}return;}

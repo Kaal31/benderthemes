@@ -59,6 +59,7 @@ export function storeSkin(s: Settings): Skin {
   if(t==="frame"||t==="santa-express"){
    const id=t==="santa-express"?t:activeTheme(s)?.id;
    const profiles:Record<string,{bg:string;panel:string;text:string;sub:string;accent:string;radius:number;font?:string}>={
+    "old-beta-big-picture":{bg:"radial-gradient(ellipse at top,#164761,#07182c)",panel:"#123b54",text:"#d8edf4",sub:"#84b6ce",accent:"#248eae",radius:2},
     "old-big-picture":{bg:"radial-gradient(ellipse at top,#164761,#07182c)",panel:"#123b54",text:"#d8edf4",sub:"#84b6ce",accent:"#248eae",radius:2},
     "blue-glass":{bg:"linear-gradient(135deg,#315774,#6f9bb6 52%,#345e7c)",panel:"linear-gradient(#89b5ce,#345973)",text:"#f0f7fc",sub:"#d4e6f0",accent:"#3d8fc8",radius:10},
     "ios6":{bg:"repeating-linear-gradient(90deg,#d6dce4 0 3px,#d2d9e2 3px 5px)",panel:"linear-gradient(#fff,#e9edf3)",text:"#233a53",sub:"#526b86",accent:"#367ebc",radius:9},
