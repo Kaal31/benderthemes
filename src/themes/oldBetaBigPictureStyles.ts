@@ -40,5 +40,8 @@ export const OLD_BETA_CSS=`
 .dht-oldbeta .beta-sheet-friend{display:flex;gap:12px;align-items:center;min-height:calc(var(--beta-h)*.105);color:#e0f0fa;transform:translateZ(calc(var(--layer)*12px));font-size:calc(var(--beta-w)*.016);line-height:1.1;text-shadow:0 1px 5px #091b30}
 .dht-oldbeta .beta-sheet-friend small{display:block;color:#a8c5df;font-size:.75em;margin-top:4px}.dht-oldbeta .beta-friend-avatar{display:grid;place-items:center;flex:none;width:calc(var(--beta-w)*.055);height:calc(var(--beta-w)*.055);border:2px solid #b9d9ee;background:#28506c;box-shadow:0 2px 10px #0005;overflow:hidden}.dht-oldbeta .beta-friend-avatar img{width:100%;height:100%;object-fit:cover}
 .dht-oldbeta .beta-view-all{transition:background 180ms,color 180ms,box-shadow 180ms}.dht-oldbeta .beta-view-all:active{transform:translateX(-50%) scale(.96)}
+.dht-oldbeta[data-opening=true] .beta-categories{top:5%;opacity:.35;pointer-events:none}.dht-oldbeta[data-opening=true] .beta-header{opacity:0;pointer-events:none}
+.dht-oldbeta[data-mode=recent] .beta-view-all{animation:beta-controls-reveal 360ms 180ms both}
+@keyframes beta-controls-reveal{from{opacity:0;filter:blur(3px)}to{opacity:1;filter:blur(0)}}
 .dht-oldbeta.no-motion *,.dht-oldbeta.no-motion *::before,.dht-oldbeta.no-motion *::after{transition:none!important;animation:none!important;scroll-behavior:auto!important}@media(prefers-reduced-motion:reduce){.dht-oldbeta *,.dht-oldbeta *::before,.dht-oldbeta *::after{transition:none!important;animation:none!important;scroll-behavior:auto!important}}
 `;

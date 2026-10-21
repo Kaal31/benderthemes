@@ -18,6 +18,7 @@ const categories=['STORE','LIBRARY','COMMUNITY'];
 /** One persistent set of covers: sheet -> carousel -> library, and back. */
 export function OldBetaBigPictureHome(){
  const api=useHome(),root=useRef<HTMLDivElement>(null),cards=useRef(new Map<number,HTMLButtonElement>());
+ const motion=useRef<Animation[]>([]),pendingOpen=useRef<ReturnType<typeof setTimeout>|null>(null),opening=useRef(false),previousCategory=useRef(1),coverStart=useRef<Map<number,{transform:string;width:string;height:string}>|null>(null),previousMode=useRef<Mode>('sheet');
  const [mode,setMode]=useState<Mode>('sheet'),[category,setCategory]=useState(1),[selected,setSelected]=useState(0);
  const [size,setSize]=useState({w:1280,h:800}),[filter,setFilter]=useState('all'),[query,setQuery]=useState('');
  const [destination,setDestination]=useState<Destination|null>(null),[game,setGame]=useState<Game|null>(null);
@@ -28,13 +29,39 @@ export function OldBetaBigPictureHome(){
  useReportFocus(destination?undefined:mode==='sheet'?undefined:chosen);
  useLayoutEffect(()=>{const node=root.current;if(!node)return;const resize=()=>setSize({w:node.clientWidth,h:node.clientHeight});resize();const observer=new ResizeObserver(resize);observer.observe(node);return()=>observer.disconnect();},[destination]);
  useLayoutEffect(()=>{if(destination)return;const target=mode==='sheet'?root.current?.querySelector<HTMLButtonElement>(`[data-category="${category}"]`):cards.current.get(chosen?.appid);target?.focus({preventScroll:true});},[mode,destination]);
- const go=(next:Destination)=>{setDestination(next);playSound('open');};
- const changeMode=(next:Mode)=>{if(mode==='sheet'&&next==='recent')setSelected(Math.min(2,Math.max(0,games.length-1)));setMode(next);playSound(next==='sheet'?'back':'open');};
+ const motionEnabled=()=>api.settings.animations&&!matchMedia('(prefers-reduced-motion: reduce)').matches;
+ const stopMotion=()=>{motion.current.forEach(a=>a.cancel());motion.current=[];};
+ useEffect(()=>()=>{motion.current.forEach(a=>a.cancel());if(pendingOpen.current)clearTimeout(pendingOpen.current);},[]);
+ useLayoutEffect(()=>{
+  const prior=previousCategory.current;previousCategory.current=category;
+  if(mode!=='sheet'||prior===category||!root.current||!motionEnabled())return;
+  stopMotion();const direction=category>prior?1:-1;
+  const sheets=[root.current.querySelector<HTMLElement>('.beta-store-sheet'),root.current.querySelector<HTMLElement>('.beta-cover-board'),root.current.querySelector<HTMLElement>('.beta-community-sheet')];
+  const incoming=sheets[category],outgoing=sheets[prior];
+  if(incoming){motion.current.push(incoming.animate([{transform:`translate3d(${direction*size.w*.26}px,${-direction*size.h*.19}px,0)`,opacity:0},{transform:`translate3d(${direction*size.w*.05}px,${-direction*size.h*.035}px,0)`,opacity:.92,offset:.58},{transform:'translate3d(0,0,0)',opacity:1}],{duration:480,easing:'cubic-bezier(.18,.72,.2,1)',composite:'add'}));}
+  if(outgoing){motion.current.push(outgoing.animate([{transform:'translate3d(0,0,0)',opacity:1},{transform:`translate3d(${-direction*size.w*.31}px,${direction*size.h*.2}px,-160px)`,opacity:0}],{duration:330,easing:'cubic-bezier(.3,0,.65,1)',composite:'add'}));}
+ },[category]);
+ useLayoutEffect(()=>{
+  const prior=previousMode.current;previousMode.current=mode;
+  const starts=coverStart.current;coverStart.current=null;
+  if(!starts||!root.current||!motionEnabled())return;
+  stopMotion();const entering=prior==='sheet'&&mode==='recent',leaving=prior==='recent'&&mode==='sheet';if(!entering&&!leaving)return;
+  const board=root.current.querySelector<HTMLElement>('.beta-cover-board');
+  if(board){const flat='rotateX(0deg) rotateZ(0deg) scale(1)',tilted='rotateX(53deg) rotateZ(-23deg) scale(.84)',lift='translate3d(3%,-5%,80px) rotateX(30deg) rotateZ(-13deg) scale(.98)';motion.current.push(board.animate(entering?[{transform:tilted},{transform:lift,offset:.38},{transform:flat}]:[{transform:flat},{transform:lift,offset:.6},{transform:tilted}],{duration:560,easing:'cubic-bezier(.18,.7,.22,1)'}));}
+  cards.current.forEach((node,id)=>{const start=starts.get(id);if(!start)return;const end={transform:node.style.transform,width:node.style.width,height:node.style.height};const match=end.transform.match(/translate3d\(([-.\d]+)px,([-.\d]+)px/);const x=Number(match?.[1]??0),y=Number(match?.[2]??0);const index=games.findIndex(g=>g.appid===id),isChosen=index===Math.min(2,games.length-1);const mid={transform:`translate(-50%,-50%) translate3d(${x*.65}px,${y*.4-size.h*.035}px,${isChosen?115:35}px) scale(${isChosen?1.12:.94})`,width:end.width,height:end.height};motion.current.push(node.animate([start,{...mid,offset:entering?.45:.55},end],{duration:520,delay:(index%5)*13,easing:'cubic-bezier(.2,.65,.2,1)'}));});
+ },[mode]);
+ const go=(next:Destination)=>{
+  if(opening.current)return;playSound('open');
+  const sheet=mode==='sheet'?(category===0?root.current?.querySelector<HTMLElement>('.beta-store-sheet'):category===2?root.current?.querySelector<HTMLElement>('.beta-community-sheet'):null):null;
+  if(sheet&&motionEnabled()&&(next==='store'||next==='community')){stopMotion();opening.current=true;root.current?.setAttribute('data-opening','true');const current=getComputedStyle(sheet).transform;motion.current.push(sheet.animate([{transform:current,opacity:1},{transform:'translate(-50%,-50%) translate3d(0,-5%,100px) rotateX(30deg) rotateZ(-12deg) scale(1.05)',opacity:1,offset:.5},{transform:'translate(-50%,-50%) translate3d(0,0,160px) rotateX(0deg) rotateZ(0deg) scale(1.18)',opacity:0}],{duration:520,easing:'cubic-bezier(.18,.7,.22,1)',fill:'forwards'}));pendingOpen.current=setTimeout(()=>{opening.current=false;pendingOpen.current=null;stopMotion();setDestination(next);},520);return;}
+  setDestination(next);
+ };
+ const changeMode=(next:Mode)=>{if(opening.current)return;if((mode==='sheet'&&next==='recent')||(mode==='recent'&&next==='sheet')){coverStart.current=new Map([...cards.current].map(([id,n])=>[id,{transform:n.style.transform,width:n.style.width,height:n.style.height}]));}if(mode==='sheet'&&next==='recent')setSelected(Math.min(2,Math.max(0,games.length-1)));setMode(next);playSound(next==='sheet'?'back':'open');};
  const choose=(index:number)=>{const next=Math.max(0,Math.min(games.length-1,index));setSelected(next);cards.current.get(games[next]?.appid)?.focus({preventScroll:true});playSound('move');};
  const activate=(g:Game)=>api.activate(g,()=>{setGame(g);go('detail');});
  const selectCategory=()=>category===1?changeMode('recent'):go(category===0?'store':'community');
  function input({btn,repeat}:Press){
-  if(api.busy)return false;
+  if(api.busy)return false;if(opening.current)return true;
   if(btn==='b'){if(mode==='games')changeMode('recent');else if(mode==='recent')changeMode('sheet');else api.showSteamHome();return true;}
   if(btn==='y'||btn==='menu'){api.openSettings();return true;}
   if(btn==='l1'){go('web');return true;}if(btn==='r1'){go('friends');return true;}
