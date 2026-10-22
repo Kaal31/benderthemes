@@ -23,7 +23,7 @@ const N3_BG = "radial-gradient(circle,#d6d9e0 1.4px,transparent 1.8px) 0 0/16px 
 export const SWITCH_PAGE_LOOKS = [
   // ── the frame: header line on top, footer line with the button hints at the bottom (System Settings / user page) ──
   `${SW}{--sw-accent:var(--dht-switch-accent,#00c3e3);--sw-blue:#3246e6;--sw-ink:#2d2d2d;--sw-line:#d2d2d2}`,
-  `${SW} .dht-page-frame{inset:0!important;padding:0 2.4%!important;gap:0!important;display:grid!important;grid-template-columns:minmax(0,1fr);grid-template-rows:96px minmax(0,1fr) 78px;grid-template-areas:"head" "main" "foot";background:var(--dht-switch-page-bg,#ebebeb);color:var(--sw-ink)!important;font-family:${FONT_SW}!important}`,
+  `${SW} .dht-page-frame{inset:0!important;padding:0 2.4%!important;gap:0!important;display:grid!important;grid-template-columns:minmax(0,1fr);grid-template-rows:96px minmax(0,1fr) 78px;grid-template-areas:"head" "main" "foot";background:var(--dht-switch-page-bg,var(--sw-bg,#ebebeb));color:var(--sw-ink)!important;font-family:${FONT_SW}!important}`,
   `${SW} .dht-page-header{display:contents!important}`,
   `${SW} .dht-page-title{grid-area:head;display:flex;align-items:center;gap:18px;padding:0 0 0 2.6%;border-bottom:1px solid var(--sw-ink);font-size:31px!important;font-weight:400!important;color:var(--sw-ink);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}`,
   // the user page's round profile picture in front of the title; the All Software page has its grid symbol
@@ -31,11 +31,11 @@ export const SWITCH_PAGE_LOOKS = [
   `${SW}:is([data-place=library],[data-place=search]) .dht-page-title::before{width:34px;height:34px;border-radius:0;box-shadow:none;background:linear-gradient(var(--sw-ink),var(--sw-ink)) 0 0/15px 15px no-repeat,linear-gradient(var(--sw-ink),var(--sw-ink)) 100% 0/15px 15px no-repeat,linear-gradient(var(--sw-ink),var(--sw-ink)) 0 100%/15px 15px no-repeat,linear-gradient(var(--sw-ink),var(--sw-ink)) 100% 100%/15px 15px no-repeat;opacity:.85}`,
   `${SW} .dht-page-main{grid-area:main;display:flex;min-height:0;gap:3.5%;padding:22px 2.6% 0 5.2%}`,
   `${SW} .dht-page-content{display:flex;flex-direction:column;flex:1;min-width:0;min-height:0;gap:12px}`,
-  `${SW} .dht-page-subtitle{font-size:18px!important;color:#6c6c6c!important}`,
+  `${SW} .dht-page-subtitle{font-size:18px!important;color:var(--sw-sub,#6c6c6c)!important}`,
   `${SW} .dht-page-footer{grid-area:foot;position:relative;display:flex;align-items:center;justify-content:flex-end;padding:0 2.6%;border-top:1px solid var(--sw-ink);font-size:0!important;color:var(--sw-ink)!important}`,
   `${SW} .dht-page-footer::after{content:"\\24B6\\2002 OK";font-size:24px}`,
   // the handheld symbol at the footer's left end: a screen between two Joy-Con
-  `${SW} .dht-page-footer::before{content:"";position:absolute;left:2.6%;top:50%;width:52px;height:24px;margin-top:-12px;border-radius:7px;background:linear-gradient(#fff,#fff) 50% 50%/24px 12px no-repeat,var(--sw-ink)}`,
+  `${SW} .dht-page-footer::before{content:"";position:absolute;left:2.6%;top:50%;width:52px;height:24px;margin-top:-12px;border-radius:7px;background:linear-gradient(var(--dht-switch-page-bg,var(--sw-bg,#ebebeb)),var(--dht-switch-page-bg,var(--sw-bg,#ebebeb))) 50% 50%/24px 12px no-repeat,var(--sw-ink)}`,
   `${SW} .dht-page-back{grid-area:foot;justify-self:end;align-self:center;margin-right:calc(2.6% + 92px)!important;position:relative;z-index:1;width:auto!important;min-height:0!important;padding:4px 6px!important;background:none!important;border:0!important;box-shadow:none!important;outline:none!important;color:var(--sw-ink)!important;font-size:0!important}`,
   `${SW} .dht-page-back::after{content:"\\24B7\\2002 Back";font-size:24px}`,
   // ── the left column: the page switcher as the settings / user page category list ──
@@ -48,17 +48,17 @@ export const SWITCH_PAGE_LOOKS = [
   // ── lists: white rounded rows; the focused one in the thin teal frame with the blue bar ──
   `${SW} .dht-page-body{gap:3%!important}`,
   `${SW} .dht-page-list{padding:6px 8px 6px 6px!important}`,
-  `${SW} .dht-page-list .dht-destination-row{flex:none;position:relative;background:#fff!important;color:var(--sw-ink)!important;border:0!important;border-radius:8px!important;margin:0 0 8px!important;min-height:74px!important;outline:none!important;box-shadow:0 1px 2px #0000001f!important}`,
+  `${SW} .dht-page-list .dht-destination-row{flex:none;position:relative;background:var(--sw-panel,#fff)!important;color:var(--sw-ink)!important;border:0!important;border-radius:8px!important;margin:0 0 8px!important;min-height:74px!important;outline:none!important;box-shadow:0 1px 2px #0000001f!important}`,
   `${SW} .dht-page-list .dht-destination-row[data-selected=true]{box-shadow:0 0 0 2px #fff,0 0 0 5px var(--sw-accent),0 4px 14px #0000002a!important;z-index:1}`,
   `${SW} .dht-page-list .dht-destination-row[data-selected=true]::before{content:"";position:absolute;left:8px;top:14px;bottom:14px;width:4px;border-radius:2px;background:var(--sw-blue)}`,
   `${SW} .dht-page-list .dht-destination-row[data-selected=true] .dht-row-label{color:var(--sw-blue)}`,
   `${SW} .dht-page-list .dht-row-label{font-size:23px!important}`,
-  `${SW} .dht-page-list .dht-row-sub{color:#7b7b7b!important;font-size:17px!important}`,
-  `${SW} .dht-page-list .dht-row-icon{color:#4a4a4a}`,
-  `${SW} .dht-page-list>p{color:#6c6c6c}`,
+  `${SW} .dht-page-list .dht-row-sub{color:var(--sw-sub,#7b7b7b)!important;font-size:17px!important}`,
+  `${SW} .dht-page-list .dht-row-icon{color:var(--sw-icon,#4a4a4a)}`,
+  `${SW} .dht-page-list>p{color:var(--sw-sub,#6c6c6c)}`,
   // settings: the System Settings list (flat rows on hairlines, no cards)
   `${each(swList("settings", "qam", "power"), " .dht-destination-row")}{background:transparent!important;border-radius:0!important;border-bottom:1px solid var(--sw-line)!important;box-shadow:none!important;min-height:68px!important;margin:0!important}`,
-  `${each(swList("settings", "qam", "power"), " .dht-destination-row[data-selected=true]")}{background:#fff!important;border-radius:2px!important;box-shadow:0 0 0 2px #fff,0 0 0 5px var(--sw-accent)!important}`,
+  `${each(swList("settings", "qam", "power"), " .dht-destination-row[data-selected=true]")}{background:var(--sw-panel,#fff)!important;border-radius:2px!important;box-shadow:0 0 0 2px #fff,0 0 0 5px var(--sw-accent)!important}`,
   // friends: the Friend List with round profile pictures; online ones get the green dot and blue status
   `${swList("friends")} .dht-row-icon{position:relative;display:grid;place-items:center;width:58px;height:58px;border-radius:50%;background:linear-gradient(135deg,#d8d8d8,#bdbdbd);color:#fff;flex:none}`,
   `${swList("friends")} .dht-destination-row[data-state=on] .dht-row-icon::after{content:"";position:absolute;right:-2px;bottom:-2px;width:16px;height:16px;border-radius:50%;background:#4bd16a;box-shadow:0 0 0 3px #fff}`,
@@ -67,7 +67,7 @@ export const SWITCH_PAGE_LOOKS = [
   `${swList("achievements")} .dht-destination-row[data-state=on] .dht-row-icon{color:#e0a21a}`,
   `${swList("achievements")} .dht-destination-row[data-state=off]{opacity:.6}`,
   // downloads: the Data Management bar
-  `${SW} .dht-row-progress{background:#dcdcdc!important;height:8px!important}`,
+  `${SW} .dht-row-progress{background:var(--sw-progress,#dcdcdc)!important;height:8px!important}`,
   `${SW} .dht-row-progress i{background:var(--sw-accent)!important}`,
   // ── library: the All Software grid; square covers six across with thin gaps, the focused one in the thick teal
   // frame with its name on a white tag above it (the tag of the last columns ends at the cover's right edge) ──
@@ -75,7 +75,7 @@ export const SWITCH_PAGE_LOOKS = [
   `${each(swList("library", "search"), " .dht-destination-row")}{position:relative;display:block;min-height:0!important;min-width:0;margin:0!important;padding:0!important;background:transparent!important;box-shadow:none!important;border-radius:0!important;overflow:visible}`,
   `${each(swList("library", "search"), " .dht-row-icon")}{display:block;width:100%}`,
   `${each(swList("library", "search"), " .dht-row-icon>*")}{width:100%!important;height:auto!important;aspect-ratio:1/1;object-fit:cover;border-radius:0!important;display:block}`,
-  `${each(swList("library", "search"), " .dht-row-text")}{display:none;position:absolute;left:-6px;bottom:calc(100% + 9px);z-index:3;width:max-content;max-width:min(460px,330%);padding:5px 14px 5px 34px;background:#fff;border-radius:4px;box-shadow:0 1px 4px #0003;pointer-events:none}`,
+  `${each(swList("library", "search"), " .dht-row-text")}{display:none;position:absolute;left:-6px;bottom:calc(100% + 9px);z-index:3;width:max-content;max-width:min(460px,330%);padding:5px 14px 5px 34px;background:var(--sw-panel,#fff);border-radius:4px;box-shadow:0 1px 4px #0003;pointer-events:none}`,
   `${each(swList("library", "search"), " .dht-row-text::before")}{content:"";position:absolute;left:12px;top:50%;width:11px;height:15px;margin-top:-7.5px;border-radius:2px;background:var(--sw-accent)}`,
   `${each(swList("library", "search"), " .dht-row-label")}{display:block;font-size:23px!important;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;color:#00a6c8!important}`,
   `${each(swList("library", "search"), " .dht-row-sub")}{display:none!important}`,
@@ -87,11 +87,22 @@ export const SWITCH_PAGE_LOOKS = [
   `${SW}:is([data-place=library],[data-place=search]) .dht-page-footer::after{content:"\\24B6\\2002 Start"}`,
   `${SW}:is([data-place=library],[data-place=search]) .dht-page-back{margin-right:calc(2.6% + 118px)!important}`,
   // search field, game cover, browser bar
-  `${SW} .dht-page-content>input,${SW} .dht-page-content form input{background:#fff!important;color:var(--sw-ink)!important;border:2px solid #cfcfcf!important;border-radius:24px!important;padding:10px 22px!important;font-size:20px!important;outline:none}`,
+  `${SW} .dht-page-content>input,${SW} .dht-page-content form input{background:var(--sw-panel,#fff)!important;color:var(--sw-ink)!important;border:2px solid var(--sw-line,#cfcfcf)!important;border-radius:24px!important;padding:10px 22px!important;font-size:20px!important;outline:none}`,
   `${SW} .dht-page-content>input:focus,${SW} .dht-page-content form input:focus{border-color:var(--sw-accent)!important}`,
   `${SW} .dht-page-body>:first-child:not(.dht-page-list){border-radius:0!important;box-shadow:0 2px 8px #0003}`,
-  `${SW} .dht-page-content form button,${SW} .dht-page-content>div>button{background:#fff!important;color:var(--sw-ink)!important;border:0!important;border-radius:24px!important;box-shadow:0 1px 2px #0002!important;padding:10px 26px!important}`,
+  `${SW} .dht-page-content form button,${SW} .dht-page-content>div>button{background:var(--sw-panel,#fff)!important;color:var(--sw-ink)!important;border:0!important;border-radius:24px!important;box-shadow:0 1px 2px #0002!important;padding:10px 26px!important}`,
   `${SW} iframe{border-radius:4px;box-shadow:0 1px 3px #0003}`,
+  `${SW}[data-place=game] .dht-page-tabs{display:none!important}`,
+  `${SW}[data-place=game] .dht-page-main{padding-left:2.6%}`,
+  `${SW}[data-place=game] .dht-page-title::before{display:none}`,
+  `${SW} .dht-switch-game-preview{position:relative;flex:0 0 46%;min-width:0;align-self:stretch;background:var(--sw-panel,#fff);overflow:hidden;border-radius:5px!important;box-shadow:0 2px 10px #0002}`,
+  `${SW} .dht-switch-game-hero{position:absolute;inset:0 0 auto;width:100%;height:68%;object-fit:cover}`,
+  `${SW} .dht-switch-game-shade{position:absolute;inset:0;background:linear-gradient(transparent 25%,var(--sw-panel,#fff) 70%)}`,
+  `${SW} .dht-switch-game-cover{position:absolute;left:24px;bottom:28px;width:130px;height:195px;object-fit:cover;box-shadow:0 4px 14px #0004}`,
+  `${SW} .dht-switch-game-summary{position:absolute;left:176px;right:24px;bottom:28px;color:var(--sw-ink)}`,
+  `${SW} .dht-switch-game-summary h2{font-size:26px;line-height:1.2;font-weight:500;margin:12px 0}`,
+  `${SW} .dht-switch-game-summary p,${SW} .dht-switch-game-summary>span:last-child{font-size:17px;color:var(--sw-sub,#6c6c6c)}`,
+  `${SW} .dht-switch-game-status{font-size:17px;color:var(--sw-blue)}`,
 ].join("\n");
 
 export const N3DS_PAGE_LOOKS = [
@@ -171,16 +182,16 @@ export const N3DS_PAGE_LOOKS = [
 /** The Switch and 3DS touches on the shared music player and capture viewer (src/mediaCenter.tsx). */
 export const NINTENDO_MEDIA_CSS = [
   // the system pages' backgrounds (the store tokens these screens start from are the eShops' own)
-  `.dht-media[data-theme=switch]{background:var(--dht-switch-page-bg,#ebebeb);--m-accent:var(--dht-switch-accent,#00c3e3)}`,
+  `.dht-media[data-theme=switch]{background:var(--dht-switch-page-bg,var(--sw-bg,#ebebeb));--m-accent:var(--dht-switch-accent,#00c3e3)}`,
   `.dht-media[data-theme=n3ds]{background:var(--dht-n3ds-page-bg,${N3_BG});--m-accent:var(--dht-n3ds-cursor,#3fe3b5)}`,
   // Switch: the Album / system page frame: header and footer lines, the teal focus frame
-  `.dht-media[data-theme=switch] .dht-media-head{left:2.4%;right:2.4%;top:0;height:96px;padding-left:2.6%;border-bottom:2px solid #2d2d2d}`,
+  `.dht-media[data-theme=switch] .dht-media-head{left:2.4%;right:2.4%;top:0;height:96px;padding-left:2.6%;border-bottom:2px solid var(--sw-ink,#2d2d2d)}`,
   `.dht-media[data-theme=switch] .dht-media-title{font-weight:400;font-size:31px}`,
-  `.dht-media[data-theme=switch] .dht-media-tabs button{background:transparent;border-radius:0;color:#2d2d2d;padding:7px 14px}`,
-  `.dht-media[data-theme=switch] .dht-media-tabs button[aria-current=true]{background:transparent;color:#3246e6;box-shadow:inset 0 -3px 0 #3246e6}`,
-  `.dht-media[data-theme=switch] .dht-media-hints{left:2.4%;right:2.4%;bottom:0;height:78px;align-items:center;justify-content:flex-end;padding:0 2.6%;border-top:2px solid #2d2d2d;color:#2d2d2d;font-size:18px}`,
+  `.dht-media[data-theme=switch] .dht-media-tabs button{background:transparent;border-radius:0;color:var(--sw-ink,#2d2d2d);padding:7px 14px}`,
+  `.dht-media[data-theme=switch] .dht-media-tabs button[aria-current=true]{background:transparent;color:var(--sw-blue,#3246e6);box-shadow:inset 0 -3px 0 var(--sw-blue,#3246e6)}`,
+  `.dht-media[data-theme=switch] .dht-media-hints{left:2.4%;right:2.4%;bottom:0;height:78px;align-items:center;justify-content:flex-end;padding:0 2.6%;border-top:2px solid var(--sw-ink,#2d2d2d);color:var(--sw-ink,#2d2d2d);font-size:18px}`,
   `.dht-media[data-theme=switch] .dht-media-tile[data-on=true]{outline:none!important;box-shadow:0 0 0 3px #fff,0 0 0 6px var(--dht-switch-accent,#00c3e3),0 8px 18px #0003!important}`,
-  `.dht-media[data-theme=switch] .dht-media-row[data-on=true]{background:#fff;color:#3246e6;box-shadow:0 0 0 2px #fff,0 0 0 5px var(--dht-switch-accent,#00c3e3)}`,
+  `.dht-media[data-theme=switch] .dht-media-row[data-on=true]{background:var(--sw-panel,#fff);color:var(--sw-blue,#3246e6);box-shadow:0 0 0 2px #fff,0 0 0 5px var(--dht-switch-accent,#00c3e3)}`,
   `.dht-media[data-theme=switch] .dht-media-panel{box-shadow:0 1px 2px #0000001f}`,
   `.dht-media[data-theme=switch] .dht-media-ctl button[data-on=true]{background:var(--dht-switch-accent,#00c3e3);color:#fff}`,
   // 3DS: the pale title strip, rounded white panels with the grey edge, the mint focus
@@ -205,8 +216,8 @@ export const NINTENDO_STORE_CSS = [
   `.dht-store[data-dht-store-skin=switch] :is(.dht-store-grid,.dht-store-page)::after{content:"";position:absolute;left:0;top:0;bottom:0;width:30px;background:#fa7e00}`,
   `.dht-store[data-dht-store-skin=switch] .dht-store-title{font-weight:500!important;color:#fa7e00}`,
   `.dht-store[data-dht-store-skin=switch] .dht-store-tab{border-radius:20px!important}`,
-  `.dht-store[data-dht-store-skin=switch] .dht-store-tab[data-selected=false]{color:#2d2d2d!important}`,
-  `.dht-store[data-dht-store-skin=switch] .dht-store-tile{background:#fff}`,
+  `.dht-store[data-dht-store-skin=switch] .dht-store-tab[data-selected=false]{color:var(--sw-ink,#2d2d2d)!important}`,
+  `.dht-store[data-dht-store-skin=switch] .dht-store-tile{background:var(--sw-panel,#fff)}`,
   `.dht-store[data-dht-store-skin=switch] .dht-store-tile>div:first-child{border-radius:4px 4px 0 0!important}`,
   `.dht-store[data-dht-store-skin=switch] .dht-store-tile>div:not(:first-child){padding:0 10px}`,
   `.dht-store[data-dht-store-skin=switch] .dht-store-tile>div:last-child{text-align:right;padding-bottom:8px}`,

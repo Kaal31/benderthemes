@@ -1,3 +1,4 @@
+import {switchPageVars} from "./themes/switchStandardSkin";
 // The music player and the capture viewer every theme shares. There is one player (musicPlayer.ts)
 // and one viewer (overlays.tsx); each theme only gives them its look, taken from the theme drawing
 // the "media" page (its store skin plus a few console touches below). Because the state lives in
@@ -33,7 +34,7 @@ export function mediaVars(s: Settings): CSSProperties {
     "--m-accent-text": k.accentText,
     "--m-radius": `${k.radius}px`,
     "--m-font": k.font ?? '"Segoe UI", "Motiva Sans", Arial, sans-serif',
-    ...iisuPageVars(s),
+    ...iisuPageVars(s),...switchPageVars(s),
   } as CSSProperties;
 }
 

@@ -180,6 +180,7 @@ const initialTheme = (params.get("theme") as ThemeId) || themedPreview || "vita"
 
 seedSettings({
   theme: initialTheme,
+  ...(params.has("switchSkin") ? {styles:{switch:{standardSkin:params.get("switchSkin")==="black"?"black":"white"}}} : {}),
   ...(themedPreview === "ios6" && params.has("folders") ? {frameData:{ios6:{folders:[{id:"demo-games",name:"Games",items:["game:1000","game:1001","game:1002"]}],order:["system:settings","system:downloads","system:recent","folder:demo-games"]}}} : {}),
   onboardingDone: params.get("onboarding") !== "1",
   ...(params.get("hubstyle") ? { hubStyle: params.get("hubstyle")! } : {}),
@@ -268,6 +269,14 @@ function App() {
     window.addEventListener("resize", fit);
     return () => window.removeEventListener("resize", fit);
   }, []);
+  useEffect(()=>{
+    if(initialTheme!=="switch"||!params.has("switchGame"))return;
+    const game=loadLibraryPreview("all","recent",400).byId.get(Number(params.get("switchGame")));
+    if(!game)return;
+    let attempts=0;
+    const timer=setInterval(()=>{if(openDestination({place:"game",game})||++attempts>=100)clearInterval(timer);},50);
+    return()=>clearInterval(timer);
+  },[]);
   return (
     <div style={{ font: "14px system-ui", color: "#ddd" }}>
       <div id="bar" style={{ display: themedPreview === "ios6" ? "none" : "flex", gap: 6, alignItems: "center", padding: "10px 12px", flexWrap: "wrap" }}>
@@ -277,6 +286,7 @@ function App() {
         <button onClick={() => openMarketplace(undefined, { from: s.theme })}>Hub (from this home)</button>
         <button onClick={() => openSteamPreview("settings")}>Theme settings</button>
         <button onClick={showFirmwarePreview}>Preview firmware update</button>
+        {s.theme === "switch" && !s.switchTheme && <><button onClick={()=>{const lib=loadLibraryPreview(s.source,s.sort,s.maxGames),name=document.querySelector('.dht-switch-tile[data-selected="true"]')?.getAttribute("data-name"),game=lib.games.find(g=>g.name===name)??lib.games[0];if(game)openGamePage(game);}}>Game preview</button><label>Standard skin <select aria-label="Preview Switch skin" value={String(s.styles?.switch?.standardSkin??"white")} onChange={e=>updateSettings({styles:{...s.styles,switch:{...s.styles?.switch,standardSkin:e.target.value}}})}><option value="white">Basic White</option><option value="black">Basic Black</option></select></label><label><input aria-label="Preview Switch animations" type="checkbox" checked={s.animations} onChange={e=>updateSettings({animations:e.target.checked})}/> Animations</label></>}
         {s.theme === "onyx" && <><label><input aria-label="Preview sound effects" type="checkbox" checked={s.sounds} onChange={e=>updateSettings({sounds:e.target.checked})}/> SFX</label><label>Volume <input aria-label="Preview SFX volume" type="range" min="0" max="100" value={s.sfxVolume} onChange={e=>updateSettings({sfxVolume:Number(e.target.value)})}/></label><button onClick={()=>{updateSettings({sounds:true,sfxVolume:Math.max(60,s.sfxVolume),packs:{...s.packs,onyx:""}});playSound("toggle");}}>Test wheel sound</button><label>Carousel <select aria-label="Preview carousel style" value={String(s.styles?.onyx?.carousel??"covers")} onChange={e=>updateSettings({styles:{...s.styles,onyx:{...s.styles?.onyx,carousel:e.target.value}}})}><option value="covers">Portrait covers</option><option value="square">Square capsules</option><option value="icons">Classic Cover Flow</option></select></label>{(["screenGlass","coverGlass"] as const).map(key=><label key={key}>{key==="screenGlass"?"Screen glass":"Cover glass"} <select aria-label={key==="screenGlass"?"Preview screen glass":"Preview cover glass"} value={String(s.styles?.onyx?.[key]??"off")} onChange={e=>updateSettings({styles:{...s.styles,onyx:{...s.styles?.onyx,[key]:e.target.value}}})}><option value="off">Off</option><option value="clear">Clear</option><option value="prism">Prismatic</option></select></label>)}<label><input aria-label="Preview animations" type="checkbox" checked={s.animations} onChange={e=>updateSettings({animations:e.target.checked})}/> Animations</label></>}
 
         {THEMES.filter((t) => t.id !== "frame").map((t, i) => (
