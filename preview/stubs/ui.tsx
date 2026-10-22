@@ -70,7 +70,8 @@ if (typeof window !== "undefined") {
     }
     requestAnimationFrame(pollGamepad);
   };
-  requestAnimationFrame(pollGamepad);
+  // Node tests import this stub with a minimal window, without a browser frame loop.
+  if(typeof requestAnimationFrame === "function") requestAnimationFrame(pollGamepad);
 }
 
 export function Focusable(props: any) {
