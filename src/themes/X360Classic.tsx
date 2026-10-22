@@ -1,3 +1,4 @@
+import { t } from "../i18n";
 import {BackgroundMedia} from "../WallpaperMedia";
 import {customProfilePicture} from "../profilePicture";
 import { BLADE_BOUNDARIES } from "./bladeBoundaries";
@@ -30,15 +31,16 @@ function Btn({ img, letter, color }: { img?: string; letter: string; color: stri
 }
 
 // ═════════════════════════════ BLADES ═════════════════════════════
-const BLADES = [
-  { id: "market", label: "Marketplace", color: "#e46c0a", light: "#ffb36a" },
+const getBlades = () => [
+  { id: "market", label: t("marketplace"), color: "#e46c0a", light: "#ffb36a" },
   { id: "live", label: "Xbox Live", color: "#bd7029", light: "#f0c466" },
-  { id: "games", label: "Games", color: "#7aa516", light: "#d4f06a" },
-  { id: "media", label: "Media", color: "#2575ab", light: "#7cc8e5" },
-  { id: "system", label: "System", color: "#745389", light: "#c2a6cc" },
+  { id: "games", label: t("games"), color: "#7aa516", light: "#d4f06a" },
+  { id: "media", label: t("media"), color: "#2575ab", light: "#7cc8e5" },
+  { id: "system", label: t("system"), color: "#745389", light: "#c2a6cc" },
 ];
 
 export function BladesHome() {
+  const BLADES = getBlades();
   const api = useHome();
   const s = api.settings;
   const { W, H } = useStage();
@@ -57,30 +59,30 @@ export function BladesHome() {
 
   const entries: Record<string, Entry[]> = {
     market: [
-      { key: "store", label: "Steam Store", sub: "New releases, deals and demos", img: a.store, icon: "store", run: () => openSteam("store") },
-      { key: "dl", label: "Active Downloads", sub: "Downloads and updates", img: a.downloads, icon: "download", run: () => openSteam("downloads") },
-      { key: "tiles", label: "Themes and Gamer Pictures", sub: "Presets for this home screen", img: a.themes, icon: "palette", run: () => menu.open(themeMenu(s.theme, api.switchTheme, THEMES), "Presets", { page: true }) },
+      { key: "store", label: t("destSteamStore"), sub: t("storeDescNew"), img: a.store, icon: "store", run: () => openSteam("store") },
+      { key: "dl", label: t("destDownloads"), sub: t("downloadsAndUpdates"), img: a.downloads, icon: "download", run: () => openSteam("downloads") },
+      { key: "tiles", label: t("themesAndGamerPictures"), sub: t("presetsForHomeDesc"), img: a.themes, icon: "palette", run: () => menu.open(themeMenu(s.theme, api.switchTheme, THEMES), t("presets"), { page: true }) },
     ],
     live: [
-      { key: "friends", label: "Friends", sub: st.friendsOnline !== undefined ? `${st.friendsOnline} online` : "Friends and chat", img: a.friends, icon: "friends", run: () => openSteam("friends") },
-      { key: "msg", label: "Messages", sub: st.notifications ? `${st.notifications} new` : "Notifications", img: a.messages, icon: "bell", run: () => openSteam("notifications") },
-      { key: "community", label: "Steam Community", sub: "Hubs, guides and workshop", img: a.live, icon: "globe", run: () => openSteam("community") },
+      { key: "friends", label: t("destFriends"), sub: st.friendsOnline !== undefined ? t("friendsOnlineCount", { count: st.friendsOnline }) : t("friendsAndChat"), img: a.friends, icon: "friends", run: () => openSteam("friends") },
+      { key: "msg", label: t("destNotifications"), sub: st.notifications ? t("messagesNewCount", { count: st.notifications }) : t("destNotifications"), img: a.messages, icon: "bell", run: () => openSteam("notifications") },
+      { key: "community", label: t("destCommunity"), sub: t("communityDesc"), img: a.live, icon: "globe", run: () => openSteam("community") },
     ],
     games: [
       ...recent.map((g) => ({ key: `g${g.appid}`, label: g.name, sub: fmtPlaytime(g.playtime, g.lastPlayed), game: g, run: () => api.activate(g, () => api.launch(g)) })),
-      { key: "lib", label: "Games Library", sub: `${api.lib.games.length} games`, img: a.controller, icon: "library" as IconName, run: () => openSteam("library") },
-      { key: "ach", label: "Achievements", sub: "Your progress", img: a.trophy, icon: "trophy" as IconName, run: () => (recent[0] ? openAchievements(recent[0]) : openSteam("library")) },
+      { key: "lib", label: t("destLibrary"), sub: t("gamesCount", { count: api.lib.games.length }), img: a.controller, icon: "library" as IconName, run: () => openSteam("library") },
+      { key: "ach", label: t("destAchievements"), sub: t("achievementsProgress"), img: a.trophy, icon: "trophy" as IconName, run: () => (recent[0] ? openAchievements(recent[0]) : openSteam("library")) },
     ],
     media: [
-      { key: "shots", label: "Screenshots", sub: "Pictures from your games", icon: "photo", run: () => api.openMedia() },
-      { key: "browser", label: "Web Browser", sub: "Open the browser", icon: "globe", run: () => openSteam("browser") },
+      { key: "shots", label: t("allScreenshots"), sub: t("screenshotsDesc"), icon: "photo", run: () => api.openMedia() },
+      { key: "browser", label: t("destWebBrowser"), sub: t("openBrowserDesc"), icon: "globe", run: () => openSteam("browser") },
     ],
     system: [
-      { key: "settings", label: "Console Settings", sub: "Steam settings", icon: "gear", run: () => openSteam("settings") },
-      { key: "home", label: "Home Screen Settings", sub: "ThemeHub options", icon: "home", run: api.openSettings },
-      { key: "presets", label: "Dashboard", sub: "Switch presets", img: a.themes, icon: "palette", run: () => menu.open(themeMenu(s.theme, api.switchTheme, THEMES), "Presets", { page: true }) },
-      { key: "steamhome", label: "Home", sub: "Show Steam's own home", icon: "steam", run: api.showSteamHome },
-      { key: "power", label: "Turn Off", sub: "Power options", icon: "power", run: () => openSteam("power") },
+      { key: "settings", label: t("systemSettings"), sub: t("steamSettingsDesc"), icon: "gear", run: () => openSteam("settings") },
+      { key: "home", label: t("homeScreenSettings"), sub: t("themeOptionsDesc"), icon: "home", run: api.openSettings },
+      { key: "presets", label: t("presets"), sub: t("switchPresetsDesc"), img: a.themes, icon: "palette", run: () => menu.open(themeMenu(s.theme, api.switchTheme, THEMES), t("presets"), { page: true }) },
+      { key: "steamhome", label: t("destMainMenu"), sub: t("showSteamHomeDesc"), icon: "steam", run: api.showSteamHome },
+      { key: "power", label: t("destPower"), sub: t("powerOptionsDesc"), icon: "power", run: () => openSteam("power") },
     ],
   };
   const list = entries[b.id];
@@ -90,13 +92,13 @@ export function BladesHome() {
 
   const options = () => {
     const extra: MenuItem[] = [
-      {label:"Options menu side",sub:()=>["right","left"].map(side=>({label:side==="right"?"Right side":"Left side",checked:(s.x360.guideSide??"right")===side,action:()=>updateSettings({x360:{...s.x360,guideSide:side as "left"|"right"}})}))},
-      { label: "Presets", sub: () => themeMenu(s.theme, api.switchTheme, THEMES) },
-      { label: "Home Screen Settings", action: api.openSettings },
-      { label: "Home", action: api.showSteamHome },
+      {label:t("optionsMenuSide"),sub:()=>["right","left"].map(side=>({label:side==="right"?t("rightSide"):t("leftSide"),checked:(s.x360.guideSide??"right")===side,action:()=>updateSettings({x360:{...s.x360,guideSide:side as "left"|"right"}})}))},
+      { label: t("presets"), sub: () => themeMenu(s.theme, api.switchTheme, THEMES) },
+      { label: t("homeScreenSettings"), action: api.openSettings },
+      { label: t("destMainMenu"), action: api.showSteamHome },
     ];
     const g = cur?.game;
-    menu.open(g ? [{ label: "Play", action: () => api.launch(g) }, { label: "Game Details", action: () => api.details(g) }, { label: "Watch Trailer", action: () => api.playTrailer(g) }, { label: "Game Options", action: () => api.nativeMenu(g) }, ...extra] : extra, g?.name);
+    menu.open(g ? [{ label: t("play"), action: () => api.launch(g) }, { label: t("gameDetails"), action: () => api.details(g) }, { label: t("watchTrailer"), action: () => api.playTrailer(g) }, { label: t("gameOptions"), action: () => api.nativeMenu(g) }, ...extra] : extra, g?.name);
   };
   const onInput = (p: Press): boolean => {
     if (menu.handle(p)) return true;
@@ -138,7 +140,7 @@ export function BladesHome() {
   const gradient = ({market:"orange",live:"orange",games:"green",media:"blue",system:"purple"} as Record<string,string>)[b.id];
   const texture=(name:string)=>original[name]?`url("${original[name]}")`:undefined;
   return (
-    <ThemeRoot onInput={onInput} hints={{a:"Select",y:"Options"}}>
+    <ThemeRoot onInput={onInput} hints={{a:t("select"),y:t("options")}}>
       <Stage background="#c8c7ce">
         <style>{`${BLADES_FONT_CSS}
           .dht-blades{font-family:"DHT MC360",Tahoma,sans-serif;color:#39362d}
@@ -174,7 +176,7 @@ export function BladesHome() {
               <div style={{fontSize:24,fontWeight:600,overflow:"hidden",whiteSpace:"nowrap",textOverflow:"ellipsis"}}>{api.user}</div>
               <div style={{display:"flex",alignItems:"center",gap:14,marginTop:6}}>
                 {customProfilePicture()||pickedPic||a.avatar?<img src={customProfilePicture()??pickedPic??a.avatar} alt="" style={{width:58,height:58,objectFit:"contain",border:"2px solid #a58555",background:"#726f60"}}/>:<Icon name="user" size={52} color="#776648"/>}
-                <div style={{flex:1,minWidth:0,fontSize:19,lineHeight:1.16}}><div style={{display:"flex",justifyContent:"space-between"}}><span>Games</span><span>{api.lib.games.length}</span></div><div style={{display:"flex",justifyContent:"space-between"}}><span>Friends online</span><span>{st.friendsOnline??"—"}</span></div><div style={{display:"flex",justifyContent:"space-between"}}><span>Notifications</span><span>{st.notifications??"—"}</span></div></div>
+                <div style={{flex:1,minWidth:0,fontSize:19,lineHeight:1.16}}><div style={{display:"flex",justifyContent:"space-between"}}><span>{t("games")}</span><span>{api.lib.games.length}</span></div><div style={{display:"flex",justifyContent:"space-between"}}><span>{t("friendsOnline")}</span><span>{st.friendsOnline??"—"}</span></div><div style={{display:"flex",justifyContent:"space-between"}}><span>{t("notifications")}</span><span>{st.notifications??"—"}</span></div></div>
               </div>
             </div>
             {list.slice(firstRow,firstRow+visibleRows).map((e,k)=>{
@@ -186,12 +188,12 @@ export function BladesHome() {
             })}
             {b.id==="live" && <button onClick={()=>{playSound("select");openSteam("community");}} style={{position:"absolute",left:38,top:H*.355+3*rowH+15,width:column-4,height:H*.14,border:0,backgroundImage:texture("ad-button-nf"),backgroundSize:"100% 100%",backgroundColor:"transparent",color:"#cfe692",fontSize:34,textShadow:"0 2px #463825"}} aria-label="Steam Community"/>}
             <div style={{position:"absolute",left:column+65,right:32,top:H*.18}}>
-              {b.id==="live"?<><div style={{textAlign:"center",fontSize:44,lineHeight:.85,color:"#71824b",textShadow:"1px 2px #a88652"}}>XBOX<br/><span style={{color:"#ac652d",letterSpacing:5}}>LIVE</span></div><div style={{fontSize:25,lineHeight:1.25,marginTop:40}}>Friends. Games. Community.<br/>Stay connected with your Steam friends and discover what to play next.</div></>:cur?.game?<><GameArt g={cur.game} kind="hero" style={{width:"100%",height:H*.3,objectFit:"cover",border:"2px solid #716b4277"}}/><div style={{fontSize:25,marginTop:18}}>{cur.game.name}</div><div style={{fontSize:20,marginTop:8}}>Last played {fmtLastPlayed(cur.game.lastPlayed)}</div></>:<><Icon name={cur?.icon??"folder"} size={88} color="#ffffff99"/><div style={{fontSize:30,marginTop:25}}>{cur?.label}</div><div style={{fontSize:23,marginTop:14,lineHeight:1.2}}>{cur?.sub}</div></>}
+              {b.id==="live"?<><div style={{textAlign:"center",fontSize:44,lineHeight:.85,color:"#71824b",textShadow:"1px 2px #a88652"}}>XBOX<br/><span style={{color:"#ac652d",letterSpacing:5}}>LIVE</span></div><div style={{fontSize:25,lineHeight:1.25,marginTop:40}}>{t("x360LiveTagline")}<br/>{t("x360LiveDesc")}</div></>:cur?.game?<><GameArt g={cur.game} kind="hero" style={{width:"100%",height:H*.3,objectFit:"cover",border:"2px solid #716b4277"}}/><div style={{fontSize:25,marginTop:18}}>{cur.game.name}</div><div style={{fontSize:20,marginTop:8}}>{t("lastPlayedVal", { val: fmtLastPlayed(cur.game.lastPlayed) })}</div></>:<><Icon name={cur?.icon??"folder"} size={88} color="#ffffff99"/><div style={{fontSize:30,marginTop:25}}>{cur?.label}</div><div style={{fontSize:23,marginTop:14,lineHeight:1.2}}>{cur?.sub}</div></>}
             </div>
-            <button className="dht-blades-disc" onClick={()=>{if(recent[0]){playSound("launch");api.launch(recent[0]);}}} disabled={!recent[0]} style={{position:"absolute",left:20,right:20,bottom:H*.13,height:H*71/576,border:0,backgroundImage:texture("dvdtray-nofocus"),backgroundSize:"100% 100%",backgroundColor:"transparent",display:"flex",alignItems:"center",gap:16,padding:"0 58px",fontSize:23,textAlign:"left"}}><span style={{width:26}}/>{recent[0]?.name??"No game selected"}</button>
+            <button className="dht-blades-disc" onClick={()=>{if(recent[0]){playSound("launch");api.launch(recent[0]);}}} disabled={!recent[0]} style={{position:"absolute",left:20,right:20,bottom:H*.13,height:H*71/576,border:0,backgroundImage:texture("dvdtray-nofocus"),backgroundSize:"100% 100%",backgroundColor:"transparent",display:"flex",alignItems:"center",gap:16,padding:"0 58px",fontSize:23,textAlign:"left"}}><span style={{width:26}}/>{recent[0]?.name??t("noGameSelected")}</button>
             
-            <div style={{position:"absolute",left:42,bottom:H*.065,display:"flex",alignItems:"center",gap:8,fontSize:22,color:"#f0e9d9",textShadow:"0 1px #705933"}}><Btn img={original["button-y"]??a.y} letter="Y" color="#e9c31d"/> Options</div>
-            <div style={{position:"absolute",right:36,bottom:H*.065,display:"flex",alignItems:"center",gap:9,fontSize:22,color:"#f0e9d9",textShadow:"0 1px #705933"}}>Select <Btn img={original["button-a"]??a.a} letter="A" color="#3fb83f"/></div>
+            <div style={{position:"absolute",left:42,bottom:H*.065,display:"flex",alignItems:"center",gap:8,fontSize:22,color:"#f0e9d9",textShadow:"0 1px #705933"}}><Btn img={original["button-y"]??a.y} letter="Y" color="#e9c31d"/> {t("options")}</div>
+            <div style={{position:"absolute",right:36,bottom:H*.065,display:"flex",alignItems:"center",gap:9,fontSize:22,color:"#f0e9d9",textShadow:"0 1px #705933"}}>{t("select")} <Btn img={original["button-a"]??a.a} letter="A" color="#3fb83f"/></div>
             </div>
           </div>
         </div>

@@ -1,3 +1,4 @@
+import { t } from "../i18n";
 import {BackgroundMedia} from "../WallpaperMedia";
 import {customProfilePicture} from "../profilePicture";
 // Xbox 360 New Xbox Experience (2008), rebuilt from the 9199 dashboard in
@@ -45,40 +46,40 @@ export function NxeHome() {
   const games = api.lib.games;
   // your avatar: your own exported model if you added one, otherwise the first visit opens the creator
   const { spec: mine, model, gamerpic, editing, setEditing } = useMyAvatar(s, api.user);
-  const presets = () => menu.open(themeMenu(s.theme, api.switchTheme, THEMES), "Presets", { page: true });
-  const play = (g: Game): Slot => ({ key: `g${g.appid}`, label: g.name, sub: `${fmtPlaytime(g.playtime, g.lastPlayed, true)} · Last played ${fmtLastPlayed(g.lastPlayed)}`, game: g, run: () => api.activate(g, () => api.launch(g)) });
+  const presets = () => menu.open(themeMenu(s.theme, api.switchTheme, THEMES), t("presets"), { page: true });
+  const play = (g: Game): Slot => ({ key: `g${g.appid}`, label: g.name, sub: `${fmtPlaytime(g.playtime, g.lastPlayed, true)} · ${t("lastPlayedVal", { val: fmtLastPlayed(g.lastPlayed) })}`, game: g, run: () => api.activate(g, () => api.launch(g)) });
 
   // NXE channel names; the panels behind them open Steam's equivalents.
   const channels: Channel[] = [
-    { id: "spotlight", label: "Spotlight", slots: [
+    { id: "spotlight", label: t("spotlight"), slots: [
       ...games.slice(0, 1).map(play),
-      { key: "store", label: "Steam Store", sub: "New releases, deals and demos", tray: "slot-orange", icon: icons.store, glyph: "store", run: () => openSteam("store") },
-      { key: "community", label: "Community", sub: "Hubs, guides and workshop", tray: "slot-green", icon: icons.live, glyph: "globe", run: () => openSteam("community") },
+      { key: "store", label: t("destSteamStore"), sub: t("storeDescNew"), tray: "slot-orange", icon: icons.store, glyph: "store", run: () => openSteam("store") },
+      { key: "community", label: t("destCommunity"), sub: t("communityDesc"), tray: "slot-green", icon: icons.live, glyph: "globe", run: () => openSteam("community") },
     ] },
-    { id: "games", label: "Games", slots: [
+    { id: "games", label: t("tabGames"), slots: [
       ...games.slice(0, 10).map(play),
-      { key: "lib", label: "Game Library", sub: `${games.length} games`, tray: "slot-games", icon: a["icon-gamelib"], glyph: "library", run: () => openSteam("library") },
-      { key: "ach", label: "Achievements", sub: "Your progress", tray: "slot-green", icon: icons.gamertiles, glyph: "trophy", run: () => (games[0] ? openAchievements(games[0]) : openSteam("library")) },
+      { key: "lib", label: t("destLibrary"), sub: t("gamesCount", { count: games.length }), tray: "slot-games", icon: a["icon-gamelib"], glyph: "library", run: () => openSteam("library") },
+      { key: "ach", label: t("destAchievements"), sub: t("achievementsProgress"), tray: "slot-green", icon: icons.gamertiles, glyph: "trophy", run: () => (games[0] ? openAchievements(games[0]) : openSteam("library")) },
     ] },
-    { id: "market", label: "Game Marketplace", slots: [
-      { key: "store2", label: "Steam Store", sub: "Featured and specials", tray: "slot-orange", icon: icons.store, glyph: "store", run: () => openSteam("store") },
-      { key: "dl", label: "Active Downloads", sub: st.downloads ? `${st.downloads} downloading` : "Queue and updates", tray: "slot-green", glyph: "download", run: () => openSteam("downloads") },
+    { id: "market", label: t("marketplace"), slots: [
+      { key: "store2", label: t("destSteamStore"), sub: t("storeDescNew"), tray: "slot-orange", icon: icons.store, glyph: "store", run: () => openSteam("store") },
+      { key: "dl", label: t("destDownloads"), sub: st.downloads ? t("downloadsActiveCount", { count: st.downloads }) : t("downloadsQueueUpdates"), tray: "slot-green", glyph: "download", run: () => openSteam("downloads") },
     ] },
-    { id: "friends", label: "Friends", slots: [
-      { key: "friends", label: "Friends", sub: st.friendsOnline !== undefined ? `${st.friendsOnline} online` : "Friends and chat", tray: "slot-friends", run: () => openSteam("friends") },
-      { key: "msg", label: "Messages", sub: st.notifications ? `${st.notifications} new` : "Notifications", tray: "slot-green", icon: icons.mail ?? icons.messages, glyph: "bell", run: () => openSteam("notifications") },
+    { id: "friends", label: t("destFriends"), slots: [
+      { key: "friends", label: t("destFriends"), sub: st.friendsOnline !== undefined ? t("friendsOnlineCount", { count: st.friendsOnline }) : t("friendsAndChat"), tray: "slot-friends", run: () => openSteam("friends") },
+      { key: "msg", label: t("destNotifications"), sub: st.notifications ? t("messagesNewCount", { count: st.notifications }) : t("destNotifications"), tray: "slot-green", icon: icons.mail ?? icons.messages, glyph: "bell", run: () => openSteam("notifications") },
     ] },
-    { id: "myxbox", label: "My Xbox", slots: [
-      { key: "me", label: api.user, sub: st.online ? "Online" : "Offline", tray: "slot-profile", icon: gamerpic ?? pickedPic ?? a["avatar-silhouette"], glyph: "user", run: () => openSteam("friends") },
-      ...([{ key: "avatar", label: "My Avatar", sub: model ? "Your imported 360sona avatar · change, import or remove" : "Change your avatar's look and clothes", tray: "slot-profile", icon: a["avatar-silhouette"], glyph: "user" as const, run: () => setEditing("edit") }]),
-      { key: "lib2", label: "Game Library", sub: `${games.length} games`, tray: "slot-games", icon: a["icon-gamelib"], glyph: "library", run: () => openSteam("library") },
-      { key: "pics", label: "Picture Library", sub: "Screenshots", tray: "slot-photos", icon: a["icon-picturelib"], glyph: "photo", run: () => api.openMedia() },
-      { key: "web", label: "Internet", sub: "Web browser", tray: "slot-videos", icon: a["icon-videolib"], glyph: "globe", run: () => openSteam("browser") },
-      { key: "settings", label: "System Settings", sub: "Steam settings", tray: "slot-tray", icon: a["icon-settings"], glyph: "gear", run: () => openSteam("settings") },
-      { key: "home", label: "Home Screen", sub: "ThemeHub options", tray: "slot-tray", glyph: "home", run: api.openSettings },
-      { key: "presets", label: "Dashboards", sub: "Switch presets", tray: "slot-tray", icon: icons.themes, glyph: "palette", run: presets },
-      { key: "steamhome", label: "Home", sub: "Steam's own home", tray: "slot-tray", glyph: "steam", run: api.showSteamHome },
-      { key: "power", label: "Turn Off", sub: "Power options", tray: "slot-tray", glyph: "power", run: () => openSteam("power") },
+    { id: "myxbox", label: t("myXbox"), slots: [
+      { key: "me", label: api.user, sub: st.online ? t("statusOnline") : t("statusOffline"), tray: "slot-profile", icon: gamerpic ?? pickedPic ?? a["avatar-silhouette"], glyph: "user", run: () => openSteam("friends") },
+      ...([{ key: "avatar", label: t("myAvatar"), sub: model ? t("myAvatarDesc") : t("myAvatarDesc"), tray: "slot-profile", icon: a["avatar-silhouette"], glyph: "user" as const, run: () => setEditing("edit") }]),
+      { key: "lib2", label: t("destLibrary"), sub: t("gamesCount", { count: games.length }), tray: "slot-games", icon: a["icon-gamelib"], glyph: "library", run: () => openSteam("library") },
+      { key: "pics", label: t("allScreenshots"), sub: t("screenshotsDesc"), tray: "slot-photos", icon: a["icon-picturelib"], glyph: "photo", run: () => api.openMedia() },
+      { key: "web", label: t("destWebBrowser"), sub: t("openBrowserDesc"), tray: "slot-videos", icon: a["icon-videolib"], glyph: "globe", run: () => openSteam("browser") },
+      { key: "settings", label: t("systemSettings"), sub: t("steamSettingsDesc"), tray: "slot-tray", icon: a["icon-settings"], glyph: "gear", run: () => openSteam("settings") },
+      { key: "home", label: t("homeScreenSettings"), sub: t("themeOptionsDesc"), tray: "slot-tray", glyph: "home", run: api.openSettings },
+      { key: "presets", label: t("presets"), sub: t("switchPresetsDesc"), tray: "slot-tray", icon: icons.themes, glyph: "palette", run: presets },
+      { key: "steamhome", label: t("destMainMenu"), sub: t("showSteamHomeDesc"), tray: "slot-tray", glyph: "steam", run: api.showSteamHome },
+      { key: "power", label: t("destPower"), sub: t("powerOptionsDesc"), tray: "slot-tray", glyph: "power", run: () => openSteam("power") },
     ] },
   ];
   const [ch, setCh] = useRemembered("nxe2-ch", 1);
@@ -91,13 +92,13 @@ export function NxeHome() {
 
   const options = () => {
     const extra: MenuItem[] = [
-      { label: "Presets", sub: () => themeMenu(s.theme, api.switchTheme, THEMES) },
-      { label: "My Avatar", sub: () => avatarMenu(model, setEditing) },
-      { label: "Home Screen Settings", action: api.openSettings },
-      { label: "Home", action: api.showSteamHome },
+      { label: t("presets"), sub: () => themeMenu(s.theme, api.switchTheme, THEMES) },
+      { label: t("myAvatar"), sub: () => avatarMenu(model, setEditing) },
+      { label: t("homeScreenSettings"), action: api.openSettings },
+      { label: t("destMainMenu"), action: api.showSteamHome },
     ];
     const g = cur?.game;
-    menu.open(g ? [{ label: "Play", action: () => api.launch(g) }, { label: "Game Details", action: () => api.details(g) }, { label: "Watch Trailer", action: () => api.playTrailer(g) }, { label: "Game Options", action: () => api.nativeMenu(g) }, ...extra] : extra, g?.name);
+    menu.open(g ? [{ label: t("play"), action: () => api.launch(g) }, { label: t("gameDetails"), action: () => api.details(g) }, { label: t("watchTrailer"), action: () => api.playTrailer(g) }, { label: t("gameOptions"), action: () => api.nativeMenu(g) }, ...extra] : extra, g?.name);
   };
   const onInput = (p: Press): boolean => {
     if (menu.handle(p)) return true;
@@ -171,7 +172,7 @@ export function NxeHome() {
   );
 
   return (
-    <ThemeRoot onInput={onInput} hints={{ a: "Select", y: "Options" }}>
+    <ThemeRoot onInput={onInput} hints={{ a: t("select"), y: t("options") }}>
       <Stage background="#9fb98c">
         {wall || look.bg || a.background ? <BackgroundMedia src={wall ?? look.bgFor(X360_SECTION[chan.id] ?? "home") ?? a.background} className="dht-x360n-bg" data-dht-from-skin={!wall && look.bg ? "x360" : undefined} style={{ position: "absolute", inset: 0, width: W, height: H, objectFit: "cover" }} /> : <div className="dht-x360n-bg" style={{ position: "absolute", inset: 0, background: "linear-gradient(180deg,#4f8f1d 0%,#a8c88a 35%,#e8edf0 55%,#b6b8ba 100%)" }} />}
         <div style={{ position: "absolute", left: ox, top: oy, width: 1280, height: 720, transform: `scale(${k})`, transformOrigin: "0 0", fontFamily: FONT, color: "#fff" }}>
@@ -206,8 +207,8 @@ export function NxeHome() {
 
           {/* button legend */}
           <div style={{ position: "absolute", left: SAFE_X, top: 632, height: 32, display: "flex", gap: 34, alignItems: "center", fontSize: 18, color: "#ebebeb", textShadow: "0 1px 1px rgba(15,15,15,.5)" }}>
-            {legend(a["legend-a"], "A", "#3fb83f", "Select")}
-            {legend(a["legend-y"], "Y", "#e9c31d", "Options")}
+            {legend(a["legend-a"], "A", "#3fb83f", t("select"))}
+            {legend(a["legend-y"], "Y", "#e9c31d", t("options"))}
           </div>
 
           {/* your avatar, standing on the floor in front of the far panels */}

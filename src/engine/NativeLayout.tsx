@@ -1,3 +1,4 @@
+import { t } from "../i18n";
 // Native API v1. This deliberately executes installed code in the plugin realm.
 import * as React from "react";
 import { Component, ReactNode, useEffect, useState } from "react";
@@ -48,7 +49,7 @@ class NativeBoundary extends Component<{ children: ReactNode; reset: string }, {
   render() { return this.state.error ? <Failure message={this.state.error}/> : this.props.children; }
 }
 function Failure({ message }: { message: string }) {
-  return <div role="alert" style={{ position: "absolute", inset: 0, padding: 40, background: "#16202b", color: "white", zIndex: 10 }}><h2>Native layout could not load</h2><p>{message}</p><button onClick={() => updateSettings({ enabled: false })}>Return to Steam Home</button><p>Open ThemeHub to select another theme, reinstall, or restore the previous version.</p></div>;
+  return <div role="alert" style={{ position: "absolute", inset: 0, padding: 40, background: "#16202b", color: "white", zIndex: 10 }}><h2>{t("nativeLayoutCouldNotLoad")}</h2><p>{message}</p><button onClick={() => updateSettings({ enabled: false })}>{t("returnToSteamHome")}</button><p>{t("openThemeHubRestoreDesc")}</p></div>;
 }
 
 export function NativeLayout({ destination, fallback, onClose }: { destination?: Destination; fallback?: ReactNode; onClose?: () => void }) {
@@ -71,7 +72,7 @@ export function NativeLayout({ destination, fallback, onClose }: { destination?:
   }, [key, loaded, !!destination]);
   if (!theme?.native) return <>{fallback ?? <Failure message="No installed native layout selected"/>}</>;
   if (error) return <Failure message={error}/>;
-  if (loaded?.key !== key) return <div role="status">Loading native layout…</div>;
+  if (loaded?.key !== key) return <div role="status">{t("loadingNativeLayout")}</div>;
   const View = destination ? loaded.module.pages?.[destination.place] : loaded.module.Home;
   if (!View) return <>{fallback}</>;
   return <NativeBoundary key={key + (destination?.place ?? "home")} reset={key}><NativeView View={View} theme={theme} destination={destination} onClose={onClose}/></NativeBoundary>;

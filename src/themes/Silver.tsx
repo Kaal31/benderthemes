@@ -1,3 +1,4 @@
+import { t } from "../i18n";
 import {CSSProperties, PointerEvent, useEffect, useRef, useState} from "react";
 import {BatteryGlyph, GameArt, Icon, IconName, MenuView, useHome, useMenu} from "../common";
 import {Press, Stage, ThemeRoot, useStage} from "../input";
@@ -13,9 +14,9 @@ import {SILVER_CSS} from "./silverStyles";
 import {subscribeSilverPad} from "./silverPad";
 import {advanceWheel, WheelState} from "./silverWheel";
 const ONYX_PAGES=["Now Playing","Games","Library","Discover","More"];
-const NAV: {label:string;icon:IconName;action:"library"|"store"|"friends"|"settings"}[] = [
- {label:"Library",icon:"library",action:"library"},{label:"Discover",icon:"store",action:"store"},
- {label:"Friends",icon:"friends",action:"friends"},{label:"Settings",icon:"gear",action:"settings"}
+const getNav = (): {label:string;icon:IconName;action:"library"|"store"|"friends"|"settings"}[] => [
+ {label:t("destLibrary"),icon:"library",action:"library"},{label:t("destStore"),icon:"store",action:"store"},
+ {label:t("destFriends"),icon:"friends",action:"friends"},{label:t("destSettings"),icon:"gear",action:"settings"}
 ];
 function ReferenceIcon({name,size=24}:{name:IconName;size?:number}){
  const src=(REF as Partial<Record<IconName,string>>)[name];
@@ -78,7 +79,7 @@ export function SilverHome({dark=false}:{dark?:boolean}={}){
   const focused=screenRef.current?.querySelector<HTMLButtonElement>("[data-wheel-focus=true]");
   if(focused)focused.click();else if(page==="Now Playing")musicPlayer.toggle();return;
  }if(game&&!blocked)api.activate(game,()=>api.launch(game));};
- const options=()=>menu.open([{label:"Home Screen Settings",action:api.openSettings},{label:"Steam Home",action:api.showSteamHome}],"Silver Wheel");
+ const options=()=>menu.open([{label:t("homeScreenSettings"),action:api.openSettings},{label:t("destMainMenu"),action:api.showSteamHome}],dark?"Onyx Wheel":"Silver Wheel");
  const showLeftMenu=()=>{if(dark){playSound("tab");setPage(current=>ONYX_PAGES[(ONYX_PAGES.indexOf(current)+1)%ONYX_PAGES.length]);return;}setPanelLight("steam");openNativeSteamMenu();};
  useEffect(()=>{
   if(!(window as any).__isThemePreview)return;
@@ -95,8 +96,8 @@ export function SilverHome({dark=false}:{dark?:boolean}={}){
   if(p.btn==="x"){options();return true;}
   if(p.btn==="y"){if(game)api.nativeMenu(game);return true;}
   if(p.btn==="b"){if(zone==="nav"){setZone("games");return true;}return false;}
-  if(p.btn==="a"){zone==="nav"?openSteam(NAV[nav].action):launch();return true;}
-  if(p.btn==="up"||p.btn==="down"){if(zone!=="nav")return true;else setNav(i=>Math.max(0,Math.min(NAV.length-1,i+(p.btn==="up"?-1:1))));return true;}
+  if(p.btn==="a"){zone==="nav"?openSteam(getNav()[nav].action):launch();return true;}
+  if(p.btn==="up"||p.btn==="down"){if(zone!=="nav")return true;else setNav(i=>Math.max(0,Math.min(getNav().length-1,i+(p.btn==="up"?-1:1))));return true;}
   if(p.btn==="left"||p.btn==="right"){if(zone==="nav"&&p.btn==="right")setZone("games");else step(p.btn==="left"?-1:1);return true;}
   if(p.btn==="r1"||p.btn==="l1"){
    const direction=p.btn==="r1"?1:-1;
@@ -118,19 +119,19 @@ export function SilverHome({dark=false}:{dark?:boolean}={}){
  <div className="silver-home" data-dark={dark} data-carousel={carousel} data-screen-glass={dark?styleOf(s,"onyx")("screenGlass"):"off"} data-cover-glass={dark?styleOf(s,"onyx")("coverGlass"):"off"} data-page={dark?page:undefined} data-motion={s.animations} style={{transform:`scale(${W/1280},${H/800})`,...Object.fromEntries(Object.entries(art).map(([key,value])=>[`--silver-${key}`,`url("${value}")`]))} as CSSProperties}>
  {dark&&<><div className="onyx-tabs">{ONYX_PAGES.map(name=><button key={name} data-active={page===name} onClick={()=>{playSound("tab");setPage(name);}}>{name}</button>)}</div><div ref={screenRef} className="onyx-screen" data-page={page}>
 {page==="Now Playing"&&<div className="onyx-music">
- <div className="onyx-albums" aria-label="Music albums">{albums?.map(album=><button key={album.id} data-active={player.album?.id===album.id} onClick={()=>musicPlayer.play(album)}>{album.cover?<img src={album.cover} alt=""/>:<span>♫</span>}<small>{album.name}</small></button>)}{albums?.length===0&&<small>No albums yet</small>}</div>
+ <div className="onyx-albums" aria-label="Music albums">{albums?.map(album=><button key={album.id} data-active={player.album?.id===album.id} onClick={()=>musicPlayer.play(album)}>{album.cover?<img src={album.cover} alt=""/>:<span>♫</span>}<small>{album.name}</small></button>)}{albums?.length===0&&<small>{t("noAlbumsYet")}</small>}</div>
  <div className="onyx-now-art">{player.album?.cover?<img src={player.album.cover} alt={player.album.name}/>:<span aria-hidden="true">♫</span>}</div>
- <div className="onyx-track"><small className="onyx-eyebrow">NOW PLAYING</small><h2>{player.album?.tracks[player.index]?.title??"Your music"}</h2><p>{player.album?.artist??player.album?.name??"Choose a soundtrack to begin"}</p>
+ <div className="onyx-track"><small className="onyx-eyebrow">{t("nowPlayingUpper")}</small><h2>{player.album?.tracks[player.index]?.title??"Your music"}</h2><p>{player.album?.artist??player.album?.name??"Choose a soundtrack to begin"}</p>
  <div className="onyx-progress"><input aria-label="Track position" type="range" disabled={!player.duration} min={0} max={player.duration||1} value={player.time} onChange={e=>musicPlayer.seekTo(Number(e.target.value))}/><div><span>{fmtClock(player.time)}</span><span>−{fmtClock(Math.max(0,player.duration-player.time))}</span></div></div>
 
- {albums?.length===0&&<p className="onyx-music-note">Add music to your Music folder or install a Steam soundtrack.</p>}{player.error&&<p className="onyx-music-note" role="status">{player.error}</p>}</div>
+ {albums?.length===0&&<p className="onyx-music-note">{t("addMusicDesc")}</p>}{player.error&&<p className="onyx-music-note" role="status">{player.error}</p>}</div>
  </div>}
 {page==="Library"&&<div className="onyx-library">{games.map((g,i)=><button key={g.appid} onClick={()=>{setSelected(i);setPage("Games");}}><GameArt flat g={g} kind="portrait" style={{width:90,height:120,objectFit:"cover"}}/><span>{g.name}</span></button>)}</div>}
-{page==="Discover"&&<div className="onyx-discover"><h2>Discover your next favorite</h2><div>{games.slice(0,3).map(g=><button key={g.appid} onClick={()=>api.details(g)}><GameArt flat g={g} kind="hero" style={{width:"100%",height:140,objectFit:"cover"}}/><span>{g.name}</span></button>)}</div><button onClick={()=>openSteam("store")}>Browse Steam Store →</button></div>}
-{page==="More"&&<div className="onyx-more"><h2>Make it yours</h2>{[{name:"Customize theme",run:api.openSettings},{name:"Downloads",run:()=>openSteam("downloads")},{name:"Friends",run:()=>openSteam("friends")},{name:"Steam Home",run:api.showSteamHome}].map(item=><button key={item.name} onClick={item.run}>{item.name}<span>›</span></button>)}</div>}
-</div></>}<header className="silver-top"><div/><div><button aria-label="Search library" onClick={()=>openSteam("search")}>{dark?<Icon name="search" size={19}/>:<ReferenceIcon name="search" size={23}/>}</button>{dark?<Icon name={status.online?"wifi":"network"} size={20}/>:<ReferenceIcon name={status.online?"wifi":"network"} size={23}/>}{dark&&battery&&<><BatteryGlyph level={battery.level} charging={battery.charging} color={dark?"#c6c8ce":"#333"} w={dark?24:28}/><span>{Math.round(battery.level*100)}%</span></>}<time>{fmtTime(clock,s.clock24)}</time><button className="silver-avatar" aria-label="Profile" onClick={()=>openSteam("friends")}>{status.avatar?<img src={status.avatar} alt=""/>:dark?<Icon name="user" size={18}/>:<ReferenceIcon name="user" size={24}/>}</button></div></header>
+{page==="Discover"&&<div className="onyx-discover"><h2>{t("discoverNextFavorite")}</h2><div>{games.slice(0,3).map(g=><button key={g.appid} onClick={()=>api.details(g)}><GameArt flat g={g} kind="hero" style={{width:"100%",height:140,objectFit:"cover"}}/><span>{g.name}</span></button>)}</div><button onClick={()=>openSteam("store")}>{t("browseSteamStoreArrow")}</button></div>}
+{page==="More"&&<div className="onyx-more"><h2>{t("makeItYours")}</h2>{[{name:"Customize theme",run:api.openSettings},{name:"Downloads",run:()=>openSteam("downloads")},{name:"Friends",run:()=>openSteam("friends")},{name:"Steam Home",run:api.showSteamHome}].map(item=><button key={item.name} onClick={item.run}>{item.name}<span>›</span></button>)}</div>}
+</div></>}<header className="silver-top"><div/><div><button aria-label={t("searchLibrary")} onClick={()=>openSteam("search")}>{dark?<Icon name="search" size={19}/>:<ReferenceIcon name="search" size={23}/>}</button>{dark?<Icon name={status.online?"wifi":"network"} size={20}/>:<ReferenceIcon name={status.online?"wifi":"network"} size={23}/>}{dark&&battery&&<><BatteryGlyph level={battery.level} charging={battery.charging} color={dark?"#c6c8ce":"#333"} w={dark?24:28}/><span>{Math.round(battery.level*100)}%</span></>}<time>{fmtTime(clock,s.clock24)}</time><button className="silver-avatar" aria-label={t("playerProfile")} onClick={()=>openSteam("friends")}>{status.avatar?<img src={status.avatar} alt=""/>:dark?<Icon name="user" size={18}/>:<ReferenceIcon name="user" size={24}/>}</button></div></header>
  <div className="silver-shell"/>{dark&&<div className="onyx-glass-screen" aria-hidden="true"/>}
- {!dark&&<div className="silver-panel-dock" aria-hidden="true"/>}<nav className="silver-nav" aria-label="Steam menu"><button className="silver-home-button" data-lit={panelLight==="home"} onPointerDown={()=>setPanelLight("home")} onClick={()=>{setPanelLight("home");api.showSteamHome();}}><ReferenceIcon name="home" size={25}/>Home</button>{NAV.map((n,i)=><button key={n.label} data-focus={zone==="nav"&&nav===i} onClick={()=>{openSteam(n.action);}}><i><ReferenceIcon name={n.icon} size={25}/></i>{n.label}</button>)}<button className="silver-steam" data-lit={panelLight==="steam"} onPointerDown={()=>setPanelLight("steam")} onClick={showLeftMenu}><ReferenceIcon name="steam" size={25}/>STEAM</button></nav>
+ {!dark&&<div className="silver-panel-dock" aria-hidden="true"/>}<nav className="silver-nav" aria-label="Steam menu"><button className="silver-home-button" data-lit={panelLight==="home"} onPointerDown={()=>setPanelLight("home")} onClick={()=>{setPanelLight("home");api.showSteamHome();}}><ReferenceIcon name="home" size={25}/>{t("homeTab")}</button>{getNav().map((n,i)=><button key={n.label} data-focus={zone==="nav"&&nav===i} onClick={()=>{openSteam(n.action);}}><i><ReferenceIcon name={n.icon} size={25}/></i>{n.label}</button>)}<button className="silver-steam" data-lit={panelLight==="steam"} onPointerDown={()=>setPanelLight("steam")} onClick={showLeftMenu}><ReferenceIcon name="steam" size={25}/>STEAM</button></nav>
 
  {styleOf(s,"silver")("coverSurface")==="floor"&&<div className="silver-cover-floor" aria-hidden="true"/>}<section className="silver-carousel" aria-label="Game carousel">{visible.map(offset=>{const g=games[(index+offset+games.length)%games.length];return <button key={g.appid} className="silver-cover" data-selected={offset===0} aria-label={`Select ${g.name}`} aria-pressed={offset===0} style={{left:490+(iconFlow?(offset===0?0:Math.sign(offset)*(175+(Math.abs(offset)-1)*83)):offset*128),transition:Math.abs(offset)>(dark?5:4)?"none":undefined,pointerEvents:Math.abs(offset)>=(dark?5:4)?"none":undefined,opacity:dark?(Math.abs(offset)>=5?0:Math.abs(offset)===4?.12:Math.abs(offset)===3?.58:1):(Math.abs(offset)>=4?0:1),transform:`translateX(-50%) perspective(900px) rotateY(${offset===0?0:-Math.sign(offset)*(iconFlow?62:12+Math.abs(offset)*3)}deg) rotateZ(${offset===0?0:-Math.sign(offset)*(iconFlow?0:.7)}deg) scale(${offset===0?1:Math.max(.55,1-Math.abs(offset)*(iconFlow?.04:.09))})`,zIndex:10-Math.abs(offset)}} onClick={()=>{if(offset===0)launch();else step(offset);}}><GameArt flat g={g} kind="portrait" style={{width:"100%",height:"100%",objectFit:"cover"}}/><span className="silver-cover-reflection" aria-hidden="true" style={{width:128/(offset===0?1:Math.max(.55,1-Math.abs(offset)*(iconFlow?.04:.09)))}}><GameArt flat g={g} kind="portrait" style={{width:squareFlow?216:offset===0?189:178,height:squareFlow?216:offset===0?240:241,maxWidth:"none",objectFit:"cover"}}/></span></button>;})}{!game&&<div className="silver-empty"><h2>Your library awaits</h2><button onClick={()=>openSteam("library")}>Open Library</button></div>}</section>
  <section className="silver-now silver-panel">{game?<><GameArt flat g={game} kind="portrait" style={{width:84,height:137,borderRadius:12,objectFit:"cover"}}/><div><small>Ready to Play</small><h2>{game.name}</h2><p>{fmtLastPlayed(game.lastPlayed)}</p><div className="silver-actions"><button aria-label="Play Game" onClick={launch}>▶ &nbsp; Play Game</button><button aria-label="Game options" onClick={()=>api.nativeMenu(game)}>•••</button></div></div></>:<p>Select a game from your Steam library</p>}</section>

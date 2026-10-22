@@ -1,3 +1,4 @@
+import { t } from "./i18n";
 // First-run flow, shown once (setting `onboardingDone`, false only on a fresh install; updates keep it true).
 // Welcome → pick a theme (the page takes on the highlighted theme's look) → done. Finishing selects the theme and plays
 // its intro (its own boot sequence when it has one, else the generic reveal of themeIntro.tsx).
@@ -24,14 +25,14 @@ export function Onboarding() {
   const listRef = useRef<HTMLDivElement>(null);
   const [busy,setBusy]=useState(false), [error,setError]=useState(""),[progress,setProgress]=useState("");
   const installing=useRef(false);
-  useEffect(()=>{if(!busy)return;const timer=setInterval(()=>{void themeDownloadProgress().then(p=>setProgress(`${p.percent}% � ${p.message}`)).catch(()=>{});},500);return()=>clearInterval(timer);},[busy]);
+  useEffect(()=>{if(!busy)return;const timer=setInterval(()=>{void themeDownloadProgress().then(p=>setProgress(`${p.percent}% · ${p.message}`)).catch(()=>{});},500);return()=>clearInterval(timer);},[busy]);
   useEffect(() => { let live = true; inventory().then((i) => live && setInstalled(i || {})).catch(() => live && setInstalled({})); return () => { live = false; }; }, []);
   useEffect(() => { listRef.current?.querySelector('[data-selected="true"]')?.scrollIntoView({ block: "nearest" }); }, [sel, step]);
   const chosen = CHOICES[sel];
   const isInstalled = (id: string) => !!installed?.[id];
   const finish = async (pick: boolean) => {
     if(installing.current)return;
-    installing.current=true;setBusy(true);setError("");setProgress("Preparing download�");
+    installing.current=true;setBusy(true);setError("");setProgress("Preparing download…");
     const theme = pick ? chosen.id : getSettings().theme;
     try{
       if(!isInstalled(theme)){
@@ -64,7 +65,7 @@ export function Onboarding() {
   const key = previewTheme === "x360" ? hubThemeKey(previewTheme, s.x360?.style) : previewTheme;
   const go = () => {if(!installing.current){if(step<2)setStep(step+1);else void finish(true);}};
   return (
-    <div className="dht-onboarding" data-hub-theme={key} data-step={step} data-motion={s.animations} role="dialog" aria-modal="true" aria-label="Welcome">
+    <div className="dht-onboarding" data-hub-theme={key} data-step={step} data-motion={s.animations} role="dialog" aria-modal="true" aria-label={t("obWelcomeAria")}>
       {error&&<div role="alert" style={{position:"absolute",top:20,zIndex:5,color:"#ffc7c7"}}>{error}</div>}
       <style>{hubVarsCss()}{HUB_DECO_CSS}{ONBOARDING_CSS}</style>
       <div className="dht-hub-deco" data-deco={shown.deco} aria-hidden="true" />
@@ -72,44 +73,44 @@ export function Onboarding() {
       {step === 0 && <section className="dht-ob-card dht-ob-welcome">
         <HubLogo className="dht-ob-logo" />
         <span className="dht-ob-eyebrow">DECK HOME THEMES</span>
-        <h1>Welcome home</h1>
-        <p>Turn your Steam Deck into a console of your choice. Pick a look, and your home comes with its menus, sounds and intro.</p>
-        <button className="dht-ob-primary" onClick={go}>Get started</button>
-        <small>Ⓐ Continue · Ⓑ Skip setup</small>
+        <h1>{t("obWelcomeTitle")}</h1>
+        <p>{t("obWelcomeDesc")}</p>
+        <button className="dht-ob-primary" onClick={go}>{t("obGetStarted")}</button>
+        <small>{t("obWelcomePrompt")}</small>
       </section>}
       {step === 1 && <section className="dht-ob-pick">
-        <header><span className="dht-ob-eyebrow">STEP 2 OF 3</span><h1>Pick your theme</h1></header>
+        <header><span className="dht-ob-eyebrow">{t("obStep2Of3")}</span><h1>{t("obPickThemeTitle")}</h1></header>
         <div className="dht-ob-body">
           <div className="dht-ob-list" ref={listRef}>
-            {CHOICES.map((t, i) => <button key={t.id} className="dht-ob-item" data-selected={i === sel} onClick={() => (i === sel ? setStep(2) : setSel(i))} onFocus={() => setSel(i)}>
-              <strong>{t.name}</strong><span>{!installed ? "Checking…" : !installed[t.id] ? "Download" : "Ready"}</span>
+            {CHOICES.map((choice, i) => <button key={choice.id} className="dht-ob-item" data-selected={i === sel} onClick={() => (i === sel ? setStep(2) : setSel(i))} onFocus={() => setSel(i)}>
+              <strong>{choice.name}</strong><span>{!installed ? t("checkingDots") : !installed[choice.id] ? t("download") : t("obReady")}</span>
             </button>)}
           </div>
           <div className="dht-ob-preview">
-            <div className="dht-ob-swatch" aria-label={`${chosen.name} with games from your library`}>
+            <div className="dht-ob-swatch" aria-label={t("obSwatchAria", { name: chosen.name })}>
               <div className="dht-ob-swatch-bar" />
               <div className="dht-ob-swatch-tiles">{sampleGames.length ? sampleGames.map(game =>
                 <div key={game.appid} className="dht-ob-game" title={game.name}>
                   <Img srcs={game.art.portrait} className="dht-ob-game-cover" fit="contain" fallback={<div className="dht-ob-game-fallback">{game.name}</div>} />
                 </div>) : <><i /><i /><i /><i /></>}</div>
             </div>
-            {sampleGames.length > 0 && <small className="dht-ob-library-note">Cover examples from your library</small>}
+            {sampleGames.length > 0 && <small className="dht-ob-library-note">{t("obCoverExamples")}</small>}
             <h2>{chosen.name}</h2>
             <p>{chosen.blurb}</p>
-            <small>{installed && !installed[chosen.id] ? "Downloads when you confirm. Other themes stay in the Hub." : "Already downloaded. You can change it later from the Hub."}</small>
-            <button className="dht-ob-primary" onClick={() => setStep(2)}>Choose {chosen.name}</button>
+            <small>{installed && !installed[chosen.id] ? t("obDownloadLaterNote") : t("obBuiltInNote")}</small>
+            <button className="dht-ob-primary" onClick={() => setStep(2)}>{t("obChooseThemeBtn", { name: chosen.name })}</button>
           </div>
         </div>
-        <footer>Ⓐ Choose · Ⓑ Back · ↑ ↓ Browse</footer>
+        <footer>{t("obPickFooter")}</footer>
       </section>}
       {step === 2 && <section className="dht-ob-card dht-ob-done">
-        <span className="dht-ob-eyebrow">ALL SET</span>
+        <span className="dht-ob-eyebrow">{t("obAllSetEyebrow")}</span>
         <h1>{chosen.name}</h1>
         <p>{shown.tagline}</p>
-        <p className="dht-ob-sub">{installed && !installed[chosen.id] ? "Only this theme will download before its home opens. Other themes stay available in the Hub." : "Your home opens with its own intro. Press any button to skip it."}</p>
-        <button className="dht-ob-primary" disabled={busy} onClick={() => void finish(true)}>{busy ? progress : installed && !installed[chosen.id] ? `Download ${chosen.name} & start` : "Start"}</button>
-        <small>Later on the home: hold L1 + ▲▼ to change console, L1 + ◀▶ for its other looks and theme files.</small>
-        <small>Ⓐ Start · Ⓑ Back</small>
+        <p className="dht-ob-sub">{installed && !installed[chosen.id] ? t("obAllSetDownloadSub") : t("obAllSetIntroSub")}</p>
+        <button className="dht-ob-primary" disabled={busy} onClick={() => void finish(true)}>{busy ? progress : installed && !installed[chosen.id] ? `Download ${chosen.name} & start` : t("obStart")}</button>
+        <small>{t("obLaterHint")}</small>
+        <small>{t("obStartBackPrompt")}</small>
       </section>}
     </div>
   );

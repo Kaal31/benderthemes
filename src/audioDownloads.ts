@@ -1,3 +1,4 @@
+import { t } from "./i18n";
 import {callable,toaster} from "@decky/api";
 import {getPacks,refreshPacks} from "./steam";
 import {resourcesChanged} from "./marketplaceState";
@@ -22,7 +23,7 @@ export async function downloadAudio(id:string):Promise<string|null> {
     toaster.toast({title:"Downloading audio",body:name});
     try {
       const result=await install(id);
-      if(!result?.ok||!result.folder)throw new Error(result?.error??"Download failed");
+      if(!result?.ok||!result.folder)throw new Error(result?.error ?? t("downloadFailed"));
       await refreshPacks();
       toaster.toast({title:"Audio ready",body:name});
       return result.folder;

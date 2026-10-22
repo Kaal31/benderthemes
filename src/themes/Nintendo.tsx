@@ -1,6 +1,8 @@
 import {plazaArtwork} from "./PlazaGameArt";
 import {WIIU_REFERENCE_CSS} from "./wiiuReferenceStyles";
 import {WiiuGameIcon} from "./WiiuGameIcon";
+
+import { t } from "../i18n";
 import {plazaPostInterval} from "./plazaPostTiming";
 import {WallpaperVideo} from "../WallpaperMedia";
 import {PersonalMiiCreator,miiPortraitUrl} from "./PersonalMii";
@@ -43,17 +45,18 @@ const DOCK_ART:Record<string,string>={friends:"icon-mii",store:"icon-shop",brows
 // The theme pictures whose drawing decides the look of the buttons the theme has no picture for (first one found).
 const LOOK_ART=["icon-shop","icon-browser","icon-mii","icon-messages","icon-friends","downloads"];
 
-const SERVICES:{name:string;icon:IconName;place:"library"|"friends"|"store"|"browser"|"notifications"|"downloads"|"settings";color:string}[]=[
- {name:"Library",icon:"disc",place:"library",color:"#53add4"},
- {name:"Friends",icon:"friends",place:"friends",color:"#ed9235"},
- {name:"Shop",icon:"store",place:"store",color:"#efa121"},
- {name:"Internet Browser",icon:"network",place:"browser",color:"#429adc"},
- // The Wii U dock's notifications bubble (the Wii's channel grid only takes the first four entries).
- {name:"Notifications",icon:"bell",place:"notifications",color:"#17bfd4"},
- {name:"Downloads",icon:"download",place:"downloads",color:"#71ad49"},
- {name:"Settings",icon:"gear",place:"settings",color:"#939ba1"},
+type ServiceItem = { name: string; icon: IconName; place: "library" | "friends" | "store" | "browser" | "notifications" | "downloads" | "settings"; color: string };
+const servicesList = (): ServiceItem[] => [
+  { name: t("destLibrary"), icon: "disc", place: "library", color: "#53add4" },
+  { name: t("destFriends"), icon: "friends", place: "friends", color: "#ed9235" },
+  { name: t("shop"), icon: "store", place: "store", color: "#efa121" },
+  { name: t("destBrowser"), icon: "network", place: "browser", color: "#429adc" },
+  // The Wii U dock's notifications bubble (the Wii's channel grid only takes the first four entries).
+  { name: t("destNotifications"), icon: "bell", place: "notifications", color: "#17bfd4" },
+  { name: t("destDownloads"), icon: "download", place: "downloads", color: "#71ad49" },
+  { name: t("destSettings"), icon: "gear", place: "settings", color: "#939ba1" },
 ];
-type Tile={game?:Game;service?:typeof SERVICES[number]};
+type Tile = { game?: Game; service?: ServiceItem };
 // The boot logo plays once per session, the first time the Wii U menu appears.
 let wiiuBooted=false;
 // Activating the Wii U from the Hub plays its logo once more (the generic reveal would hide it).
@@ -78,7 +81,7 @@ export function NintendoHome({kind}:{kind:"wii"|"wiiu"}){
  const [miiOpen,setMiiOpen]=useState(false);
  const [customThemes,setCustomThemes]=useState<string[]>([]);
  useEffect(()=>{if(u)listWiiuThemes().then(r=>setCustomThemes(r?.themes??[])).catch(()=>{});},[u,s.wiiuTheme]);
- const themeItems=()=>[...(wiiuProblem(skin)?[{label:wiiuProblem(skin),disabled:true}]:[]),{label:"None (built-in look)",checked:!s.wiiuTheme,action:()=>updateSettings({wiiuTheme:""})},...customThemes.map(n=>({label:n.replace(/\.utheme$/i,""),checked:s.wiiuTheme===n,action:()=>updateSettings({wiiuTheme:n})}))];
+ const themeItems=()=>[...(wiiuProblem(skin)?[{label:wiiuProblem(skin),disabled:true}]:[]),{label:t("noneBuiltInLook"),checked:!s.wiiuTheme,action:()=>updateSettings({wiiuTheme:""})},...customThemes.map(n=>({label:n.replace(/\.utheme$/i,""),checked:s.wiiuTheme===n,action:()=>updateSettings({wiiuTheme:n})}))];
  const miiPicture=s.personalMii?(s.personalMii.portrait??miiPortraitUrl(s.personalMii)):undefined,plaza=u&&s.wiiuView==="plaza",st=styleOf(s,kind),w=(part:string)=>u?` dht-wiiu-${part}`:"";
 // Dock look: the option, else the theme file's own dock pictures (round buttons or free pictograms), else the stock icons.
  const lookArt=u?LOOK_ART.map(k=>themeArt[k]).find(Boolean):undefined,dockArt=useAnalysed(lookArt,analyseDockArt),dockPref=u?st<string>("dock"):"auto";
@@ -101,7 +104,8 @@ const notifyOn=u&&st("notify")!=="off",detailOn=u&&st("detail")!=="off",notices=
  const swap=()=>{updateSettings({wiiuView:plaza?"grid":"plaza"});setPage(0);setSelected(0);setZone("grid");playSound("tab");};
  // Library and Settings are shortcuts the consoles never had here (the games are on the grid; Settings is a page
  // tab and an options entry): shown only with Global settings → Shortcut buttons.
- const extra=(x:typeof SERVICES[number])=>!!s.shortcutButtons||(x.place!=="library"&&x.place!=="settings");
+ const extra=(x:ServiceItem)=>!!s.shortcutButtons||(x.place!=="library"&&x.place!=="settings");
+ const SERVICES=servicesList();
  const dockServices=SERVICES.filter(extra);
  const tiles:Tile[]=u?api.lib.games.map(game=>({game})):[...SERVICES.slice(0,4).filter(extra).map(service=>({service})),...api.lib.games.map(game=>({game}))];
  const pages=Math.max(1,Math.ceil(tiles.length/count));
@@ -115,9 +119,9 @@ const notifyOn=u&&st("notify")!=="off",detailOn=u&&st("detail")!=="off",notices=
  const last=(plaza?Math.max(1,Math.min(count,tiles.length-page*count)):count)-1;
  const focus=(i:number)=>{if(selected!==i||zone!=="grid")playSound("move");setSelected(i);setZone("grid");};
  const changePage=(d:number)=>{setPage(p=>Math.max(0,Math.min(pages-1,p+d)));setSelected(0);setZone("grid");playSound("tab");};
- const options=()=>menu.open([...(plaza?[{label:moving?"Finish moving cover":"Move selected cover",action:()=>setMoving(!moving)},{label:"Reset Plaza layout",action:()=>updateSettings({wiiuPlazaPositions:{}})},{label:"Plaza advice",checked:s.wiiuPlazaTips!==false,action:()=>updateSettings({wiiuPlazaTips:s.wiiuPlazaTips===false})}]:[]),...(u?[{label:plaza?"Switch to software grid":"Switch to WaraWara Plaza",action:swap},{label:`Notifications${notices.count?` (${notices.count})`:""}`,action:()=>openSteam("notifications")},{label:"Show notifications",checked:notifyOn,action:()=>setStyle("wiiu","notify",notifyOn?"off":"on")},{label:"Show game details",checked:detailOn,action:()=>setStyle("wiiu","detail",detailOn?"off":"on")},{label:`Custom theme: ${skin?.name??"None"}`,sub:themeItems}]:[]),{label:"Presets",sub:()=>themeMenu()},{label:"Home Screen Settings",action:api.openSettings},{label:"Downloads",action:()=>openSteam("downloads")},...(u&&!s.shortcutButtons?[{label:"System Settings",action:()=>openSteam("settings")}]:[]),{label:"Steam Home",action:api.showSteamHome}],u?"Wii U Menu":"Wii Menu");
+ const options=()=>menu.open([...(plaza?[{label:moving?t("finishMovingCover"):t("moveSelectedCover"),action:()=>setMoving(!moving)},{label:t("resetPlazaLayout"),action:()=>updateSettings({wiiuPlazaPositions:{}})},{label:t("plazaAdvice"),checked:s.wiiuPlazaTips!==false,action:()=>updateSettings({wiiuPlazaTips:s.wiiuPlazaTips===false})}]:[]),...(u?[{label:plaza?t("switchToGrid"):t("switchToPlaza"),action:swap},{label:`${t("destNotifications")}${notices.count?` (${notices.count})`:""}`,action:()=>openSteam("notifications")},{label:t("showNotifications"),checked:notifyOn,action:()=>setStyle("wiiu","notify",notifyOn?"off":"on")},{label:t("showGameDetails"),checked:detailOn,action:()=>setStyle("wiiu","detail",detailOn?"off":"on")},{label:t("customThemeNamed",{name:skin?.name??t("none")}),sub:themeItems}]:[]),{label:t("presets"),sub:()=>themeMenu()},{label:t("homeScreenSettings"),action:api.openSettings},{label:t("destDownloads"),action:()=>openSteam("downloads")},...(u&&!s.shortcutButtons?[{label:t("systemSettings"),action:()=>openSteam("settings")}]:[]),{label:t("destMainMenu"),action:api.showSteamHome}],u?t("wiiuMenu"):t("wiiMenu"));
  // Y: the focused game's details and full achievements page, then Steam's own game menu.
- const gameMenu=(game:Game)=>menu.open([{label:"Game details",action:()=>openGamePage(game)},{label:"Achievements",action:()=>openAchievements(game)},{label:"Steam game options",action:()=>api.nativeMenu(game)}],game.name);
+ const gameMenu=(game:Game)=>menu.open([{label:t("destGameDetails"),action:()=>openGamePage(game)},{label:t("destAchievements"),action:()=>openAchievements(game)},{label:t("gameOptions"),action:()=>api.nativeMenu(game)}],game.name);
  const pick=(i:number)=>{focus(i);const tile=tiles[page*count+i];if(tile?.service){playSound("open");openSteam(tile.service.place);}else if(tile?.game){const game=tile.game;api.activate(game,()=>{playSound("open");setBanner(game);setBannerStart(true);});}};
  const close=()=>{playSound("back");setBanner(null);};
  const start=()=>{if(banner)api.launch(banner);};
@@ -167,9 +171,9 @@ const notifyOn=u&&st("notify")!=="off",detailOn=u&&st("detail")!=="off",notices=
   const arrowArt=!plaza&&art["page-arrow"],prev=<button className={`nt-arrow nt-prev${w("arrow")}`} aria-label="Previous page" disabled={page===0} onClick={()=>changePage(-1)}>{plaza?"−":arrowArt?<img src={arrowArt} alt="" style={{transform:"scaleX(-1)"}}/>:"‹"}</button>,next=<button className={`nt-arrow nt-next${w("arrow")}`} aria-label="Next page" disabled={page===pages-1} onClick={()=>changePage(1)}>{plaza?"+":arrowArt?<img src={arrowArt} alt=""/>:"›"}</button>;
   // The Plaza pages with − / + bubbles in the bottom-left corner, as on the TV.
   return plaza?<div className="nt-plaza-pager dht-wiiu-pager">{prev}{dots}{next}</div>:<>{prev}{next}{dots}</>;})()}
- {u?<><div className="nt-selected-name dht-wiiu-title">{zone==="dock"?dockServices[dock]?.name:current?.game?.name??"Select software"}{detailOn&&!plaza&&zone==="grid"&&<WiiuDetail game={current?.game} variant="line"/>}</div><footer className="nt-dock dht-wiiu-dock">{dockServices.map((service,i)=><button key={service.name} className="dht-wiiu-dock-item" data-place={service.place} aria-label={service.name} data-focus={zone==="dock"&&dock===i} data-selected={zone==="dock"&&dock===i} data-name={service.name} style={{'--channel':service.color} as CSSProperties} onPointerEnter={()=>{setZone("dock");setDock(i);}} onClick={()=>dockAction(i)}>{dockPic(service.place)?<img className="nt-original-icon" src={dockPic(service.place)} alt=""/>:<DockGlyph place={service.place}/>}<span>{service.name}</span></button>)}</footer><div className="nt-home-hint">ⓧ HOME Menu</div></>:<footer className="nt-wii-footer dht-wii-bar"><div className="nt-footer-left"><button data-focus={zone==="dock"&&dock===0} onClick={()=>dockAction(0)}>Wii</button>{wiiDock.includes("sd")&&<button aria-label="Downloads" data-focus={zone==="dock"&&dock===1} onClick={()=>dockAction(1)}><WiiSdCard/></button>}</div><div className="nt-date"><WiiClock clock={clock} h24={s.clock24}/><span>{wiiDate(clock)}</span></div>{wiiDock.includes("mail")&&<button className="nt-mail" aria-label="Messages" data-focus={zone==="dock"&&dock===wiiDock.indexOf("mail")} onClick={()=>dockAction(wiiDock.indexOf("mail"))}><svg viewBox="0 0 64 44" width="55" fill="none" stroke="currentColor" strokeWidth="3" strokeLinejoin="round"><rect x="2" y="2" width="60" height="40" rx="6" fill="#e3e5e7"/><path d="m3 5 29 23L61 5M3 40l19-19m20 0 19 19"/></svg></button>}</footer>}
+ {u?<><div className="nt-selected-name dht-wiiu-title">{zone==="dock"?dockServices[dock]?.name:current?.game?.name??t("selectSoftware")}{detailOn&&!plaza&&zone==="grid"&&<WiiuDetail game={current?.game} variant="line"/>}</div><footer className="nt-dock dht-wiiu-dock">{dockServices.map((service,i)=><button key={service.name} className="dht-wiiu-dock-item" data-place={service.place} aria-label={service.name} data-focus={zone==="dock"&&dock===i} data-selected={zone==="dock"&&dock===i} data-name={service.name} style={{'--channel':service.color} as CSSProperties} onPointerEnter={()=>{setZone("dock");setDock(i);}} onClick={()=>dockAction(i)}>{dockPic(service.place)?<img className="nt-original-icon" src={dockPic(service.place)} alt=""/>:<DockGlyph place={service.place}/>}<span>{service.name}</span></button>)}</footer><div className="nt-home-hint">ⓧ HOME Menu</div></>:<footer className="nt-wii-footer dht-wii-bar"><div className="nt-footer-left"><button data-focus={zone==="dock"&&dock===0} onClick={()=>dockAction(0)}>Wii</button>{wiiDock.includes("sd")&&<button aria-label="Downloads" data-focus={zone==="dock"&&dock===1} onClick={()=>dockAction(1)}><WiiSdCard/></button>}</div><div className="nt-date"><WiiClock clock={clock} h24={s.clock24}/><span>{wiiDate(clock)}</span></div>{wiiDock.includes("mail")&&<button className="nt-mail" aria-label="Messages" data-focus={zone==="dock"&&dock===wiiDock.indexOf("mail")} onClick={()=>dockAction(wiiDock.indexOf("mail"))}><svg viewBox="0 0 64 44" width="55" fill="none" stroke="currentColor" strokeWidth="3" strokeLinejoin="round"><rect x="2" y="2" width="60" height="40" rx="6" fill="#e3e5e7"/><path d="m3 5 29 23L61 5M3 40l19-19m20 0 19 19"/></svg></button>}</footer>}
  {burnIn&&<div className="nt-wii-dim" data-on={dim} aria-hidden="true" onPointerDown={()=>wake()}/>}
- {banner&&<div className={`nt-banner${w("banner")}`} role="dialog" aria-label={`${banner.name} channel`}><div className="nt-banner-art"><GameArt flat g={banner} kind="hero" fit="cover" style={{width:"100%",height:"100%"}}/><div className="nt-banner-title"><h1>{banner.name}</h1><span>{banner.installed?"Ready to play":"Open with Steam"}</span>{detailOn&&<WiiuDetail game={banner} variant="panel"/>}</div></div><div className="nt-banner-actions"><button data-focus={!bannerStart} onClick={close}>{u?"Wii U Menu":"Wii Menu"}</button><button data-focus={bannerStart} onClick={start}>Start</button></div></div>}
+ {banner&&<div className={`nt-banner${w("banner")}`} role="dialog" aria-label={`${banner.name} channel`}><div className="nt-banner-art"><GameArt flat g={banner} kind="hero" fit="cover" style={{width:"100%",height:"100%"}}/><div className="nt-banner-title"><h1>{banner.name}</h1><span>{banner.installed?t("readyToPlay"):t("openWithSteam")}</span>{detailOn&&<WiiuDetail game={banner} variant="panel"/>}</div></div><div className="nt-banner-actions"><button data-focus={!bannerStart} onClick={close}>{u?t("wiiuMenu"):t("wiiMenu")}</button><button data-focus={bannerStart} onClick={start}>{t("start")}</button></div></div>}
  {bootPhase>0&&<div className={`nt-boot${w("boot")}`} data-leaving={!boot} data-splash={splash?true:undefined} role="presentation" onPointerDown={()=>setBoot(false)}>{splash&&<img className="nt-boot-splash dht-wiiu-splash" src={splash} alt=""/>}<div className="nt-boot-shapes" aria-hidden="true">{BOOT_SHAPES.map(({d,size,left,top,...v},i)=><svg key={i} viewBox="0 0 48 68" width={size} style={{left,top,...v} as CSSProperties} fill="currentColor" fillRule="evenodd"><path d={d}/></svg>)}</div><div className="nt-boot-logo" aria-label="Wii U"><span>Wii</span><b>U</b><small>™</small></div></div>}
  </div><MenuView menu={menu} variant={kind}/></Stage></ThemeRoot>;
 }

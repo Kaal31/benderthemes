@@ -1,3 +1,4 @@
+import { t } from "../i18n";
 import {GameAmpHome} from "../themes/GameAmp";
 import {GlassHome} from "../themes/Glass";
 import { BundledThemeSurface, hasBundledRenderer, NativeThemePort } from "./BundledThemeSurface";
@@ -303,10 +304,10 @@ function LegacyFrameHome() {
 
   return (
     <ThemeRoot onInput={onInput} hints={{ y: "Options", ...hints }}>
-      {pageError && <div role="alert" style={{position:"absolute",inset:0,zIndex:5,background:"#16202bf2",padding:48,color:"white"}}>This page did not connect to ThemeHub.<button onClick={() => { if (!back()) { setPageError(false); setReady(null); client.current = null; generation.current++; setReload(n => n + 1); } }}>Back to a working page</button></div>}
-      {!frameAvailable?<div role="status" style={{padding:48,color:"white"}}>{media.error?`Could not download theme media: ${media.error}`:"Downloading theme media…"}{media.error&&<button onClick={()=>setMediaAttempt(n=>n+1)}>Retry download</button>}</div>:isNative&&theme ? (
+      {pageError && <div role="alert" style={{position:"absolute",inset:0,zIndex:5,background:"#16202bf2",padding:48,color:"white"}}>{t("frameNotConnected")}<button onClick={() => { if (!back()) { setPageError(false); setReady(null); client.current = null; generation.current++; setReload(n => n + 1); } }}>{t("backToWorkingPage")}</button></div>}
+      {!frameAvailable ? <div role="status" style={{padding:48,color:"white"}}>{media.error ? `${t("couldNotDownloadThemeMedia") || "Could not download theme media:"} ${media.error}` : t("downloadingThemeMediaDots") || "Downloading theme media…"}{media.error && <button onClick={()=>setMediaAttempt(n=>n+1)}>{t("retryDownload") || "Retry download"}</button>}</div> : isNative && theme ? (
         <BundledThemeSurface id={theme.id} base={themeFileUrl(theme, "")!} port={nativePort} onMessage={message=>nativeReceive.current?.(message)}/>
-      ):url ? (
+      ) : url ? (
         <iframe
           ref={frame}
           key={`${url}:${reload}:${theme?.revision ?? ""}`}
@@ -332,7 +333,7 @@ function FrameMissing({ name }: { name?: string }) {
     <div style={{ position: "absolute", inset: 0, display: "grid", placeItems: "center", background: "#101216", color: "#d6d9de", font: '20px "Motiva Sans", Arial, sans-serif', textAlign: "center", padding: 40 }}>
       <div>
         <div style={{ fontSize: 28, marginBottom: 12 }}>{name ?? "Community interface"}</div>
-        <div style={{ opacity: 0.75 }}>This theme's interface couldn't be opened. Pick another look with L1 held + the D-pad or L2 / R2, or press △ / Y for options.</div>
+        <div style={{ opacity: 0.75 }}>{t("frameCouldNotOpen")}</div>
         <div style={{ opacity: 0.5, marginTop: 24, fontSize: 16 }}>{fmtTime(new Date(), s.clock24)}</div>
       </div>
     </div>

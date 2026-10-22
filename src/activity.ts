@@ -1,3 +1,4 @@
+import { t } from "./i18n";
 import { useActiveInterval } from "./performance";
 // Live Steam activity for the themes that show it as part of their own look (Wii U Plaza now, the 3DS later):
 // notifications, friends (online / playing), a game's achievements (names, icons, unlock times) and the
@@ -54,7 +55,7 @@ export function useNotices(on=true):Notices{
   const status=useSteamStatus(),dls=useDownloads();
   const [items,setItems]=useState<Notice[]>(()=>readNotices());
   useActiveInterval(() => { const next = readNotices(); setItems(prev => JSON.stringify(prev) === JSON.stringify(next) ? prev : next); }, 4000, on);
-  const done:Notice[]=dls.items.filter(d=>d.completed).map(d=>({id:`download:${d.appid}`,kind:"download",title:"Download complete",body:"",appid:d.appid,unread:true}));
+  const done:Notice[]=dls.items.filter(d=>d.completed).map(d=>({id:`download:${d.appid}`,kind:"download",title:t("downloadComplete"),body:"",appid:d.appid,unread:true}));
   const all=!on?[]:[...items,...done.filter(d=>!items.some(n=>n.kind==="download"&&n.appid===d.appid))];
   const unread=all.filter(n=>n.unread).length;
   return {count:Math.max(status.notifications??0,unread),items:all};

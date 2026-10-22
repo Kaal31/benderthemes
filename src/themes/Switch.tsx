@@ -1,3 +1,4 @@
+import {switchPageVars} from "./switchStandardSkin";
 import {SwitchLibrary} from "./SwitchLibrary";
 import {WallpaperVideo} from "../WallpaperMedia";
 import {startSwitchCapture} from './switchCaptureTransition';
@@ -44,19 +45,21 @@ import { GameArt, Icon, IconName, themeMenu, useHome, useMenu, useRemembered } f
 import { clamp, Press, Stage, ThemeRoot, useStage } from "../input";
 import { Game, openSteam, SteamPlace } from "../library";
 import { showTitle, THEMES } from "../settings";
+import { styleOf } from "../engine/themeStyles";
+import { t } from "../i18n";
 import { playSound, useBattery, useClock, useWallpaper } from "../steam";
 import { themeSettingsItems } from "../themeSettingsMenu";
 import { switchParts, useSwitchSkin } from "../switchThemes";
 import { useReportFocus } from "../focus";
 
 type Dock = { id: string; label: string; icon: IconName; art?: string; place?: SteamPlace; action?: "settings" | "album" };
-const DOCK: Dock[] = [
-  { id: "news", label: "News", icon: "bell", art: "news", place: "community" },
-  { id: "shop", label: "Shop", icon: "store", art: "shop", place: "store" },
-  { id: "album", label: "Album", icon: "photo", art: "album", action: "album" },
-  { id: "controller", label: "Controllers", icon: "game", art: "controller", place: "qam" },
-  { id: "settings", label: "Settings", icon: "gear", art: "settings", action: "settings" },
-  { id: "power", label: "Power", icon: "power", art: "power", place: "power" },
+const dockItems = (): Dock[] => [
+  { id: "news", label: t("news"), icon: "bell", art: "news", place: "community" },
+  { id: "shop", label: t("shop"), icon: "store", art: "shop", place: "store" },
+  { id: "album", label: t("album"), icon: "photo", art: "album", action: "album" },
+  { id: "controller", label: t("controllers"), icon: "game", art: "controller", place: "qam" },
+  { id: "settings", label: t("destSettings"), icon: "gear", art: "settings", action: "settings" },
+  { id: "power", label: t("destPower"), icon: "power", art: "power", place: "power" },
 ];
 /** The console's own dock symbols, drawn as outlines (news, eShop bag, album, controller); settings and power use the shared icons. */
 function DockGlyph({ id, size, color }: { id: string; size: number; color: string }) {
@@ -71,12 +74,12 @@ function DockGlyph({ id, size, color }: { id: string; size: number; color: strin
   );
 }
 /** The handheld console symbol at the left of the footer line. */
-function ConsoleGlyph({ w, color }: { w: number; color: string }) {
+function ConsoleGlyph({ w, color, neon }: { w: number; color: string; neon?: boolean }) {
   return (
     <svg width={w} height={w * 0.47} viewBox="0 0 68 32" style={{ display: "block" }}>
       <rect x="1.5" y="1.5" width="65" height="29" rx="9" fill="none" stroke={color} strokeWidth="3" />
       <rect x="13" y="5" width="42" height="22" rx="2.5" fill={color} />
-      <circle cx="7" cy="11" r="2.6" fill={color} /><circle cx="61" cy="21" r="2.6" fill={color} />
+      <circle cx="7" cy="11" r="2.6" fill={neon ? "#00dcd4" : color} /><circle cx="61" cy="21" r="2.6" fill={neon ? "#e60012" : color} />
       <circle cx="59" cy="9" r="1.4" fill={color} /><circle cx="63" cy="9" r="1.4" fill={color} /><circle cx="61" cy="7" r="1.4" fill={color} /><circle cx="61" cy="11" r="1.4" fill={color} />
     </svg>
   );
@@ -175,11 +178,13 @@ export function SwitchHome() {
   const bgRef=useSwitchPaneMotion(conversion?.animations??[],"background",[menu.isOpen?"exit":"enter",...(resume>0?["resume"]:[])],animationOn,rawEffects.backgroundContainer,1,1,false,resume,bgRaster);
   const footerRef=useSwitchPaneMotion(conversion?.animations??[],"footer",[launch?"exit":menu.isOpen?"exit":"enter"],animationOn,rawEffects.footer,1,1,true);
   const luma = useLuma(parts.background, parts.brightness);
+  const switchColor = styleOf(s, "switch")<"light" | "dark">("themeColor");
+  const isDarkTheme = !skin && switchColor === "dark";
   const colorMode=themeStyle<string>(s,"switch","firmwareColors");
-  const standardSkin=themeStyle<string>(s,"switch","standardSkin");
-  const dark = !skin ? standardSkin==="black" : colorMode==="dark" || (colorMode!=="light" && (conversion?true:parts.background ? (luma ?? 0.5) < 0.55 : false));
+  const dark = !skin ? isDarkTheme : colorMode==="dark" || (colorMode!=="light" && (conversion?true:parts.background ? (luma ?? 0.5) < 0.55 : false));
   const effects=Object.fromEntries(Object.entries(rawEffects).map(([key,effect])=>[key,resolvePalette(effect,dark)!]));
-  const ink = dark ? "#fff" : "#2d2d2d";
+  const ink = dark ? "#ffffff" : "#2d2d2d";
+  const DOCK = dockItems();
   const dock:Dock[]=[
     ...(panes.L_BtnLR?[{id:"online",label:"Nintendo Switch Online",icon:"game" as IconName,place:"community" as SteamPlace}]:[]),
     ...DOCK.slice(0,3),
@@ -190,7 +195,6 @@ export function SwitchHome() {
   ];
   const dockKeys:Record<string,string>={news:"L_BtnNoti",shop:"L_BtnShop",album:"L_BtnPvr",controller:"L_BtnCtrl",settings:"L_BtnSet",power:"L_BtnPow",online:"L_BtnLR",gameShare:"L_BtnSplay",virtualCards:"L_BtnVgc"};
   const visibleDock = dock.map((_,i)=>i).filter(i=>panes[dockKeys[dock[i].art??dock[i].id]]?.Visible!==false);
-
   const games = api.lib.games;
   const [sel, setSel] = useRemembered("switch-sel", 0);
   const [pressed,setPressed]=useState(false),[pointerPressed,setPointerPressed]=useState(false);
@@ -235,15 +239,15 @@ export function SwitchHome() {
       ...((conversion.notes?.length??0)?[{label:'Source layout notes',sub:()=>conversion.notes!.map(w=>({label:w,disabled:true}))}]:[]),
       ...((conversion.resourceWarnings?.length??0)?[{label:'Menu resource issues',sub:()=>conversion.resourceWarnings!.map(w=>({label:w,disabled:true}))}]:[]),
     ]}] : []),
-    ...(g ? [{ label: "Start", action: () => launchGame(g) }, { label: "Information", action:showInformation },{label:"Save data",action:showSaves}, { label: "Game Options", action: () => api.nativeMenu(g) }] : []),
-    ...(skin?.screens.lock?.background ? [{ label: "Lock screen", action: () => setView("lock") }] : []),
-    { label: "Home", action: api.showSteamHome },
+    ...(g ? [{ label: t("start"), action: () => launchGame(g) }, { label: t("information"), action: showInformation }, { label: t("saveData") || "Save data", action: showSaves }, { label: t("gameOptions"), action: () => api.nativeMenu(g) }] : []),
+    ...(skin?.screens.lock?.background ? [{ label: t("lockScreen"), action: () => setView("lock") }] : []),
+    { label: t("destMainMenu"), action: api.showSteamHome },
   ], g?.name ?? "Switch");
   const runDock = (i:number)=>{void withCapture(()=>runDockAction(i));};
   const runDockAction = (i: number) => {
     const d = dock[i]; playSound("select");setPressed(true);setTimeout(()=>setPressed(false),180);
     if (d.action === "album") api.openMedia();
-    else if (d.action === "settings") { setView("set"); menu.open([...themeSettingsItems(), { label: "Presets", sub: () => themeMenu(s.theme, api.switchTheme, THEMES) }, { label: "Home Screen Settings", action: api.openSettings }], "Settings", { page: true }); }
+    else if (d.action === "settings") { setView("set"); menu.open([...themeSettingsItems(), { label: t("presets"), sub: () => themeMenu(s.theme, api.switchTheme, THEMES) }, { label: t("homeScreenSettings"), action: api.openSettings }], t("destSettings"), { page: true }); }
     else if (d.place) openSteam(d.place);
   };
 
@@ -335,12 +339,12 @@ export function SwitchHome() {
   const titleWidth = Math.min((effects.gameTitle?.Size?.X??400)*k,W-40*k);
   const titleHeight = (effects.gameTitle?.Size?.Y??40)*k;
   const titlePosition:CSSProperties = rotatedTitle ? {left:startX-38*k-titleWidth/2,top:Math.max(titleWidth/2+10*k,Math.min(H-titleWidth/2-10*k,tileY+tileHeight/2))-titleHeight/2,width:titleWidth,height:titleHeight,justifyContent:"center",transformOrigin:"center",boxSizing:"border-box"} : {};
-  const label = (i: number) => i < n ? games[i].name : "All Software";
+  const label = (i: number) => i < n ? games[i].name : t("allSoftware");
   const texture=effects.background?.texture;
   const backgroundImage=useSwitchMirroredImage(parts.background,texture?.mirrorX,texture?.mirrorY);
   const bg: CSSProperties = parts.background
     ? { backgroundImage: `url(${backgroundImage})`, backgroundSize: "cover", backgroundPosition: "center",...(texture?{backgroundPosition:"center",backgroundSize:`${(texture.mirrorX?200:100)/texture.scaleX}% ${(texture.mirrorY?200:100)/texture.scaleY}%`,backgroundRepeat:`${texture.repeatX?"repeat":"no-repeat"} ${texture.repeatY?"repeat":"no-repeat"}`,imageRendering:texture.nearest?"pixelated":"auto"}:{}),...effectStyle(effects.backgroundContainer),...paneStyle(effects.background) }
-    : { background: effects.backgroundPanel&&effects.backgroundPanel.Visible!==false?panelColor(effects.backgroundPanel):dark?"#2d2d2d":"var(--dht-switch-bg, linear-gradient(#ececec,#dcdcdc))" };
+    : { background: effects.backgroundPanel&&effects.backgroundPanel.Visible!==false?panelColor(effects.backgroundPanel):isDarkTheme?"var(--dht-switch-bg, var(--sw-bg, #2d2d2d))":conversion&&dark?"#2d2d2d":"var(--dht-switch-bg, linear-gradient(#ececec,#dcdcdc))" };
 
   const childLockLayer=effects.childLock?.Visible!==false&&(effects.childLock||Object.keys(effects).some(key=>key.startsWith("childLock:")))&&<SwitchChildLock backingBehindGames={conversion?.childLockBackingBehindGames??false} effects={effects} animations={conversion?.animations??[]} dark={dark} animate={animationOn} modern={!!panes.L_BtnSplay} scale={k} rootY={0} onActivate={()=>menu.open([{label:"Steam settings",action:()=>openSteam("settings")},{label:"Close"}],"Parental controls",{page:true,body:<SwitchDialogContent {...dialogShared} file="DCntPclOnOff" text="Manage parental controls in Steam settings."/>})}/>;
   const swipe=useRef<{x:number;y:number;pointerId:number;active:boolean;dragged:boolean}|null>(null);
@@ -351,11 +355,11 @@ export function SwitchHome() {
   const refreshRef=useSwitchPaneMotion(refreshMotion,'N_Game',['refresh'],animationOn,{Position:panes.N_Game?.Position},k*(panes.N_GameRoot?.Scale?.X??1),k*(panes.N_GameRoot?.Scale?.Y??1),true,`${resume}:${api.lib.games.length}`);
   const cursorShadow=effects.cursorGlow?.shadowFunction!==undefined?"none":effectStyle(effects.cursor).boxShadow;
   return (
-    <ThemeRoot onInput={onInput} hints={{ a: "Open", y: "Options", b: view === "home" ? undefined : "Back" } as any}>
-      <SwitchNativeContext.Provider value={conversion}><Stage background="#e6e6e6">
+    <ThemeRoot onInput={onInput} hints={{ a: t("open"), y: t("options"), b: view === "home" ? undefined : t("back") } as any}>
+      <SwitchNativeContext.Provider value={conversion}><Stage background={isDarkTheme ? "#1a1a1a" : "#e6e6e6"}>
         <style>{CSS}</style>
         {effects.cursor && <style>{`.dht-switch-focus{box-sizing:border-box;border-style:solid;animation:none!important;border-color:${nxColor(effects.cursorGlow?.white??effects.cursor.white,"#19bcc4")}!important;border-width:calc(${effects.cursor.borderWidth??3}px * var(--dht-switch-focus-unit,1))!important;border-radius:calc(${effects.cursor.radius??0}px * var(--dht-switch-focus-unit,1));box-shadow:${cursorShadow??`0 0 ${effects.cursor.shadow??0}px ${nxColor(effects.cursorGlow?.white,effects.cursor.white?nxColor(effects.cursor.white):"#19bcc4")}`}!important;${effects.cursor.borderDraw===false?"border:none!important;":""}}`}</style>}
-        <div ref={element=>{rootRef.current=element;captureSource.current=element;}} className="dht-switch-root" data-standard={!conversion} data-standard-skin={!skin?standardSkin:undefined} data-motion={s.animations} data-resume-generation={resume} style={{position:"absolute",inset:0}}>
+        <div ref={element=>{rootRef.current=element;captureSource.current=element;}} className="dht-switch-root" data-standard={!conversion} data-standard-skin={!skin?(isDarkTheme?"black":"white"):undefined} data-motion={s.animations} data-resume-generation={resume} style={{position:"absolute",inset:0,...switchPageVars(s)}}>
         {parts.background&&effects.backgroundContainer?.Visible===false&&<div className="dht-switch-wallpaper-backdrop" style={{position:"absolute",inset:0,backgroundImage:`url(${parts.background})`,backgroundSize:"cover",backgroundPosition:"center"}}/>}
         <div ref={bgRef} className="dht-switch-bg" data-raster-mode={bgRaster?'viewport':undefined} data-converted={!!conversion?.converted} data-dht-from-skin={parts.background ? "" : undefined} data-view={view} style={{ position: "absolute", inset: 0, ...bg,zIndex:bgOrder.exelixBG }} />
         <WallpaperVideo src={wall} style={{zIndex:bgOrder.exelixBG+.1}}/>{effects.backgroundPanel && (effects.backgroundPanel.Position||effects.backgroundPanel.Size) && effects.backgroundPanel.Visible!==false && <div className="dht-switch-background-panel" style={{position:"absolute",pointerEvents:"none",left:W/2+(effects.backgroundPanel.Position?.X??0)*k-(effects.backgroundPanel.Size?.X??1280)*k/2,top:H/2-(effects.backgroundPanel.Position?.Y??0)*k-(effects.backgroundPanel.Size?.Y??720)*k/2,width:(effects.backgroundPanel.Size?.X??1280)*k,height:(effects.backgroundPanel.Size?.Y??720)*k,background:panelColor(effects.backgroundPanel),zIndex:bgOrder.P_Bg_00,...paneStyle(effects.backgroundPanel)}}/>}
@@ -363,7 +367,7 @@ export function SwitchHome() {
           <div className="dht-switch-lock" style={{ position: "absolute", inset: 0, zIndex: 20, color: ink, textShadow: dark ? "0 1px 6px #000a" : "none", fontFamily: "inherit" }}>
             <div style={{ position: "absolute", inset: 0, backgroundImage: `url(${parts.background})`, backgroundSize: "cover", backgroundPosition: "center" }} />
             <div style={{ position: "absolute", left: 0, right: 0, top: H * 0.38, textAlign: "center", fontSize: 96, fontWeight: 300 }}>{clock24h(now)}</div>
-            <div style={{ position: "absolute", left: 0, right: 0, bottom: H * 0.08, textAlign: "center", fontSize: 20 }}>Press any button</div>
+            <div style={{ position: "absolute", left: 0, right: 0, bottom: H * 0.08, textAlign: "center", fontSize: 20 }}>{t("pressAnyButton")}</div>
           </div>
         )}
         {effects.libraryLine&&<div className="dht-switch-library-line" style={{position:"absolute",left:30*k,right:30*k,bottom:72*k,height:k,background:panelColor(effects.libraryLine),...effectStyle(effects.libraryLine)}}/>}
@@ -396,11 +400,11 @@ export function SwitchHome() {
           </>}
           </div>
         </div>
-        {conversion?<SwitchFooter effects={effects} animations={conversion.animations} modern={!!panes.L_BtnSplay} dark={dark} enabled={animationOn} open={!!launch||menu.isOpen} pressed={pressed||pointerPressed} scale={k} height={H} view={view} controller={<ConsoleGlyph w={80} color="white"/>}/>:<>        <div ref={footerRef} className="dht-switch-footer" style={{ zIndex:4,position: "absolute", left: 30 * k, right: 30 * k, bottom: 0, height: 72 * k, borderTop: effects.footerLine?.Visible===false||effects.footerLineRoot?.Visible===false ? "none" : `1.5px solid ${dark ? "#fffb" : "#555"}`, color: ink, display: effects.footer?.Visible===false?"none":"flex", alignItems: "center", justifyContent: "space-between", padding: `0 ${30 * k}px`, fontSize: 24 * k, textShadow: dark ? "0 1px 4px #0008" : "none", pointerEvents: "none",...effectStyle(effects.footer) }}>
-          <SwitchFooterController effects={effects} animations={[]} modern={!!panes.L_BtnSplay} dark={dark} enabled={animationOn}><ConsoleGlyph w={68 * k} color={ink} /></SwitchFooterController>
+        {conversion?<SwitchFooter effects={effects} animations={conversion.animations} modern={!!panes.L_BtnSplay} dark={dark} enabled={animationOn} open={!!launch||menu.isOpen} pressed={pressed||pointerPressed} scale={k} height={H} view={view} controller={<ConsoleGlyph w={80} color="white" neon={isDarkTheme}/>}/>:<>        <div ref={footerRef} className="dht-switch-footer" style={{ zIndex:4,position: "absolute", left: 30 * k, right: 30 * k, bottom: 0, height: 72 * k, borderTop: effects.footerLine?.Visible===false||effects.footerLineRoot?.Visible===false ? "none" : `1.5px solid ${dark ? "#fffb" : "#555"}`, color: ink, display: effects.footer?.Visible===false?"none":"flex", alignItems: "center", justifyContent: "space-between", padding: `0 ${30 * k}px`, fontSize: 24 * k, textShadow: dark ? "0 1px 4px #0008" : "none", pointerEvents: "none",...effectStyle(effects.footer) }}>
+          <SwitchFooterController effects={effects} animations={[]} modern={!!panes.L_BtnSplay} dark={dark} enabled={animationOn}><ConsoleGlyph w={68 * k} color={ink} neon={isDarkTheme} /></SwitchFooterController>
           <span style={{ display: "flex", gap: 36 * k, marginLeft:"auto",position:"relative" }}>{(pressed||pointerPressed)&&effects.footerTouch&&<span style={{position:"absolute",inset:0,background:panelColor(effects.footerTouch),...effectStyle(effects.footerTouch)}}/>}
-            <span style={{ display: "flex", alignItems: "center", gap: 10 * k }}><SwitchFooterKey effect={effects.footerKey}><b style={{ width: 28 * k, height: 28 * k, borderRadius: "50%", background: nxColor(effects.footerText?.white,ink), color: dark ? "#000" : "#e8e8e8", display: "inline-flex", alignItems: "center", justifyContent: "center", fontSize: 24 * k, lineHeight: 1 }}>+</b></SwitchFooterKey><span style={effectStyle(effects["footer:T_00"])}>Options</span></span>
-            <span style={{ display: "flex", alignItems: "center", gap: 10 * k }}><SwitchFooterKey effect={effects.footerKey}><b style={{ width: 28 * k, height: 28 * k, borderRadius: "50%", background: nxColor(effects.footerText?.white,ink), color: dark ? "#000" : "#e8e8e8", display: "inline-flex", alignItems: "center", justifyContent: "center", fontSize: 17 * k }}>A</b></SwitchFooterKey><span style={effectStyle(effects["footer:T_01"])}>{view === "home" ? "Start" : "Open"}</span></span>
+            <span style={{ display: "flex", alignItems: "center", gap: 10 * k }}><SwitchFooterKey effect={effects.footerKey}><b style={{ width: 28 * k, height: 28 * k, borderRadius: "50%", background: nxColor(effects.footerText?.white,ink), color: dark ? "#000" : "#e8e8e8", display: "inline-flex", alignItems: "center", justifyContent: "center", fontSize: 24 * k, lineHeight: 1 }}>+</b></SwitchFooterKey><span style={effectStyle(effects["footer:T_00"])}>{t("options")}</span></span>
+            <span style={{ display: "flex", alignItems: "center", gap: 10 * k }}><SwitchFooterKey effect={effects.footerKey}><b style={{ width: 28 * k, height: 28 * k, borderRadius: "50%", background: nxColor(effects.footerText?.white,ink), color: dark ? "#000" : "#e8e8e8", display: "inline-flex", alignItems: "center", justifyContent: "center", fontSize: 17 * k }}>A</b></SwitchFooterKey><span style={effectStyle(effects["footer:T_01"])}>{view === "home" ? t("start") : t("open")}</span></span>
           </span>
         </div></>}
 
@@ -409,7 +413,7 @@ export function SwitchHome() {
           <div className="dht-switch-apps" data-entering={libraryEntering} style={{ position: "absolute", left: 90, right: 90, top: H * 0.16, bottom: 40, display: "grid", gridTemplateColumns: `repeat(${COLS},1fr)`, gap: 18, alignContent: "start", overflowY: "hidden" }}>
             {games.slice(Math.floor(asel / COLS) * COLS, Math.floor(asel / COLS) * COLS + COLS * 4).map((gm, i) => {
               const idx = Math.floor(asel / COLS) * COLS + i, on = idx === asel;
-              return <div key={gm.appid} className="dht-switch-tile" data-selected={on} data-name={gm.name} onClick={() => { setLibraryEntering(false);setAsel(idx); activateGame(gm); }} style={{animationDelay:libraryEntering?`${Math.floor(i/COLS)*70+(i%COLS)*40}ms`:undefined, aspectRatio: "1", position: "relative", overflow: "hidden", background: "#222" }}>
+              return <div key={gm.appid} className="dht-switch-tile" data-selected={on} data-name={gm.name} onClick={() => { setLibraryEntering(false);setAsel(idx); activateGame(gm); }} style={{animationDelay:libraryEntering?`${Math.floor(i/COLS)*70+(i%COLS)*40}ms`:undefined, aspectRatio: "1", position: "relative", overflow: "hidden", background: isDarkTheme ? "#2d2d2d" : "#222" }}>
                 <GameArt g={gm} kind="portrait" position="50% 22%" style={{ width: "100%", height: "100%" }} />
                 {on && <div className="dht-switch-focus" style={{ position: "absolute", inset: 0 }} />}
               </div>;
@@ -438,22 +442,22 @@ export function SwitchHome() {
               {!conversion&&on&&row==="tiles"&&effects.gameInnerCursor?.Visible!==false&&effects.gameInnerCursor&&<div className="dht-switch-inner-cursor" style={{position:"absolute",inset:4,border:"1px solid #fff6",pointerEvents:"none",...effectStyle({...effects.gameInnerCursor,radius:(effects.gameInnerCursor.radius??0)*dim.width/256})}}/>}
               {!conversion&&on&&row==="tiles"&&<AnimatedGameLayer animations={[]} pane="gameFocus" event="focus" active={animationOn} style={{zIndex:3}}/>}
               {!conversion&&on&&pointerPressed&&<AnimatedGameLayer animations={[]} pane="gameTouch" event="touch" active={animationOn} style={{zIndex:4,background:"#fff3"}}/>}
-              {!conversion&&game?.overview?.running&&<AnimatedGameLayer animations={[]} pane="gameSuspend" event="running" active={animationOn} style={{zIndex:5,inset:undefined,bottom:8,left:8,color:ink,...effectStyle(effects.gameSuspend)}}>Playing</AnimatedGameLayer>}
+              {!conversion&&game?.overview?.running&&<AnimatedGameLayer animations={[]} pane="gameSuspend" event="running" active={animationOn} style={{zIndex:5,inset:undefined,bottom:8,left:8,color:ink,...effectStyle(effects.gameSuspend)}}>{t("playing") || "Playing"}</AnimatedGameLayer>}
             </div>;
           })}
           </div></div>
           <div className="dht-switch-balloon-root" style={{position:"absolute",pointerEvents:"none",inset:0,zIndex:order.N_Balloon,...effectStyle(effects.balloonRoot)}}>
           <div style={{position:"absolute",inset:0,...effectStyle(effects.gameTitleRoot)}}>
           <div className="dht-switch-title" style={{ position: "absolute", left: conversion?startX-28*k:tileX(cur)-(F-T)/2, top: tileY - (F - T) / 2 - 56 * k, width: conversion?W-2*startX:Math.max(0,W-tileX(cur)-24*k), transition:conversion?undefined:"left 280ms cubic-bezier(.22,1,.36,1),opacity 140ms", opacity:!conversion&&row!=="tiles"?0:1, display: "flex", alignItems: "center", gap: 12 * k, fontSize: 26 * k, whiteSpace: "nowrap", overflow: "hidden", textOverflow: "ellipsis", textShadow: dark ? "0 1px 5px #000a" : "none",...effectStyle(effects.gameTitle),color:nxColor(effects.gameTitleText?.corners?.ColorTR,parts.background?ink:"var(--dht-switch-title, #19bcc4)"),...(effects.gameTitle?.Size?.X?{width:effects.gameTitle.Size.X*k}:{}),...(conversion&&!rotatedTitle?{left:tileX(cur),width:T,justifyContent:"center"}:{}),...titlePosition,...(conversion||effects.gameTooltip?.Visible===false?{display:"none"}:{}) }}>
-            <span style={{ display:conversion?"none":undefined, width: 20 * k, height: 26 * k, background: "currentColor", borderRadius: 3, flex: "none", clipPath: "polygon(0 0,100% 0,100% 100%,50% 82%,0 100%)" }} />
+            <span style={{ display:conversion?"none":undefined, width: 20 * k, height: 26 * k, background: isDarkTheme ? "#e60012" : "currentColor", borderRadius: 3, flex: "none", clipPath: "polygon(0 0,100% 0,100% 100%,50% 82%,0 100%)" }} />
             {effects["gameTitle:P_Card"]&&<span style={effectStyle(effects.gameCardRoot)}><span className="dht-switch-title-card" style={{width:12*k,height:18*k,background:"currentColor",...effectStyle(effects["gameTitle:P_Card"])}}/></span>}
             {effects["gameTitle:P_Reset"]&&<span className="dht-switch-title-reset" style={{width:8*k,height:8*k,borderRadius:"50%",background:"currentColor",...effectStyle(effects["gameTitle:P_Reset"])}}/>}
-            <span key={conversion?"native":cur} className={conversion?undefined:"dht-switch-standard-caption"} style={{ overflow: "hidden", textOverflow: "ellipsis" }}>{!g || showTitle(s, "switch", true) ? label(cur) : ""}</span>{g?.overview?.running&&<span className="dht-switch-title-sub" style={effectStyle(effects["gameTitle:T_Sub"])}>Playing</span>}
+            <span key={conversion?"native":cur} className={conversion?undefined:"dht-switch-standard-caption"} style={{ overflow: "hidden", textOverflow: "ellipsis" }}>{!g || showTitle(s, "switch", true) ? label(cur) : ""}</span>{g?.overview?.running&&<span className="dht-switch-title-sub" style={effectStyle(effects["gameTitle:T_Sub"])}>{t("playing")}</span>}
           </div>
           </div>
           {!conversion?.childLockBackingBehindGames&&childLockLayer}
           {effects.changeUser?.Visible!==false&&conversion&&effects.changeUser&&g?.overview?.running&&row==="tiles"&&<div className="dht-switch-change-user" style={{position:"absolute",left:tileX(cur)+T/2+(effects.changeUser.Position?.X??0)*k,top:tileTop(cur)+tileHeight/2-(effects.changeUser.Position?.Y??-159)*k,width:(effects.changeUser.Size?.X??384)*k,height:(effects.changeUser.Size?.Y??34)*k,transformOrigin:"0 0",background:"transparent",color:ink,border:0,...effectStyle({...effects.changeUser,Position:undefined})}}><SwitchServiceScene file="RdtBtnChangeUser" size={[effects.changeUser.Size?.X??384,effects.changeUser.Size?.Y??34]} effects={effects} animations={conversion.animations} modern={!!panes.L_BtnSplay} dark={dark} enabled={animationOn} label="User options" pressed={pressed||pointerPressed} onActivate={userOptions}/></div>}
-          {n === 0 && (conversion?<SwitchEmptyLibrary effects={effects} animations={conversion.animations} modern={!!panes.L_BtnSplay} dark={dark} enabled={animationOn} scale={k}/>:<div style={{position:"absolute",left:startX,top:H*.62,color:ink,opacity:.7,fontSize:18}}>No games found for the selected library view.</div>)}
+          {n === 0 && (conversion?<SwitchEmptyLibrary effects={effects} animations={conversion.animations} modern={!!panes.L_BtnSplay} dark={dark} enabled={animationOn} scale={k}/>:<div style={{position:"absolute",left:startX,top:H*.62,color:ink,opacity:.7,fontSize:18}}>{t("noGamesFound")}</div>)}
           </div>
           <div className="dht-switch-dock" style={{zIndex:order.N_System,position: "absolute", left: 0, right: 0, top: panes.N_System ? (panes.N_System.Size?H/2-(panes.N_System.Position?.Y??0)*k-(panes.N_System.Size.Y??80)*k/2:0) : dockY,...(panes.N_System?.Size?{left:(640+(panes.N_System.Position?.X??0)-(panes.N_System.Size.X??1160)/2)*k,right:undefined,width:(panes.N_System.Size.X??1160)*k,height:(panes.N_System.Size.Y??80)*k}:{}), display: "flex", justifyContent: "center", gap: 20 * k }}>
             {dock.map((d, i) => {
@@ -472,7 +476,7 @@ export function SwitchHome() {
                   {on&&(pressed||pointerPressed)&&effects[`dock:${d.id}:${pointerPressed?"touch":"decide"}`]&&<span className="dht-switch-applet-press" style={{position:"absolute",inset:0,borderRadius:"inherit",background:panelColor(effects[`dock:${d.id}:${pointerPressed?"touch":"decide"}`]),...effectStyle(effects[`dock:${d.id}:${pointerPressed?"touch":"decide"}`]),pointerEvents:"none"}}/>}
                   <SwitchMaterial effect={effects[`dock:${d.id}:color`]}><SwitchMaterial effect={resolvePalette(rawEffects[`dock:${d.art??d.id}`],dark,on)}>{art ? <img src={art} alt="" style={{ width: 44, height: 38, objectFit: "contain" }} /> : (["settings","power","online","gameShare","virtualCards"].includes(d.id) ? <Icon name={d.icon} size={36 * k} color={dark ? "#fff" : DOCK_COLOR[d.id] ?? "#666"} /> : <DockGlyph id={d.id} size={40 * k} color={dark ? "#fff" : DOCK_COLOR[d.id] ?? "#666"} />)}</SwitchMaterial></SwitchMaterial>
                 </div>
-                <span style={{ ...(convertedDock?{position:"absolute",top:"100%"}:{}),color: ink, fontSize: 14*k, transition:"opacity 140ms", opacity: on ? 1 : 0, ...effectStyle(effects.dockLabel),...effectStyle(effects[`dock:${d.id}:label`]), textShadow: dark ? "0 1px 4px #000a" : "none" }}>{d.label}</span>
+                <span style={{ ...(convertedDock?{position:"absolute",top:"100%"}:{}),color: on && isDarkTheme ? "#e60012" : ink, fontSize: 14*k, transition:"opacity 140ms", opacity: on ? 1 : 0, ...effectStyle(effects.dockLabel),...effectStyle(effects[`dock:${d.id}:label`]), textShadow: dark ? "0 1px 4px #000a" : "none" }}>{d.label}</span>
                 </>}
               </SwitchMotionPane>;
             })}

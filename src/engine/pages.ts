@@ -8,15 +8,16 @@
 import type { Settings } from "../settings";
 import type { Destination } from "../destinations";
 import { findTheme } from "./registry";
+import { t } from "../i18n";
 
 export type PageId = "store" | "browser" | "library" | "game" | "system" | "media";
-export const PAGES: { id: PageId; name: string }[] = [
-  { id: "store", name: "Store" },
-  { id: "browser", name: "Web browser" },
-  { id: "library", name: "Game library" },
-  { id: "game", name: "Game details" },
-  { id: "system", name: "Friends, downloads and settings" },
-  { id: "media", name: "Music player and captures" },
+export const PAGES: { id: PageId; readonly name: string }[] = [
+  { id: "store", get name() { return t("destStore"); } },
+  { id: "browser", get name() { return t("destWebBrowser"); } },
+  { id: "library", get name() { return t("destLibrary"); } },
+  { id: "game", get name() { return t("destGameDetails"); } },
+  { id: "system", get name() { return t("destSystem"); } },
+  { id: "media", get name() { return t("destMediaCaptures"); } },
 ];
 export const PAGE_IDS = PAGES.map((p) => p.id) as readonly string[];
 

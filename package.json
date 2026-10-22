@@ -1,12 +1,13 @@
 {
   "name": "deck-home-themes",
-  "version": "1.10.8",
+  "version": "1.10.9",
   "description": "Console-style home screens for the Steam Deck: PS Vita, PS2, PS3, PSP, PS4, PS5, Xbox and Xbox 360.",
   "type": "module",
   "scripts": {
     "build": "rollup -c",
     "watch": "rollup -c -w",
     "typecheck": "tsc --noEmit",
+    "test:localization": "node tests/verify-localization.mjs && node tests/verify-localization-settings.mjs",
     "preview": "node preview/build.mjs",
     "package": "python tools/package_release.py",
     "theme:viewer": "node sdk/viewer/server.mjs",

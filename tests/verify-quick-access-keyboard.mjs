@@ -105,6 +105,16 @@ try {
   assert.equal(await recovery.locator('._45rH7-kY4P2uVEb3TxZhm').evaluate(el=>el.getBoundingClientRect().height),250);
   await recovery.evaluate(()=>window.cleanup());await recovery.close();
   console.log('PASS replay of real log: hashed keyboard and both hidden ancestors recover');
+  // Main log regression: each 47px bottom row used to be hidden on the next poll.
+  const rows=await browser.newPage({viewport:{width:826,height:517}});
+  await rows.setContent('<div data-dht-root style="position:fixed;inset:0"></div><div class="_45rH7-kY4P2uVEb3TxZhm" style="position:fixed;bottom:0;width:826px;background:#345">'+Array.from({length:5},(_,i)=>`<div class="d-_DJF8LavBgxrCblp2Kb Row_${i}" style="height:47px">Keyboard row ${i}</div>`).join('')+'</div>');
+  await rows.addScriptTag({content:code});await rows.evaluate(()=>window.start('hide'));
+  await rows.clock.install();
+  await rows.clock.fastForward(12000);
+  assert.equal(await rows.locator('._45rH7-kY4P2uVEb3TxZhm').evaluate(el=>el.getBoundingClientRect().height),235);
+  assert.equal(await rows.locator('[data-dht-foot]').count(),0,'keyboard rows never mistaken for footer');
+  await rows.evaluate(()=>window.cleanup());await rows.close();
+  console.log('PASS main log regression: all five 47px keyboard rows survive repeated footer polls');
   // Unknown footer mapping must never fall back to hiding arbitrary bottom rows.
   const page=await browser.newPage({viewport:{width:1280,height:800}});
   await page.setContent('<div data-dht-root style="position:fixed;inset:0"></div><div id="unknown" style="position:fixed;bottom:0;height:40px;width:100%">Native chat controls</div>');

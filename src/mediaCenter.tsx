@@ -1,4 +1,6 @@
 import {switchPageVars} from "./themes/switchStandardSkin";
+import { style } from "./engine/themeStyles";
+import { t } from "./i18n";
 // The music player and the capture viewer every theme shares. There is one player (musicPlayer.ts)
 // and one viewer (overlays.tsx); each theme only gives them its look, taken from the theme drawing
 // the "media" page (its store skin plus a few console touches below). Because the state lives in
@@ -114,7 +116,7 @@ ${IISU_MEDIA_CSS}
 /** The shared frame: background, title, optional tabs and the button hints, in the theme's look. */
 export function MediaFrame({ s, title, tabs, children, hints, onTab }: { s: Settings; title: ReactNode; tabs?: { id: string; label: string; on: boolean }[]; onTab?: (id: string) => void; hints?: string[]; children: ReactNode }) {
   return (
-    <div className="dht-media" data-theme={s.theme} data-variant={s.theme === "x360" ? s.x360?.style : undefined} data-scheme={iisuSchemeAttr(s)} style={mediaVars(s)}>
+    <div className="dht-media" data-theme={s.theme} data-variant={s.theme === "x360" ? s.x360?.style : undefined} data-switch-style={s.theme === "switch" && !s.switchTheme ? style(s, "switch", "themeColor") : undefined} data-scheme={iisuSchemeAttr(s)} style={mediaVars(s)}>
       <style>{MEDIA_CSS}</style>
       <Stage background="transparent">
         <header className="dht-media-head">
@@ -204,10 +206,10 @@ export function MusicPlayerView({ onClose }: { onClose: () => void }) {
     if (p.duration) musicPlayer.seek((ev.clientX - r.left) / r.width * p.duration - p.time);
   };
   return (
-    <MediaFrame s={s} title="Music" hints={["Ⓐ Play / Pause", "L1 R1 Track", "Ⓧ Shuffle", "Ⓨ Repeat", "L2 R2 Crossfade", "☰ Stop", "Ⓑ Close · music keeps playing"]}>
+    <MediaFrame s={s} title={t("music")} hints={[t("mediaHintPlayPause"), t("mediaHintTrack"), t("mediaHintShuffle"), t("mediaHintRepeat"), t("mediaHintCrossfade"), t("mediaHintStop"), t("mediaHintClose")]}>
       <div ref={albumsRef} className="dht-media-panel" style={{ position: "absolute", left: 56, top: 100, width: 400, bottom: 210, overflowY: "auto", padding: 8 }}>
-        {albums === null && <div style={{ padding: 16, opacity: 0.7 }}>Looking for music…</div>}
-        {albums !== null && !list.length && <div style={{ padding: 16, opacity: 0.8, lineHeight: 1.4 }}>No music yet. Steam soundtracks and music in your Music folder or on an SD card show up here.</div>}
+        {albums === null && <div style={{ padding: 16, opacity: 0.7 }}>{t("lookingForMusic")}</div>}
+        {albums !== null && !list.length && <div style={{ padding: 16, opacity: 0.8, lineHeight: 1.4 }}>{t("noMusicYet")}</div>}
         {list.map((a, i) => (
           <button key={a.id} className="dht-media-row" data-on={i === album && zone === "albums"} data-playing={p.album?.id === a.id} onClick={() => { setAlbum(i); setTrack(0); setZone("tracks"); }} style={i === album && zone !== "albums" ? { outline: "1px solid var(--m-sub)" } : undefined}>
             <Cover src={a.cover} size={40} />
@@ -228,13 +230,13 @@ export function MusicPlayerView({ onClose }: { onClose: () => void }) {
       <div className="dht-media-panel" style={{ position: "absolute", left: 56, right: 56, bottom: 62, height: 130, display: "flex", alignItems: "center", gap: 22, padding: "0 22px" }}>
         <Cover src={p.album?.cover} size={96} />
         <div style={{ flex: 1, minWidth: 0 }}>
-          <div style={{ fontSize: 22, whiteSpace: "nowrap", overflow: "hidden", textOverflow: "ellipsis" }}>{cur?.title ?? "Nothing playing"}</div>
-          <div style={{ fontSize: 15, color: "var(--m-sub)", marginTop: 3 }}>{p.album ? [p.album.name, p.album.artist].filter(Boolean).join(" · ") : "Pick an album and a track"}</div>
+          <div style={{ fontSize: 22, whiteSpace: "nowrap", overflow: "hidden", textOverflow: "ellipsis" }}>{cur?.title ?? t("nothingPlaying")}</div>
+          <div style={{ fontSize: 15, color: "var(--m-sub)", marginTop: 3 }}>{p.album ? [p.album.name, p.album.artist].filter(Boolean).join(" · ") : t("pickAlbumAndTrack")}</div>
           <div className="dht-media-status" data-error={!!p.error}>
             {p.error ? <span>{p.error}</span> : <>
-              {p.shuffle && <span><b>⤨</b> Shuffle</span>}
+              {p.shuffle && <span><b>⤨</b> {t("shuffle")}</span>}
               {p.repeat !== "off" && <span><b>{p.repeat === "one" ? "↻1" : "↻"}</b> Repeat {REPEAT_NAMES[p.repeat].toLowerCase()}</span>}
-              {p.crossfade > 0 && <span><b>⇌</b> {p.fading ? "Crossfading" : `Crossfade ${p.crossfade} s`}</span>}
+              {p.crossfade > 0 && <span><b>⇌</b> {p.fading ? t("crossfading") : t("crossfadeSeconds", { sec: p.crossfade })}</span>}
             </>}
           </div>
           <div style={{ display: "flex", alignItems: "center", gap: 12, marginTop: 12, fontSize: 14 }}>
@@ -249,7 +251,7 @@ export function MusicPlayerView({ onClose }: { onClose: () => void }) {
           <button className="dht-media-big" aria-label={p.playing ? "Pause" : "Play"} onClick={() => (p.album ? musicPlayer.toggle() : al && start(al, 0))}>{p.playing ? "❚❚" : "▶"}</button>
           <button aria-label="Next" onClick={() => musicPlayer.next()}>⏭</button>
           <button aria-label={`Repeat ${p.repeat}`} data-on={p.repeat !== "off"} onClick={() => musicPlayer.cycleRepeat()}>{p.repeat === "one" ? "↻1" : "↻"}</button>
-          <button className="dht-media-xf" aria-label={`Crossfade ${crossfadeName(p.crossfade)}`} data-on={p.crossfade > 0} onClick={() => musicPlayer.setCrossfade(nextCrossfade(p.crossfade, 1))}>⇌ {p.crossfade ? `${p.crossfade} s` : "Off"}<small>Crossfade</small></button>
+          <button className="dht-media-xf" aria-label={`Crossfade ${crossfadeName(p.crossfade)}`} data-on={p.crossfade > 0} onClick={() => musicPlayer.setCrossfade(nextCrossfade(p.crossfade, 1))}>⇌ {p.crossfade ? `${p.crossfade} s` : "Off"}<small>{t("crossfade")}</small></button>
         </div>
       </div>
     </MediaFrame>
@@ -261,14 +263,14 @@ export function NowPlayingMini({ onOpen }: { onOpen: () => void }) {
   const s = useMediaSettings();
   const p = usePlayer();
   if (!p.album || fullMusicPlayerVisible()) return null;
-  const t = p.album.tracks[p.index];
+  const track = p.album.tracks[p.index];
   return (
-    <div className="dht-media-mini" data-theme={s.theme} data-scheme={iisuSchemeAttr(s)} style={mediaVars(s)} onClick={onOpen} role="button" aria-label="Open the music player">
+    <div className="dht-media-mini" data-theme={s.theme} data-scheme={iisuSchemeAttr(s)} style={mediaVars(s)} onClick={onOpen} role="button" aria-label={t("openMusicPlayer")}>
       <style>{MEDIA_CSS}</style>
       <Cover src={p.album.cover} size={52} />
       <div style={{ flex: 1, minWidth: 0 }}>
-        <b>{t?.title ?? p.album.name}</b>
-        <small>{p.playing ? "Now playing" : "Paused"} · {p.album.name}</small>
+        <b>{track?.title ?? p.album.name}</b>
+        <small>{p.playing ? t("nowPlaying") : t("paused")} · {p.album.name}</small>
         <div className="dht-media-bar"><div style={{ width: `${p.duration ? Math.min(100, (p.time / p.duration) * 100) : 0}%` }} /></div>
       </div>
       <div className="dht-media-mini-controls">

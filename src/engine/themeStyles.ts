@@ -1,3 +1,4 @@
+import { OPTIONS as switchOpt } from "../themes/options/switch";
 import { OPTIONS as gameamp } from "../themes/options/gameamp";
 // Each theme's own options: a short list per theme (src/themes/options/<theme>.ts)
 // describing choices that stay true to that console. The values are saved per
@@ -28,7 +29,7 @@ export type StyleOption = {
   def: StyleValue;
 };
 
-export const THEME_STYLES: Partial<Record<ThemeId, StyleOption[]>> = { gameamp, onyx, silver, wii, wiiu, ps2, ps5, xbox, aero, aero2, pain, nazarick, ps1, iisu };
+export const THEME_STYLES: Partial<Record<ThemeId, StyleOption[]>> = { gameamp, onyx, silver, wii, wiiu, ps2, ps5, xbox, aero, aero2, pain, nazarick, ps1, iisu, switch: switchOpt };
 
 // Only layouts with game hero backgrounds expose this control. Cover tiles and
 // console wallpapers keep their own sizing.
@@ -46,16 +47,15 @@ for (const theme of HERO_SCALING_THEMES) {
 }
 
 THEME_STYLES.switch = [...(THEME_STYLES.switch ?? []), {
-  key: "standardSkin", label: "Standard skin", group: "Appearance",
-  choices: [{id:"white",name:"Basic White"},{id:"black",name:"Basic Black"}], def:"white",
-}, {
   key: "consoleConversion", label: "Console theme conversion", group: "Theme file",
   choices: [{id:true,name:"Convert supported layout and animations"},{id:false,name:"Artwork only"}], def:true,
 },{key:"firmwareLayout",label:"Switch firmware layout",group:"Theme file",choices:[{id:"auto",name:"Automatic - detect from theme"},{id:"classic",name:"Classic Home Menu - six applets"},{id:"modern",name:"Modern Home Menu - nine applets"}],def:"auto"},{key:"clockFormat",label:"Switch clock format",group:"Theme file",choices:[{id:"24",name:"24-hour"},{id:"12",name:"12-hour"}],def:"24"},{key:"firmwareColors",label:"Switch system colors",group:"Theme file",choices:[{id:"auto",name:"Automatic"},{id:"light",name:"Basic White"},{id:"dark",name:"Basic Black"}],def:"auto"}];
 
 /** A theme's own option, or its default. */
 export function style<T extends StyleValue>(s: Settings, theme: ThemeId, key: string): T {
-  const own = s.styles?.[theme]?.[key];
+  // Accept the PR language-independent color key without creating a second setting.
+  if (theme === "switch" && key === "themeColor") return (style(s, theme, "standardSkin") === "black" ? "dark" : "light") as T;
+  const own = s.styles?.[theme]?.[key] ?? (theme === "switch" && key === "standardSkin" && s.styles?.switch?.themeColor ? (s.styles.switch.themeColor === "dark" ? "black" : "white") : undefined);
   const opt = THEME_STYLES[theme]?.find((o) => o.key === key);
   if (own !== undefined && (!opt || opt.choices.some((c) => c.id === own))) return own as T;
   return (opt?.def ?? own) as T;
@@ -64,8 +64,10 @@ export function style<T extends StyleValue>(s: Settings, theme: ThemeId, key: st
 export const styleOf = (s: Settings, theme: ThemeId) => <T extends StyleValue>(key: string) => style<T>(s, theme, key);
 
 export function setStyle(theme: ThemeId, key: string, value: StyleValue | undefined) {
+  if (theme === "switch" && key === "themeColor") { key = "standardSkin"; value = value === undefined ? undefined : value === "dark" ? "black" : "white"; }
   updateSettings((p) => {
     const mine = { ...(p.styles?.[theme] ?? {}) };
+    if (theme === "switch" && key === "standardSkin") delete mine.themeColor;
     if (value === undefined) delete mine[key];
     else mine[key] = value;
     return { styles: { ...p.styles, [theme]: mine } };

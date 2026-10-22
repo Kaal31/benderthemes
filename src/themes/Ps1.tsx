@@ -1,3 +1,4 @@
+import { t, getCurrentLanguage } from "../i18n";
 // PS1 home: the console's own start-up screens (redrawn without any console
 // logo), the BIOS main menu with its two bevelled buttons, the Memory Card
 // manager (two cards of 15 blocks, the games as tiny pixel save icons, the
@@ -20,6 +21,7 @@ const BLOCKS = 15; // a memory card holds 15 blocks
 const WORDS = {
   en: { main: "MAIN MENU", card: "MEMORY CARD", cd: "CD PLAYER", play: "PLAY", details: "DETAILS", options: "OPTIONS", exit: "EXIT", free: "FREE", block: "1 BLOCK", track: "TRACK", page: "CARDS", empty: "NO DATA", shuffle: "SHUFFLE" },
   ja: { main: "メインメニュー", card: "メモリーカード", cd: "CDプレイヤー", play: "プレイ", details: "くわしく", options: "オプション", exit: "おわる", free: "あき", block: "1ブロック", track: "トラック", page: "カード", empty: "データなし", shuffle: "シャッフル" },
+  ptBr: { main: "MENU PRINCIPAL", card: "CARTÃO DE MEMÓRIA", cd: "REPRODUTOR DE CD", play: "JOGAR", details: "DETALHES", options: "OPÇÕES", exit: "SAIR", free: "LIVRE", block: "1 BLOCO", track: "FAIXA", page: "CARTÕES", empty: "SEM DADOS", shuffle: "ALEATÓRIO" },
 };
 
 let booted = false; // the start-up screens play once per session
@@ -33,7 +35,8 @@ export function Ps1Home() {
   const st = styleOf(s, "ps1");
   const menu = useMenu();
   const now = useClock(15000);
-  const t = WORDS[st<string>("language") === "ja" ? "ja" : "en"];
+  const curLang = getCurrentLanguage();
+  const words = WORDS[st<string>("language") === "ja" ? "ja" : curLang === "ptBr" ? "ptBr" : "en"];
   const animate = s.animations !== false;
   const [screen, setScreen] = useState<Screen>(() => (!booted && st<string>("boot") === "show" ? "boot" : st<string>("startScreen") === "card" ? "card" : "main"));
   const [mainSel, setMainSel] = useRemembered("ps1-main", 0);
@@ -57,16 +60,16 @@ export function Ps1Home() {
 
   // ───── CD player ─────
   const tracks: Track[] = [
-    { name: "Store", run: () => openSteam("store") },
-    { name: "Game Library", run: () => openSteam("library") },
-    { name: "Friends", run: () => openSteam("friends") },
-    { name: "Media", run: () => api.openMedia() },
-    { name: "Music", run: () => openDestination({ place: "music" }) },
-    { name: "Downloads", run: () => openSteam("downloads") },
-    { name: "Web Browser", run: () => openSteam("browser" as SteamPlace) },
-    { name: "Steam Settings", run: () => openSteam("settings") },
-    { name: "Home Screen Settings", run: () => api.openSettings() },
-    { name: "Power", run: () => openSteam("power") },
+    { name: t("destStore"), run: () => openSteam("store") },
+    { name: t("destLibrary"), run: () => openSteam("library") },
+    { name: t("destFriends"), run: () => openSteam("friends") },
+    { name: t("destMedia"), run: () => api.openMedia() },
+    { name: t("destMusic"), run: () => openDestination({ place: "music" }) },
+    { name: t("destDownloads"), run: () => openSteam("downloads") },
+    { name: t("destWebBrowser"), run: () => openSteam("browser" as SteamPlace) },
+    { name: t("destSettings"), run: () => openSteam("settings") },
+    { name: t("homeScreenSettings"), run: () => api.openSettings() },
+    { name: t("destPower"), run: () => openSteam("power") },
   ];
   const [trk, setTrk] = useRemembered("ps1-track", 0);
   const [cdZone, setCdZone] = useState<"tracks" | "transport">("tracks");
@@ -76,23 +79,23 @@ export function Ps1Home() {
     { label: "▶", run: () => (playSound("select"), tracks[trk].run()) },
     { label: "■", run: () => (setScreen("main"), playSound("back")) },
     { label: "⏭", run: () => (setTrk(clamp(trk + 1, 0, tracks.length - 1)), playSound("move")) },
-    { label: t.shuffle, run: () => { const r = games[Math.floor(Math.random() * games.length)]; if (r) (playSound("open"), api.details(r)); } },
+    { label: words.shuffle, run: () => { const r = games[Math.floor(Math.random() * games.length)]; if (r) (playSound("open"), api.details(r)); } },
   ];
 
   const options = () => {
     const extra: MenuItem[] = [
-      { label: "Presets", sub: () => themeMenu(s.theme, api.switchTheme, THEMES) },
-      { label: "Home Screen Settings", action: api.openSettings },
-      { label: "Home", action: api.showSteamHome },
+      { label: t("presets"), sub: () => themeMenu(s.theme, api.switchTheme, THEMES) },
+      { label: t("homeScreenSettings"), action: api.openSettings },
+      { label: t("destMainMenu"), action: api.showSteamHome },
     ];
-    menu.open(g ? [{ label: "Play", action: () => api.launch(g) }, { label: "Game Details", action: () => api.details(g) }, { label: "Game Options", action: () => api.nativeMenu(g) }, ...extra] : extra, g?.name);
+    menu.open(g ? [{ label: t("play"), action: () => api.launch(g) }, { label: t("gameDetails"), action: () => api.details(g) }, { label: t("gameOptions"), action: () => api.nativeMenu(g) }, ...extra] : extra, g?.name);
   };
 
   const cardButtons = [
-    { label: t.play, run: () => g && api.launch(g) },
-    { label: t.details, run: () => g && api.details(g) },
-    { label: t.options, run: () => (g ? api.nativeMenu(g) : options()) },
-    { label: t.exit, run: () => (setScreen("main"), playSound("back")) },
+    { label: words.play, run: () => g && api.launch(g) },
+    { label: words.details, run: () => g && api.details(g) },
+    { label: words.options, run: () => (g ? api.nativeMenu(g) : options()) },
+    { label: words.exit, run: () => (setScreen("main"), playSound("back")) },
   ];
 
   const go = (to: Screen) => {
@@ -190,7 +193,7 @@ export function Ps1Home() {
   };
 
   const [c0, c1, c2] = PS1_BACKS[st<string>("background")] ?? PS1_BACKS.blue;
-  const hints = screen === "card" ? { a: g ? "Play" : "Select", b: "Back", y: "Options", l1: "Cards", r1: "Cards" } : screen === "main" ? { a: "Select", y: "Options" } : { a: "Play track", b: "Back", y: "Options" };
+  const hints = screen === "card" ? { a: g ? words.play : t("open"), b: t("back"), y: words.options, l1: words.page, r1: words.page } : screen === "main" ? { a: t("open"), y: words.options } : { a: words.play, b: t("back"), y: words.options };
 
   return (
     <ThemeRoot onInput={onInput} hints={hints as any}>
@@ -204,8 +207,8 @@ export function Ps1Home() {
 
         {screen === "main" && (
           <div style={{ position: "absolute", inset: 0, display: "flex", flexDirection: "column", alignItems: "center", justifyContent: "center", gap: 46 }}>
-            <div style={{ fontFamily: PS1_FONT, fontWeight: 700, color: "#b8c8f0", letterSpacing: 6, fontSize: 22, textShadow: "2px 2px 0 #000" }}>{t.main}</div>
-            {[t.card, t.cd].map((label, i) => (
+            <div style={{ fontFamily: PS1_FONT, fontWeight: 700, color: "#b8c8f0", letterSpacing: 6, fontSize: 22, textShadow: "2px 2px 0 #000" }}>{words.main}</div>
+            {[words.card, words.cd].map((label, i) => (
               <div key={label} className="dht-ps1-button dht-tile" data-selected={mainSel === i} onClick={() => (mainSel === i ? go(i === 0 ? "card" : "cd") : (setMainSel(i), playSound("move")))} style={{ ...ps1Bevel(mainSel === i), width: 520, height: 112, borderRadius: 10, display: "flex", alignItems: "center", justifyContent: "center", fontSize: 40, animation: mainSel === i && animate ? "dhtPs1Glow 1.6s ease-in-out infinite" : "none" }}>
                 <MainGlyph kind={i === 0 ? "card" : "cd"} />
                 <span style={{ marginLeft: 26 }}>{label}</span>
@@ -216,7 +219,7 @@ export function Ps1Home() {
 
         {screen === "card" && (
           <CardScreen
-            W={W} H={H} t={t} st={st} animate={animate} perScreen={perScreen} pg={pg} pages={pages} cardCount={cardCount}
+            W={W} H={H} t={words} st={st} animate={animate} perScreen={perScreen} pg={pg} pages={pages} cardCount={cardCount}
             cardGames={cardGames} side={sd} block={block} zone={zone} btn={btn} buttons={cardButtons} g={g}
             titled={(sel) => showTitle(s, "ps1", sel)}
             pickBlock={(sideI, i) => {
@@ -228,7 +231,7 @@ export function Ps1Home() {
         )}
 
         {screen === "cd" && (
-          <CdScreen W={W} H={H} t={t} st={st} animate={animate} tracks={tracks} trk={trk} zone={cdZone} tp={tp} transport={transport}
+          <CdScreen W={W} H={H} t={words} st={st} animate={animate} tracks={tracks} trk={trk} zone={cdZone} tp={tp} transport={transport}
             pickTrack={(i) => (i === trk ? tracks[i].run() : (setTrk(i), setCdZone("tracks"), playSound("move")))}
             pickTransport={(i) => (setTp(i), transport[i].run())}
           />

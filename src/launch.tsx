@@ -1,3 +1,4 @@
+import { t } from "./i18n";
 import { useEffect, useState } from "react";
 import { Navigation } from "@decky/ui";
 import type { Game } from "./library";
@@ -54,7 +55,7 @@ export function beginLaunch(game: Game, preview?: (g: Game)=>void) {
 
 function startGame(game: Game, preview?: (g: Game)=>void) {
   teardown();
-  emit({game,message:"Preparing game…",failed:false});
+  emit({game,message:t("preparingGameDots"),failed:false});
   let dead=false;
   const regs: any[]=[];
   const timers: ReturnType<typeof setTimeout>[]=[];
@@ -62,20 +63,20 @@ function startGame(game: Game, preview?: (g: Game)=>void) {
   const update=(message:string,failed=false,waitingUI=false)=>{if(!dead) emit({game,message,failed,waitingUI});};
   if (preview) {
     preview(game);
-    timers.push(setTimeout(()=>update("Waiting for game window…"),700),setTimeout(dismissLaunch,2600));
+    timers.push(setTimeout(()=>update(t("waitingForGameWindowDots")),700),setTimeout(dismissLaunch,2600));
     return;
   }
   const client=(globalThis as any).SteamClient;
   const matches=(id:any)=>String(id)===String(game.appid)||String(id)===game.gameid;
   const register=(owner:any,name:string,cb:Function)=>{try{const r=owner?.[name]?.(cb);if(r)regs.push(r);}catch{}};
   const task=(name:string)=> {
-    if(name==="Failed"||name==="Cancelled") { update(name==="Failed"?"Steam could not start this game.":"Launch cancelled.",true);return; }
-    const labels:Record<string,string>={SynchronizingCloud:"Synchronizing cloud saves…",ProcessingShaderCache:"Preparing shaders…",DownloadingDepots:"Downloading game files…",WaitingGameWindow:"Waiting for game window…",CreatingProcess:"Starting game…",Completed:"Waiting for game window…"};
+    if(name==="Failed"||name==="Cancelled") { update(name==="Failed"?t("steamCouldNotStart"):t("launchCancelled"),true);return; }
+    const labels:Record<string,string>={SynchronizingCloud:t("syncCloudSavesDots"),ProcessingShaderCache:t("preparingShadersDots"),DownloadingDepots:t("downloadingGameFilesDots"),WaitingGameWindow:t("waitingForGameWindowDots"),CreatingProcess:t("startingGameDots"),Completed:t("waitingForGameWindowDots")};
     update(labels[name] ?? name.replace(/([a-z])([A-Z])/g,"$1 $2")+"…",false,name.startsWith("Show"));
   };
   register(client?.Apps,"RegisterForGameActionTaskChange",(_a:any,id:any,_b:any,name:string)=>{if(matches(id))task(name);});
-  register(client?.Apps,"RegisterForGameActionShowError",(_a:any,id:any,_b:any,error:string)=>{if(matches(id))update(error||"Steam could not start this game.",true);});
-  register(client?.GameSessions,"RegisterForAppLifetimeNotifications",(event:any)=>{if(matches(event.unAppID))update(event.bRunning?"Waiting for game window…":"The game stopped before its window opened.",!event.bRunning);});
+  register(client?.Apps,"RegisterForGameActionShowError",(_a:any,id:any,_b:any,error:string)=>{if(matches(id))update(error||t("steamCouldNotStart"),true);});
+  register(client?.GameSessions,"RegisterForAppLifetimeNotifications",(event:any)=>{if(matches(event.unAppID))update(event.bRunning?t("waitingForGameWindowDots"):t("gameStoppedBeforeWindow"),!event.bRunning);});
   register(client?.System?.UI,"RegisterForFocusChangeEvents",(event:any)=>{
     if(dead)return;
     if(matches(event.focusedApp?.appid)) { dismissLaunch();return; }
@@ -85,12 +86,12 @@ function startGame(game: Game, preview?: (g: Game)=>void) {
       try { client.Overlay?.SetOverlayState?.(game.gameid,0); Navigation.CloseSideMenus(); } catch {}
     }
   });
-  timers.push(setTimeout(()=>update("Still waiting for Steam. You can return home and check downloads.",true),120000));
+  timers.push(setTimeout(()=>update(t("waitingForSteamCheckDownloads"),true),120000));
   try {
-    if(!client?.Apps?.RunGame)throw new Error("Steam launch service is unavailable.");
-    Promise.resolve(client.Apps.RunGame(game.gameid,"",-1,100)).catch(error=>update(error instanceof Error?error.message:"Steam could not start this game.",true));
+    if(!client?.Apps?.RunGame)throw new Error(t("steamLaunchUnavailable"));
+    Promise.resolve(client.Apps.RunGame(game.gameid,"",-1,100)).catch(error=>update(error instanceof Error?error.message:t("steamCouldNotStart"),true));
   }
-  catch(error) { update(error instanceof Error?error.message:"Steam could not start this game.",true); }
+  catch(error) { update(error instanceof Error?error.message:t("steamCouldNotStart"),true); }
 }
 
 /** The game-start clip, full screen; Ⓐ skips it, Ⓑ cancels the launch. If it can't play, the game just starts. */
@@ -117,8 +118,8 @@ function LaunchScreen({value,settings}:{value:LaunchState;settings:Settings}) {
       <h1 style={{fontSize:32}}>{value.game.name}</h1>
       {!value.failed && <div className="dht-launch-loader"><i/><i/><i/><i/></div>}
       <p style={{fontSize:22}}>{value.message}</p>
-      {value.waitingUI && <p>Complete Steam’s launch prompt to continue.</p>}
-      <button onClick={dismissLaunch} style={{background:"#151a20",color:"white",border:"1px solid #9ba6b5",borderRadius:8,padding:"12px 24px",fontSize:18}}>B · Return home</button>
+      {value.waitingUI && <p>{t("completeLaunchPrompt")}</p>}
+      <button onClick={dismissLaunch} style={{background:"#151a20",color:"white",border:"1px solid #9ba6b5",borderRadius:8,padding:"12px 24px",fontSize:18}}>Ⓑ · {t("returnHome")}</button>
     </div>
     <style>{LAUNCH_CSS}</style>
   </div>;

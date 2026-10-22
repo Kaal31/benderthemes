@@ -1,4 +1,5 @@
-import {BackgroundMedia} from "../WallpaperMedia";
+import { t } from "../i18n";
+import { BackgroundMedia } from "../WallpaperMedia";
 import { GameHero } from "../common";
 import {ProfileAvatar} from "../ProfileAvatar";
 // PS4 home: a function area (top icons) above a horizontal row of square
@@ -16,16 +17,16 @@ import { fmtTime, playSound, useBattery, useClock, useWallpaper } from "../steam
 
 import { useReportFocus } from "../focus";
 type Tile = { key: string; label: string; game?: Game; icon?: IconName; color?: string; action?: () => void };
-const FUNCS: { id: string; label: string; icon: IconName; place?: SteamPlace; action?: "settings" | "theme" }[] = [
-  { id: "store", label: "Store", icon: "store", place: "store" },
-  { id: "notif", label: "Notifications", icon: "bell", place: "notifications" },
-  { id: "friends", label: "Friends", icon: "friends", place: "friends" },
-  { id: "downloads", label: "Downloads", icon: "download", place: "downloads" },
-  { id: "search", label: "Search", icon: "search", place: "search" },
-  { id: "media", label: "Capture Gallery", icon: "photo", place: "media" },
-  { id: "theme", label: "Themes", icon: "palette", action: "theme" },
-  { id: "settings", label: "Settings", icon: "gear", action: "settings" },
-  { id: "power", label: "Power", icon: "power", place: "power" },
+const getFuncs = (): { id: string; label: string; icon: IconName; place?: SteamPlace; action?: "settings" | "theme" }[] => [
+  { id: "store", label: t("destStore"), icon: "store", place: "store" },
+  { id: "notif", label: t("destNotifications"), icon: "bell", place: "notifications" },
+  { id: "friends", label: t("destFriends"), icon: "friends", place: "friends" },
+  { id: "downloads", label: t("destDownloads"), icon: "download", place: "downloads" },
+  { id: "search", label: t("destSearch"), icon: "search", place: "search" },
+  { id: "media", label: t("captureGallery"), icon: "photo", place: "media" },
+  { id: "theme", label: t("qamThemes"), icon: "palette", action: "theme" },
+  { id: "settings", label: t("destSettings"), icon: "gear", action: "settings" },
+  { id: "power", label: t("destPower"), icon: "power", place: "power" },
 ];
 
 function drawPs4Bg(ctx: CanvasRenderingContext2D, t: number, w: number, h: number) {
@@ -59,6 +60,7 @@ function drawPs4Bg(ctx: CanvasRenderingContext2D, t: number, w: number, h: numbe
 
 export function Ps4Home() {
   const api = useHome();
+  const FUNCS = getFuncs();
   const s = api.settings;
   const { W, H } = useStage();
   const now = useClock(15000);
@@ -67,9 +69,9 @@ export function Ps4Home() {
   const menu = useMenu();
 
   const tiles: Tile[] = [
-    { key: "new", label: "What's New", icon: "bell", color: "#1f5fbf", action: () => openSteam("community") },
+    { key: "new", label: t("whatIsNew"), icon: "bell", color: "#1f5fbf", action: () => openSteam("community") },
     ...api.lib.games.map((g) => ({ key: `g${g.appid}`, label: g.name, game: g })),
-    { key: "lib", label: "Library", icon: "library", color: "#2167cf", action: () => openSteam("library") },
+    { key: "lib", label: t("destLibrary"), icon: "library", color: "#2167cf", action: () => openSteam("library") },
   ];
   const [row, setRow] = useState<"func" | "tiles" | "info">("tiles");
   const [sel, setSel] = useRemembered("ps4-sel", Math.min(1, tiles.length - 1));
@@ -89,9 +91,9 @@ export function Ps4Home() {
 
   const infoBtns: { label: string; run: () => void }[] = g
     ? [
-        { label: "Start", run: () => api.launch(g) },
-        { label: "Game Details", run: () => api.details(g) },
-        { label: "Options", run: () => api.nativeMenu(g) },
+        { label: t("start"), run: () => api.launch(g) },
+        { label: t("gameDetails"), run: () => api.details(g) },
+        { label: t("options"), run: () => api.nativeMenu(g) },
       ]
     : [];
 
@@ -114,7 +116,7 @@ export function Ps4Home() {
       { label: "Home Screen Settings", action: api.openSettings },
       { label: "Home", action: api.showSteamHome },
     ];
-    menu.open(g ? [{ label: "Start", action: () => api.launch(g) }, { label: "Watch Trailer", action: () => api.playTrailer(g) }, { label: "Information", action: () => api.details(g) }, { label: "Game Options", action: () => api.nativeMenu(g) }, ...extra] : extra, g?.name);
+    menu.open(g ? [{ label: t("start"), action: () => api.launch(g) }, { label: t("watchTrailer"), action: () => api.playTrailer(g) }, { label: t("information"), action: () => api.details(g) }, { label: t("gameOptions"), action: () => api.nativeMenu(g) }, ...extra] : extra, g?.name);
   };
 
   const onInput = (p: Press): boolean => {
@@ -197,7 +199,7 @@ export function Ps4Home() {
   });
 
   return (
-    <ThemeRoot onInput={onInput} hints={{ a: "Select", y: "Options", menu: "Options" }}>
+    <ThemeRoot onInput={onInput} hints={{ a: g ? t("start") : t("select"), y: t("options"), menu: t("options") }}>
       <Stage background="#04122e">
         <div className="dht-ps4-bg" style={{ position: "absolute", inset: 0, background: "var(--dht-ps4-bg, radial-gradient(ellipse at 70% 20%, #2f8be0 0%, transparent 55%), linear-gradient(170deg, #0a3a86 0%, #0b2a63 45%, #061637 100%))" }} />
         {wall && <BackgroundMedia src={wall} style={{ position: "absolute", inset: 0, width: W, height: H, objectFit: "cover" }} />}
@@ -258,7 +260,7 @@ export function Ps4Home() {
             <div style={{ fontSize: 28, fontWeight: 300, maxWidth: 760, whiteSpace: "nowrap", overflow: "hidden", textOverflow: "ellipsis", textShadow: "0 2px 8px rgba(0,0,0,0.6)" }}>{!cur.game || showTitle(s, "ps4", true) ? cur.label : ""}</div>
             {g && row !== "info" && (
               <div style={{ display: "flex", alignItems: "center", gap: 10 }}>
-                <span style={{ padding: "6px 26px", border: "1px solid rgba(255,255,255,0.8)", borderRadius: 3, fontSize: 18 }}>Start</span>
+                <span style={{ padding: "6px 26px", border: "1px solid rgba(255,255,255,0.8)", borderRadius: 3, fontSize: 18 }}>{t("start")}</span>
                 <span style={{ fontSize: 15, opacity: 0.7 }}>{fmtPlaytime(g.playtime, g.lastPlayed)}</span>
                 <Badges g={g} size={14} />
               </div>
@@ -273,12 +275,12 @@ export function Ps4Home() {
               <div key={btn.label} className="dht-ps4-card" data-selected={i === isel} style={{ width: 250, height: 140, borderRadius: 4, padding: 18, boxSizing: "border-box", background: i === isel ? "rgba(255,255,255,0.22)" : "rgba(0,0,0,0.35)", boxShadow: i === isel ? "0 0 0 3px #fff" : "none", color: "#fff", display: "flex", flexDirection: "column", justifyContent: "space-between" }}>
                 <Icon name={i === 0 ? "play" : i === 1 ? "info" : "dots"} size={34} color="#fff" />
                 <div style={{ fontSize: 20 }}>{btn.label}</div>
-                {i === 1 && <div style={{ fontSize: 13, opacity: 0.7 }}>Last played: {fmtLastPlayed(g.lastPlayed)}</div>}
+                {i === 1 && <div style={{ fontSize: 13, opacity: 0.7 }}>{t("lastPlayedVal", { val: fmtLastPlayed(g.lastPlayed) })}</div>}
               </div>
             ))}
           </div>
         )}
-        {api.lib.games.length === 0 && <div style={{ position: "absolute", left: startX, top: H * 0.7, color: "#fff", opacity: 0.7, fontSize: 18 }}>No games found for the selected library view.</div>}
+        {api.lib.games.length === 0 && <div style={{ position: "absolute", left: startX, top: H * 0.7, color: "#fff", opacity: 0.7, fontSize: 18 }}>{t("noGamesFound")}</div>}
         <MenuView menu={menu} variant="ps4" />
       </Stage>
     </ThemeRoot>

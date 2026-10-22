@@ -1,3 +1,4 @@
+import { t } from "../i18n";
 import {BLADE_BOUNDARIES} from "./bladeBoundaries";
 import {useEffect,useRef,useState} from "react";
 import {MenuState} from "../common";
@@ -25,11 +26,11 @@ export function BladesGuide({menu,assets,animate,side="right"}:{menu:MenuState;a
    <div className="dht-guide-tile" style={{position:"absolute",left:100*sx,right:0,top:0,bottom:0,backgroundImage:texture("guide-blade-overlay-tile"),backgroundSize:"100% 100%"}}/>
    <img className="dht-guide-edge" src={assets["guide-blade-overlay-edge-right"]} aria-hidden style={{position:"absolute",left:0,top:0,height:"100%",width:100*sx,pointerEvents:"none"}}/>
    </div>
-   <div style={{position:"absolute",top:50*sy,left:(side==="left"?30:85)*sx,right:(side==="left"?85:30)*sx,fontSize:28*sy,color:"#f2f4ec",textShadow:"0 1px 2px #182212"}}>{top.title??"Xbox Guide"}</div>
+   <div style={{position:"absolute",top:50*sy,left:(side==="left"?30:85)*sx,right:(side==="left"?85:30)*sx,fontSize:28*sy,color:"#f2f4ec",textShadow:"0 1px 2px #182212"}}>{top.title??t("xboxGuide")}</div>
    <div ref={panel} style={{position:"absolute",left:(side==="left"?30:52)*sx,right:(side==="left"?52:30)*sx,top:140*sy,bottom:110*sy,overflowY:"auto",scrollbarWidth:"thin"}}>
     {top.items.map((it,i)=><button key={i} className="dht-menu-item" data-selected={i===top.sel} disabled={it.disabled||!open} onClick={()=>menu.clickItem(i)} style={{display:"flex",alignItems:"center",justifyContent:"space-between",gap:12,width:"100%",minHeight:48*sy,border:0,padding:`${8*sy}px ${30*sx}px`,textAlign:"left",font:"inherit",fontSize:20*sy,color:"inherit",opacity:it.disabled?.4:1,backgroundColor:"transparent",backgroundImage:texture(i===top.sel?"guide-button-focus":"guide-button-nofocus")}}><span>{it.label}</span><span>{it.checked?"✓":it.sub?"›":""}</span></button>)}
    </div>
-   <div style={{position:"absolute",bottom:35*sy,left:(side==="left"?30:85)*sx,right:(side==="left"?85:30)*sx,display:"flex",alignItems:"center",justifyContent:"space-between",fontSize:20*sy,color:"#eee"}}><span style={{display:"flex",gap:8,alignItems:"center"}}><img src={assets["button-b"]} style={{width:24*sy,height:24*sy}}/>Back</span><span style={{display:"flex",gap:8,alignItems:"center"}}>Select<img src={assets["button-a"]} style={{width:24*sy,height:24*sy}}/></span></div>
+   <div style={{position:"absolute",bottom:35*sy,left:(side==="left"?30:85)*sx,right:(side==="left"?85:30)*sx,display:"flex",alignItems:"center",justifyContent:"space-between",fontSize:20*sy,color:"#eee"}}><span style={{display:"flex",gap:8,alignItems:"center"}}><img src={assets["button-b"]} style={{width:24*sy,height:24*sy}}/>{t("back")}</span><span style={{display:"flex",gap:8,alignItems:"center"}}>{t("select")}<img src={assets["button-a"]} style={{width:24*sy,height:24*sy}}/></span></div>
   </div>
  </div>;
 }

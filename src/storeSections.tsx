@@ -8,6 +8,7 @@
 // Data and install code are the Hub's; this file only lays them out the way each console's store does (category rows,
 // a category column, a list with a preview pane or the Xbox 360 NXE stack; storeSectionStyles.ts has the per-console
 // CSS) and moves the controller focus through them.
+import { t, lang } from "./i18n";
 import { CSSProperties, MutableRefObject, useEffect, useMemo, useRef, useState } from "react";
 import type { Press } from "./input";
 import type { storeSkin } from "./storeView";
@@ -68,11 +69,11 @@ const matches = (t: Tile, q: string) => q.split(/\s+/).filter(Boolean).every((w)
 // presets v2: a theme-file preset carries its console (p.theme) and its file (p.file)
 const FILE_LABEL: Record<string, string> = { ps3: "PS3 theme", psp: "PSP theme", vita: "PS Vita theme", switch: "Switch theme", wii: "Wii theme", wiiu: "Wii U theme", n3ds: "3DS theme", xbox: "Xbox skin", x360: "Xbox 360 theme" };
 function fileTile(p: Preset, current: string): Tile {
-  const label = (p.file && FILE_LABEL[p.theme]) || "Theme file";
+  const label = (p.file && FILE_LABEL[p.theme]) || t("themeFile");
   const file = p.file;
   const ext = file.match(/\.([a-z0-9]{2,8})$/i)?.[1]?.toUpperCase();
   const name = p.label.includes(" · ") ? p.label.slice(p.label.indexOf(" · ") + 3) : p.label;
-  return { id: p.id, kind: "file", name, sub: ext ? `${label} (.${ext.toLowerCase()})` : label, meta: p.id === current ? "In use" : "Installed", mark: ext ? (ext.length > 4 ? ext.slice(0, 2) : ext) : initials(name), hue: hueOf(p.id), preset: p,
+  return { id: p.id, kind: "file", name, sub: ext ? `${label} (.${ext.toLowerCase()})` : label, meta: p.id === current ? t("inUse") : t("installed"), mark: ext ? (ext.length > 4 ? ext.slice(0, 2) : ext) : initials(name), hue: hueOf(p.id), preset: p,
     text: `${label} on this Deck: ${file.split("/").pop()}. Applying it keeps your library, folders and other settings.` };
 }
 function useThemeShelves(s: Settings, query: string) {
@@ -97,23 +98,23 @@ function useThemeShelves(s: Settings, query: string) {
     const engine = new Map(allThemes().map((t) => [t.id, t]));
     const packTiles: Tile[] = packs.filter((p) => p.theme === console).map((p) => ({
       id: `pack:${p.id}`, kind: "pack", name: p.name, sub: `${(p.size / 1048576).toFixed(1)} MB · v${p.version}`,
-      meta: !p.compatible ? "Coming soon" : packIsCurrent(p) ? "Installed" : p.installedVersion ? "Update" : "Free",
-      art: p.poster || p.preview, mark: initials(p.name), hue: hueOf(p.id), pack: p, badge: p.installedVersion && !packIsCurrent(p) ? "Update" : undefined, badgeKind: "update",
+      meta: !p.compatible ? t("comingSoon") : packIsCurrent(p) ? t("installed") : p.installedVersion ? t("update") : t("free"),
+      art: p.poster || p.preview, mark: initials(p.name), hue: hueOf(p.id), pack: p, badge: p.installedVersion && !packIsCurrent(p) ? t("update") : undefined, badgeKind: "update",
       text: THEMES.find((t) => t.id === p.theme)?.blurb || p.description,
     }));
     const mine = presets.filter((p) => p.theme === console && p.origin !== "saved");
     const lookTiles: Tile[] = mine.filter((p) => p.origin === "default").map((p) => {
       const e = engine.get(p.dataTheme);
-      return { id: p.id, kind: "look", name: p.label, sub: e?.author ? `By ${e.author}` : name, meta: p.id === current ? "In use" : "Installed", mark: initials(p.label), hue: hueOf(p.id), preset: p,
-        text: e?.description || `A look of the ${name} theme.` };
+      return { id: p.id, kind: "look", name: p.label, sub: e?.author ? lang("byAuthor", { author: e.author }) : name, meta: p.id === current ? t("inUse") : t("installed"), mark: initials(p.label), hue: hueOf(p.id), preset: p,
+        text: e?.description || lang("themePacksDesc", { theme: name }) };
     });
     const fileTiles: Tile[] = mine.filter((p) => p.origin === "file").map((p) => fileTile(p, current));
-    const info: Tile = { id: "info:files", kind: "info", name: "Add theme files", sub: "From your Deck", meta: "", mark: "+", hue: 210,
-      text: `Copy ${name} theme files into ${dir || "the plugin's skins folder"} (or Downloads), then reopen the store. Theme options lists what each console reads.` };
+    const info: Tile = { id: "info:files", kind: "info", name: t("addThemeFiles"), sub: t("fromYourDeck"), meta: "", mark: "+", hue: 210,
+      text: lang("copyThemeFilesInfo", { name, dir: dir || t("skinsFolder") }) };
     const all: Shelf[] = [
-      { id: "packs", title: "Theme packs", tiles: packTiles },
+      { id: "packs", title: t("themePacks"), tiles: packTiles },
       { id: "looks", title: `${name} looks`, tiles: lookTiles },
-      { id: "files", title: "Theme files", tiles: [...fileTiles, info] },
+      { id: "files", title: t("themeFiles"), tiles: [...fileTiles, info] },
     ];
     const q = query.trim().toLowerCase();
     if (q) return [{ id: "results", title: `Results for "${query.trim()}"`, tiles: all.flatMap((x) => x.tiles.filter((t) => t.kind !== "info" && matches(t, q))) }];
@@ -124,7 +125,7 @@ function useThemeShelves(s: Settings, query: string) {
 
 // ───────────── Plugins: Spotlight picks + every public Decky plugin ─────────────
 function pluginTile(it: SearchItem): Tile {
-  return { id: it.id, kind: "plugin", name: it.name, sub: `By ${it.author || it.repo.split("/")[0]}`, meta: it.installed ? "Installed" : "Free", art: it.image, mark: initials(it.name), hue: hueOf(it.key || it.id),
+  return { id: it.id, kind: "plugin", name: it.name, sub: `By ${it.author || it.repo.split("/")[0]}`, meta: it.installed ? t("installed") : t("free"), art: it.image, mark: initials(it.name), hue: hueOf(it.key || it.id),
     badge: it.source === "spotlight" ? "Spotlight" : "Unreviewed", badgeKind: it.source === "spotlight" ? "spotlight" : "unreviewed", plugin: it,
     text: it.pick ? it.pick.whyFeatured : it.description || "No description." };
 }
@@ -143,7 +144,7 @@ function usePluginShelves(query: string) {
       text: "Press Y to search every public Decky plugin by name, author, tag or README text." };
     const out: Shelf[] = [
       { id: "spotlight", title: "Spotlight", tiles: merged.filter((i) => i.source === "spotlight").map(pluginTile) },
-      { id: "installed", title: "Installed", tiles: merged.filter((i) => i.installed).map(pluginTile) },
+      { id: "installed", title: t("installed"), tiles: merged.filter((i) => i.installed).map(pluginTile) },
       { id: "starred", title: "Most starred", tiles: starred.map(pluginTile) },
       { id: "more", title: "More plugins", tiles: [...more.map(pluginTile), search] },
     ];
@@ -206,20 +207,20 @@ export function StoreSection({ kind, settings, skin, query, active, inputRef, on
     return m;
   });
   const actions: Action[] = !tile ? [] : tile.kind === "pack" && tile.pack ? [
-    { label: !tile.pack.compatible ? "Coming soon" : packIsCurrent(tile.pack) ? "Installed" : tile.pack.installedVersion ? "Update" : "Download", disabled: !tile.pack.compatible || packIsCurrent(tile.pack),
-      run: () => act(async () => { await ensurePackInstalled(tile.pack!); resourcesChanged(); data.reload(); return `${tile.pack!.name} is installed.`; }) },
-    ...(tile.pack.theme && tile.pack.theme !== getSettings().theme ? [{ label: "Use as home", run: () => act(async () => { await ensurePackInstalled(tile.pack!); onClose(() => updateSettings((p) => ({ theme: tile.pack!.theme!, enabled: true, hiddenThemes: (p.hiddenThemes || []).filter((t) => t !== tile.pack!.theme) }))); }) }] : []),
+    { label: !tile.pack.compatible ? t("comingSoon") : packIsCurrent(tile.pack) ? t("installed") : tile.pack.installedVersion ? t("update") : t("download"), disabled: !tile.pack.compatible || packIsCurrent(tile.pack),
+      run: () => act(async () => { await ensurePackInstalled(tile.pack!); resourcesChanged(); data.reload(); return lang("isInstalled", { name: tile.pack!.name }); }) },
+    ...(tile.pack.theme && tile.pack.theme !== getSettings().theme ? [{ label: t("useAsHome"), run: () => act(async () => { await ensurePackInstalled(tile.pack!); onClose(() => updateSettings((p) => ({ theme: tile.pack!.theme!, enabled: true, hiddenThemes: (p.hiddenThemes || []).filter((t) => t !== tile.pack!.theme) }))); }) }] : []),
   ] : (tile.kind === "look" || tile.kind === "file") && tile.preset ? [
-    { label: tile.meta === "In use" ? "In use" : "Apply", disabled: tile.meta === "In use", run: () => { applyPreset(tile.preset!); resourcesChanged(); setMessage(`${tile.name} applied.`); } },
+    { label: tile.meta === t("inUse") || tile.meta === "In use" ? t("inUse") : t("apply"), disabled: tile.meta === t("inUse") || tile.meta === "In use", run: () => { applyPreset(tile.preset!); resourcesChanged(); setMessage(lang("appliedNotice", { name: tile.name })); } },
   ] : tile.kind === "plugin" && it ? (it.pick ? [
-    { label: busy ? "Opening Decky…" : it.pick.install ? `Install · ${it.pick.install.version}` : "Coming soon", disabled: busy || !it.pick.install, run: () => act(() => installSpotlightPlugin(it.pickIndex!)) },
-    { label: "View project", run: () => openUrl(it.url) },
+    { label: busy ? t("openingDecky") : it.pick.install ? lang("installWithVersion", { version: it.pick.install.version }) : t("comingSoon"), disabled: busy || !it.pick.install, run: () => act(() => installSpotlightPlugin(it.pickIndex!)) },
+    { label: t("viewProject"), run: () => openUrl(it.url) },
   ] : confirm ? [
-    { label: busy ? "Opening Decky…" : confirm === 1 && it.root ? "Continue" : "Install anyway", disabled: busy, run: installUnreviewed },
-    { label: "Cancel", run: () => { setConfirm(0); setAi(0); } },
+    { label: busy ? t("openingDecky") : confirm === 1 && it.root ? t("continueAction") : t("installAnyway"), disabled: busy, run: installUnreviewed },
+    { label: t("cancel"), run: () => { setConfirm(0); setAi(0); } },
   ] : [
-    { label: "View project", run: () => openUrl(it.url) },
-    ...(it.zipUrl ? [{ label: `Install release ${it.release || "ZIP"}…`, run: installUnreviewed }] : []),
+    { label: t("viewProject"), run: () => openUrl(it.url) },
+    ...(it.zipUrl ? [{ label: lang("installRelease", { version: it.release || "ZIP" }), run: installUnreviewed }] : []),
   ]) : [];
   const run = (i: number) => { const a = actions[i]; if (a && !a.disabled) { playSound("select"); void a.run(); } };
 
@@ -309,13 +310,13 @@ export function StoreSection({ kind, settings, skin, query, active, inputRef, on
       </div>
     );
   };
-  const sectionName = kind === "themes" ? "Themes" : "Plugins";
-  const empty = data.loading ? (kind === "themes" ? "Loading themes…" : "Loading plugins…") : query.trim() ? "Nothing found. Press Y to search again." : kind === "themes" ? "No themes for this console yet." : "No plugins to show.";
+  const sectionName = kind === "themes" ? t("themes") : t("plugins");
+  const empty = data.loading ? (kind === "themes" ? t("loadingThemes") : t("loadingPlugins")) : query.trim() ? t("nothingFoundPressY") : kind === "themes" ? t("noThemesForConsole") : t("noPluginsToShow");
   const hints = zone === "detail"
-    ? `A select · ◀ ▶ buttons · ▲ ▼ scroll${it ? " · X project page" : ""}${confirm ? " · B cancel" : " · B back"}`
-    : `A open · Y search ${kind === "themes" ? "themes" : "plugins"} · L1 / R1 sections · B close`;
+    ? `${t("storeSectionDetailHints")}${it ? t("projectPageHint") : ""}${confirm ? t("cancelHint") : t("backHint")}`
+    : (kind === "themes" ? t("storeSectionBrowseHintsThemes") : t("storeSectionBrowseHintsPlugins"));
   const footer = <div className="dht-store-section-hints dht-store-prompt">{T(hints)}</div>;
-  const attribution = kind === "plugins" && <span className="dht-store-section-attribution" onClick={() => openUrl(plugins.source || EXPLORER_PAGE)}>Plugin data: Decky Plugins Explorer by safetzahirovic</span>;
+  const attribution = kind === "plugins" && <span className="dht-store-section-attribution" onClick={() => openUrl(plugins.source || EXPLORER_PAGE)}>{t("pluginDataAttribution")}</span>;
 
   // ── the detail page of the open item ──
   if (zone === "detail" && tile) {
@@ -332,24 +333,24 @@ export function StoreSection({ kind, settings, skin, query, active, inputRef, on
             <p>{tile.text}</p>
             {it?.pick?.aiAssisted && <p>{it.pick.aiAssisted.note}</p>}
             {it && it.source === "explorer" && !confirm && <div className="dht-store-section-warning" role="note">
-              <strong>Not reviewed by ThemeHub</strong>
-              <span>This plugin comes from the public list of Decky plugin repositories. We have not checked its code, and it may or may not be in Decky’s own store. Read the project page first. ThemeHub installs an unreviewed plugin only from a known release ZIP and only after you confirm.</span>
-              {it.root && <span>It asks to run <b>as root</b> (full access to your system).</span>}
-              {it.archived && <span>The author has <b>archived</b> this repository; it may no longer work.</span>}
-              {it.forkOf && <span>Another repository of <b>{it.forkOf}</b> with the same name and author.</span>}
+              <strong>{t("notReviewedByThemeHub")}</strong>
+              <span>{t("notReviewedByThemeHubDesc")}</span>
+              {it.root && <span>{t("runsAsRootWarning")}</span>}
+              {it.archived && <span>{t("repoArchivedWarning")}</span>}
+              {it.forkOf && <span>{t("forkWarning", { repo: it.forkOf })}</span>}
             </div>}
             {it && confirm > 0 && <div className="dht-store-section-confirm" role="alertdialog" aria-label="Confirm installation">
-              {confirm === 1 ? <><strong>Install {it.name} without a review?</strong><span>ThemeHub has not checked this plugin. It downloads {it.release ? `release ${it.release}` : "the latest release"} from {it.repo} on GitHub and runs with Decky’s permissions. Decky asks once more before installing.</span></>
-                : <><strong>This plugin runs as root.</strong><span>It gets full access to your system, beyond what normal plugins can do. Install only if you trust {it.author || it.repo.split("/")[0]}.</span></>}
+              {confirm === 1 ? <><strong>{t("installConfirmTitle", { name: it.name })}</strong><span>{t("installConfirmDesc", { release: it.release ? `release ${it.release}` : t("latestRelease"), repo: it.repo })}</span></>
+                : <><strong>{t("rootConfirmTitle")}</strong><span>{t("rootConfirmDesc", { author: it.author || it.repo.split("/")[0] })}</span></>}
             </div>}
-            {it?.pick && <p className="dht-store-section-note">Decky will ask you to confirm before downloading and installing.</p>}
+            {it?.pick && <p className="dht-store-section-note">{t("deckyConfirmNote")}</p>}
             {it && (it.tags.length > 0 || it.release || !!it.downloads) && <dl className="dht-store-section-facts">
-              {it.tags.length > 0 && <div><dt>Tags</dt><dd>{it.tags.join(", ")}</dd></div>}
-              {it.release && <div><dt>Latest release</dt><dd>{it.release}</dd></div>}
-              {!!it.downloads && <div><dt>Release downloads</dt><dd>{it.downloads.toLocaleString()}</dd></div>}
+              {it.tags.length > 0 && <div><dt>{t("tagsFact")}</dt><dd>{it.tags.join(", ")}</dd></div>}
+              {it.release && <div><dt>{t("latestReleaseFact")}</dt><dd>{it.release}</dd></div>}
+              {!!it.downloads && <div><dt>{t("releaseDownloadsFact")}</dt><dd>{it.downloads.toLocaleString()}</dd></div>}
             </dl>}
-            {tile.pack && <dl className="dht-store-section-facts"><div><dt>Download</dt><dd>{(tile.pack.size / 1048576).toFixed(1)} MB</dd></div><div><dt>Version</dt><dd>{tile.pack.version}</dd></div><div><dt>On this Deck</dt><dd>{tile.pack.installedVersion ? `Yes (${tile.pack.installedVersion})` : "No"}</dd></div></dl>}
-            {it?.readme && <><h4>From the README</h4><ReadmeExcerpt text={it.readme} /></>}
+            {tile.pack && <dl className="dht-store-section-facts"><div><dt>{t("downloadFact")}</dt><dd>{(tile.pack.size / 1048576).toFixed(1)} MB</dd></div><div><dt>{t("versionFact")}</dt><dd>{tile.pack.version}</dd></div><div><dt>{t("onThisDeckFact")}</dt><dd>{tile.pack.installedVersion ? t("yesWithVersion", { version: tile.pack.installedVersion }) : t("noFact")}</dd></div></dl>}
+            {it?.readme && <><h4>{t("fromTheReadme")}</h4><ReadmeExcerpt text={it.readme} /></>}
             {message && <p className="dht-store-section-message" role="status">{message}</p>}
           </div>
           <div className="dht-store-section-actions">
@@ -401,7 +402,7 @@ export function StoreSection({ kind, settings, skin, query, active, inputRef, on
   );
   else if (layout === "stack") body = (
     <div className="dht-store-section-stackwrap">
-      <div className="dht-store-stack-about"><b>{kind === "themes" ? "Themes Marketplace" : "Plugin Marketplace"}</b><span>{kind === "themes" ? "Download theme packs and use the theme files on your Deck" : "Download plugins for your Deck, picked by us or from every public Decky plugin"}</span></div>
+      <div className="dht-store-stack-about"><b>{kind === "themes" ? t("themesMarketplace") : t("pluginMarketplace")}</b><span>{kind === "themes" ? "Download theme packs and use the theme files on your Deck" : "Download plugins for your Deck, picked by us or from every public Decky plugin"}</span></div>
       <div className="dht-store-stack-cats">
         {shelves.map((sh, i) => i <= si && <div key={sh.id} className="dht-store-stack-cat dht-store-shelf-title" data-current={i === si} style={{ opacity: i === si ? 1 : Math.max(0.15, 0.6 - (si - i - 1) * 0.2) }}>{sh.title}</div>)}
       </div>

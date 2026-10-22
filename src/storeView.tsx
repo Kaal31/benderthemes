@@ -1,5 +1,6 @@
 import {switchPageVars,switchStandardPalette,switchStandardDark} from "./themes/switchStandardSkin";
 import { SANTA_PAGE_STYLES } from "./themes/santaPageStyles";
+import { t } from "./i18n";
 import {NazarickNavigation,NazarickPage,nextNazarickPage} from "./themes/NazarickNavigation";
 import {NazarickBackdrop} from "./themes/NazarickBackdrop";
 import {castleWindowAppearance,useCastleWindow} from "./themes/castleWindow";
@@ -27,10 +28,24 @@ import { getSettings, storeSectionOn } from "./settings";
 
 /** The store's tabs: Steam's lists, then the optional Themes / Plugins sections the home theme turned on, then Search. */
 function storeTabs(s: Settings): { id: StoreTab; label: string }[] {
-  const home = getSettings().theme || s.theme; // the toggles belong to the theme the store was opened from
-  const extra = ([["themes", "Themes"], ["plugins", "Plugins"]] as const).filter(([k]) => storeSectionOn(getSettings(), home, k)).map(([id, label]) => ({ id, label }));
-  const i = STORE_TABS.findIndex((t) => t.id === "search");
-  return [...STORE_TABS.slice(0, i), ...extra, ...STORE_TABS.slice(i)];
+  const tabLabel = (id: StoreTab, fallback: string): string => {
+    switch (id) {
+      case "featured": return t("storeFeatured");
+      case "specials": return t("storeSpecials");
+      case "top": return t("storeTopSellers");
+      case "new": return t("storeNewReleases");
+      case "soon": return t("storeComingSoon");
+      case "themes": return t("themes");
+      case "plugins": return t("plugins");
+      case "search": return t("search");
+      default: return fallback;
+    }
+  };
+  const home = getSettings().theme || s.theme;
+  const extra = ([["themes", t("themes")], ["plugins", t("plugins")]] as const).filter(([k]) => storeSectionOn(getSettings(), home, k)).map(([id, label]) => ({ id: id as StoreTab, label }));
+  const base = STORE_TABS.map((tab) => ({ id: tab.id, label: tabLabel(tab.id, tab.label) }));
+  const i = base.findIndex((t) => t.id === "search");
+  return [...base.slice(0, i), ...extra, ...base.slice(i)];
 }
 const isSection = (t: StoreTab): t is "themes" | "plugins" => t === "themes" || t === "plugins";
 
@@ -183,9 +198,9 @@ export function StoreView({ settings, lib, onClose, onLaunch }: { settings: Sett
 
   const actions: { label: string; run: () => void }[] = detail
     ? [
-        ...(owned ? [{ label: "Play", run: () => close(()=>onLaunch(owned)) }] : []),
-        { label: "Checkout / sign in with Steam", run: () => close(()=>openStorePage(detail.id)) },
-        ...(detail.hasTrailer ? [{ label: "Watch Trailer", run: () => setZone("trailer") }] : []),
+        ...(owned ? [{ label: t("play"), run: () => close(()=>onLaunch(owned)) }] : []),
+        { label: t("storeCheckoutAction"), run: () => close(()=>openStorePage(detail.id)) },
+        ...(detail.hasTrailer ? [{ label: t("watchTrailer"), run: () => setZone("trailer") }] : []),
       ]
     : [];
 
@@ -278,9 +293,9 @@ export function StoreView({ settings, lib, onClose, onLaunch }: { settings: Sett
   }, []);
 
   return (
-    <div ref={castleWindow.ref} className="dht-store" data-dht-store-skin={settings.theme} data-theme-id={activeTheme(settings)?.id} data-scheme={iisuSchemeAttr(settings)} style={{ position: "absolute", inset: 0, zIndex: 85, background: "#000",...iisuPageVars(settings),...switchPageVars(settings),...(settings.theme==="castle"?castleWindowAppearance(settings):{}) }}><style>{SANTA_PAGE_STYLES}</style>
+    <div ref={castleWindow.ref} className="dht-store" data-dht-store-skin={settings.theme} data-theme-id={activeTheme(settings)?.id} data-switch-style={settings.theme === "switch" && switchStandardDark(settings) ? "dark" : undefined} data-scheme={iisuSchemeAttr(settings)} style={{ position: "absolute", inset: 0, zIndex: 85, background: "#000",...iisuPageVars(settings),...switchPageVars(settings),...(settings.theme==="castle"?castleWindowAppearance(settings):{}) }}><style>{SANTA_PAGE_STYLES}</style>
       <style>{NINTENDO_STORE_CSS + "\n" + IISU_STORE_CSS}</style>
-      {searchOpen && <div className="dht-store-search" style={{position:"absolute",inset:settings.theme==="nazarick"?"10% 0 0":0,zIndex:5,background:skin.bg,color:skin.text,display:"grid",placeItems:"center"}}><form onSubmit={e=>{e.preventDefault();submitSearch();}} style={{width:"65%"}}><h1>{tab === "plugins" ? "Search plugins" : tab === "themes" ? "Search themes" : "Search Store"}</h1><input ref={searchBox} autoFocus {...opensKeyboardOnTap} aria-label={tab === "plugins" ? "Search plugins" : tab === "themes" ? "Search themes" : "Search Store"} value={searchDraft} onChange={e=>setSearchDraft(e.target.value)} onKeyDown={e=>{e.stopPropagation();if(e.key==="Escape")setSearchOpen(false);}} style={{width:"100%",boxSizing:"border-box",fontSize:28,padding:18,color:skin.text,background:skin.panel,border:`2px solid ${skin.sub}`,borderRadius:skin.radius}}/><button type="submit" style={{fontSize:22,padding:"14px 30px",marginTop:24,background:skin.accent,color:skin.accentText}}>Search</button><button type="button" onClick={()=>setSearchOpen(false)} style={{fontSize:22,padding:"14px 30px",marginLeft:18}}>Back</button><p style={{marginTop:22,fontSize:16,color:skin.sub}}>Ⓐ Keyboard · Ⓨ Search · Ⓑ Back</p></form></div>}
+      {searchOpen && <div className="dht-store-search" style={{position:"absolute",inset:settings.theme==="nazarick"?"10% 0 0":0,zIndex:5,background:skin.bg,color:skin.text,display:"grid",placeItems:"center"}}><form onSubmit={e=>{e.preventDefault();submitSearch();}} style={{width:"65%"}}><h1>{tab === "plugins" ? t("searchPlugins") : tab === "themes" ? t("searchThemes") : t("searchStore")}</h1><input ref={searchBox} autoFocus {...opensKeyboardOnTap} aria-label={tab === "plugins" ? t("searchPlugins") : tab === "themes" ? t("searchThemes") : t("searchStore")} value={searchDraft} onChange={e=>setSearchDraft(e.target.value)} onKeyDown={e=>{e.stopPropagation();if(e.key==="Escape")setSearchOpen(false);}} style={{width:"100%",boxSizing:"border-box",fontSize:28,padding:18,color:skin.text,background:skin.panel,border:`2px solid ${skin.sub}`,borderRadius:skin.radius}}/><button type="submit" style={{fontSize:22,padding:"14px 30px",marginTop:24,background:skin.accent,color:skin.accentText}}>{t("search")}</button><button type="button" onClick={()=>setSearchOpen(false)} style={{fontSize:22,padding:"14px 30px",marginLeft:18}}>{t("back")}</button><p style={{marginTop:22,fontSize:16,color:skin.sub}}>{t("storeSearchPrompt")}</p></form></div>}
       <StageHost><Stage background="transparent">
         {settings.theme==="nazarick"&&<><NazarickBackdrop page="store" motion={settings.animations} settings={settings}/><NazarickNavigation page="store" settings={settings} onNavigate={navigateNazarick}/></>}
         <StoreBody
@@ -348,14 +363,14 @@ function StoreBody(p: {
           {skin.title}
         </span>
       </div>
-      <div className="dht-store-prompt" style={{ position: "absolute", right: 56, top: 36, fontSize: 15, color: skin.tabText ?? skin.sub }}>{T(skin.categoryNavigation?"L1 / R1 categories · Y search":"L1 / R1 sections · Y search · B close")}</div>
+      <div className="dht-store-prompt" style={{ position: "absolute", right: 56, top: 36, fontSize: 15, color: skin.tabText ?? skin.sub }}>{T(skin.categoryNavigation?t("storePromptCategories"):t("storePromptSections"))}</div>
       <div style={{ position: "absolute", left: 56, top: 82, right:56, display: "flex", flexWrap:"wrap", gap: 10 }}>
-        {p.tabs.map((t) => {
-          const on = t.id === p.tab;
+        {p.tabs.map((tabItem) => {
+          const on = tabItem.id === p.tab;
           const focus = on && p.zone === "tabs";
           return (
-            <div key={t.id} className="dht-store-tab" data-selected={on} onClick={() => p.onTab(t.id)} style={{ padding: "7px 16px", borderRadius: Math.min(skin.radius, 20) || 0, fontSize: skin.compact ? 24 : 16, fontWeight: on ? 700 : 500, letterSpacing: skin.upper ? 1.5 : 0, background: on ? skin.accent : "transparent", color: on ? skin.accentText : skin.tabText ?? skin.sub, boxShadow: focus ? `0 0 0 2px ${skin.text}` : "none", cursor: "pointer" }}>
-              {T(t.id === "search" && p.query ? `Search: ${p.query}` : t.label)}
+            <div key={tabItem.id} className="dht-store-tab" data-selected={on} onClick={() => p.onTab(tabItem.id)} style={{ padding: "7px 16px", borderRadius: Math.min(skin.radius, 20) || 0, fontSize: skin.compact ? 24 : 16, fontWeight: on ? 700 : 500, letterSpacing: skin.upper ? 1.5 : 0, background: on ? skin.accent : "transparent", color: on ? skin.accentText : skin.tabText ?? skin.sub, boxShadow: focus ? `0 0 0 2px ${skin.text}` : "none", cursor: "pointer" }}>
+              {T(tabItem.id === "search" && p.query ? `${t("search")}: ${p.query}` : tabItem.label)}
             </div>
           );
         })}
@@ -394,13 +409,13 @@ function StoreBody(p: {
                 <b>{d.priceText}</b>
               </span>
             )}
-            {owned && <span style={{ padding: "2px 10px", borderRadius: 4, background: skin.accent, color: skin.accentText, fontSize: 13, fontWeight: 700 }}>{T("In Library")}</span>}
+            {owned && <span style={{ padding: "2px 10px", borderRadius: 4, background: skin.accent, color: skin.accentText, fontSize: 13, fontWeight: 700 }}>{T(t("inLibrary"))}</span>}
           </div>
-          <div style={{ marginTop: 14, fontSize: 16, lineHeight: 1.5, color: skin.text, opacity: 0.9, maxHeight: 190, overflow: "hidden" }}>{d.short || "Loading…"}</div>
+          <div style={{ marginTop: 14, fontSize: 16, lineHeight: 1.5, color: skin.text, opacity: 0.9, maxHeight: 190, overflow: "hidden" }}>{d.short || t("loadingDots")}</div>
           <div style={{ marginTop: 14, fontSize: 14, color: skin.sub, lineHeight: 1.6 }}>
             {d.genres.length > 0 && <div>{d.genres.join(" · ")}</div>}
-            {d.release && <div>Release: {d.release}</div>}
-            {d.developers.length > 0 && <div>Developer: {d.developers.join(", ")}</div>}
+            {d.release && <div>{t("release")}: {d.release}</div>}
+            {d.developers.length > 0 && <div>{t("developer")}: {d.developers.join(", ")}</div>}
             {d.metacritic && <div>Metacritic: {d.metacritic}</div>}
           </div>
         </div>
@@ -411,7 +426,7 @@ function StoreBody(p: {
             </div>
           ))}
         </div>
-        <div className="dht-store-prompt" style={{ position: "absolute", left: 56, bottom: 30, fontSize: 14, color: skin.sub }}>{T(p.zone === "trailer" ? "B back" : "A select · ◀ ▶ buttons · L1 / R1 screenshots · B back")}</div>
+        <div className="dht-store-prompt" style={{ position: "absolute", left: 56, bottom: 30, fontSize: 14, color: skin.sub }}>{T(p.zone === "trailer" ? t("storeTrailerPrompt") : t("storeDetailPrompt"))}</div>
       </div>
     );
   }
@@ -420,7 +435,7 @@ function StoreBody(p: {
   if (p.section) return <div className={`${skin.layout === "grid" ? "dht-store-grid" : "dht-store-list"} dht-store-sections`} style={base}>{header}{p.section}</div>;
 
   // ── lists ──
-  const empty = p.loading ? "Loading the store…" : p.failed ? "The store can't be reached right now (check the internet connection)." : p.tab === "search" ? (p.query ? "Nothing found." : "Press Y to search.") : "Nothing here right now.";
+  const empty = p.loading ? t("storeLoading") : p.failed ? t("storeUnreachable") : p.tab === "search" ? (p.query ? t("nothingFound") : t("storePressYToSearch")) : t("nothingHereRightNow");
   if (skin.layout === "grid") {
     const COLS = skin.compact ? 2 : 4;
     const tw = Math.floor((W - 112 - (COLS - 1) * 20) / COLS);
@@ -441,7 +456,7 @@ function StoreBody(p: {
               <div style={{ width: tw, height: th, borderRadius: skin.radius, overflow: "hidden", background: skin.panel, position: "relative" }}>
                 <img src={it.header} style={{ width: "100%", height: "100%", objectFit: "cover", display: "block" }} />
                 {!!it.discount && <span style={{ position: "absolute", left: 8, top: 8, padding: "2px 8px", borderRadius: 4, background: skin.sale, color: "#000", fontWeight: 800, fontSize: 14 }}>-{it.discount}%</span>}
-                {p.lib.byId.has(it.id) && <span style={{ position: "absolute", right: 8, top: 8, padding: "2px 8px", borderRadius: 4, background: "rgba(0,0,0,0.65)", color: "#fff", fontSize: 12 }}>In Library</span>}
+                {p.lib.byId.has(it.id) && <span style={{ position: "absolute", right: 8, top: 8, padding: "2px 8px", borderRadius: 4, background: "rgba(0,0,0,0.65)", color: "#fff", fontSize: 12 }}>{t("inLibrary")}</span>}
               </div>
               <div style={{ marginTop: 8, fontSize: 16, fontWeight: 600, whiteSpace: "nowrap", overflow: "hidden", textOverflow: "ellipsis" }}>{T(it.name)}</div>
               <div style={{ marginTop: 2, color: skin.sub }}>

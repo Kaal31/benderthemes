@@ -23,6 +23,7 @@ import { refreshThemeLists } from "./themeSettingsMenu";
 import { deleteCurrentTheme } from "./themeActions";
 import { applyPreset, currentLook, currentPresetId, deleteUserPreset, getPresets, presetAvailable, refreshPresets, renamePreset, saveUserPreset, usePresets, PRESET_GROUPS } from "./presets";
 import { customizeControls } from "./customize";
+import { t, useLocalization } from "./i18n";
 
 const ROUTE = "/deck-home-themes";
 const HOME_ROUTE = "/library/home";
@@ -56,6 +57,7 @@ function DeferredText({ label, initial, onCommit }: { label: string; initial: st
 
 /** Community themes (docs/THEME-FORMAT.md): pick a theme .zip; the plugin checks it and copies it into its themes folder. */
 function AddThemeRow() {
+  const lang = useLocalization();
   const [msg, setMsg] = useState("");
   const [, setRev] = useState(0);
   useEffect(() => onThemesChanged(() => setRev((r) => r + 1)), []); // refused zips change after a Rescan
@@ -63,14 +65,14 @@ function AddThemeRow() {
     try {
       const picked = await openFilePicker(0 as any /* FileSelectionType.FILE */, "/home/deck/Downloads", true, true, undefined, ["zip"]);
       if (!picked?.realpath) return;
-      setMsg("Checking…");
+      setMsg(lang("checkingDots"));
       const r = await importThemeZip(picked.realpath);
       if (r.ok) {
         await refreshPresets();
         const p = getPresets().find((x) => x.id === r.id);
         if (p) applyPreset(p);
-        setMsg(`Added ${r.name || r.id}`);
-      } else setMsg(`Not added: ${r.error ?? "unknown reason"}`);
+        setMsg(lang("themeAdded", { name: r.name || r.id || "" }));
+      } else setMsg(lang("themeNotAdded", { error: r.error ?? lang("unknownReason") }));
     } catch {
       setMsg("");
     }
@@ -78,14 +80,15 @@ function AddThemeRow() {
   const refused = userThemes.errors;
   return (
     <PanelSectionRow>
-      <ButtonItem layout="below" description={msg || `A community theme as a .zip (theme.json inside). Or copy a theme folder / .zip into ${userThemes.dir || "the plugin's themes folder"} and Rescan.${refused.length ? ` Refused: ${refused.map((e) => `${e.file} (${e.error})`).join("; ")}` : ""}`} onClick={() => void add()}>
-        Add a theme from a file
+      <ButtonItem layout="below" description={msg || `${lang("addThemeFromFileDesc", { dir: userThemes.dir || "the plugin's themes folder" })}${refused.length ? ` ${lang("refusedThemes", { errors: refused.map((e) => `${e.file} (${e.error})`).join("; ") })}` : ""}`} onClick={() => void add()}>
+        {lang("addThemeFromFile")}
       </ButtonItem>
     </PanelSectionRow>
   );
 }
 
 function Panel() {
+  const lang = useLocalization();
   const failure = useHomeFailure();
   const s = useSettings();
   const loaded = useSettingsLoaded();
@@ -111,15 +114,15 @@ function Panel() {
   return (
     <>
       <Updates showCommunityUpdates={false} onManageThemes={() => { openMarketplace(); Navigation.Navigate(ROUTE); Navigation.CloseSideMenus(); }} />
-      <PanelSection title="Screensavers">
+      <PanelSection title={lang("screensavers")}>
         <PanelSectionRow><ScreensaverStatus /></PanelSectionRow>
-        <PanelSectionRow><ToggleField label="Disable screensavers" description="Disable all Steam screensavers while ThemeHub is loaded. Overrides every theme’s screensaver." checked={s.screensaversDisabled===true} onChange={screensaversDisabled=>updateSettings({screensaversDisabled})}/></PanelSectionRow>
+        <PanelSectionRow><ToggleField label={lang("disableScreensavers")} description={lang("disableScreensaversDesc")} checked={s.screensaversDisabled===true} onChange={screensaversDisabled=>updateSettings({screensaversDisabled})}/></PanelSectionRow>
       </PanelSection>
-      <PanelSection title="Themes">
-        <PanelSectionRow><ButtonItem layout="below" description="Browse animated previews, download a theme and activate it." onClick={() => { openMarketplace(); Navigation.Navigate(ROUTE); Navigation.CloseSideMenus(); }}>Hub</ButtonItem></PanelSectionRow>
+      <PanelSection title={lang("qamThemes")}>
+        <PanelSectionRow><ButtonItem layout="below" description={lang("qamHubDesc")} onClick={() => { openMarketplace(); Navigation.Navigate(ROUTE); Navigation.CloseSideMenus(); }}>{lang("qamHub")}</ButtonItem></PanelSectionRow>
         <AddThemeRow />
         <PanelSectionRow>
-          <ToggleField label="Themed home screen" description="Replace Steam's home with the console theme" checked={s.enabled} onChange={(v) => updateSettings({ enabled: v })} />
+          <ToggleField label={lang("qamThemedHome")} description={lang("qamThemedHomeDesc")} checked={s.enabled} onChange={(v) => updateSettings({ enabled: v })} />
         </PanelSectionRow>
         <PanelSectionRow>
           <ButtonItem
@@ -131,35 +134,35 @@ function Panel() {
               setTimeout(() => Navigation.Navigate(ROUTE), 80);
             }}
           >
-            Open themed home
+            {lang("openThemedHome")}
           </ButtonItem>
         </PanelSectionRow>
       </PanelSection>
-      {failure && <PanelSection title="Steam Home restored"><PanelSectionRow><ButtonItem layout="below" description={failure} onClick={retryHome}>Retry themed home</ButtonItem></PanelSectionRow></PanelSection>}
+      {failure && <PanelSection title={lang("qamHomeRestored")}><PanelSectionRow><ButtonItem layout="below" description={failure} onClick={retryHome}>{lang("qamRetryHome")}</ButtonItem></PanelSectionRow></PanelSection>}
 
-      <PanelSection title="Presets">
+      <PanelSection title={lang("qamPresets")}>
         <PanelSectionRow>
-          <DropdownItem label="Look" rgOptions={looks} selectedOption={look} onChange={(o) => { const p = presets.find((x) => x.id === o.data); if (p) applyPreset(p); }} />
+          <DropdownItem label={lang("qamLook")} rgOptions={looks} selectedOption={look} onChange={(o) => { const p = presets.find((x) => x.id === o.data); if (p) applyPreset(p); }} />
         </PanelSectionRow>
         <PanelSectionRow>
           <DropdownItem
-            label="Preset"
-            description={`${themeName}'s presets: its own look, its imported theme files and the ones you saved. Changes are kept in the preset in use. On the home: hold L2 / R2 + ▲▼ to change console, L2 / R2 + ◀▶ for its presets; L2 / R2 previous / next theme; △ / Y → Presets.`}
+            label={lang("qamPreset")}
+            description={lang("themePresetsInfoDetailed", { theme: themeName })}
             key={look}
             rgOptions={mine.map((p) => ({ data: p.id, label: p.label }))}
             selectedOption={current}
             onChange={(o) => { const p = presets.find((x) => x.id === o.data); if (p) applyPreset(p); }}
           />
         </PanelSectionRow>
-        <PanelSectionRow><ButtonItem layout="below" onClick={() => void saveUserPreset()}>Save as new preset</ButtonItem></PanelSectionRow>
+        <PanelSectionRow><ButtonItem layout="below" onClick={() => void saveUserPreset()}>{lang("qamSaveNewPreset")}</ButtonItem></PanelSectionRow>
         <PanelSectionRow>
-          <DeferredText key={`${current}|${preset?.label}`} label="Name" initial={preset?.label ?? ""} onCommit={(v) => { if (v.trim() && v !== preset?.label) renamePreset(current, v); }} />
+          <DeferredText key={`${current}|${preset?.label}`} label={lang("qamName")} initial={preset?.label ?? ""} onCommit={(v) => { if (v.trim() && v !== preset?.label) renamePreset(current, v); }} />
         </PanelSectionRow>
         {(preset?.origin === "saved" || preset?.user) && <PresetDeleteRow id={current} saved={preset?.origin === "saved"} name={preset?.label ?? ""} />}
       </PanelSection>
 
       {controls.length > 0 && (
-        <PanelSection title="Customize">
+        <PanelSection title={lang("qamCustomize")}>
           {controls.map((c) => (
             <PanelSectionRow key={c.id}>
               <DropdownItem
@@ -173,49 +176,49 @@ function Panel() {
         </PanelSection>
       )}
 
-      <PanelSection title="Advanced">
+      <PanelSection title={lang("qamAdvanced")}>
         <PanelSectionRow>
-          <ToggleField label="Show advanced options" description="Settings for all themes, rescanning, reset and delete" checked={advanced} onChange={setAdvanced} />
+          <ToggleField label={lang("qamShowAdvanced")} description={lang("qamShowAdvancedDesc")} checked={advanced} onChange={setAdvanced} />
         </PanelSectionRow>
         {advanced && (
           <>
             {s.enabled && (
               <PanelSectionRow>
-                <ButtonItem layout="below" description="Open the native Steam home screen" onClick={showNativeSteamHome}>
-                  Go to Steam Home
+                <ButtonItem layout="below" description={lang("openNativeSteamHomeDesc")} onClick={showNativeSteamHome}>
+                  {lang("goToSteamHome")}
                 </ButtonItem>
               </PanelSectionRow>
             )}
-            <PanelSectionRow><ToggleField label="Firmware update notifications" checked={s.firmwareNotifications !== false} onChange={(value) => updateSettings({ firmwareNotifications: value })} /></PanelSectionRow>
-            <PanelSectionRow><ToggleField label="TV mode" description="Safe screen margins and larger menu text" checked={s.tvMode} onChange={(tvMode) => updateSettings({ tvMode })} /></PanelSectionRow>
+            <PanelSectionRow><ToggleField label={lang("firmwareNotifications")} checked={s.firmwareNotifications !== false} onChange={(value) => updateSettings({ firmwareNotifications: value })} /></PanelSectionRow>
+            <PanelSectionRow><ToggleField label={lang("tvMode")} description={lang("tvModeDesc")} checked={s.tvMode} onChange={(tvMode) => updateSettings({ tvMode })} /></PanelSectionRow>
             <PanelSectionRow>
-              <DropdownItem label="Sort · all themes" rgOptions={[{ data: "recent", label: "Recently played" }, { data: "alpha", label: "A–Z" }, { data: "playtime", label: "Most played" }]} selectedOption={s.sort} onChange={(o) => updateSettings({ sort: o.data as SortMode })} />
+              <DropdownItem label={lang("sortAllThemes")} rgOptions={[{ data: "recent", label: lang("sortRecent") }, { data: "alpha", label: lang("sortAlpha") }, { data: "playtime", label: lang("sortPlaytime") }]} selectedOption={s.sort} onChange={(o) => updateSettings({ sort: o.data as SortMode })} />
             </PanelSectionRow>
             <PanelSectionRow>
-              <DropdownItem label="Ⓐ on a game" rgOptions={[{ data: "theme", label: "Like the console (LiveArea, Start…)" }, { data: "launch", label: "Launch right away" }, { data: "details", label: "Open Steam's game page" }]} selectedOption={s.aAction} onChange={(o) => updateSettings({ aAction: o.data })} />
+              <DropdownItem label={lang("aOnGame")} rgOptions={[{ data: "theme", label: lang("aActionConsole") }, { data: "launch", label: lang("aActionLaunch") }, { data: "details", label: lang("aActionDetails") }]} selectedOption={s.aAction} onChange={(o) => updateSettings({ aAction: o.data })} />
             </PanelSectionRow>
-            <PanelSectionRow><ToggleField label="Themed store" description="Store entries open the Steam Store styled like this theme (off: Steam's own store)" checked={s.themedStore !== false} onChange={(v) => updateSettings({ themedStore: v })} /></PanelSectionRow>
-            <PanelSectionRow><ToggleField label="Steam Deck compatibility badges" checked={s.badges.deck} onChange={(v) => updateSettings((p) => ({ badges: { ...p.badges, deck: v } }))} /></PanelSectionRow>
-            <PanelSectionRow><ToggleField label="Hide Steam's top bar" description="While the themed home is on screen" checked={s.hideSteamHeader} onChange={(v) => updateSettings({ hideSteamHeader: v })} /></PanelSectionRow>
-            <PanelSectionRow><ToggleField label="Themed keyboard" description="Off by default. Steam's on-screen keyboard looks like the active console's keyboard, in every theme (a CSS Loader keyboard theme or a Points Shop keyboard wins)" checked={s.keyboardSkin === true} onChange={(v) => updateSettings({ keyboardSkin: v })} /></PanelSectionRow>
+            <PanelSectionRow><ToggleField label={lang("themedStore")} description={lang("themedStoreDesc")} checked={s.themedStore !== false} onChange={(v) => updateSettings({ themedStore: v })} /></PanelSectionRow>
+            <PanelSectionRow><ToggleField label={lang("deckBadges")} checked={s.badges.deck} onChange={(v) => updateSettings((p) => ({ badges: { ...p.badges, deck: v } }))} /></PanelSectionRow>
+            <PanelSectionRow><ToggleField label={lang("hideSteamHeader")} description={lang("whileThemedHomeOnScreen")} checked={s.hideSteamHeader} onChange={(v) => updateSettings({ hideSteamHeader: v })} /></PanelSectionRow>
+            <PanelSectionRow><ToggleField label={lang("themedKeyboard")} description={lang("themedKeyboardDesc")} checked={s.keyboardSkin === true} onChange={(v) => updateSettings({ keyboardSkin: v })} /></PanelSectionRow>
             {s.keyboardSkin === true && (
               <PanelSectionRow>
                 <div style={{ paddingLeft: 12 }}>
-                  <SliderField label="Keyboard spacing (px)" description="Gap around each key · default 1 px" min={0} max={5} step={0.5} value={Math.max(0, Math.min(5, Number.isFinite(s.keyboardSpacing) ? s.keyboardSpacing! : 1))} showValue onChange={(value) => updateSettings({ keyboardSpacing: value })} />
+                  <SliderField label={lang("keyboardSpacing")} description={lang("keyboardSpacingDesc")} min={0} max={5} step={0.5} value={Math.max(0, Math.min(5, Number.isFinite(s.keyboardSpacing) ? s.keyboardSpacing! : 1))} showValue onChange={(value) => updateSettings({ keyboardSpacing: value })} />
                 </div>
               </PanelSectionRow>
             )}
-            <PanelSectionRow><DropdownItem label="Steam's bottom bar" description="Steam Menu · Ⓐ Select · Ⓑ Back, while the themed home is on screen" rgOptions={FOOTER_MODES.map((f) => ({ data: f.id, label: f.name }))} selectedOption={s.footer} onChange={(o) => updateSettings({ footer: o.data })} /></PanelSectionRow>
-            <PanelSectionRow><ToggleField label="Background animations" checked={s.animations} onChange={(v) => updateSettings({ animations: v })} /></PanelSectionRow>
-            <PanelSectionRow><ToggleField label="24-hour clock" checked={s.clock24} onChange={(v) => updateSettings({ clock24: v })} /></PanelSectionRow>
-            <PanelSectionRow><DeferredText key={String(loaded)} label="Profile name (blank = Steam name)" initial={s.profileName} onCommit={(v) => updateSettings({ profileName: v })} /></PanelSectionRow>
-            <PanelSectionRow><ToggleField label="Background music" description="Master switch; keeps each preset's own music" checked={s.backgroundMusic !== false} onChange={(v) => updateSettings({ backgroundMusic: v })} /></PanelSectionRow>
-            <PanelSectionRow><ToggleField label="Navigation sounds" checked={s.sounds} onChange={(v) => updateSettings({ sounds: v })} /></PanelSectionRow>
-            <PanelSectionRow><SliderField label="Sound volume" min={0} max={100} step={5} value={s.sfxVolume} showValue onChange={(v) => updateSettings({ sfxVolume: v })} /></PanelSectionRow>
-            <PanelSectionRow><SliderField label="Music volume" min={0} max={100} step={5} value={s.musicVolume} showValue onChange={(v) => updateSettings({ musicVolume: v })} /></PanelSectionRow>
+            <PanelSectionRow><DropdownItem label={lang("steamBottomBar")} description={lang("steamBottomBarDesc")} rgOptions={FOOTER_MODES.map((f) => ({ data: f.id, label: f.name }))} selectedOption={s.footer} onChange={(o) => updateSettings({ footer: o.data })} /></PanelSectionRow>
+            <PanelSectionRow><ToggleField label={lang("backgroundAnimations")} checked={s.animations} onChange={(v) => updateSettings({ animations: v })} /></PanelSectionRow>
+            <PanelSectionRow><ToggleField label={lang("clock24")} checked={s.clock24} onChange={(v) => updateSettings({ clock24: v })} /></PanelSectionRow>
+            <PanelSectionRow><DeferredText key={String(loaded)} label={lang("profileNameLabel")} initial={s.profileName} onCommit={(v) => updateSettings({ profileName: v })} /></PanelSectionRow>
+            <PanelSectionRow><ToggleField label={lang("backgroundMusic")} description={lang("backgroundMusicDesc")} checked={s.backgroundMusic !== false} onChange={(v) => updateSettings({ backgroundMusic: v })} /></PanelSectionRow>
+            <PanelSectionRow><ToggleField label={lang("navigationSounds")} checked={s.sounds} onChange={(v) => updateSettings({ sounds: v })} /></PanelSectionRow>
+            <PanelSectionRow><SliderField label={lang("soundVolume")} min={0} max={100} step={5} value={s.sfxVolume} showValue onChange={(v) => updateSettings({ sfxVolume: v })} /></PanelSectionRow>
+            <PanelSectionRow><SliderField label={lang("musicVolume")} min={0} max={100} step={5} value={s.musicVolume} showValue onChange={(v) => updateSettings({ musicVolume: v })} /></PanelSectionRow>
             <PanelSectionRow>
-              <ButtonItem layout="below" description="After adding sound packs, wallpapers or theme files" onClick={refresh}>
-                Rescan packs, wallpapers and skins
+              <ButtonItem layout="below" description={lang("rescanPacksDesc")} onClick={refresh}>
+                {lang("rescanPacks")}
               </ButtonItem>
             </PanelSectionRow>
             <ResetSection th={th} themeName={themeName} />
@@ -228,6 +231,7 @@ function Panel() {
 
 /** Delete a saved preset, or forget a built-in / theme-file preset's changes (press twice). */
 function PresetDeleteRow({ id, saved, name }: { id: string; saved: boolean; name: string }) {
+  const lang = useLocalization();
   const [armed, setArmed] = useState(false);
   useEffect(() => {
     if (!armed) return;
@@ -236,8 +240,8 @@ function PresetDeleteRow({ id, saved, name }: { id: string; saved: boolean; name
   }, [armed]);
   return (
     <PanelSectionRow>
-      <ButtonItem layout="below" description={saved ? undefined : "Back to how this preset starts (the look's defaults, its theme file)"} onClick={() => (armed ? (deleteUserPreset(id), setArmed(false)) : setArmed(true))}>
-        {armed ? "Press again" : saved ? `Delete ${name}` : `Reset ${name}`}
+      <ButtonItem layout="below" description={saved ? undefined : lang("resetPresetDesc")} onClick={() => (armed ? (deleteUserPreset(id), setArmed(false)) : setArmed(true))}>
+        {armed ? lang("pressAgain") : saved ? lang("deletePresetNamed", { name }) : lang("resetPresetNamed", { name })}
       </ButtonItem>
     </PanelSectionRow>
   );
@@ -245,6 +249,7 @@ function PresetDeleteRow({ id, saved, name }: { id: string; saved: boolean; name
 
 /** Settings are kept across reboots, plugin updates and theme deletion; these put them back to defaults. */
 function ResetSection({ th, themeName }: { th: ThemeId; themeName: string }) {
+  const lang = useLocalization();
   const [armed, setArmed] = useState<"" | "theme" | "all" | "delete">("");
   useEffect(() => {
     if (!armed) return;
@@ -256,28 +261,28 @@ function ResetSection({ th, themeName }: { th: ThemeId; themeName: string }) {
       <PanelSectionRow>
         <ButtonItem
           layout="below"
-          description={`Look, options, icon size, sounds and theme-file tunings of ${themeName}. Your folders and chosen theme files stay.`}
+          description={lang("resetThemeSettingsDesc", { theme: themeName })}
           onClick={() => (armed === "theme" ? (resetThemeSettings(th), setArmed("")) : setArmed("theme"))}
         >
-          {armed === "theme" ? "Press again to reset" : `Reset ${themeName} settings`}
+          {armed === "theme" ? lang("pressAgainReset") : lang("resetThemeSettingsNamed", { theme: themeName })}
         </ButtonItem>
       </PanelSectionRow>
       <PanelSectionRow>
         <ButtonItem
           layout="below"
-          description={`Removes ${themeName}'s downloaded resources and returns to Steam's home. Its settings are kept (Reset clears them).`}
+          description={lang("deleteThemeDesc", { theme: themeName })}
           onClick={() => (armed === "delete" ? (deleteCurrentTheme(), setArmed("")) : setArmed("delete"))}
         >
-          {armed === "delete" ? "Press again to delete" : `Delete ${themeName}`}
+          {armed === "delete" ? lang("pressAgainDelete") : lang("deleteThemeNamed", { theme: themeName })}
         </ButtonItem>
       </PanelSectionRow>
       <PanelSectionRow>
         <ButtonItem
           layout="below"
-          description="Every setting of every theme back to defaults (the current theme stays selected)."
+          description={lang("resetAllSettingsDesc")}
           onClick={() => (armed === "all" ? (resetAllSettings(), setArmed("")) : setArmed("all"))}
         >
-          {armed === "all" ? "Press again to reset everything" : "Reset all settings"}
+          {armed === "all" ? lang("pressAgainResetAll") : lang("resetAllSettings")}
         </ButtonItem>
       </PanelSectionRow>
     </>
@@ -285,6 +290,7 @@ function ResetSection({ th, themeName }: { th: ThemeId; themeName: string }) {
 }
 
 function Diagnostics() {
+  const lang = useLocalization();
   const d = useDiag();
   const lib = loadLibrary(useSettings().source, "recent", 9999);
   const others = useOtherPlugins();
@@ -295,20 +301,20 @@ function Diagnostics() {
     </div>
   );
   return (
-    <PanelSection title="Diagnostics">
-      <PanelSectionRow><div style={{fontSize:12}}>Experimental diagnostics run automatically for thirty minutes after plugin load. Keyboard, input lifecycle and idle overlay events share the Decky log at ~/homebrew/logs/DeckHomeThemes. Messages and typed text are excluded.</div></PanelSectionRow>
+    <PanelSection title={lang("qamDiagnostics")}>
+      <PanelSectionRow><div style={{fontSize:12}}>{lang("diagNotice")}</div></PanelSectionRow>
       <PanelSectionRow>
         <div>
-          {row("Version", PLUGIN_VERSION)}
-          {row("Settings (backend)", d.settingsBackend, d.settingsBackend !== "ok")}
-          {row("Steam home patched", d.homePatchRenders ? `yes (${d.homePatchRenders}×)` : "not yet — open Steam's Home", !d.homePatchRenders)}
-          {row("Themed home shown", d.themedMounts ? `${d.themedMounts}×` : "not yet", !d.themedMounts)}
-          {row("Sound", soundDiag(useSettings().theme))}
-          {row("Library", `${lib.games.length} games · ${lib.apps.length} apps · ${lib.collections.length} collections`, !lib.games.length)}
-          {others.homes.length > 0 && row("Also replacing Home", `${others.homes.join(", ")}: only one home can show. Turn off its home option or this plugin.`, true)}
-          {others.music.length > 0 && row("Other music", `${others.music.join(", ")} paused while theme music plays`)}
+          {row(lang("diagVersion"), PLUGIN_VERSION)}
+          {row(lang("diagSettingsBackend"), d.settingsBackend, d.settingsBackend !== "ok")}
+          {row(lang("diagSteamHomePatched"), d.homePatchRenders ? lang("diagYesCount", { count: d.homePatchRenders }) : lang("diagNotYetOpenHome"), !d.homePatchRenders)}
+          {row(lang("diagThemedHomeShown"), d.themedMounts ? `${d.themedMounts}×` : lang("diagNotYet"), !d.themedMounts)}
+          {row(lang("diagSound"), soundDiag(useSettings().theme))}
+          {row(lang("diagLibrary"), lang("diagLibraryCount", { games: lib.games.length, apps: lib.apps.length, collections: lib.collections.length }), !lib.games.length)}
+          {others.homes.length > 0 && row(lang("diagAlsoReplacingHome"), lang("diagOnlyOneHomeDesc", { homes: others.homes.join(", ") }), true)}
+          {others.music.length > 0 && row(lang("diagOtherMusic"), lang("diagOtherMusicPaused", { music: others.music.join(", ") }))}
           {others.support.map(p => <div key={p.name}>{row(p.name, `${p.mode}: ${p.detail}`, p.mode === "conflict")}</div>)}
-          {row("Last error", d.lastError || "none", !!d.lastError)}
+          {row(lang("diagLastError"), d.lastError || lang("diagNone"), !d.lastError)}
         </div>
       </PanelSectionRow>
     </PanelSection>
@@ -334,7 +340,7 @@ export default definePlugin(() => {
   routerHook.addRoute(
     ROUTE,
     () => (
-      <SafeBoundary where="page" fallback={<div style={{ padding: 48, color: "#ccc" }}>ThemeHub: something went wrong. See Quick Access → Diagnostics.</div>}>
+      <SafeBoundary where="page" fallback={<div style={{ padding: 48, color: "#ccc" }}>{t("themeHubError")}</div>}>
         <ThemedHome standalone />
       </SafeBoundary>
     ),
@@ -358,7 +364,7 @@ export default definePlugin(() => {
     name: "ThemeHub",
     titleView: <div className={staticClasses.Title}>ThemeHub</div>,
     content: (
-      <SafeBoundary fallback={<div style={{ padding: 16, color: "#ccc" }}>Settings failed to load.</div>}>
+      <SafeBoundary fallback={<div style={{ padding: 16, color: "#ccc" }}>{t("settingsFailed")}</div>}>
         <Panel />
         <Diagnostics />
       </SafeBoundary>

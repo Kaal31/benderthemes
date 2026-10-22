@@ -1,3 +1,4 @@
+import { t } from "../i18n";
 import {useEffect,useRef,useState} from "react";
 import {GameArt,Icon,IconName} from "../common";
 import {Game} from "../library";
@@ -61,9 +62,9 @@ export function WiiuDetail({game,variant}:{game?:Game;variant:"card"|"line"|"pan
     <div className="nt-detail-body">
       {variant==="card"&&<h2 className="dht-wiiu-detail-name">{d.name}</h2>}
       <p className="nt-detail-facts dht-wiiu-detail-facts"><span className="dht-wiiu-detail-playtime">{d.playtime}</span><span className="dht-wiiu-detail-last">Last played: {d.lastPlayed}</span><span className="dht-wiiu-detail-install" data-state={d.installed?"installed":"missing"}>{d.installLabel}</span>{tag&&<span className="dht-wiiu-detail-compat">{tag}</span>}</p>
-      {a.total>0&&<div className="nt-detail-ach dht-wiiu-detail-ach"><span className="nt-detail-trophy"><Icon name="trophy" size={20}/></span><span className="nt-detail-bar" role="progressbar" aria-valuenow={a.percent} aria-valuemin={0} aria-valuemax={100} aria-label="Achievements unlocked"><i style={{width:`${a.percent}%`}}/></span><b>{a.unlocked} / {a.total}</b><small>{a.percent}%</small></div>}
-      {a.recent.length>0&&<ul className="nt-detail-recent dht-wiiu-detail-recent" aria-label="Latest unlocked achievements">{a.recent.map(r=><li key={r.id}><span className="nt-detail-ach-icon">{r.image?<img src={r.image} alt=""/>:<Icon name="trophy" size={16}/>}</span><span>{r.name}</span></li>)}</ul>}
-      {variant==="card"&&<p className="nt-detail-hint">Y · Details and achievements</p>}
+      {a.total>0&&<div className="nt-detail-ach dht-wiiu-detail-ach"><span className="nt-detail-trophy"><Icon name="trophy" size={20}/></span><span className="nt-detail-bar" role="progressbar" aria-valuenow={a.percent} aria-valuemin={0} aria-valuemax={100} aria-label={t("achievementsUnlocked")}><i style={{width:`${a.percent}%`}}/></span><b>{a.unlocked} / {a.total}</b><small>{a.percent}%</small></div>}
+      {a.recent.length>0&&<ul className="nt-detail-recent dht-wiiu-detail-recent" aria-label={t("latestUnlockedAchievements")}>{a.recent.map(r=><li key={r.id}><span className="nt-detail-ach-icon">{r.image?<img src={r.image} alt=""/>:<Icon name="trophy" size={16}/>}</span><span>{r.name}</span></li>)}</ul>}
+      {variant==="card"&&<p className="nt-detail-hint">{t("detailsAndAchievementsHint")}</p>}
     </div>
   </aside>;
 }

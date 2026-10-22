@@ -1,3 +1,4 @@
+import { t } from "./i18n";
 import { PluginSpotlight } from "./PluginSpotlight";
 import { ThemeFiles } from "./ThemeFiles";
 import { CommunityThemes } from "./CommunityThemes";
@@ -23,7 +24,7 @@ import { bonusThemeFeatures, BONUS_FEATURE_LABELS } from "./bonusThemeFeatures";
 function BonusFeatureBadges({id}:{id:string}) {
   const features=bonusThemeFeatures(id);
   if(!features.length)return null;
-  return <div className="dht-hub-feature-badges" aria-label="Bonus theme features">{features.map(feature=><span key={feature} className="dht-hub-feature-badge" data-feature={feature} title={BONUS_FEATURE_LABELS[feature].description}>{BONUS_FEATURE_LABELS[feature].label}</span>)}</div>;
+  return <div className="dht-hub-feature-badges" aria-label={t("bonusFeatures")}>{features.map(feature=><span key={feature} className="dht-hub-feature-badge" data-feature={feature} title={BONUS_FEATURE_LABELS[feature].description}>{BONUS_FEATURE_LABELS[feature].label}</span>)}</div>;
 }
 
 export type ThemePack = { id: string; name: string; theme: ThemeId | null; description: string; size: number; version: string; installedVersion?: string; compatible: boolean; preview?: string; poster?: string; builtIn?: boolean; localThemeId?: string; frameTheme?:string; uiOverhaul?: boolean; community?: { repo: string; id: string; themeId?: string; updateAvailable: boolean } };
@@ -49,7 +50,13 @@ const withBuiltIns = (themes: ThemePack[], art: ThemeArt = {}): ThemePack[] => [
 const extrasMissing = (p: ThemePack) => !!p.builtIn && !p.installedVersion;
 
 type Tab = "discover" | "yours" | "community" | "files" | "spotlight";
-const TABS: { id: Tab; name: string }[] = [{ id: "discover", name: "Discover" }, { id: "yours", name: "Your themes" }, { id: "community", name: "Community" }, { id: "files", name: "Theme files" }, { id: "spotlight", name: "Plugin Spotlight" }];
+const getTabs = (): { id: Tab; name: string }[] => [
+  { id: "discover", name: t("hubDiscover") },
+  { id: "yours", name: t("hubYours") },
+  { id: "community", name: t("hubCommunity") },
+  { id: "files", name: t("hubFiles") },
+  { id: "spotlight", name: t("hubSpotlight") },
+];
 const upToDate = (p: ThemePack) => p.community ? !p.community.updateAvailable : p.installedVersion === "legacy" || p.installedVersion === p.version;
 
 export function Marketplace({ requested, from, initialTab }: { requested?: ThemeId; from?: ThemeId; initialTab?: "community" }) {
@@ -105,11 +112,11 @@ export function Marketplace({ requested, from, initialTab }: { requested?: Theme
         size: t.size ?? 0, version: t.version, installedVersion: t.installedVersion, compatible: t.compatible, preview: t.preview, poster: t.preview, uiOverhaul: t.uiOverhaul,
         community: { repo: source.repo, id: t.id, themeId: t.themeId, updateAvailable: t.updateAvailable }
       } satisfies ThemePack)));
-      const localThemes: ThemePack[] = allThemes().filter(t => t.source === "bundled" && !/test/i.test(t.name)).map(t => ({
-        id: `local:${t.id}`, name: t.name, description: t.description ?? "Bundled community theme",
-        size: 0, version: "bundled", compatible: true, ...result.art?.[t.id],
-        ...result.themes.find(p=>p.frameTheme===t.id), localThemeId:t.id, theme:t.layout,
-        installedVersion:result.themes.some(p=>p.frameTheme===t.id)?result.themes.find(p=>p.frameTheme===t.id)?.installedVersion:"bundled"
+      const localThemes: ThemePack[] = allThemes().filter(th => th.source === "bundled" && !/test/i.test(th.name)).map(th => ({
+        id: `local:${th.id}`, name: th.name, description: th.description ?? t("bundledCommunityTheme"),
+        size: 0, version: "bundled", compatible: true, ...result.art?.[th.id],
+        ...result.themes.find(p=>p.frameTheme===th.id), localThemeId:th.id, theme:th.layout,
+        installedVersion:result.themes.some(p=>p.frameTheme===th.id)?result.themes.find(p=>p.frameTheme===th.id)?.installedVersion:"bundled"
       }));
       setPacks([...withBuiltIns(result.themes.filter(p=>!p.frameTheme), result.art), ...localThemes, ...installed]); setError(result.error || "");
       setProgress(result.progress); setBusy(result.progress.busy);
@@ -148,12 +155,12 @@ export function Marketplace({ requested, from, initialTab }: { requested?: Theme
         let themeId = current.community?.themeId ?? current.localThemeId;
         if (current.community?.updateAvailable) {
           const result = await communityPackage(current.community.repo, current.community.id, "install");
-          if (!result.ok) throw new Error(result.error || "Theme update failed");
+          if (!result.ok) throw new Error(result.error || t("themeUpdateFailed"));
           themeId = result.themeId ?? themeId;
         }
         await refreshThemes();
         const preset = getPresets().find(p => p.dataTheme === themeId && p.origin === "default");
-        if (!preset) throw new Error("Theme could not be loaded. Check its manifest.");
+        if (!preset) throw new Error(t("themeLoadFailed"));
         applyPreset(preset); invalidateCommunityUpdates(); closeMarketplace(); resourcesChanged();
         return;
       }
@@ -170,11 +177,11 @@ export function Marketplace({ requested, from, initialTab }: { requested?: Theme
     try {
       if (current.community) {
         const result = await communityPackage(current.community.repo, current.community.id, "remove");
-        if (!result.ok) throw new Error(result.error || "Uninstall failed");
-        await refreshThemes(); invalidateCommunityUpdates(); await load(); setMessage("Theme uninstalled."); return;
+        if (!result.ok) throw new Error(result.error || t("uninstallFailed"));
+        await refreshThemes(); invalidateCommunityUpdates(); await load(); setMessage(t("themeUninstalled")); return;
       }
       await deleteTheme(current.theme, current.localThemeId ? current.id : undefined, current.localThemeId);
-      await load(); void reloadInventory(); setMessage("Theme deleted and hidden. You can download it again anytime.");
+      await load(); void reloadInventory(); setMessage(t("themeDeletedHidden"));
     } catch (e) { if (alive.current) setMessage(String(e)); }
     finally { if (alive.current) setBusy(false); }
   };
@@ -206,8 +213,9 @@ export function Marketplace({ requested, from, initialTab }: { requested?: Theme
     if (a.busy) return true;
     if (p.btn === "y" && !p.repeat) { playSound("select"); a.cycleStyle(); return true; }
     if ((p.btn === "l1" || p.btn === "r1") && !p.repeat) {
-      const i = TABS.findIndex(t => t.id === a.tab);
-      playSound("tab"); goTab(TABS[(i + (p.btn === "r1" ? 1 : TABS.length - 1)) % TABS.length].id); return true;
+      const tabs = getTabs();
+      const i = tabs.findIndex(t => t.id === a.tab);
+      playSound("tab"); goTab(tabs[(i + (p.btn === "r1" ? 1 : tabs.length - 1)) % tabs.length].id); return true;
     }
     if (routed) return tabInput.current?.(p) ?? true; // ThemeFiles.tsx / PluginSpotlight.tsx
     if (p.btn === "a" && !p.repeat) { playSound("select"); void a.activate(); }
@@ -226,47 +234,47 @@ export function Marketplace({ requested, from, initialTab }: { requested?: Theme
   return <div className="dht-market dht-hub" data-hub-theme={hubThemeKey(styled?.theme, styled?.x360)} data-hub-styled={styled ? "true" : "false"} data-hub-source={source} data-hub-tab={tab} data-motion={s.animations} role="dialog" aria-modal="true" aria-label="Hub">
     <style>{hubVarsCss()}{HUB_DECO_CSS}{MARKET_CSS}</style><div className="dht-hub-deco" data-deco={styled ? hs.deco : "none"} aria-hidden="true"/>
     <header className="dht-hub-header">
-      <div className="dht-hub-brand"><span className="market-eyebrow">DECK HOME THEMES</span><h1><HubLogo />Hub</h1><p className="dht-hub-tagline">{styled ? hs.tagline : "Pick a theme and make it yours."}</p></div>
-      <nav className="market-toolbar dht-hub-tabs" aria-label="Hub sections">
+      <div className="dht-hub-brand"><span className="market-eyebrow">DECK HOME THEMES</span><h1><HubLogo />Hub</h1><p className="dht-hub-tagline">{styled ? hs.tagline : t("hubSubtitle")}</p></div>
+      <nav className="market-toolbar dht-hub-tabs" aria-label={t("hubSections")}>
         <kbd className="dht-hub-glyph" aria-hidden="true">LB</kbd>
-        <div role="tablist">{TABS.map(t => <button key={t.id} role="tab" aria-selected={tab === t.id} data-active={tab === t.id} onClick={() => goTab(t.id)}>{t.name}{count[t.id] !== undefined && <small>{count[t.id]}</small>}</button>)}</div>
+        <div role="tablist">{getTabs().map(t => <button key={t.id} role="tab" aria-selected={tab === t.id} data-active={tab === t.id} onClick={() => goTab(t.id)}>{t.name}{count[t.id] !== undefined && <small>{count[t.id]}</small>}</button>)}</div>
         <kbd className="dht-hub-glyph" aria-hidden="true">RB</kbd>
       </nav>
       <div className="dht-hub-headright">
-        <button className="market-style" aria-pressed={updatesOpen} onClick={() => setUpdatesOpen(v => !v)}>Updates{communityUpdates.updateCount ? ` · ${communityUpdates.updateCount}` : ""}</button>
-        <button className="market-style" onClick={cycleStyle} aria-label={`Hub style: ${styleName}`}><kbd>Y</kbd> Style <strong>{styleName}</strong></button>
-        {(tab === "discover" || tab === "yours") && <button className="market-refresh" disabled={busy || loading} onClick={() => void load(true)} aria-label="Refresh">{loading ? "…" : "↻"}</button>}
-        <button className="market-close" onClick={() => updatesOpen ? setUpdatesOpen(false) : closeMarketplace()} aria-label="Back"><kbd>B</kbd> Back</button>
+        <button className="market-style" aria-pressed={updatesOpen} onClick={() => setUpdatesOpen(v => !v)}>{t("updates")}{communityUpdates.updateCount ? ` · ${communityUpdates.updateCount}` : ""}</button>
+        <button className="market-style" onClick={cycleStyle} aria-label={`${t("hubStyle")}: ${styleName}`}><kbd>Y</kbd> {t("style")} <strong>{styleName}</strong></button>
+        {(tab === "discover" || tab === "yours") && <button className="market-refresh" disabled={busy || loading} onClick={() => void load(true)} aria-label={t("refresh")}>{loading ? "…" : "↻"}</button>}
+        <button className="market-close" onClick={() => updatesOpen ? setUpdatesOpen(false) : closeMarketplace()} aria-label={t("back")}><kbd>B</kbd> {t("back")}</button>
       </div>
     </header>
     {error && (tab === "discover" || tab === "yours") && <div className="market-notice">{error} · Showing saved catalog. Installed themes still work offline.</div>}
     {updatesOpen ? <section ref={updatesRoot} className="dht-hub-updates" aria-label="Hub updates"><h2>Updates</h2><Updates onManageThemes={() => goTab("yours")}/></section> : tab === "community" ? <CommunityThemes inputRef={tabInput}/> : tab === "spotlight" ? <PluginSpotlight inputRef={tabInput}/> : tab === "files" ? <ThemeFiles inputRef={tabInput}/> : <main className="dht-hub-body"><div className="market-grid dht-hub-grid" ref={listRef}>
-      {!filtered.length && <p className="dht-hub-empty">{loading ? "Loading your next home…" : installedOnly ? "Your collection starts here. Browse Discover to download a theme." : "No themes are available yet. Try Refresh."}</p>}
+      {!filtered.length && <p className="dht-hub-empty">{loading ? t("hubLoading") : installedOnly ? t("hubNoThemes") : t("hubNothingHere")}</p>}
       {filtered.map((pack, i) => {
-        const state = pack.community?.updateAvailable ? "Update" : isActive(pack) ? "Active" : pack.installedVersion ? (upToDate(pack) || pack.installedVersion === "built-in" ? "Installed" : "Update") : extrasMissing(pack) ? "Built in" : "";
+        const state = pack.community?.updateAvailable ? t("update") : isActive(pack) ? t("active") : pack.installedVersion ? (upToDate(pack) || pack.installedVersion === "built-in" ? t("installed") : t("update")) : extrasMissing(pack) ? t("builtIn") : "";
         return <button key={pack.id} className="market-card dht-hub-card" data-selected={i === selected} onClick={() => setSelected(i)} onFocus={() => setSelected(i)}>
           <div className="market-art dht-hub-art" data-theme={pack.id}>{pack.poster ? <img src={pack.poster} alt="" loading="lazy" onError={e => { e.currentTarget.style.display = "none"; }} /> : <span>{pack.name}</span>}{state && <em className="dht-hub-state" data-state={state.toLowerCase()}>{state}</em>}</div>
           <div className="market-card-title"><strong>{pack.name}</strong>{pack.size > 0 && <span>{(pack.size / 1048576).toFixed(1)} MB</span>}</div>
           <p>{THEMES.find(t => t.id === pack.theme)?.blurb || pack.description}</p>
-          <BonusFeatureBadges id={pack.id}/>{pack.uiOverhaul && <small className="dht-hub-overhaul">UI overhaul</small>}
+          <BonusFeatureBadges id={pack.id}/>{pack.uiOverhaul && <small className="dht-hub-overhaul">{t("uiOverhaul")}</small>}
         </button>;
       })}
     </div><aside className="dht-hub-detail">{current && <>
       <div className="dht-hub-detail-scroll">
-        <div className="market-detail-art" data-theme={current.id}>{current.preview || current.poster ? <img key={current.id} src={current.preview || current.poster} alt={`${current.name} animated preview`} /> : <span>Preview coming soon</span>}</div>
+        <div className="market-detail-art" data-theme={current.id}>{current.preview || current.poster ? <img key={current.id} src={current.preview || current.poster} alt={`${current.name} animated preview`} /> : <span>{t("previewComingSoon")}</span>}</div>
         <h2>{current.name}</h2><p>{current.description}</p>
-        <BonusFeatureBadges id={current.id}/>{current.uiOverhaul && <small className="dht-hub-overhaul">UI overhaul</small>}
-        <dl><div><dt>Download</dt><dd>{current.size ? `${(current.size / 1048576).toFixed(1)} MB` : "Built in"}</dd></div><div><dt>Version</dt><dd>{current.version}</dd></div><div><dt>Available offline</dt><dd>{current.installedVersion ? "Ready to play" : "After download"}</dd></div></dl>
+        <BonusFeatureBadges id={current.id}/>{current.uiOverhaul && <small className="dht-hub-overhaul">{t("uiOverhaul")}</small>}
+        <dl><div><dt>{t("downloadFact")}</dt><dd>{current.size ? `${(current.size / 1048576).toFixed(1)} MB` : t("builtIn")}</dd></div><div><dt>{t("versionFact")}</dt><dd>{current.version}</dd></div><div><dt>{t("availableOffline")}</dt><dd>{current.installedVersion ? t("readyToPlay") : t("afterDownload")}</dd></div></dl>
       </div>
       <div className="dht-hub-detail-actions">
-        <button className="market-primary dht-hub-primary" disabled={busy || loading || !current.compatible || (isActive(current) && upToDate(current))} onClick={() => void activate()}>{busy ? `${progress?.percent || 0}% · ${progress?.message || "Preparing…"}` : !current.compatible ? "Coming soon" : isActive(current) && upToDate(current) ? "Active" : upToDate(current) ? "Activate theme" : current.installedVersion ? "Update theme" : extrasMissing(current) ? "Download extras & activate" : "Download theme"}<kbd>A</kbd></button>
+        <button className="market-primary dht-hub-primary" disabled={busy || loading || !current.compatible || (isActive(current) && upToDate(current))} onClick={() => void activate()}>{busy ? `${progress?.percent || 0}% · ${progress?.message || t("preparing")}` : !current.compatible ? t("comingSoon") : isActive(current) && upToDate(current) ? t("active") : upToDate(current) ? t("activateTheme") : current.installedVersion ? t("updateTheme") : extrasMissing(current) ? t("downloadExtrasActivate") : t("downloadTheme")}<kbd>A</kbd></button>
         {busy && <progress max={100} value={progress?.percent || 0} />}
-        {(current.installedVersion || current.builtIn) && <button className="market-remove dht-hub-remove" disabled={busy || isActive(current)} onClick={() => void deletePack()}>Delete theme</button>}
-        <small>Updates activate immediately. Your settings are kept.</small>
+        {(current.installedVersion || current.builtIn) && <button className="market-remove dht-hub-remove" disabled={busy || isActive(current)} onClick={() => void deletePack()}>{t("deleteTheme")}</button>}
+        <small>{t("updatesActivateImmediately")}</small>
       </div>
     </>}</aside></main>}
     {message && <div className="market-notice" role="status">{message}</div>}
-    <footer className="dht-hub-footer"><span>✦ A home for every mood</span><span className="dht-hub-hints"><kbd>LB</kbd><kbd>RB</kbd> Sections <kbd>Y</kbd> Hub style {tab === "discover" || tab === "yours" ? <><kbd>✛</kbd> Choose <kbd>A</kbd> Select </> : null}<kbd>B</kbd> Back</span></footer>
+    <footer className="dht-hub-footer"><span>{t("hubTagline")}</span><span className="dht-hub-hints"><kbd>LB</kbd><kbd>RB</kbd> {t("sections")} <kbd>Y</kbd> {t("hubStyle")} {tab === "discover" || tab === "yours" ? <><kbd>✛</kbd> {t("choose")} <kbd>A</kbd> {t("actionSelect")} </> : null}<kbd>B</kbd> {t("back")}</span></footer>
   </div>;
 }
 

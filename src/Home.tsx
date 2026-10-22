@@ -1,3 +1,4 @@
+import { t } from "./i18n";
 import { IOS6Home } from "./themes/IOS6";
 import {GameAmpHome} from "./themes/GameAmp";
 import { SantaHome } from "./themes/Santa";
@@ -240,10 +241,10 @@ function VerifiedThemedHome({ standalone }: { standalone?: boolean }) {
       return false;
     }}>
     <div style={{textAlign:"center",maxWidth:520,padding:32}}>
-      <h2>{state === "checking" ? "Checking theme files…" : state === "error" ? "Couldn’t check theme files" : "Download this theme to continue"}</h2>
-      {state === "missing" && <p>The theme’s artwork and resources haven’t been installed yet.</p>}
-      {state !== "checking" && <button onClick={() => state === "missing" ? openMarketplace(settings.theme, {from:settings.theme}) : setRetry(n=>n+1)}>{state === "missing" ? "Open theme downloads" : "Try again"}</button>}
-      <button onClick={showNativeSteamHome}>Steam Home</button>
+      <h2>{state === "checking" ? t("checkingThemeFiles") : state === "error" ? t("couldNotCheckThemeFiles") : t("downloadThemeToContinue")}</h2>
+      {state === "missing" && <p>{t("themeResourcesNotInstalled")}</p>}
+      {state !== "checking" && <button onClick={() => state === "missing" ? openMarketplace(settings.theme, {from:settings.theme}) : setRetry(n=>n+1)}>{state === "missing" ? t("openThemeDownloads") : t("tryAgain")}</button>}
+      <button onClick={showNativeSteamHome}>{t("steamHome")}</button>
     </div>
     {market.opened && <Marketplace requested={market.requested} from={market.from} />}
     </ThemeRoot>
