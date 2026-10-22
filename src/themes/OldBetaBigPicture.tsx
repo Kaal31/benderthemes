@@ -12,6 +12,8 @@ import {Navigation} from '@decky/ui';
 import {OLD_BETA_CSS} from './oldBetaBigPictureStyles';
 
 type Mode='sheet'|'recent'|'games';
+type CoverPose={transform:string;width:string;height:string;translate:string;opacity:string};
+type SheetPose={transform:string;left:string;top:string};
 type Destination='store'|'community'|'friends'|'web'|'settings'|'power'|'profile'|'detail';
 const categories=['STORE','LIBRARY','COMMUNITY'];
 
@@ -19,7 +21,7 @@ const categories=['STORE','LIBRARY','COMMUNITY'];
 export function OldBetaBigPictureHome(){
  const api=useHome(),root=useRef<HTMLDivElement>(null),cards=useRef(new Map<number,HTMLButtonElement>());
  const focusStarts=useRef<Map<number,{transform:string;opacity:string}>>(new Map());
- const motion=useRef<Animation[]>([]),pendingOpen=useRef<ReturnType<typeof setTimeout>|null>(null),opening=useRef(false),previousCategory=useRef(1),coverStart=useRef<Map<number,{transform:string;width:string;height:string}>|null>(null),previousMode=useRef<Mode>('sheet');
+ const motion=useRef<Animation[]>([]),pendingOpen=useRef<ReturnType<typeof setTimeout>|null>(null),opening=useRef(false),previousCategory=useRef(1),coverStart=useRef<Map<number,CoverPose>|null>(null),boardStart=useRef<SheetPose|null>(null),rearStart=useRef<{node:HTMLElement;transform:string;translate:string;opacity:string}[]>([]),previousMode=useRef<Mode>('sheet');
  const [mode,setMode]=useState<Mode>('sheet'),[category,setCategory]=useState(1),[selected,setSelected]=useState(0);
  const [size,setSize]=useState({w:1280,h:800}),[filter,setFilter]=useState('all'),[query,setQuery]=useState('');
  const [destination,setDestination]=useState<Destination|null>(null),[game,setGame]=useState<Game|null>(null);
@@ -31,7 +33,7 @@ export function OldBetaBigPictureHome(){
  useLayoutEffect(()=>{const node=root.current;if(!node)return;const resize=()=>setSize({w:node.clientWidth,h:node.clientHeight});resize();const observer=new ResizeObserver(resize);observer.observe(node);return()=>observer.disconnect();},[destination]);
  useLayoutEffect(()=>{if(destination)return;const target=mode==='sheet'?root.current?.querySelector<HTMLButtonElement>(`[data-category="${category}"]`):cards.current.get(chosen?.appid);target?.focus({preventScroll:true});},[mode,destination]);
  const motionEnabled=()=>api.settings.animations&&!matchMedia('(prefers-reduced-motion: reduce)').matches;
- const stopMotion=()=>{motion.current.forEach(a=>a.cancel());motion.current=[];root.current?.querySelectorAll<HTMLElement>('.beta-cover-board,.beta-secondary-sheet').forEach(n=>{n.style.opacity='';});};
+ const stopMotion=()=>{motion.current.forEach(a=>a.cancel());motion.current=[];root.current?.querySelectorAll<HTMLElement>('.beta-cover-board,.beta-secondary-sheet').forEach(n=>{n.style.opacity='';});root.current?.querySelector<HTMLElement>('.beta-stacked-sheets')?.style.removeProperty('visibility');};
  useEffect(()=>()=>{motion.current.forEach(a=>a.cancel());if(pendingOpen.current)clearTimeout(pendingOpen.current);},[]);
  useEffect(()=>{const media=matchMedia('(prefers-reduced-motion: reduce)'),stop=()=>{if(media.matches||!api.settings.animations)stopMotion();};stop();media.addEventListener('change',stop);return()=>media.removeEventListener('change',stop);},[api.settings.animations]);
  useLayoutEffect(()=>{
@@ -52,9 +54,52 @@ export function OldBetaBigPictureHome(){
   const starts=coverStart.current;coverStart.current=null;
   if(!starts||!root.current||!motionEnabled())return;
   stopMotion();const entering=prior==='sheet'&&mode==='recent',leaving=prior==='recent'&&mode==='sheet';if(!entering&&!leaving)return;
-  const board=root.current.querySelector<HTMLElement>('.beta-cover-board');
-  if(board){const flat='rotateX(0deg) rotateZ(0deg) scale(1)',tilted='rotateX(53deg) rotateZ(-23deg) scale(.84)',lift='translate3d(3%,-5%,80px) rotateX(30deg) rotateZ(-13deg) scale(.98)';motion.current.push(board.animate(entering?[{transform:tilted},{transform:lift,offset:.35},{transform:flat}]:[{transform:flat},{transform:lift,offset:.65},{transform:tilted}],{duration:360,easing:'cubic-bezier(.22,.61,.36,1)'}));}
-  cards.current.forEach((node,id)=>{const start=starts.get(id);if(!start)return;const end={transform:node.style.transform,width:node.style.width,height:node.style.height};const match=end.transform.match(/translate3d\(([-.\d]+)px,([-.\d]+)px/);const x=Number(match?.[1]??0),y=Number(match?.[2]??0);const index=games.findIndex(g=>g.appid===id),isChosen=index===Math.min(2,games.length-1);const mid={transform:`translate(-50%,-50%) translate3d(${x*.65}px,${y*.4-size.h*.035}px,${isChosen?115:35}px) scale(${isChosen?1.12:.94})`,width:end.width,height:end.height};motion.current.push(node.animate([start,{...mid,offset:entering?.45:.55},end],{duration:340,delay:(index%5)*7,easing:'cubic-bezier(.22,.61,.36,1)'}));});
+  const board=root.current.querySelector<HTMLElement>('.beta-cover-board'),savedBoard=boardStart.current;
+  boardStart.current=null;
+  const duration=400,easing='cubic-bezier(.25,.46,.45,.94)',boardTarget=board?getComputedStyle(board).transform:'none';
+  if(board&&savedBoard){
+   const end=getComputedStyle(board),target={transform:end.transform,left:end.left,top:end.top};
+   // The sheet separates while tilted, then straightens. No collective Z bounce.
+   const intermediate={transform:'rotateX(35deg) rotateZ(-15deg) scale(.94)',left:(size.w*.515)+'px',top:(size.h*.415)+'px'};
+   motion.current.push(board.animate([savedBoard,{...intermediate,offset:entering?.4:.6},target],{duration,easing}));
+  }
+  cards.current.forEach((node,id)=>{
+   const start=starts.get(id);if(!start)return;
+   const end={transform:node.style.transform,width:node.style.width,height:node.style.height,translate:getComputedStyle(node).translate,opacity:node.style.opacity};
+   const index=games.findIndex(g=>g.appid===id),center=entering?Math.min(2,games.length-1):selected,isChosen=index===center;
+   const x=(index-center)*size.w*.215;
+   const row={transform:`translate(-50%,-50%) translate3d(${x}px,0px,0px) scale(1)`,width:size.w*.195+'px',height:size.w*.195*215/460+'px',translate:'none',opacity:Math.abs(index-center)<4?'1':'0'};
+   const frames=entering?[start,{...row,offset:.55},{...row,offset:.7},end]:[start,{...row,offset:.3},{...row,offset:.45},end];
+   if(!isChosen)frames.splice(2,1);
+   motion.current.push(node.animate(frames,{duration,easing}));
+  });
+  const stack=root.current.querySelector<HTMLElement>('.beta-stacked-sheets');
+  if(stack&&entering&&savedBoard){
+   stack.style.visibility='visible';
+   // Counter the unfolding board so discarded covers retain their original tilt
+   // as they retreat diagonally, instead of flattening with the carousel row.
+   const original=new DOMMatrix(savedBoard.transform);
+   const finalBoard=new DOMMatrix(boardTarget);
+   const stackMatrix=new DOMMatrix(getComputedStyle(stack).transform);
+   rearStart.current.forEach(({node,transform,translate,opacity})=>{
+    const plane=new DOMMatrix(getComputedStyle(node.parentElement!).transform);
+    const end=plane.inverse().multiply(stackMatrix.inverse()).multiply(finalBoard.inverse()).multiply(new DOMMatrix().translate(size.w*.24,-size.h*.28,-140)).multiply(original).multiply(stackMatrix).multiply(plane).multiply(new DOMMatrix(transform));
+    const exit=node.animate([{transform,translate,opacity},{transform:end.toString(),translate:'none',opacity:0}],{duration:300,easing:'cubic-bezier(.4,0,.7,1)',fill:'forwards'});
+    motion.current.push(exit);
+   });
+   const hide=stack.animate([{visibility:'visible'},{visibility:'visible'}],{duration});
+   hide.finished.then(()=>{stack.style.visibility='';hide.cancel();}).catch(()=>{});motion.current.push(hide);
+  }
+  if(stack&&leaving&&savedBoard&&board){
+   const flat=new DOMMatrix(savedBoard.transform),tilted=new DOMMatrix(boardTarget),stackMatrix=new DOMMatrix(getComputedStyle(stack).transform);
+   stack.querySelectorAll<HTMLElement>('.beta-rear-cover').forEach(node=>{
+    const style=getComputedStyle(node),target=style.transform;
+    const plane=new DOMMatrix(getComputedStyle(node.parentElement!).transform);
+    const retreat=plane.inverse().multiply(stackMatrix.inverse()).multiply(flat.inverse()).multiply(new DOMMatrix().translate(size.w*.24,-size.h*.28,-140)).multiply(tilted).multiply(stackMatrix).multiply(plane).multiply(new DOMMatrix(target));
+    motion.current.push(node.animate([{transform:retreat.toString(),translate:'none',opacity:0},{transform:target,translate:style.translate,opacity:style.opacity}],{duration,easing}));
+   });
+  }
+  rearStart.current=[];
  },[mode]);
  const go=(next:Destination)=>{
   if(opening.current)return;playSound('open');
@@ -63,7 +108,7 @@ export function OldBetaBigPictureHome(){
   setDestination(next);
  };
  const focusCategory=(next:number)=>{if(next===category||opening.current)return;const nodes=[root.current?.querySelector<HTMLElement>('.beta-store-sheet'),root.current?.querySelector<HTMLElement>('.beta-cover-board'),root.current?.querySelector<HTMLElement>('.beta-community-sheet')];focusStarts.current=new Map(nodes.flatMap((n,i)=>n?[[i,{transform:getComputedStyle(n).transform,opacity:getComputedStyle(n).opacity}] as const]:[]));stopMotion();setCategory(next);};
- const changeMode=(next:Mode)=>{if(opening.current)return;if((mode==='sheet'&&next==='recent')||(mode==='recent'&&next==='sheet')){coverStart.current=new Map([...cards.current].map(([id,n])=>[id,{transform:getComputedStyle(n).transform,width:getComputedStyle(n).width,height:getComputedStyle(n).height}]));}if(mode==='sheet'&&next==='recent')setSelected(Math.min(2,Math.max(0,games.length-1)));setMode(next);playSound(next==='sheet'?'back':'open');};
+ const changeMode=(next:Mode)=>{if(opening.current)return;if((mode==='sheet'&&next==='recent')||(mode==='recent'&&next==='sheet')){coverStart.current=new Map([...cards.current].map(([id,n])=>{const s=getComputedStyle(n);return [id,{transform:s.transform,width:s.width,height:s.height,translate:s.translate,opacity:s.opacity}];}));const board=root.current?.querySelector<HTMLElement>('.beta-cover-board');if(board){const s=getComputedStyle(board);boardStart.current={transform:s.transform,left:s.left,top:s.top};}rearStart.current=[...root.current?.querySelectorAll<HTMLElement>('.beta-rear-cover')??[]].map(node=>{const s=getComputedStyle(node);return {node,transform:s.transform,translate:s.translate,opacity:s.opacity};});}if(mode==='sheet'&&next==='recent')setSelected(Math.min(2,Math.max(0,games.length-1)));setMode(next);playSound(next==='sheet'?'back':'open');};
  const choose=(index:number)=>{const next=Math.max(0,Math.min(games.length-1,index));setSelected(next);cards.current.get(games[next]?.appid)?.focus({preventScroll:true});playSound('move');};
  const activate=(g:Game)=>api.activate(g,()=>{setGame(g);go('detail');});
  const selectCategory=()=>category===1?changeMode('recent'):go(category===0?'store':'community');
@@ -97,7 +142,7 @@ export function OldBetaBigPictureHome(){
     const sheetColumn=index%5,sheetRow=Math.floor(index/5),distance=Math.abs(index-selected);
     const x=mode==='sheet'?(sheetColumn-2)*cardW*1.075+Math.sin(index*2.3)*w*.009:mode==='recent'?(index-selected)*w*.215:(Math.floor(index/3)-columnOffset-2)*w*.19;
     const y=mode==='sheet'?(sheetRow-1.2)*cardH*1.08+Math.cos(index*1.7)*h*.009:mode==='recent'?0:(index%3-1)*h*.19;
-    const scale=mode==='sheet'?[1.06,.98,1.03,1,.96][index%5]:mode==='recent'&&index===selected?1.25:1;
+    const scale=mode==='sheet'?[1.06,.98,1.03,1,.96][index%5]:mode==='recent'&&index===selected?1.45:1;
     const visible=mode==='sheet'?index<15:mode==='recent'?distance<4:Math.floor(index/3)>=columnOffset-1&&Math.floor(index/3)<=columnOffset+5;
     if(index>=15&&!visible)return null;
     return <button key={g.appid} ref={n=>{if(n)cards.current.set(g.appid,n);else cards.current.delete(g.appid);}} className="beta-cover" data-appid={g.appid} data-selected={index===selected} aria-label={g.name} tabIndex={mode==='sheet'||!visible?-1:0} onFocus={()=>{if(mode!=='sheet')setSelected(index);}} onClick={()=>mode!=='sheet'&&activate(g)} style={{'--tile-delay':(index%5)*12+'ms','--flow-phase':(-index*2.9)+'s',width:cardW,height:cardH,transform:`translate(-50%,-50%) translate3d(${x}px,${y}px,${mode==='sheet'?(index%3)*12:0}px) scale(${scale})`,opacity:visible?1:0,pointerEvents:mode==='sheet'||!visible?'none':'auto',zIndex:mode==='recent'&&index===selected?4:1} as CSSProperties}><GameArt g={g} kind="landscape" flat style={{width:'100%',height:'100%'}}/><span>{g.name}</span></button>;

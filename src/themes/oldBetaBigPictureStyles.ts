@@ -115,6 +115,14 @@ export const OLD_BETA_CSS=`
 .dht-oldbeta .beta-categories{transition:top 360ms cubic-bezier(.22,.61,.36,1),transform 360ms,opacity 180ms}.dht-oldbeta .beta-categories::before{transition:transform 180ms cubic-bezier(.22,.61,.36,1)}
 .dht-oldbeta .beta-categories button{transition:color 120ms,background-color 120ms,transform 180ms}.dht-oldbeta .beta-light,.dht-oldbeta .beta-focus-light{transition:transform 400ms cubic-bezier(.22,.61,.36,1),top 360ms,opacity 300ms}
 .dht-oldbeta .beta-stacked-sheets{transition:opacity 240ms,transform 360ms}.dht-oldbeta[data-mode=recent] .beta-view-all{animation:beta-controls-reveal 160ms 200ms both}
+/* Rear leaf covers peel away independently while the front becomes a row. */
+.dht-oldbeta .beta-stacked-sheets{opacity:1;transform:translateZ(-30px);transition:none}
+.dht-oldbeta:not([data-mode=sheet]) .beta-stacked-sheets{visibility:hidden}
+.dht-oldbeta .beta-categories{transition:top 400ms cubic-bezier(.25,.46,.45,.94),transform 400ms,opacity 180ms}
+.dht-oldbeta[data-mode=recent] .beta-cover>span{transition:opacity 100ms 300ms}
+.dht-oldbeta[data-mode=recent] .beta-cover[data-selected=true]{animation:beta-carousel-selection 400ms linear}
+@keyframes beta-carousel-selection{0%,65%{outline-color:transparent;box-shadow:0 0 0 transparent}100%{outline-color:#ecf9ff;box-shadow:0 0 20px #9bd9ff90}}
+.dht-oldbeta[data-mode=recent] .beta-view-all{animation:beta-controls-reveal 180ms 120ms both}
 
 /* Counter-flow: front covers travel left, deeper covers right. The first
    rear planes are solid artwork; only the deepest plane recedes into haze. */
