@@ -115,5 +115,17 @@ export const OLD_BETA_CSS=`
 .dht-oldbeta .beta-categories{transition:top 360ms cubic-bezier(.22,.61,.36,1),transform 360ms,opacity 180ms}.dht-oldbeta .beta-categories::before{transition:transform 180ms cubic-bezier(.22,.61,.36,1)}
 .dht-oldbeta .beta-categories button{transition:color 120ms,background-color 120ms,transform 180ms}.dht-oldbeta .beta-light,.dht-oldbeta .beta-focus-light{transition:transform 400ms cubic-bezier(.22,.61,.36,1),top 360ms,opacity 300ms}
 .dht-oldbeta .beta-stacked-sheets{transition:opacity 240ms,transform 360ms}.dht-oldbeta[data-mode=recent] .beta-view-all{animation:beta-controls-reveal 160ms 200ms both}
+
+/* Counter-flow: front covers always travel left; deeper covers travel right.
+   Staggered low-opacity resets avoid a whole-sheet jump at the loop boundary. */
+.dht-oldbeta .beta-cover-board,.dht-oldbeta .beta-rear-sheet,.dht-oldbeta .beta-store-layer{animation:none}
+.dht-oldbeta .beta-rear-sheet{transform:translate3d(calc((var(--sheet-depth)*12 - 28)*1px),calc(var(--sheet-depth)*24px),calc(var(--sheet-depth)*-52px)) rotateZ(calc((var(--sheet-depth) - 2)*1.5deg));opacity:calc(.44 - var(--sheet-depth)*.075)}
+.dht-oldbeta .beta-store-layer-3{position:absolute;inset:0;transform:translate3d(-2%,57%,-165px) scale(.76);opacity:.12;pointer-events:none;z-index:0}
+@keyframes beta-flow-left{0%{translate:calc(var(--beta-w)*.025) 0;opacity:0}9%{opacity:1}91%{opacity:1}100%{translate:calc(var(--beta-w)*-.025) 0;opacity:0}}
+@keyframes beta-flow-right{0%{translate:calc(var(--beta-w)*-.035) 0;opacity:0}9%{opacity:1}91%{opacity:1}100%{translate:calc(var(--beta-w)*.035) 0;opacity:0}}
+.dht-oldbeta[data-mode=sheet] .beta-cover,.dht-oldbeta .beta-store-layer-0 .beta-sheet-cover{animation:beta-flow-left 18s linear infinite;animation-delay:var(--flow-phase,0s)}
+.dht-oldbeta .beta-rear-sheet .beta-rear-cover,.dht-oldbeta .beta-store-layer:not(.beta-store-layer-0) .beta-sheet-cover{animation:beta-flow-right 24s linear infinite;animation-delay:var(--flow-phase,0s)}
+.dht-oldbeta .beta-rear-sheet-2 .beta-rear-cover{animation-duration:28s}.dht-oldbeta .beta-rear-sheet-3 .beta-rear-cover{animation-duration:32s}.dht-oldbeta .beta-rear-sheet-4 .beta-rear-cover{animation-duration:36s}
+.dht-oldbeta:not([data-mode=sheet]) .beta-rear-cover,.dht-oldbeta:not([data-category="1"]) .beta-rear-cover,.dht-oldbeta:not([data-category="1"]) .beta-cover,.dht-oldbeta:not([data-category="0"]) .beta-sheet-cover,.dht-oldbeta:not([data-mode=sheet]) .beta-sheet-cover{animation-play-state:paused}
 .dht-oldbeta.no-motion *,.dht-oldbeta.no-motion *::before,.dht-oldbeta.no-motion *::after{transition:none!important;animation:none!important;scroll-behavior:auto!important}@media(prefers-reduced-motion:reduce){.dht-oldbeta *,.dht-oldbeta *::before,.dht-oldbeta *::after{transition:none!important;animation:none!important;scroll-behavior:auto!important}}
 `;

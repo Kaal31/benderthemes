@@ -49,3 +49,8 @@ Removed independent front-cover bobbing and multiple overlapping hover loops. Li
 ## Library focus completion snap fix
 
 A measured front/rear cover check exposed about 69 px of rear-layer displacement as the focus animation completed. Animating opacity on the preserve-3d board caused its descendants to be composited flat during the sweep, then restored their 3D stacking afterward. Focus now animates only the board transform; individual leaf covers/friend tiles fade instead. Outgoing boards stay opaque via a temporary inline opacity that is cleared on completion/cancellation. `old-beta-library-no-snap-check.mjs` checks geometry immediately before and after focus completion from Store and Community, requiring less than 1 px displacement. Typecheck and separate focus/open tests passed.
+
+
+## Opposing sheet flow, 00:08–00:09 reference
+
+The user identified 00:08–00:09 as the idle-motion reference. Re-extracted the continuous 00:05–00:14 sequence with full original frames and exact timestamps; earlier cropped stills and approximate sample labels were insufficient evidence for motion. Camera movement and partial hand occlusion mean the original rear-plane counts and velocities remain estimates. The requested recreation now has five Library planes and four Store planes: front covers loop left, deeper covers loop right. Small staggered leaf fades mask loop resets, rather than reversing the entire sheet. Front flow takes 18 seconds across 5% of surface width; deeper flow takes 24–36 seconds across 7%, giving depth-dependent rates. Direction/count tests check this behavior directly, with a separate no-snap check for category arrival. These are procedural approximations of the user-described motion, not recovered Valve animation parameters.
