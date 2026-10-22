@@ -51,8 +51,8 @@ onThemesChanged(() => listeners.forEach((l) => l()));
 // Downloaded theme packs (theme_inventory) plus the themes that ship inside the plugin. The switchers (L1 hold, L2 / R2)
 // and the Quick Access Look list only offer looks whose console is here: never a deleted or not yet downloaded theme. null = not read yet.
 const remoteInventory = callable<[], Record<string, string>>("theme_inventory");
-/** No layout is implicitly installed: every shipped look has a downloadable pack. */
-export const BUILT_IN_THEMES = ["ios6", "gameamp"] as const;
+/** Layouts that can supply an in-plugin Hub card when no catalog pack exists. */
+export const BUILT_IN_THEMES = ["ios6", "gameamp", "old-beta-big-picture"] as const;
 let downloaded: Record<string, string> | null = null;
 export async function refreshInventory(): Promise<Record<string, string>> {
   const remote = await remoteInventory();

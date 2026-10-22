@@ -20,13 +20,14 @@ theme_declaration = settings_source.split("export const THEMES:", 1)[1].split("]
 layouts = set(re.findall(r'id:\s*"([a-z0-9-]+)"', theme_declaration)) - {"frame", "native"}
 builtins_source = (root / "src/presets.ts").read_text(encoding="utf-8")
 builtins = set(json.loads(re.search(r'export const BUILT_IN_THEMES = (\[[^;]*?\]) as const;', builtins_source).group(1)))
-available = {theme.get("theme") for theme in catalog["themes"]} | builtins
+# Legacy frameTheme catalog entries also back native layouts after renderer migrations.
+available = {theme.get("theme") or theme.get("frameTheme") for theme in catalog["themes"]} | builtins
 assert not layouts - available, f"Themes missing from the release Hub: {sorted(layouts - available)}"
 with zipfile.ZipFile(root / f"out/DeckHomeThemes-v{version}.zip") as plugin:
     for name in ("screensaver-player/index.html", "screensaver-player/player.js", "py_modules/theme_screensavers.py"):
         assert "DeckHomeThemes/" + name in plugin.namelist(), f"Missing screensaver runtime: {name}"
     assert plugin.testzip() is None
-    core_defaults = ("DeckHomeThemes/defaults/assets/console-intros/", "DeckHomeThemes/defaults/sounds/DHT Onyx iPod/")
+    core_defaults = ("DeckHomeThemes/defaults/assets/console-intros/", "DeckHomeThemes/defaults/sounds/DHT Onyx iPod/", "DeckHomeThemes/defaults/sounds/Old Big Picture UI/")
     assert not any(n.startswith("DeckHomeThemes/bundle/") or (n.startswith("DeckHomeThemes/defaults/") and not n.startswith(core_defaults)) for n in plugin.namelist()), "Optional theme resources leaked into the installer"
     assert json.loads(plugin.read("DeckHomeThemes/theme-catalog.json")) == catalog
     assert json.loads(plugin.read("DeckHomeThemes/package.json"))["version"] == version

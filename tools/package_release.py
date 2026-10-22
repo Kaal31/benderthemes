@@ -57,6 +57,9 @@ elif OFFLINE and TEST_STOCK and TEST_THEMES:
     name_tail = (f'-{TEST_TAG}' if TEST_TAG else '') + '-FULLTEST'
 else:
     name_tail = (f'-{TEST_TAG}' if TEST_TAG else '') + ("-offline" if OFFLINE else "") + ("-TESTSTOCK" if TEST_STOCK else "") + ("-TESTTHEMES" if TEST_THEMES else "")
+# Downloadable theme media stays in its published asset pack, even when present in a developer checkout.
+media_catalog=json.loads((root/'py_modules/frame_media_catalog.json').read_text(encoding='utf-8'))
+migrated_media={f'themes/{ident}/{name}' for ident,spec in media_catalog.items() for name in spec['files']}
 out=root/'out'; out.mkdir(exist_ok=True)
 target=out/f'DeckHomeThemes-v{version}{name_tail}.zip'
 with zipfile.ZipFile(target,'w',zipfile.ZIP_DEFLATED,compresslevel=6) as z:
@@ -82,6 +85,8 @@ with zipfile.ZipFile(target,'w',zipfile.ZIP_DEFLATED,compresslevel=6) as z:
         if not folder.is_dir(): continue
         for p in sorted(folder.rglob('*')):
             if p.is_file() and '__pycache__' not in p.parts and not p.name.startswith('.git'):
+                if not OFFLINE and p.is_relative_to(root) and p.relative_to(root).as_posix() in migrated_media:
+                    continue
                 # pictures, sounds and videos are already compressed
                 stored=p.suffix.lower() in ('.png','.jpg','.jpeg','.webp','.gif','.mp3','.ogg','.opus','.mp4','.webm','.zip','.p3t','.ctf','.ptf','.nxtheme','.utheme','.mym','.csm')
                 z.write(p,'DeckHomeThemes/'+destination+'/'+p.relative_to(folder).as_posix(),compress_type=zipfile.ZIP_STORED if stored else zipfile.ZIP_DEFLATED)
