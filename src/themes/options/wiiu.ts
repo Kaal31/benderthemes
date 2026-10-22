@@ -13,6 +13,16 @@ export const OPTIONS: StyleOption[] = [
     def: 15,
   },
   {
+    key: "titleBubbles",
+    label: "Game title bubbles",
+    group: "Software grid",
+    choices: [
+      { id: "on", name: "Show" },
+      { id: "off", name: "Hide" },
+    ],
+    def: "on",
+  },
+  {
     key: "profile",
     label: "User and Mii",
     group: "Software grid",

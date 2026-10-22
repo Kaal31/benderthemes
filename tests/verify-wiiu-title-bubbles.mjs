@@ -1,0 +1,8 @@
+import assert from 'node:assert/strict';import {launch} from './browser.mjs';import {startPreviewServer} from '../preview/server.mjs';
+const {server,url}=await startPreviewServer(),b=await launch();try{
+ const p=await b.newPage({viewport:{width:1280,height:800}});p.setDefaultTimeout(15000);await p.goto(url+'?theme=wiiu&still=1');await p.locator('.nt-boot').waitFor({state:'detached'});await p.locator('.nt-tile-caption:visible').waitFor();
+ async function choose(label){await p.evaluate(()=>window.__openThemeSettings());for(const text of ['Customize','Look options','Software grid','Game title bubbles'])await p.locator('.dht-menu-item').filter({hasText:new RegExp('^'+text)}).click();await p.locator('.dht-menu-item').filter({hasText:new RegExp('^'+label+'$')}).click();for(let i=0;i<8&&await p.locator('.dht-menu').count();i++)await p.keyboard.press('Escape');}
+ await choose('Hide');assert.equal(await p.evaluate(()=>window.__getThemeSettings().styles.wiiu.titleBubbles),'off');assert.equal(await p.locator('.nt-tile-caption,.nt-tile-tail').count(),0);assert.equal(await p.locator('.nt-tile-start:visible').count(),1,'Start remains visible');
+ await p.evaluate(()=>window.__updateTheme({wiiuView:'plaza'}));await p.locator('.nt-plaza').waitFor();await p.evaluate(()=>window.__updateTheme({wiiuView:'grid'}));await p.locator('.nt-grid').waitFor();assert.equal(await p.locator('.nt-tile-caption,.nt-tile-tail').count(),0);
+ await choose('Show');await p.locator('.nt-tile-caption:visible').waitFor();assert.equal(await p.locator('.nt-tile-tail:visible').count(),1);console.log('PASS title bubbles shown by default, nested toggle, hidden captions and tails, Start retained, persistence across views');
+}finally{await b.close();server.closeAllConnections();server.close();}
