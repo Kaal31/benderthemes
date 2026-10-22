@@ -17,6 +17,12 @@ try{
  }
  await p.evaluate(()=>window.__updateTheme({theme:'gameamp',activeTheme:'gameamp'}));const amp=p.locator('[data-react-theme=gameamp],[data-native-theme=gameamp]');await amp.waitFor();
  await p.waitForFunction(()=>{const host=document.querySelector('[data-native-theme=gameamp]'),dash=host?.shadowRoot?.querySelector('#dashboard');return dash&&Math.abs(dash.getBoundingClientRect().width-Math.min(innerWidth,innerHeight*1280/800))<1;});const before=await amp.locator('#dashboard').boundingBox();for(let i=0;i<9;i++)await p.keyboard.press('ArrowRight');const after=await amp.locator('#dashboard').boundingBox();assert.equal(after.width,before.width);assert.equal(after.height,before.height,'GameAmp size is independent of carousel content');
+ const panels=()=>amp.evaluate(host=>Object.fromEntries(['.player','.library','#shelf','.lower','.recent','.audio'].map(selector=>{const r=host.shadowRoot.querySelector(selector).getBoundingClientRect();return [selector,{width:r.width,height:r.height}];})));
+ const panelSizes=await panels();
+ await p.evaluate(()=>{window.__ampOriginalGames=window.__getThemeLibrary().games.map(g=>({game:g,name:g.name,art:g.art}));for(const {game} of window.__ampOriginalGames){game.name='LONG GAME TITLE WITHOUT ROOM '.repeat(30);game.art={...game.art,landscape:['data:image/svg+xml,'+encodeURIComponent('<svg xmlns="http://www.w3.org/2000/svg" width="100" height="8000"/>')]};}window.__updateTheme(s=>({clock24:!s.clock24}));});
+ await p.keyboard.press('ArrowRight');await amp.locator('#shelf img').first().evaluate(img=>img.decode());
+ assert.deepEqual(await panels(),panelSizes,'Long game titles and tall artwork cannot resize inner GameAmp panels');
+ await p.evaluate(()=>{for(const {game,name,art} of window.__ampOriginalGames){game.name=name;game.art=art;}delete window.__ampOriginalGames;window.__updateTheme(s=>({clock24:!s.clock24}));});
  await p.evaluate(()=>window.__updateTheme({theme:'santa-express',activeTheme:'santa-express'}));await s.waitFor();
  await s.screenshot({path:'out/native-themes/santa-native-covers.png'});assert.deepEqual(errors,[]);console.log('PASS Santa complete proportional covers, round avatar and recessed badge');
 }finally{await browser.close();server.closeAllConnections();server.close();}
