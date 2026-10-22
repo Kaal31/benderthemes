@@ -51,4 +51,13 @@ export const MII_CONTROLS_CSS=`
 .personal-mii .mii-model-tools{display:flex;flex-shrink:0;gap:6px;margin:8px 0}.personal-mii .mii-model-tools button{flex:1;min-width:0;padding:8px 4px;font-size:13px}.personal-mii .mii-model-tools button[aria-pressed=true]{background:#d9f5fc;border-color:#2bb6da;color:#087da5}
 @keyframes mii-palette-unfurl{from{opacity:0;transform:translateY(-6px) scaleY(.94)}to{opacity:1;transform:none}}
 @media(prefers-reduced-motion:reduce){.personal-mii .mii-palette-window{animation:none}.personal-mii .mii-palette-toggle b{transition:none}}
+
+/* Keep the chosen tool visibly pressed even after focus moves back to the model. */
+.personal-mii :is(nav,.mii-model-tools) button[aria-pressed=true],.personal-mii :is(nav,.mii-model-tools) button[aria-pressed=true]:hover{background:linear-gradient(#159fbe,#087eab);border-color:#08799f;color:#fff;box-shadow:inset 0 3px 5px #045d8066,inset 0 -1px 0 #c2f6ff88,0 0 0 2px #fff;text-shadow:0 1px 1px #065a79}
+.personal-mii .mii-model-tools button{position:relative;padding-left:22px}
+.personal-mii .mii-model-tools button[aria-pressed=true]:before{content:'✓' / '';position:absolute;left:7px;top:50%;transform:translateY(-50%);font-size:14px;font-weight:bold;color:#fff}
+.personal-mii .mii-choices button[aria-pressed=true],.personal-mii .mii-choices button[aria-pressed=true]:hover{position:relative;background:linear-gradient(#e7fbff,#c4eff9);border-color:#0789b4;box-shadow:inset 0 2px 5px #0b8ab433,0 0 0 2px #fff;color:#086a8a}
+.personal-mii .mii-choices button[aria-pressed=true]:after{content:'✓' / '';position:absolute;right:7px;top:7px;display:grid;place-items:center;width:24px;height:24px;border-radius:50%;background:#0789b4;color:white;font-size:17px;box-shadow:0 1px 3px #086a8a44}
+.personal-mii .mii-palette[data-expanded=true]{border-color:#159fbe;box-shadow:0 0 0 1px #159fbe33}
+.personal-mii .mii-palette[data-expanded=true] .mii-palette-toggle{background:linear-gradient(#e2f8ff,#cceef7);color:#086a8a;box-shadow:inset 0 2px 4px #0b8ab41a}
 `;
