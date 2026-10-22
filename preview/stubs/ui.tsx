@@ -18,7 +18,7 @@ if (typeof window !== "undefined") {
   window.addEventListener("keydown", (k) => {
     const top = stack[stack.length - 1]?.current;
     if (!top) return;
-    if ((k.target as HTMLElement)?.closest('input,textarea,select,[contenteditable="true"]') && k.key !== 'Escape') return;
+    if ((k.target as HTMLElement)?.closest?.('input,textarea,select,[contenteditable="true"]') && k.key !== 'Escape') return;
     const r = k.repeat;
     const dirs: Record<string, number> = { ArrowUp: 9, ArrowDown: 10, ArrowLeft: 11, ArrowRight: 12, PageUp: 11, PageDown: 12 };
     if (dirs[k.key]) return k.preventDefault(), top.onGamepadDirection?.(ev(dirs[k.key], r));

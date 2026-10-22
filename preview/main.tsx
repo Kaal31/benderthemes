@@ -327,7 +327,7 @@ function App() {
 (window as any).__consoleRows = () => consoleRows().map((r) => ({ key: r.key, label: r.label, presets: r.presets.map((p) => ({ id: p.id, name: variantLabel(r, p) })) }));
 (window as any).__l1Held = () => l1Held();
 window.addEventListener("keydown", (e) => {
-  if ((e.target as HTMLElement)?.closest('input,textarea,select,[contenteditable="true"]')) return;
+  if ((e.target as HTMLElement)?.closest?.('input,textarea,select,[contenteditable="true"]')) return;
   const layouts = THEMES.filter((t) => t.id !== "frame");
   const n = Number(e.key);
   if (n >= 1 && n <= layouts.length) updateSettings({ theme: layouts[n - 1].id, activeTheme: "" });
