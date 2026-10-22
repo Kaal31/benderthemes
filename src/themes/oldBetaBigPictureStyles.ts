@@ -116,13 +116,22 @@ export const OLD_BETA_CSS=`
 .dht-oldbeta .beta-categories button{transition:color 120ms,background-color 120ms,transform 180ms}.dht-oldbeta .beta-light,.dht-oldbeta .beta-focus-light{transition:transform 400ms cubic-bezier(.22,.61,.36,1),top 360ms,opacity 300ms}
 .dht-oldbeta .beta-stacked-sheets{transition:opacity 240ms,transform 360ms}.dht-oldbeta[data-mode=recent] .beta-view-all{animation:beta-controls-reveal 160ms 200ms both}
 
-/* Counter-flow: front covers always travel left; deeper covers travel right.
-   Staggered low-opacity resets avoid a whole-sheet jump at the loop boundary. */
+/* Counter-flow: front covers travel left, deeper covers right. The first
+   rear planes are solid artwork; only the deepest plane recedes into haze. */
 .dht-oldbeta .beta-cover-board,.dht-oldbeta .beta-rear-sheet,.dht-oldbeta .beta-store-layer{animation:none}
-.dht-oldbeta .beta-rear-sheet{transform:translate3d(calc((var(--sheet-depth)*12 - 28)*1px),calc(var(--sheet-depth)*24px),calc(var(--sheet-depth)*-52px)) rotateZ(calc((var(--sheet-depth) - 2)*1.5deg));opacity:calc(.44 - var(--sheet-depth)*.075)}
-.dht-oldbeta .beta-store-layer-3{position:absolute;inset:0;transform:translate3d(-2%,57%,-165px) scale(.76);opacity:.12;pointer-events:none;z-index:0}
-@keyframes beta-flow-left{0%{translate:calc(var(--beta-w)*.025) 0;opacity:0}9%{opacity:1}91%{opacity:1}100%{translate:calc(var(--beta-w)*-.025) 0;opacity:0}}
-@keyframes beta-flow-right{0%{translate:calc(var(--beta-w)*-.035) 0;opacity:0}9%{opacity:1}91%{opacity:1}100%{translate:calc(var(--beta-w)*.035) 0;opacity:0}}
+.dht-oldbeta .beta-rear-sheet{transform:translate3d(var(--sheet-offset,0px),calc(var(--sheet-depth)*26px),calc(var(--sheet-depth)*-42px)) rotateZ(calc((var(--sheet-depth) - 2)*.8deg));opacity:1;--flow-alpha:1}
+.dht-oldbeta .beta-rear-sheet-1{--sheet-offset:-32px}.dht-oldbeta .beta-rear-sheet-2{--sheet-offset:28px}.dht-oldbeta .beta-rear-sheet-3{--sheet-offset:-18px}.dht-oldbeta .beta-rear-sheet-4{--sheet-offset:42px;--flow-alpha:.48}
+.dht-oldbeta .beta-rear-cover img{filter:saturate(.7) brightness(.86)}
+.dht-oldbeta .beta-rear-sheet-3 img,.dht-oldbeta .beta-rear-sheet-4 img{filter:saturate(.65) brightness(.78)}
+.dht-oldbeta .beta-store-sheet{mask-image:none}
+.dht-oldbeta .beta-store-layer{opacity:1;--flow-alpha:1}
+.dht-oldbeta .beta-store-layer-1{transform:translate3d(-6%,21%,-50px) scale(.94)}
+.dht-oldbeta .beta-store-layer-2{transform:translate3d(6%,43%,-100px) scale(.88)}
+.dht-oldbeta .beta-store-layer-3{position:absolute;inset:0;transform:translate3d(-3%,64%,-150px) scale(.82);--flow-alpha:.48;pointer-events:none;z-index:0}
+.dht-oldbeta .beta-sheet-cover>span{display:none}
+.dht-oldbeta .beta-rear-cover,.dht-oldbeta .beta-sheet-cover{opacity:var(--flow-alpha,1)}
+@keyframes beta-flow-left{0%{translate:calc(var(--beta-w)*.025) 0;opacity:0}3%{opacity:var(--flow-alpha,1)}97%{opacity:var(--flow-alpha,1)}100%{translate:calc(var(--beta-w)*-.025) 0;opacity:0}}
+@keyframes beta-flow-right{0%{translate:calc(var(--beta-w)*-.035) 0;opacity:0}3%{opacity:var(--flow-alpha,1)}97%{opacity:var(--flow-alpha,1)}100%{translate:calc(var(--beta-w)*.035) 0;opacity:0}}
 .dht-oldbeta[data-mode=sheet] .beta-cover,.dht-oldbeta .beta-store-layer-0 .beta-sheet-cover{animation:beta-flow-left 18s linear infinite;animation-delay:var(--flow-phase,0s)}
 .dht-oldbeta .beta-rear-sheet .beta-rear-cover,.dht-oldbeta .beta-store-layer:not(.beta-store-layer-0) .beta-sheet-cover{animation:beta-flow-right 24s linear infinite;animation-delay:var(--flow-phase,0s)}
 .dht-oldbeta .beta-rear-sheet-2 .beta-rear-cover{animation-duration:28s}.dht-oldbeta .beta-rear-sheet-3 .beta-rear-cover{animation-duration:32s}.dht-oldbeta .beta-rear-sheet-4 .beta-rear-cover{animation-duration:36s}
