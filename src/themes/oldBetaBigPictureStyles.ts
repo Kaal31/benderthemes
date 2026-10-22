@@ -101,5 +101,19 @@ export const OLD_BETA_CSS=`
 @keyframes beta-friend-scroll{0%{translate:-10px 0;rotate:-.35deg}50%{translate:0 0;rotate:0deg}100%{translate:12px 0;rotate:.35deg}}
 .dht-oldbeta .beta-rear-sheet-1{opacity:.34}.dht-oldbeta .beta-rear-sheet-2{opacity:.17}
 
+
+/* One transform owner per transition; avoid CSS interpolation underneath WAAPI. */
+.dht-oldbeta .beta-cover-board,.dht-oldbeta .beta-secondary-sheet{transition:none}
+.dht-oldbeta .beta-cover{transition:transform 190ms cubic-bezier(.22,.61,.36,1),width 190ms,height 190ms,opacity 180ms;transition-delay:0ms}
+.dht-oldbeta[data-mode=sheet] .beta-cover,.dht-oldbeta .beta-rear-cover{animation:none}
+.dht-oldbeta .beta-cover-board{animation:beta-library-idle 32s linear infinite alternate}
+@keyframes beta-library-idle{from{translate:-11px 0}to{translate:11px 0}}
+.dht-oldbeta:not([data-mode=sheet]) .beta-cover-board{animation:none}.dht-oldbeta:not([data-category="1"]) .beta-cover-board{animation-play-state:paused}
+.dht-oldbeta .beta-rear-sheet-1{animation:beta-rear-one 38s linear infinite alternate}.dht-oldbeta .beta-rear-sheet-2{animation:beta-rear-two 44s linear infinite alternate}
+.dht-oldbeta .beta-store-layer{animation-duration:34s;animation-timing-function:linear}
+.dht-oldbeta .beta-community-sheet{animation:none}.dht-oldbeta .beta-sheet-friend{animation-duration:42s;animation-timing-function:linear}.dht-oldbeta .beta-community-layer-2 .beta-sheet-friend{animation-duration:48s}
+.dht-oldbeta .beta-categories{transition:top 360ms cubic-bezier(.22,.61,.36,1),transform 360ms,opacity 180ms}.dht-oldbeta .beta-categories::before{transition:transform 180ms cubic-bezier(.22,.61,.36,1)}
+.dht-oldbeta .beta-categories button{transition:color 120ms,background-color 120ms,transform 180ms}.dht-oldbeta .beta-light,.dht-oldbeta .beta-focus-light{transition:transform 400ms cubic-bezier(.22,.61,.36,1),top 360ms,opacity 300ms}
+.dht-oldbeta .beta-stacked-sheets{transition:opacity 240ms,transform 360ms}.dht-oldbeta[data-mode=recent] .beta-view-all{animation:beta-controls-reveal 160ms 200ms both}
 .dht-oldbeta.no-motion *,.dht-oldbeta.no-motion *::before,.dht-oldbeta.no-motion *::after{transition:none!important;animation:none!important;scroll-behavior:auto!important}@media(prefers-reduced-motion:reduce){.dht-oldbeta *,.dht-oldbeta *::before,.dht-oldbeta *::after{transition:none!important;animation:none!important;scroll-behavior:auto!important}}
 `;
