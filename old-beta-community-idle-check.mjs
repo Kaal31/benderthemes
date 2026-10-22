@@ -9,6 +9,11 @@ try {
   assert.equal(await root.locator('.beta-sheet-friend').first().evaluate(n=>getComputedStyle(n).animationPlayState),'paused');
   await root.locator('button[data-category="2"]').focus();
   await page.waitForTimeout(600);
+  assert.equal(await root.locator('.beta-community-layer-0>.beta-sheet-friend:not(.beta-chat-panel)').count(),18);
+  assert.equal(await root.locator('.beta-chat-panel').count(),6);
+  assert.ok(await root.locator('.beta-chat-history').allTextContents().then(texts=>texts.some(text=>text.includes('Ready for another run?'))));
+  assert.equal(await root.locator('.beta-chat-panel input,.beta-chat-panel button,.beta-chat-panel textarea').count(),0,'Decorative chats must not capture controller focus');
+  assert.ok(await root.locator('.beta-chat-panel').evaluateAll(nodes=>nodes.every(n=>getComputedStyle(n).position==='relative'&&getComputedStyle(n).gridColumnEnd==='span 2')),'Chat panels must occupy cells within the friend sheets');
   for(const layer of [0,1,2]) {
     const result=await root.locator(`.beta-community-layer-${layer} .beta-sheet-friend`).first().evaluate(n=>{
       const a=n.getAnimations().find(a=>a.effect.getTiming().iterations===Infinity);

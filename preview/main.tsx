@@ -334,11 +334,26 @@ window.addEventListener("keydown", (e) => {
 });
 createRoot(document.getElementById("root")!).render(<App />);
 
+// Beta home uses mock conversations only in this local preview.
+if(initialTheme==='old-beta-big-picture') (globalThis as any).__oldBetaPreviewChats={
+  Kaida:['Ready for another run?','Give me a minute!','I’ll send you an invite.'],
+  Tobias:['Did you find the next area?','Just reached the castle.','Meet you there.'],
+  Juno:['The farm is looking good!','Want to join?','Starting the game now.'],
+  Wren:['Hey, what are we playing?','Up for some co-op?'],
+  Orrin:['Just got online.','Let’s play!'],
+  Mei:['That last match was close.','One more?']
+};
 // Sample friends and achievements, so the friends and trophy pages have something to draw in the preview.
 (globalThis as any).friendStore ??= {
   allFriends: [
     ["Kaida", 1, "Hades"], ["Orrin", 1, ""], ["Mei", 0, ""], ["Tobias", 1, "Elden Ring"],
     ["Sable", 0, ""], ["Juno", 1, "Stardew Valley"], ["Rook", 0, ""], ["Wren", 1, ""],
+    ...(initialTheme==='old-beta-big-picture' ? [
+      ['Lumi',1,'Portal 2'],['Atlas',1,'Baldur’s Gate 3'],['Nova',1,''],['Rowan',1,'DOOM Eternal'],
+      ['Iris',1,'Hollow Knight'],['Ash',1,''],['Echo',1,'Balatro'],['Finn',1,''],
+      ['Cleo',1,'The Witcher 3'],['Sage',1,''],['Milo',1,'Red Dead Redemption 2'],['Skye',1,''],
+      ['Nico',1,''],['Robin',1,''],['Ember',1,'']
+    ] : []),
   ].map(([n, st, g]) => ({ persona: { m_strPlayerName: n, m_ePersonaState: st, m_strGameName: g || undefined, m_steamid: `7656119${n}`, ...(bugCases && n === "Kaida" ? { m_strNickname: "Kai (best buddy)" } : bugCases && n === "Tobias" ? { m_strNickname: "Toby" } : {}) } })),
 };
 {
