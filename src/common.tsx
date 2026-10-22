@@ -577,7 +577,7 @@ export function MenuView({
     item:(on,disabled)=>({fontSize:21,padding:"11px 18px",margin:"2px 0",color:disabled?"#53798b":on?"#15374b":"#99c8db",background:on?"linear-gradient(90deg,#b6e6f0,#6cb8d1)":"#1c4c6570",boxShadow:on?"0 0 9px #76d5ef55":"none",borderRadius:0}),
     title:{fontSize:26,fontWeight:300,padding:"5px 0 20px",color:"#c4e4ef",borderBottom:"1px solid #609bb052",marginBottom:14},
   };
-  styles["old-beta-big-picture"] = styles["old-big-picture"];
+  styles["old-beta-big-picture"] = {...styles["old-big-picture"],panel:{...styles["old-big-picture"].panel,"--beta-focus-duration":getSettings().animations?"160ms":"0ms"} as CSSProperties};
   styles.wiiu = styles.wii;
   styles.ps1 = PS1_MENU;
   styles.iisu = IISU_MENU;

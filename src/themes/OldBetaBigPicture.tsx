@@ -10,6 +10,7 @@ import {playSound} from '../steam';
 import {OldBigPictureHome} from './OldBigPicture';
 import {Navigation} from '@decky/ui';
 import {OLD_BETA_CSS} from './oldBetaBigPictureStyles';
+import {OLD_BETA_FOCUS_CSS} from './oldBetaFocusStyles';
 import {OLD_BETA_PAGE_CSS} from './oldBetaPageStyles';
 import {OldBetaPages,createBetaBrowserSession} from './OldBetaPages';
 import {OldBetaKeyboard} from './OldBetaKeyboard';
@@ -41,7 +42,7 @@ export function OldBetaBigPictureHome(){
  useLayoutEffect(()=>{const node=root.current;if(!node)return;const resize=()=>setSize({w:node.clientWidth,h:node.clientHeight});resize();const observer=new ResizeObserver(resize);observer.observe(node);return()=>observer.disconnect();},[destination]);
  useLayoutEffect(()=>{if(destination)return;const target=mode==='sheet'?root.current?.querySelector<HTMLButtonElement>(`[data-category="${category}"]`):cards.current.get(chosen?.appid);target?.focus({preventScroll:true});},[mode,destination]);
  const motionEnabled=()=>api.settings.animations&&!matchMedia('(prefers-reduced-motion: reduce)').matches;
- const stopMotion=()=>{motion.current.forEach(a=>a.cancel());motion.current=[];root.current?.querySelectorAll<HTMLElement>('.beta-cover-board,.beta-secondary-sheet').forEach(n=>{n.style.opacity='';});root.current?.querySelector<HTMLElement>('.beta-stacked-sheets')?.style.removeProperty('visibility');};
+ const stopMotion=()=>{root.current?.removeAttribute('data-carousel-entering');motion.current.forEach(a=>a.cancel());motion.current=[];root.current?.querySelectorAll<HTMLElement>('.beta-cover-board,.beta-secondary-sheet').forEach(n=>{n.style.opacity='';});root.current?.querySelector<HTMLElement>('.beta-stacked-sheets')?.style.removeProperty('visibility');};
  useEffect(()=>()=>{motion.current.forEach(a=>a.cancel());if(pendingOpen.current)clearTimeout(pendingOpen.current);},[]);
  useEffect(()=>{const media=matchMedia('(prefers-reduced-motion: reduce)'),stop=()=>{if(media.matches||!api.settings.animations)stopMotion();};stop();media.addEventListener('change',stop);return()=>media.removeEventListener('change',stop);},[api.settings.animations]);
  useLayoutEffect(()=>{
@@ -69,7 +70,7 @@ export function OldBetaBigPictureHome(){
    const end=getComputedStyle(board),target={transform:end.transform,left:end.left,top:end.top};
    // The sheet separates while tilted, then straightens. No collective Z bounce.
    const intermediate={transform:'rotateX(35deg) rotateZ(-15deg) scale(.94)',left:(size.w*.515)+'px',top:(size.h*.415)+'px'};
-   motion.current.push(board.animate([savedBoard,{...intermediate,offset:entering?.4:.6},target],{duration,easing}));
+   const unfolding=board.animate([savedBoard,{...intermediate,offset:entering?.4:.6},target],{duration,easing});motion.current.push(unfolding);if(entering){root.current.setAttribute('data-carousel-entering','true');unfolding.finished.then(()=>root.current?.removeAttribute('data-carousel-entering')).catch(()=>{});}
   }
   cards.current.forEach((node,id)=>{
    const start=starts.get(id);if(!start)return;
@@ -136,14 +137,14 @@ export function OldBetaBigPictureHome(){
   if(btn==='up'&&selected%3===0){root.current?.querySelector<HTMLButtonElement>('.beta-collection-picker>button')?.focus({preventScroll:true});return true;}
   choose(selected+(btn==='left'?-3:btn==='right'?3:btn==='up'?-1:1));return true;
  }
- if(destination&&destination!=='web'&&destination!=='friends')return <OldBigPictureHome initialPage={destination} initialGame={game} onExit={()=>setDestination(null)}/>;
+ if(destination&&destination!=='web'&&destination!=='friends')return <OldBigPictureHome variant="beta" initialPage={destination} initialGame={game} onExit={()=>setDestination(null)}/>;
  const w=size.w,h=size.h,cardW=mode==='sheet'?w*.15:mode==='recent'?w*.195:w*.18,cardH=cardW*215/460;
  const storeArt=storeCovers.length?storeCovers.map(p=>({id:p.id,name:p.name,src:p.header})):games.slice().reverse().map(g=>({id:g.appid,name:g.name,src:g.art.landscape[0]}));
  const friendCard=(f:typeof friends[number],i:number)=><div key={f.id} className="beta-sheet-friend" style={{'--layer':i%3,'--friend-phase':(-i*4.1)+'s'} as CSSProperties}><span className="beta-friend-avatar" role="img" aria-label={f.avatar?f.name+' Steam avatar':'Placeholder avatar for '+f.name}><span aria-hidden="true">{f.name.slice(0,1)}</span>{f.avatar&&<img src={f.avatar} alt="" onError={event=>{event.currentTarget.hidden=true;event.currentTarget.parentElement?.setAttribute('aria-label','Placeholder avatar for '+f.name);}}/>}</span><span>{f.name}<small>{f.status??(f.online?'Online':'Offline')}</small>{f.game&&<small>{f.game}</small>}</span></div>;
  const column=Math.floor(selected/3),columnOffset=Math.max(0,column-2);
  return <ThemeRoot onInput={input} hints={{a:'Select',b:'Back',x:'Play',y:'Options'}}>
   <div ref={root} className={'dht-oldbeta'+(!api.settings.animations?' no-motion':'')} data-mode={mode} data-category={category} style={{'--beta-w':w+'px','--beta-h':h+'px','--beta-category':category} as CSSProperties}>
-   <style>{OLD_BETA_CSS+OLD_BETA_PAGE_CSS}</style><div className="beta-home-scene" ref={n=>{if(n)n.inert=!!destination||searchOpen;}}><div className="beta-ambient" aria-hidden="true">{Array.from({length:26},(_,i)=><i key={i} style={{left:((i*37+9)%100)+'%',top:((i*23+13)%100)+'%','--dot-size':(i%6===0?2.3:.45+(i%5)*.3)+'%','--dot-time':(28+i%7*4)+'s','--dot-delay':(-i*3.7)+'s','--dot-alpha':.055+(i%4)*.023} as CSSProperties}/>)}</div>
+   <style>{OLD_BETA_CSS+OLD_BETA_PAGE_CSS+OLD_BETA_FOCUS_CSS}</style><div className="beta-home-scene" ref={n=>{if(n)n.inert=!!destination||searchOpen;}}><div className="beta-ambient" aria-hidden="true">{Array.from({length:26},(_,i)=><i key={i} style={{left:((i*37+9)%100)+'%',top:((i*23+13)%100)+'%','--dot-size':(i%6===0?2.3:.45+(i%5)*.3)+'%','--dot-time':(28+i%7*4)+'s','--dot-delay':(-i*3.7)+'s','--dot-alpha':.055+(i%4)*.023} as CSSProperties}/>)}</div>
    <header className="beta-header"><button aria-label="Profile" onClick={()=>go('profile')}><span className="beta-avatar"><ProfileAvatar size={32}/></span></button><div><button aria-label="Settings" onClick={()=>go('settings')}><Icon name="gear" size={22}/></button><button aria-label="Power" onClick={()=>Navigation.OpenPowerMenu()}><Icon name="power" size={22}/></button><span className="beta-stamp">BETA</span></div></header>
    <div className="beta-light" aria-hidden="true"/><div className="beta-focus-light" aria-hidden="true"/>
    <nav className="beta-categories" aria-label="Categories">{categories.map((name,index)=><button key={name} data-category={index} aria-pressed={index===category} onFocus={()=>focusCategory(index)} onClick={()=>index===1?changeMode('recent'):go(index===0?'store':'community')}>{name}</button>)}</nav>

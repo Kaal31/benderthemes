@@ -120,8 +120,8 @@ export const OLD_BETA_CSS=`
 .dht-oldbeta:not([data-mode=sheet]) .beta-stacked-sheets{visibility:hidden}
 .dht-oldbeta .beta-categories{transition:top 400ms cubic-bezier(.25,.46,.45,.94),transform 400ms,opacity 180ms}
 .dht-oldbeta[data-mode=recent] .beta-cover>span{transition:opacity 80ms}
-.dht-oldbeta[data-mode=recent] .beta-cover[data-selected=true]>span{transition:opacity 100ms 300ms}
-.dht-oldbeta[data-mode=recent] .beta-cover[data-selected=true]{animation:beta-carousel-selection 400ms linear}
+.dht-oldbeta[data-mode=recent][data-carousel-entering=true] .beta-cover[data-selected=true]>span{transition:opacity 100ms 300ms}
+.dht-oldbeta[data-mode=recent][data-carousel-entering=true] .beta-cover[data-selected=true]{animation:beta-carousel-selection 400ms linear}
 @keyframes beta-carousel-selection{0%,65%{outline-color:transparent;box-shadow:0 0 0 transparent}100%{outline-color:#ecf9ff;box-shadow:0 0 20px #9bd9ff90}}
 .dht-oldbeta[data-mode=recent] .beta-view-all{animation:beta-controls-reveal 180ms 120ms both}
 
@@ -146,8 +146,8 @@ export const OLD_BETA_CSS=`
 .dht-oldbeta .beta-rear-sheet-2 .beta-rear-cover{animation-duration:28s}.dht-oldbeta .beta-rear-sheet-3 .beta-rear-cover{animation-duration:32s}.dht-oldbeta .beta-rear-sheet-4 .beta-rear-cover{animation-duration:36s}
 .dht-oldbeta:not([data-mode=sheet]) .beta-rear-cover,.dht-oldbeta:not([data-category="1"]) .beta-rear-cover,.dht-oldbeta:not([data-category="1"]) .beta-cover,.dht-oldbeta:not([data-category="0"]) .beta-sheet-cover,.dht-oldbeta:not([data-mode=sheet]) .beta-sheet-cover{animation-play-state:paused}
 /* Community shares the cover sheets' cadence without rotating names or avatars. */
-.dht-oldbeta .beta-community-sheet{width:calc(var(--beta-w)*.69)}
-.dht-oldbeta .beta-community-layer{grid-template-columns:repeat(5,minmax(0,1fr));grid-auto-flow:row dense;grid-auto-rows:calc(var(--beta-h)*.058);gap:calc(var(--beta-h)*.012) calc(var(--beta-w)*.009)}
+.dht-oldbeta .beta-community-sheet{width:calc(var(--beta-w)*.55)}
+.dht-oldbeta .beta-community-layer{grid-template-columns:repeat(5,minmax(0,1fr));grid-auto-flow:row dense;grid-auto-rows:calc(var(--beta-h)*.05);gap:calc(var(--beta-h)*.008) calc(var(--beta-w)*.006)}
 .dht-oldbeta .beta-community-layer>.beta-sheet-friend{min-height:0;font-size:calc(var(--beta-w)*.009);gap:calc(var(--beta-w)*.005)}
 .dht-oldbeta .beta-community-layer .beta-friend-avatar{width:calc(var(--beta-w)*.028);height:calc(var(--beta-w)*.028);border-width:1px}
 .dht-oldbeta .beta-community-layer-1{transform:translate3d(-4%,24%,-55px) scale(.95)}
