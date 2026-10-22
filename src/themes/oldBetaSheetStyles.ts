@@ -13,9 +13,9 @@ export const OLD_BETA_SHEET_CSS=`
 .dht-oldbeta[data-sheet-layout=reference][data-mode=sheet] .beta-cover-board{left:50%;top:35.5%}
 .dht-oldbeta[data-sheet-layout=reference] .beta-rear-sheet{transform:translate3d(var(--sheet-offset,0px),calc(var(--sheet-depth)*18px),calc(var(--sheet-depth)*-30px)) rotateZ(calc((var(--sheet-depth) - 2)*.5deg))}.dht-oldbeta[data-sheet-layout=reference] .beta-rear-sheet-1{--sheet-offset:-20px}.dht-oldbeta[data-sheet-layout=reference] .beta-rear-sheet-2{--sheet-offset:16px}
 .dht-oldbeta[data-sheet-layout=reference] .beta-store-layer-2 .beta-sheet-cover:nth-last-child(-n+2),.dht-oldbeta[data-sheet-layout=reference] .beta-rear-sheet-2 .beta-rear-cover:nth-last-child(-n+2){--flow-alpha:.48}
-.dht-oldbeta[data-sheet-layout=reference] .beta-community-sheet{width:calc(var(--beta-w)*.46);left:50%;top:40%}
-.dht-oldbeta[data-sheet-layout=reference] .beta-community-layer{grid-template-columns:repeat(4,minmax(0,1fr));grid-auto-rows:calc(var(--beta-h)*.07);gap:calc(var(--beta-h)*.003) calc(var(--beta-w)*.002)}
-.dht-oldbeta[data-sheet-layout=reference] .beta-community-layer .beta-friend-avatar{width:calc(var(--beta-w)*.044);height:calc(var(--beta-w)*.044)}
-.dht-oldbeta[data-sheet-layout=reference] .beta-community-layer-0 .beta-sheet-friend[data-sheet-selected=true]{grid-column:2 / 4;grid-row:1;justify-content:center;position:relative}
-.dht-oldbeta[data-sheet-layout=reference] .beta-community-layer-0 .beta-sheet-friend[data-sheet-selected=true]>span:last-child{position:absolute;left:calc(50% + var(--beta-w)*.028);white-space:nowrap}
+.dht-oldbeta[data-sheet-layout=reference] .beta-community-sheet{width:calc(var(--beta-w)*.34);left:50%;top:40%}
+.dht-oldbeta[data-sheet-layout=reference] .beta-community-layer{grid-template-columns:repeat(3,minmax(0,1fr));grid-auto-rows:calc(var(--beta-h)*.11);gap:calc(var(--beta-h)*.0025) calc(var(--beta-w)*.001)}
+.dht-oldbeta[data-sheet-layout=reference] .beta-community-layer .beta-friend-avatar{width:calc(var(--beta-w)*.068);height:calc(var(--beta-w)*.068)}
+.dht-oldbeta[data-sheet-layout=reference] .beta-community-layer-0 .beta-sheet-friend[data-sheet-selected=true]{grid-column:2;grid-row:1;justify-content:center;position:relative}
+.dht-oldbeta[data-sheet-layout=reference] .beta-community-layer-0 .beta-sheet-friend[data-sheet-selected=true]>span:last-child{position:absolute;left:calc(50% + var(--beta-w)*.039);white-space:nowrap}
 `;
