@@ -136,5 +136,14 @@ export const OLD_BETA_CSS=`
 .dht-oldbeta .beta-rear-sheet .beta-rear-cover,.dht-oldbeta .beta-store-layer:not(.beta-store-layer-0) .beta-sheet-cover{animation:beta-flow-right 24s linear infinite;animation-delay:var(--flow-phase,0s)}
 .dht-oldbeta .beta-rear-sheet-2 .beta-rear-cover{animation-duration:28s}.dht-oldbeta .beta-rear-sheet-3 .beta-rear-cover{animation-duration:32s}.dht-oldbeta .beta-rear-sheet-4 .beta-rear-cover{animation-duration:36s}
 .dht-oldbeta:not([data-mode=sheet]) .beta-rear-cover,.dht-oldbeta:not([data-category="1"]) .beta-rear-cover,.dht-oldbeta:not([data-category="1"]) .beta-cover,.dht-oldbeta:not([data-category="0"]) .beta-sheet-cover,.dht-oldbeta:not([data-mode=sheet]) .beta-sheet-cover{animation-play-state:paused}
+/* Community shares the cover sheets' cadence without rotating names or avatars. */
+.dht-oldbeta .beta-community-sheet{mask-image:none}
+.dht-oldbeta .beta-community-layer{opacity:1;--flow-alpha:1}
+.dht-oldbeta .beta-community-layer-2{--flow-alpha:.48}
+.dht-oldbeta .beta-community-layer-0 .beta-sheet-friend{animation:beta-flow-left 18s linear infinite;animation-delay:var(--friend-phase,0s)}
+.dht-oldbeta .beta-community-layer-1 .beta-sheet-friend{animation:beta-flow-right 24s linear infinite;animation-delay:var(--friend-phase,0s)}
+.dht-oldbeta .beta-community-layer-2 .beta-sheet-friend{animation:beta-flow-right 28s linear infinite;animation-delay:var(--friend-phase,0s)}
+.dht-oldbeta .beta-sheet-friend{opacity:var(--flow-alpha,1)}
+.dht-oldbeta:not([data-mode=sheet]) .beta-sheet-friend,.dht-oldbeta:not([data-category="2"]) .beta-sheet-friend{animation-play-state:paused}
 .dht-oldbeta.no-motion *,.dht-oldbeta.no-motion *::before,.dht-oldbeta.no-motion *::after{transition:none!important;animation:none!important;scroll-behavior:auto!important}@media(prefers-reduced-motion:reduce){.dht-oldbeta *,.dht-oldbeta *::before,.dht-oldbeta *::after{transition:none!important;animation:none!important;scroll-behavior:auto!important}}
 `;
