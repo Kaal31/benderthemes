@@ -7,7 +7,7 @@ try{
  const root=page.locator('.dht-oldbeta');await root.waitFor();
  const finish=async()=>{await root.evaluate(n=>n.getAnimations({subtree:true}).filter(a=>a.effect.getTiming().iterations!==Infinity).forEach(a=>{try{a.finish();}catch{}}));await page.waitForTimeout(80);};
  await root.getByRole('button',{name:'Settings',exact:true}).click();const settings=root.locator('.beta-settings-page');await settings.waitFor();await finish();
- assert.equal(await settings.locator('.beta-settings-list button').count(),7);assert.equal(await page.locator(':focus').innerText(),'Account');await page.keyboard.press('ArrowDown');assert.equal(await page.locator(':focus').innerText(),'Friends');
+ assert.ok(await settings.locator('.beta-settings-list button').count()>=7);assert.ok(await settings.getByRole('button',{name:/Community page:/}).count());assert.ok(await settings.getByRole('button',{name:/Sheet size and amount:/}).count());await page.keyboard.press('ArrowDown');assert.ok(await page.locator(':focus').evaluate(n=>!!n.closest('.beta-settings-list')));
  const rect=await settings.boundingBox(),list=await settings.locator('.beta-settings-list').boundingBox();assert.ok(Math.abs(list.width/rect.width-.25)<.01);
  await page.screenshot({path:'out/old-beta-big-picture/reference-settings.png'});await page.keyboard.press('Escape');await finish();await settings.waitFor({state:'detached'});
  await root.locator('[data-category="2"]').click();const community=root.locator('.beta-community-page');await community.waitFor();await finish();assert.ok(await community.locator('.beta-community-person').count()>0);

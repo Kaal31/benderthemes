@@ -10,9 +10,9 @@ export function captureStoreSheet(root:HTMLElement){
 }
 
 /** Same separation/level/late enlargement timing as the Library sheet peel. */
-export function unfoldStoreSheet(root:HTMLElement,wrapper:HTMLElement,onDone:()=>void){
+export function unfoldStoreSheet(root:HTMLElement,wrapper:HTMLElement,onDone:()=>void,reverse=false){
  const sheet=wrapper.querySelector<HTMLElement>('.beta-store-sheet')!,layer=sheet.querySelector<HTMLElement>('.beta-store-layer-0')!,featured=root.querySelector<HTMLElement>('.beta-store-featured'),bounds=root.getBoundingClientRect(),w=bounds.width,h=bounds.height;
- const animations:Animation[]=[],timing={duration:400,easing:'cubic-bezier(.25,.46,.45,.94)',fill:'forwards' as FillMode};
+ const animations:Animation[]=[],timing={duration:400,easing:'cubic-bezier(.25,.46,.45,.94)',fill:'forwards' as FillMode,direction:(reverse?'reverse':'normal') as PlaybackDirection};
  const move=(n:HTMLElement,frames:Keyframe[])=>{const a=n.animate(frames,timing);animations.push(a);return a;};
  const style=getComputedStyle(sheet);move(sheet,[{transform:style.transform,left:sheet.style.left,top:sheet.style.top},{transform:'rotateX(35deg) rotateZ(-15deg) scale(.94)',left:w*.12+'px',top:h*.1+'px',offset:.4},{transform:'none',left:'0px',top:'0px'}]);
  move(layer,[{transform:getComputedStyle(layer).transform,translate:getComputedStyle(layer).translate},{transform:'none',translate:'none'}]);
@@ -28,7 +28,7 @@ export function unfoldStoreSheet(root:HTMLElement,wrapper:HTMLElement,onDone:()=
  sheet.querySelectorAll<HTMLElement>('.beta-store-layer:not(.beta-store-layer-0) .beta-sheet-cover').forEach(n=>{const s=getComputedStyle(n);move(n,[{translate:s.translate,opacity:s.opacity},{translate:`${w*.24}px ${-h*.28}px`,opacity:0}]);});
  if(featured)featured.style.visibility='hidden';
  let completed=false;
- const complete=()=>{if(completed)return;completed=true;if(featured)featured.style.visibility='';wrapper.remove();onDone();if(featured?.isConnected)featured.querySelector<HTMLButtonElement>('[data-selected=true]')?.focus({preventScroll:true});};
+ const complete=()=>{if(completed)return;completed=true;if(featured)featured.style.visibility='';wrapper.remove();onDone();if(!reverse&&featured?.isConnected)featured.querySelector<HTMLButtonElement>('[data-selected=true]')?.focus({preventScroll:true});};
  Promise.all(animations.map(a=>a.finished.catch(()=>{}))).then(complete);
  return ()=>{animations.forEach(a=>a.cancel());complete();};
 }

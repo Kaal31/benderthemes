@@ -130,3 +130,12 @@ The compact default now means fewer larger leaves, following the user's correcti
 
 
 Library covers have a further size increase to 21.5% of screen width in the compact sheet layout, including rear leaves, while retaining eight front/eight rear covers and the centered colored game. Surplus persistent Library buttons are explicitly hidden in sheet mode: idle opacity keyframes previously overrode their zero opacity and could reveal covers beyond the intended count. Their captured opening opacity is zero, preserving the existing peel when entering the carousel.
+
+
+## Escape cleanup, Community scale and theme Settings
+
+Store Back now reverses the cover peel into the preserved home sheet. The home categories retain their home position throughout Store entry/exit; the generic opening flag previously shifted them toward the top and could still be moving when Escape revealed them. A separate close flag prevents this movement. Snapshot nodes for internal Store pages are tracked, frozen to their original stage dimensions/background and removed when interrupted, closed or unmounted. Rapid Back cannot leave a stale snapshot over the home menu.
+
+Community sheet avatars grow from 3.2% to 4.4% screen width, with smaller horizontal/vertical gaps. On the Community page, neighboring avatars grow from 7% to 9%, the selected avatar from 15.6% to 18.4%, and row gaps shrink from 1.8% to 1%. Activity tiles also grow and move closer together; offsets follow the new pitch so controller selection stays centered.
+
+Settings now renders the same essential items, theme options, nested choices and Global settings used by the existing options window in the Beta Settings page. Community layout, sheet layout, Customize, Screensaver, Advanced, presets and shared choices work directly in this page. Back returns through submenus before leaving the page, and focus scrolls within the centered list. The Settings page enters while the home sheets sweep aside, then restores their captured pose underneath its exit rather than revealing a snapped home state. Reduced motion finishes/cleans up both directions. `old-beta-back-settings-check.mjs` covers Store menu position during Escape, reverse peel, rapid Back cleanup, live nested theme settings, Settings return motion, larger Community avatars and reduced-motion cleanup.
