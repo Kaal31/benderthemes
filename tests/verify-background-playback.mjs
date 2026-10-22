@@ -16,7 +16,7 @@ try{
  }
  const gif=new URL('../tests/fixtures/media/animated-wallpaper.gif',url).href;
  await page.evaluate(gif=>{window.__testWalls['motion.gif']=gif;},gif);
- for(const theme of ['castle','ps4','aero','n3ds']){
+ for(const theme of ['castle','republic','nazarick','ps4','aero','n3ds']){
   await page.evaluate(theme=>window.__updateTheme(s=>({theme,activeTheme:'',animations:false,ps4GameBackgrounds:false,gameArt:false,wallpapers:{...s.wallpapers,[theme]:'motion.gif'}})),theme);
   await page.waitForFunction(()=>[...document.querySelectorAll('[data-dht-root] img')].some(i=>i.src.includes('animated-wallpaper.gif')&&i.complete&&i.naturalWidth)||[...document.querySelectorAll('[style]')].some(n=>n.style.backgroundImage.includes('animated-wallpaper.gif')));
   const frames=new Set();

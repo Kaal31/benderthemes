@@ -75,6 +75,8 @@ jobs:
       - run: node tests/verify-native-app-order.mjs
       - run: node tests/verify-plaza-post-frequency.mjs
       - run: node tests/verify-background-playback.mjs
+      - run: node tests/verify-wallpaper-steam-window.mjs
+      - run: python tests/verify-wallpaper-backend.py
       - run: node tests/verify-wiiflow-background.mjs
       - run: node tests/verify-wiiflow-scrolling.mjs
       - run: node tests/verify-native-theme-regressions.mjs

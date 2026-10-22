@@ -28,15 +28,32 @@ with tempfile.TemporaryDirectory() as folder:
             assert assets['poster'].endswith('.jpg'), assets
             assert vi.files[assets['video'].rsplit('/', 1)[1]].endswith(theme + '.mp4')
         assert await scope['cinematic_assets'](None, 'unknown') == {}
-        # Nazarick assets are returned as typed data URLs rather than /f/ streams.
+        # A partial user set must not hide the downloaded pack's movies.
         asset_dir = os.path.join(folder, 'assets', 'nazarick')
         os.makedirs(asset_dir)
+        downloaded = os.path.join(folder, 'downloaded', 'assets', 'nazarick')
+        os.makedirs(downloaded)
+        open(os.path.join(asset_dir, 'home.png'), 'wb').write(b'user poster')
         pages = ('home', 'library', 'store', 'friends', 'downloads', 'settings')
         for page in pages:
-            open(os.path.join(asset_dir, page + '-video.mp4'), 'wb').write(b'fixture')
+            open(os.path.join(downloaded, page + '-video.mp4'), 'wb').write(b'fixture')
+        open(os.path.join(downloaded, 'home.png'), 'wb').write(b'downloaded poster')
+        open(os.path.join(downloaded, 'custom-gif.gif'), 'wb').write(b'GIF89a')
+        open(os.path.join(downloaded, 'custom-webm.webm'), 'wb').write(b'fixture')
+        scope['_safe_name'] = lambda name: name
+        scope['_resource_names'] = lambda name: os.listdir(downloaded)
+        scope['_user_resource'] = lambda d,n,k: os.path.join(d,n) if os.path.isfile(os.path.join(d,n)) else os.path.join(downloaded,n)
         assets = await scope['get_assets'](None, 'nazarick')
         for page in pages:
-            assert assets[page + '-video'].startswith('data:video/mp4;base64,'), assets
+            url = assets[page + '-video']
+            assert url.startswith('http://127.0.0.1:9999/test/f/') and url.endswith('.mp4'), assets
+            assert vi.files[url.rsplit('/', 1)[1]] == os.path.join(downloaded, page + '-video.mp4')
+        for extension in ('gif','webm'):
+            url = assets['custom-'+extension]
+            assert url.endswith('.'+extension)
+            assert vi.files[url.rsplit('/',1)[1]] == os.path.join(downloaded, 'custom-'+extension+'.'+extension)
+        assert base64.b64decode(assets['home'].split(',',1)[1]) == b'user poster'
+        assert await scope['get_assets'](None, 'nazarick') == assets
 
     asyncio.run(test())
-print('PASS custom MP4/WebM wallpaper URLs, GIFs, Castle/Republic cinematic URLs, unsupported and missing files')
+print('PASS custom MP4/WebM/GIF sources, cinematic URLs, streamed Nazarick movies, partial user sets and per-file overrides')

@@ -11,15 +11,15 @@ export function BackgroundMedia({src,poster,paused=false,className,style,onError
     const el=video.current;
     if(!el||kind!=="video")return;
     const doc=el.ownerDocument,view=doc.defaultView;
-    const reduced=view?.matchMedia("(prefers-reduced-motion: reduce)");
     let visible=true;
     const sync=()=>{
-      if(paused||doc.hidden||reduced?.matches||!visible)el.pause();
+      // The theme's Video background option controls playback independently of UI motion.
+      if(paused||doc.hidden||!visible)el.pause();
       else {el.muted=true;el.play().catch(()=>{});}
     };
-    const observer=new IntersectionObserver(entries=>{visible=entries[0]?.isIntersecting??false;sync();});
-    observer.observe(el);doc.addEventListener("visibilitychange",sync);reduced?.addEventListener("change",sync);el.addEventListener("loadeddata",sync);sync();
-    return()=>{el.pause();observer.disconnect();doc.removeEventListener("visibilitychange",sync);reduced?.removeEventListener("change",sync);el.removeEventListener("loadeddata",sync);};
+    const observer=new (view?.IntersectionObserver??IntersectionObserver)(entries=>{visible=entries[0]?.isIntersecting??false;sync();});
+    observer.observe(el);doc.addEventListener("visibilitychange",sync);el.addEventListener("loadeddata",sync);el.addEventListener("canplay",sync);sync();
+    return()=>{observer.disconnect();doc.removeEventListener("visibilitychange",sync);el.removeEventListener("loadeddata",sync);el.removeEventListener("canplay",sync);el.pause();};
   },[kind,src,paused]);
   const surface:CSSProperties={position:"absolute",inset:0,width:"100%",height:"100%",objectFit:"cover",pointerEvents:"none",...style};
   if(kind!=="video")return <img {...attributes} src={src} className={className} alt="" aria-hidden draggable={false} style={surface} onError={onError}/>;

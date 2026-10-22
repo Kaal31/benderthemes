@@ -2154,13 +2154,30 @@ class Plugin:
         return "data:" + mime + ";base64," + payload
 
     async def get_assets(self, name: str):
-        folder = _user_resource(os.path.join(_data_dir(), "assets"), name, "assets")  # your own files on the Deck come first
+        relative = "assets/" + _safe_name(name)
+        folder = os.path.join(_data_dir(), relative)
         out = {}
         try:
-            for n in sorted(os.listdir(folder)):
-                if n.lower().endswith(IMAGE_EXT + (".glb", ".mp4",)):
-                    with open(os.path.join(folder, n), "rb") as f:
-                        out[os.path.splitext(n)[0]] = _data_url(f.read(), "model/gltf-binary" if n.lower().endswith(".glb") else _mime(n))
+            names = set(_resource_names(relative))
+            if os.path.isdir(folder):
+                names.update(os.listdir(folder))
+            for n in sorted(names):
+                ext = os.path.splitext(n)[1].lower()
+                if ext not in IMAGE_EXT + (".glb",) + WALLPAPER_VIDEO_EXT:
+                    continue
+                path = _user_resource(folder, n, relative)  # override each file, not the whole downloaded set
+                if not os.path.isfile(path):
+                    continue
+                if ext in WALLPAPER_VIDEO_EXT or ext == ".gif":
+                    # Keep multi-megabyte movies out of Decky's JSON/WebSocket messages.
+                    if await _ensure_server():
+                        import hashlib
+                        ident = "asset-" + hashlib.sha256(os.path.realpath(path).encode()).hexdigest()[:24] + ext
+                        _vi.files[ident] = path
+                        out[os.path.splitext(n)[0]] = f"http://127.0.0.1:{_vi.port}/{_vi.token}/f/{ident}"
+                    continue
+                with open(path, "rb") as f:
+                    out[os.path.splitext(n)[0]] = _data_url(f.read(), "model/gltf-binary" if ext == ".glb" else _mime(n))
         except Exception:
             pass
         return out
