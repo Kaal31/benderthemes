@@ -9,11 +9,11 @@ try {
   assert.equal(await root.locator('.beta-sheet-friend').first().evaluate(n=>getComputedStyle(n).animationPlayState),'paused');
   await root.locator('button[data-category="2"]').focus();
   await page.waitForTimeout(600);
-  assert.equal(await root.locator('.beta-community-layer-0>.beta-sheet-friend:not(.beta-chat-panel)').count(),18);
+  assert.equal(await root.locator('.beta-community-layer-0>.beta-sheet-friend:not(.beta-chat-panel)').count(),10);
   assert.equal(await root.locator('.beta-chat-panel').count(),0);
   assert.ok(await root.locator('.beta-friend-avatar').first().getAttribute('aria-label').then(label=>label.startsWith('Placeholder avatar')));
   assert.ok(await root.locator('.beta-community-layer-0 .beta-sheet-friend').first().innerText().then(text=>text.includes('Online')&&text.includes('Hades')));
-  for(const layer of [0,1,2]) {
+  for(const layer of [0,1]) {
     const result=await root.locator(`.beta-community-layer-${layer} .beta-sheet-friend`).first().evaluate(n=>{
       const a=n.getAnimations().find(a=>a.effect.getTiming().iterations===Infinity);
       const running=getComputedStyle(n).animationPlayState;
@@ -28,9 +28,9 @@ try {
     assert.ok(layer===0?result.dx<0:result.dx>0,`wrong layer ${layer} direction`);
     assert.equal(result.dy,0);
     assert.equal(result.rotation,'none');
-    assert.equal(result.opacity,layer===2?.48:1);
+    assert.equal(result.opacity,1);
   }
-  await root.screenshot({path:'out/old-beta-big-picture/community-counterflow.png'});
+  await page.screenshot({path:'out/old-beta-big-picture/community-counterflow.png'});
   await page.emulateMedia({reducedMotion:'reduce'});
   await page.waitForFunction(()=>document.querySelector('.dht-oldbeta').getAnimations({subtree:true}).length===0);
   await page.addInitScript(()=>{globalThis.friendStore={allFriends:[

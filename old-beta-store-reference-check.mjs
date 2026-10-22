@@ -2,7 +2,7 @@ import assert from 'node:assert/strict';
 import {launch} from './tests/browser.mjs';
 const browser=await launch();
 try{
- const page=await browser.newPage({viewport:{width:1440,height:1100}}),errors=[];page.on('pageerror',e=>errors.push(e.message));
+ const page=await browser.newPage({viewport:{width:1440,height:1400}}),errors=[];page.on('pageerror',e=>errors.push(e.message));
  await page.goto('http://127.0.0.1:8793/preview/preview.html?theme=old-beta-big-picture');
  const root=page.locator('.dht-oldbeta');await root.waitFor();
  const finish=async()=>{await root.evaluate(n=>n.getAnimations({subtree:true}).filter(a=>a.effect.getTiming().iterations!==Infinity).forEach(a=>a.finish()));await page.waitForTimeout(50);};
@@ -11,7 +11,7 @@ try{
  assert.equal(await store.locator('.beta-store-sections button').count(),5);
  assert.equal(await store.locator('.beta-store-card[data-selected=true] img').evaluate(n=>getComputedStyle(n).filter),'none');
  assert.ok((await store.locator('.beta-store-card[data-selected=false] img').first().evaluate(n=>getComputedStyle(n).filter)).includes('grayscale'));
- await store.screenshot({path:'out/old-beta-big-picture/store-reference-home.png'});
+ await page.screenshot({path:'out/old-beta-big-picture/store-reference-home.png'});
  await page.keyboard.press('Enter');await store.locator('.beta-store-product').waitFor();await finish();
  await store.locator('button[aria-label="Play trailer"]').waitFor();
  assert.equal(await store.locator('.beta-store-info>button').count(),5);
@@ -21,7 +21,7 @@ try{
  assert.equal(await store.locator('.beta-store-buy img').evaluate(n=>getComputedStyle(n).filter),'none');
  const bounds=await store.boundingBox(),popupBox=await popover.boundingBox();assert.ok(popupBox.x>bounds.x+bounds.width*.2&&popupBox.x<bounds.x+bounds.width*.23);assert.ok(popupBox.width>bounds.width*.27&&popupBox.width<bounds.width*.29);
  assert.ok(await store.locator('.beta-store-media button').count()>=4);
- await store.screenshot({path:'out/old-beta-big-picture/store-reference-description-popup.png'});
+ await page.screenshot({path:'out/old-beta-big-picture/store-reference-description-popup.png'});
  await page.keyboard.press('ArrowRight');assert.equal(await store.locator('.beta-store-popover').getAttribute('data-panel'),'details');
  await page.keyboard.press('ArrowLeft');await page.keyboard.press('Enter');
  await store.getByRole('button',{name:'Read Full Description',exact:true}).click();
@@ -29,7 +29,7 @@ try{
  assert.ok((await store.locator('.beta-store-dialog-text').innerText()).includes('Features'));
  assert.equal(await store.evaluate(n=>n.scrollTop),0);assert.equal(await root.evaluate(n=>n.scrollTop),0);
  assert.ok((await store.locator('.beta-store-stage').evaluate(n=>getComputedStyle(n).filter)).includes('grayscale'));
- await store.screenshot({path:'out/old-beta-big-picture/store-reference-full-description.png'});
+ await page.screenshot({path:'out/old-beta-big-picture/store-reference-full-description.png'});
  await page.keyboard.press('Escape');await store.getByRole('dialog').waitFor({state:'detached'});
  await page.keyboard.press('Escape');assert.equal(await store.locator('.beta-store-popover').count(),0);
  await store.locator('.beta-store-media button[aria-label="Screenshot 1"]').click();
@@ -37,7 +37,7 @@ try{
  await page.keyboard.press('Escape');await finish();assert.equal(await store.getAttribute('data-view'),'home');
  await store.locator('.beta-store-sections button').filter({hasText:'TOP SELLERS'}).click();await finish();
  assert.equal(await store.getAttribute('data-view'),'list');assert.ok(await store.locator('.beta-store-list button').count()>0);
- await page.keyboard.press('ArrowRight');await page.waitForTimeout(200);await store.screenshot({path:'out/old-beta-big-picture/store-reference-top-sellers.png'});
+ await page.keyboard.press('ArrowRight');await page.waitForTimeout(200);await page.screenshot({path:'out/old-beta-big-picture/store-reference-top-sellers.png'});
  await page.keyboard.press('Enter');await finish();await page.keyboard.press('Escape');await finish();assert.equal(await store.getAttribute('data-view'),'list');
  await page.keyboard.press('x');await store.getByRole('textbox',{name:'Search Steam Store'}).fill('Portal');await store.getByRole('button',{name:'A SUBMIT',exact:true}).click();await finish();
  await page.waitForFunction(()=>document.querySelector('.beta-store-list')?.textContent?.includes('Portal')||document.querySelector('.beta-store-list button[aria-label*="Portal"]'));

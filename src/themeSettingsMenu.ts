@@ -519,7 +519,11 @@ export function advancedItems(): MenuItem[] {
 /** The current theme's entries after Presets and the shared destinations: Customize and Advanced. */
 export function themeSettingsItems(): MenuItem[] {
   refreshThemeLists();
-  return [group("Customize", customizeItems), group("Screensaver", () => [
+  const betaOptions=S().theme==='old-beta-big-picture'?[
+    choice("Community page",[{id:"ribbon",name:"Beta friends ribbon (default)"},{id:"classic",name:"Classic friends grid"}],()=>(S().frameData['old-beta-big-picture'] as {communityPage?:string}|undefined)?.communityPage??'ribbon',communityPage=>updateSettings(p=>({frameData:{...p.frameData,'old-beta-big-picture':{...(p.frameData['old-beta-big-picture'] as Record<string,unknown>??{}),communityPage}}}))),
+    choice("Sheet size and amount",[{id:"reference",name:"Smaller reference stack (default)"},{id:"large",name:"Larger stack (previous size)"}],()=>(S().frameData['old-beta-big-picture'] as {sheetLayout?:string}|undefined)?.sheetLayout??'reference',sheetLayout=>updateSettings(p=>({frameData:{...p.frameData,'old-beta-big-picture':{...(p.frameData['old-beta-big-picture'] as Record<string,unknown>??{}),sheetLayout}}}))),
+  ]:[];
+  return [...betaOptions,group("Customize", customizeItems), group("Screensaver", () => [
     choice("Mode", [{id:"steam" as const,name:"Steam default"},{id:"custom" as const,name:"This theme’s media"},{id:"disabled" as const,name:"Disabled for this theme"}],()=>saverOptions().mode,mode=>updateSaver({mode})),
     {label:"Add photo, GIF or video",action:()=>void addSaverMedia()},
     {get label(){return "Media ("+saverOptions().media.length+")";},sub:()=>saverOptions().media.map((file,i)=>({label:"Remove "+(i+1)+": "+(saverOptions().labels?.[file]??file.slice(-8)),action:()=>updateSaver({media:saverOptions().media.filter(x=>x!==file)})}))},

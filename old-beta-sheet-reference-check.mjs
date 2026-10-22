@@ -1,0 +1,24 @@
+import assert from 'node:assert/strict';
+import {launch} from './tests/browser.mjs';
+const browser=await launch();
+try{
+ const page=await browser.newPage({viewport:{width:1440,height:1400}}),errors=[];page.on('pageerror',e=>errors.push(e.message));
+ await page.goto('http://127.0.0.1:8793/preview/preview.html?theme=old-beta-big-picture');const root=page.locator('.dht-oldbeta');await root.waitFor();
+ const finish=async()=>{await root.evaluate(n=>n.getAnimations({subtree:true}).filter(a=>a.effect.getTiming().iterations!==Infinity).forEach(a=>{try{a.finish();}catch{}}));await page.waitForTimeout(80);};
+ assert.equal(await root.getAttribute('data-sheet-layout'),'reference');assert.equal(await root.locator('.beta-rear-cover').count(),12);assert.equal(await root.locator('.beta-community-layer-0 .beta-sheet-friend').count(),10);
+ const visible=await root.locator('.beta-cover').evaluateAll(ns=>ns.filter(n=>n.style.opacity==='1').length);assert.equal(visible,10);
+ assert.equal(await root.locator('.beta-cover[data-sheet-selected=true] img').evaluate(n=>getComputedStyle(n).filter),'none');assert.match(await root.locator('.beta-cover[data-sheet-selected=false] img').first().evaluate(n=>getComputedStyle(n).filter),/grayscale\(1\).*hue-rotate/);
+ await page.screenshot({path:'out/old-beta-big-picture/reference-small-cold-library.png'});
+ await page.keyboard.press('ArrowLeft');await finish();const colored=root.locator('.beta-store-layer-0 .beta-sheet-cover[data-sheet-selected=true]'),appid=await colored.getAttribute('data-appid');assert.equal(await colored.locator('img').evaluate(n=>getComputedStyle(n).filter),'none');
+ assert.equal(await root.locator('.beta-store-layer').count(),3);assert.equal(await root.locator('.beta-store-layer-0 .beta-sheet-cover').count(),8);
+ await page.keyboard.press('Enter');await root.locator('.beta-store-peel').waitFor();assert.equal(await root.locator('.beta-store-peel .beta-sheet-cover[data-sheet-selected=true]').getAttribute('data-appid'),appid);assert.equal(await root.locator('.beta-store-card[data-selected=true]').getAttribute('data-appid'),appid);await finish();assert.equal(await root.locator('.beta-store-peel').count(),0);
+ assert.equal(await root.locator('.beta-store-card[data-selected=true] img').evaluate(n=>getComputedStyle(n).filter),'none');assert.match(await root.locator('.beta-store-card[data-selected=false] img').first().evaluate(n=>getComputedStyle(n).filter),/hue-rotate/);
+ await page.keyboard.press('Escape');await finish();await root.locator('.beta-store-page').waitFor({state:'detached'});await page.emulateMedia({reducedMotion:'reduce'});
+ await page.keyboard.press('y');const hub=page.locator('.dht-menu--old-beta-big-picture');await hub.waitFor();await hub.locator('.dht-menu-item').filter({hasText:'Sheet size and amount:'}).click();await hub.locator('.dht-menu-item').filter({hasText:'Larger stack (previous size)'}).click();await page.keyboard.press('Escape');
+ assert.equal(await root.getAttribute('data-sheet-layout'),'large');assert.equal(await root.locator('.beta-rear-cover').count(),40);assert.equal(await root.locator('.beta-store-layer').count(),4);assert.equal(await root.locator('.beta-community-layer-0 .beta-sheet-friend').count(),18);
+ await page.keyboard.press('y');await hub.waitFor();await hub.locator('.dht-menu-item').filter({hasText:'Sheet size and amount:'}).click();await hub.locator('.dht-menu-item').filter({hasText:'Smaller reference stack (default)'}).click();await page.keyboard.press('Escape');assert.equal(await root.getAttribute('data-sheet-layout'),'reference');
+ await root.locator('[data-category="2"]').click();const community=root.locator('.beta-community-page');await community.waitFor();assert.ok(await community.locator('.beta-community-activity-chip').count()>=7);const bounds=await community.boundingBox(),feed=await community.locator('.beta-community-feed').boundingBox();assert.ok(feed.height<bounds.height*.12);assert.ok(feed.y>bounds.y+bounds.height*.68);
+ const status=community.locator('.beta-community-person[data-selected=true]>small');assert.ok(await status.evaluate(n=>parseFloat(getComputedStyle(n).fontSize)/n.closest('.dht-oldbeta').clientWidth)>=.0159);
+ await page.screenshot({path:'out/old-beta-big-picture/reference-community-compact-feed.png'});await page.keyboard.press('ArrowDown');assert.equal(await community.getAttribute('data-feed'),'true');await page.keyboard.press('ArrowRight');assert.equal(await community.locator('.beta-community-activity-chip[data-selected=true]').count(),1);assert.equal(await community.locator('.beta-community-feed').evaluate(n=>getComputedStyle(n).backgroundColor),'rgba(0, 0, 0, 0)');
+ assert.deepEqual(errors,[]);console.log('PASS: smaller default stacks/all categories, saved larger-stack option, cold inactive sheets, one colored cover preserves Store identity, compact activity ribbon and larger green presence text.');
+}finally{await browser.close();}

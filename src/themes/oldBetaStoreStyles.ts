@@ -1,3 +1,4 @@
+import {BETA_COLD_ART} from './oldBetaSheetStyles';
 export const OLD_BETA_STORE_CSS=`
 .dht-oldbeta .beta-store-page{overflow:clip;background:radial-gradient(ellipse at 65% 30%,#335f79,#102b3c 60%,#071820);--gallery-height:calc(var(--beta-w)*.24*9/16)}
 .dht-oldbeta .beta-store-backdrop{position:absolute;inset:-10%;background-size:cover;background-position:center;filter:blur(22px) saturate(.3);opacity:.13;pointer-events:none;transition:opacity 200ms}
@@ -15,15 +16,15 @@ export const OLD_BETA_STORE_CSS=`
 .dht-oldbeta .beta-store-featured{position:absolute;top:20%;left:0;right:0;height:43%;overflow:visible}
 .dht-oldbeta .beta-store-cover-track{display:flex;align-items:center;height:100%;gap:0;transition:transform 190ms cubic-bezier(.22,.61,.36,1);will-change:transform}
 .dht-oldbeta .beta-store-page .beta-store-card{position:relative;flex:0 0 calc(var(--beta-w)*.24);padding:0;border:2px solid transparent;z-index:1;transform:scale(1);outline:0;transition:transform 180ms cubic-bezier(.22,.61,.36,1),border-color 150ms,box-shadow 180ms}
-.dht-oldbeta .beta-store-card img{display:block;width:100%;aspect-ratio:460/215;object-fit:cover;filter:grayscale(.85) brightness(.6);transition:filter 180ms ease-out}
+.dht-oldbeta .beta-store-card img{display:block;width:100%;aspect-ratio:460/215;object-fit:cover;filter:${BETA_COLD_ART};transition:filter 180ms ease-out}
 .dht-oldbeta .beta-store-page .beta-store-card[data-selected=true]{border-color:#d2edf5;transform:scale(1.15);box-shadow:0 0 10px #a9def66b;z-index:3}
 .dht-oldbeta .beta-store-card[data-selected=true] img{filter:none}
 .dht-oldbeta .beta-store-featured .beta-store-card img{aspect-ratio:16/9}
 .dht-oldbeta .beta-store-featured .beta-store-card[data-selected=true]{transform:scale(1.3)}
 .dht-oldbeta .beta-store-card>small{position:absolute;right:0;top:calc(100% + 5px);font-size:calc(var(--beta-w)*.009);white-space:nowrap;opacity:.7}
 .dht-oldbeta .beta-store-card em{font-style:normal;margin-right:7px;background:#4a703c;color:#d8e9bc;padding:2px 5px}
-.dht-oldbeta .beta-store-sections{position:absolute;left:19%;right:0;top:71%;display:flex;gap:.8%;height:16%}
-.dht-oldbeta .beta-store-sections button{position:relative;flex:0 0 20%;overflow:hidden;border:2px solid transparent;font-size:calc(var(--beta-w)*.012)}
+.dht-oldbeta .beta-store-sections{position:absolute;left:4.5%;right:4.5%;top:69%;display:flex;gap:.8%;height:19%}
+.dht-oldbeta .beta-store-sections button{position:relative;flex:1;min-width:0;overflow:hidden;border:2px solid transparent;font-size:calc(var(--beta-w)*.012)}
 .dht-oldbeta .beta-store-sections img{position:absolute;inset:0;width:100%;height:100%;object-fit:cover;filter:grayscale(1) brightness(.35);transition:filter 160ms}
 .dht-oldbeta .beta-store-sections span{position:absolute;left:0;right:0;bottom:0;background:#081b27b0;padding:7px 2px}
 .dht-oldbeta .beta-store-sections button:focus{border-color:#a3d3e5;box-shadow:0 0 10px #96d1e555}.dht-oldbeta .beta-store-sections button:focus img{filter:grayscale(.3) brightness(.65)}
@@ -41,7 +42,7 @@ export const OLD_BETA_STORE_CSS=`
 .dht-oldbeta .beta-store-media{position:absolute;top:15%;left:8.5%;right:0;height:var(--gallery-height);transition:height 190ms cubic-bezier(.22,.61,.36,1)}
 .dht-oldbeta .beta-store-media-track{display:flex;align-items:center;height:100%;transition:transform 190ms cubic-bezier(.22,.61,.36,1)}
 .dht-oldbeta .beta-store-media button{position:relative;flex:0 0 calc(var(--beta-w)*.24);aspect-ratio:16/9;background:#06151e;border:2px solid transparent;overflow:hidden;transition:flex-basis 190ms,border-color 160ms,box-shadow 160ms}
-.dht-oldbeta .beta-store-media img{display:block;width:100%;height:100%;object-fit:cover;filter:grayscale(.85) brightness(.6);transition:filter 180ms}
+.dht-oldbeta .beta-store-media img{display:block;width:100%;height:100%;object-fit:cover;filter:${BETA_COLD_ART};transition:filter 180ms}
 .dht-oldbeta .beta-store-product[data-media-focus=true] .beta-store-media button[data-selected=true]{flex-basis:calc(var(--beta-w)*.42);border-color:#d1e9f4;box-shadow:0 0 8px #b8e0f673}
 .dht-oldbeta .beta-store-product[data-media-focus=true] .beta-store-media button[data-selected=true] img{filter:none}
 .dht-oldbeta .beta-store-play{position:absolute;inset:0;display:grid;place-items:center;color:#bacdd6;font-size:calc(var(--beta-w)*.04)}
