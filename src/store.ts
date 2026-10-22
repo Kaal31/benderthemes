@@ -20,6 +20,7 @@ export interface StoreDetails {
   id: number;
   name: string;
   short: string;
+  description?: string; // full description, plain text
   header: string;
   background?: string;
   screenshots: string[];
@@ -147,6 +148,7 @@ export async function loadStoreDetails(id: number): Promise<StoreDetails | null>
       id,
       name: d.name,
       short: String(d.short_description ?? "").replace(/<[^>]+>/g, "").replace(/&quot;/g, '"').replace(/&amp;/g, "&").replace(/&#39;/g, "'"),
+      description: String(d.detailed_description??d.about_the_game??d.short_description??'').replace(/<(?:br\s*\/?|\/p|\/div|\/li|\/h[1-6])\s*>/gi,'\n').replace(/<[^>]+>/g,'').replace(/&nbsp;/g,' ').replace(/&quot;/g,'"').replace(/&#39;/g,"'").replace(/&amp;/g,'&').slice(0,50000),
       header: d.header_image || headerOf(id),
       background: d.background_raw || d.background,
       screenshots: (d.screenshots ?? []).slice(0, 8).map((x: any) => x.path_full || x.path_thumbnail),

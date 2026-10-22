@@ -13,6 +13,7 @@ import {OLD_BETA_CSS} from './oldBetaBigPictureStyles';
 import {OLD_BETA_FOCUS_CSS} from './oldBetaFocusStyles';
 import {OLD_BETA_PAGE_CSS} from './oldBetaPageStyles';
 import {OldBetaPages,createBetaBrowserSession} from './OldBetaPages';
+import {OldBetaStore} from './OldBetaStore';
 import {OldBetaKeyboard} from './OldBetaKeyboard';
 
 type Mode='sheet'|'recent'|'games';
@@ -113,7 +114,7 @@ export function OldBetaBigPictureHome(){
  const go=(next:Destination)=>{
   if(opening.current)return;playSound('open');
   const sheet=mode==='sheet'?(category===0?root.current?.querySelector<HTMLElement>('.beta-store-sheet'):category===2?root.current?.querySelector<HTMLElement>('.beta-community-sheet'):null):null;
-  if(sheet&&motionEnabled()&&(next==='store'||next==='community')){stopMotion();opening.current=true;root.current?.setAttribute('data-opening','true');const current=getComputedStyle(sheet).transform;motion.current.push(sheet.animate([{transform:current,opacity:1},{transform:'translate(-50%,-50%) translate3d(0,-5%,100px) rotateX(30deg) rotateZ(-12deg) scale(1.05)',opacity:1,offset:.5},{transform:'translate(-50%,-50%) translate3d(0,0,160px) rotateX(0deg) rotateZ(0deg) scale(1.18)',opacity:0}],{duration:360,easing:'cubic-bezier(.22,.61,.36,1)',fill:'forwards'}));pendingOpen.current=setTimeout(()=>{opening.current=false;pendingOpen.current=null;stopMotion();setDestination(next);},360);return;}
+  if(sheet&&motionEnabled()&&(next==='store'||next==='community')){stopMotion();opening.current=true;root.current?.setAttribute('data-opening','true');const current=getComputedStyle(sheet).transform;motion.current.push(sheet.animate([{transform:current,opacity:1},{transform:'translate(-50%,-50%) translate3d(0,-5%,100px) rotateX(30deg) rotateZ(-12deg) scale(1.05)',opacity:1,offset:.5},{transform:'translate(-50%,-50%) translate3d(0,0,160px) rotateX(0deg) rotateZ(0deg) scale(1.18)',opacity:0}],{duration:360,easing:'cubic-bezier(.22,.61,.36,1)',fill:'forwards'}));pendingOpen.current=setTimeout(()=>{opening.current=false;pendingOpen.current=null;stopMotion();root.current?.removeAttribute('data-opening');setDestination(next);},360);return;}
   setDestination(next);
  };
  const focusCategory=(next:number)=>{if(next===category||opening.current)return;const nodes=[root.current?.querySelector<HTMLElement>('.beta-store-sheet'),root.current?.querySelector<HTMLElement>('.beta-cover-board'),root.current?.querySelector<HTMLElement>('.beta-community-sheet')];focusStarts.current=new Map(nodes.flatMap((n,i)=>n?[[i,{transform:getComputedStyle(n).transform,opacity:getComputedStyle(n).opacity}] as const]:[]));stopMotion();setCategory(next);};
@@ -137,7 +138,7 @@ export function OldBetaBigPictureHome(){
   if(btn==='up'&&selected%3===0){root.current?.querySelector<HTMLButtonElement>('.beta-collection-picker>button')?.focus({preventScroll:true});return true;}
   choose(selected+(btn==='left'?-3:btn==='right'?3:btn==='up'?-1:1));return true;
  }
- if(destination&&destination!=='web'&&destination!=='friends')return <OldBigPictureHome variant="beta" initialPage={destination} initialGame={game} onExit={()=>setDestination(null)}/>;
+ if(destination&&destination!=='web'&&destination!=='friends'&&destination!=='store')return <OldBigPictureHome variant="beta" initialPage={destination} initialGame={game} onExit={()=>setDestination(null)}/>;
  const w=size.w,h=size.h,cardW=mode==='sheet'?w*.15:mode==='recent'?w*.195:w*.18,cardH=cardW*215/460;
  const storeArt=storeCovers.length?storeCovers.map(p=>({id:p.id,name:p.name,src:p.header})):games.slice().reverse().map(g=>({id:g.appid,name:g.name,src:g.art.landscape[0]}));
  const friendCard=(f:typeof friends[number],i:number)=><div key={f.id} className="beta-sheet-friend" style={{'--layer':i%3,'--friend-phase':(-i*4.1)+'s'} as CSSProperties}><span className="beta-friend-avatar" role="img" aria-label={f.avatar?f.name+' Steam avatar':'Placeholder avatar for '+f.name}><span aria-hidden="true">{f.name.slice(0,1)}</span>{f.avatar&&<img src={f.avatar} alt="" onError={event=>{event.currentTarget.hidden=true;event.currentTarget.parentElement?.setAttribute('aria-label','Placeholder avatar for '+f.name);}}/>}</span><span>{f.name}<small>{f.status??(f.online?'Online':'Offline')}</small>{f.game&&<small>{f.game}</small>}</span></div>;
@@ -163,6 +164,7 @@ export function OldBetaBigPictureHome(){
    <footer><button onClick={()=>go('web')}><b>LB</b> WEB</button><div><button onClick={()=>mode==='sheet'?selectCategory():chosen&&activate(chosen)}><b>A</b> SELECT</button>{mode!=='sheet'&&<button onClick={()=>changeMode(mode==='games'?'recent':'sheet')}><b>B</b> BACK</button>}<button onClick={api.openSettings}><b>Y</b> OPTIONS</button></div><button onClick={()=>go('friends')}>FRIENDS <b>RB</b></button></footer>
   </div>
   {(destination==='web'||destination==='friends')&&<OldBetaPages key={destination} kind={destination} session={browserSession.current} onExit={()=>setDestination(null)}/>}
+  {destination==='store'&&<OldBetaStore onExit={()=>setDestination(null)} onWeb={()=>setDestination('web')} onFriends={()=>setDestination('friends')} onLibrary={()=>{setCategory(1);changeMode('recent');setDestination(null);}} onCommunity={()=>setDestination('community')}/>}
   {searchOpen&&<OldBetaKeyboard label="Search games" value={query} onChange={value=>{setQuery(value);setSelected(0);}} onDone={()=>setSearchOpen(false)} onSubmit={()=>setSearchOpen(false)}/>}
   </div>
  </ThemeRoot>;
