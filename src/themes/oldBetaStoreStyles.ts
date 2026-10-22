@@ -2,8 +2,8 @@ import {BETA_COLD_ART} from './oldBetaSheetStyles';
 export const OLD_BETA_STORE_CSS=`
 .dht-oldbeta .beta-store-page{overflow:clip;background:radial-gradient(ellipse at 65% 30%,#335f79,#102b3c 60%,#071820);--gallery-height:calc(var(--beta-w)*.24*9/16)}
 .dht-oldbeta .beta-store-backdrop{position:absolute;inset:-10%;background-size:cover;background-position:center;filter:blur(22px) saturate(.3);opacity:.13;pointer-events:none;transition:opacity 200ms}
-.dht-oldbeta .beta-store-tabs{position:absolute;top:0;left:33%;right:33%;height:5%;display:flex;gap:4px;z-index:5}
-.dht-oldbeta .beta-store-tabs button{flex:1;background:#0b1e2b;color:#97b4c5;font-size:calc(var(--beta-w)*.01)}
+.dht-oldbeta .beta-store-tabs{position:absolute;top:4%;left:27%;right:27%;height:5%;display:flex;gap:4px;z-index:5}
+.dht-oldbeta .beta-store-tabs button{flex:1;background:#0b1e2b;color:#97b4c5;font-size:calc(var(--beta-w)*.013)}
 .dht-oldbeta .beta-store-tabs button[aria-pressed=true]{background:linear-gradient(#ddedf4,#9fbbc9);color:#416073;box-shadow:0 0 11px #86bbd24d}
 .dht-oldbeta .beta-store-previous-strip{position:absolute;left:0;right:0;top:7.5%;height:4%;display:flex;opacity:.18;overflow:hidden;filter:grayscale(1)}
 .dht-oldbeta .beta-store-previous-strip img{width:15%;object-fit:cover}

@@ -12,7 +12,8 @@ try {
   assert.equal(await root.locator('.beta-community-layer-0>.beta-sheet-friend:not(.beta-chat-panel)').count(),8);
   assert.equal(await root.locator('.beta-chat-panel').count(),0);
   assert.ok(await root.locator('.beta-friend-avatar').first().getAttribute('aria-label').then(label=>label.startsWith('Placeholder avatar')));
-  assert.ok(await root.locator('.beta-community-layer-0 .beta-sheet-friend').first().innerText().then(text=>text.includes('Online')&&text.includes('Hades')));
+  assert.ok(await root.locator('.beta-community-layer-0 .beta-sheet-friend').first().innerText().then(text=>text.includes('In-Game')&&text.includes('Hades')));
+  assert.equal(await root.locator('.beta-sheet-friend[data-presence=playing]').first().evaluate(n=>getComputedStyle(n).color),'rgb(165, 213, 106)');
   for(const layer of [0,1]) {
     const result=await root.locator(`.beta-community-layer-${layer} .beta-sheet-friend`).first().evaluate(n=>{
       const a=n.getAnimations().find(a=>a.effect.getTiming().iterations===Infinity);
@@ -40,6 +41,8 @@ try {
   await page.route('https://avatars.steamstatic.com/**',route=>route.fulfill({contentType:'image/png',body:Buffer.from('iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAQAAAC1HAwCAAAAC0lEQVR42mP8/x8AAwMCAO+jRZkAAAAASUVORK5CYII=','base64')}));
   await page.reload();await root.waitFor();await root.locator('button[data-category="2"]').focus();
   const front=root.locator('.beta-community-layer-0');
+  assert.equal(await root.locator('.beta-sheet-friend[data-presence=online]').first().evaluate(n=>getComputedStyle(n).color),'rgb(111, 199, 239)');
+
   assert.ok((await front.innerText()).includes('Away'));
   assert.ok((await front.innerText()).includes('Busy'));
   assert.ok((await front.innerText()).includes('Portal 2'));

@@ -5,7 +5,7 @@ try{
  const page=await browser.newPage({viewport:{width:1440,height:1400}}),errors=[];page.on('pageerror',e=>errors.push(e.message));
  await page.goto('http://127.0.0.1:8793/preview/preview.html?theme=old-beta-big-picture');const root=page.locator('.dht-oldbeta');await root.waitFor();
  const finish=async()=>{await root.evaluate(n=>n.getAnimations({subtree:true}).filter(a=>a.effect.getTiming().iterations!==Infinity).forEach(a=>{try{a.finish();}catch{}}));await page.waitForTimeout(80);};
- await page.keyboard.press('ArrowLeft');await finish();await page.keyboard.press('Enter');await root.locator('.beta-store-page').waitFor();await finish();
+ await root.locator('[data-category="0"]').click();await root.locator('.beta-store-page').waitFor();await finish();
  const nav=root.locator('.beta-home-scene .beta-categories'),before=await nav.boundingBox();await page.keyboard.press('Escape');
  assert.equal(await root.getAttribute('data-opening'),null);assert.equal(await root.getAttribute('data-closing-store'),'true');assert.ok(await root.locator('.beta-store-peel').evaluate(n=>n.getAnimations({subtree:true}).some(a=>a.effect.getTiming().direction==='reverse')));
  const during=await nav.boundingBox();assert.ok(Math.abs(during.y-before.y)<1,'Store Back must not move the home menu to its opening position');await page.keyboard.press('Escape');await finish();await root.locator('.beta-store-page').waitFor({state:'detached'});assert.equal(await root.locator('.beta-store-peel').count(),0);assert.equal(await root.getAttribute('data-closing-store'),null);

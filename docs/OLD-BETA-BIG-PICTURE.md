@@ -142,3 +142,12 @@ Settings now renders the same essential items, theme options, nested choices and
 
 
 Community size clarification: the enlarged/tighter row and activity icons inside the Community page are reverted to their pre-fbb74a3 dimensions. The intended floating home-sheet avatars alone are enlarged from 4.4% to 6.8% of screen width and arranged in a tighter three-column group, with eight foreground/four background friends retained. The selected floating friend stays in the central column; live friend data, tint and drift remain in use.
+
+
+## Store handoff, presence and friend prompt
+
+Store uses the same capsule image in the home sheet and featured carousel. Each captured leaf follows its own composed world pose rather than combining a moving parent and moving leaf. The selected cover levels toward the carousel center before enlarging; border, glow and artwork tint blend into the actual target. The 460ms path is reversible and all leaf animations begin together. Geometry regression checks verify the first frame, horizontal path, final target and reduced-motion cleanup.
+
+Floating friend text keeps its own readable colors while only avatar artwork receives the cold tint: blue for online, green for playing, with Steam’s Away/Busy/Snooze label retained and game title shown separately. Friends refresh from the live Steam store; unavailable avatars use initials.
+
+Selecting a Community friend opens a narrow native panel based on Waynimus 00:27–00:29: framed avatar, presence, five vertical actions and A/B prompts. The panel expands upward around the avatar and reveals its actions, with a matching close motion; these durations are visual estimates from the reference. Controller focus is trapped and restored on Back. Profile/message actions hand off to Steam; voice and friendship management continue in Steam, without silently blocking/removing a friend or initiating a call. Empty activity has no strip, placeholder or Down prompt; current playing presence alone does not create synthetic feed entries. Store’s page tabs now use the same 46% screen width and text scale as the Community page.
