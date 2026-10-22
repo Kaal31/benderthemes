@@ -94,6 +94,9 @@ def catalog(refresh=False):
         if (pack.get("frameTheme") or pack.get("defaultConsole")) and (
                 previous is None or version_key(pack["version"]) > version_key(previous["version"])):
             merged[pack["id"]] = pack
+        elif previous and pack.get("audioPacks") and pack["version"] == previous["version"] and pack["sha256"] == previous["sha256"]:
+            # Dependency-only updates do not require republishing identical artwork ZIPs.
+            merged[pack["id"]] = {**previous, "audioPacks": sorted(set(previous.get("audioPacks", [])) | set(pack["audioPacks"]))}
     if merged:
         validate_catalog({"schema": 1, "themes": list(merged.values())})
     installed_themes = local_inventory()

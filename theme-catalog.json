@@ -1701,12 +1701,12 @@
     {
       "id": "old-big-picture",
       "name": "Old Big Picture",
-      "version": "1.0.1",
+      "version": "1.0.2",
       "theme": null,
       "frameTheme": "old-big-picture",
       "description": "Downloadable media for Old Big Picture.",
       "minPluginVersion": "1.10.10",
-      "size": 2938047,
+      "size": 5755842,
       "resources": [
         "assets/frame-themes/old-big-picture/assets/downloads.png",
         "assets/frame-themes/old-big-picture/assets/exit.png",
@@ -1728,11 +1728,13 @@
         "sounds/Old Big Picture UI/deck_ui_out_of_game_detail.wav",
         "sounds/Old Big Picture UI/deck_ui_tab_transition_01.wav",
         "sounds/Old Big Picture UI/deck_ui_tile_scroll.wav",
-        "sounds/Old Big Picture UI/pack.json"
+        "sounds/Old Big Picture UI/pack.json",
+        "assets/frame-themes/old-big-picture/intro.mp4",
+        "assets/frame-themes/old-big-picture/intro-source.json"
       ],
-      "unpackedSize": 3607109,
-      "sha256": "182b599c98ec2019b14efd49505bbf0755ef54219e5065ad6a6ca316bb74fcdc",
-      "url": "https://github.com/Kaal31/deckthemes-assets/releases/download/old-big-picture-v1.0.1/ThemeAssets-old-big-picture-v1.0.1.zip",
+      "unpackedSize": 6427901,
+      "sha256": "54fe42c6d121340ca6a8129df13efb8be8ef37efe3280f274b565aed78dee26f",
+      "url": "https://github.com/Kaal31/deckthemes-assets/releases/download/old-big-picture-v1.0.2/ThemeAssets-old-big-picture-v1.0.2.zip",
       "preview": null,
       "poster": null,
       "audioPacks": [
@@ -1804,7 +1806,10 @@
       "url": "https://github.com/Kaal31/deckthemes-assets/releases/download/wiiflow-default-v1.0.0/ThemeAssets-wiiflow-default-v1.0.0.zip",
       "preview": null,
       "poster": null,
-      "audioPacks": []
+      "audioPacks": [
+        "10494ed2-1526-4b69-b5b4-67c2f743fccb",
+        "f3d6b5e1-55e5-43ab-90f8-51e8a622763a"
+      ]
     },
     {
       "id": "onyx",
@@ -1852,7 +1857,11 @@
       ],
       "sha256": "835c4c54002a029e5e27d11d37daf08c9df6da55090d0a5f466b79186935b603",
       "url": "https://github.com/Kaal31/deckthemes-assets/releases/download/wii-v1.0.0/ThemeAssets-Wii-v1.0.0.zip",
-      "defaultConsole": true
+      "defaultConsole": true,
+      "audioPacks": [
+        "10494ed2-1526-4b69-b5b4-67c2f743fccb",
+        "f3d6b5e1-55e5-43ab-90f8-51e8a622763a"
+      ]
     },
     {
       "id": "switch",
@@ -1868,7 +1877,10 @@
       ],
       "sha256": "afe2dbc6ffa2d57235ffd796081c09e8fa6efa63700106cabc547c8d2edc4b94",
       "url": "https://github.com/Kaal31/deckthemes-assets/releases/download/switch-v1.0.0/ThemeAssets-switch-v1.0.0.zip",
-      "defaultConsole": true
+      "defaultConsole": true,
+      "audioPacks": [
+        "28c07fe6-6ead-44b1-8c31-2372cfffcb60"
+      ]
     },
     {
       "id": "n3ds",
@@ -1884,7 +1896,11 @@
       ],
       "sha256": "5aed943a886c3181941ce07f81d684d6b3c9eef19090bd55709c52eb8b78b460",
       "url": "https://github.com/Kaal31/deckthemes-assets/releases/download/n3ds-v1.0.0/ThemeAssets-n3ds-v1.0.0.zip",
-      "defaultConsole": true
+      "defaultConsole": true,
+      "audioPacks": [
+        "9eb68e00-d0ed-4ed2-935b-e6992e588192",
+        "a3fddc99-d74a-413a-adc5-3f9d81b4be73"
+      ]
     },
     {
       "id": "ps1",

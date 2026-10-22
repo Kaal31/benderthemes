@@ -26,6 +26,7 @@ import { LaunchView, useLaunchState, dismissLaunch, setGameBootClip, setGameBoot
 import { BootIntro } from "./bootIntro";
 import { Onboarding } from "./Onboarding";
 import { ThemeIntro } from "./themeIntro";
+import {useThemeResourcesReady} from "./themeResources";
 import { essentialItems, globalSettingsItems, refreshThemeLists, setThemeSettingsOpener, themeSettingsItems } from "./themeSettingsMenu";
 import { cachedPspSkin, loadPspSkin } from "./skins";
 // The themed home: builds the shared API every theme uses, picks the theme
@@ -252,6 +253,7 @@ function VerifiedThemedHome({ standalone }: { standalone?: boolean }) {
 
 function ThemedHomeContent({ standalone }: { standalone?: boolean }) {
   const s = useSettings();
+  const introResourcesReady=useThemeResourcesReady(s.theme);
   const market = useMarketplace();
   const root = useRef<HTMLDivElement>(null);
   const [doc, setDoc] = useState<Document | null>(null);
@@ -452,7 +454,7 @@ function ThemedHomeContent({ standalone }: { standalone?: boolean }) {
       <MenuView menu={themeMenu} variant={s.theme === "ps3" ? "xmb" : (s.theme === "frame" || s.theme === "native") ? "ps5" : s.theme} art={s.theme === "psp" ? { panel: cachedPspSkin(pspFile(s))?.visuals?.optionMenu, focus: cachedPspSkin(pspFile(s))?.visuals?.menuFocus } : undefined} />
       {launching && <LaunchView value={launching} settings={s}/>}
       <BootIntro file={s.bootIntro} />
-      <ThemeIntro autoTheme={s.onboardingDone && !market.opened && !api.busy && !slotUrl("bootVideo", s) ? s.theme : undefined} />
+      <ThemeIntro autoTheme={s.onboardingDone && !market.opened && !api.busy && !slotUrl("bootVideo", s) && (!["old-big-picture","old-beta-big-picture"].includes(s.theme)||introResourcesReady) ? s.theme : undefined} />
       <VideoIntro url={slotUrl("bootVideo", s)} />
       {market.opened && <Marketplace requested={market.requested} from={market.from} initialTab={market.initialTab} />}
       <FirmwareNotice paused={market.opened || !!overlay || !!destination || !!launching} />

@@ -1,6 +1,8 @@
 import {CSSProperties} from "react";
 /** Lightweight console-inspired sequences. No firmware/video download is needed. */
 export const CONSOLE_STARTUPS:Record<string,{name:string;subtitle:string;color:string;background:string;duration:number;scene:string}>={
+ "old-big-picture":{name:"STEAM",subtitle:"BIG PICTURE",color:"#d9f0ff",background:"#071825",duration:5100,scene:"wave"},
+ "old-beta-big-picture":{name:"STEAM",subtitle:"BIG PICTURE",color:"#d9f0ff",background:"#071825",duration:5100,scene:"wave"},
  iisu:{name:"iiSU",subtitle:"",color:"#a59aff",background:"#f5f5f5",duration:3000,scene:"logo"},
  wii:{name:"Wii",subtitle:"",color:"#8b8b8b",background:"#fff",duration:3000,scene:"wii"},
  switch:{name:"NINTENDO SWITCH",subtitle:"",color:"#fff",background:"#e60012",duration:2700,scene:"switch"},

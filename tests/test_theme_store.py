@@ -29,6 +29,15 @@ def archive(files):
 
 
 class ThemeStoreTests(unittest.TestCase):
+    def test_shipped_audio_dependencies_update_identical_cached_artwork(self):
+        ident = "28c07fe6-6ead-44b1-8c31-2372cfffcb60"
+        shipped = {**self.pack, "audioPacks": [ident]}
+        (self.plugin / "theme-catalog.json").write_text(json.dumps({"schema": 1, "themes": [shipped]}))
+        store._catalog = {"schema": 1, "themes": [self.pack]}
+        self.assertEqual(store.catalog()["themes"][0]["audioPacks"], [ident])
+        store._catalog = {"schema": 1, "themes": [{**self.pack, "sha256": "b" * 64}]}
+        self.assertNotIn("audioPacks", store.catalog()["themes"][0], "Dependencies cannot be copied to different archive contents")
+
     def test_shipped_gallery_keeps_new_theme_previews_with_legacy_catalog(self):
         pinned = {"themes": ["gamecube", "ios6"], "sha256": "a" * 64, "size": 100, "url": "pinned-gallery"}
         (self.plugin / "theme-catalog.json").write_text(json.dumps({"schema": 1, "themes": [], "gallery": pinned}))

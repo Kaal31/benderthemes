@@ -36,9 +36,11 @@
       "assets/steam_home.png",
       "sounds/activation.wav",
       "sounds/focus_change.wav",
-      "sounds/txting_press_b.wav"
+      "sounds/txting_press_b.wav",
+      "intro.mp4",
+      "intro-source.json"
     ],
-    "version": "1.0.1",
+    "version": "1.0.2",
     "soundResources": [
       "sounds/Old Big Picture UI/deck_ui_default_activation.wav",
       "sounds/Old Big Picture UI/deck_ui_hide_modal.wav",

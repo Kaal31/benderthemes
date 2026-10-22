@@ -18,6 +18,9 @@ class FrameMediaTests(unittest.TestCase):
             self.assertTrue(spec["files"])
             for name in spec["files"]:
                 self.assertNotIn("..",Path(name).parts)
+                # Provenance for the user-provided intro is the sole non-media file in this pack.
+                if ident == "old-big-picture" and name == "intro-source.json":
+                    continue
                 self.assertIn(Path(name).suffix.lower(),allowed)
 
     def test_download_cached_reuse_and_missing_file_repair(self):

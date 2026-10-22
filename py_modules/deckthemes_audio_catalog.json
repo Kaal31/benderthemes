@@ -61,7 +61,8 @@
     "kind": "music",
     "themes": [
       "n3ds"
-    ]
+    ],
+    "installWithTheme": true
   },
   {
     "id": "a3fddc99-d74a-413a-adc5-3f9d81b4be73",
@@ -69,7 +70,8 @@
     "kind": "sounds",
     "themes": [
       "n3ds"
-    ]
+    ],
+    "installWithTheme": true
   },
   {
     "id": "2b132959-5f9d-458c-bb4f-acd6ab4dcc1a",
@@ -88,7 +90,8 @@
     "kind": "sounds",
     "themes": [
       "switch"
-    ]
+    ],
+    "installWithTheme": true
   },
   {
     "id": "1dca56a8-bb7c-4182-9b64-f83a8b568f15",
@@ -433,16 +436,20 @@
     "name": "Wii Menu Sounds",
     "kind": "sounds",
     "themes": [
-      "wii"
-    ]
+      "wii",
+      "wiiflow-default"
+    ],
+    "installWithTheme": true
   },
   {
     "id": "f3d6b5e1-55e5-43ab-90f8-51e8a622763a",
     "name": "Wii Menu Music",
     "kind": "music",
     "themes": [
-      "wii"
-    ]
+      "wii",
+      "wiiflow-default"
+    ],
+    "installWithTheme": true
   },
   {
     "id": "ac9179c2-f0b0-4ee5-b5a1-d6b569a94fe6",
@@ -685,5 +692,30 @@
       "Steam Big Picture Ambience"
     ],
     "installWithTheme": true
+  },
+  {
+    "id": "12b04b34-00c1-4600-8e71-eb0a77f47962",
+    "name": "Switch 2 Sounds",
+    "kind": "sounds",
+    "themes": [
+      "switch"
+    ]
+  },
+  {
+    "id": "fb1780d7-12af-493d-a36d-28700870528a",
+    "name": "Wii Sports SFX Pack",
+    "kind": "sounds",
+    "themes": [
+      "wii",
+      "wiiflow-default"
+    ]
+  },
+  {
+    "id": "61867c03-9f24-4c1c-a482-28a6f1841d04",
+    "name": "Nintendo DSi UI Sounds",
+    "kind": "sounds",
+    "themes": [
+      "n3ds"
+    ]
   }
 ]

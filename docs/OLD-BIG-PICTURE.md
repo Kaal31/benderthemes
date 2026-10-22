@@ -6,6 +6,8 @@ Library/actions use HomeApi, friends and achievements use activity hooks, downlo
 
 Artwork and original UI sounds are downloaded from the verified Old Big Picture asset pack on Kaal31/deckthemes-assets. The native layout waits for media installation and resolves images through the local media server; CSS remains scoped to .dht-oldbigpicture. Old Beta Big Picture shares this pack. The sounds use the shared sound settings/lifecycle. Valve retains rights to original client assets.
 
+Media pack v1.0.2 adds the user-provided **Steam - Big Picture | OG Intro [Original 1080p]** clip credited to Rybz. The original 5.09-second 1920×1080 MP4 is preserved byte-for-byte; `intro-source.json` records its checksum and provenance. Both Old Big Picture and Old Beta Big Picture play this shared local video once their media are ready. Any button or tap skips it, and the existing animations/reduced-motion settings and custom boot-video choice retain priority.
+
 # Reference comparison
 
 Compared visually against:

@@ -1,4 +1,5 @@
 import {callable} from "@decky/api";
+import {useSyncExternalStore} from "react";
 import {ensureThemeAudio} from "./audioDownloads";
 import {refreshThemes} from "./engine/registry";
 import {refreshPacks} from "./steam";
@@ -7,9 +8,12 @@ export type ResourceProgress={percent:number;message:string};
 const ensureMedia=callable<[string],{success:boolean;error?:string}>("ensure_frame_media");
 const key=(id:string)=>id==="old-beta-big-picture"?"old-big-picture":id;
 const ready=new Set<string>();
+const readyListeners=new Set<()=>void>();
+const subscribeReady=(fn:()=>void)=>{readyListeners.add(fn);return()=>{readyListeners.delete(fn);};};
 const pending=new Map<string,{promise:Promise<void>;progress:ResourceProgress;listeners:Set<(p:ResourceProgress)=>void>}>();
 export const themeResourcesReady=(id:string)=>ready.has(key(id));
-export function invalidateThemeResources(id:string){ready.delete(key(id));}
+export function useThemeResourcesReady(id:string){return useSyncExternalStore(subscribeReady,()=>themeResourcesReady(id),()=>false);}
+export function invalidateThemeResources(id:string){if(ready.delete(key(id)))readyListeners.forEach(fn=>fn());}
 
 /** Hub downloads and first-open recovery share one preparation operation. */
 export async function prepareThemeResources(id:string,onProgress?:(p:ResourceProgress)=>void):Promise<void>{
@@ -29,6 +33,7 @@ export async function prepareThemeResources(id:string,onProgress?:(p:ResourcePro
    report({percent:98,message:"Preparing theme…"});
    await Promise.all([refreshThemes(),refreshPacks()]);
    ready.add(id);
+   readyListeners.forEach(fn=>fn());
   })().finally(()=>pending.delete(id));
  }
  if(onProgress){task.listeners.add(onProgress);onProgress(task.progress);}

@@ -9,6 +9,7 @@ try{
  for(const id of ['old-big-picture','santa-express']){
   await page.evaluate(id=>window.__updateTheme({theme:['santa-express','old-big-picture'].includes(id)?id:'frame',activeTheme:id,animations:true}),id);
   const host=page.locator(`[data-react-theme="${id}"]`);await host.waitFor();
+  if(id==='old-big-picture'){const intro=page.locator('.dht-console-video[data-console="old-big-picture"]');await intro.waitFor();await intro.click();await intro.waitFor({state:'detached'});}
   const selected=id==='old-big-picture'?'.home-tile.library:focus':'.card[aria-current=true]';await host.locator(selected).waitFor();
   // Real Steam D-pad messages reach the outer Focusable, represented by window keyboard events here.
   const before=await host.locator(selected).getAttribute('data-appid');

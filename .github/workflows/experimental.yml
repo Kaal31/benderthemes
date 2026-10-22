@@ -95,6 +95,8 @@ jobs:
       - run: node tests/verify-community-updates.mjs
       - run: node tests/verify-channel-updater.mjs
       - run: node tests/verify-audio-downloads-browser.mjs
+      - run: node tests/verify-console-audio-defaults.mjs
+      - run: node tests/verify-big-picture-intro.mjs
       - name: Verify published Hub previews
         run: python tools/fetch_gallery.py
       - run: node tests/verify-bundled-hub.mjs
