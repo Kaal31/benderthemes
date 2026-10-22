@@ -13,20 +13,20 @@ export function refreshAudioCatalog():Promise<void> {
 }
 export const downloadableAudio=()=>available;
 export const audioDownloading=(id:string)=>pending.has(id);
-export async function downloadAudio(id:string):Promise<string|null> {
+export async function downloadAudio(id:string,options?:{quiet?:boolean}):Promise<string|null> {
   const existing=getPacks().filter(p=>p.id===id).sort((a,b)=>Number(b.name.startsWith("DHT Verified"))-Number(a.name.startsWith("DHT Verified")))[0];
   if(existing)return existing.folder;
   const running=pending.get(id);if(running)return running;
   const name=available.find(p=>p.id===id)?.name??"Audio pack";
   const task=(async()=>{
-    toaster.toast({title:"Downloading audio",body:name});
+    if(!options?.quiet)toaster.toast({title:"Downloading audio",body:name});
     try {
       const result=await install(id);
       if(!result?.ok||!result.folder)throw new Error(result?.error??"Download failed");
       await refreshPacks();
-      toaster.toast({title:"Audio ready",body:name});
+      if(!options?.quiet)toaster.toast({title:"Audio ready",body:name});
       return result.folder;
-    } catch(error){toaster.toast({title:"Could not download audio",body:`${name}: ${String(error)}`});return null;}
+    } catch(error){if(!options?.quiet)toaster.toast({title:"Could not download audio",body:`${name}: ${String(error)}`});return null;}
     finally{pending.delete(id);}
   })();
   pending.set(id,task);return task;
@@ -34,7 +34,7 @@ export async function downloadAudio(id:string):Promise<string|null> {
 
 const automatic=new Map<string,{at:number;promise:Promise<boolean>}>();
 /** Shipped theme dependencies use the same original DeckThemes packs as manual audio downloads. */
-export function ensureThemeAudio(themeId:string):Promise<boolean> {
+export function ensureThemeAudio(themeId:string,options?:{notifyResources?:boolean;quiet?:boolean}):Promise<boolean> {
   const previous=automatic.get(themeId);
   if(previous&&Date.now()-previous.at<5*60*1000)return previous.promise;
   const promise=(async()=>{
@@ -44,8 +44,8 @@ export function ensureThemeAudio(themeId:string):Promise<boolean> {
     await refreshPacks();
     const missing=required.filter(p=>!getPacks().some(installed=>installed.id===p.id));
     if(!missing.length)return true;
-    const results=await Promise.all(missing.map(p=>downloadAudio(p.id)));
-    if(results.some(Boolean))resourcesChanged();
+    const results=await Promise.all(missing.map(p=>downloadAudio(p.id,options)));
+    if(results.some(Boolean)&&options?.notifyResources!==false)resourcesChanged();
     return results.every(Boolean);
   })().catch(()=>false);
   automatic.set(themeId,{at:Date.now(),promise});

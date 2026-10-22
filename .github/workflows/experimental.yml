@@ -60,6 +60,7 @@ jobs:
           SKIP_THEME_PACK_BUILD: '1'
       - run: node tests/verify-performance-ui.mjs
       - run: node tests/verify-onboarding-download.mjs
+      - run: node tests/verify-hub-resource-progress.mjs
       - run: node tests/verify-bundled-native.mjs
       - run: node tests/verify-native-asset-downloads.mjs
       - run: node tests/verify-plugin-route-handoff.mjs

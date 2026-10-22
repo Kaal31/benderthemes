@@ -167,7 +167,7 @@ const backend: Record<string, (...a: any[]) => any> = {
   },
   media_server: () => (window as any).__testServer ?? null,
   list_data_themes: () => (window as any).__dataThemes ?? { base: null, themes: [] },
-  ensure_frame_media: async () => {if((window as any).__frameMediaGate)await (window as any).__frameMediaGate;return {success:true};},
+  ensure_frame_media: async (id:string) => {const w=window as any;(w.__frameMediaCalls??=[]).push(id);if(w.__frameMediaGate)await w.__frameMediaGate;return w.__frameMediaFailure?{success:false,error:"Preview media download failure"}:{success:true};},
   get_dial_asset: (n: string) => (window as any).__dialAssets?.[n] ?? null,
   get_assets: (n: string) => (window as any).__testAssets?.[n] ?? {},
   list_wallpapers: () => ({ dir: "~/homebrew/data/DeckHomeThemes/wallpapers", files: [] }),

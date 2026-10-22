@@ -2,8 +2,8 @@ import {GameAmpHome} from "../themes/GameAmp";
 import {GlassHome} from "../themes/Glass";
 import { BundledThemeSurface, hasBundledRenderer, NativeThemePort } from "./BundledThemeSurface";
 import { frameRoute, FrameRoute } from "./frameNavigation";
-import { ensureThemeAudio } from "../audioDownloads";
-import { callable } from "@decky/api";
+import {prepareThemeResources,themeResourcesReady,ResourceProgress} from "../themeResources";
+import {ThemeResourceProgress} from "../ThemeResourceProgress";
 // HTML theme host: compiled native surfaces for trusted bundled themes, isolated frames for imported HTML.
 //
 // The interface is an HTML page from the theme's folder. It runs in an iframe
@@ -26,15 +26,14 @@ import { useHome } from "../common";
 import { Btn, Hints, Press, ThemeRoot } from "../input";
 import { Game, openSteam, SteamPlace } from "../library";
 import { getSettings, updateSettings } from "../settings";
-import { fmtTime, playSound, refreshPacks, SOUND_FILES, SoundKind, useSteamStatus } from "../steam";
-import { activeTheme, iconMap, slotAccent, slotUrl, frameUrl, themeFileUrl, refreshThemes } from "./registry";
+import { fmtTime, playSound, SOUND_FILES, SoundKind, useSteamStatus } from "../steam";
+import { activeTheme, iconMap, slotAccent, slotUrl, frameUrl, themeFileUrl } from "./registry";
 import { themeAudioBands } from "../themeAudio";
 import { useDownloads } from "../downloads";
 import { framePageRequest } from "./framePages";
 import { useReportFocus } from "../focus";
 
 export const FRAME_PROTOCOL = 1;
-const ensureMedia=callable<[id:string],{success:boolean;error?:string}>("ensure_frame_media");
 const BUTTONS: Btn[] = ["up", "down", "left", "right", "a", "b", "x", "y", "menu", "l1", "r1"];
 const PLACES: SteamPlace[] = ["library", "store", "friends", "settings", "downloads", "search", "power", "mainmenu"];
 const MAX_SAVE = 64 * 1024;
@@ -61,9 +60,9 @@ export function FrameHome() {
 }
 export function NativeMediaGate({id,children}:{id:string;children:import("react").ReactNode}){
  const api=useHome();
- const [state,setState]=useState<{id:string;ready:boolean;error?:string}>({id,ready:false}),[attempt,retry]=useState(0);
- useEffect(()=>{let alive=true;setState({id,ready:false});void Promise.all([ensureMedia(id),ensureThemeAudio(id),refreshThemes()]).then(async([media,audio])=>{if(media.success)await refreshPacks();if(alive)setState({id,ready:media.success&&audio,error:media.error||(!audio?"Could not download theme audio.":undefined)});}).catch(e=>{if(alive)setState({id,ready:false,error:String(e)});});return()=>{alive=false;};},[id,attempt]);
- return state.id===id&&state.ready?<>{children}</>:<ThemeRoot hints={{a:state.error?"Retry download":undefined,y:"Options"}} onInput={({btn})=>{if(btn==="a"&&state.error){retry(n=>n+1);return true;}if(btn==="y"||btn==="menu"){api.openSettings();return true;}return false;}}><div role="status" style={{padding:48,color:"white"}}>{state.error??"Downloading theme media…"}{state.error&&<button onClick={()=>retry(n=>n+1)}>Retry download</button>}</div></ThemeRoot>;
+ const [state,setState]=useState<{id:string;ready:boolean;error?:string;progress?:ResourceProgress}>({id,ready:themeResourcesReady(id)}),[attempt,retry]=useState(0);
+ useEffect(()=>{let alive=true;setState({id,ready:themeResourcesReady(id)});void prepareThemeResources(id,progress=>{if(alive)setState({id,ready:false,progress});}).then(()=>{if(alive)setState({id,ready:true});}).catch(e=>{if(alive)setState({id,ready:false,error:String(e)});});return()=>{alive=false;};},[id,attempt]);
+ return themeResourcesReady(id)||(state.id===id&&state.ready)?<>{children}</>:<ThemeRoot hints={{a:state.error?"Retry download":undefined,y:"Options"}} onInput={({btn})=>{if(btn==="a"&&state.error){retry(n=>n+1);return true;}if(btn==="y"||btn==="menu"){api.openSettings();return true;}return false;}}><ThemeResourceProgress id={id} progress={state.progress} error={state.error} retry={()=>retry(n=>n+1)}/></ThemeRoot>;
 }
 function LegacyFrameHome() {
   const api = useHome();
@@ -71,15 +70,15 @@ function LegacyFrameHome() {
   const status = useSteamStatus();
   const requests = useRef({ at: 0, count: 0, pending: 0 });
   const theme = activeTheme(api.settings);
-  const [media,setMedia]=useState<{id?:string;ready:boolean;error?:string}>({ready:false});
+  const [media,setMedia]=useState<{id?:string;ready:boolean;error?:string;progress?:ResourceProgress}>({ready:false});
   const [mediaAttempt,setMediaAttempt]=useState(0);
   useEffect(()=>{
     let alive=true;
-    setMedia({id:theme?.id,ready:theme?.source!=="bundled"});
-    if(theme?.source==="bundled")void Promise.all([ensureMedia(theme.id),ensureThemeAudio(theme.id)]).then(([result,audioReady])=>{if(alive)setMedia({id:theme.id,ready:result.success&&audioReady,error:result.error||(!audioReady?"Could not download theme audio. Please retry.":undefined)});}).catch(error=>{if(alive)setMedia({id:theme.id,ready:false,error:String(error)});});
+    setMedia({id:theme?.id,ready:theme?.source!=="bundled"||themeResourcesReady(theme.id)});
+    if(theme?.source==="bundled")void prepareThemeResources(theme.id,progress=>{if(alive)setMedia({id:theme.id,ready:false,progress});}).then(()=>{if(alive)setMedia({id:theme.id,ready:true});}).catch(error=>{if(alive)setMedia({id:theme.id,ready:false,error:String(error)});});
     return()=>{alive=false;};
   },[theme?.id,theme?.source,mediaAttempt]);
-  const frameAvailable=theme?.source!=="bundled"||(media.id===theme.id&&media.ready);
+  const frameAvailable=theme?.source!=="bundled"||themeResourcesReady(theme.id)||(media.id===theme.id&&media.ready);
   const frame = useRef<HTMLIFrameElement>(null);
   const nativePort=useRef<NativeThemePort|null>(null);
   const nativeReceive=useRef<((message:Record<string,unknown>)=>void)|null>(null);
@@ -289,6 +288,7 @@ function LegacyFrameHome() {
   }, [url, ready, reload, frameAvailable, isNative]);
 
   const onInput = (p: Press) => {
+    if (!frameAvailable && media.error && p.btn === "a") { setMediaAttempt(n=>n+1); return true; }
     if (p.btn === "b" && (!ready || pageError) && back()) return true;
     if (ready?.handles.has(p.btn)) {
       post({ type: "input", btn: p.btn, repeat: p.repeat });
@@ -302,9 +302,9 @@ function LegacyFrameHome() {
   };
 
   return (
-    <ThemeRoot onInput={onInput} hints={{ y: "Options", ...hints }}>
+    <ThemeRoot onInput={onInput} hints={{ y: "Options", ...hints, ...(!frameAvailable&&media.error?{a:"Retry download"}:{}) }}>
       {pageError && <div role="alert" style={{position:"absolute",inset:0,zIndex:5,background:"#16202bf2",padding:48,color:"white"}}>This page did not connect to ThemeHub.<button onClick={() => { if (!back()) { setPageError(false); setReady(null); client.current = null; generation.current++; setReload(n => n + 1); } }}>Back to a working page</button></div>}
-      {!frameAvailable?<div role="status" style={{padding:48,color:"white"}}>{media.error?`Could not download theme media: ${media.error}`:"Downloading theme media…"}{media.error&&<button onClick={()=>setMediaAttempt(n=>n+1)}>Retry download</button>}</div>:isNative&&theme ? (
+      {!frameAvailable?<ThemeResourceProgress id={theme?.id??""} progress={media.progress} error={media.error} retry={()=>setMediaAttempt(n=>n+1)}/>:isNative&&theme ? (
         <BundledThemeSurface id={theme.id} base={themeFileUrl(theme, "")!} port={nativePort} onMessage={message=>nativeReceive.current?.(message)}/>
       ):url ? (
         <iframe
