@@ -39,8 +39,8 @@ export function OldBetaBigPictureHome(){
   stopMotion();const direction=category>prior?1:-1;
   const sheets=[root.current.querySelector<HTMLElement>('.beta-store-sheet'),root.current.querySelector<HTMLElement>('.beta-cover-board'),root.current.querySelector<HTMLElement>('.beta-community-sheet')];
   const incoming=sheets[category],outgoing=sheets[prior];
-  if(incoming){const end=getComputedStyle(incoming),target=end.transform,saved=focusStarts.current.get(category),start=saved&&Number(saved.opacity)>.12?saved.transform:new DOMMatrix(target).translate(direction*size.w*.23,-direction*size.h*.15,0).toString();motion.current.push(incoming.animate([{transform:start,opacity:saved?.opacity??0},{transform:target,opacity:1}],{duration:400,easing:'cubic-bezier(.22,.61,.36,1)'}));}
-  if(outgoing){const saved=focusStarts.current.get(prior);const start=saved?.transform??getComputedStyle(outgoing).transform;motion.current.push(outgoing.animate([{transform:start,opacity:saved?.opacity??1},{transform:new DOMMatrix(start).translate(-direction*size.w*.23,direction*size.h*.13,-70).toString(),opacity:0}],{duration:300,easing:'cubic-bezier(.4,0,.8,.6)'}));}
+  if(incoming){const end=getComputedStyle(incoming),target=end.transform,saved=focusStarts.current.get(category),start=saved&&Number(saved.opacity)>.12?saved.transform:new DOMMatrix().translate(direction*size.w*.23,-direction*size.h*.15,0).multiply(new DOMMatrix(target)).toString();motion.current.push(incoming.animate([{transform:start,opacity:saved?.opacity??0},{transform:target,opacity:1}],{duration:400,easing:'cubic-bezier(.22,.61,.36,1)'}));}
+  if(outgoing){const saved=focusStarts.current.get(prior);const start=saved?.transform??getComputedStyle(outgoing).transform;motion.current.push(outgoing.animate([{transform:start,opacity:saved?.opacity??1},{transform:new DOMMatrix().translate(-direction*size.w*.23,direction*size.h*.13,prior===1?0:-70).multiply(new DOMMatrix(start)).toString(),opacity:0}],{duration:300,easing:'cubic-bezier(.4,0,.8,.6)'}));}
   focusStarts.current.clear();
  },[category]);
  useLayoutEffect(()=>{

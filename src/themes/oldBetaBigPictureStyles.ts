@@ -26,8 +26,8 @@ export const OLD_BETA_CSS=`
 .dht-oldbeta .beta-categories button[aria-pressed=true]{background:transparent;box-shadow:none;color:#8299a9;transform:scaleY(1.08);text-shadow:none}
 .dht-oldbeta .beta-categories button:active{transform:scale(.97);transition-duration:80ms}
 .dht-oldbeta .beta-cover-board{transition:transform 600ms cubic-bezier(.16,.76,.22,1),top 520ms,left 600ms,opacity 420ms;opacity:1}
-.dht-oldbeta[data-mode=sheet][data-category="0"] .beta-cover-board{transform:translate3d(-24%,15%,-260px) rotateX(64deg) rotateZ(-31deg) scale(.7);opacity:.07}
-.dht-oldbeta[data-mode=sheet][data-category="2"] .beta-cover-board{transform:translate3d(-18%,8%,-220px) rotateX(62deg) rotateZ(-29deg) scale(.76);opacity:.06}
+.dht-oldbeta[data-mode=sheet][data-category="0"] .beta-cover-board{transform:rotateX(53deg) rotateZ(-23deg) scale(.84);opacity:0}
+.dht-oldbeta[data-mode=sheet][data-category="2"] .beta-cover-board{transform:rotateX(53deg) rotateZ(-23deg) scale(.84);opacity:0}
 .dht-oldbeta .beta-cover{transition:transform 520ms cubic-bezier(.16,.76,.22,1),width 520ms,height 520ms,opacity 360ms;transition-delay:var(--tile-delay,0ms)}
 .dht-oldbeta[data-mode=sheet] .beta-cover::after{content:'';position:absolute;inset:0;pointer-events:none;background:linear-gradient(115deg,#1f5d9148,transparent 50%,#153b6859);box-shadow:inset 0 0 0 1px #9dc5de18}
 .dht-oldbeta[data-mode=sheet] .beta-cover img{filter:saturate(.65) brightness(.88);transition:filter 400ms}.dht-oldbeta:not([data-mode=sheet]) .beta-cover img{filter:none;transition:filter 400ms}
