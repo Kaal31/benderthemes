@@ -31,7 +31,7 @@ export function OldBetaBigPictureHome(){
  useLayoutEffect(()=>{const node=root.current;if(!node)return;const resize=()=>setSize({w:node.clientWidth,h:node.clientHeight});resize();const observer=new ResizeObserver(resize);observer.observe(node);return()=>observer.disconnect();},[destination]);
  useLayoutEffect(()=>{if(destination)return;const target=mode==='sheet'?root.current?.querySelector<HTMLButtonElement>(`[data-category="${category}"]`):cards.current.get(chosen?.appid);target?.focus({preventScroll:true});},[mode,destination]);
  const motionEnabled=()=>api.settings.animations&&!matchMedia('(prefers-reduced-motion: reduce)').matches;
- const stopMotion=()=>{motion.current.forEach(a=>a.cancel());motion.current=[];};
+ const stopMotion=()=>{motion.current.forEach(a=>a.cancel());motion.current=[];root.current?.querySelectorAll<HTMLElement>('.beta-cover-board,.beta-secondary-sheet').forEach(n=>{n.style.opacity='';});};
  useEffect(()=>()=>{motion.current.forEach(a=>a.cancel());if(pendingOpen.current)clearTimeout(pendingOpen.current);},[]);
  useLayoutEffect(()=>{
   const prior=previousCategory.current;previousCategory.current=category;
@@ -39,8 +39,11 @@ export function OldBetaBigPictureHome(){
   stopMotion();const direction=category>prior?1:-1;
   const sheets=[root.current.querySelector<HTMLElement>('.beta-store-sheet'),root.current.querySelector<HTMLElement>('.beta-cover-board'),root.current.querySelector<HTMLElement>('.beta-community-sheet')];
   const incoming=sheets[category],outgoing=sheets[prior];
-  if(incoming){const end=getComputedStyle(incoming),target=end.transform,saved=focusStarts.current.get(category),start=saved&&Number(saved.opacity)>.12?saved.transform:new DOMMatrix().translate(direction*size.w*.23,-direction*size.h*.15,0).multiply(new DOMMatrix(target)).toString();motion.current.push(incoming.animate([{transform:start,opacity:saved?.opacity??0},{transform:target,opacity:1}],{duration:400,easing:'cubic-bezier(.22,.61,.36,1)'}));}
-  if(outgoing){const saved=focusStarts.current.get(prior);const start=saved?.transform??getComputedStyle(outgoing).transform;motion.current.push(outgoing.animate([{transform:start,opacity:saved?.opacity??1},{transform:new DOMMatrix().translate(-direction*size.w*.23,direction*size.h*.13,prior===1?0:-70).multiply(new DOMMatrix(start)).toString(),opacity:0}],{duration:300,easing:'cubic-bezier(.4,0,.8,.6)'}));}
+  if(incoming){const end=getComputedStyle(incoming),target=end.transform,saved=focusStarts.current.get(category),start=saved&&Number(saved.opacity)>.12?saved.transform:new DOMMatrix().translate(direction*size.w*.23,-direction*size.h*.15,0).multiply(new DOMMatrix(target)).toString();motion.current.push(incoming.animate([{transform:start},{transform:target}],{duration:400,easing:'cubic-bezier(.22,.61,.36,1)'}));}
+  if(outgoing){outgoing.style.opacity='1';const saved=focusStarts.current.get(prior);const start=saved?.transform??getComputedStyle(outgoing).transform;const exit=outgoing.animate([{transform:start},{transform:new DOMMatrix().translate(-direction*size.w*.23,direction*size.h*.13,prior===1?0:-70).multiply(new DOMMatrix(start)).toString()}],{duration:300,easing:'cubic-bezier(.4,0,.8,.6)'});exit.onfinish=()=>{outgoing.style.opacity='';};motion.current.push(exit);}
+  // Opacity below 1 on a preserve-3d parent flattens its children. Fade leaves,
+  // keeping the incoming/outgoing sheet at opacity 1 throughout its sweep.
+  for(const [sheet,arriving] of [[incoming,true],[outgoing,false]] as const){sheet?.querySelectorAll<HTMLElement>('.beta-cover,.beta-rear-cover,.beta-sheet-cover,.beta-sheet-friend').forEach(leaf=>{const opacity=Number(getComputedStyle(leaf).opacity);motion.current.push(leaf.animate(arriving?[{opacity:0},{opacity}]:[{opacity},{opacity:0}],{duration:arriving?300:240,easing:'ease-out',fill:arriving?'none':'forwards'}));});}
   focusStarts.current.clear();
  },[category]);
  useLayoutEffect(()=>{
