@@ -98,6 +98,11 @@ export function useThemes(): ThemeEntry[] {
   return allThemes();
 }
 
+/** Media for a bundled native layout, served from its verified downloaded pack. */
+export function bundledThemeFileUrl(id:string,rel:string):string|null {
+  return base?`${base}/${encodeURIComponent(id)}/${rel.split("/").map(encodeURIComponent).join("/")}`:null;
+}
+
 /** URL of a file inside a data theme's folder (served by the plugin's local server). */
 export function themeFileUrl(theme: ThemeEntry, rel: string): string | null {
   if (theme.source === "builtin" || !base) return null;

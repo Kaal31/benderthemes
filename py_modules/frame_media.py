@@ -26,6 +26,6 @@ def ensure(ident):
     with _lock:
         import theme_store
         present = theme_store.local_inventory().get(spec["pack"])
-        if present == spec["version"] and all(resolve(ident, name) for name in spec["files"]):
+        if present == spec["version"] and all(resolve(ident, name) for name in spec["files"]) and all(Path(theme_store.resource(name)).is_file() for name in spec.get("soundResources", [])):
             return {"success": True}
         return theme_store.install(spec["pack"])

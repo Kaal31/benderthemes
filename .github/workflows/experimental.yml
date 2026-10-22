@@ -61,6 +61,7 @@ jobs:
       - run: node tests/verify-performance-ui.mjs
       - run: node tests/verify-onboarding-download.mjs
       - run: node tests/verify-bundled-native.mjs
+      - run: node tests/verify-native-asset-downloads.mjs
       - run: node tests/verify-plugin-route-handoff.mjs
       - run: node tests/verify-castle-category-state.mjs
       - run: node tests/verify-bundled-store-layout.mjs

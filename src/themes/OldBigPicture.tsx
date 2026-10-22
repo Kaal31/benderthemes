@@ -12,7 +12,7 @@ import { updateSettings } from '../settings';
 import { fmtTime, useClock, playSound, useWallpaper } from '../steam';
 import { ProfileAvatar } from '../ProfileAvatar';
 import { useReportFocus } from '../focus';
-import { OLD_BIG_PICTURE_ASSETS as assets } from './oldBigPictureAssets';
+import { oldBigPictureAssets } from './oldBigPictureAssets';
 import {OLD_BETA_FOCUS_CSS} from './oldBetaFocusStyles';
 import { OLD_BIG_PICTURE_CSS } from './oldBigPictureStyles';
 import { Navigation } from '@decky/ui';
@@ -22,6 +22,7 @@ function ClassicTileIcon({kind}:{kind:Page}){return <svg viewBox="0 0 64 64" ari
 function ClassicLoading(){return <div className="classic-loading" role="status" aria-label="Loading"><span>Loading</span><div aria-hidden="true"><i/><i/><i/></div></div>;}
 function NativeButton({children,onClick,className='',label}:{children:ReactNode;onClick:()=>void;className?:string;label?:string}){return <button type="button" className={className} aria-label={label} onClick={()=>{playSound('select');onClick();}}>{children}</button>;}
 export function OldBigPictureHome({initialPage='home',initialGame=null,onExit,variant='classic'}:{initialPage?:Page;initialGame?:Game|null;onExit?:()=>void;variant?:'classic'|'beta'}={}){
+ const assets=oldBigPictureAssets();
  const api=useHome(),s=api.settings,root=useRef<HTMLDivElement>(null),track=useRef<HTMLDivElement>(null);
  const lastControl=useRef<HTMLElement|null>(null),powerReturn=useRef<HTMLElement|null>(null),libraryReturn=useRef<{appid:string;scrollTop:number;scrollLeft:number}|null>(null);
  const [webTab,setWebTab]=useState('favorites'),[webHistory,setWebHistory]=useState<string[]>([]);

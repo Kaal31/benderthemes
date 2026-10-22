@@ -4,7 +4,7 @@ Registered as the `old-big-picture` layout in Home.tsx and builtin.ts. Rendered 
 
 Library/actions use HomeApi, friends and achievements use activity hooks, downloads use useDownloads, Store uses store.ts, screenshots/videos use media hooks, music uses musicPlayer, settings use updateSettings, and controller input uses ThemeRoot. Full Steam chat/controller configuration opens native Steam interfaces.
 
-Artwork is embedded in oldBigPictureAssets.ts to avoid a frame asset-server dependency; CSS is scoped to .dht-oldbigpicture. Original sounds live under defaults/sounds/Old Big Picture UI and use the shared sound settings/lifecycle. Valve retains rights to original client assets.
+Artwork and original UI sounds are downloaded from the verified Old Big Picture asset pack on Kaal31/deckthemes-assets. The native layout waits for media installation and resolves images through the local media server; CSS remains scoped to .dht-oldbigpicture. Old Beta Big Picture shares this pack. The sounds use the shared sound settings/lifecycle. Valve retains rights to original client assets.
 
 # Reference comparison
 

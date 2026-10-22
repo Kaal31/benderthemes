@@ -81,8 +81,8 @@ const skinHook = (s: ReturnType<typeof getSettings>) => {
 const THEME_COMPONENTS: Record<ThemeId, () => ReactNode> = {
   gameamp: () => <NativeMediaGate id="gameamp"><GameAmpHome /></NativeMediaGate>,
   "santa-express": () => <SantaHome />,
-  "old-beta-big-picture": () => <OldBetaBigPictureHome />,
-  "old-big-picture": () => <OldBigPictureHome />,
+  "old-beta-big-picture": () => <NativeMediaGate id="old-big-picture"><OldBetaBigPictureHome /></NativeMediaGate>,
+  "old-big-picture": () => <NativeMediaGate id="old-big-picture"><OldBigPictureHome /></NativeMediaGate>,
   native: () => <NativeLayout />,
   onyx: () => <SilverHome dark />,
   silver: () => <SilverHome />,

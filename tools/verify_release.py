@@ -27,7 +27,7 @@ with zipfile.ZipFile(root / f"out/DeckHomeThemes-v{version}.zip") as plugin:
     for name in ("screensaver-player/index.html", "screensaver-player/player.js", "py_modules/theme_screensavers.py"):
         assert "DeckHomeThemes/" + name in plugin.namelist(), f"Missing screensaver runtime: {name}"
     assert plugin.testzip() is None
-    core_defaults = ("DeckHomeThemes/defaults/assets/console-intros/", "DeckHomeThemes/defaults/sounds/DHT Onyx iPod/", "DeckHomeThemes/defaults/sounds/Old Big Picture UI/")
+    core_defaults = ("DeckHomeThemes/defaults/assets/console-intros/", "DeckHomeThemes/defaults/sounds/DHT Onyx iPod/")
     assert not any(n.startswith("DeckHomeThemes/bundle/") or (n.startswith("DeckHomeThemes/defaults/") and not n.startswith(core_defaults)) for n in plugin.namelist()), "Optional theme resources leaked into the installer"
     assert json.loads(plugin.read("DeckHomeThemes/theme-catalog.json")) == catalog
     assert json.loads(plugin.read("DeckHomeThemes/package.json"))["version"] == version

@@ -44,6 +44,15 @@ class ThemeStoreTests(unittest.TestCase):
         result = store.catalog()
         self.assertEqual(result["themes"][0]["version"], "1.10.1")
 
+    def test_shipped_native_media_upgrade_replaces_cached_older_pack(self):
+        clean = {**self.pack, "version": "1.10.1", "frameTheme": "vita",
+                 "url": self.pack["url"].replace("1.10.0", "1.10.1")}
+        (self.plugin / "theme-catalog.json").write_text(json.dumps({"schema": 1, "themes": [clean]}))
+        self.assertEqual(store.catalog()["themes"][0]["version"], "1.10.1")
+        newer = {**clean, "version": "1.10.2", "url": clean["url"].replace("1.10.1", "1.10.2")}
+        store._catalog = {"schema": 1, "themes": [newer]}
+        self.assertEqual(store.catalog()["themes"][0]["version"], "1.10.2")
+
     def setUp(self):
         self.temp = tempfile.TemporaryDirectory()
         self.addCleanup(self.temp.cleanup)

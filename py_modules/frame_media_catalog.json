@@ -38,7 +38,18 @@
       "sounds/focus_change.wav",
       "sounds/txting_press_b.wav"
     ],
-    "version": "1.0.0"
+    "version": "1.0.1",
+    "soundResources": [
+      "sounds/Old Big Picture UI/deck_ui_default_activation.wav",
+      "sounds/Old Big Picture UI/deck_ui_hide_modal.wav",
+      "sounds/Old Big Picture UI/deck_ui_into_game_detail.wav",
+      "sounds/Old Big Picture UI/deck_ui_launch_game.wav",
+      "sounds/Old Big Picture UI/deck_ui_navigation.wav",
+      "sounds/Old Big Picture UI/deck_ui_out_of_game_detail.wav",
+      "sounds/Old Big Picture UI/deck_ui_tab_transition_01.wav",
+      "sounds/Old Big Picture UI/deck_ui_tile_scroll.wav",
+      "sounds/Old Big Picture UI/pack.json"
+    ]
   },
   "santa-express": {
     "pack": "santa-express",
@@ -53,7 +64,7 @@
       "lever-housing.png",
       "lever-knob.png"
     ],
-    "version": "1.0.0"
+    "version": "1.0.1"
   },
   "wiiflow-default": {
     "pack": "wiiflow-default",

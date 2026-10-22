@@ -65,6 +65,18 @@ class DataThemes(unittest.TestCase):
         html, _ = data_themes.frame_wrapper("http://h", 'x"><script>', 'a"b.html')
         self.assertNotIn('"><script>', html)
 
+    def test_native_media_without_data_manifest(self):
+        import frame_media
+        target = Path(self.tmp.name) / "native.png"
+        target.write_bytes(b"verified image")
+        spec = {"old-big-picture": {"pack": "old-big-picture", "version": "1.0.1", "files": ["assets/home.png"]}}
+        fake = types.SimpleNamespace(resource=lambda _: str(target))
+        with patch.object(frame_media, "catalog", return_value=spec), patch.dict(sys.modules, {"theme_store": fake}):
+            self.assertEqual(data_themes.resolve("old-big-picture", "assets/home.png"), str(target))
+            self.assertIsNone(data_themes.resolve("old-big-picture", "../secret"))
+            self.assertIsNone(data_themes.resolve("old-big-picture", "unknown.png"))
+            self.assertIsNone(data_themes.resolve("unknown-layout", "assets/home.png"))
+
     def test_user_theme_and_files(self):
         self.theme("mine", {"schema": 1, "id": "mine", "name": "Mine", "layout": "ps4", "slots": {"wallpaper": "art/bg.jpg", "sounds": "sfx"}}, ["art/bg.jpg", "sfx/deck_ui_navigation.wav", "sfx/notes.txt"])
         t = next(t for t in data_themes.list_themes() if t["id"] == "mine")

@@ -1701,12 +1701,12 @@
     {
       "id": "old-big-picture",
       "name": "Old Big Picture",
-      "version": "1.0.0",
+      "version": "1.0.1",
       "theme": null,
       "frameTheme": "old-big-picture",
       "description": "Downloadable media for Old Big Picture.",
       "minPluginVersion": "1.10.10",
-      "size": 2127083,
+      "size": 2938047,
       "resources": [
         "assets/frame-themes/old-big-picture/assets/downloads.png",
         "assets/frame-themes/old-big-picture/assets/exit.png",
@@ -1719,27 +1719,47 @@
         "assets/frame-themes/old-big-picture/assets/steam_home.png",
         "assets/frame-themes/old-big-picture/sounds/activation.wav",
         "assets/frame-themes/old-big-picture/sounds/focus_change.wav",
-        "assets/frame-themes/old-big-picture/sounds/txting_press_b.wav"
+        "assets/frame-themes/old-big-picture/sounds/txting_press_b.wav",
+        "sounds/Old Big Picture UI/deck_ui_default_activation.wav",
+        "sounds/Old Big Picture UI/deck_ui_hide_modal.wav",
+        "sounds/Old Big Picture UI/deck_ui_into_game_detail.wav",
+        "sounds/Old Big Picture UI/deck_ui_launch_game.wav",
+        "sounds/Old Big Picture UI/deck_ui_navigation.wav",
+        "sounds/Old Big Picture UI/deck_ui_out_of_game_detail.wav",
+        "sounds/Old Big Picture UI/deck_ui_tab_transition_01.wav",
+        "sounds/Old Big Picture UI/deck_ui_tile_scroll.wav",
+        "sounds/Old Big Picture UI/pack.json"
       ],
-      "unpackedSize": 2305449,
-      "sha256": "8ddc35eaef96e598c64f7b288e9a9b100d3160197b7596c29fcc70a15bff7b69",
-      "url": "https://github.com/Kaal31/deckthemes-assets/releases/download/old-big-picture-v1.0.0/ThemeAssets-old-big-picture-v1.0.0.zip",
+      "unpackedSize": 3607109,
+      "sha256": "182b599c98ec2019b14efd49505bbf0755ef54219e5065ad6a6ca316bb74fcdc",
+      "url": "https://github.com/Kaal31/deckthemes-assets/releases/download/old-big-picture-v1.0.1/ThemeAssets-old-big-picture-v1.0.1.zip",
       "preview": null,
       "poster": null,
       "audioPacks": [
         "cadb90ee-b772-493c-8d7d-72443029960a",
         "e5875375-c3c0-4ab2-a1d0-5f58f6b5b000"
+      ],
+      "soundResources": [
+        "sounds/Old Big Picture UI/deck_ui_default_activation.wav",
+        "sounds/Old Big Picture UI/deck_ui_hide_modal.wav",
+        "sounds/Old Big Picture UI/deck_ui_into_game_detail.wav",
+        "sounds/Old Big Picture UI/deck_ui_launch_game.wav",
+        "sounds/Old Big Picture UI/deck_ui_navigation.wav",
+        "sounds/Old Big Picture UI/deck_ui_out_of_game_detail.wav",
+        "sounds/Old Big Picture UI/deck_ui_tab_transition_01.wav",
+        "sounds/Old Big Picture UI/deck_ui_tile_scroll.wav",
+        "sounds/Old Big Picture UI/pack.json"
       ]
     },
     {
       "id": "santa-express",
       "name": "Santa Express",
-      "version": "1.0.0",
+      "version": "1.0.1",
       "theme": null,
       "frameTheme": "santa-express",
       "description": "Downloadable media for Santa Express.",
       "minPluginVersion": "1.10.10",
-      "size": 19364095,
+      "size": 19841197,
       "resources": [
         "assets/frame-themes/santa-express/background.png",
         "assets/frame-themes/santa-express/button-glass.png",
@@ -1751,9 +1771,9 @@
         "assets/frame-themes/santa-express/lever-housing.png",
         "assets/frame-themes/santa-express/lever-knob.png"
       ],
-      "unpackedSize": 19901364,
-      "sha256": "8cca065bfce7a995278be105019559605bf7b60eef7515f3c5aa2074124e1f05",
-      "url": "https://github.com/Kaal31/deckthemes-assets/releases/download/santa-express-v1.0.0/ThemeAssets-santa-express-v1.0.0.zip",
+      "unpackedSize": 20346060,
+      "sha256": "da726ab9425555f00ef53ad01603c785bf94777004e2ccb71d0bf545d7cde58c",
+      "url": "https://github.com/Kaal31/deckthemes-assets/releases/download/santa-express-v1.0.1/ThemeAssets-santa-express-v1.0.1.zip",
       "preview": null,
       "poster": null,
       "audioPacks": []

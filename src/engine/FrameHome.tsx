@@ -26,8 +26,8 @@ import { useHome } from "../common";
 import { Btn, Hints, Press, ThemeRoot } from "../input";
 import { Game, openSteam, SteamPlace } from "../library";
 import { getSettings, updateSettings } from "../settings";
-import { fmtTime, playSound, SOUND_FILES, SoundKind, useSteamStatus } from "../steam";
-import { activeTheme, iconMap, slotAccent, slotUrl, frameUrl, themeFileUrl } from "./registry";
+import { fmtTime, playSound, refreshPacks, SOUND_FILES, SoundKind, useSteamStatus } from "../steam";
+import { activeTheme, iconMap, slotAccent, slotUrl, frameUrl, themeFileUrl, refreshThemes } from "./registry";
 import { themeAudioBands } from "../themeAudio";
 import { useDownloads } from "../downloads";
 import { framePageRequest } from "./framePages";
@@ -62,7 +62,7 @@ export function FrameHome() {
 export function NativeMediaGate({id,children}:{id:string;children:import("react").ReactNode}){
  const api=useHome();
  const [state,setState]=useState<{id:string;ready:boolean;error?:string}>({id,ready:false}),[attempt,retry]=useState(0);
- useEffect(()=>{let alive=true;setState({id,ready:false});void Promise.all([ensureMedia(id),ensureThemeAudio(id)]).then(([media,audio])=>{if(alive)setState({id,ready:media.success&&audio,error:media.error||(!audio?"Could not download theme audio.":undefined)});}).catch(e=>{if(alive)setState({id,ready:false,error:String(e)});});return()=>{alive=false;};},[id,attempt]);
+ useEffect(()=>{let alive=true;setState({id,ready:false});void Promise.all([ensureMedia(id),ensureThemeAudio(id),refreshThemes()]).then(async([media,audio])=>{if(media.success)await refreshPacks();if(alive)setState({id,ready:media.success&&audio,error:media.error||(!audio?"Could not download theme audio.":undefined)});}).catch(e=>{if(alive)setState({id,ready:false,error:String(e)});});return()=>{alive=false;};},[id,attempt]);
  return state.id===id&&state.ready?<>{children}</>:<ThemeRoot hints={{a:state.error?"Retry download":undefined,y:"Options"}} onInput={({btn})=>{if(btn==="a"&&state.error){retry(n=>n+1);return true;}if(btn==="y"||btn==="menu"){api.openSettings();return true;}return false;}}><div role="status" style={{padding:48,color:"white"}}>{state.error??"Downloading theme media…"}{state.error&&<button onClick={()=>retry(n=>n+1)}>Retry download</button>}</div></ThemeRoot>;
 }
 function LegacyFrameHome() {

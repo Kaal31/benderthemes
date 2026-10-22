@@ -272,8 +272,12 @@ def resolve(ident, rel):
     """Absolute path of a file inside theme `ident`, or None (never outside the theme folder)."""
     hit = _scan().get(ident)
     parts = safe_path(rel)
-    if not hit or not parts:
+    if not parts:
         return None
+    if not hit:
+        # Native layouts have no data-theme manifest. Only explicitly listed media is exposed.
+        import frame_media
+        return frame_media.resolve(ident, "/".join(parts))
     folder = hit[1]
     path = os.path.realpath(os.path.join(folder, *parts))
     if not path.startswith(folder + os.sep):
