@@ -289,7 +289,7 @@ def convert(source, output, selected=None, ident=None, *, source_kind='community
         bg=mapped.get('background',{}).get('target')
         if bg and hashlib.sha256((theme/bg).read_bytes()).hexdigest()=='edaebd157645a953b02a0ab566d07302d77f76b2b579c5b2d3380db7d0fed33a':
             interface_profile='windows7-frame-v1';interface_background=bg
-        (theme/'theme-config.js').write_text('window.WiiFlowImport='+json.dumps({'interfaceProfile':interface_profile,'interfaceBackground':interface_background,'layout':layout,'modes':modes,'audio':audio,'sourceMenu':source_menu,'ui':ui,'shadowDistance':{'fullUntil':1,'fadeUntil':3} if nearby_shadows else None})+';',encoding='utf-8')
+        (theme/'theme-config.js').write_text('window.WiiFlowImport='+json.dumps({'defaults':{'backgroundFit':'fill','extendInterface':True,'extendCoverflow':True,'artworkMapping':'automatic','continueCoverPattern':False},'interfaceProfile':interface_profile,'interfaceBackground':interface_background,'layout':layout,'modes':modes,'audio':audio,'sourceMenu':source_menu,'ui':ui,'shadowDistance':{'fullUntil':1,'fadeUntil':3} if nearby_shadows else None})+';',encoding='utf-8')
         html = (theme / 'index.html').read_text(encoding='utf-8').replace('<script src="renderer.js">', '<script src="theme-config.js"></script><script src="importedAudio.js"></script><script src="sourceMenu.js"></script><script src="importedUI.js"></script><script src="renderer.js">')
         (theme / 'index.html').write_text(html, encoding='utf-8')
         manifest = json.loads((theme / 'theme.json').read_text(encoding='utf-8'))

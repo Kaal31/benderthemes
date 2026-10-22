@@ -16,7 +16,7 @@ export function interfaceExtension(config,invalidate){
  }
  function refresh(){const fill=saved.backgroundFit==='fill',active=!config.sourceMenuOpen;
   mapArtwork();covers=fill&&saved.extendCoverflow!==false&&active;panels=fill&&saved.extendInterface!==false&&saved.artworkMapping!=='off'&&active;
-  config.continueCoverPattern=covers&&saved.continueCoverPattern!==false&&config.experimentalExtendStacks===true;
+  config.continueCoverPattern=covers&&saved.continueCoverPattern===true&&config.experimentalExtendStacks===true;
   const factor=covers?Math.max(1,innerWidth/innerHeight/(config.continueCoverPattern?4/3:widescreen()?16/9:4/3)):1,key=[covers,panels,mapping,config.continueCoverPattern,innerWidth,innerHeight,devicePixelRatio].join(':');
   if(key===lastKey)return;lastKey=key;config.coverflowWidthFactor=factor;document.body.classList.toggle('wiiflow-wide',covers||panels);
   engine.setEnabled(panels);alignShell();document.dispatchEvent(new Event('wiiflow-layout'));invalidate();

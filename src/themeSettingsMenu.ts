@@ -445,7 +445,7 @@ export function customizeItems(): MenuItem[] {
     ]),
     ...(pageBackgrounds.length || activeTheme(S())?.id.startsWith("wiiflow-") ? [group("Background",()=>[
       ...pageBackgrounds.map(slotItem),
-      ...(activeTheme(S())?.id.startsWith("wiiflow-") ? [choice("Fit", [{id:"original",name:"Original"},{id:"extend",name:"Extend"},{id:"fill",name:"Fill"}],
+      ...(activeTheme(S())?.id.startsWith("wiiflow-") ? [choice("Fit", [{id:"original",name:"Original"},{id:"extend",name:"Blurred fill"},{id:"fill",name:"Fill"}],
         () => (S().frameData[activeTheme(S())!.id] as {backgroundFit?:string}|undefined)?.backgroundFit ?? (activeTheme(S())?.id.startsWith("wiiflow-")?"fill":"original"),
         (value) => {const id=activeTheme(S())!.id;updateSettings(p=>({frameData:{...p.frameData,[id]:{...(p.frameData[id] as Record<string,unknown> ?? {}),backgroundFit:value}}}));}),
         choice("Artwork extension",[{id:"automatic",name:"Automatic (verified mappings)"},{id:"frame",name:"Manual: preserve frame and extend edges"},{id:"off",name:"Off"}],
@@ -465,7 +465,7 @@ export function customizeItems(): MenuItem[] {
       { ...collectionMenu(th), label: "Show in this theme" },
       ...(activeTheme(S())?.id.startsWith("wiiflow-") ? [toggle("Extend coverflow with Fill",()=> (S().frameData[activeTheme(S())!.id] as {extendCoverflow?:boolean}|undefined)?.extendCoverflow!==false,
         value=>{const id=activeTheme(S())!.id;updateSettings(p=>({frameData:{...p.frameData,[id]:{...(p.frameData[id] as Record<string,unknown> ?? {}),extendCoverflow:value}}}));})] : []),
-      ...(activeTheme(S())?.id.startsWith("wiiflow-") ? [toggle("Continue cover pattern with Fill",()=> (S().frameData[activeTheme(S())!.id] as {continueCoverPattern?:boolean}|undefined)?.continueCoverPattern!==false,
+      ...(activeTheme(S())?.id.startsWith("wiiflow-") ? [toggle("Continue cover pattern with Fill",()=> (S().frameData[activeTheme(S())!.id] as {continueCoverPattern?:boolean}|undefined)?.continueCoverPattern===true,
         value=>{const id=activeTheme(S())!.id;updateSettings(p=>({frameData:{...p.frameData,[id]:{...(p.frameData[id] as Record<string,unknown> ?? {}),continueCoverPattern:value}}}));})] : []),
       ...(activeTheme(S())?.id.startsWith("wiiflow-") ? [toggle("Show navigation arrows", () => {
         const id = activeTheme(S())!.id;
@@ -474,6 +474,17 @@ export function customizeItems(): MenuItem[] {
         const id = activeTheme(S())!.id;
         updateSettings((p) => ({ frameData: { ...p.frameData, [id]: { ...(p.frameData[id] as Record<string, unknown> ?? {}), hideNavigationArrows: !visible } } }));
       })] : []),
+      ...(activeTheme(S())?.id.startsWith("wiiflow-") ? [toggle("Realistic case edges",()=> (S().frameData[activeTheme(S())!.id] as {realisticCaseEdges?:boolean}|undefined)?.realisticCaseEdges!==false,
+        value=>{const id=activeTheme(S())!.id;updateSettings(p=>({frameData:{...p.frameData,[id]:{...(p.frameData[id] as Record<string,unknown>??{}),realisticCaseEdges:value}}}));})] : []),
+      ...(activeTheme(S())?.id.startsWith("wiiflow-") ? [toggle("Swap case left/right",()=> (S().frameData[activeTheme(S())!.id] as {swapCaseSides?:boolean}|undefined)?.swapCaseSides===true,
+        value=>{const id=activeTheme(S())!.id;updateSettings(p=>({frameData:{...p.frameData,[id]:{...(p.frameData[id] as Record<string,unknown>??{}),swapCaseSides:value}}}));},
+        ()=>(S().frameData[activeTheme(S())!.id] as {realisticCaseEdges?:boolean}|undefined)?.realisticCaseEdges===false)] : []),
+      ...(activeTheme(S())?.id.startsWith("wiiflow-") ? [choice("Automatic spine appearance",[{id:"enhanced",name:"Enhanced"},{id:"classic",name:"Previous look"}],
+        ()=>(S().frameData[activeTheme(S())!.id] as {automaticSpineStyle?:string}|undefined)?.automaticSpineStyle??"enhanced",
+        value=>{const id=activeTheme(S())!.id;updateSettings(p=>({frameData:{...p.frameData,[id]:{...(p.frameData[id] as Record<string,unknown>??{}),automaticSpineStyle:value}}}));})] : []),
+      ...(activeTheme(S())?.id.startsWith("wiiflow-") ? [choice("Case edge",[{id:"dark",name:"Thin dark edge"},{id:"gray",name:"Original gray frame"}],
+        ()=>(S().frameData[activeTheme(S())!.id] as {caseEdge?:string}|undefined)?.caseEdge??"dark",
+        value=>{const id=activeTheme(S())!.id;updateSettings(p=>({frameData:{...p.frameData,[id]:{...(p.frameData[id] as Record<string,unknown>??{}),caseEdge:value}}}));})] : []),
       ...(activeTheme(S())?.id.startsWith("wiiflow-") ? [toggle("Cover title", () => {
         const id = activeTheme(S())!.id;
         return (S().frameData[id] as { hideCoverTitle?: boolean } | undefined)?.hideCoverTitle !== true;

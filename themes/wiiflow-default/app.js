@@ -17,7 +17,8 @@
   function focusGame(){hub.send({type:'focus',appid:current()?.appid??null});}
   function render(){
     const game=current();if(!game){gameOpen=false;document.body.classList.remove('game-open');}const old=new Map([...$('covers').children].map(n=>[n.dataset.appid,n])),used=new Set();
-    const visible=Math.min((window.WiiFlowImport||window.WiiFlowDefault)?.slotColumns?.((window.WiiFlowImport||window.WiiFlowDefault).layout)||Math.max(1,Math.min(31,Math.round(window.WiiFlowImport?.layout?.columns_4_3||window.WiiFlowImport?.layout?.columns||13))),games.length),start=-Math.floor((visible-1)/2);
+    if(window.WiiFlowImport){window.WiiFlowImport.libraryCount=games.length;window.WiiFlowImport.libraryIndex=selected;}
+    const visible=Math.min((window.WiiFlowImport||window.WiiFlowDefault)?.slotColumns?.((window.WiiFlowImport||window.WiiFlowDefault).layout)||Math.max(1,Math.min(31,Math.round(window.WiiFlowImport?.layout?.columns_4_3||window.WiiFlowImport?.layout?.columns||13))),games.length),start=window.WiiFlowImport?.layout?.library_stack?-selected:-Math.floor((visible-1)/2);
     for(let offset=start;offset<start+visible;offset++){
       const i=(selected+offset+games.length)%games.length,g=games[i];
       const key=String(g.appid),previous=old.get(key),cached=previous?._art===artwork(g)?previous:null,button=cached||document.createElement('button');if(previous&&!cached)previous.remove();button._art=artwork(g);button.dataset.appid=key;used.add(key);button.className='cover'+(offset===0?' selected':'');button.setAttribute('aria-label',g.name);button.setAttribute('aria-pressed',String(offset===0));button.tabIndex=-1;
@@ -39,7 +40,7 @@
     $('play').textContent=game&&!game.installed?'↓ Install':'▶ Play';$('empty').hidden=!!games.length;$('empty').textContent='No games in this view.';
     hub.send({type:'hints',a:gameOpen?(game?.installed?'Play':'Install'):'Select',x:'Game details',y:'Options'});focusGame();
   }
-  function choose(i){if(!games.length)return;gameOpen=false;document.body.classList.remove('game-open');selected=(i+games.length)%games.length;zone=0;document.activeElement?.blur();persist();hub.sound('move');render();}
+  function choose(i){if(!games.length)return;if(window.WiiFlowImport?.slottingBusy)return;gameOpen=false;document.body.classList.remove('game-open');selected=(i+games.length)%games.length;zone=0;document.activeElement?.blur();persist();hub.sound('move');render();}
   function select(){if(!current())return;if(gameOpen)return launch();gameOpen=true;document.body.classList.add('game-open');zone=1;control=0;document.body.classList.remove('controls');hub.sound('select');render();}
   function launch(){if(current()){hub.sound('launch');hub.launch(current().appid);}}
   function details(){if(current())hub.send({type:'details',appid:current().appid});}
@@ -52,6 +53,10 @@
   hub.on('input',({btn})=>{
     if(window.WiiFlowImport?.sourceMenuOpen)return;
     if(btn==='y'||btn==='menu')return hub.open('options');if(btn==='x')return details();if(btn==='b'){gameOpen=false;zone=0;document.body.classList.remove('game-open','controls');document.activeElement?.blur();render();return;}
+    if(window.WiiFlowImport?.layout?.library_stack&&!gameOpen&&!zone){
+      if(btn==='l1'||btn==='r1'){window.WiiFlowImport.shiftStackColumn?.(btn==='l1'?-1:1);return;}
+      if(btn==='up'||btn==='down'){choose(selected+(btn==='up'?1:-1));return;}
+    }
     if(btn==='down'){document.body.classList.add('controls');zone=1;control=0;controls()[control]?.focus();return;}if(btn==='up'){document.body.classList.remove('controls');zone=0;document.activeElement?.blur();return;}
     if(btn==='l1'||btn==='r1')return choose(selected+(btn==='l1'?-5:5));
     if(btn==='left'||btn==='right'){const delta=btn==='left'?-1:1;if(zone){const list=controls();control=(control+delta+list.length)%list.length;list[control]?.focus();}else choose(selected+delta);}

@@ -12,3 +12,8 @@
 header{opacity:1;pointer-events:auto}#logo-style{background:#242424e8;border-color:#888}
 
 #animation-speed{position:absolute;left:250px;top:0;font-size:11px;padding:5px 9px;border:1px solid #888;border-radius:4px;background:#242424e8;color:#fff}
+
+/* Thin dark case rim: retain depth while giving the front to artwork. */
+.front,.cover.selected .front{border:1px solid #24282d}
+
+body.gray-case-frame .front,body.gray-case-frame .cover.selected .front{border:3px solid #c6c8c9}
