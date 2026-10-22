@@ -9,6 +9,8 @@ assert (root/'dist/index.js').is_file(), 'Run npm run build first'
 # OFFLINE=1: every theme's artwork, sounds and music go inside the plugin ZIP (as bundled
 # defaults), so a test build works without the Hub or any hosted asset packs.
 OFFLINE = os.environ.get("OFFLINE") == "1"
+frame_media = json.loads((root/'py_modules/frame_media_catalog.json').read_text(encoding='utf-8'))
+migrated_media = {f"{ident}/{relative}" for ident, spec in frame_media.items() for relative in spec['files']}
 # ONLINE_ASSETS=1: PRIVATE ONLINE TEST builds. Theme packs are not in the ZIP; the Hub downloads them from the private
 # Kaal31/assets-data repository (asset-catalog-online.json, published with tools/publish_assets_data.py) using the
 # read-only token in ASSETS_READ_TOKEN, written to asset-source.json inside the ZIP. Never publish such a build.
@@ -82,6 +84,8 @@ with zipfile.ZipFile(target,'w',zipfile.ZIP_DEFLATED,compresslevel=6) as z:
         if not folder.is_dir(): continue
         for p in sorted(folder.rglob('*')):
             if p.is_file() and '__pycache__' not in p.parts and not p.name.startswith('.git'):
+                if destination == 'themes' and not OFFLINE and p.relative_to(folder).as_posix() in migrated_media:
+                    continue  # These assets are downloaded from their published media packs.
                 # pictures, sounds and videos are already compressed
                 stored=p.suffix.lower() in ('.png','.jpg','.jpeg','.webp','.gif','.mp3','.ogg','.opus','.mp4','.webm','.zip','.p3t','.ctf','.ptf','.nxtheme','.utheme','.mym','.csm')
                 z.write(p,'DeckHomeThemes/'+destination+'/'+p.relative_to(folder).as_posix(),compress_type=zipfile.ZIP_STORED if stored else zipfile.ZIP_DEFLATED)

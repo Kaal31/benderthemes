@@ -18,6 +18,7 @@ The merge preserves current experimental functionality and adds the PR's English
 - Kept the existing Switch `standardSkin` control as the single color preference. The PR's `themeColor` values remain readable for compatibility; changing the option writes the existing preference.
 - Kept experimental's shared black/white palettes and animations. Integrated the red accent for built-in black mode, scoped to Switch surfaces. Imported themes keep their accent and firmware palette behavior.
 - The new Basic Black look supplies a default; saved preset differences can still override it.
+- Xbox follows Steam's locale unless the user explicitly chooses a dashboard language. Diagnostics highlight actual errors rather than the absence of an error.
 
 ## Automated verification
 
@@ -44,3 +45,11 @@ To register another language, add its catalog in `src/languages.ts` and update l
 Local screenshots and an HTML comparison are in `out/dark-mode-comparison/` (generated, not committed). They compare original experimental with the contributor version using matching library data, viewport and clock. The contributor preview includes only the dock crash fix so the intended visuals can render. It still demonstrates the contributor's overlapping dock and cyan focus ring despite red labels.
 
 No Steam Deck runtime, release publication or remote merge is implied by these local checks.
+
+## Local test package
+
+The follow-up release check also corrected existing experimental packaging metadata: the built-in layout list now includes the two native Big Picture layouts, the verifier recognizes `frameTheme` catalog entries and the shipped Big Picture sound pack, and lightweight packages exclude media already migrated into download packs. Offline packaging retains that media.
+
+The local installer was built with `USE_PUBLISHED_ASSETS=1` and passed `tools/verify_release.py` against the published catalog. No hosted assets were uploaded or changed. The generated copy for Deck testing is `out/DeckHomeThemes-v1.10.9-localization-local.zip`.
+
+An additional English/Portuguese preview of the integrated result is `out/dark-mode-comparison/merged.html` (and `merged.png`).

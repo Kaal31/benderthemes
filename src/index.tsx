@@ -314,7 +314,7 @@ function Diagnostics() {
           {others.homes.length > 0 && row(lang("diagAlsoReplacingHome"), lang("diagOnlyOneHomeDesc", { homes: others.homes.join(", ") }), true)}
           {others.music.length > 0 && row(lang("diagOtherMusic"), lang("diagOtherMusicPaused", { music: others.music.join(", ") }))}
           {others.support.map(p => <div key={p.name}>{row(p.name, `${p.mode}: ${p.detail}`, p.mode === "conflict")}</div>)}
-          {row(lang("diagLastError"), d.lastError || lang("diagNone"), !d.lastError)}
+          {row(lang("diagLastError"), d.lastError || lang("diagNone"), !!d.lastError)}
         </div>
       </PanelSectionRow>
     </PanelSection>

@@ -382,7 +382,8 @@ export function XboxHome() {
   const st = styleOf(s, "xbox");
   const tint = st("colour") === "blue" ? BLUE : undefined;
   const curLang = getCurrentLanguage();
-  const langKey = st<string>("lang") in WORDS ? st<string>("lang") : (curLang === "ptBr" ? "ptBr" : "en");
+  const selectedLanguage = s.styles?.xbox?.lang;
+  const langKey = typeof selectedLanguage === "string" && selectedLanguage in WORDS ? selectedLanguage : (curLang === "ptBr" ? "ptBr" : "en");
   const T = WORDS[langKey as Lang];
   const vis = Number(st("rows")) || 5;
 

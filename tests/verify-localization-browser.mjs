@@ -25,8 +25,13 @@ try {
     await page.evaluate(()=>window.__updateTheme({theme:'wiiu'}));
     await page.locator('[data-dht-theme="wiiu"]').waitFor();
     assert.equal(await page.getByText('This theme hit an error.',{exact:false}).count(),0);
+    await page.evaluate(()=>window.__updateTheme({theme:'xbox'}));
+    await page.locator('.dht-xbox-button').first().waitFor();
+    assert.ok((await page.locator('.dht-xbox-button').allTextContents()).some(text=>text.includes(locale==='en'?'MEMORY':'MEMÓRIA')),'Xbox follows Steam language by default');
+    await page.evaluate(()=>window.__updateTheme({styles:{...window.__getThemeSettings().styles,xbox:{lang:'en'}}}));
+    await page.waitForFunction(()=>[...document.querySelectorAll('.dht-xbox-button')].some(node=>node.textContent.includes('MEMORY')));
     assert.deepEqual(errors,[]);
-    console.log(`PASS ${locale}: Switch dock, red focus, localized settings and Wii U render`);
+    console.log(`PASS ${locale}: Switch dock, red focus, settings, Wii U and Xbox locale/override`);
     await page.close();
   }
 } finally {await browser.close();server.close();}
