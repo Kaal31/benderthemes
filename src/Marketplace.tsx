@@ -111,7 +111,9 @@ export function Marketplace({ requested, from, initialTab }: { requested?: Theme
         ...result.themes.find(p=>p.frameTheme===t.id), localThemeId:t.id, theme:t.layout,
         installedVersion:result.themes.some(p=>p.frameTheme===t.id)?result.themes.find(p=>p.frameTheme===t.id)?.installedVersion:"bundled"
       }));
-      setPacks([...withBuiltIns(result.themes.filter(p=>!p.frameTheme), result.art), ...localThemes, ...installed]); setError(result.error || "");
+      // Promoted native layouts retain their downloadable catalog pack after their old data theme is removed.
+      const catalogThemes=result.themes.flatMap(p=>!p.frameTheme?[p]:localThemes.some(t=>t.localThemeId===p.frameTheme)?[]:THEMES.some(t=>t.id===p.frameTheme)?[{...p,theme:p.frameTheme as ThemeId}]:[]);
+      setPacks([...withBuiltIns(catalogThemes, result.art), ...localThemes, ...installed]); setError(result.error || "");
       setProgress(result.progress); setBusy(result.progress.busy);
     } catch (e) { if (alive.current) setError(`Cannot load themes: ${e}`); }
     finally { if (alive.current) setLoading(false); }

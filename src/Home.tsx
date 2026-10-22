@@ -63,7 +63,7 @@ import { Ps2Home } from "./themes/Ps2";
 import { Ps1Home } from "./themes/Ps1";
 import { IisuHome } from "./themes/Iisu";
 import { NativeLayout } from "./engine/NativeLayout";
-import { FrameHome } from "./engine/FrameHome";
+import { FrameHome, NativeMediaGate } from "./engine/FrameHome";
 import { VideoIntro } from "./engine/VideoIntro";
 import { activeTheme, refreshThemes, slotAccent, slotFont, slotUrl, useThemes } from "./engine/registry";
 import { callable } from "@decky/api";
@@ -79,14 +79,14 @@ const skinHook = (s: ReturnType<typeof getSettings>) => {
 };
 
 const THEME_COMPONENTS: Record<ThemeId, () => ReactNode> = {
-  gameamp: () => <GameAmpHome />,
+  gameamp: () => <NativeMediaGate id="gameamp"><GameAmpHome /></NativeMediaGate>,
   "santa-express": () => <SantaHome />,
   "old-beta-big-picture": () => <OldBetaBigPictureHome />,
   "old-big-picture": () => <OldBigPictureHome />,
   native: () => <NativeLayout />,
   onyx: () => <SilverHome dark />,
   silver: () => <SilverHome />,
-  ios6: () => <IOS6Home />,
+  ios6: () => <NativeMediaGate id="ios6"><IOS6Home /></NativeMediaGate>,
   frame: () => <FrameHome />,
   wii: () => <NintendoHome kind="wii"/>,
   wiiu: () => <NintendoHome kind="wiiu"/>,

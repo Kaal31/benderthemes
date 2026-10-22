@@ -208,3 +208,6 @@ body.away-from-home footer>[data-home-dock]{display:none!important}
 
 /* Fade reflected artwork out before the shelf's front edge at every icon size. */
 #dashboard footer>button>.ios-native-art,#dashboard footer>[data-home-dock] .cover-frame,#dashboard footer>[data-home-dock] .ios-app-art{-webkit-box-reflect:below 2px linear-gradient(to bottom,transparent 0%,transparent calc(100% - (95px - var(--dock-icon-size))),#ffffff32 100%)}
+
+/* Keep shortcut ownership visible independently of artwork loading. */
+.cover-frame .non-steam-badge{position:absolute;right:3px;bottom:3px;z-index:4;padding:2px 4px;border-radius:4px;background:#122b43dc;color:#fff;font:10px Arial,sans-serif;line-height:1.2;text-shadow:none;pointer-events:none}

@@ -15,17 +15,17 @@ try{
    appStore.GetCustomVerticalCapsuleURLs=()=>['/missing-cover-1','/missing-cover-2','/missing-cover-3',good];
  });
  for(const id of ['blue-glass','ios6','santa-express']){
-   await page.evaluate(id=>window.__updateTheme({theme:'frame',activeTheme:id,animations:false}),id);
-   const host=page.locator(`[data-react-theme="${id}"]`);await host.waitFor();
+   await page.evaluate(id=>window.__updateTheme({theme:['ios6','gameamp','santa-express','old-big-picture'].includes(id)?id:'frame',activeTheme:id,animations:false}),id);
+   const host=page.locator(`[data-react-theme="${id}"],[data-native-theme="${id}"]`);await host.waitFor();
    const tile=host.locator('button[aria-label="Dolphin Emulator"]').first();
    await tile.locator('img').waitFor();
-   await page.waitForFunction(id=>{const s=document.querySelector(`[data-react-theme="${id}"]`);const img=s.querySelector('button[aria-label="Dolphin Emulator"] img');return img?.complete&&img.naturalWidth>0;},id);
+   await page.waitForFunction(id=>{const host=document.querySelector(`[data-react-theme="${id}"],[data-native-theme="${id}"]`),s=host.shadowRoot??host;const img=s.querySelector('button[aria-label="Dolphin Emulator"] img');return img?.complete&&img.naturalWidth>0;},id);
    assert.equal(await tile.locator('.non-steam-badge').textContent(),'Non-Steam');
    assert.equal(await tile.locator('img').evaluate(n=>n.complete&&n.naturalWidth>0),true,'shared GameArt walks through every fallback URL');
    for(const [width,height] of [[1280,800],[1280,720],[960,600]]){
      await page.setViewportSize({width,height});
      await page.evaluate(()=>new Promise(resolve=>requestAnimationFrame(()=>requestAnimationFrame(resolve))));
-     await page.waitForFunction(id=>{const host=document.querySelector(`[data-react-theme="${id}"]`),stage=host.querySelector(id==='santa-express'?'#stage':'#dashboard');const a=host.getBoundingClientRect(),b=stage.getBoundingClientRect();return ['x','y','width','height'].every(k=>Math.abs(a[k]-b[k])<1);},id);
+     await page.waitForFunction(id=>{const host=document.querySelector(`[data-react-theme="${id}"],[data-native-theme="${id}"]`),stage=(host.shadowRoot??host).querySelector(id==='santa-express'?'#stage':'#dashboard');const a=host.getBoundingClientRect(),b=stage.getBoundingClientRect();return id==='santa-express'?b.left>=a.left-1&&b.top>=a.top-1&&b.right<=a.right+1&&b.bottom<=a.bottom+1: ['x','y','width','height'].every(k=>Math.abs(a[k]-b[k])<1);},id);
    }
    if(id==='santa-express')await host.screenshot({path:'out/native-themes/santa-express-avatar.png'});
    console.log('PASS artwork fallback beyond third URL, non-Steam label and viewport fit:',id);

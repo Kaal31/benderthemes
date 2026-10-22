@@ -59,7 +59,7 @@ export function FrameHome() {
  const api=useHome(),theme=activeTheme(api.settings);
  return theme?.source==="bundled"&&["blue-glass","ios6","gameamp"].includes(theme.id)?<NativeMediaGate id={theme.id}>{theme.id==="gameamp"?<GameAmpHome/>:<GlassHome ios={theme.id==="ios6"}/>}</NativeMediaGate>:<LegacyFrameHome/>;
 }
-function NativeMediaGate({id,children}:{id:string;children:import("react").ReactNode}){
+export function NativeMediaGate({id,children}:{id:string;children:import("react").ReactNode}){
  const api=useHome();
  const [state,setState]=useState<{id:string;ready:boolean;error?:string}>({id,ready:false}),[attempt,retry]=useState(0);
  useEffect(()=>{let alive=true;setState({id,ready:false});void Promise.all([ensureMedia(id),ensureThemeAudio(id)]).then(([media,audio])=>{if(alive)setState({id,ready:media.success&&audio,error:media.error||(!audio?"Could not download theme audio.":undefined)});}).catch(e=>{if(alive)setState({id,ready:false,error:String(e)});});return()=>{alive=false;};},[id,attempt]);
