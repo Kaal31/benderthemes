@@ -119,7 +119,8 @@ export const OLD_BETA_CSS=`
 .dht-oldbeta .beta-stacked-sheets{opacity:1;transform:translateZ(-30px);transition:none}
 .dht-oldbeta:not([data-mode=sheet]) .beta-stacked-sheets{visibility:hidden}
 .dht-oldbeta .beta-categories{transition:top 400ms cubic-bezier(.25,.46,.45,.94),transform 400ms,opacity 180ms}
-.dht-oldbeta[data-mode=recent] .beta-cover>span{transition:opacity 100ms 300ms}
+.dht-oldbeta[data-mode=recent] .beta-cover>span{transition:opacity 80ms}
+.dht-oldbeta[data-mode=recent] .beta-cover[data-selected=true]>span{transition:opacity 100ms 300ms}
 .dht-oldbeta[data-mode=recent] .beta-cover[data-selected=true]{animation:beta-carousel-selection 400ms linear}
 @keyframes beta-carousel-selection{0%,65%{outline-color:transparent;box-shadow:0 0 0 transparent}100%{outline-color:#ecf9ff;box-shadow:0 0 20px #9bd9ff90}}
 .dht-oldbeta[data-mode=recent] .beta-view-all{animation:beta-controls-reveal 180ms 120ms both}

@@ -10,6 +10,9 @@ import {playSound} from '../steam';
 import {OldBigPictureHome} from './OldBigPicture';
 import {Navigation} from '@decky/ui';
 import {OLD_BETA_CSS} from './oldBetaBigPictureStyles';
+import {OLD_BETA_PAGE_CSS} from './oldBetaPageStyles';
+import {OldBetaPages,createBetaBrowserSession} from './OldBetaPages';
+import {OldBetaKeyboard} from './OldBetaKeyboard';
 
 type Mode='sheet'|'recent'|'games';
 type CoverPose={transform:string;width:string;height:string;translate:string;opacity:string};
@@ -24,11 +27,16 @@ export function OldBetaBigPictureHome(){
  const motion=useRef<Animation[]>([]),pendingOpen=useRef<ReturnType<typeof setTimeout>|null>(null),opening=useRef(false),previousCategory=useRef(1),coverStart=useRef<Map<number,CoverPose>|null>(null),boardStart=useRef<SheetPose|null>(null),rearStart=useRef<{node:HTMLElement;transform:string;translate:string;opacity:string}[]>([]),previousMode=useRef<Mode>('sheet');
  const [mode,setMode]=useState<Mode>('sheet'),[category,setCategory]=useState(1),[selected,setSelected]=useState(0);
  const [size,setSize]=useState({w:1280,h:800}),[filter,setFilter]=useState('all'),[query,setQuery]=useState('');
+ const searchWasOpen=useRef(false),browserSession=useRef(createBetaBrowserSession());
+ const [collectionOpen,setCollectionOpen]=useState(false),[collectionIndex,setCollectionIndex]=useState(0),[searchOpen,setSearchOpen]=useState(false);
+ const collectionOptions=[{id:'all',name:'All Games',count:api.lib.games.length},{id:'installed',name:'Installed',count:api.lib.games.filter(g=>g.installed).length},...api.lib.collections.map(c=>({id:'col:'+c.id,name:c.name,count:c.games.length}))];
  const [destination,setDestination]=useState<Destination|null>(null),[game,setGame]=useState<Game|null>(null);
- const games=useMemo(()=>[...api.lib.games].filter(g=>(filter!=='installed'||g.installed)&&g.name.toLowerCase().includes(query.toLowerCase())).sort((a,b)=>b.lastPlayed-a.lastPlayed),[api.lib.games,filter,query]);
+ const games=useMemo(()=>[...(filter.startsWith('col:')?api.lib.collections.find(c=>c.id===filter.slice(4))?.games??[]:api.lib.games)].filter(g=>(filter!=='installed'||g.installed)&&g.name.toLowerCase().includes(query.toLowerCase())).sort((a,b)=>mode==='games'?a.name.localeCompare(b.name):b.lastPlayed-a.lastPlayed),[api.lib.games,api.lib.collections,filter,query,mode]);
  const friends=useFriends(!destination),[storeCovers,setStoreCovers]=useState<StoreItem[]>([]);
  useEffect(()=>{let live=true;loadStoreLists().then(lists=>{if(live)setStoreCovers(lists.featured??[]);}).catch(()=>{});return()=>{live=false;};},[]);
  const chosen=games[Math.min(selected,Math.max(0,games.length-1))];
+ useLayoutEffect(()=>{const previous=searchWasOpen.current;searchWasOpen.current=searchOpen;if(previous&&!searchOpen)root.current?.querySelector<HTMLButtonElement>('button[aria-label="Search games"]')?.focus({preventScroll:true});},[searchOpen]);
+ useLayoutEffect(()=>{if(collectionOpen)root.current?.querySelector<HTMLElement>('.beta-collection-options [aria-selected=true]')?.scrollIntoView({block:'nearest'});},[collectionOpen,collectionIndex]);
  useReportFocus(destination?undefined:mode==='sheet'?undefined:chosen);
  useLayoutEffect(()=>{const node=root.current;if(!node)return;const resize=()=>setSize({w:node.clientWidth,h:node.clientHeight});resize();const observer=new ResizeObserver(resize);observer.observe(node);return()=>observer.disconnect();},[destination]);
  useLayoutEffect(()=>{if(destination)return;const target=mode==='sheet'?root.current?.querySelector<HTMLButtonElement>(`[data-category="${category}"]`):cards.current.get(chosen?.appid);target?.focus({preventScroll:true});},[mode,destination]);
@@ -114,28 +122,32 @@ export function OldBetaBigPictureHome(){
  const selectCategory=()=>category===1?changeMode('recent'):go(category===0?'store':'community');
  function input({btn,repeat}:Press){
   if(api.busy)return false;if(opening.current)return true;
+  if(collectionOpen){if(btn==='b'){setCollectionOpen(false);return true;}if(btn==='up'||btn==='down')setCollectionIndex(i=>Math.max(0,Math.min(collectionOptions.length-1,i+(btn==='down'?1:-1))));if(btn==='a'){setFilter(collectionOptions[collectionIndex].id);setSelected(0);setCollectionOpen(false);}return true;}
   if(btn==='b'){if(mode==='games')changeMode('recent');else if(mode==='recent')changeMode('sheet');else api.showSteamHome();return true;}
-  if(btn==='y'||btn==='menu'){api.openSettings();return true;}
+  if(btn==='y'&&mode==='games'){setSearchOpen(true);return true;}if(btn==='y'||btn==='menu'){api.openSettings();return true;}
   if(btn==='l1'){go('web');return true;}if(btn==='r1'){go('friends');return true;}
   if(btn==='x'){if(mode!=='sheet'&&chosen)api.launch(chosen);return true;}
   if(btn==='a'){const active=root.current?.ownerDocument.activeElement as HTMLElement|null;if(active?.closest('button'))(active.closest('button') as HTMLButtonElement).click();else if(mode==='sheet')selectCategory();return true;}
   if(!['left','right','up','down'].includes(btn))return false;
   if(mode==='sheet'){if(btn==='left'||btn==='right'){const next=Math.max(0,Math.min(2,category+(btn==='right'?1:-1)));focusCategory(next);root.current?.querySelector<HTMLButtonElement>(`[data-category="${next}"]`)?.focus({preventScroll:true});playSound('move');}else if(btn==='down'&&!repeat)selectCategory();return true;}
   if(mode==='recent'){if(btn==='left'||btn==='right')choose(selected+(btn==='right'?1:-1));else if(btn==='down')root.current?.querySelector<HTMLButtonElement>('.beta-view-all')?.focus({preventScroll:true});else if(btn==='up'&&!repeat)changeMode('sheet');return true;}
+  const active=root.current?.ownerDocument.activeElement as HTMLElement|null;
+  if(active?.closest('.beta-games-toolbar')){if(btn==='down')choose(selected);else if(btn==='left'||btn==='right')root.current?.querySelector<HTMLButtonElement>(btn==='left'?'.beta-collection-picker>button':'button[aria-label="Search games"]')?.focus({preventScroll:true});return true;}
+  if(btn==='up'&&selected%3===0){root.current?.querySelector<HTMLButtonElement>('.beta-collection-picker>button')?.focus({preventScroll:true});return true;}
   choose(selected+(btn==='left'?-3:btn==='right'?3:btn==='up'?-1:1));return true;
  }
- if(destination)return <OldBigPictureHome initialPage={destination} initialGame={game} onExit={()=>setDestination(null)}/>;
+ if(destination&&destination!=='web'&&destination!=='friends')return <OldBigPictureHome initialPage={destination} initialGame={game} onExit={()=>setDestination(null)}/>;
  const w=size.w,h=size.h,cardW=mode==='sheet'?w*.15:mode==='recent'?w*.195:w*.18,cardH=cardW*215/460;
  const storeArt=storeCovers.length?storeCovers.map(p=>({id:p.id,name:p.name,src:p.header})):games.slice().reverse().map(g=>({id:g.appid,name:g.name,src:g.art.landscape[0]}));
  const friendCard=(f:typeof friends[number],i:number)=><div key={f.id} className="beta-sheet-friend" style={{'--layer':i%3,'--friend-phase':(-i*4.1)+'s'} as CSSProperties}><span className="beta-friend-avatar" role="img" aria-label={f.avatar?f.name+' Steam avatar':'Placeholder avatar for '+f.name}><span aria-hidden="true">{f.name.slice(0,1)}</span>{f.avatar&&<img src={f.avatar} alt="" onError={event=>{event.currentTarget.hidden=true;event.currentTarget.parentElement?.setAttribute('aria-label','Placeholder avatar for '+f.name);}}/>}</span><span>{f.name}<small>{f.status??(f.online?'Online':'Offline')}</small>{f.game&&<small>{f.game}</small>}</span></div>;
  const column=Math.floor(selected/3),columnOffset=Math.max(0,column-2);
  return <ThemeRoot onInput={input} hints={{a:'Select',b:'Back',x:'Play',y:'Options'}}>
   <div ref={root} className={'dht-oldbeta'+(!api.settings.animations?' no-motion':'')} data-mode={mode} data-category={category} style={{'--beta-w':w+'px','--beta-h':h+'px','--beta-category':category} as CSSProperties}>
-   <style>{OLD_BETA_CSS}</style><div className="beta-ambient" aria-hidden="true">{Array.from({length:26},(_,i)=><i key={i} style={{left:((i*37+9)%100)+'%',top:((i*23+13)%100)+'%','--dot-size':(i%6===0?2.3:.45+(i%5)*.3)+'%','--dot-time':(28+i%7*4)+'s','--dot-delay':(-i*3.7)+'s','--dot-alpha':.055+(i%4)*.023} as CSSProperties}/>)}</div>
+   <style>{OLD_BETA_CSS+OLD_BETA_PAGE_CSS}</style><div className="beta-home-scene" ref={n=>{if(n)n.inert=!!destination||searchOpen;}}><div className="beta-ambient" aria-hidden="true">{Array.from({length:26},(_,i)=><i key={i} style={{left:((i*37+9)%100)+'%',top:((i*23+13)%100)+'%','--dot-size':(i%6===0?2.3:.45+(i%5)*.3)+'%','--dot-time':(28+i%7*4)+'s','--dot-delay':(-i*3.7)+'s','--dot-alpha':.055+(i%4)*.023} as CSSProperties}/>)}</div>
    <header className="beta-header"><button aria-label="Profile" onClick={()=>go('profile')}><span className="beta-avatar"><ProfileAvatar size={32}/></span></button><div><button aria-label="Settings" onClick={()=>go('settings')}><Icon name="gear" size={22}/></button><button aria-label="Power" onClick={()=>Navigation.OpenPowerMenu()}><Icon name="power" size={22}/></button><span className="beta-stamp">BETA</span></div></header>
    <div className="beta-light" aria-hidden="true"/><div className="beta-focus-light" aria-hidden="true"/>
    <nav className="beta-categories" aria-label="Categories">{categories.map((name,index)=><button key={name} data-category={index} aria-pressed={index===category} onFocus={()=>focusCategory(index)} onClick={()=>index===1?changeMode('recent'):go(index===0?'store':'community')}>{name}</button>)}</nav>
-   {mode==='games'&&<div className="beta-games-toolbar"><h1>Games</h1><select aria-label="Game collection" value={filter} onChange={e=>{setFilter(e.target.value);setSelected(0);}}><option value="all">All Games ({api.lib.games.length})</option><option value="installed">Installed</option></select><input aria-label="Search games" placeholder="Search games" value={query} onChange={e=>{setQuery(e.target.value);setSelected(0);}}/></div>}
+   {mode==='games'&&<div className="beta-games-toolbar"><h1>Games</h1><div className="beta-collection-picker"><button aria-label="Game collection" aria-haspopup="listbox" aria-expanded={collectionOpen} onClick={()=>{setCollectionIndex(Math.max(0,collectionOptions.findIndex(c=>c.id===filter)));setCollectionOpen(v=>!v);}}>{collectionOptions.find(c=>c.id===filter)?.name??'All Games'} ({games.length})　⌄</button>{collectionOpen&&<div className="beta-collection-options" role="listbox" aria-label="Collections">{collectionOptions.map((c,i)=><button key={c.id} role="option" aria-selected={collectionIndex===i} onMouseEnter={()=>setCollectionIndex(i)} onClick={()=>{setFilter(c.id);setSelected(0);setCollectionOpen(false);}}>{c.name} ({c.count})</button>)}</div>}</div><button aria-label="Search games" onClick={()=>setSearchOpen(true)}>{query||'Search games'}</button></div>}
    <div className="beta-perspective"><div className="beta-secondary-sheet beta-store-sheet" aria-hidden="true">{[0,1,2,3].map(layer=><div key={layer} className={'beta-store-layer beta-store-layer-'+layer}>{[...storeArt.slice(layer*2),...storeArt.slice(0,layer*2)].slice(0,layer?8:12).map((item,i)=><div key={item.id} className="beta-sheet-cover" style={{'--layer':i%3,'--tile-delay':(i%4)*14+'ms','--flow-phase':(-i*3.1-layer*5)+'s'} as CSSProperties}><img src={item.src} alt=""/><span>{item.name}</span></div>)}</div>)}</div><div className="beta-secondary-sheet beta-community-sheet" aria-hidden="true">{[2,1,0].map(layer=><div key={layer} className={'beta-community-layer beta-community-layer-'+layer}>{[...friends.slice(layer*4),...friends.slice(0,layer*4)].slice(0,layer?12:18).map((f,i)=>friendCard(f,i+layer*3))}</div>)}{!friends.length&&<p className="beta-sheet-empty">Friends &amp; Community</p>}</div><div className="beta-cover-board" aria-label="Game covers"><div className="beta-stacked-sheets" aria-hidden="true">{[1,2,3,4].map(layer=><div key={layer} className={'beta-rear-sheet beta-rear-sheet-'+layer} style={{'--sheet-depth':layer} as CSSProperties}>{games.slice(0,10).map((g,i)=><div key={g.appid} className="beta-rear-cover" style={{'--flow-phase':(-i*3.7-layer*7)+'s',width:w*.15,height:w*.15*215/460,transform:`translate(-50%,-50%) translate3d(${(i%5-2)*w*.164+Math.sin(i*2.3+layer)*w*.018}px,${(Math.floor(i/5)-1.2)*w*.15*215/460*1.13+Math.cos(i*1.7+layer)*h*.02}px,${(i%3)*12}px) rotateZ(${Math.sin(i+layer)*4}deg) scale(${.91+(i%4)*.055})`} as CSSProperties}><GameArt g={games[(i+layer*3)%games.length]} kind="landscape" flat style={{width:'100%',height:'100%'}}/></div>)}</div>)}</div>{games.map((g,index)=>{
     const sheetColumn=index%5,sheetRow=Math.floor(index/5),distance=Math.abs(index-selected);
     const x=mode==='sheet'?(sheetColumn-2)*cardW*1.075+Math.sin(index*2.3)*w*.009:mode==='recent'?(index-selected)*w*.215:(Math.floor(index/3)-columnOffset-2)*w*.19;
@@ -145,9 +157,12 @@ export function OldBetaBigPictureHome(){
     if(index>=15&&!visible)return null;
     return <button key={g.appid} ref={n=>{if(n)cards.current.set(g.appid,n);else cards.current.delete(g.appid);}} className="beta-cover" data-appid={g.appid} data-selected={index===selected} aria-label={g.name} tabIndex={mode==='sheet'||!visible?-1:0} onFocus={()=>{if(mode!=='sheet')setSelected(index);}} onClick={()=>mode!=='sheet'&&activate(g)} style={{'--tile-delay':(index%5)*12+'ms','--flow-phase':(-index*2.9)+'s',width:cardW,height:cardH,transform:`translate(-50%,-50%) translate3d(${x}px,${y}px,${mode==='sheet'?(index%3)*12:0}px) scale(${scale})`,opacity:visible?1:0,pointerEvents:mode==='sheet'||!visible?'none':'auto',zIndex:mode==='recent'&&index===selected?4:1} as CSSProperties}><GameArt g={g} kind="landscape" flat style={{width:'100%',height:'100%'}}/><span>{g.name}</span></button>;
    })}</div></div>
-   {mode==='recent'&&<><span className="beta-recent-label" style={{opacity:selected<2?1:0}}>Recently<br/>Played</span><button className="beta-view-all" onClick={()=>changeMode('games')}><small>VIEW ALL</small>GAMES</button></>}
+   {mode==='recent'&&<><span className="beta-recent-label" style={{transform:`translate(-50%,-50%) translateX(${(-selected-1.1)*w*.215}px)`}}>Recently<br/>Played</span><button className="beta-view-all" onClick={()=>changeMode('games')}><small>VIEW ALL</small>GAMES</button></>}
    {!games.length&&<p className="beta-empty">{query?'No games match your search.':'Your Steam games will appear here.'}</p>}
    <footer><button onClick={()=>go('web')}><b>LB</b> WEB</button><div><button onClick={()=>mode==='sheet'?selectCategory():chosen&&activate(chosen)}><b>A</b> SELECT</button>{mode!=='sheet'&&<button onClick={()=>changeMode(mode==='games'?'recent':'sheet')}><b>B</b> BACK</button>}<button onClick={api.openSettings}><b>Y</b> OPTIONS</button></div><button onClick={()=>go('friends')}>FRIENDS <b>RB</b></button></footer>
+  </div>
+  {(destination==='web'||destination==='friends')&&<OldBetaPages key={destination} kind={destination} session={browserSession.current} onExit={()=>setDestination(null)}/>}
+  {searchOpen&&<OldBetaKeyboard label="Search games" value={query} onChange={value=>{setQuery(value);setSelected(0);}} onDone={()=>setSearchOpen(false)} onSubmit={()=>setSearchOpen(false)}/>}
   </div>
  </ThemeRoot>;
 }

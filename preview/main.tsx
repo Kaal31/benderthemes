@@ -334,6 +334,7 @@ window.addEventListener("keydown", (e) => {
 });
 createRoot(document.getElementById("root")!).render(<App />);
 
+(globalThis as any).__oldBetaPreview=initialTheme==='old-beta-big-picture';
 // Sample friends and achievements, so the friends and trophy pages have something to draw in the preview.
 (globalThis as any).friendStore ??= {
   allFriends: [
