@@ -13,7 +13,7 @@ import {applyNicknames,friendName,nicknameOf} from "./steamData";
 
 export type NoticeKind="friend"|"message"|"download"|"achievement"|"other";
 export interface Notice{id:string;kind:NoticeKind;title:string;body:string;appid?:number;time?:number;unread:boolean}
-export interface Friend{id:string;name:string;persona?:string;nickname?:string;online:boolean;game?:string;appid?:number;avatar?:string}
+export interface Friend{id:string;name:string;persona?:string;nickname?:string;online:boolean;status?:string;game?:string;appid?:number;avatar?:string}
 export interface Ach{id:string;name:string;desc:string;achieved:boolean;time:number;image?:string;percent?:number}
 export interface AchList{unlocked:number;total:number;percent:number;items:Ach[];recent:Ach[];loaded:boolean}
 
@@ -67,9 +67,11 @@ export function readFriends():Friend[]{
     const fs=root().friendStore;
     return arr(fs?.allFriends??fs?.m_FriendsUIFriendStore?.allFriends).map((f:any,i:number)=>{
       const p=f?.persona??f,persona=String(p?.m_strPlayerName??p?.display_name??p?.name??""),nickname=nicknameOf(f,fs),name=friendName(f,fs);
-      const online=p?.is_online===true||p?.m_bIsOnline===true||Number(p?.m_ePersonaState??p?.ePersonaState??0)>0;
+      const state=Number(p?.m_ePersonaState??p?.ePersonaState??0);
+      const online=p?.is_online===true||p?.m_bIsOnline===true||state>0;
+      const status=state===0&&online?'Online':(['Offline','Online','Busy','Away','Snooze','Looking to Trade','Looking to Play','Invisible'][state]??(online?'Online':'Offline'));
       const game=String(p?.m_strGameName??p?.game_name??"")||undefined,hash=p?.m_strAvatarHash;
-      return {id:String(p?.m_steamid??p?.steamid??`${persona}:${i}`),name,persona,nickname:nickname||undefined,online,game,appid:Number(p?.m_gameid??p?.game_id??0)||undefined,avatar:typeof hash==="string"&&/^[0-9a-f]{40}$/i.test(hash)&&!/^0+$/.test(hash)?`https://avatars.steamstatic.com/${hash}_medium.jpg`:undefined};
+      return {id:String(p?.m_steamid??p?.steamid??`${persona}:${i}`),name,persona,nickname:nickname||undefined,online,status,game,appid:Number(p?.m_gameid??p?.game_id??0)||undefined,avatar:typeof hash==="string"&&/^[0-9a-f]{40}$/i.test(hash)&&!/^0+$/.test(hash)?`https://avatars.steamstatic.com/${hash}_medium.jpg`:undefined};
     }).filter((f:Friend)=>f.name);
   }catch{return [];}
 }

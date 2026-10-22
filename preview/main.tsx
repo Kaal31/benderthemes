@@ -334,15 +334,6 @@ window.addEventListener("keydown", (e) => {
 });
 createRoot(document.getElementById("root")!).render(<App />);
 
-// Beta home uses mock conversations only in this local preview.
-if(initialTheme==='old-beta-big-picture') (globalThis as any).__oldBetaPreviewChats={
-  Kaida:['Ready for another run?','Give me a minute!','I’ll send you an invite.'],
-  Tobias:['Did you find the next area?','Just reached the castle.','Meet you there.'],
-  Juno:['The farm is looking good!','Want to join?','Starting the game now.'],
-  Wren:['Hey, what are we playing?','Up for some co-op?'],
-  Orrin:['Just got online.','Let’s play!'],
-  Mei:['That last match was close.','One more?']
-};
 // Sample friends and achievements, so the friends and trophy pages have something to draw in the preview.
 (globalThis as any).friendStore ??= {
   allFriends: [
