@@ -1,0 +1,13 @@
+import {execFileSync} from 'node:child_process';execFileSync(process.env.PYTHON||'python',['tools/prepare_background_media.py'],{stdio:'inherit'});
+import assert from 'node:assert/strict';import {launch} from './browser.mjs';import {startPreviewServer} from '../preview/server.mjs';
+const {server,url}=await startPreviewServer(),browser=await launch();try{
+ const p=await browser.newPage(),errors=[];p.on('pageerror',e=>errors.push(e.message));await p.addInitScript(()=>{let assets;Object.defineProperty(window,'__testAssets',{configurable:true,get:()=>assets,set:value=>{assets=value;const base=location.origin+'/out/compatible-backgrounds/assets/nazarick/';assets.nazarick={...assets.nazarick,...Object.fromEntries(['home','store','downloads'].map(id=>[id+'-video',base+id+'-video.webm']))};}});});await p.goto(url+'?theme=onyx&still=1');await p.locator('[data-dht-root]').waitFor();
+ await p.evaluate(()=>{const base=location.origin+'/out/compatible-backgrounds/';window.__cinematicAssets=Object.fromEntries(['castle','republic'].map(id=>[id,{video:base+'cinematic/'+id+'.webm'}]));window.__testAssets.nazarick={...window.__testAssets.nazarick,'home-video':base+'assets/nazarick/home-video.webm','store-video':base+'assets/nazarick/store-video.webm','downloads-video':base+'assets/nazarick/downloads-video.webm'};});
+ for(const theme of ['castle','republic','nazarick']){
+  await p.evaluate(theme=>window.__updateTheme({theme,activeTheme:'',animations:false,wallpapers:{},mix:{},videoBackgrounds:{[theme]:true}}),theme);
+  const video=p.locator('[data-dht-root] video').first();await video.waitFor();await p.waitForFunction(()=>{const v=document.querySelector('[data-dht-root] video');return v&&!v.paused&&v.currentTime>.1;});assert.match(await video.getAttribute('src'),/\.webm$/);
+  const before=await video.evaluate(v=>v.currentTime);await p.waitForTimeout(250);assert.notEqual(await video.evaluate(v=>v.currentTime),before);console.log('PASS actual packaged VP9 wallpaper through theme renderer:',theme);
+ }
+ for(const page of ['store','downloads']){await p.evaluate(page=>{window.__testWalls['real-'+page+'.webm']=location.origin+'/out/compatible-backgrounds/assets/nazarick/'+page+'-video.webm';window.__updateTheme({wallpapers:{nazarick:'real-'+page+'.webm'}});},page);await p.waitForFunction(page=>{const v=document.querySelector('[data-dht-root] video');return v?.src.includes(page+'-video.webm')&&!v.paused&&v.currentTime>.1;},page);console.log('PASS actual Nazarick clip:',page);}
+ assert.deepEqual(errors,[]);
+}finally{await browser.close();server.closeAllConnections();server.close();}

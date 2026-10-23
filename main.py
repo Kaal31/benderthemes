@@ -2161,7 +2161,12 @@ class Plugin:
             names = set(_resource_names(relative))
             if os.path.isdir(folder):
                 names.update(os.listdir(folder))
-            for n in sorted(names):
+            # Resolve duplicate video encodings as one logical asset: WebM is portable
+            # across Steam CEF builds; a user-supplied file still wins over downloaded media.
+            def asset_order(n):
+                user = os.path.isfile(os.path.join(folder, n))
+                return (user, os.path.splitext(n)[1].lower() == ".webm", n)
+            for n in sorted(names, key=asset_order):
                 ext = os.path.splitext(n)[1].lower()
                 if ext not in IMAGE_EXT + (".glb",) + WALLPAPER_VIDEO_EXT:
                     continue
@@ -2259,7 +2264,7 @@ class Plugin:
         if name not in ("castle", "republic") or not await _ensure_server():
             return {}
         result = {}
-        for key, ext in (("video", ".mp4"), ("poster", ".jpg")):
+        for key, ext in (("video", ".mp4"), ("video", ".webm"), ("poster", ".jpg")):
             path = _resource("cinematic/" + name + ext)
             if os.path.isfile(path):
                 ident = "cinematic-" + name + "-" + key + ext
@@ -2282,6 +2287,9 @@ class Plugin:
     async def ensure_frame_media(self, ident: str):
         import frame_media
         try:
+            import background_media
+            if str(ident) in background_media.catalog():
+                return await asyncio.to_thread(background_media.ensure, str(ident))
             return await asyncio.to_thread(frame_media.ensure, str(ident))
         except Exception as error:
             return {"success": False, "error": str(error)}

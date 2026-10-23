@@ -1,3 +1,4 @@
+import {ThemeLoadingScreen} from "./ThemeLoadingScreen";
 import { IOS6Home } from "./themes/IOS6";
 import {GameAmpHome} from "./themes/GameAmp";
 import { SantaHome } from "./themes/Santa";
@@ -108,9 +109,9 @@ const THEME_COMPONENTS: Record<ThemeId, () => ReactNode> = {
   dial: () => <DialHome />,
   minecraft: () => <MinecraftHome />,
   pain: () => <PainHome />,
-  nazarick: () => <NazarickHome />,
-  castle: () => <CinematicHome kind="castle"/>,
-  republic: () => <CinematicHome kind="republic"/>,
+  nazarick: () => <NativeMediaGate id="nazarick"><NazarickHome /></NativeMediaGate>,
+  castle: () => <NativeMediaGate id="castle"><CinematicHome kind="castle"/></NativeMediaGate>,
+  republic: () => <NativeMediaGate id="republic"><CinematicHome kind="republic"/></NativeMediaGate>,
 };
 
 /** Falls back to `fallback` if anything inside throws (e.g. a Steam update). */
@@ -121,7 +122,7 @@ export class SafeBoundary extends Component<{ fallback: ReactNode; children: Rea
   }
   componentDidCatch(e: unknown) {
     reportError(this.props.where ?? "render", e);
-    if (this.props.where === "home" || this.props.where?.startsWith("theme ")) failHome(e);
+    if (this.props.where === "home") failHome(e);
   }
   render() {
     return this.state.failed ? this.props.fallback : this.props.children;
@@ -229,6 +230,7 @@ function VerifiedThemedHome({ standalone }: { standalone?: boolean }) {
     return () => { alive = false; };
   }, [settings.theme, settings.activeTheme, retry]);
   if (state === "ready") return <ThemedHomeContent standalone={standalone} />;
+  if (state === "checking" && !market.opened) return <div data-dht-root="" style={{position:"fixed",inset:0,zIndex:standalone?900:1}}><ThemeLoadingScreen id={settings.theme}/></div>;
   return <div data-dht-root="" data-theme-availability={state} style={{position:"fixed",inset:0,zIndex:standalone?900:1,background:"#10151d",color:"#fff",display:"grid",placeItems:"center"}}>
     <ThemeRoot onInput={p => {
       if (market.opened) return false;
@@ -253,6 +255,7 @@ function VerifiedThemedHome({ standalone }: { standalone?: boolean }) {
 
 function ThemedHomeContent({ standalone }: { standalone?: boolean }) {
   const s = useSettings();
+  const [renderAttempt,setRenderAttempt]=useState(0);
   const introResourcesReady=useThemeResourcesReady(s.theme);
   const market = useMarketplace();
   const root = useRef<HTMLDivElement>(null);
@@ -429,14 +432,9 @@ function ThemedHomeContent({ standalone }: { standalone?: boolean }) {
       <style>{`.dht-root[data-tv=true] .dht-menu-item{font-size:25px!important;min-height:44px}.dht-root [data-dht-stage-active=false] *{animation-play-state:paused!important}.dht-root[data-motion=false] *{animation:none!important;transition:none!important}@media(prefers-reduced-motion:reduce){.dht-root *{animation:none!important;transition:none!important}}`}</style>
       <UiDocument.Provider value={doc}><ThemeActivity.Provider value={themeActive}><HomeCtx.Provider value={api}>
         <SafeBoundary
-          key={`${s.theme}:${engineTheme?.id}:${engineTheme?.revision}`}
+          key={`${s.theme}:${engineTheme?.id}:${engineTheme?.revision}:${renderAttempt}`}
           where={`theme ${s.theme}`}
-          fallback={
-            <div style={{ color: "#ddd", padding: 60, fontSize: 20, lineHeight: 1.5 }}>
-              This theme hit an error. Pick another look with L1 held + the D-pad, L2 / R2, or in Quick Access → ThemeHub.
-              <div style={{ marginTop: 16, fontSize: 15, color: "#f99", fontFamily: "monospace" }}>{diag.lastError}</div>
-            </div>
-          }
+          fallback={<ThemeRecovery onRetry={()=>setRenderAttempt(n=>n+1)}/>}
         >
           <div data-dht-stage-active={themeActive} style={{display:"contents"}}><StageHost>{render()}</StageHost></div>
         </SafeBoundary>
@@ -472,4 +470,20 @@ function ThemedHomeContent({ standalone }: { standalone?: boolean }) {
       </div>
     </div>
   );
+}
+
+/** A failed renderer must leave the Hub and the theme switcher usable. */
+function ThemeRecovery({onRetry}:{onRetry:()=>void}){
+ const market=useMarketplace();
+ return <ThemeRoot onInput={p=>{
+  if(market.opened)return false;
+  if(p.btn==='a'&&!p.repeat){openMarketplace();return true;}
+  if(p.btn==='b'&&!p.repeat){showNativeSteamHome();return true;}
+  return false;
+ }} hints={{a:"Theme Hub",b:"Steam Home"}}>
+ <section data-theme-recovery="" role="alert" style={{position:"absolute",inset:0,display:"grid",placeContent:"center",gap:16,padding:48,background:"#111827",color:"white",fontFamily:"Segoe UI,Arial",fontSize:18}}>
+ <h2>This theme could not load</h2><p>Choose another theme in the Hub, or retry this one.</p>
+ <div style={{display:"flex",gap:12}}><button onClick={()=>openMarketplace()}>Open Theme Hub</button><button onClick={onRetry}>Retry theme</button><button onClick={showNativeSteamHome}>Steam Home</button></div>
+ <small style={{color:"#f99",overflowWrap:"anywhere"}}>{diag.lastError}</small>
+ </section></ThemeRoot>;
 }

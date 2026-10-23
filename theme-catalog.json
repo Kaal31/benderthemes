@@ -1411,11 +1411,11 @@
     {
       "id": "castle",
       "name": "Floating Castle",
-      "version": "1.0.1",
+      "version": "1.0.3",
       "theme": "castle",
       "description": "Artwork, sounds and optional skins for Floating Castle.",
       "minPluginVersion": "1.10.2",
-      "size": 6283940,
+      "size": 6998736,
       "resources": [
         "cinematic/castle.jpg",
         "cinematic/castle.mp4",
@@ -1428,22 +1428,26 @@
         "sounds/DHT Verified SAO/ExitMenu.wav",
         "sounds/DHT Verified SAO/MenuTick.wav",
         "sounds/DHT Verified SAO/pack.json",
-        "sounds/DHT Verified SAO/simplify sounds.txt"
+        "sounds/DHT Verified SAO/simplify sounds.txt",
+        "cinematic/castle.webm"
       ],
-      "unpackedSize": 6771669,
-      "sha256": "2564214dde8c0e036739f543fb19bf21a745a5812134ab036080e383e27c5879",
-      "url": "https://github.com/Kaal31/deckthemes-assets/releases/download/castle-v1.0.1/ThemeAssets-Floating-Castle-v1.0.1.zip",
+      "unpackedSize": 7487867,
+      "sha256": "cd5b72558207fe3bc421fd2a2ef39f9aea269fb4978304e8b6f940e8ff0026e9",
+      "url": "https://github.com/Kaal31/deckthemes-assets/releases/download/castle-v1.0.3/ThemeAssets-Floating-Castle-v1.0.3.zip",
       "preview": null,
-      "poster": null
+      "poster": null,
+      "backgroundVideos": [
+        "cinematic/castle.webm"
+      ]
     },
     {
       "id": "republic",
       "name": "Republic Office",
-      "version": "1.0.1",
+      "version": "1.0.3",
       "theme": "republic",
       "description": "Artwork, sounds and optional skins for Republic Office.",
       "minPluginVersion": "1.10.2",
-      "size": 11684804,
+      "size": 12424587,
       "resources": [
         "cinematic/republic.jpg",
         "cinematic/republic.mp4",
@@ -1456,13 +1460,17 @@
         "sounds/DHT Verified Republic/pack.json",
         "sounds/DHT Verified Republic/slider.wav",
         "sounds/DHT Verified Republic/tab.wav",
-        "sounds/DHT Verified Republic/tab_alt.wav"
+        "sounds/DHT Verified Republic/tab_alt.wav",
+        "cinematic/republic.webm"
       ],
-      "unpackedSize": 11840348,
-      "sha256": "a7b780a6683963e9aad7dee30f1720f3084cafb383d7db899152f5b30fffae59",
-      "url": "https://github.com/Kaal31/deckthemes-assets/releases/download/republic-v1.0.1/ThemeAssets-Republic-Office-v1.0.1.zip",
+      "unpackedSize": 12582119,
+      "sha256": "15d1747a41a9a6a8444eb5ed0eea0dbb3edee037fdb9800c394761a1f2d6b63b",
+      "url": "https://github.com/Kaal31/deckthemes-assets/releases/download/republic-v1.0.3/ThemeAssets-Republic-Office-v1.0.3.zip",
       "preview": null,
-      "poster": null
+      "poster": null,
+      "backgroundVideos": [
+        "cinematic/republic.webm"
+      ]
     },
     {
       "id": "iisu",
@@ -1587,11 +1595,11 @@
     {
       "id": "nazarick",
       "name": "Nazarick",
-      "version": "1.0.2",
+      "version": "1.0.4",
       "theme": "nazarick",
       "description": "Artwork, sounds and optional skins for Nazarick.",
       "minPluginVersion": "1.10.2",
-      "size": 43025690,
+      "size": 49330812,
       "resources": [
         "assets/nazarick/downloads-video.mp4",
         "assets/nazarick/downloads.png",
@@ -1604,13 +1612,21 @@
         "assets/nazarick/store.png",
         "assets/nazarick/wheel.png",
         "sounds/DHT Nazarick Music/menu_music.mp3",
-        "sounds/DHT Nazarick Music/pack.json"
+        "sounds/DHT Nazarick Music/pack.json",
+        "assets/nazarick/downloads-video.webm",
+        "assets/nazarick/home-video.webm",
+        "assets/nazarick/store-video.webm"
       ],
-      "unpackedSize": 43478604,
-      "sha256": "d74359fcda411ced75185cddc13c805b47bdfad2da6f1f3b7608925fa5cce6c3",
-      "url": "https://github.com/Kaal31/deckthemes-assets/releases/download/nazarick-v1.0.2/ThemeAssets-Nazarick-v1.0.2.zip",
+      "unpackedSize": 49783093,
+      "sha256": "80f655851347a5a30cce50642876b9bd88b1d39f06b2765957bb4b925ec0a3c9",
+      "url": "https://github.com/Kaal31/deckthemes-assets/releases/download/nazarick-v1.0.4/ThemeAssets-Nazarick-v1.0.4.zip",
       "preview": null,
-      "poster": null
+      "poster": null,
+      "backgroundVideos": [
+        "assets/nazarick/downloads-video.webm",
+        "assets/nazarick/home-video.webm",
+        "assets/nazarick/store-video.webm"
+      ]
     },
     {
       "id": "extras",

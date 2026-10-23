@@ -2,6 +2,15 @@ import { useEffect, useLayoutEffect, useRef } from "react";
 import type { CSSProperties } from "react";
 import type { SwitchAnimation, SwitchEffect, SwitchPane, SwitchTrack } from "../switchThemes";
 const registeredAlphaProperties=new Set<string>();
+function registerMotionProperty(name:string,syntax:string,initialValue:string){
+ if(typeof CSS==='undefined'||!CSS.registerProperty||registeredAlphaProperties.has(name))return;
+ try{CSS.registerProperty({name,syntax,inherits:true,initialValue});}
+ catch(error){
+  // CSS registrations survive plugin reloads; the module-local Set does not.
+  if((error as {name?:string})?.name!=='InvalidModificationError')throw error;
+ }
+ registeredAlphaProperties.add(name);
+}
 
 export type SwitchBackgroundRaster={width:number;height:number;texture:NonNullable<SwitchEffect['texture']>};
 /** Atlas transforms must paint into the viewport rather than an enlarged GPU
@@ -78,15 +87,11 @@ export function useSwitchPaneMotion(animations:SwitchAnimation[],pane:string,eve
  // paint so the compressed atlas is never exposed during startup.
  useLayoutEffect(()=>{
   const el=ref.current;if(!el)return;
-  if(alphaProperty.startsWith('--')&&typeof CSS!=='undefined'&&CSS.registerProperty&&!registeredAlphaProperties.has(alphaProperty)){
-   CSS.registerProperty({name:alphaProperty,syntax:'<number>',inherits:true,initialValue:'1'});registeredAlphaProperties.add(alphaProperty);
+  if(alphaProperty.startsWith('--')){
+   registerMotionProperty(alphaProperty,'<number>','1');
+   registerMotionProperty('--dht-nx-border-width','<length>','0px');
   }
-  if(alphaProperty.startsWith('--')&&typeof CSS!=='undefined'&&CSS.registerProperty&&!registeredAlphaProperties.has('--dht-nx-border-width')){
-   CSS.registerProperty({name:'--dht-nx-border-width',syntax:'<length>',inherits:true,initialValue:'0px'});registeredAlphaProperties.add('--dht-nx-border-width');
-  }
-  if(typeof CSS!=='undefined'&&CSS.registerProperty&&!registeredAlphaProperties.has('--dht-nx-shadow-volume')){
-   CSS.registerProperty({name:'--dht-nx-shadow-volume',syntax:'<number>',inherits:true,initialValue:'1'});registeredAlphaProperties.add('--dht-nx-shadow-volume');
-  }
+  registerMotionProperty('--dht-nx-shadow-volume','<number>','1');
   const selected=events.flatMap(event=>animations.filter(a=>a.pane===pane&&a.event===event));
   if(!selected.length)return;
   const duration=Math.max(1,...selected.map(a=>a.frames));

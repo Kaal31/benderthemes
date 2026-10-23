@@ -61,6 +61,8 @@ jobs:
       - run: node tests/verify-performance-ui.mjs
       - run: node tests/verify-onboarding-download.mjs
       - run: node tests/verify-hub-resource-progress.mjs
+      - run: node tests/verify-theme-recovery.mjs
+      - run: node tests/verify-switch-property-reload.mjs
       - run: node tests/verify-bundled-native.mjs
       - run: node tests/verify-native-asset-downloads.mjs
       - run: node tests/verify-plugin-route-handoff.mjs
@@ -76,6 +78,7 @@ jobs:
       - run: node tests/verify-native-app-order.mjs
       - run: node tests/verify-plaza-post-frequency.mjs
       - run: node tests/verify-background-playback.mjs
+      - run: node tests/verify-built-in-background-clips.mjs
       - run: node tests/verify-wallpaper-steam-window.mjs
       - run: python tests/verify-wallpaper-backend.py
       - run: node tests/verify-wiiflow-background.mjs

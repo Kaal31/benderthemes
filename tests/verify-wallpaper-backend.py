@@ -27,6 +27,10 @@ with tempfile.TemporaryDirectory() as folder:
             assert assets['video'].endswith('.mp4'), assets
             assert assets['poster'].endswith('.jpg'), assets
             assert vi.files[assets['video'].rsplit('/', 1)[1]].endswith(theme + '.mp4')
+        # Actual packs now include VP9/WebM to avoid relying on proprietary H.264 decoding.
+        for theme in ('castle', 'republic'):
+            open(os.path.join(folder, theme + '.webm'), 'wb').write(b'webm fixture')
+            assert (await scope['cinematic_assets'](None, theme))['video'].endswith('.webm')
         assert await scope['cinematic_assets'](None, 'unknown') == {}
         # A partial user set must not hide the downloaded pack's movies.
         asset_dir = os.path.join(folder, 'assets', 'nazarick')
@@ -54,6 +58,11 @@ with tempfile.TemporaryDirectory() as folder:
             assert vi.files[url.rsplit('/',1)[1]] == os.path.join(downloaded, 'custom-'+extension+'.'+extension)
         assert base64.b64decode(assets['home'].split(',',1)[1]) == b'user poster'
         assert await scope['get_assets'](None, 'nazarick') == assets
+        open(os.path.join(downloaded, 'home-video.webm'), 'wb').write(b'webm fixture')
+        assert (await scope['get_assets'](None, 'nazarick'))['home-video'].endswith('.webm')
+        open(os.path.join(asset_dir, 'home-video.mp4'), 'wb').write(b'user movie')
+        chosen = (await scope['get_assets'](None, 'nazarick'))['home-video']
+        assert os.path.normpath(vi.files[chosen.rsplit('/',1)[1]]) == os.path.normpath(os.path.join(asset_dir, 'home-video.mp4'))
 
     asyncio.run(test())
 print('PASS custom MP4/WebM/GIF sources, cinematic URLs, streamed Nazarick movies, partial user sets and per-file overrides')

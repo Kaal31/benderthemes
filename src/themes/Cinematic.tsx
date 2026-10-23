@@ -16,9 +16,9 @@ const getMedia=callable<[string],{video?:string;poster?:string}>("cinematic_asse
 function Background({kind,paused,settings:s}:{kind:"castle"|"republic";paused:boolean;settings:Settings}){
  const override=useWallpaper(kind,{raw:true,settings:s,gameArt:false,defaultWallpaper:false});
  const [failed,setFailed]=useState<string|null>(null),[assets,setAssets]=useState<{video?:string;poster?:string}>({});
- useEffect(()=>{let alive=true;if((window as any).__testAssets){setAssets({video:`../bundle/cinematic/${kind}.mp4`,poster:`../bundle/cinematic/${kind}.jpg`});}else getMedia(kind).then(a=>alive&&setAssets(a)).catch(()=>{});return()=>{alive=false;};},[kind]);
+ useEffect(()=>{let alive=true;getMedia(kind).then(a=>alive&&setAssets(a)).catch(()=>{});return()=>{alive=false;};},[kind]);
  const source=override&&override!==failed?override:assets.video??assets.poster;
- return source?<BackgroundMedia src={source} poster={assets.poster} className="cinema-video" paused={paused} style={{filter:`brightness(${s.bgBrightness/100})`}} onError={()=>{if(override)setFailed(override);}}/>:null;
+ return source?<BackgroundMedia src={source} mediaKind={override&&override!==failed?undefined:assets.video?"video":undefined} poster={assets.poster} className="cinema-video" paused={paused} style={{filter:`brightness(${s.bgBrightness/100})`}} onError={()=>{if(override)setFailed(override);}}/>:null;
 }
 function GlassEdge({profile=false}:{profile?:boolean}){return <svg className="glass-edge" viewBox="0 0 100 100" preserveAspectRatio="none" aria-hidden="true"><polygon points={profile?"6,0.5 99.5,0.5 99.5,87 94,99.5 6,99.5 .5,87 .5,13":".5,.5 96,.5 99.5,9 99.5,91 96,99.5 .5,99.5"} fill="none" stroke="white" strokeOpacity=".8" strokeWidth="1" vectorEffect="non-scaling-stroke"/></svg>}
 function RepublicMark(){return <svg viewBox="0 0 100 100" aria-hidden="true"><circle cx="50" cy="50" r="46" fill="none" stroke="currentColor" strokeWidth="3"/><circle cx="50" cy="50" r="39" fill="none" stroke="currentColor" strokeWidth="2"/>{Array.from({length:8},(_,i)=><path key={i} d="M50 13 L57 39 L68 50 L54 56 L50 84 L44 57 L30 50 L43 43 Z" transform={`rotate(${i*45} 50 50)`} fill="currentColor" opacity=".65"/>)}<circle cx="50" cy="50" r="42" fill="none" stroke="#a6853e" strokeWidth="3" strokeDasharray="24 9"/></svg>}

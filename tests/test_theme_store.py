@@ -29,6 +29,13 @@ def archive(files):
 
 
 class ThemeStoreTests(unittest.TestCase):
+    def test_shipped_background_media_upgrade_replaces_legacy_catalog(self):
+        upgraded = {**self.pack, "version": "1.10.1", "backgroundVideos": ["cinematic/castle.webm"],
+                    "url": self.pack["url"].replace("v1.10.0/", "v1.10.1/").replace("v1.10.0.zip", "v1.10.1.zip")}
+        (self.plugin / "theme-catalog.json").write_text(json.dumps({"schema": 1, "themes": [upgraded]}))
+        store._catalog = {"schema": 1, "themes": [self.pack]}
+        self.assertEqual(store.catalog()["themes"][0]["version"], "1.10.1")
+
     def test_shipped_audio_dependencies_update_identical_cached_artwork(self):
         ident = "28c07fe6-6ead-44b1-8c31-2372cfffcb60"
         shipped = {**self.pack, "audioPacks": [ident]}

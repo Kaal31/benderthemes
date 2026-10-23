@@ -91,7 +91,7 @@ def catalog(refresh=False):
     merged = {p["id"]: p for p in (_catalog or {}).get("themes", [])}
     for pack in shipped.get("themes", []):
         previous = merged.get(pack["id"])
-        if (pack.get("frameTheme") or pack.get("defaultConsole")) and (
+        if (pack.get("frameTheme") or pack.get("defaultConsole") or pack.get("backgroundVideos")) and (
                 previous is None or version_key(pack["version"]) > version_key(previous["version"])):
             merged[pack["id"]] = pack
         elif previous and pack.get("audioPacks") and pack["version"] == previous["version"] and pack["sha256"] == previous["sha256"]:
