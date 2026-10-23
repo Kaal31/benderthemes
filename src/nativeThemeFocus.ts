@@ -2,7 +2,7 @@
 type SteamNav={TakeFocus:()=>unknown};
 type Scope={root:HTMLElement;selected:HTMLElement|null;nav:()=>SteamNav|null};
 const scopes=new WeakMap<Document,Set<Scope>>();
-const belongs=(scope:Scope,node:HTMLElement)=>scope.root.contains(node)||!!(node.closest('.dht-menu--old-beta-big-picture')&&scope.root.closest('[data-dht-root]')?.contains(node));
+const belongs=(scope:Scope,node:HTMLElement)=>scope.root.contains(node)||!!(node.closest('.dht-menu--old-beta-big-picture,.dht-menu--old-big-picture')&&scope.root.closest('[data-dht-root]')?.contains(node));
 const usable=(scope:Scope,node:HTMLElement|null):node is HTMLElement=>!!node?.isConnected&&belongs(scope,node)&&!node.closest('[inert],.beta-page-departure,[data-transition-snapshot]');
 
 export function installNativeThemeFocus(root:HTMLElement,nav:()=>SteamNav|null){

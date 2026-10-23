@@ -50,3 +50,8 @@ Validation: typecheck and native preview checks, including focused-cover/sidebar
 Home’s Web and Chat edge tiles carry LB/RB prompts and open their corresponding pages when focused. LB/RB also open these from Home. Web/Friends transitions use horizontal movement; Library retains the vertical reveal. Home mouse-wheel input no longer opens Library. Browser Favorites matches the 0:49–0:51 MingeBag reference with History / Current / Favorites tabs and five website tiles; visits are tracked for this mounted session and open in Steam’s browser. Remote pages are not embedded in an iframe.
 
 Store and product loading use the three staggered cyan bars seen around 0:32/0:43, with a static reduced-motion fallback. Theme options now have a dedicated classic blue/cyan MenuView style, and the Hub uses matching square cards, gradients and cyan focus lighting. The footer Home button uses a contained focus highlight. Browser-edge, history, wheel, menu and Hub checks are in old-big-picture-edge-pages-check.mjs.
+
+
+## Native Deck controller focus
+
+The default theme now uses the same explicit Steam navigation node and logical-control focus handling as Old Beta Big Picture. Steam retains actual focus on the outer input node, while navigation, A activation and CSS highlights follow the selected inner button. This avoids treating the input container as an extra invisible control. The native focus scope includes the default theme’s options window, preserves text editing and yields to external Steam overlays. Native-event emulation checks cover the home carousel, Library/details, Store, Community, Web, Chat, Settings, options and power dialog; actual Deck confirmation remains a device test.
