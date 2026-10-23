@@ -232,7 +232,7 @@ function ControllerTest() {
   useEffect(()=>{
     const labels:Record<number,string>={1:'A',2:'B',3:'X',4:'Y',5:'LB',6:'RB',9:'D-pad Up',10:'D-pad Down',11:'D-pad Left',12:'D-pad Right',14:'Menu'};
     const observe=(e:Event)=>{const {button,source}=(e as CustomEvent<{button:number;source:string}>).detail;setInput(v=>({count:v.count+1,label:source+': '+(labels[button]??'Button '+button)}));};
-    const key=(e:KeyboardEvent)=>{if(e.repeat||(e.target as HTMLElement)?.closest('input,textarea,select'))return;if(!['ArrowLeft','ArrowRight','ArrowUp','ArrowDown','Enter','Escape'].includes(e.key))return;setInput(v=>({count:v.count+1,label:'Keyboard: '+e.key}));};
+    const key=(e:KeyboardEvent)=>{if(e.repeat||(e.target as HTMLElement)?.closest?.('input,textarea,select'))return;if(!['ArrowLeft','ArrowRight','ArrowUp','ArrowDown','Enter','Escape'].includes(e.key))return;setInput(v=>({count:v.count+1,label:'Keyboard: '+e.key}));};
     window.addEventListener('preview-input-observed',observe);window.addEventListener('keydown',key);return()=>{window.removeEventListener('preview-input-observed',observe);window.removeEventListener('keydown',key);};
   },[]);
   useEffect(()=>{

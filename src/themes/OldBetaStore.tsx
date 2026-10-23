@@ -1,3 +1,4 @@
+import {themeActiveElement} from '../nativeThemeFocus';
 import {useEffect,useLayoutEffect,useMemo,useRef,useState} from 'react';
 import {Navigation} from '@decky/ui';
 import {useFriends} from '../activity';
@@ -44,7 +45,7 @@ export function OldBetaStore({onExit,onWeb,onFriends,onLibrary,onCommunity,initi
  handler.current=({btn})=>{
   if(closing.current||root.current?.closest('[data-opening=true]'))return true;if(btn==='b'){back();return true;}if(btn==='l1'){onWeb();return true;}if(btn==='r1'){onFriends();return true;}if(btn==='x'){setPlaying(false);setKeyboard(true);return true;}if(btn==='y'||btn==='menu'){api.openSettings();return true;}
   if(dialog){if(btn==='up'||btn==='down')root.current?.querySelector('.beta-store-dialog-text')?.scrollBy({top:(btn==='down'?1:-1)*(root.current?.clientHeight??800)*.12,behavior:motion()?'smooth':'auto'});else if(btn==='a')closeDialog();return true;}
-  const activeControl=document.activeElement as HTMLElement|null;
+  const activeControl=themeActiveElement(root.current) as HTMLElement|null;
   if(btn==='a'){activeControl?.closest('button')?.click();return true;}
   if(!['up','down','left','right'].includes(btn))return true;
   const container=activeControl?.closest('.beta-store-featured,.beta-store-list,.beta-store-media,.beta-store-sections,.beta-store-info,.beta-store-filters');
@@ -59,7 +60,7 @@ export function OldBetaStore({onExit,onWeb,onFriends,onLibrary,onCommunity,initi
  useEffect(()=>pushModalInput(p=>handler.current(p)),[]);
  useLayoutEffect(()=>{if(stage.current)stage.current.inert=!!dialog||keyboard;},[dialog,keyboard]);
  useLayoutEffect(()=>{if(dialog)root.current?.querySelector<HTMLButtonElement>('.beta-store-dialog-shade button')?.focus({preventScroll:true});},[dialog]);
- useLayoutEffect(()=>{if(view==='product'&&details&&root.current&&!root.current.contains(document.activeElement))root.current.querySelector<HTMLButtonElement>('.beta-store-media button')?.focus({preventScroll:true});},[details?.id,view]);
+ useLayoutEffect(()=>{if(view==='product'&&details&&root.current&&!root.current.contains(themeActiveElement(root.current)))root.current.querySelector<HTMLButtonElement>('.beta-store-media button')?.focus({preventScroll:true});},[details?.id,view]);
  const card=(item:StoreItem,i:number,home:boolean)=><button key={item.id} data-appid={item.id} className="beta-store-card" aria-label={item.name} data-selected={i===(home?hero:selected)} onFocus={()=>home?setHero(i):setSelected(i)} onClick={()=>openProduct(item)}><img src={home?item.capsule||item.header:item.header} alt=""/><small>{item.discount?<em>−{item.discount}%</em>:null}{fmtPrice(item.price,item.currency)|| (item.soon?'Coming Soon':'')}</small></button>;
  const currentMedia=media[Math.min(mediaIndex,media.length-1)];
  return <div ref={root} className="beta-side-page beta-store-page" data-view={view} data-dialog={!!dialog}>

@@ -1,7 +1,7 @@
 // Browser stand-ins for @decky/ui so the themes run in a normal page.
 // Keyboard: arrows = D-pad, Enter = Ⓐ, Esc/Backspace = Ⓑ, X = Ⓧ, Y = Ⓨ/△, M = ≡, Q/E = L1/R1 (hold Q + arrows = theme switcher), Z/C = L2/R2.
 import {createPreviewPadPoller} from "../controllerInput";
-import { CSSProperties, ReactNode, useEffect, useRef } from "react";
+import { CSSProperties, ReactNode, forwardRef, useEffect, useLayoutEffect, useRef } from "react";
 export function ProgressBarWithInfo({ nProgress, sOperationText }: any) { return <div>{sOperationText}<progress value={nProgress} max={100} /></div>; }
 
 export enum GamepadButton {
@@ -48,6 +48,10 @@ if (typeof window !== "undefined") {
   const dispatchPreviewButton=(button:number,repeat=false,source='Preview buttons')=>{
     const top=stack[stack.length-1]?.current;if(!top)return;
     if(!repeat)window.dispatchEvent(new CustomEvent('preview-input-observed',{detail:{button,source}}));
+    if((window as any).__previewEmulateSteamFocus){
+      const name=[9,10,11,12].includes(button)?'vgp_ondirection':({1:'vgp_onok',3:'vgp_onsecondaryaction',4:'vgp_onoptions',14:'vgp_onmenu'} as Record<number,string>)[button]??'vgp_onbuttondown';
+      document.activeElement?.dispatchEvent(new CustomEvent(name,{bubbles:true,cancelable:true,detail:{button,is_repeat:repeat,source:0}}));return;
+    }
     const e=ev(button,repeat);
     if([9,10,11,12].includes(button))top.onGamepadDirection?.(e);
     else if(button===1)top.onOKButton?.(e);
@@ -68,7 +72,14 @@ if (typeof window !== "undefined") {
   if(typeof requestAnimationFrame === "function") requestAnimationFrame(pollGamepad);
 }
 
-export function Focusable(props: any) {
+export const Focusable=forwardRef<HTMLDivElement,any>(function Focusable(props,forwardedRef) {
+  const surface=useRef<HTMLDivElement|null>(null);
+  useLayoutEffect(()=>{if((window as any).__previewEmulateSteamFocus&&props.navRef){
+    props.navRef.current={TakeFocus:()=>{surface.current?.focus({preventScroll:true});return true;}};
+    const names:Record<string,string>={vgp_ondirection:'onGamepadDirection',vgp_onok:'onOKButton',vgp_onsecondaryaction:'onSecondaryButton',vgp_onoptions:'onOptionsButton',vgp_onmenu:'onMenuButton',vgp_onbuttondown:'onButtonDown'};
+    const listeners=Object.entries(names).map(([name,prop])=>{const listener=(e:Event)=>entry.current.current[prop]?.(e);surface.current?.addEventListener(name,listener);return {name,listener};});
+    return()=>{listeners.forEach(({name,listener})=>surface.current?.removeEventListener(name,listener));props.navRef.current=null;};
+  }},[]);
   const entry = useRef<{ current: Handlers }>({ current: props });
   entry.current.current = props; // latest handlers every render
   useEffect(() => {
@@ -78,8 +89,8 @@ export function Focusable(props: any) {
     };
   }, []);
   const { style, children } = props;
-  return <div style={style as CSSProperties}>{children as ReactNode}</div>;
-}
+  return <div ref={node=>{surface.current=node;if(typeof forwardedRef==='function')forwardedRef(node);else if(forwardedRef)forwardedRef.current=node;}} tabIndex={(window as any).__previewEmulateSteamFocus?0:undefined} style={style as CSSProperties}>{children as ReactNode}</div>;
+});
 
 const toast = (msg: string) => (window as any).__previewToast?.(msg);
 export const Navigation = {

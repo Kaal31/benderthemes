@@ -1,3 +1,4 @@
+import {themeActiveElement,nativeControlFocusCSS} from '../nativeThemeFocus';
 import {CSSProperties,useEffect,useLayoutEffect,useMemo,useRef,useState} from 'react';
 import {GameArt,Icon,useHome} from '../common';
 import {ThemeRoot,Press} from '../input';
@@ -169,14 +170,14 @@ export function OldBetaBigPictureHome(){
   if(btn==='y'&&mode==='games'){setSearchOpen(true);return true;}if(btn==='y'||btn==='menu'){api.openSettings();return true;}
   if(btn==='l1'){go('web');return true;}if(btn==='r1'){go('friends');return true;}
   if(btn==='x'){if(mode!=='sheet'&&chosen)api.launch(chosen);return true;}
-  if(btn==='a'){const active=root.current?.ownerDocument.activeElement as HTMLElement|null;if(active?.closest('button'))(active.closest('button') as HTMLButtonElement).click();else if(mode==='sheet')selectCategory();return true;}
+  if(btn==='a'){const active=themeActiveElement(root.current) as HTMLElement|null;if(active?.closest('button'))(active.closest('button') as HTMLButtonElement).click();else if(mode==='sheet')selectCategory();return true;}
   if(!['left','right','up','down'].includes(btn))return false;
-  const headerActive=root.current?.ownerDocument.activeElement as HTMLElement|null;
+  const headerActive=themeActiveElement(root.current) as HTMLElement|null;
   if(headerActive?.closest('.beta-header')){const controls=[...root.current?.querySelectorAll<HTMLButtonElement>('.beta-header button')??[]];if(btn==='down')root.current?.querySelector<HTMLButtonElement>(`[data-category="${category}"]`)?.focus({preventScroll:true});else if(btn==='left'||btn==='right'){const i=controls.indexOf(headerActive as HTMLButtonElement);controls[Math.max(0,Math.min(controls.length-1,i+(btn==='right'?1:-1)))]?.focus({preventScroll:true});}return true;}
   if(mode==='sheet'&&btn==='up'){root.current?.querySelector<HTMLButtonElement>('.beta-header button[aria-label="Settings"]')?.focus({preventScroll:true});return true;}
   if(mode==='sheet'){if(btn==='left'||btn==='right'){const next=Math.max(0,Math.min(2,categoryRef.current+(btn==='right'?1:-1)));focusCategory(next);playSound('move');}else if(btn==='down'&&!repeat)selectCategory();return true;}
   if(mode==='recent'){if(btn==='left'||btn==='right')choose(selected+(btn==='right'?1:-1));else if(btn==='down')root.current?.querySelector<HTMLButtonElement>('.beta-view-all')?.focus({preventScroll:true});else if(btn==='up'&&!repeat)changeMode('sheet');return true;}
-  const active=root.current?.ownerDocument.activeElement as HTMLElement|null;
+  const active=themeActiveElement(root.current) as HTMLElement|null;
   if(active?.closest('.beta-games-toolbar')){if(btn==='down')choose(selected);else if(btn==='left'||btn==='right')root.current?.querySelector<HTMLButtonElement>(btn==='left'?'.beta-collection-picker>button':'button[aria-label="Search games"]')?.focus({preventScroll:true});return true;}
   if(btn==='up'&&selected%3===0){root.current?.querySelector<HTMLButtonElement>('.beta-collection-picker>button')?.focus({preventScroll:true});return true;}
   choose(selected+(btn==='left'?-3:btn==='right'?3:btn==='up'?-1:1));return true;
@@ -186,9 +187,9 @@ export function OldBetaBigPictureHome(){
  const storeArt=storeCovers.length?storeCovers.map(p=>({id:p.id,name:p.name,src:p.capsule||p.header})):games.slice().reverse().map(g=>({id:g.appid,name:g.name,src:g.art.landscape[0]}));
  const friendCard=(f:CommunitySlot,i:number,front=false)=><div key={f.id} data-sheet-selected={front&&i===0} data-placeholder={f.placeholder||undefined} data-presence={f.placeholder?'empty':f.game?'playing':f.online?'online':'offline'} title={[f.name,f.status,f.game].filter(Boolean).join(' · ')} className="beta-sheet-friend" style={{'--layer':i%3,'--friend-phase':(-i*4.1)+'s'} as CSSProperties}><span className="beta-friend-avatar" role="img" aria-label={f.placeholder?'Empty friend slot':f.avatar?f.name+' Steam avatar':'Placeholder avatar for '+f.name}><span aria-hidden="true">{f.placeholder?<Icon name="user" size={40}/>:f.name.slice(0,1)}</span>{f.avatar&&<img src={f.avatar} alt="" onError={event=>{event.currentTarget.hidden=true;event.currentTarget.parentElement?.setAttribute('aria-label','Placeholder avatar for '+f.name);}}/>}</span><span>{f.name}{!f.placeholder&&<small>{f.game?(f.status&&f.status!=='Online'?'In-Game · '+f.status:'In-Game'):(f.status??(f.online?'Online':'Offline'))}</small>}{f.game&&<small>{f.game}</small>}</span></div>;
  const column=Math.floor(selected/3),columnOffset=Math.max(0,column-2);
- return <ThemeRoot onInput={input} hints={{a:'Select',b:'Back',x:'Play',y:'Options'}}>
+ return <ThemeRoot nativeControlFocus onInput={input} hints={{a:'Select',b:'Back',x:'Play',y:'Options'}}>
   <div ref={root} className={'dht-oldbeta'+(!api.settings.animations?' no-motion':'')} data-sheet-layout={largeSheets?'large':'reference'} data-mode={mode} data-category={category} style={{'--beta-w':w+'px','--beta-h':h+'px','--beta-category':category} as CSSProperties}>
-   <style>{OLD_BETA_CSS+OLD_BETA_PAGE_CSS+OLD_BETA_FOCUS_CSS+OLD_BETA_SHEET_CSS}</style><div className="beta-home-scene" ref={n=>{if(n)n.inert=!!destination||searchOpen;}}><div className="beta-ambient" aria-hidden="true">{Array.from({length:26},(_,i)=><i key={i} style={{left:((i*37+9)%100)+'%',top:((i*23+13)%100)+'%','--dot-size':(i%6===0?2.3:.45+(i%5)*.3)+'%','--dot-time':(28+i%7*4)+'s','--dot-delay':(-i*3.7)+'s','--dot-alpha':.055+(i%4)*.023} as CSSProperties}/>)}</div>
+   <style>{nativeControlFocusCSS(OLD_BETA_CSS+OLD_BETA_PAGE_CSS+OLD_BETA_FOCUS_CSS+OLD_BETA_SHEET_CSS)}</style><div className="beta-home-scene" ref={n=>{if(n)n.inert=!!destination||searchOpen;}}><div className="beta-ambient" aria-hidden="true">{Array.from({length:26},(_,i)=><i key={i} style={{left:((i*37+9)%100)+'%',top:((i*23+13)%100)+'%','--dot-size':(i%6===0?2.3:.45+(i%5)*.3)+'%','--dot-time':(28+i%7*4)+'s','--dot-delay':(-i*3.7)+'s','--dot-alpha':.055+(i%4)*.023} as CSSProperties}/>)}</div>
    <header className="beta-header"><button aria-label="Profile" onClick={()=>go('profile')}><span className="beta-avatar"><ProfileAvatar size={32}/></span></button><div><button aria-label="Settings" onClick={()=>go('settings')}><Icon name="gear" size={22}/></button><button aria-label="Power" onClick={()=>Navigation.OpenPowerMenu()}><Icon name="power" size={22}/></button><span className="beta-stamp">BETA</span></div></header>
    <div className="beta-light" aria-hidden="true"/><div className="beta-focus-light" aria-hidden="true"/>
    <nav className="beta-categories" aria-label="Categories">{categories.map((name,index)=><button key={name} data-category={index} aria-pressed={index===category} onFocus={()=>focusCategory(index)} onClick={()=>mode!=='sheet'?switchPage(index):index===1?changeMode('recent'):go(index===0?'store':'community')}>{name}</button>)}</nav>

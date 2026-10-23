@@ -1,3 +1,4 @@
+import {themeActiveElement} from '../nativeThemeFocus';
 import {useEffect,useLayoutEffect,useRef,useState} from 'react';
 import {Navigation} from '@decky/ui';
 import {Friend,useFriends} from '../activity';
@@ -19,7 +20,7 @@ export function OldBetaPages({kind,onExit,session}:{kind:'web'|'friends';onExit:
  const [closing,setClosing]=useState(false),[tab,setTab]=useState('favorites'),[selected,setSelected]=useState(''),[favorites,setFavorites]=useState(session.favorites),[history,setHistory]=useState(session.history),[current,setCurrent]=useState(''),[lastVisited,setLastVisited]=useState(session.lastVisited);
  const [address,setAddress]=useState(session.lastVisited||'https://www.google.com/'),[keyboard,setKeyboard]=useState<'address'|'chat'|null>(null),[draft,setDraft]=useState(''),[error,setError]=useState(''),[friendsTab,setFriendsTab]=useState('friends'),[options,setOptions]=useState(false),[notice,setNotice]=useState('');
  const optionsOrigin=useRef<HTMLElement|null>(null);
- const showOptions=()=>{optionsOrigin.current=document.activeElement as HTMLElement;setNotice('');setOptions(true);};
+ const showOptions=()=>{optionsOrigin.current=themeActiveElement(root.current) as HTMLElement;setNotice('');setOptions(true);};
  const closeOptions=()=>{setOptions(false);requestAnimationFrame(()=>optionsOrigin.current?.isConnected&&optionsOrigin.current.focus({preventScroll:true}));};
  useLayoutEffect(()=>{if(options)root.current?.querySelector<HTMLButtonElement>('.beta-browser-options button')?.focus({preventScroll:true});root.current?.querySelectorAll<HTMLElement>('.beta-browser-page,.beta-browser-menu,:scope > footer').forEach(n=>n.inert=options);},[options]);
  const previousKeyboard=useRef<string|null>(null),handler=useRef<(p:Press)=>boolean>(()=>true),friend=friends.find(f=>f.id===selected)??friends[0];
@@ -36,12 +37,12 @@ export function OldBetaPages({kind,onExit,session}:{kind:'web'|'friends';onExit:
  };
  const chat=()=>{setKeyboard(null);openSteam('friends');};
  handler.current=({btn})=>{
-  if(options){const buttons=[...root.current?.querySelectorAll<HTMLButtonElement>('.beta-browser-options button')??[]];if(btn==='b'||btn==='menu'){closeOptions();return true;}if(btn==='a')(document.activeElement as HTMLElement)?.click();if(btn==='up'||btn==='down'){const i=buttons.indexOf(document.activeElement as HTMLButtonElement);buttons[Math.max(0,Math.min(buttons.length-1,i+(btn==='down'?1:-1)))]?.focus({preventScroll:true});}return true;}
+  if(options){const buttons=[...root.current?.querySelectorAll<HTMLButtonElement>('.beta-browser-options button')??[]];if(btn==='b'||btn==='menu'){closeOptions();return true;}if(btn==='a')(themeActiveElement(root.current) as HTMLElement)?.click();if(btn==='up'||btn==='down'){const i=buttons.indexOf(themeActiveElement(root.current) as HTMLButtonElement);buttons[Math.max(0,Math.min(buttons.length-1,i+(btn==='down'?1:-1)))]?.focus({preventScroll:true});}return true;}
   if(btn==='menu'&&kind==='web'){showOptions();return true;}
   if(closing)return true;if(btn==='b'){if(current){setCurrent('');return true;}leave();return true;}
   if(btn==='l1'||btn==='r1'){leave();return true;}
   if(btn==='y'){if(kind==='web'){setKeyboard('address');}else openSteam('friends');return true;}
-  const active=document.activeElement as HTMLElement|null;
+  const active=themeActiveElement(root.current) as HTMLElement|null;
   if(btn==='x'){if(kind==='web'){const url=active?.dataset.url;setFavorites(v=>v.filter(f=>f[1]!==url));}else openSteam('friends');return true;}
   if(btn==='a'){if(active?.tagName==='INPUT'){setKeyboard(kind==='web'?'address':'chat');}else active?.closest('button')?.click();return true;}
   if(!['up','down','left','right'].includes(btn))return true;

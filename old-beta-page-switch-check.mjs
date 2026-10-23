@@ -1,8 +1,9 @@
 import assert from 'node:assert/strict';
 import {launch} from './tests/browser.mjs';
-const browser=await launch();
+const nativeFocus=process.env.NATIVE_FOCUS==='1',browser=await launch();
 try{
  const page=await browser.newPage({viewport:{width:1280,height:1100}}),errors=[];page.on('pageerror',e=>errors.push(e.message));
+ if(nativeFocus)await page.addInitScript(()=>{globalThis.__previewEmulateSteamFocus=true;});
  await page.emulateMedia({reducedMotion:'reduce'});
  await page.goto('http://127.0.0.1:8793/preview/preview.html?theme=old-beta-big-picture');const root=page.locator('.dht-oldbeta').first();await root.waitFor();
  await root.locator('[data-category="1"]').click();await page.emulateMedia({reducedMotion:'no-preference'});
@@ -22,7 +23,7 @@ try{
   const frames=await surface.evaluate(n=>n.getAnimations().flatMap(a=>a.effect.getKeyframes()));assert.ok(frames.every(f=>!String(f.transform??'').includes('45%')),'Do not replay the home-to-page opening');
   await root.evaluate(n=>n.getAnimations({subtree:true}).filter(a=>a.effect.getTiming().iterations!==Infinity).forEach(a=>{a.pause();a.currentTime=180;}));if(next===2)await page.screenshot({path:'out/old-beta-big-picture/page-switch-midpoint.png'});const during=await tab.boundingBox();assert.ok(Math.abs(before.y-during.y)<1,'Page tabs stay fixed');
   await root.evaluate(n=>n.getAnimations({subtree:true}).filter(a=>a.effect.getTiming().iterations!==Infinity).forEach(a=>a.finish()));await snapshot.waitFor({state:'detached'});await page.waitForTimeout(80);
-  assert.equal(await current(),next===1?0:1);assert.ok(await surface.evaluate(n=>n.contains(document.activeElement)),'Focus belongs to the incoming page');
+  assert.equal(await current(),next===1?0:1);assert.ok(await surface.evaluate((n,native)=>n.contains(native?document.querySelector('[data-dht-control-focus=true]'):document.activeElement),nativeFocus),'Focus belongs to the incoming page');
  }
  // A second switch before the first completes replaces its departure safely.
  await select(0);await select(2);assert.equal(await root.locator(':scope > .beta-page-departure').count(),1);
