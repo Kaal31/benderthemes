@@ -59,16 +59,21 @@ export function ThemeFiles({ inputRef, initialKind = "psp" }: { inputRef: Mutabl
   const kindInfo = kinds?.kinds.find(k => k.id === kind);
   const src = source || kindInfo?.sources[0] || "";
   const srcInfo = kinds?.sources[src];
+  const browseKey = `${kind}|${src}|${query}`;
+  const latestBrowseKey = useRef(browseKey);
+  latestBrowseKey.current = browseKey;
+  const browseRequest = useRef(0);
   // one page at a time; "Show more" appends the next page
   const load = (page: number, refresh = false) => {
     if (!src) return;
     setLoading(true);
-    const key = `${kind}|${src}|${query}`;
+    const key = browseKey, request = ++browseRequest.current;
+    const currentRequest = () => alive.current && latestBrowseKey.current === key && browseRequest.current === request;
     browse(kind, src, query, page, refresh).then(r => {
-      if (!alive.current || key !== `${kind}|${src}|${query}`) return;
+      if (!currentRequest()) return;
       setInfo(r); setItems(prev => page > 1 ? [...prev, ...r.items.filter(i => !prev.some(p => p.id === i.id))] : r.items);
-    }).catch(e => { if (alive.current) setInfo({ kind, page, pages: 1, total: 0, items: [], source: srcInfo as Source, error: String(e) }); })
-      .finally(() => { if (alive.current) setLoading(false); });
+    }).catch(e => { if (currentRequest()) setInfo({ kind, page, pages: 1, total: 0, items: [], source: srcInfo as Source, error: String(e) }); })
+      .finally(() => { if (currentRequest()) setLoading(false); });
   };
   useEffect(() => { setItems([]); setInfo(null); setSelected(0); setConfirm(null); setMessage(null); load(1); }, [kind, src, query, !!kinds]);
   const more = !!info && info.page < info.pages;

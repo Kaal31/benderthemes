@@ -114,6 +114,7 @@ const backend: Record<string, (...a: any[]) => any> = {
   // replaces a page (tests inject real backend output with local pictures). Downloads are recorded in __themeSourceDownloads.
   theme_sources: () => THEME_SOURCES_KINDS,
   theme_sources_browse: (kind: string, source: string, query: string, page: number) => {
+    if ((window as any).__themeSourceBrowse) return (window as any).__themeSourceBrowse(kind, source, query, page);
     const real = (window as any).__themeSources?.[`${kind}:${source}`];
     const base = real ?? themeSourcePage(kind, source);
     const words = (query || "").toLowerCase().split(/\s+/).filter(Boolean);
