@@ -30,4 +30,9 @@ export const OLD_BETA_SHEET_CSS=`
 .dht-oldbeta[data-sheet-layout=reference] .beta-rear-sheet-3 img{filter:${BETA_COLD_ART} brightness(.75) blur(1px)}
 .dht-oldbeta .beta-cover{transition-property:transform,opacity}
 .dht-oldbeta[data-mode=sheet] .beta-cover,.dht-oldbeta[data-carousel-entering=true] .beta-cover{transition:none}
+/* Artwork lies directly on the sheet: no blue casing or illuminated seams. */
+.dht-oldbeta[data-mode=sheet] .beta-cover,.dht-oldbeta .beta-rear-cover,.dht-oldbeta .beta-sheet-cover{background:transparent;box-shadow:none;border:0}
+.dht-oldbeta[data-mode=sheet] .beta-cover::after{background:none;box-shadow:none}
+.dht-oldbeta[data-sheet-layout=reference] .beta-store-layer .beta-sheet-cover{transform:none;scale:1;rotate:0deg}
+.dht-oldbeta[data-sheet-layout=reference] .beta-store-layer{gap:0}
 `;
