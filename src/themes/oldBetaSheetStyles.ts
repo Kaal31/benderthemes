@@ -7,7 +7,8 @@ export const OLD_BETA_SHEET_CSS=`
 .dht-oldbeta:not([data-mode=sheet]) .beta-cover img{filter:${BETA_COLD_ART}}.dht-oldbeta:not([data-mode=sheet]) .beta-cover[data-selected=true] img{filter:none}
 .dht-oldbeta .beta-community-layer .beta-sheet-friend .beta-friend-avatar img{filter:${BETA_COLD_ART};transition:filter 240ms ease-out}.dht-oldbeta .beta-community-layer-0 .beta-sheet-friend[data-sheet-selected=true] .beta-friend-avatar img{filter:none}
 .dht-oldbeta .beta-community-layer .beta-sheet-friend{--presence:#6fc7ef;color:var(--presence);font-size:calc(var(--beta-w)*.0115);font-weight:500;line-height:1.2;text-shadow:0 1px 2px #000,0 0 4px #071725}
-.dht-oldbeta .beta-community-layer .beta-sheet-friend[data-presence=playing]{--presence:#a5d56a}.dht-oldbeta .beta-community-layer .beta-sheet-friend[data-presence=offline]{--presence:#96a6b1}
+.dht-oldbeta .beta-community-layer .beta-sheet-friend[data-presence=playing]{--presence:#a5d56a}.dht-oldbeta .beta-community-layer .beta-sheet-friend[data-presence=empty]{--presence:#79909e}
+.dht-oldbeta .beta-community-layer .beta-sheet-friend[data-presence=offline]{--presence:#96a6b1}
 .dht-oldbeta .beta-community-layer .beta-sheet-friend small{color:inherit;font-size:.88em;line-height:1.2;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
 .dht-oldbeta .beta-community-layer .beta-sheet-friend>span:last-child{min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}.dht-oldbeta .beta-community-layer .beta-friend-avatar{border-color:var(--presence)}
 .dht-oldbeta[data-sheet-layout=reference] .beta-store-sheet{width:calc(var(--beta-w)*.67);left:50%;top:40%}

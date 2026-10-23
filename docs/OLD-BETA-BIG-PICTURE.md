@@ -156,3 +156,10 @@ Selecting a Community friend opens a narrow native panel based on Waynimus 00:27
 ## Community Escape return
 
 The Community exit no longer rotates/scales its full-screen background. Only the friend row folds and fades; page tabs return toward the home category strip, and the stationary backdrop fades after the outgoing content has receded. Before an interrupted exit, entrance poses are captured and frozen, all delayed feed reveals are canceled, and the exit starts from the currently visible pose. Final exit styles remain filled until unmount so canceling the animation cannot flash the opaque page back on screen. Repeated Back is ignored while closing; reduced motion completes the transition and restores main-menu focus. `old-beta-community-exit-check.mjs` samples the stationary background and interrupted entrance geometry and exercises keyboard Escape, rapid Back and reduced-motion cleanup.
+
+
+## Sparse friend lists and category input
+
+Sparse Community lists keep the normal composition: the compact home sheets retain eight foreground/four rear slots, the larger sheet option retains its existing eighteen/twelve-per-rear composition, and the Community page keeps at least eight slots. Missing friends use explicit Empty slot silhouettes with no online/game status, avatar URL or friend actions. Actual names, images and statuses are shown only for Steam friends; the count excludes placeholders.
+
+Category focus now commits with the selected category in a layout effect. A synchronous category ref makes repeated controller events and focus callbacks idempotent, avoiding duplicate focus-change capture/cancellation. Community’s modal handler unregisters during layout cleanup so it cannot consume the first main-menu press after Back. Tests cover zero/one/two friends and single keyboard/controller direction events in both directions, with and without motion and after returning from Community.

@@ -46,7 +46,9 @@ try {
   assert.ok((await front.innerText()).includes('Away'));
   assert.ok((await front.innerText()).includes('Busy'));
   assert.ok((await front.innerText()).includes('Portal 2'));
-  assert.equal(await front.locator('.beta-sheet-friend').count(),2,'Real friend data must not be padded with invented accounts');
+  assert.equal(await front.locator('.beta-sheet-friend').count(),8,'Keep the sheet populated');
+  assert.equal(await front.locator('.beta-sheet-friend:not([data-placeholder=true])').count(),2,'Only real accounts have presence');
+  assert.equal(await front.locator('[data-placeholder=true]').count(),6);
   const avatar=front.locator('img').first();
   assert.equal(await avatar.getAttribute('src'),'https://avatars.steamstatic.com/'+ 'a'.repeat(40)+'_medium.jpg');
   await avatar.evaluate(n=>n.dispatchEvent(new Event('error')));
