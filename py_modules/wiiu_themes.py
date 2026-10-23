@@ -910,7 +910,7 @@ def scan(roots, state, max_depth=3):
                     continue
                 key = os.path.realpath(p)
                 old = state.get(key)
-                sig = {"size": st.st_size, "mtime": int(st.st_mtime)}
+                sig = {"size": st.st_size, "mtime": st.st_mtime_ns}
                 if old and old.get("size") == sig["size"] and old.get("mtime") == sig["mtime"]:
                     if old.get("kind") and not old.get("decision"):
                         found.append({"path": key, "kind": old["kind"], "name": old.get("name", "")})

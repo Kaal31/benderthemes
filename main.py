@@ -1639,6 +1639,14 @@ class Plugin:
         import theme_sources
         return await asyncio.to_thread(theme_sources.browse, str(kind), str(source), str(query or ""), page, bool(refresh))
 
+    async def wiiflow_scan_downloads(self):
+        import wiiflow_downloads
+        roots = [os.path.join(decky.DECKY_USER_HOME, "Downloads")]
+        try:
+            return await asyncio.to_thread(wiiflow_downloads.scan, roots, os.path.join(_skin_dir(), "wiiflow-downloads.json"))
+        except Exception as error:
+            return {"busy": False, "imported": [], "pending": 0, "errors": [str(error)[:200]]}
+
     async def theme_sources_files(self, kind: str, ident: str):
         import theme_sources
         return await asyncio.to_thread(theme_sources.archive_files, str(kind), str(ident))
@@ -2113,6 +2121,26 @@ class Plugin:
         except Exception as e:
             decky.logger.warning(f"wii u scan failed: {e}")
             return []
+
+    async def wiiu_import_file(self, path: str):
+        def import_selected():
+            import wiiu_themes
+            selected = os.path.realpath(path)
+            if os.path.basename(selected) in wiiu_themes.STOCK:
+                selected = os.path.dirname(selected)
+            kind = wiiu_themes._classify(selected)
+            if not kind:
+                return {"success": False, "error": "Choose a .utheme or a Wii U menu dump (ZIP, folder, Men.pack or Men2.pack)."}
+            st = os.stat(selected)
+            with _wiiu_lock:
+                state = _wiiu_load_state()
+                state[selected] = {"size": st.st_size, "mtime": int(st.st_mtime), "kind": kind}
+                _wiiu_save_state(state)
+            return _wiiu_decide(selected, True)
+        try:
+            return await asyncio.to_thread(import_selected)
+        except Exception as error:
+            return {"success": False, "error": str(error)[:200]}
 
     async def wiiu_decide(self, path: str, accept: bool):
         try:

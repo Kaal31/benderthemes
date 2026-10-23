@@ -108,6 +108,8 @@ jobs:
       - run: node tests/verify-marketplace.mjs
       - run: node tests/verify-theme-files.mjs
       - run: node tests/verify-theme-source-races.mjs
+      - run: node tests/verify-wiiu-import-flow.mjs
+      - run: node tests/verify-wiiflow-import-flow.mjs
       - run: node tests/verify-theme-availability.mjs
       - run: node tests/verify-theme-options.mjs
       - run: node tests/verify-block-panels.mjs

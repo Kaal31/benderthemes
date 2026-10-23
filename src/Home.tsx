@@ -1,3 +1,4 @@
+import {WiiFlowDownloadsWatcher} from "./wiiflowDownloads";
 import {ThemeLoadingScreen} from "./ThemeLoadingScreen";
 import { IOS6Home } from "./themes/IOS6";
 import {GameAmpHome} from "./themes/GameAmp";
@@ -456,6 +457,7 @@ function ThemedHomeContent({ standalone }: { standalone?: boolean }) {
       <VideoIntro url={slotUrl("bootVideo", s)} />
       {market.opened && <Marketplace requested={market.requested} from={market.from} initialTab={market.initialTab} />}
       <FirmwareNotice paused={market.opened || !!overlay || !!destination || !!launching} />
+      <WiiFlowDownloadsWatcher active={true}/>
       <WiiuImportPrompt paused={market.opened || !!overlay || !!destination || !!launching} />
       <ThemeSwitcher available={() => !overlay && !destination && !launching && !market.opened && !themeMenu.isOpen && !anyMenuOpen()} />
       {banner && (

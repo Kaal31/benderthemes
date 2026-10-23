@@ -30,7 +30,7 @@ import { customizeControls, nameOf, refreshCustomizeLists, SlotControl } from ".
 import { LAYOUT_SLOTS } from "./engine/assets";
 import { PAGES } from "./engine/pages";
 import { importSwitchResources, importSwitchThemeFile, listSwitchThemes, switchFxKey } from "./switchThemes";
-import { listWiiuThemes } from "./wiiuThemes";
+import { listWiiuThemes, importWiiuFiles } from "./wiiuThemes";
 import { applyPreset, currentLook, currentPresetId, deleteUserPreset, getPresets, lookPresets, presetGroups, renamePreset, saveUserPreset } from "./presets";
 import { playSound } from "./steam";
 
@@ -345,6 +345,7 @@ function themeFileItems(th: ThemeId): MenuItem[] {
   if (th === "switch") return switchItems();
   if (th === "n3ds") return n3dsItems("file");
   if (th === "wiiu") return [
+    {label:"Import Wii U theme/menu files",action:()=>void importWiiuFiles()},
     choice("Wii U theme file", [{ id: "", name: "None (built-in look)" }, ...lists.wiiu.map((n) => ({ id: n, name: n.replace(/\.utheme$/i, "") }))], () => S().wiiuTheme ?? "", (v) => updateSettings({ wiiuTheme: v }), undefined, "Put .utheme files (Themezer / Theme Café) in the skins/wiiu folder, or in Downloads, then reopen this menu"),
     ...(S().wiiuTheme ? [group("Theme file effects", () => {
       const key = `wiiu:${S().wiiuTheme ?? ""}`;

@@ -401,11 +401,14 @@ def browse(kind, source, query="", page=1, refresh=False, fetch_json=None, fetch
                 fallbacks = {i["id"]: i.get("fallbackImage") for i in saved["items"]}
                 for item in items:
                     if fallbacks.get(item["id"]): item["fallbackImage"] = fallbacks[item["id"]]
-                return items, failures
+                # A partial live response must never discard saved sources/themes.
+                combined={item['id']:item for item in saved['items']}
+                combined.update({item['id']:item for item in items})
+                return list(combined.values()), failures
             every, failures = _cached(("gbatemp", live_gbatemp), load, now, refresh)
             words = query.lower().split()
             hits = [i for i in every if all(w in (i["name"]+" "+i["description"]+" "+i["author"]).lower() for w in words)]
-            res = {"items": hits[(page-1)*PAGE_SIZE:page*PAGE_SIZE], "total": len(hits), "pages": max(1, -(-len(hits)//PAGE_SIZE)), "skipped": len(failures), "warning": "Showing the saved public GBAtemp index from 2026-10-17. Refresh tries live pages; older links may have expired." if not live_gbatemp else "Some GBAtemp pages are unavailable. Showing available entries or the saved index from 2026-10-17; older links may have expired." if failures else ""}
+            res = {"items": hits[(page-1)*PAGE_SIZE:page*PAGE_SIZE], "total": len(hits), "pages": max(1, -(-len(hits)//PAGE_SIZE)), "skipped": len(failures), "warning": "Showing the saved public GBAtemp index from 2026-10-23. Refresh tries live pages; older links may have expired." if not live_gbatemp else "Some GBAtemp pages are unavailable. Showing available entries or the saved index from 2026-10-23; older links may have expired." if failures else ""}
         elif source == "themezer":
             def load():
                 data = fetch_json("themezer", THEMEZER_API, json.dumps({"query": _themezer_query(kind, query, page)}).encode())

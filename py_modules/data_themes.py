@@ -201,7 +201,18 @@ def import_file(path):
     os.makedirs(root, exist_ok=True)
     check = tempfile.mkdtemp(prefix=".check-", dir=root)
     try:
-        _unpack(path, os.path.join(check, "t"))
+        try:
+            _unpack(path, os.path.join(check, "t"))
+        except ValueError as error:
+            with zipfile.ZipFile(path) as source:
+                names=source.namelist()
+                wiiflow = not any(PurePosixPath(n).name == "theme.json" for n in names) and any(n.lower().endswith(".ini") for n in names)
+            if wiiflow:
+                import wiiflow_downloads
+                imported = wiiflow_downloads.install(path)
+                if imported:
+                    return {"ok": True, **imported[0], "count": len(imported)}
+            raise
         manifest = _read_manifest(os.path.join(check, "t"))
     except Exception as e:
         return {"ok": False, "error": str(e)[:200]}

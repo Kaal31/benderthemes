@@ -25,6 +25,7 @@ const PLUGIN_CATALOG_FIXTURE = {
   ],
 };
 const THEME_SOURCE_INFO: Record<string, any> = {
+  gbatemp:{name:"GBAtemp",url:"https://gbatemp.net/threads/wiiflow-themes.180497/",credit:"WiiFlow themes by their original creators."},
   themezer: { name: "Themezer", url: "https://themezer.net", credit: "Themes and previews from Themezer (themezer.net) by their creators." },
   pspunk: { name: "PSPunk", url: "https://www.pspunk.com/psp-themes/", credit: "Themes and screenshots from PSPunk (pspunk.com), collected from their creators." },
   ps3pro: { name: "PS3-Pro Themes (GitHub)", url: "https://github.com/PS3-Pro/Themes", credit: "Themes from the PS3-Pro/Themes repository on GitHub, made by their creators." },
@@ -32,7 +33,7 @@ const THEME_SOURCE_INFO: Record<string, any> = {
   archive: { name: "Internet Archive", url: "https://archive.org", credit: "Uploads on the Internet Archive (archive.org) by its users. Not checked by Deck Home Themes." },
 };
 const THEME_SOURCES_KINDS: any = {
-  kinds: [["psp", "PSP", "psp", [".ptf", ".ctf"], ["pspunk", "shenron0", "archive"]], ["p3t", "PS3", "p3t", [".p3t"], ["themezer", "ps3pro", "archive"]], ["vita", "PS Vita", "vita", [".zip"], ["archive"]],
+  kinds: [["wiiflow","WiiFlow","wiiflow",[".zip",".rar",".7z"],["gbatemp"]],["psp", "PSP", "psp", [".ptf", ".ctf"], ["pspunk", "shenron0", "archive"]], ["p3t", "PS3", "p3t", [".p3t"], ["themezer", "ps3pro", "archive"]], ["vita", "PS Vita", "vita", [".zip"], ["archive"]],
     ["switch", "Switch", "switch", [".nxtheme"], ["themezer"]], ["wiiu", "Wii U", "wiiu", [".utheme"], ["themezer"]], ["3ds", "3DS", "3ds", [".zip"], ["themezer"]],
     ["wii", "Wii", "wii", [".mym", ".csm"], ["archive"]], ["xbox", "Xbox", "xbox", [".zip"], ["archive"]]].map(([id, label, dir, exts, sources]) => ({ id, label, dir: `skins/${dir}`, exts, sources })),
   sources: THEME_SOURCE_INFO,
@@ -121,6 +122,7 @@ const backend: Record<string, (...a: any[]) => any> = {
     const items = base.items.filter((i: any) => words.every(w => i.name.toLowerCase().includes(w)));
     return { ...base, kind, page: page || 1, total: words.length ? items.length : base.total, items, source: { ...THEME_SOURCES_KINDS.sources[source], id: source } };
   },
+  wiiflow_scan_downloads: () => {const w=window as any;w.__wiiflowScanCalls=(w.__wiiflowScanCalls??0)+1;return w.__wiiflowScanResult??{busy:false,imported:[],pending:0,errors:[]};},
   theme_sources_files: (_kind: string, id: string) => ({ files: [{ name: `${id}/Theme One.mym`, size: 420000 }, { name: "Theme Two.csm", size: 7300000 }] }),
   theme_sources_saved: (kind:string) => Object.fromEntries(Object.entries((window as any).__savedThemeSources??{}).filter(([key])=>key.startsWith(kind+":"))),
   theme_sources_download: async (kind: string, source: string, id: string, file: string, name: string) => {
@@ -186,6 +188,7 @@ const backend: Record<string, (...a: any[]) => any> = {
   // Wii U themes: window.__testWiiu = a skin ({name, author, art:{slot: url}, …}) or {"File.utheme": skin}; window.__testWiiuFound = scan results
   list_wiiu_themes: () => { if (R()) return { themes: R().lists.wiiu ?? [], stock: {}, dir: "" }; const t = (window as any).__testWiiu; return { themes: !t ? [] : t.art || t.needsStock !== undefined || t.name ? ["Test.utheme"] : Object.keys(t), stock: {}, dir: "~/homebrew/data/DeckHomeThemes/skins/wiiu" }; },
   get_wiiu_skin: (n: string) => { if (R()) return R().skins?.wiiu?.[n] ?? null; const t = (window as any).__testWiiu; return !t ? null : t.name || t.art ? t : t[n] ?? null; },
+  wiiu_import_file: () => ({success:true}),
   wiiu_scan: () => (window as any).__testWiiuFound ?? [],
   // your own avatar (a 360sona export): window.__testAvatarFound = scan results, window.__testAvatarGlb = a data URL the import "copies"
   x360_avatar_scan: () => (window as any).__testAvatarFound ?? [],

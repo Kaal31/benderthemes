@@ -7,6 +7,7 @@ from urllib.parse import urljoin, urlsplit
 THREADS = (
     'https://gbatemp.net/threads/wiiflow-themes.180497/',
     'https://gbatemp.net/threads/rhapsodii-shima-5-4.555062/',
+    'https://gbatemp.net/threads/wiiflow-lite-theme-rhapsodii.511833/',
     'https://gbatemp.net/threads/wiiflow-themes-20-in-one-pack-extras-for-v-5-5-4.657626/',
 )
 

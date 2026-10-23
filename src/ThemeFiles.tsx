@@ -1,3 +1,4 @@
+import {useWiiFlowDownloads} from "./wiiflowDownloads";
 // Hub > Theme files: theme files for the theme-file importers (PSP, PS3, Vita, Switch, Wii U, 3DS, Wii, Xbox), listed
 // from public sites at runtime by the backend (py_modules/theme_sources.py) with the source and the creator named on
 // every entry. Nothing is downloaded until the user confirms it here; files land in <data>/skins/<kind>/.
@@ -34,6 +35,7 @@ const hintFor = (kind: string) => `Choose it in the ${KIND_HINT[kind] ?? ""} the
 export function ThemeFiles({ inputRef, initialKind = "psp" }: { inputRef: MutableRefObject<InputHandler | null>; initialKind?: string }) {
   const [kinds, setKinds] = useState<Kinds | null>(null);
   const [kind, setKind] = useState(initialKind);
+  const wiiflowDownloads=useWiiFlowDownloads(kind==="wiiflow");
   const [source, setSource] = useState("");
   const [query, setQuery] = useState("");
   const [typed, setTyped] = useState("");
@@ -205,6 +207,8 @@ export function ThemeFiles({ inputRef, initialKind = "psp" }: { inputRef: Mutabl
       <span className="dht-files-sources">From {(kindInfo?.sources ?? []).map(s => <button key={s} data-active={s === src} onClick={() => setSource(s)}>{kinds?.sources[s]?.name ?? s}</button>)}{(kindInfo?.sources.length ?? 0) > 1 && <i>X switches</i>}</span>
       <span className="dht-files-status" role="status">{loading && !items.length ? "Loading…" : info?.error ? info.error : `${info?.total ?? 0} ${query ? `results for “${query}”` : "themes"}${kind === "wiiflow" ? " · original source posts" : ` · saved to ${kindInfo?.dir ?? "skins"}/`}`}</span>
     </div>
+    {more&&<button className="dht-files-load-more" onClick={()=>choose(items.length)} disabled={loading} style={{padding:"8px 16px",font:"inherit",marginBottom:8}}>{loading?"Loading…":`Show more · ${items.length} of ${info?.total}`}</button>}
+    {kind==="wiiflow"&&<p className="dht-files-note" role="status">{wiiflowDownloads} ZIPs, RAR/7z archives and extracted theme folders are checked after downloads finish.</p>}
     {info?.warning && <p className="dht-files-note" role="status">{info.warning}</p>}
     <div className="dht-files-layout">
       <div className="dht-files-grid" ref={gridRef} data-focused={zone === "grid"}>
@@ -226,7 +230,7 @@ export function ThemeFiles({ inputRef, initialKind = "psp" }: { inputRef: Mutabl
           {current.fallbackImage && <small className="dht-files-by">If the original image fails, a screenshot of our converted theme is shown.</small>}
           {current.description && <p className="dht-files-note">{current.description}</p>}
           {(current.images?.length ?? 0) > 1 && <div style={{display:"flex",gap:6,overflowX:"auto"}}>{current.images!.slice(1).map(url=><img key={url} src={url} alt={`${current.name} screenshot`} loading="lazy" referrerPolicy="no-referrer" style={{width:120,height:90,objectFit:"contain"}} onError={e=>{e.currentTarget.style.display="none"}} />)}</div>}
-          {current.externalOnly && <p className="dht-files-note">Open the author's download page, then import the extracted WiiFlow theme separately. Original image and download links may have expired.</p>}
+          {current.externalOnly && <p className="dht-files-note">Open the author's download page. Completed ZIPs and extracted WiiFlow folders in Downloads are imported automatically while this tab is open. Older links may have expired.</p>}
           {fileList === null ? <p className="dht-files-note">{(files[current.id] as any)?.error ?? "Reading the item’s files…"}</p> : <div className="dht-files-actions">
             {current.externalLinks?.map((url,i)=><button key={url} data-active={zone === "detail" && action === i} onClick={()=>openUrl(url)}>Author download page {i+1} ↗</button>)}
             {fileList.map((f, i) => {

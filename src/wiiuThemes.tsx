@@ -1,7 +1,7 @@
 // Wii U Menu custom themes (.utheme), read on the Deck by the backend (py_modules/wiiu_themes.py).
 // A .utheme only holds patches, so the user's own Wii U menu files are needed once; both are
 // picked up from Downloads / SD cards with a one-time prompt.
-import { callable } from "@decky/api";
+import { callable,toaster,openFilePicker } from "@decky/api";
 import { useEffect, useRef, useState } from "react";
 import { pushModalInput } from "./input";
 import { updateSettings, useSettings } from "./settings";
@@ -30,6 +30,19 @@ export interface WiiuFound { path: string; kind: "theme" | "stock"; name: string
 export const listWiiuThemes = callable<[], { themes: string[]; stock: Record<string, { crc: string; version: string }>; dir: string }>("list_wiiu_themes");
 const getWiiu = callable<[name: string], WiiuSkin | null>("get_wiiu_skin");
 const scanWiiu = callable<[], WiiuFound[]>("wiiu_scan");
+const importWiiu=callable<[path:string],{success:boolean;error?:string;theme?:string}>("wiiu_import_file");
+export async function importWiiuFiles(){
+ try{
+  const file=await openFilePicker(0 as any,"/home/deck/Downloads",true,true,undefined,["utheme","zip","pack"]);
+  if(!file?.realpath)return;
+  const result=await importWiiu(file.realpath);
+  if(!result.success){toaster.toast({title:"Wii U import needs attention",body:result.error??"Import failed"});return;}
+  changed();if(result.theme)updateSettings({wiiuTheme:result.theme});
+  await (await import("./presets")).refreshPresets();
+  (await import("./themeSettingsMenu")).refreshThemeLists();
+  toaster.toast({title:"Wii U files imported",body:result.theme??"Your menu files are ready. The selected theme will be reloaded."});
+ }catch(error){toaster.toast({title:"Wii U import failed",body:String(error)});}
+}
 const decideWiiu = callable<[path: string, accept: boolean], { success: boolean; error?: string; theme?: string }>("wiiu_decide");
 
 const cache = new Map<string, WiiuSkin | null>();
@@ -49,7 +62,8 @@ export function useWiiuSkin(): WiiuSkin | null {
     if (cache.has(name)) return setSkin(cache.get(name)!);
     let alive = true;
     const gen = generation;
-    getWiiu(name).then((r) => { if (gen === generation) cache.set(name, r ?? null); if (alive) setSkin(r ?? null); }).catch(() => alive && setSkin(null));
+    setSkin(null);
+    getWiiu(name).then((r) => { if (gen === generation) cache.set(name, r ?? null); if (alive && gen === generation) setSkin(r ?? null); }).catch(() => alive && setSkin(null));
     return () => { alive = false; };
   }, [name, rev]);
   return skin;
@@ -82,9 +96,14 @@ export function WiiuImportPrompt({ paused = false }: { paused?: boolean }) {
   const [selection, setSelection] = useState(0), [busy, setBusy] = useState(false), [message, setMessage] = useState("");
   const active = s.theme === "wiiu";
   useEffect(() => {
-    if (!active) return; // each time the Wii U home opens; files already seen are not read again
-    scanWiiu().then((r) => setQueue(r ?? [])).catch(() => {});
+    if (!active) return;
+    let alive=true,running=false;
+    const scan=async()=>{if(running)return;running=true;try{const found=await scanWiiu();if(alive)setQueue(previous=>{const paths=new Set(previous.map(f=>f.path));return [...previous,...(found??[]).filter(f=>!paths.has(f.path))];});}catch{}finally{running=false;}};
+    void scan();const timer=setInterval(scan,3000);
+    return()=>{alive=false;clearInterval(timer);};
   }, [active]);
+  const skin=useWiiuSkin();
+  const problem=wiiuProblem(skin);
   const item = queue[0];
   const visible = active && !paused && !!item;
   const next = () => { setQueue((q) => q.slice(1)); setSelection(0); setMessage(""); };
@@ -97,6 +116,8 @@ export function WiiuImportPrompt({ paused = false }: { paused?: boolean }) {
       if (!r.success) { setMessage(r.error || "That file could not be used."); return; }
       if (accept) {
         changed();
+        void import("./presets").then(m=>m.refreshPresets());
+        void import("./themeSettingsMenu").then(m=>m.refreshThemeLists());
         if (item.kind === "stock") setQueue((q) => [q[0], ...q.slice(1).filter((f) => f.kind !== "stock")]); // other copies of the same dump
         if (r.theme && !s.wiiuTheme) updateSettings({ wiiuTheme: r.theme });
         setMessage(item.kind === "stock" ? "Wii U menu files saved. Custom themes can now be shown." : `"${item.name || r.theme}" was added to your Wii U themes.`);
@@ -116,7 +137,7 @@ export function WiiuImportPrompt({ paused = false }: { paused?: boolean }) {
       return true;
     });
   }, [visible]);
-  if (!visible) return null;
+  if (!visible) return active&&!paused&&s.wiiuTheme&&problem?<aside role="status" data-wiiu-import-problem="" style={{position:"absolute",left:24,right:24,bottom:80,zIndex:110,background:"#122936ee",color:"white",padding:"18px 24px",borderRadius:14,fontFamily:"system-ui",fontSize:16}}><strong>{skin?.name||s.wiiuTheme}</strong><p style={{margin:"8px 0 0"}}>{problem} The default look stays visible until this is resolved.</p><button onClick={()=>void importWiiuFiles()} style={{marginTop:12,padding:"8px 16px",font:"inherit"}}>Import Wii U menu files</button></aside>:null;
   const file = item.path.split("/").pop();
   const title = item.kind === "stock" ? "Wii U menu files found" : `Wii U theme found: ${item.name || file}`;
   const body = item.kind === "stock"
