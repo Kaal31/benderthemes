@@ -139,10 +139,10 @@ export const OLD_BETA_CSS=`
 .dht-oldbeta .beta-store-layer-3{position:absolute;inset:0;transform:translate3d(-3%,64%,-150px) scale(.82);--flow-alpha:.48;pointer-events:none;z-index:0}
 .dht-oldbeta .beta-sheet-cover>span{display:none}
 .dht-oldbeta .beta-rear-cover,.dht-oldbeta .beta-sheet-cover{opacity:var(--flow-alpha,1)}
-@keyframes beta-flow-left{0%{translate:calc(var(--beta-w)*.025) 0;opacity:0}3%{opacity:var(--flow-alpha,1)}97%{opacity:var(--flow-alpha,1)}100%{translate:calc(var(--beta-w)*-.025) 0;opacity:0}}
-@keyframes beta-flow-right{0%{translate:calc(var(--beta-w)*-.035) 0;opacity:0}3%{opacity:var(--flow-alpha,1)}97%{opacity:var(--flow-alpha,1)}100%{translate:calc(var(--beta-w)*.035) 0;opacity:0}}
-.dht-oldbeta[data-mode=sheet] .beta-cover,.dht-oldbeta .beta-store-layer-0 .beta-sheet-cover{animation:beta-flow-left 18s linear infinite;animation-delay:var(--flow-phase,0s)}
-.dht-oldbeta .beta-rear-sheet .beta-rear-cover,.dht-oldbeta .beta-store-layer:not(.beta-store-layer-0) .beta-sheet-cover{animation:beta-flow-right 24s linear infinite;animation-delay:var(--flow-phase,0s)}
+@keyframes beta-flow-left{from{translate:calc(var(--beta-w)*.025) 0}to{translate:calc(var(--beta-w)*-.025) 0}}
+@keyframes beta-flow-right{from{translate:calc(var(--beta-w)*-.035) 0}to{translate:calc(var(--beta-w)*.035) 0}}
+.dht-oldbeta[data-mode=sheet] .beta-cover,.dht-oldbeta .beta-store-layer-0 .beta-sheet-cover{animation:beta-flow-left 18s ease-in-out infinite alternate;animation-delay:var(--flow-phase,0s)}
+.dht-oldbeta .beta-rear-sheet .beta-rear-cover,.dht-oldbeta .beta-store-layer:not(.beta-store-layer-0) .beta-sheet-cover{animation:beta-flow-right 24s ease-in-out infinite alternate;animation-delay:var(--flow-phase,0s)}
 .dht-oldbeta .beta-rear-sheet-2 .beta-rear-cover{animation-duration:28s}.dht-oldbeta .beta-rear-sheet-3 .beta-rear-cover{animation-duration:32s}.dht-oldbeta .beta-rear-sheet-4 .beta-rear-cover{animation-duration:36s}
 .dht-oldbeta:not([data-mode=sheet]) .beta-rear-cover,.dht-oldbeta:not([data-category="1"]) .beta-rear-cover,.dht-oldbeta:not([data-category="1"]) .beta-cover,.dht-oldbeta:not([data-category="0"]) .beta-sheet-cover,.dht-oldbeta:not([data-mode=sheet]) .beta-sheet-cover{animation-play-state:paused}
 /* Community shares the cover sheets' cadence without rotating names or avatars. */
@@ -158,9 +158,9 @@ export const OLD_BETA_CSS=`
 .dht-oldbeta .beta-friend-avatar img[hidden]{display:none}
 .dht-oldbeta .beta-community-layer{opacity:1;--flow-alpha:1}
 .dht-oldbeta .beta-community-layer-2{--flow-alpha:.48}
-.dht-oldbeta .beta-community-layer-0 .beta-sheet-friend{animation:beta-flow-left 18s linear infinite;animation-delay:var(--friend-phase,0s)}
-.dht-oldbeta .beta-community-layer-1 .beta-sheet-friend{animation:beta-flow-right 24s linear infinite;animation-delay:var(--friend-phase,0s)}
-.dht-oldbeta .beta-community-layer-2 .beta-sheet-friend{animation:beta-flow-right 28s linear infinite;animation-delay:var(--friend-phase,0s)}
+.dht-oldbeta .beta-community-layer-0 .beta-sheet-friend{animation:beta-flow-left 18s ease-in-out infinite alternate;animation-delay:var(--friend-phase,0s)}
+.dht-oldbeta .beta-community-layer-1 .beta-sheet-friend{animation:beta-flow-right 24s ease-in-out infinite alternate;animation-delay:var(--friend-phase,0s)}
+.dht-oldbeta .beta-community-layer-2 .beta-sheet-friend{animation:beta-flow-right 28s ease-in-out infinite alternate;animation-delay:var(--friend-phase,0s)}
 .dht-oldbeta .beta-sheet-friend{opacity:var(--flow-alpha,1)}
 .dht-oldbeta:not([data-mode=sheet]) .beta-sheet-friend,.dht-oldbeta:not([data-category="2"]) .beta-sheet-friend{animation-play-state:paused}
 /* The original home strip is substantially broader than the page tabs. */
