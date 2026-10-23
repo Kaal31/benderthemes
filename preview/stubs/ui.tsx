@@ -1,5 +1,6 @@
 // Browser stand-ins for @decky/ui so the themes run in a normal page.
 // Keyboard: arrows = D-pad, Enter = Ⓐ, Esc/Backspace = Ⓑ, X = Ⓧ, Y = Ⓨ/△, M = ≡, Q/E = L1/R1 (hold Q + arrows = theme switcher), Z/C = L2/R2.
+import {createPreviewPadPoller} from "../controllerInput";
 import { CSSProperties, ReactNode, useEffect, useRef } from "react";
 export function ProgressBarWithInfo({ nProgress, sOperationText }: any) { return <div>{sOperationText}<progress value={nProgress} max={100} /></div>; }
 
@@ -44,8 +45,9 @@ if (typeof window !== "undefined") {
     if (key === "q") top?.onButtonUp?.(ev(5, false));
     if (key === "e") top?.onButtonUp?.(ev(6, false));
   });
-  const dispatchPreviewButton=(button:number,repeat=false)=>{
+  const dispatchPreviewButton=(button:number,repeat=false,source='Preview buttons')=>{
     const top=stack[stack.length-1]?.current;if(!top)return;
+    if(!repeat)window.dispatchEvent(new CustomEvent('preview-input-observed',{detail:{button,source}}));
     const e=ev(button,repeat);
     if([9,10,11,12].includes(button))top.onGamepadDirection?.(e);
     else if(button===1)top.onOKButton?.(e);
@@ -55,19 +57,11 @@ if (typeof window !== "undefined") {
     else top.onButtonDown?.(e);
   };
   window.addEventListener('preview-controller-input',(event:Event)=>dispatchPreviewButton((event as CustomEvent<number>).detail));
-  let previous=new Set<number>(),lastDirection=0;
+  const samplePad=createPreviewPadPoller((button,repeat)=>dispatchPreviewButton(button,repeat,'Gamepad'),button=>stack[stack.length-1]?.current.onButtonUp?.(ev(button,false)));
   const pollGamepad=(now:number)=>{
     if(!document.hidden){
-      const pads=Array.from(navigator.getGamepads?.()??[]).filter((p):p is Gamepad=>!!p?.connected);
-      const pad=pads.find(p=>p.buttons.some(b=>b.pressed)||p.axes.some(a=>Math.abs(a)>.55))??pads[0];
-      const down=new Set<number>();
-      if(pad){for(const [i,button] of [[0,1],[1,2],[2,3],[3,4],[4,5],[5,6],[6,7],[7,8],[9,14],[12,9],[13,10],[14,11],[15,12]])if(pad.buttons[i]?.pressed)down.add(button);
-       if(pad.axes[0]<-.55||pad.axes[2]<-.55)down.add(11);if(pad.axes[0]>.55||pad.axes[2]>.55)down.add(12);if(pad.axes[1]<-.55||pad.axes[3]<-.55)down.add(9);if(pad.axes[1]>.55||pad.axes[3]>.55)down.add(10);
-      }
-      for(const button of down){const repeat=previous.has(button);if(!repeat||([9,10,11,12].includes(button)&&now-lastDirection>180)){dispatchPreviewButton(button,repeat);if([9,10,11,12].includes(button))lastDirection=now;}}
-      for(const button of previous)if(!down.has(button))stack[stack.length-1]?.current.onButtonUp?.(ev(button,false));
-      previous=down;
-    }
+      try{samplePad(Array.from(navigator.getGamepads?.()??[]),now);}catch{/* Browser policy may disable the Gamepad API. Keyboard input remains available. */}
+    }else samplePad([],now);
     requestAnimationFrame(pollGamepad);
   };
   // Node tests import this stub with a minimal window, without a browser frame loop.

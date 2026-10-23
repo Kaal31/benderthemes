@@ -1,3 +1,4 @@
+import {previewPadButtons} from "./controllerInput";
 import { startAchievementPopups, previewAchievementPopup, achievementPopupStatus } from "../src/achievementPopups";
 import {SILVER_REFERENCE as PREVIEW_REFERENCE} from "../src/themes/silverReference";
 import {openThemeSettings} from "../src/themeSettingsMenu";
@@ -227,12 +228,18 @@ setPreviewActions({
 });
 
 function ControllerTest() {
-  const [status,setStatus]=useState('Press a button on your controller to connect');
+  const [status,setStatus]=useState('Press a button on your controller to connect'),[input,setInput]=useState({count:0,label:'No input yet'});
+  useEffect(()=>{
+    const labels:Record<number,string>={1:'A',2:'B',3:'X',4:'Y',5:'LB',6:'RB',9:'D-pad Up',10:'D-pad Down',11:'D-pad Left',12:'D-pad Right',14:'Menu'};
+    const observe=(e:Event)=>{const {button,source}=(e as CustomEvent<{button:number;source:string}>).detail;setInput(v=>({count:v.count+1,label:source+': '+(labels[button]??'Button '+button)}));};
+    const key=(e:KeyboardEvent)=>{if(e.repeat||(e.target as HTMLElement)?.closest('input,textarea,select'))return;if(!['ArrowLeft','ArrowRight','ArrowUp','ArrowDown','Enter','Escape'].includes(e.key))return;setInput(v=>({count:v.count+1,label:'Keyboard: '+e.key}));};
+    window.addEventListener('preview-input-observed',observe);window.addEventListener('keydown',key);return()=>{window.removeEventListener('preview-input-observed',observe);window.removeEventListener('keydown',key);};
+  },[]);
   useEffect(()=>{
     const update=()=>{
       try {
         const pads=Array.from(navigator.getGamepads?.()??[]).filter((p):p is Gamepad=>!!p?.connected);
-        const pad=pads.find(p=>p.buttons.some(b=>b.pressed)||p.axes.some(a=>Math.abs(a)>.55))??pads[0];
+        const pad=pads.find(p=>p.buttons.some(b=>b.pressed))??pads.find(p=>previewPadButtons(p).size>0)??pads[0];
         if(!pad){setStatus('No controller detected — press a controller button');return;}
         const held=pad.buttons.flatMap((b,i)=>b.pressed?[i]:[]);
         setStatus(`${pad.id}${held.length?' · Button '+held.join(', '):' · Connected'}`);
@@ -247,6 +254,7 @@ function ControllerTest() {
       {([[11,'←'],[9,'↑'],[10,'↓'],[12,'→'],[1,'A / Enter'],[2,'B / Back']] as const).map(([button,label])=><button key={button} aria-label={`Preview navigation ${label}`} title={button===11?'Scroll left':button===12?'Scroll right':label} onPointerDown={e=>e.preventDefault()} onClick={()=>window.dispatchEvent(new CustomEvent('preview-controller-input',{detail:button}))} style={{minWidth:38,padding:'8px 12px',background:'#285c75',color:'#d9f4ff',border:'1px solid #6fa7bc',borderRadius:3,cursor:'pointer'}}>{label}</button>)}
     </div>
     <span role="status" aria-label="Controller status">{status}</span>
+    <span role="status" aria-label="Last preview input">{input.label}{input.count?` · Press ${input.count}`:''}</span>
     <span>D-pad / left stick: move · A: select · B: back · X: play · Y: options</span>
     <span>Keyboard: hold ← / → to scroll · ↑ / ↓ to move · Enter to select · Escape to go back. Page Up / Page Down also scroll.</span>
   </div>;

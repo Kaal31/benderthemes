@@ -174,3 +174,10 @@ The open-page category strips use equal-width buttons with a narrow gap of 0.4% 
 
 
 Game preview Back captures its currently visible transform before canceling an interrupted entrance. Its exit remains filled until unmount, preventing the panel from flashing back to its resting position when returning to Library. The modal input layer unregisters during layout cleanup. Detail panes retain vertical scrolling but hide both Chromium and standards-based scrollbar chrome; focused actions are scrolled into view within their own pane without moving the page. `old-beta-game-return-check.mjs` covers ribbon navigation, hidden scrollbars, focus visibility, return focus, interrupted entrance and reduced-motion cleanup.
+
+
+## Physical gamepad preview input
+
+The preview’s shared gamepad adapter gives digital D-pad input priority over analog directions. It no longer interprets right-stick/legacy trigger axes as menu navigation. A displaced left stick must recenter after D-pad use, preventing an opposing analog event from undoing the digital move on release. Press/release edges and directional repeat timers are tracked per button; controller changes and hidden/disconnected states release held inputs. This adapter is preview-only; native Steam controller handling remains in Steam’s Focusable event stream.
+
+Controller testing now shows the latest input source/button and a physical press counter (held repeats do not increment it), distinguishing Gamepad API input from keyboard-mapped controllers. `tests/preview-controller-input.mjs` covers opposing stick input, legacy axes, multiple controllers, repeat timing, neutral rearm and disconnects. `old-beta-physical-gamepad-check.mjs` injects Gamepad API snapshots and tests first-press navigation across the main menu, Community, Library, game preview and Store. These are simulated controller tests, not verification with the user’s physical device.
