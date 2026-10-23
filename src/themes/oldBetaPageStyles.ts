@@ -4,6 +4,11 @@ export const OLD_BETA_PAGE_CSS=`
 .dht-oldbeta .beta-browser-options button{padding:6px 4px;text-align:left;font-size:calc(var(--beta-w)*.011);border:1px solid transparent;min-height:calc(var(--beta-h)*.038)}
 .dht-oldbeta .beta-browser-options button:focus{background:linear-gradient(#d9e0e5,#aebcc6);border-color:#fff;color:#203447;box-shadow:0 0 5px #d4edff}
 .dht-oldbeta .beta-browser-options-shade>p{position:absolute;top:73%;font-size:calc(var(--beta-w)*.012)}.dht-oldbeta .beta-browser-options-hints{position:absolute;bottom:4%;background:#07131f;padding:8px;display:flex;gap:20px}
+.dht-oldbeta[data-mode=recent] .beta-categories{top:4%;width:46%;height:5%;transition:none}
+.dht-oldbeta[data-mode=recent] .beta-categories button{width:auto;flex:1;font-size:calc(var(--beta-w)*.013);padding:0}
+.dht-oldbeta[data-mode=recent] .beta-categories::before{top:0;bottom:0}
+.dht-oldbeta[data-mode=recent] .beta-categories button[aria-pressed=true]{transform:none}
+.dht-oldbeta .beta-page-departure{pointer-events:none!important}
 .dht-oldbeta .beta-home-scene{position:absolute;inset:0}
 .dht-oldbeta .beta-home-scene[inert] *{animation-play-state:paused!important}
 .dht-oldbeta[data-mode=games] .beta-categories{visibility:hidden}

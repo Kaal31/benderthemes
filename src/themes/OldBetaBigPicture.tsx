@@ -3,6 +3,7 @@ import {GameArt,Icon,useHome} from '../common';
 import {ThemeRoot,Press} from '../input';
 import {Game} from '../library';
 import {useFriends} from '../activity';
+import {captureBetaPage,animateBetaPageSwitch} from './betaPageSwitch';
 import {communitySlots,CommunitySlot} from './betaCommunitySlots';
 import {loadStoreLists,StoreItem} from '../store';
 import {ProfileAvatar} from '../ProfileAvatar';
@@ -37,6 +38,7 @@ export function OldBetaBigPictureHome(){
  const focusStarts=useRef<Map<number,{transform:string;opacity:string}>>(new Map());
  const storePeel=useRef<HTMLElement|null>(null),storePeelCancel=useRef<(()=>void)|null>(null);
  const motion=useRef<Animation[]>([]),pendingOpen=useRef<ReturnType<typeof setTimeout>|null>(null),opening=useRef(false),previousCategory=useRef(1),coverStart=useRef<Map<number,CoverPose>|null>(null),boardStart=useRef<SheetPose|null>(null),rearStart=useRef<{node:HTMLElement;transform:string;translate:string;opacity:string}[]>([]),previousMode=useRef<Mode>('sheet');
+ const pageSwitch=useRef<{departure:HTMLElement;direction:number}|null>(null),pageSwitchCancel=useRef<(()=>void)|null>(null),switchingPage=useRef(false);
  const [mode,setMode]=useState<Mode>('sheet'),[category,setCategory]=useState(1),[selected,setSelected]=useState(0);
  const categoryRef=useRef(category);categoryRef.current=category;
  const [size,setSize]=useState({w:1280,h:800}),[filter,setFilter]=useState('all'),[query,setQuery]=useState('');
@@ -60,7 +62,7 @@ export function OldBetaBigPictureHome(){
  useEffect(()=>{const media=matchMedia('(prefers-reduced-motion: reduce)'),stop=()=>{if(media.matches||!api.settings.animations){stopMotion();storePeelCancel.current?.();}};stop();media.addEventListener('change',stop);return()=>media.removeEventListener('change',stop);},[api.settings.animations]);
  useLayoutEffect(()=>{
   const prior=previousCategory.current;previousCategory.current=category;
-  if(mode!=='sheet'||prior===category||!root.current||!motionEnabled())return;
+  if(pageSwitch.current||mode!=='sheet'||prior===category||!root.current||!motionEnabled())return;
   stopMotion();const direction=category>prior?1:-1;
   const sheets=[root.current.querySelector<HTMLElement>('.beta-store-sheet'),root.current.querySelector<HTMLElement>('.beta-cover-board'),root.current.querySelector<HTMLElement>('.beta-community-sheet')];
   const incoming=sheets[category],outgoing=sheets[prior];
@@ -144,6 +146,21 @@ export function OldBetaBigPictureHome(){
  const changeMode=(next:Mode)=>{if(opening.current)return;if((mode==='sheet'&&next==='recent')||(mode==='recent'&&next==='sheet')){coverStart.current=new Map([...cards.current].map(([id,n])=>{const s=getComputedStyle(n);return [id,{transform:s.transform,width:s.width,height:s.height,translate:s.translate,opacity:s.visibility==='hidden'?'0':s.opacity}];}));const board=root.current?.querySelector<HTMLElement>('.beta-cover-board');if(board){const s=getComputedStyle(board);boardStart.current={transform:s.transform,left:s.left,top:s.top};}rearStart.current=[...root.current?.querySelectorAll<HTMLElement>('.beta-rear-cover')??[]].map(node=>{const s=getComputedStyle(node);return {node,transform:s.transform,translate:s.translate,opacity:s.opacity};});}if(mode==='sheet'&&next==='recent')setSelected(Math.min(2,Math.max(0,games.length-1)));setMode(next);playSound(next==='sheet'?'back':'open');};
  const choose=(index:number)=>{const next=Math.max(0,Math.min(games.length-1,index));setSelected(next);cards.current.get(games[next]?.appid)?.focus({preventScroll:true});playSound('move');};
  const activate=(g:Game)=>api.activate(g,()=>{setGame(g);go('detail');});
+ const switchPage=(next:number)=>{
+  const node=root.current;if(!node||opening.current)return;
+  const previous=destination==='store'?0:destination==='community'?2:1;if(previous===next)return;
+  pageSwitchCancel.current?.();pageSwitchCancel.current=null;
+  const departure=motionEnabled()?captureBetaPage(node):null;
+  stopMotion();coverStart.current=null;boardStart.current=null;
+  switchingPage.current=!!departure;
+  if(departure)pageSwitch.current={departure,direction:next>previous?1:-1};
+  categoryRef.current=next;setCategory(next);
+  if(next===1){setSelected(Math.min(2,Math.max(0,games.length-1)));setMode('recent');setDestination(null);}
+  else setDestination(next===0?'store':'community');
+ };
+ useLayoutEffect(()=>{const pending=pageSwitch.current;if(!pending||!root.current)return;pageSwitch.current=null;pageSwitchCancel.current=animateBetaPageSwitch(root.current,pending.departure,pending.direction,()=>{switchingPage.current=false;});},[destination,mode,category]);
+ useEffect(()=>()=>{pageSwitchCancel.current?.();pageSwitch.current?.departure.remove();},[]);
+ useEffect(()=>{const q=matchMedia('(prefers-reduced-motion: reduce)'),finish=()=>{if(q.matches||!api.settings.animations)pageSwitchCancel.current?.();};q.addEventListener('change',finish);finish();return()=>q.removeEventListener('change',finish);},[api.settings.animations]);
  const selectCategory=()=>category===1?changeMode('recent'):go(category===0?'store':'community');
  function input({btn,repeat}:Press){
   if(api.busy)return false;if(opening.current)return true;
@@ -174,7 +191,7 @@ export function OldBetaBigPictureHome(){
    <style>{OLD_BETA_CSS+OLD_BETA_PAGE_CSS+OLD_BETA_FOCUS_CSS+OLD_BETA_SHEET_CSS}</style><div className="beta-home-scene" ref={n=>{if(n)n.inert=!!destination||searchOpen;}}><div className="beta-ambient" aria-hidden="true">{Array.from({length:26},(_,i)=><i key={i} style={{left:((i*37+9)%100)+'%',top:((i*23+13)%100)+'%','--dot-size':(i%6===0?2.3:.45+(i%5)*.3)+'%','--dot-time':(28+i%7*4)+'s','--dot-delay':(-i*3.7)+'s','--dot-alpha':.055+(i%4)*.023} as CSSProperties}/>)}</div>
    <header className="beta-header"><button aria-label="Profile" onClick={()=>go('profile')}><span className="beta-avatar"><ProfileAvatar size={32}/></span></button><div><button aria-label="Settings" onClick={()=>go('settings')}><Icon name="gear" size={22}/></button><button aria-label="Power" onClick={()=>Navigation.OpenPowerMenu()}><Icon name="power" size={22}/></button><span className="beta-stamp">BETA</span></div></header>
    <div className="beta-light" aria-hidden="true"/><div className="beta-focus-light" aria-hidden="true"/>
-   <nav className="beta-categories" aria-label="Categories">{categories.map((name,index)=><button key={name} data-category={index} aria-pressed={index===category} onFocus={()=>focusCategory(index)} onClick={()=>index===1?changeMode('recent'):go(index===0?'store':'community')}>{name}</button>)}</nav>
+   <nav className="beta-categories" aria-label="Categories">{categories.map((name,index)=><button key={name} data-category={index} aria-pressed={index===category} onFocus={()=>focusCategory(index)} onClick={()=>mode!=='sheet'?switchPage(index):index===1?changeMode('recent'):go(index===0?'store':'community')}>{name}</button>)}</nav>
    {mode==='games'&&<div className="beta-games-toolbar"><h1>Games</h1><div className="beta-collection-picker"><button aria-label="Game collection" aria-haspopup="listbox" aria-expanded={collectionOpen} onClick={()=>{setCollectionIndex(Math.max(0,collectionOptions.findIndex(c=>c.id===filter)));setCollectionOpen(v=>!v);}}>{collectionOptions.find(c=>c.id===filter)?.name??'All Games'} ({games.length})　⌄</button>{collectionOpen&&<div className="beta-collection-options" role="listbox" aria-label="Collections">{collectionOptions.map((c,i)=><button key={c.id} role="option" aria-selected={collectionIndex===i} onMouseEnter={()=>setCollectionIndex(i)} onClick={()=>{setFilter(c.id);setSelected(0);setCollectionOpen(false);}}>{c.name} ({c.count})</button>)}</div>}</div><button aria-label="Search games" onClick={()=>setSearchOpen(true)}>{query||'Search games'}</button></div>}
    <div className="beta-perspective"><div className="beta-secondary-sheet beta-store-sheet" aria-hidden="true">{(largeSheets?[0,1,2,3]:[0,1,2]).map(layer=><div key={layer} className={'beta-store-layer beta-store-layer-'+layer}>{[...storeArt.slice(layer*2),...storeArt.slice(0,layer*2)].slice(0,largeSheets?(layer?8:12):(layer?4:6)).map((item,i)=><div key={item.id} data-appid={item.id} data-sheet-selected={layer===0&&i===Math.min(2,storeArt.length-1)} className="beta-sheet-cover" style={{'--layer':i%3,'--tile-delay':(i%4)*14+'ms','--flow-phase':(-i*3.1-layer*5)+'s'} as CSSProperties}><img src={item.src} alt=""/><span>{item.name}</span></div>)}</div>)}</div><div className="beta-secondary-sheet beta-community-sheet" aria-hidden="true">{(largeSheets?[2,1,0]:[1,0]).map(layer=><div key={layer} className={'beta-community-layer beta-community-layer-'+layer}>{[...friendSlots.slice(layer*4),...friendSlots.slice(0,layer*4)].slice(0,largeSheets?(layer?12:18):(layer?4:8)).map((f,i)=>friendCard(f,i+layer*3,layer===0))}</div>)}</div><div className="beta-cover-board" aria-label="Game covers"><div className="beta-stacked-sheets" aria-hidden="true">{(largeSheets?[1,2,3,4]:[1,2]).map(layer=><div key={layer} className={'beta-rear-sheet beta-rear-sheet-'+layer} style={{'--sheet-depth':layer} as CSSProperties}>{games.slice(0,largeSheets?10:4).map((g,i)=><div key={g.appid} className="beta-rear-cover" style={{'--flow-phase':(-i*3.7-layer*7)+'s',width:w*sheetUnit,height:w*sheetUnit*215/460,transform:`translate(-50%,-50%) translate3d(${(i%(largeSheets?5:4)-(largeSheets?2:1.5))*w*sheetUnit*(largeSheets?1.0933:.98)+Math.sin(i*2.3+layer)*w*(largeSheets?.018:.006)}px,${(Math.floor(i/(largeSheets?5:4))-(largeSheets?1.2:.3))*w*sheetUnit*215/460*(largeSheets?1.13:.96)+Math.cos(i*1.7+layer)*h*(largeSheets?.02:.008)}px,${(i%3)*12}px) rotateZ(${Math.sin(i+layer)*4}deg) scale(${.91+(i%4)*.055})`} as CSSProperties}><GameArt g={games[(i+layer*3)%games.length]} kind="landscape" flat style={{width:'100%',height:'100%'}}/></div>)}</div>)}</div>{games.map((g,index)=>{
     const sheetColumn=index%5,sheetRow=Math.floor(index/5),distance=Math.abs(index-selected);
@@ -192,8 +209,8 @@ export function OldBetaBigPictureHome(){
   {(destination==='web'||destination==='friends')&&<OldBetaPages key={destination} kind={destination} session={browserSession.current} onExit={()=>setDestination(null)}/>}
   {destination==='detail'&&game&&<OldBetaGame game={game} onExit={()=>setDestination(null)} onWeb={()=>setDestination('web')} onFriends={()=>setDestination('friends')}/>}
   {destination==='settings'&&<OldBetaSettings onExit={()=>setDestination(null)} onReturnStart={restoreSettingsHome}/>}
-  {destination==='community'&&communityRibbon&&<OldBetaCommunity onExit={()=>setDestination(null)} onWeb={()=>setDestination('web')} onFriends={()=>setDestination('friends')} onStore={()=>{setCategory(0);setDestination('store');}} onLibrary={()=>{setCategory(1);changeMode('recent');setDestination(null);}}/>}
-  {destination==='store'&&<OldBetaStore onFold={foldStore} initialFeatured={storeCovers} skipIntro={!!storePeel.current} onExit={()=>setDestination(null)} onWeb={()=>setDestination('web')} onFriends={()=>setDestination('friends')} onLibrary={()=>{setCategory(1);changeMode('recent');setDestination(null);}} onCommunity={()=>setDestination('community')}/>}
+  {destination==='community'&&communityRibbon&&<OldBetaCommunity skipIntro={switchingPage.current} onExit={()=>setDestination(null)} onWeb={()=>setDestination('web')} onFriends={()=>setDestination('friends')} onStore={()=>switchPage(0)} onLibrary={()=>switchPage(1)}/>}
+  {destination==='store'&&<OldBetaStore onFold={foldStore} initialFeatured={storeCovers} skipIntro={!!storePeel.current||switchingPage.current} onExit={()=>setDestination(null)} onWeb={()=>setDestination('web')} onFriends={()=>setDestination('friends')} onLibrary={()=>switchPage(1)} onCommunity={()=>switchPage(2)}/>}
   {searchOpen&&<OldBetaKeyboard label="Search games" value={query} onChange={value=>{setQuery(value);setSelected(0);}} onDone={()=>setSearchOpen(false)} onSubmit={()=>setSearchOpen(false)}/>}
   </div>
  </ThemeRoot>;
