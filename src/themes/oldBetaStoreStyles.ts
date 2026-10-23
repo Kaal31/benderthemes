@@ -1,7 +1,7 @@
 import {BETA_COLD_ART} from './oldBetaSheetStyles';
 export const OLD_BETA_STORE_CSS=`
-.dht-oldbeta .beta-store-page{overflow:clip;background:radial-gradient(ellipse at 65% 30%,#335f79,#102b3c 60%,#071820);--gallery-height:calc(var(--beta-w)*.24*9/16)}
-.dht-oldbeta .beta-store-backdrop{position:absolute;inset:-10%;background-size:cover;background-position:center;filter:blur(22px) saturate(.3);opacity:.13;pointer-events:none;transition:opacity 200ms}
+.dht-oldbeta .beta-store-page{overflow:clip;background:radial-gradient(ellipse at 88% 5%,#344b5d,#172a3a 60%,#0b1825);--gallery-height:calc(var(--beta-w)*.24*9/16)}
+.dht-oldbeta .beta-store-backdrop{position:absolute;inset:-10%;background-size:cover;background-position:center;filter:blur(22px) saturate(.3);opacity:.045;pointer-events:none;transition:opacity 200ms}
 .dht-oldbeta .beta-store-tabs{position:absolute;top:4%;left:27%;right:27%;height:5%;display:flex;gap:4px;z-index:5}
 .dht-oldbeta .beta-store-tabs button{flex:1;background:#0b1e2b;color:#97b4c5;font-size:calc(var(--beta-w)*.013)}
 .dht-oldbeta .beta-store-tabs button[aria-pressed=true]{background:linear-gradient(#ddedf4,#9fbbc9);color:#416073;box-shadow:0 0 11px #86bbd24d}
@@ -13,7 +13,7 @@ export const OLD_BETA_STORE_CSS=`
 .dht-oldbeta .beta-store-snapshot{pointer-events:none;z-index:2}
 .dht-oldbeta .beta-store-stage h1{position:absolute;left:5.5%;top:2%;margin:0;font-size:calc(var(--beta-w)*.029);font-weight:400;line-height:1.15}
 .dht-oldbeta .beta-store-stage h1 small{display:block;font-size:.4em;font-weight:400;margin-top:3px}
-.dht-oldbeta .beta-store-featured{position:absolute;top:20%;left:0;right:0;height:43%;overflow:visible}
+.dht-oldbeta .beta-store-featured{position:absolute;top:10%;left:0;right:0;height:43%;overflow:visible}
 .dht-oldbeta .beta-store-cover-track{display:flex;align-items:center;height:100%;gap:0;transition:transform 190ms cubic-bezier(.22,.61,.36,1);will-change:transform}
 .dht-oldbeta .beta-store-page .beta-store-card{position:relative;flex:0 0 calc(var(--beta-w)*.24);padding:0;border:2px solid transparent;z-index:1;transform:scale(1);outline:0;transition:transform 180ms cubic-bezier(.22,.61,.36,1),border-color 150ms,box-shadow 180ms}
 .dht-oldbeta .beta-store-card img{display:block;width:100%;aspect-ratio:460/215;object-fit:cover;filter:${BETA_COLD_ART};transition:filter 180ms ease-out}
@@ -22,8 +22,9 @@ export const OLD_BETA_STORE_CSS=`
 .dht-oldbeta .beta-store-featured .beta-store-card img{aspect-ratio:16/9}
 .dht-oldbeta .beta-store-featured .beta-store-card[data-selected=true]{transform:scale(1.3)}
 .dht-oldbeta .beta-store-card>small{position:absolute;right:0;top:calc(100% + 5px);font-size:calc(var(--beta-w)*.009);white-space:nowrap;opacity:.7}
+.dht-oldbeta .beta-store-featured .beta-store-card:not([data-selected=true])>small{visibility:hidden}
 .dht-oldbeta .beta-store-card em{font-style:normal;margin-right:7px;background:#4a703c;color:#d8e9bc;padding:2px 5px}
-.dht-oldbeta .beta-store-sections{position:absolute;left:4.5%;right:4.5%;top:69%;display:flex;gap:.8%;height:19%}
+.dht-oldbeta .beta-store-sections{position:absolute;left:4.5%;right:4.5%;top:66%;display:flex;gap:.8%;height:19%}
 .dht-oldbeta .beta-store-sections button{position:relative;flex:1;min-width:0;overflow:hidden;border:2px solid transparent;font-size:calc(var(--beta-w)*.012)}
 .dht-oldbeta .beta-store-sections img{position:absolute;inset:0;width:100%;height:100%;object-fit:cover;filter:grayscale(1) brightness(.35);transition:filter 160ms}
 .dht-oldbeta .beta-store-sections span{position:absolute;left:0;right:0;bottom:0;background:#081b27b0;padding:7px 2px}
