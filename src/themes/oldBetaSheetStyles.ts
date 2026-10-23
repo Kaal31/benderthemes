@@ -1,8 +1,9 @@
 /** Cold inactive artwork and the smaller reference composition. */
 export const BETA_COLD_ART='grayscale(1) sepia(1) hue-rotate(165deg) saturate(.65) brightness(.66)';
+const SHEET_ART='grayscale(.92) sepia(.6) hue-rotate(165deg) saturate(.55) brightness(.76)';
 export const OLD_BETA_SHEET_CSS=`
 .dht-oldbeta[data-mode=sheet][data-opening=true][data-store-open=true] .beta-categories{top:39%}
-.dht-oldbeta[data-mode=sheet] .beta-cover img,.dht-oldbeta .beta-store-sheet .beta-sheet-cover img,.dht-oldbeta .beta-rear-cover img{filter:${BETA_COLD_ART};transition:filter 240ms ease-out}
+.dht-oldbeta[data-mode=sheet] .beta-cover img,.dht-oldbeta .beta-store-sheet .beta-sheet-cover img,.dht-oldbeta .beta-rear-cover img{filter:${SHEET_ART};transition:filter 240ms ease-out}
 .dht-oldbeta[data-mode=sheet] .beta-cover[data-sheet-selected=true] img,.dht-oldbeta .beta-store-layer-0 .beta-sheet-cover[data-sheet-selected=true] img{filter:none}
 .dht-oldbeta:not([data-mode=sheet]) .beta-cover img{filter:${BETA_COLD_ART}}.dht-oldbeta:not([data-mode=sheet]) .beta-cover[data-selected=true] img{filter:none}
 .dht-oldbeta .beta-community-layer .beta-sheet-friend .beta-friend-avatar img{filter:${BETA_COLD_ART};transition:filter 240ms ease-out}.dht-oldbeta .beta-community-layer-0 .beta-sheet-friend[data-sheet-selected=true] .beta-friend-avatar img{filter:none}
@@ -26,8 +27,8 @@ export const OLD_BETA_SHEET_CSS=`
 .dht-oldbeta[data-sheet-layout=reference] .beta-community-layer-0 .beta-sheet-friend[data-sheet-selected=true]>span:last-child{position:absolute;left:calc(50% + var(--beta-w)*.039);white-space:nowrap}
 /* Peripheral artwork recedes into haze; the central colored capsule stays crisp. */
 .dht-oldbeta[data-sheet-layout=reference][data-mode=sheet] .beta-cover[data-sheet-edge=true] img,
-.dht-oldbeta[data-sheet-layout=reference] .beta-store-layer-0 .beta-sheet-cover:not([data-sheet-selected=true]) img{filter:${BETA_COLD_ART} brightness(.78) blur(.45px)}
-.dht-oldbeta[data-sheet-layout=reference] .beta-rear-sheet-3 img{filter:${BETA_COLD_ART} brightness(.75) blur(1px)}
+.dht-oldbeta[data-sheet-layout=reference] .beta-store-layer-0 .beta-sheet-cover:not([data-sheet-selected=true]) img{filter:${SHEET_ART} brightness(.88) blur(.35px)}
+.dht-oldbeta[data-sheet-layout=reference] .beta-rear-sheet-3 img{filter:${SHEET_ART} brightness(.82) blur(.8px)}
 .dht-oldbeta .beta-cover{transition-property:transform,opacity}
 .dht-oldbeta[data-mode=sheet] .beta-cover,.dht-oldbeta[data-carousel-entering=true] .beta-cover{transition:none}
 /* Artwork lies directly on the sheet: no blue casing or illuminated seams. */
@@ -35,4 +36,7 @@ export const OLD_BETA_SHEET_CSS=`
 .dht-oldbeta[data-mode=sheet] .beta-cover::after{background:none;box-shadow:none}
 .dht-oldbeta[data-sheet-layout=reference] .beta-store-layer .beta-sheet-cover{transform:none;scale:1;rotate:0deg}
 .dht-oldbeta[data-sheet-layout=reference] .beta-store-layer{gap:0}
+/* Steeper diagonal and less foreshortening match the readable reference capsules. */
+.dht-oldbeta[data-sheet-layout=reference][data-mode=sheet] .beta-cover-board{transform:rotateX(48deg) rotateZ(-28deg) scale(.84)}
+.dht-oldbeta[data-sheet-layout=reference][data-mode=sheet][data-category="0"] .beta-store-sheet{transform:translate(-50%,-50%) translate3d(3%,0,0) rotateX(48deg) rotateZ(-28deg) scale(.94)}
 `;
