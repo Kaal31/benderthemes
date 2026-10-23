@@ -16,11 +16,18 @@ export const OLD_BETA_SHEET_CSS=`
 .dht-oldbeta[data-sheet-layout=reference] .beta-store-layer-0 .beta-sheet-cover[data-sheet-selected=true]{grid-column:2;grid-row:1}
 .dht-oldbeta[data-sheet-layout=reference] .beta-store-layer-1{transform:translate3d(-3%,15%,-36px) scale(.96)}.dht-oldbeta[data-sheet-layout=reference] .beta-store-layer-2{transform:translate3d(3%,30%,-72px) scale(.92)}
 .dht-oldbeta[data-sheet-layout=reference][data-mode=sheet] .beta-cover-board{left:50%;top:35.5%}
-.dht-oldbeta[data-sheet-layout=reference] .beta-rear-sheet{transform:translate3d(var(--sheet-offset,0px),calc(var(--sheet-depth)*18px),calc(var(--sheet-depth)*-30px)) rotateZ(calc((var(--sheet-depth) - 2)*.5deg))}.dht-oldbeta[data-sheet-layout=reference] .beta-rear-sheet-1{--sheet-offset:-20px}.dht-oldbeta[data-sheet-layout=reference] .beta-rear-sheet-2{--sheet-offset:16px}
-.dht-oldbeta[data-sheet-layout=reference] .beta-store-layer-2 .beta-sheet-cover:nth-last-child(-n+2),.dht-oldbeta[data-sheet-layout=reference] .beta-rear-sheet-2 .beta-rear-cover:nth-last-child(-n+2){--flow-alpha:.48}
+.dht-oldbeta[data-sheet-layout=reference] .beta-rear-sheet{transform:translate3d(var(--sheet-offset,0px),calc((var(--sheet-depth) - 1)*38px),calc(var(--sheet-depth)*-32px)) rotateZ(calc((var(--sheet-depth) - 2)*.5deg))}.dht-oldbeta[data-sheet-layout=reference] .beta-rear-sheet-1{--sheet-offset:-20px}.dht-oldbeta[data-sheet-layout=reference] .beta-rear-sheet-2{--sheet-offset:16px}
+.dht-oldbeta[data-sheet-layout=reference] .beta-rear-sheet-3{--sheet-offset:-12px;--flow-alpha:.48}
+.dht-oldbeta[data-sheet-layout=reference] .beta-store-layer-2 .beta-sheet-cover:nth-last-child(-n+2){--flow-alpha:.48}
 .dht-oldbeta[data-sheet-layout=reference] .beta-community-sheet{width:calc(var(--beta-w)*.34);left:50%;top:40%}
 .dht-oldbeta[data-sheet-layout=reference] .beta-community-layer{grid-template-columns:repeat(3,minmax(0,1fr));grid-auto-rows:calc(var(--beta-h)*.11);gap:calc(var(--beta-h)*.0025) calc(var(--beta-w)*.001)}
 .dht-oldbeta[data-sheet-layout=reference] .beta-community-layer .beta-friend-avatar{width:calc(var(--beta-w)*.068);height:calc(var(--beta-w)*.068)}
 .dht-oldbeta[data-sheet-layout=reference] .beta-community-layer-0 .beta-sheet-friend[data-sheet-selected=true]{grid-column:2;grid-row:1;justify-content:center;position:relative}
 .dht-oldbeta[data-sheet-layout=reference] .beta-community-layer-0 .beta-sheet-friend[data-sheet-selected=true]>span:last-child{position:absolute;left:calc(50% + var(--beta-w)*.039);white-space:nowrap}
+/* Peripheral artwork recedes into haze; the central colored capsule stays crisp. */
+.dht-oldbeta[data-sheet-layout=reference][data-mode=sheet] .beta-cover[data-sheet-edge=true] img,
+.dht-oldbeta[data-sheet-layout=reference] .beta-store-layer-0 .beta-sheet-cover:not([data-sheet-selected=true]) img{filter:${BETA_COLD_ART} brightness(.78) blur(.45px)}
+.dht-oldbeta[data-sheet-layout=reference] .beta-rear-sheet-3 img{filter:${BETA_COLD_ART} brightness(.75) blur(1px)}
+.dht-oldbeta .beta-cover{transition-property:transform,opacity}
+.dht-oldbeta[data-mode=sheet] .beta-cover,.dht-oldbeta[data-carousel-entering=true] .beta-cover{transition:none}
 `;
