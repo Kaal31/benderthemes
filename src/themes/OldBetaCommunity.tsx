@@ -14,11 +14,29 @@ export function OldBetaCommunity({onExit,onWeb,onFriends,onStore,onLibrary}:{onE
  useEffect(()=>{if(!entries.length){setFeed(false);setActivity(0);if(feed)choose(selected);}},[entries.length]);
  useEffect(()=>{setSelected(i=>Math.min(i,Math.max(0,friends.length-1)));},[friends.length]);
  const motion=()=>api.settings.animations&&!matchMedia('(prefers-reduced-motion: reduce)').matches;
- const animate=(node:HTMLElement,frames:Keyframe[],duration:number,done?:()=>void)=>{if(!motion()){done?.();return;}const a=node.animate(frames,{duration,easing:'cubic-bezier(.25,.46,.45,.94)',fill:'forwards'});motions.current.push(a);a.finished.then(()=>{done?.();a.cancel();}).catch(()=>{});};
+ const animate=(node:HTMLElement,frames:Keyframe[],duration:number,done?:()=>void,easing='cubic-bezier(.25,.46,.45,.94)')=>{if(!motion()){done?.();return;}const a=node.animate(frames,{duration,easing,fill:'forwards'});motions.current.push(a);a.finished.then(()=>{done?.();if(!closing.current)a.cancel();}).catch(()=>{});};
  useLayoutEffect(()=>{const node=root.current;if(node){animate(node,[{opacity:.2},{opacity:1}],300);const row=node.querySelector<HTMLElement>('.beta-community-row'),tabs=node.querySelector<HTMLElement>('.beta-community-tabs'),preview=node.querySelector<HTMLElement>('.beta-community-feed');if(row){const target=getComputedStyle(row).transform;animate(row,[{transform:target+' perspective(1200px) rotateX(53deg) rotateZ(-23deg) scale(.85)'},{transform:target+' rotateX(25deg) rotateZ(-10deg)',offset:.5},{transform:target}],400);}if(tabs)animate(tabs,[{top:'44%',scale:'1.4'},{top:'4%',scale:'1'}],400);if(preview&&motion()){const a=preview.animate([{transform:'perspective(1000px) rotateX(53deg) rotateZ(-9deg) translateY(-20px)',opacity:0},{transform:'none',opacity:1}],{duration:400,delay:400,fill:'both',easing:'cubic-bezier(.25,.46,.45,.94)'});motions.current.push(a);a.finished.then(()=>a.cancel()).catch(()=>{});preview.querySelectorAll<HTMLElement>('.beta-community-activity-chip').forEach((leaf,i)=>{const reveal=leaf.animate([{transform:'translate3d(-18px,-28px,-20px) rotateY(-45deg)',opacity:0},{transform:'none',opacity:1}],{duration:360,delay:440+i*18,fill:'both',easing:'cubic-bezier(.25,.46,.45,.94)'});motions.current.push(reveal);reveal.finished.then(()=>reveal.cancel()).catch(()=>{});});}}node?.querySelector<HTMLButtonElement>('.beta-community-person')?.focus({preventScroll:true});return()=>motions.current.forEach(a=>a.cancel());},[]);
 
  useEffect(()=>{const q=matchMedia('(prefers-reduced-motion: reduce)'),finish=()=>{if(q.matches||!api.settings.animations)motions.current.filter(a=>a.playState==='running').forEach(a=>a.finish());};finish();q.addEventListener('change',finish);return()=>q.removeEventListener('change',finish);},[api.settings.animations]);
- const leave=()=>{if(closing.current)return;closing.current=true;if(root.current)animate(root.current,[{transform:'none',opacity:1},{transform:'perspective(1200px) rotateX(25deg) rotateZ(-12deg) scale(.8)',opacity:0}],400,onExit);else onExit();};
+ const leave=()=>{
+  if(closing.current)return;closing.current=true;const node=root.current;
+  if(!node||!motion()){onExit();return;}
+  // Freeze every in-flight entrance pose before canceling it. A quick Back must
+  // never snap the row/tabs to their resting pose or let a delayed feed reappear.
+  const poses=new Map<HTMLElement,{transform:string;opacity:string;top:string;scale:string;translate:string}>();
+  motions.current.forEach(a=>{const target=(a.effect as KeyframeEffect|null)?.target;if(target instanceof HTMLElement&&!poses.has(target)){const s=getComputedStyle(target);poses.set(target,{transform:s.transform,opacity:s.opacity,top:s.top,scale:s.scale,translate:s.translate});}});
+  poses.forEach((pose,target)=>Object.assign(target.style,pose,{transition:'none'}));
+  motions.current.forEach(a=>a.cancel());motions.current=[];
+  node.dataset.closing='true';node.inert=true;
+  const row=node.querySelector<HTMLElement>('.beta-community-row'),tabs=node.querySelector<HTMLElement>('.beta-community-tabs'),feedNode=node.querySelector<HTMLElement>('.beta-community-feed'),footer=node.querySelector<HTMLElement>('footer');
+  if(row){const s=getComputedStyle(row);animate(row,[{transform:s.transform,opacity:s.opacity},{transform:s.transform+' perspective(1200px) rotateX(35deg) rotateZ(-15deg) scale(.88)',opacity:0}],320);}
+  if(tabs){const s=getComputedStyle(tabs);animate(tabs,[{top:s.top,scale:s.scale},{top:'39%',scale:'1'}],400);}
+  [feedNode,footer].forEach(part=>{if(part){const s=getComputedStyle(part);animate(part,[{opacity:s.opacity},{opacity:0}],180);}});
+  const opacity=getComputedStyle(node).opacity;
+  // Only the content folds. Keep the full-screen backdrop in place until the
+  // old row has faded, then reveal the preserved main menu without tilted edges.
+  animate(node,[{opacity},{opacity,offset:.55},{opacity:0}],400,onExit,'linear');
+ };
  const choose=(i:number)=>{const next=Math.max(0,Math.min(friends.length-1,i));setSelected(next);root.current?.querySelector<HTMLButtonElement>(`.beta-community-person[data-index="${next}"]`)?.focus({preventScroll:true});};
  useLayoutEffect(()=>{if(!prompt)choose(selected);},[prompt]);
  handler.current=({btn})=>{if(closing.current)return true;if(btn==='b'){if(feed){setFeed(false);choose(selected);}else leave();return true;}if(btn==='l1'){onWeb();return true;}if(btn==='r1'){onFriends();return true;}if(btn==='y'||btn==='menu'){api.openSettings();return true;}if(btn==='down'){if(!entries.length)return true;setFeed(true);requestAnimationFrame(()=>root.current?.querySelector<HTMLButtonElement>('.beta-community-activity-chip')?.focus({preventScroll:true}));return true;}if(btn==='up'){setFeed(false);choose(selected);return true;}if(btn==='left'||btn==='right'){if(feed){const next=Math.max(0,Math.min(entries.length-1,activity+(btn==='right'?1:-1)));setActivity(next);root.current?.querySelectorAll<HTMLButtonElement>('.beta-community-activity-chip')[next]?.focus({preventScroll:true});}else choose(selected+(btn==='right'?1:-1));return true;}if(btn==='a')(document.activeElement as HTMLElement)?.closest('button')?.click();return true;};
