@@ -14,10 +14,10 @@ export const OLD_BETA_SHEET_CSS=`
 .dht-oldbeta[data-sheet-layout=reference] .beta-store-sheet{width:calc(var(--beta-w)*.67);left:50%;top:40%}
 .dht-oldbeta[data-sheet-layout=reference] .beta-store-layer{grid-template-columns:repeat(3,minmax(0,1fr));gap:calc(var(--beta-w)*.004)}
 .dht-oldbeta[data-sheet-layout=reference] .beta-store-layer-0 .beta-sheet-cover[data-sheet-selected=true]{grid-column:2;grid-row:1}
-.dht-oldbeta[data-sheet-layout=reference] .beta-store-layer-1{transform:translate3d(-3%,15%,-36px) scale(.96)}.dht-oldbeta[data-sheet-layout=reference] .beta-store-layer-2{transform:translate3d(3%,30%,-72px) scale(.92)}
+.dht-oldbeta[data-sheet-layout=reference] .beta-store-layer-1{transform:translate3d(-9%,35%,-24px) scale(1.08)}.dht-oldbeta[data-sheet-layout=reference] .beta-store-layer-2{transform:translate3d(-15%,60%,-48px) scale(1.12)}
 .dht-oldbeta[data-sheet-layout=reference][data-mode=sheet] .beta-cover-board{left:50%;top:35.5%}
-.dht-oldbeta[data-sheet-layout=reference] .beta-rear-sheet{transform:translate3d(var(--sheet-offset,0px),calc((var(--sheet-depth) - 1)*38px),calc(var(--sheet-depth)*-32px)) rotateZ(calc((var(--sheet-depth) - 2)*.5deg))}.dht-oldbeta[data-sheet-layout=reference] .beta-rear-sheet-1{--sheet-offset:-20px}.dht-oldbeta[data-sheet-layout=reference] .beta-rear-sheet-2{--sheet-offset:16px}
-.dht-oldbeta[data-sheet-layout=reference] .beta-rear-sheet-3{--sheet-offset:-12px;--flow-alpha:.48}
+.dht-oldbeta[data-sheet-layout=reference] .beta-rear-sheet{transform:translate3d(var(--sheet-offset,0px),calc(var(--sheet-depth)*var(--beta-h)*.065),calc(var(--sheet-depth)*-24px)) rotateZ(calc((var(--sheet-depth) - 2)*.5deg)) scale(calc(1 + var(--sheet-depth)*.055))}.dht-oldbeta[data-sheet-layout=reference] .beta-rear-sheet-1{--sheet-offset:calc(var(--beta-w)*-.045)}.dht-oldbeta[data-sheet-layout=reference] .beta-rear-sheet-2{--sheet-offset:calc(var(--beta-w)*-.065)}
+.dht-oldbeta[data-sheet-layout=reference] .beta-rear-sheet-3{--sheet-offset:calc(var(--beta-w)*-.085);--flow-alpha:.48}
 .dht-oldbeta[data-sheet-layout=reference] .beta-store-layer-2 .beta-sheet-cover:nth-last-child(-n+2){--flow-alpha:.48}
 .dht-oldbeta[data-sheet-layout=reference] .beta-community-sheet{width:calc(var(--beta-w)*.34);left:50%;top:40%}
 .dht-oldbeta[data-sheet-layout=reference] .beta-community-layer{grid-template-columns:repeat(3,minmax(0,1fr));grid-auto-rows:calc(var(--beta-h)*.11);gap:calc(var(--beta-h)*.0025) calc(var(--beta-w)*.001)}
