@@ -1,6 +1,6 @@
 # Themezer conversion audit
 
-40 themes, including 32 expanded cases (16 in the latest batch). 0 contain unsupported entries, totaling 0 warnings (0 distinct diagnostic messages). 1 artwork-only fixture. 0 browser errors; 0 render failures.
+52 themes, including 44 expanded cases (12 in the latest batch). 0 contain unsupported entries, totaling 0 warnings (0 distinct diagnostic messages). 1 artwork-only fixture. 0 browser errors; 0 render failures.
 
 Counts represent diagnostics across the corpus, not distinct underlying format properties. Zero warnings does not establish visual parity. 29 native loader no-op properties are listed separately and are not converted shader features.
 
@@ -46,6 +46,18 @@ Counts represent diagnostics across the corpus, not distinct underlying format p
 | [Seamless V2 - Color in the Dark](https://themezer.net/switch/themes/seamless-v2-color-in-the-dark-796D) | Yes | 0 |
 | [Seamless - The Matrix](https://themezer.net/switch/themes/seamless-the-matrix-13696) | Yes | 0 |
 | [JahadTK Pitch Black Home](https://themezer.net/switch/themes/jahadtk-pitch-black-home-5D03) | Yes | 0 |
+| [Project Clean - Home](https://themezer.net/switch/themes/project-clean-home-E87B) | Yes | 0 |
+| [Vertical Lava Lamp Blue - HomeLayout](https://themezer.net/switch/themes/vertical-lava-lamp-blue-homelayout-F5C1) | Yes | 0 |
+| [MK Switch 2 Edition - Home Menu](https://themezer.net/switch/themes/mk-switch-2-edition-home-menu-1360A) | Yes | 0 |
+| [BLACK EDITION:  NES: Jumping Mario [SWITCH REMAKE]](https://themezer.net/switch/themes/black-edition-nes-jumping-mario-switch-remake-EDE3) | Yes | 0 |
+| [Kotone P5X Home Menu](https://themezer.net/switch/themes/kotone-p5x-home-menu-1F098) | Yes | 0 |
+| [devil may cry home](https://themezer.net/switch/themes/devil-may-cry-home-13782) | Yes | 0 |
+| [nfsu home menu](https://themezer.net/switch/themes/nfsu-home-menu-1EFD1) | Yes | 0 |
+| [Pixel Halloween Home Menu (Dark Mansion)](https://themezer.net/switch/themes/pixel-halloween-home-menu-dark-mansion-1F012) | Yes | 0 |
+| [Green Floral home](https://themezer.net/switch/themes/green-floral-home-183BE) | Yes | 0 |
+| [sewerslvt homemenu](https://themezer.net/switch/themes/sewerslvt-homemenu-1F043) | Yes | 0 |
+| [Windows XP home](https://themezer.net/switch/themes/windows-xp-home-F068) | Yes | 0 |
+| [Lava Lamp Dark - Homelayout](https://themezer.net/switch/themes/lava-lamp-dark-homelayout-F5EB) | Yes | 0 |
 
 ## Categories
 
@@ -85,5 +97,17 @@ Counts represent diagnostics across the corpus, not distinct underlying format p
 - **Seamless V2 - Color in the Dark:** Fixed in the shared renderer: initially hidden decorative panes can become visible through FLVI and their motion now paints. The comparison focuses All Software. Symbol shapes, launcher focus treatment, footer placement and contrast remain inaccurate; account/game data and phase differ.
 - **Seamless - The Matrix:** Matrix wallpaper, enlarged selection and title render. FLVI now reveals initially hidden animated elements. Native symbol/cursor shapes, footer treatment and service text remain approximate; background phase and host data differ from the reference.
 - **JahadTK Pitch Black Home:** Black wallpaper, lower Flow cover row and top applet group render. Selected title and frame, clock placement and glyph treatment differ. Source game/account data differs.
+- **Project Clean - Home:** Fixed: native focus uses its authored material outline and radius without the generic CSS glow. The archive explicitly hides clock/network roots although the reference shows them; the importer preserves those instructions. Source game and profile content differ.
+- **Vertical Lava Lamp Blue - HomeLayout:** Shared renderer fixes: cursor follows cover bounds; rounded cover and focus shadows exclude the rounded silhouette rather than cutting a rectangle. Transparent shader borders no longer shrink View All picture textures. Game/account data and some font/icon metrics still differ.
+- **MK Switch 2 Edition - Home Menu:** Fixed: the modern virtual-card shell no longer hides digital game artwork. Nine applet slots, wallpaper and cover row render. Native glyph variants, focus treatment and host services differ from the screenshot.
+- **BLACK EDITION:  NES: Jumping Mario [SWITCH REMAKE]:** Pixel-art wallpaper, low game row and upper applet band render. Footer controller, notification corners and key masks now render through shared bindings. Profile count, source game art and cursor details differ. The supplied background is static; the name alone does not add a wallpaper animation.
+- **Kotone P5X Home Menu:** Shared renderer restores the repurposed News clock pill. Archive clock coordinates place text about 50px below the included preview; 20.0 and 22.5 HUD resources are identical. A guarded preview-assisted clock anchor centers live digits inside the detected pill. Original pane values are retained. TargetFirmware=2000 selects modern automatically. Game/account data still differ.
+- **devil may cry home:** Fixed: outer game-root motion now moves/enlarges the selected artwork; launcher primitives paint and the footer controller uses the host device. Wallpaper and compact lower row render. Focus-decoration, HUD service symbols and account/game content differ.
+- **nfsu home menu:** Shared fixes restore opaque selection backing, dark caption mask, and modern reference applet dimensions. The archive declares a gray backing while its embedded preview shows near-white; a guarded preview-assisted neutral-fill correction resolves that discrepancy automatically, without editing the archive. Game/account data and Album glyph still differ.
+- **Pixel Halloween Home Menu (Dark Mansion):** Fixed: center All Software launcher is painted above the game scene and its stock A0 texture is reconstructed as shader-generated outline squares. The menu button is clickable and tested. All twelve slots remain in their authored three-row layout. Game/profile content differs.
+- **Green Floral home:** Fixed: transparent launcher primitives paint, rounded picture masks clip badges, and the controller/footer symbols render. Wallpaper and lower cover row follow the authored layout. Source game art, account count and selection styling differ.
+- **sewerslvt homemenu:** Fixed: stretched rounded picture panels retain circular corners; source alpha registers and footer key cutouts render. The comparison explicitly uses Basic White to match the reference; .nxtheme does not store system color mode. Account/game content, native applet variants and focus styling differ.
+- **Windows XP home:** Windows wallpaper, folder applets and bottom game row render. Fixed outer-root focus motion, launcher primitives and footer glyphs. Comparison focuses the seventh slot like the reference. Selected title/cursor details, applet glyphs and source game/account content differ.
+- **Lava Lamp Dark - Homelayout:** Shared renderer fix: shader borders overlay picture textures, restoring the filled View All squares and their close authored spacing. Native focus follows the square cover bounds. Painted cube spacing is tested at wide and narrow widths. Game/account data and font/icon metrics still differ.
 
 ## Per-theme diagnostics

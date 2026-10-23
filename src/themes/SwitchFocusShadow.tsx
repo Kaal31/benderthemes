@@ -14,6 +14,6 @@ export function SwitchFocusShadow({effects,modern,dark}:{effects:Record<string,S
  return <span data-native-focus-shadow="" style={{position:'absolute',inset:0,pointerEvents:'none'}}>{(['P_Main','P_Grow'] as const).map(name=>{
   const node=defaults[name],legacy=name==='P_Main'?'cursor':'cursorGlow',pane=native?.nativePanes?.Cursor3?.[name]??effects[legacy];
   const effect=resolvePalette(mergeSceneEffect(mergeSceneEffect(node.effect,native?.nativeMaterials?.Cursor3?.[name]),pane),dark)!;
-  return effect.Visible===false?null:<SwitchShadow key={name} effect={{...effect,shadowFunction:effect.shadowFunction??0}} alpha={String(node.alpha/255)}/>;
+  return effect.Visible===false?null:<SwitchShadow key={name} effect={{...effect,shadowFunction:effect.shadowFunction??0}} alpha={String(node.alpha/255)} silhouette={(effect.radius??0)>0}/>;
  })}</span>;
 }

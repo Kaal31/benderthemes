@@ -1,0 +1,59 @@
+{
+  "comparedFirmware": [
+    "20.0.0",
+    "22.5.0"
+  ],
+  "resources": [
+    {
+      "resource": "Hud",
+      "firmware20Sha256": "1dcdc4a8491575f67aea5d15c01f2b54c2a713261cd2fbeb23c960e0f2d3ab7c",
+      "firmware22Sha256": "1dcdc4a8491575f67aea5d15c01f2b54c2a713261cd2fbeb23c960e0f2d3ab7c",
+      "identical": true
+    },
+    {
+      "resource": "HudTime",
+      "firmware20Sha256": "5ad595740d72e0f4584b82eba920818bd74d751b351236951bc887856dc7046d",
+      "firmware22Sha256": "5ad595740d72e0f4584b82eba920818bd74d751b351236951bc887856dc7046d",
+      "identical": true
+    },
+    {
+      "resource": "RdtBtnNtf",
+      "firmware20Sha256": "e606fdabd04f2c49eb5dddee23c01fdc5eb62cb516bfab8bff24aab00f6904a7",
+      "firmware22Sha256": "e606fdabd04f2c49eb5dddee23c01fdc5eb62cb516bfab8bff24aab00f6904a7",
+      "identical": true
+    },
+    {
+      "resource": "RdtBtnPvr",
+      "firmware20Sha256": "6fa941e8efa06bb0fd08b224d02ba44b4e5a39402bfcfaeb6594e95249bc8242",
+      "firmware22Sha256": "6fa941e8efa06bb0fd08b224d02ba44b4e5a39402bfcfaeb6594e95249bc8242",
+      "identical": true
+    },
+    {
+      "resource": "RdtBtnCtrl",
+      "firmware20Sha256": "7ab266161fac63111170f6342a8e3be319d931ff7083dfbc1f8c7b638f50ea37",
+      "firmware22Sha256": "7ab266161fac63111170f6342a8e3be319d931ff7083dfbc1f8c7b638f50ea37",
+      "identical": true
+    },
+    {
+      "resource": "RdtBase",
+      "firmware20Sha256": "e3dcb47c506f22ad7879d9a3b7328351610ba7253c6494cd636f2e8280bf41d4",
+      "firmware22Sha256": "453f346107e2c13ecae92fb9a7d8c2d839d7ec21f3ccedb771a653772563ca21",
+      "identical": false
+    }
+  ],
+  "kotoneClock": {
+    "sourceHudY": -425,
+    "sourceTimeY": 685,
+    "sourceComputedCenterY": 100,
+    "referencePillCenterY": 50,
+    "finding": "The archive places the clock 50px below the reference backing. Hud, HudTime and the News backing base are byte-identical in 20.0.0 and 22.5.0. The clock backing was previously lost due to an extra standalone root Position; it is now restored. Remaining text offset is not explained by these firmware layouts.",
+    "resolution": "Guarded preview-assisted clock anchor validates a dark clock pill with white glyphs in the embedded author preview, then aligns live clock glyphs to the rendered pill. No archive edits or theme-ID rules."
+  },
+  "firmware23": {
+    "archiveMembers": 238,
+    "homeMenuIdentified": true,
+    "validResourceDecryption": false,
+    "usedAsRendererBaseline": false,
+    "finding": "The provided 23.0.1 archive matches the cached input. Header identification succeeds, but extracted Home Menu sections fail integrity/valid RomFS checks with available keys. No unverified numeric defaults were generated."
+  }
+}

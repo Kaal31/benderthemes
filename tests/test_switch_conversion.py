@@ -4,6 +4,21 @@ sys.path.insert(0,str(Path(__file__).parents[1]/"py_modules"))
 from switch_layout import convert_layout
 from switch_import import import_theme
 class ConversionTests(unittest.TestCase):
+ def test_declared_firmware_and_legacy_dock_request_are_retained(self):
+  doc={'TargetFirmware':2000,'HideOnlineBtn':True,'Files':[]}
+  result=convert_layout({'layout.json':json.dumps(doc).encode()},'home')
+  self.assertEqual(result['targetFirmware'],2000);self.assertTrue(result['hideOnlineButton']);self.assertFalse(result['warnings'])
+ def test_vertex_and_material_register_animation_channels(self):
+  entries=[]
+  for tag,count in [('FLVC',16),('FLMC',8)]:
+   entries.append({'Name':'P_PictBase','Tags':[{'TagType':tag,'Entries':[{'AnimationTarget':i,'Index':0,'DataType':2,'KeyFrames':[{'Frame':0,'Value':i},{'Frame':12,'Value':200}]} for i in range(count)]}]})
+  doc={'Anims':[{'FileName':'anim/RdtBtnPvr_Active.bflan','AnimJson':json.dumps({'pai1':{'FrameSize':12,'Entries':entries}})}]}
+  result=convert_layout({'layout.json':json.dumps(doc).encode()},'home');self.assertFalse(result['warnings'])
+  self.assertEqual({t['property'] for t in result['nativeAnimations']['RdtBtnPvr'][0]['tracks']},set(range(32,48))|set(range(64,72)))
+ def test_scene_animation_groups_keep_native_pane_binding(self):
+  doc={'Files':[{'FileName':'blyt/RdtBalloonSystemApplet.bflyt','AddGroups':[{'GroupName':'G_Root','Panes':['N_Root']}]}]}
+  result=convert_layout({'layout.json':json.dumps(doc).encode()},'home');self.assertFalse(result['warnings'])
+  self.assertEqual(result['groups']['blyt/RdtBalloonSystemApplet.bflyt:G_Root'],['dockLabelRoot'])
  def test_animated_shadow_strength_uses_native_numeric_channel(self):
   animation={'FileName':'anim/DBaseNml_In.bflan','AnimJson':json.dumps({'pai1':{'FrameSize':8,'Entries':[{'Name':'P_Base','Tags':[{'TagType':'FLEU','Entries':[{'AnimationTarget':0,'Index':0,'FLEUEntryName':'S_DropShadowVolume','DataType':2,'KeyFrames':[{'Frame':0,'Value':0},{'Frame':8,'Value':0.6}]}]}]}]}})}
   result=convert_layout({'layout.json':json.dumps({'Anims':[animation]}).encode()},'home')
@@ -14,7 +29,7 @@ class ConversionTests(unittest.TestCase):
   self.assertFalse(result['warnings'])
   for patch in patches:self.assertEqual(result['nativePanes']['DBaseNml'][patch['PaneName']]['Size'],patch['Size'])
   result=convert_layout({'common.json':json.dumps({'Files':[{'FileName':'blyt/DBaseNml.bflyt','Patches':[{'PaneName':'L_Mask','Size':{'X':1,'Y':1}}]}]}).encode()},'home')
-  self.assertTrue(result['warnings'],'The unbound mask must retain diagnostics')
+  self.assertFalse(result['warnings']);self.assertEqual(result['nativePanes']['DBaseNml']['L_Mask']['Size'],{'X':1,'Y':1})
  def test_redundant_unmounted_material_assignments_are_not_converted(self):
   def material(value,file='RdtBalloon'):return {'FileName':'blyt/'+file+'.bflyt','Materials':[{'MaterialName':'W_FadeLT','BackgroundColor':value}]}
   def run(files):return convert_layout({'layout.json':json.dumps({'Files':files}).encode()},'home')

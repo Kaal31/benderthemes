@@ -154,6 +154,11 @@
       "firmware": "19.0.1",
       "sha256": "4a900522d5231cfb4c73fd96a006b5cc2dfa11ce2fbec9650d7ffac7f1f457ec",
       "path": "common/blyt/SystemAppletFader.bflyt"
+    },
+    "BgMask": {
+      "firmware": "19.0.1",
+      "sha256": "fe936b1e2c20d8d192e6ffd95ed705ad863d0266b6e047f1052bd4516249e61c",
+      "path": "common/blyt/BgMask.bflyt"
     }
   },
   "modern": {
@@ -311,6 +316,11 @@
       "firmware": "22.5.0",
       "sha256": "4a900522d5231cfb4c73fd96a006b5cc2dfa11ce2fbec9650d7ffac7f1f457ec",
       "path": "common/blyt/SystemAppletFader.bflyt"
+    },
+    "BgMask": {
+      "firmware": "22.5.0",
+      "sha256": "fe936b1e2c20d8d192e6ffd95ed705ad863d0266b6e047f1052bd4516249e61c",
+      "path": "ResidentMenu/blyt/BgMask.bflyt"
     }
   }
 }

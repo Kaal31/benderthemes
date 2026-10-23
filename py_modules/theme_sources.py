@@ -64,7 +64,7 @@ KINDS = {
     "switch": {"label": "Switch", "dir": "switch", "exts": (".nxtheme",), "max": 24 << 20, "sources": ("themezer",)},
     "wiiu": {"label": "Wii U", "dir": "wiiu", "exts": (".utheme",), "max": 64 << 20, "sources": ("themezer",)},
     "3ds": {"label": "3DS", "dir": "3ds", "exts": (".zip",), "max": 24 << 20, "sources": ("themezer",)},
-    "wii": {"label": "Wii", "dir": "wii", "exts": (".mym", ".csm"), "max": 32 << 20, "sources": ("archive",)},
+    "wii": {"label": "Wii", "dir": "wii", "exts": (".mym", ".csm", ".zip"), "max": 32 << 20, "sources": ("archive",)},
     "xbox": {"label": "Xbox", "dir": "xbox", "exts": (".zip",), "max": 160 << 20, "sources": ("archive",)},
 }
 NOT_BUILT = [

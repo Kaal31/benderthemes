@@ -43,6 +43,7 @@ export function SwitchHudTree({effects,animations,modern,dark,enabled,open,now,l
   let digitClass=false;
   if(numberMatch){if(digit===' ')style.visibility='hidden';else if(patch?.Visible!==false)style.visibility='inherit';digitClass=file==='HudBatteryNum'&&digit!==' ';}
   if(file==='Hud'&&node.name==='N_BatteryNum'&&!percentage)style.visibility='hidden';
+  if(file==='Hud'&&node.name==='L_Time'){style.left=`calc(50% + ${effect.Position?.X??node.position[0]}px + var(--dht-reference-clock-x, 0px))`;style.top=`calc(50% - ${effect.Position?.Y??node.position[1]}px + var(--dht-reference-clock-y, 0px))`;}
   if(file==='HudTime'){
    if(node.name==='N_AMPM'&&!motion.some(a=>a.pane===node.slot&&a.event==='clockFormat'))style.visibility=hour12?'inherit':'hidden';
    if(node.name==='P_A')style.visibility=now.getHours()<12?'inherit':'hidden';

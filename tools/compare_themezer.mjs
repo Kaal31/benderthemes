@@ -15,31 +15,39 @@ const findings={
  '1E89E':'The three-row game grid now converts; profile/HUD, selected-title treatment and firmware details still differ.'
 };
 const cases=JSON.parse(readFileSync('work/themezer-validation/manifest.json'));
+const latestBatch=[...cases].reverse().find(x=>x.batch)?.batch;
 const only=new Set((process.argv.find(x=>x.startsWith('--check-only='))?.split('=')[1]??'').split(',').filter(Boolean));
 const generateOnly=process.argv.includes('--generate-only');
 const out='preview/themezer-validation';mkdirSync(out,{recursive:true});
 const template=readFileSync('preview/preview.html','utf8');
 const {server,url}=await startPreviewServer(0);const browser=await chromium.launch();
 try {
- for(const item of [...cases].sort((a,b)=>Number(b.batch==='native-expansion')-Number(a.batch==='native-expansion')).filter(x=>!only.size||only.has(x.id))){
+ for(const item of [...cases].sort((a,b)=>Number(b.batch===latestBatch)-Number(a.batch===latestBatch)).filter(x=>!only.size||only.has(x.id))){
   if(item.fetchError)continue;
   if(!item.discovery)assert.equal(item.warningCount,0,`${item.id}: the established fixture corpus must retain property coverage`);
   assert.equal(item.warnings.length,item.warningCount,`${item.id}: discovery diagnostics must remain complete`);
+  const fixture=JSON.parse(readFileSync('tests/fixtures/switch/themezer-cases.json')).find(x=>x.id===item.id);
+  Object.assign(item,fixture);
   const skin=JSON.parse(readFileSync(`work/themezer-validation/${item.id}.json`));
   const motionControls=skin.screens.home.conversion?.animations.some(a=>a.event==='resume')?`<div style="padding:12px 24px;color:#eee;font:14px system-ui"><button id="resume-home-preview">Resume home animation</button> · Use arrow keys to compare game and applet focus states.</div><script>document.getElementById('resume-home-preview').addEventListener('click',()=>window.dispatchEvent(new Event('dht:switch-return-to-home')));</script>`:'';
   const backgroundMotion=skin.screens.home.conversion?.animations.filter(a=>a.pane==='background')??[];
   const end=Math.max(0,...backgroundMotion.map(a=>a.frames/60));
   const timeline=end?`<div style="padding:12px 24px;color:#eee;font:14px system-ui"><button id="background-play-pause">Pause wallpaper</button> <label>Wallpaper time <input id="background-time" type="range" min="0" max="${end}" step="0.0166667" value="0" style="width:280px;vertical-align:middle"> <output id="background-time-label">0.00 s</output></label></div><script>{const players=()=>[...document.querySelectorAll('.dht-switch-bg')].flatMap(el=>el.getAnimations()),button=document.getElementById('background-play-pause'),slider=document.getElementById('background-time'),label=document.getElementById('background-time-label');button.onclick=()=>{const list=players(),pause=list.some(a=>a.playState==='running');list.forEach(a=>pause?a.pause():a.play());button.textContent=pause?'Play wallpaper':'Pause wallpaper';};slider.oninput=()=>{players().forEach(a=>{a.pause();a.currentTime=Number(slider.value)*1000;});label.value=Number(slider.value).toFixed(2)+' s';button.textContent='Play wallpaper';};}</script>`:'';
   const qualityNote=item.sourceQuality?`<p style="padding:0 24px;color:#b6bdca;font:14px system-ui">${item.sourceQuality.replaceAll('&','&amp;').replaceAll('<','&lt;')}</p>`:'';
-  const stateControls=timeline+motionControls+qualityNote+(item.id==='103D0'?`<div style="padding:12px 24px;color:#eee;font:14px system-ui"><label>Parental indicator preview: <select id="parental-preview"><option value="hidden">Hidden</option><option value="on">On</option><option value="off">Off</option><option value="timer">Timer (1:05)</option><option value="limit">Time limit</option></select></label></div><script>document.getElementById('parental-preview').addEventListener('change',e=>window.dispatchEvent(new CustomEvent('dht:switch-parental-state',{detail:{mode:e.target.value,minutes:65}})));</script>`:'');
+  const firmwareControls=`<div style="padding:12px 24px;color:#eee;font:14px system-ui"><label>Reference firmware base <select id="firmware-preview"><option value="auto">Automatic from archive</option><option value="classic">Classic (19.x)</option><option value="modern">Modern (20+)</option></select></label></div><script>window.addEventListener('DOMContentLoaded',()=>{const select=document.getElementById('firmware-preview');select.value=${JSON.stringify(item.firmwareProfile??'auto')};select.onchange=()=>{const s=window.__getThemeSettings();window.__updateTheme({styles:{...s.styles,switch:{...s.styles?.switch,firmwareLayout:select.value}}});};});</script>`;
+  const stateControls=firmwareControls+timeline+motionControls+qualityNote+(item.id==='103D0'?`<div style="padding:12px 24px;color:#eee;font:14px system-ui"><label>Parental indicator preview: <select id="parental-preview"><option value="hidden">Hidden</option><option value="on">On</option><option value="off">Off</option><option value="timer">Timer (1:05)</option><option value="limit">Time limit</option></select></label></div><script>document.getElementById('parental-preview').addEventListener('change',e=>window.dispatchEvent(new CustomEvent('dht:switch-parental-state',{detail:{mode:e.target.value,minutes:65}})));</script>`:'');
+  const firmware=item.firmwareProfile?`const configured=window.__getThemeSettings();window.__updateTheme({styles:{...configured.styles,switch:{...configured.styles?.switch,firmwareLayout:${JSON.stringify(item.firmwareProfile)}}}});`:'';
   const colors=item.systemColors?`const settings=window.__getThemeSettings();window.__updateTheme({styles:{...settings.styles,switch:{...settings.styles?.switch,firmwareColors:${JSON.stringify(item.systemColors)}}}});`:'';
-  const html=template.replace('<head>','<head><base href="/preview/"><script>window.__testSwitch='+JSON.stringify(skin).replaceAll('<','\\u003c')+';</script>').replace('</body>',`<script>window.addEventListener('DOMContentLoaded',()=>{window.__updateTheme({theme:'switch',switchTheme:${JSON.stringify(skin.file)},animations:true});${colors}});</script>${stateControls}</body>`);
+  const html=template.replace('<head>','<head><base href="/preview/"><script>window.__testSwitch='+JSON.stringify(skin).replaceAll('<','\\u003c')+';</script>').replace('</body>',`<script>window.addEventListener('DOMContentLoaded',()=>{window.__updateTheme({theme:'switch',switchTheme:${JSON.stringify(skin.file)},animations:true});${colors}${firmware}});</script>${stateControls}</body>`);
   writeFileSync(`${out}/${item.id}.html`,html);
   if(generateOnly)continue;
   const page=await browser.newPage({viewport:{width:1304,height:960}});const errors=[];page.setDefaultTimeout(60000);page.on('pageerror',e=>errors.push(e.message));
   try {
   await page.goto(url.replace('preview.html',`themezer-validation/${item.id}.html?theme=switch&still=1&h=720`),{waitUntil:'domcontentloaded'});
   await page.locator('.dht-switch-bg').waitFor({state:'attached'});await page.locator('.dht-switch-scene').waitFor();await page.waitForTimeout(5500);await page.locator('.dht-switch-tile [data-nx-pane="game"] img').evaluateAll(async imgs=>{await Promise.all(imgs.map(img=>img.decode().catch(()=>{})));});
+  // Selection is host state, not an importer/theme override. Match the author's focused slot.
+  for(let i=0;i<(item.referenceSelection??0);i++){await page.keyboard.press('ArrowRight');await page.waitForTimeout(90);}
+  if(item.referenceSelection)await page.waitForTimeout(350);
   // These author screenshots focus the launcher; compare the same state.
   if(['DE49','13B5F','6DE7','75B9','796D'].includes(item.id)){
    await page.locator('.dht-switch-tile[data-name="All Software"]').dispatchEvent('click');await page.waitForTimeout(350);
@@ -124,7 +132,8 @@ try {
  if(only.size){
   const previous=existsSync(`${out}/results.json`)?JSON.parse(readFileSync(`${out}/results.json`)):[];
   const checked=new Map(cases.filter(item=>only.has(item.id)).map(item=>[item.id,item]));
-  reportCases=previous.length?previous.map(item=>checked.get(item.id)??item):[...checked.values()];
+  const priorIds=new Set(previous.map(item=>item.id));
+  reportCases=previous.length?[...previous.map(item=>checked.get(item.id)??item),...[...checked.values()].filter(item=>!priorIds.has(item.id))]:[...checked.values()];
  }
  const checkPath=`${out}/expansion-check/results.json`;
  if(existsSync(checkPath)){const checks=JSON.parse(readFileSync(checkPath));for(const item of reportCases)item.interactionChecks=checks.filter(c=>c.id===item.id);}

@@ -1,3 +1,5 @@
+import {SwitchPromptGlyph} from './SwitchPromptGlyph';
+import {useSwitchReferenceHints} from "./useSwitchReferenceHints";
 import {SwitchLibrary} from "./SwitchLibrary";
 import {WallpaperVideo} from "../WallpaperMedia";
 import {startSwitchCapture} from './switchCaptureTransition';
@@ -5,7 +7,7 @@ import {flushSync} from 'react-dom';
 import {SwitchAppletCapture,SwitchCapturedFrame} from './SwitchAppletCapture';
 import {SwitchDialogContent} from './SwitchDialogContent';
 import {useSteamStatus} from '../steam';
-import {SwitchFocusShadow} from './SwitchFocusShadow';
+import {SwitchNativeFocus} from "./SwitchNativeFocus";
 import {SwitchEmptyLibrary} from './SwitchEmptyLibrary';
 import {useDownloads} from '../downloads';
 import {SWITCH_RUNTIME_MOTION} from './switchRuntimeDefaults';
@@ -151,8 +153,9 @@ export function SwitchHome() {
   const parts0 = switchParts(skin, view);
   const parts = wall ? { ...parts0, background: wall, brightness: undefined, own: false } : parts0;
   const conversion = themeStyle<boolean>(s,"switch","consoleConversion") ? skin?.screens.home?.conversion : undefined;
+  const referenceRoot=useSwitchReferenceHints(skin?.screens.home?.preview,conversion);
   const firmwareProfile=themeStyle<SwitchFirmwareProfile>(s,"switch","firmwareLayout");
-  const panes = conversion?firmwarePanes(conversion.panes,firmwareProfile):{};
+  const panes = conversion?firmwarePanes(conversion.panes,firmwareProfile,conversion.targetFirmware,conversion.hideOnlineButton):{};
   const order:Record<string,number>={N_GameRoot:3,N_System:4,L_ChildLock:5,N_Balloon:6,N_MyPage:7,L_Hud:8,L_BalloonCtrl:9,...conversion?.paneOrder?.["RdtBase.bflyt"]},bgOrder=conversion?.paneOrder?.["BgNml.bflyt"]??{};
   const rawEffects = conversion?.effects ?? {};
   const animationOn = s.animations && view === "home";
@@ -290,7 +293,7 @@ export function SwitchHome() {
   const slots=Array.from({length:13},(_,i)=>panes[`N_Icon_${String(i).padStart(2,"0")}`]);
   const explicitSlots=slots.some(x=>x?.Position!==undefined);
   const visibleSlots=slots.map((slot,index)=>({slot,index})).filter(x=>x.slot?.Visible!==false);
-  const grid=explicitSlots&&new Set(visibleSlots.slice(0,12).map(x=>Math.round(x.slot?.Position?.Y??0))).size>1;
+  const grid=explicitSlots&&new Set(visibleSlots.filter(x=>x.index<12).map(x=>Math.round(x.slot?.Position?.Y??0))).size>1;
   const stationary=Math.abs(panes.N_GameRoot?.Scale?.X??1)<.001&&Math.abs(panes.N_Game?.Scale?.X??1)>1000;
   const fixedSlots=grid||stationary;
   const pageSlots=visibleSlots.filter(x=>x.index<12);
@@ -355,7 +358,7 @@ export function SwitchHome() {
       <SwitchNativeContext.Provider value={conversion}><Stage background="#e6e6e6">
         <style>{CSS}</style>
         {effects.cursor && <style>{`.dht-switch-focus{box-sizing:border-box;border-style:solid;animation:none!important;border-color:${nxColor(effects.cursorGlow?.white??effects.cursor.white,"#19bcc4")}!important;border-width:calc(${effects.cursor.borderWidth??3}px * var(--dht-switch-focus-unit,1))!important;border-radius:calc(${effects.cursor.radius??0}px * var(--dht-switch-focus-unit,1));box-shadow:${cursorShadow??`0 0 ${effects.cursor.shadow??0}px ${nxColor(effects.cursorGlow?.white,effects.cursor.white?nxColor(effects.cursor.white):"#19bcc4")}`}!important;${effects.cursor.borderDraw===false?"border:none!important;":""}}`}</style>}
-        <div ref={element=>{rootRef.current=element;captureSource.current=element;}} className="dht-switch-root" data-standard={!conversion} data-standard-skin={!skin?standardSkin:undefined} data-motion={s.animations} data-resume-generation={resume} style={{position:"absolute",inset:0}}>
+        <div ref={element=>{rootRef.current=element;captureSource.current=element;referenceRoot.current=element;}} className="dht-switch-root" data-standard={!conversion} data-standard-skin={!skin?standardSkin:undefined} data-motion={s.animations} data-resume-generation={resume} style={{position:"absolute",inset:0}}>
         {parts.background&&effects.backgroundContainer?.Visible===false&&<div className="dht-switch-wallpaper-backdrop" style={{position:"absolute",inset:0,backgroundImage:`url(${parts.background})`,backgroundSize:"cover",backgroundPosition:"center"}}/>}
         <div ref={bgRef} className="dht-switch-bg" data-raster-mode={bgRaster?'viewport':undefined} data-converted={!!conversion?.converted} data-dht-from-skin={parts.background ? "" : undefined} data-view={view} style={{ position: "absolute", inset: 0, ...bg,zIndex:bgOrder.exelixBG }} />
         <WallpaperVideo src={wall} style={{zIndex:bgOrder.exelixBG+.1}}/>{effects.backgroundPanel && (effects.backgroundPanel.Position||effects.backgroundPanel.Size) && effects.backgroundPanel.Visible!==false && <div className="dht-switch-background-panel" style={{position:"absolute",pointerEvents:"none",left:W/2+(effects.backgroundPanel.Position?.X??0)*k-(effects.backgroundPanel.Size?.X??1280)*k/2,top:H/2-(effects.backgroundPanel.Position?.Y??0)*k-(effects.backgroundPanel.Size?.Y??720)*k/2,width:(effects.backgroundPanel.Size?.X??1280)*k,height:(effects.backgroundPanel.Size?.Y??720)*k,background:panelColor(effects.backgroundPanel),zIndex:bgOrder.P_Bg_00,...paneStyle(effects.backgroundPanel)}}/>}
@@ -399,8 +402,8 @@ export function SwitchHome() {
         {conversion?<SwitchFooter effects={effects} animations={conversion.animations} modern={!!panes.L_BtnSplay} dark={dark} enabled={animationOn} open={!!launch||menu.isOpen} pressed={pressed||pointerPressed} scale={k} height={H} view={view} controller={<ConsoleGlyph w={80} color="white"/>}/>:<>        <div ref={footerRef} className="dht-switch-footer" style={{ zIndex:4,position: "absolute", left: 30 * k, right: 30 * k, bottom: 0, height: 72 * k, borderTop: effects.footerLine?.Visible===false||effects.footerLineRoot?.Visible===false ? "none" : `1.5px solid ${dark ? "#fffb" : "#555"}`, color: ink, display: effects.footer?.Visible===false?"none":"flex", alignItems: "center", justifyContent: "space-between", padding: `0 ${30 * k}px`, fontSize: 24 * k, textShadow: dark ? "0 1px 4px #0008" : "none", pointerEvents: "none",...effectStyle(effects.footer) }}>
           <SwitchFooterController effects={effects} animations={[]} modern={!!panes.L_BtnSplay} dark={dark} enabled={animationOn}><ConsoleGlyph w={68 * k} color={ink} /></SwitchFooterController>
           <span style={{ display: "flex", gap: 36 * k, marginLeft:"auto",position:"relative" }}>{(pressed||pointerPressed)&&effects.footerTouch&&<span style={{position:"absolute",inset:0,background:panelColor(effects.footerTouch),...effectStyle(effects.footerTouch)}}/>}
-            <span style={{ display: "flex", alignItems: "center", gap: 10 * k }}><SwitchFooterKey effect={effects.footerKey}><b style={{ width: 28 * k, height: 28 * k, borderRadius: "50%", background: nxColor(effects.footerText?.white,ink), color: dark ? "#000" : "#e8e8e8", display: "inline-flex", alignItems: "center", justifyContent: "center", fontSize: 24 * k, lineHeight: 1 }}>+</b></SwitchFooterKey><span style={effectStyle(effects["footer:T_00"])}>Options</span></span>
-            <span style={{ display: "flex", alignItems: "center", gap: 10 * k }}><SwitchFooterKey effect={effects.footerKey}><b style={{ width: 28 * k, height: 28 * k, borderRadius: "50%", background: nxColor(effects.footerText?.white,ink), color: dark ? "#000" : "#e8e8e8", display: "inline-flex", alignItems: "center", justifyContent: "center", fontSize: 17 * k }}>A</b></SwitchFooterKey><span style={effectStyle(effects["footer:T_01"])}>{view === "home" ? "Start" : "Open"}</span></span>
+            <span style={{ display: "flex", alignItems: "center", gap: 10 * k }}><SwitchFooterKey effect={effects.footerKey}><SwitchPromptGlyph symbol="+" size={28*k} ink={nxColor(effects.footerText?.white,ink)} symbolColor={dark?"#000":"#e8e8e8"}/></SwitchFooterKey><span style={effectStyle(effects["footer:T_00"])}>Options</span></span>
+            <span style={{ display: "flex", alignItems: "center", gap: 10 * k }}><SwitchFooterKey effect={effects.footerKey}><SwitchPromptGlyph symbol="A" size={28*k} ink={nxColor(effects.footerText?.white,ink)} symbolColor={dark?"#000":"#e8e8e8"}/></SwitchFooterKey><span style={effectStyle(effects["footer:T_01"])}>{view === "home" ? "Start" : "Open"}</span></span>
           </span>
         </div></>}
 
@@ -418,18 +421,19 @@ export function SwitchHome() {
         ) : <>
           <div ref={refreshRef} className="dht-switch-game-stack" style={{position:"absolute",left:gameCenterX-gameBounds.width/2,top:centerY-gameBounds.height/2,width:gameBounds.width,height:gameBounds.height,transformOrigin:'50% 50%',zIndex:order.N_GameRoot??0,pointerEvents:"none"}}>
           <div className={conversion?"dht-switch-game-canvas":"dht-switch-game-canvas dht-switch-standard-track"} style={{transform:conversion?undefined:`translate3d(${-scroll}px,0,0)`,position:'absolute',left:gameBounds.width/2-gameCenterX,top:gameBounds.height/2-centerY,width:W,height:H}}>
-          {Array.from({ length: n + 1 }, (_, i) => i).filter((i) => fixedSlots ? (i===n?!grid:i>=pageStart&&i<pageStart+pageSize&&i<n) : (i===n&&explicitSlots || i >= cur - 4 && i <= cur + 8) && slotFor(i)?.Visible!==false).map((i) => {
+          {Array.from({ length: n + 1 }, (_, i) => i).filter((i) => fixedSlots ? (i===n?(!grid||!!launcherSlot?.Position)&&launcherSlot?.Visible!==false:i>=pageStart&&i<pageStart+pageSize&&i<n) : (i===n&&explicitSlots || i >= cur - 4 && i <= cur + 8) && slotFor(i)?.Visible!==false).map((i) => {
             const hit=i===n?effects.allSoftwareHit:effects.gameHit;
             const on = i === cur, dim=dimensions(i), artRadius=(effects.gameArt?.radius??0)*dim.width/(iconPane?.Size?.X??262), size = dim.width, height = dim.height, game = games[i];
             const download=game?downloads.byApp.get(game.appid):undefined;
             const downloadProgress=download?(download.completed?undefined:Math.max(0,download.progress)*100):game?.overview?.percent_downloaded>0&&game.overview.percent_downloaded<100?game.overview.percent_downloaded:undefined;
             return <div key={i < n ? game.appid : "all"} className="dht-switch-tile" data-selected={on && row === "tiles"} data-name={label(i)}
               onPointerDown={()=>setPointerPressed(true)} onPointerUp={()=>setPointerPressed(false)} onPointerCancel={()=>setPointerPressed(false)} onPointerLeave={()=>setPointerPressed(false)} onClick={() => { if(swipe.current?.dragged){swipe.current=null;return;} setRow("tiles"); if (on) { if (game) activateGame(game); else openLibrary(); } else { setSel(i); playSound("move"); } }}
-              style={{ position: "absolute", left: tileX(i)+(conversion?0:scroll), top: tileTop(i), width: size, height, transform:!conversion&&on&&row==="tiles"?`scale(${276/262})`:undefined, ...paneStyle(panes["game:RootPane"]?.Rotation ? {Rotation:panes["game:RootPane"].Rotation}:undefined), transition: conversion?"left 160ms ease-out, width 140ms, height 140ms, top 140ms":"transform 180ms cubic-bezier(.22,1,.36,1)", background: game||conversion ? "transparent" : dark?"#383838":"linear-gradient(145deg,#f5f5f5,#cfcfcf)", overflow: conversion||hit?"visible":"hidden",pointerEvents:hit?"none":"auto",borderRadius:game?artRadius:"50%",zIndex:i===n?-1:on&&row==="tiles"?1:0 }}>
+              style={{ position: "absolute", left: tileX(i)+(conversion?0:scroll), top: tileTop(i), width: size, height, transform:!conversion&&on&&row==="tiles"?`scale(${276/262})`:undefined, ...paneStyle(panes["game:RootPane"]?.Rotation ? {Rotation:panes["game:RootPane"].Rotation}:undefined), transition: conversion?"left 160ms ease-out, width 140ms, height 140ms, top 140ms":"transform 180ms cubic-bezier(.22,1,.36,1)", background: game||conversion ? "transparent" : dark?"#383838":"linear-gradient(145deg,#f5f5f5,#cfcfcf)", overflow: conversion||hit?"visible":"hidden",pointerEvents:hit?"none":"auto",borderRadius:game?artRadius:"50%",zIndex:on&&row==="tiles"?1:0 }}>
               {game&&conversion ? <SwitchGameMotion animations={conversion.animations} effects={effects} nativePanes={conversion.nativePanes} nativeAnimations={conversion.nativeAnimations} nativeMaterials={conversion.nativeMaterials} modern={!!panes.L_BtnSplay} dark={dark} active={on&&row==="tiles"} enabled={animationOn} unitX={size/(iconPane?.Size?.X??256)} unitY={height/(iconPane?.Size?.Y??256)} touch={pointerPressed||pressed} running={!!game.overview?.running} launching={!!launch&&on} downloadProgress={downloadProgress} installable={!game.installed}
-                focus={<div className="dht-switch-focus" style={{position:"absolute",left:'50%',top:'50%',translate:'-50% -50%',width:effects.gameFocus?.Size?.X??iconPane?.Size?.X??256,height:effects.gameFocus?.Size?.Y??iconPane?.Size?.Y??256,["--dht-switch-focus-unit" as any]:1,...(effects.cursorRoot?.Size?{width:effects.cursorRoot.Size.X,height:effects.cursorRoot.Size.Y}:{}),...effectStyle(effects.cursorRoot)}}><SwitchFocusShadow effects={effects} modern={!!panes.L_BtnSplay} dark={dark}/></div>}>
+                focus={<SwitchNativeFocus effects={effects} modern={!!panes.L_BtnSplay} dark={dark} width={effects.gameFocus?.Size?.X??iconPane?.Size?.X??256} height={effects.gameFocus?.Size?.Y??iconPane?.Size?.Y??256}/>}
+              >
                 <GameArt g={game} kind={size>height*1.1?"landscape":"portrait"} position="50% 22%" style={{width:"100%",height:"100%"}}/>
-              </SwitchGameMotion> : <div style={{width:"100%",height:"100%",overflow:"hidden",borderRadius:game?artRadius:"50%"}}>
+              </SwitchGameMotion> : <div style={{width:"100%",height:"100%",overflow:conversion?"visible":"hidden",borderRadius:game?artRadius:"50%"}}>
                 {game?<GameArt g={game} kind="portrait" position="50% 22%" style={{width:"100%",height:"100%"}}/>:conversion?<SwitchMotionPane animations={conversion.animations} pane="scenePane:L_BtnFlc" events={resume>0?["resume"]:[]} playbackKey={resume} enabled={animationOn} relativePosition effect={{Position:effects.allSoftwareRoot?.Position}}><SwitchLauncherTree effects={effects} animations={conversion.animations} modern={!!panes.L_BtnSplay} dark={dark} enabled={animationOn} active={on&&row==="tiles"} pressed={pressed||pointerPressed} size={size} height={height} onActivate={openLibrary}/></SwitchMotionPane>:<SwitchLauncher effects={effects} size={size} dark={dark}/> }
               </div>}
               {conversion&&game&&on&&row==="tiles"&&showTitle(s,"switch",true)&&<SwitchGameTitle conversion={conversion} effects={effects} title={game.name} running={!!game.overview?.running} dark={dark} modern={!!panes.L_BtnSplay} enabled={animationOn} unitX={size/(iconPane?.Size?.X??256)} unitY={height/(iconPane?.Size?.Y??256)}/>}

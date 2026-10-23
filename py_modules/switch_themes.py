@@ -28,7 +28,7 @@ try:
 except Exception:  # pragma: no cover
     wiiu_themes = None
 
-READER_VERSION = 39  # Native dialog families, nested parts, capture panes and cursor shadows.
+READER_VERSION = 41  # Vertex/material color tracks, native dialog masks and game runtime states.
 MAX_FILE = 48 * 1024 * 1024
 ICON_NAMES = ("album", "news", "shop", "controller", "settings", "power", "nso", "card", "share")
 TARGET_LABELS = {"home": "Home menu", "lock": "Lock screen", "apps": "All software", "news": "News", "psl": "Player select",

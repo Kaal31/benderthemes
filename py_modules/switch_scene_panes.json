@@ -227,6 +227,7 @@
   "DBaseNml.bflyt": [
     "B_Content",
     "L_Indicator",
+    "L_Mask",
     "N_Content",
     "N_Header",
     "N_Root",
@@ -355,6 +356,10 @@
     "P_Base",
     "P_Capture",
     "P_GameCapture",
+    "RootPane"
+  ],
+  "BgMask.bflyt": [
+    "P_Mask",
     "RootPane"
   ]
 }

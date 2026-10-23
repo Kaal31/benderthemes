@@ -19,7 +19,11 @@ export function SwitchWidgetTree({file,modern,effects,animations,dark,events,ena
    const base=native?.nativePanes?native.effects?.[node.slot]:effects[node.slot];
    if(native?.nativePanes)delete out[node.slot];
    if(base||patch||runtime[node.slot])out[node.slot]=mergeSceneEffect(mergeSceneEffect(runtime[node.slot],base),patch);
-  }if(rootSize)out[list[0].slot]={...out[list[0].slot],Size:{X:rootSize[0],Y:rootSize[1]}};return out;
+  }
+  // Referenced-layout roots are replaced by the owner's instance transform.
+  // Keeping a standalone root Position moves repurposed applet backings away.
+  out[list[0].slot]={...out[list[0].slot],Position:{X:0,Y:0}};
+  if(rootSize)out[list[0].slot]={...out[list[0].slot],Size:{X:rootSize[0],Y:rootSize[1]}};return out;
  },[effects,native,file,list,parts,runtime,rootSize]);
  const materials=useMemo(()=>Object.fromEntries(Object.entries(native?.nativeMaterials??{}).flatMap(([resource,values])=>Object.entries(values).map(([name,effect])=>[resource+':'+name,effect]))),[native]);
  const motion=useMemo(()=>{

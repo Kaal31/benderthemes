@@ -1,6 +1,7 @@
 import {SwitchTexture} from "./SwitchTexture";
 import {SWITCH_PALETTE} from "./switchPalette";
-import { useId, useMemo } from "react";
+import { useId, useMemo,useContext,useEffect,useRef } from "react";
+import {SwitchTextureMotionContext} from "./switchTextureMotion";
 import type { CSSProperties, ReactNode } from "react";
 import type { SwitchEffect } from "../switchThemes";
 
@@ -62,23 +63,42 @@ export function vertexImage(corners:Record<string,number[]>|undefined) {
 /** A two-register texture-color remap, with source alpha retained for glyphs. */
 export function SwitchMaterial({effect,children,textureMotion=false,surfaceStyle=true}: {effect:SwitchEffect|undefined;children:ReactNode;textureMotion?:boolean;surfaceStyle?:boolean}) {
   const id = "nx-material-"+useId().replace(/[^a-zA-Z0-9]/g,"");
-  const vertex=useMemo(()=>vertexImage(effect?.corners),[effect?.corners]);
-  if (!effect) return <>{children}</>;
+  const motion=useContext(SwitchTextureMotionContext),host=useRef<HTMLSpanElement>(null),gradient=useRef<SVGFEImageElement>(null),registers=useRef<SVGFEComponentTransferElement>(null);
+  const colorMotion=!!(motion.vertexMask||motion.materialMask);
+  const vertex=useMemo(()=>vertexImage(colorMotion?{ColorTL:[255,255,255,255],...effect?.corners}:effect?.corners),[effect?.corners,colorMotion]);
+  useEffect(()=>{
+    if(!colorMotion)return;
+    const baseEffect=effect??{};
+    let frame=0,previous='';
+    const paint=()=>{
+      const target=host.current;if(!target)return;
+      const style=getComputedStyle(target),corners=Object.fromEntries(['ColorTL','ColorTR','ColorBL','ColorBR'].map(name=>[name,[...(baseEffect.corners?.[name]??[255,255,255,255])]])),black=[...(baseEffect.black??[0,0,0,0])],white=[...(baseEffect.white??[255,255,255,255])];
+      const value=(property:number,fallback:number)=>{const v=Number(style.getPropertyValue('--dht-nx-color-'+property).trim()||fallback);return Number.isFinite(v)?v:fallback;};
+      for(let i=0;i<16;i++)if(motion.vertexMask&(1<<i)){const key=['ColorTL','ColorTR','ColorBL','ColorBR'][Math.floor(i/4)];corners[key][i%4]=value(32+i,corners[key][i%4]);}
+      for(let i=0;i<8;i++)if(motion.materialMask&(1<<i)){const rgba=i<4?black:white;rgba[i%4]=value(64+i,rgba[i%4]);}
+      const key=JSON.stringify([corners,black,white]);
+      if(key!==previous){previous=key;if(gradient.current)gradient.current.setAttribute('href',vertexImage(corners)??'');const nodes=registers.current?.children;if(nodes)for(let i=0;i<4;i++){nodes[i].setAttribute('slope',String((white[i]-black[i])/255));nodes[i].setAttribute('intercept',String(black[i]/255));}}
+      const pane=target.closest('[data-scene-slot],[data-widget-slot]');
+      if(motion.enabled&&!window.matchMedia('(prefers-reduced-motion: reduce)').matches&&pane?.getAnimations().some(a=>a.playState==='running'))frame=requestAnimationFrame(paint);
+    };frame=requestAnimationFrame(paint);return()=>cancelAnimationFrame(frame);
+  },[colorMotion,motion.vertexMask,motion.materialMask,motion.enabled,effect]);
+  if (!effect&&!colorMotion) return <>{children}</>;
+  effect=effect??{};
   const black=effect.black??[0,0,0,0], white=effect.white??[255,255,255,255];
   const uniform=Object.values(effect.corners??{});
   const tint=[255,255,255,255];
-  const mapping = effect.black || effect.white || uniform.length>0;
+  const mapping = colorMotion || effect.black || effect.white || uniform.length>0;
   // A monochrome mask needs only source alpha. CSS brightness avoids SVG's
   // intermediate raster rounding when a one-pixel quad is enlarged enormously.
-  const blackMask=white[3]===255&&white.slice(0,3).every(v=>v===0)&&black.slice(0,3).every(v=>v===0)&&uniform.every(c=>c.every(v=>v===255));
-  return <span className="dht-nx-material" data-material-id={id} style={{position:"relative",display:effect.Visible===false?"none":"inline-flex",width:"100%",height:"100%",alignItems:"center",justifyContent:"center",...(surfaceStyle?effectStyle({...effect,corners:undefined,Position:undefined,Rotation:undefined,Scale:undefined}):{})}}>
-    {mapping && <svg width="0" height="0" aria-hidden="true" style={{position:"absolute"}}><defs><filter id={id} x="0" y="0" width="100%" height="100%" colorInterpolationFilters="sRGB"><feComponentTransfer in="SourceGraphic" result="material">
+  const blackMask=black[3]===0&&white[3]===255&&white.slice(0,3).every(v=>v===0)&&black.slice(0,3).every(v=>v===0)&&uniform.every(c=>c.every(v=>v===255));
+  return <span ref={host} className="dht-nx-material" data-material-id={id} style={{position:"relative",display:effect.Visible===false?"none":"inline-flex",width:"100%",height:"100%",alignItems:"center",justifyContent:"center",...(surfaceStyle?effectStyle({...effect,corners:undefined,Position:undefined,Rotation:undefined,Scale:undefined}):{})}}>
+    {mapping && <svg width="0" height="0" aria-hidden="true" style={{position:"absolute"}}><defs><filter id={id} x="0" y="0" width="100%" height="100%" colorInterpolationFilters="sRGB"><feComponentTransfer ref={registers} in="SourceGraphic" result="material">
       <feFuncR type="linear" slope={(white[0]-black[0])/255*tint[0]/255} intercept={black[0]/255*tint[0]/255}/>
       <feFuncG type="linear" slope={(white[1]-black[1])/255*tint[1]/255} intercept={black[1]/255*tint[1]/255}/>
       <feFuncB type="linear" slope={(white[2]-black[2])/255*tint[2]/255} intercept={black[2]/255*tint[2]/255}/>
-      <feFuncA type="linear" slope={white[3]/255}/>
-    </feComponentTransfer>{vertex&&<><feImage href={vertex} x="0" y="0" width="100%" height="100%" preserveAspectRatio="none" result="vertex"/><feComposite in="material" in2="vertex" operator="arithmetic" k1="1" k2="0" k3="0" k4="0"/></>}</filter></defs></svg>}
-    <span style={{display:"inline-flex",width:"100%",height:"100%",alignItems:"center",justifyContent:"center",filter:mapping?(blackMask?'brightness(0)':`url(#${id})`):undefined}}>{textureMotion?<SwitchTexture enabled>{children}</SwitchTexture>:children}</span>
+      <feFuncA type="linear" slope={(white[3]-black[3])/255} intercept={black[3]/255}/>
+    </feComponentTransfer>{vertex&&<><feImage ref={gradient} href={vertex} x="0" y="0" width="100%" height="100%" preserveAspectRatio="none" result="vertex"/><feComposite in="material" in2="vertex" operator="arithmetic" k1="1" k2="0" k3="0" k4="0"/></>}</filter></defs></svg>}
+    <span style={{display:"inline-flex",width:"100%",height:"100%",alignItems:"center",justifyContent:"center",filter:mapping?(blackMask&&!colorMotion?'brightness(0)':`url(#${id})`):undefined}}>{textureMotion?<SwitchTexture enabled>{children}</SwitchTexture>:children}</span>
 
   </span>;
 }

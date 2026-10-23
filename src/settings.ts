@@ -172,7 +172,7 @@ export const storeSectionOn = (s: Pick<Settings, "storeSections">, theme: ThemeI
 export const LOOK_KEYS = [
   "theme", "activeTheme", "pages", "mix", "iconPicks", "themeOptions", "styles", "vita", "xmb", "x360", "dial", "wallpapers", "wallpaperDim", "packs", "musicPacks", "music",
   "coverStyles", "titles", "iconSizes", "protondbThemes", "videoBackgrounds", "ps4GameBackgrounds", "castleWeather", "castleWindows",
-  "minecraftFollowFocus", "minecraftWaitForSwipe", "minecraftSlim", "themeFx", "wiiuView", "wiiuTheme", "xboxSkin", "wiiSkin", "switchTheme", "wiiuPlazaPositions", "wiiuPlazaTips", "n3dsSkin", "n3dsCursor", "n3dsTop", "n3dsLayout", "hubStyle", "storeSections",
+  "minecraftFollowFocus", "minecraftWaitForSwipe", "minecraftSlim", "themeFx", "wiiuView", "wiiuTheme", "xboxSkin", "wiiSkin", "wiiSkinMember", "wiiSkinBase", "switchTheme", "wiiuPlazaPositions", "wiiuPlazaTips", "n3dsSkin", "n3dsCursor", "n3dsTop", "n3dsLayout", "hubStyle", "storeSections",
 ] as const;
 export type LookKey = (typeof LOOK_KEYS)[number];
 /** A stored preset (v2): "my:<n>" for the user's own, or a built-in / theme-file preset's id once its state was kept. */
@@ -188,7 +188,7 @@ export function cleanLook(v: any): Partial<Pick<Settings, LookKey>> {
   for (const k of LOOK_KEYS) {
     const x = v[k];
     // keys that have no default value (theme files, the Plaza switches) still have a type
-    const d: any = (DEFAULTS as any)[k] ?? (["wiiuTheme", "switchTheme", "wiiSkin", "xboxSkin", "n3dsSkin"].includes(k) ? "" : k === "wiiuPlazaTips" ? true : k === "wiiuPlazaPositions" ? {} : undefined);
+    const d: any = (DEFAULTS as any)[k] ?? (["wiiuTheme", "switchTheme", "wiiSkin", "wiiSkinMember", "wiiSkinBase", "xboxSkin", "n3dsSkin"].includes(k) ? "" : k === "wiiuPlazaTips" ? true : k === "wiiuPlazaPositions" ? {} : undefined);
     if (x === undefined || x === null) continue;
     const plain = typeof x === "object" && !Array.isArray(x);
     if (typeof d === "object" && d !== null ? !plain : d !== undefined ? typeof x !== typeof d : !(plain || ["string", "number", "boolean"].includes(typeof x))) continue;
@@ -340,6 +340,8 @@ export interface Settings {
   wiiuPlazaTips?: boolean;
   wiiuView?: "grid" | "plaza";
   wiiuTheme?: string; // Wii U custom theme (.utheme file name in skins/wiiu) or ""
+  wiiSkinBase?: string;
+  wiiSkinMember?: string;
   wiiSkin?: string; // Wii System Menu theme: a .mym / .csm name under skins/wii ("" = none)
   n3dsSkin?: string; // Nintendo 3DS theme: a .zip / folder / body_LZ.bin name under skins/3ds ("" = the built-in stock look)
   n3dsTop?: "show" | "hide" | "split"; // 3DS look: "hide" shows only the bottom screen, as large as possible ("show" when unset)
@@ -729,6 +731,7 @@ export const setLookChangeHook = (h: LookChangeHook | null) => { lookChangeHook 
 export function updateSettings(patch: Partial<Settings> | ((s: Settings) => Partial<Settings>)) {
   let p = typeof patch === "function" ? patch(current) : patch;
   if (lookChangeHook && loaded) p = lookChangeHook(current, p);
+  if(p.wiiSkin!==undefined&&p.wiiSkin!==current.wiiSkin&&p.wiiSkinMember===undefined)p={...p,wiiSkinMember:""};
   current = { ...current, ...p };
   emit();
   if (storeUnread) {

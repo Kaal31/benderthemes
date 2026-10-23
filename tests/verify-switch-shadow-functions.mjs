@@ -10,6 +10,9 @@ for(let kind=0;kind<6;kind++){
  assert.equal(switchShadowCurve(-1,kind),0);assert.equal(switchShadowCurve(2,kind),1);
 }
 const fixture=JSON.parse(readFileSync('tests/fixtures/switch/shadow-function-reference.json'));
+assert.equal(switchShadowAlpha(0,0,64,80,8,20,0,true),0,'Rounded shadow must never darken the artwork interior');
+assert(switchShadowAlpha(30,38,64,80,8,20,0,true)>0,'Rounded corner lobe must survive inside rectangular pane bounds');
+assert.equal(switchShadowAlpha(30,38,64,80,8,20,0),0,'Standalone native shader oracle keeps its rectangular cutoff');
 for(const [x,y,values] of fixture.samples)for(let kind=0;kind<6;kind++)assert.equal(Math.round(255*switchShadowAlpha(x+.5-fixture.canvas[0]/2,y+.5-fixture.canvas[1]/2,...fixture.pane,fixture.size,fixture.radius,kind)),values[kind],'Recorded native edge/corner alpha samples must stay exact');
 const path='work/switch-base-analysis/shader-analysis/ArchiveShader-00003.bnsh/shadow-function-pixels.json';
 if(existsSync(path)){

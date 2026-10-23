@@ -208,8 +208,11 @@ export function useXboxLook(): { bg?: string; bgColor?: string; css: string } {
   return { bg, bgColor, css: vars ? `.dht-root{${vars}}` : "" };
 }
 
-/** Wii System Menu theme (.mym / .csm) from skins/wii/: the menu wallpaper and the pointer hands. */
+/** Imported Wii System Menu assets, scene data and compatibility diagnostics. */
 export interface WiiSkin {
+  scene?: import("./themes/WiiNativeScene").WiiScene;
+  warnings?:string[];variants?:string[];selectedMember?:string;stages?:string[];
+  compatibility?:{textures:number;layouts:number;animations:number;baseRequired:boolean;partial:boolean};
   kind: "mym" | "csm";
   name: string;
   id: string;
@@ -221,25 +224,25 @@ export interface WiiSkin {
   cursorSize: number;
   errors: string[];
 }
-const getWii = callable<[name: string], WiiSkin | null>("get_wii_skin");
-const wiiCache = new BoundedCache<string, WiiSkin | null>();
+const getWii = callable<[name: string, member?: string, base?:string], WiiSkin | null>("get_wii_skin");
+const wiiCache = new Map<string, WiiSkin | null>();
 onResourcesChanged(() => wiiCache.clear());
-const loadWii = async (name: string): Promise<WiiSkin | null> => (await getWii(name).catch(() => null)) ?? null;
+const loadWii = async (key: string): Promise<WiiSkin | null> => {const [name,member,base]=JSON.parse(key) as [string,string,string];return (await getWii(name,member,base).catch(()=>null))??null;};
 /** The Wii theme chosen in Theme options (null while loading / none). */
 export function useWiiSkin(): WiiSkin | null {
   const s = useSettings();
-  const sk = useSkin(s.wiiSkin ?? "", wiiCache, loadWii);
+  const sk = useSkin(s.wiiSkin?JSON.stringify([s.wiiSkin,s.wiiSkinMember??"",s.wiiSkinBase??""]):"", wiiCache, loadWii);
   return sk && sk.name !== undefined ? sk : null;
 }
 /** What the Wii theme gives the Wii menu after the per-file switches (ThemeFx key `wii:<file>`: "Theme wallpaper" =
  *  background, "Theme pointer hand" = icons). The home sets --dht-wii-skin-wallpaper from `wallpaper`. */
-export function useWiiLook(): { wallpaper?: string; fit: "cover" | "stretch"; cursor?: string; cursors: { a?: string; b?: string; c?: string } } {
+export function useWiiLook(): { wallpaper?: string; fit: "cover" | "stretch"; cursor?: string; cursors: { a?: string; b?: string; c?: string };scene?:WiiSkin["scene"];skin?:WiiSkin } {
   const s = useSettings();
   const sk = useWiiSkin();
   const fx = themeFx(s, `wii:${s.wiiSkin ?? ""}`);
   if (!sk) return { fit: "cover", cursors: {} };
   const cursors = fx.icons ? sk.cursors : {};
-  return { wallpaper: fx.background ? sk.wallpaper ?? undefined : undefined, fit: sk.wallpaperFit, cursor: cursors.a, cursors };
+  return { wallpaper: fx.background ? sk.wallpaper ?? undefined : undefined, fit: sk.wallpaperFit, cursor: cursors.a, cursors,scene:fx.icons?sk.scene:undefined,skin:sk };
 }
 
 /** Nintendo 3DS HOME Menu theme (body_LZ.bin, alone or in a .zip / folder) from skins/3ds/. */

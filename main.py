@@ -1405,15 +1405,16 @@ def _read_xbox_cached(path: str):
     return _pickle_cached("xboxskin", text, lambda: xbox_skins.read_xbox_skin(path))
 
 
-def _read_wii_cached(path: str):
+def _read_wii_cached(path: str, member: str = "", base_path: str = ""):
     """wii_themes.read_wii_theme, remembered on disk."""
     import wii_themes
     try:
         st = os.stat(path)
-        text = f"{os.path.realpath(path)}|{st.st_size}|{st.st_mtime_ns}|{wii_themes.READER_VERSION}"
+        base_st = os.stat(base_path) if base_path else None
+        text = f"{os.path.realpath(path)}|{st.st_size}|{st.st_mtime_ns}|{wii_themes.READER_VERSION}|{member}|{base_path}|{base_st.st_mtime_ns if base_st else 0}|{base_st.st_size if base_st else 0}"
     except Exception:
-        return wii_themes.read_wii_theme(path)
-    return _pickle_cached("wiiskin", text, lambda: wii_themes.read_wii_theme(path))
+        return wii_themes.read_wii_theme(path, member, base_path)
+    return _pickle_cached("wiiskin", text, lambda: wii_themes.read_wii_theme(path, member, base_path))
 
 def _read_3ds_cached(path: str):
     """n3ds_themes.read_3ds_theme, remembered on disk (the wallpapers are decoded to PNG)."""
@@ -1897,7 +1898,7 @@ class Plugin:
             import wii_themes
             os.makedirs(os.path.join(base, "wii"), exist_ok=True)
             for n, p in _skin_entries("wii"):
-                if n.lower().endswith((".mym", ".csm", ".zip")) and wii_themes.peek(p):
+                if n.lower().endswith((".mym", ".csm", ".zip", ".app")) and wii_themes.peek(p):
                     wii.append(n)
         except Exception as e:
             decky.logger.warning(f"wii theme list failed: {e}")
@@ -1912,13 +1913,13 @@ class Plugin:
             decky.logger.warning(f"3ds theme list failed: {e}")
         return {"p3t": p3t, "vita": vita, "psp": psp, "x360": x360, "x360pics": x360pics, "x360names": x360names, "xbox": xbox, "wii": wii, "n3ds": n3ds, "dir": base}
 
-    async def get_wii_skin(self, name: str):
+    async def get_wii_skin(self, name: str, member: str = "", base: str = ""):
         """Wii System Menu theme (.mym / .csm / .zip) from skins/wii/, or None."""
         p = _skin_path("wii", name)
         if not name or not os.path.isfile(p):
             return None
         try:
-            return await asyncio.to_thread(_read_wii_cached, p)
+            return await asyncio.to_thread(_read_wii_cached, p, member, _skin_path("wii", base) if base else "")
         except Exception as e:
             decky.logger.error(f"wii theme read failed: {e}")
 

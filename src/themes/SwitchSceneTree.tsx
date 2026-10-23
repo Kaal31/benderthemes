@@ -1,3 +1,4 @@
+import {SwitchMaterial} from "./SwitchMaterial";
 import {SwitchShadow} from './SwitchShadow';
 import {useId} from 'react';
 import type {CSSProperties,ReactNode} from 'react';
@@ -27,7 +28,10 @@ function SceneNode({node,...props}:Omit<Props,'root'>&{node:SwitchScenePane}){
  const magnify=node.partMagnify??[1,1],partSize=layout.size.map((value,i)=>magnify[i]!==0?value/magnify[i]:value);
  const children=list.filter(p=>p.parent===node.name).sort((a,b)=>(order?.[a.name]??list.indexOf(a))-(order?.[b.name]??list.indexOf(b)));
  const style:CSSProperties={...layout.style,...(custom.style?.marginLeft!==undefined||custom.style?.marginTop!==undefined?{translate:'none'}:{}),...custom.style,...(custom.hidden?{display:'none'}:{})};
- const paintStyle:CSSProperties={position:'absolute',inset:0,boxSizing:'border-box',borderRadius:style.borderRadius,opacity:paintAlpha};
+ // The native rounded-quad shader keeps circular corners when its quad is
+ // stretched. CSS scales the corner ellipse unless its radii compensate.
+ if(node.type==='pic1'&&layout.effect.radius){const sx=Math.abs(layout.base.Scale?.X??1),sy=Math.abs(layout.base.Scale?.Y??1);if(sx&&sy&&Math.abs(sx-sy)>.0001){const radius=Math.min(layout.effect.radius*Math.min(sx,sy),layout.size[0]*sx/2,layout.size[1]*sy/2);style.borderRadius=`${radius/sx}px / ${radius/sy}px`;}}
+ const paintStyle:CSSProperties={position:'absolute',inset:0,boxSizing:'border-box',borderRadius:style.borderRadius,overflow:node.type==='pic1'&&(layout.effect.radius??0)>0?'hidden':undefined,opacity:paintAlpha};
  // Picture masks cast a silhouette shadow. A CSS box shadow would expose the
  // transparent quad around every glyph as a rectangular outline.
  const volumeMotion=animations.some(a=>a.pane===node.slot&&events.includes(a.event)&&a.tracks.some(t=>t.property===25));
@@ -48,14 +52,20 @@ function SceneNode({node,...props}:Omit<Props,'root'>&{node:SwitchScenePane}){
   for(const key of Object.keys(style))if(key.startsWith('background')||key==='boxShadow'||key.startsWith('border')&&!key.includes('Radius')){(paintStyle as Record<string,unknown>)[key]=(style as Record<string,unknown>)[key];delete (style as Record<string,unknown>)[key];}
   const border=layout.effect.borderWidth??parseFloat(String(paintStyle.borderWidth??paintStyle.border??0));
   (style as Record<string,unknown>)['--dht-nx-border-width']=`${Number.isFinite(border)?border:0}px`;
-  if(paintStyle.border)paintStyle.borderWidth='var(--dht-nx-border-width)';
+  // Native borders overlay the picture; CSS borders must not shrink its texture.
+  if(paintStyle.border){paintStyle.border='none';paintStyle.borderWidth=0;}
  }
  const childProps={...props,path,parentAlpha:nativeAlpha?paintAlpha:props.parentAlpha};
  const textureChannels=animations.filter(a=>a.pane===node.slot&&events.includes(a.event)).flatMap(a=>a.tracks).reduce((bits,t)=>bits|(t.property===19?1:t.property===20?2:t.property===22?4:t.property===23?8:t.property===24?16:0),0);
- const content=textureChannels?<SwitchTextureMotionContext.Provider value={{channels:textureChannels,enabled}}>{custom.content}</SwitchTextureMotionContext.Provider>:custom.content;
+ const colorTracks=animations.filter(a=>a.pane===node.slot&&events.includes(a.event)).flatMap(a=>a.tracks),vertexMask=colorTracks.reduce((bits,t)=>bits|(t.property>=32&&t.property<48?1<<(t.property-32):0),0),materialMask=colorTracks.reduce((bits,t)=>bits|(t.property>=64&&t.property<72?1<<(t.property-64):0),0);
+ const backgroundColor=paintStyle.background||paintStyle.backgroundColor||style.background||style.backgroundColor;
+ const background=!!(vertexMask||materialMask)&&!!backgroundColor&&backgroundColor!=='transparent';
+ if(background){paintStyle.background='transparent';delete paintStyle.backgroundColor;delete style.background;delete style.backgroundColor;}
+ const source=<>{background&&<div style={{position:'absolute',inset:0,borderRadius:style.borderRadius,overflow:'hidden'}}><SwitchMaterial effect={layout.effect} surfaceStyle={false}><span style={{display:'block',width:'100%',height:'100%',background:'white'}}/></SwitchMaterial></div>}{custom.content}</>;
+ const content=textureChannels||vertexMask||materialMask?<SwitchTextureMotionContext.Provider value={{channels:textureChannels,vertexMask,materialMask,enabled}}>{source}</SwitchTextureMotionContext.Provider>:source;
  return <div {...attrs} {...custom.attrs} ref={ref} className={custom.className} style={style}>
-  {nativeShadow&&<SwitchShadow effect={layout.effect} alpha={nativeAlpha?paintAlpha:undefined} animated={volumeMotion&&enabled} motionKey={events.join('|')} volumeProperty="--dht-nx-shadow-volume"/>}
-  {nativeAlpha?<div data-scene-paint="" style={paintStyle}>{content}</div>:content}
+  {nativeShadow&&<SwitchShadow effect={layout.effect} alpha={nativeAlpha?paintAlpha:undefined} animated={volumeMotion&&enabled} motionKey={events.join('|')} volumeProperty="--dht-nx-shadow-volume" silhouette={node.type==='pic1'&&(layout.effect.radius??0)>0&&!custom.alphaMask}/>}
+  {nativeAlpha?<div data-scene-paint="" style={paintStyle}>{content}{layout.effect.borderDraw!==false&&(layout.effect.borderOpacity??1)>0&&(layout.effect.borderWidth??0)>0&&<span data-native-border="" style={{position:'absolute',inset:0,boxSizing:'border-box',pointerEvents:'none',borderRadius:style.borderRadius,border:String(layout.style.border??'none').replace(/^[\d.]+px/,'var(--dht-nx-border-width)')}}/>}</div>:content}
   <div data-scene-pivot="" style={{position:'absolute',left:`${layout.pivot.x}%`,top:`${layout.pivot.y}%`,width:0,height:0}}>
    {part&&depth<12&&<div data-native-part={node.part} style={{position:'absolute',width:0,height:0,transform:`scale(${magnify[0]},${magnify[1]})`}}><SwitchSceneTree {...childProps} events={custom.partEvents??events} root={undefined} effects={{...partEffects,[part[0].slot]:{...partEffects[part[0].slot],Position:{X:0,Y:0},Scale:{X:1,Y:1},Rotation:{Z:0},Size:{X:partSize[0],Y:partSize[1]}}}} list={[{...part[0],size:partSize},...part.slice(1)]} depth={depth+1}/></div>}
    {children.map(p=><SceneNode key={p.name} {...childProps} node={p}/>) }

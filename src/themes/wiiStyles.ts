@@ -4,6 +4,8 @@
 // in capsule grooves that run in from the screen edges, the SD Card button and the clock in the bar's dip
 // (the clock itself is wiiClock.tsx).
 export const WII_CSS=`
+.nt-wii .wii-native-channel{z-index:2;border-radius:inherit}.nt-wii .wii-native-scene{z-index:0}.nt-wii .wii-native-controls{z-index:3}
+
 .nt-wii .nt-grid{left:104px;right:108px;top:66px;height:492px;gap:16px 15px}
 .nt-wii .nt-tile{border:2px solid #c3c7ca;border-radius:20px;box-shadow:0 1px 2px #6b7a8433}
 .nt-wii .nt-tile[data-focus=true]{border:3px solid #34bdf0}

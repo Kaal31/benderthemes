@@ -11,7 +11,7 @@ archive of the whole menu (layout/common/*.ash, ...). Both end in the same conta
   * TPL   : Wii textures (I4 I8 IA4 IA8 RGB565 RGB5A3 RGBA32 C4 C8 C14X2 CMPR)
 
 We read the parts the Deck home can show: the menu wallpaper (`my_BackPic_a.tpl` in board.ash, or a loose
-tpl / png) and the pointer hand pictures (`defcursor_final64_a/b/c`). Layouts (BRLYT) are not interpreted.
+tpl / png) and the pointer hand pictures (`defcursor_final64_a/b/c`). Channel-menu layouts and animation data are converted by wii_layout / wii_scene.
 A theme is modified Nintendo data: this module only reads the user's own file and never ships any.
 
 read_wii_theme(path) returns None for anything that is not a Wii theme and never raises; a damaged part
@@ -27,7 +27,7 @@ import struct
 import zipfile
 import zlib
 
-READER_VERSION = 1
+READER_VERSION = 2
 
 U8_MAGIC = b"U\xaa8-"
 MAX_FILE = 128 * 1024 * 1024     # biggest theme file read into memory
@@ -664,7 +664,7 @@ def peek(path):
         with zipfile.ZipFile(path) as z:
             for n in z.namelist()[:MAX_ZIP_FILES]:
                 low = n.lower().replace("\\", "/")
-                if low.endswith(("mym.ini", ".ash", ".tpl")):
+                if low.endswith(("mym.ini", ".ash", ".tpl", ".mym", ".csm", ".app")):
                     return "mym"
         return None
     except Exception:
@@ -687,13 +687,14 @@ def _ci(files, suffix):
     return files[hits[0]] if hits else None
 
 
-def read_wii_theme(path):
+def read_wii_theme(path, member="", base_path=""):
     """Read a .mym / .csm into one plain dict for the Wii home, or None when `path` is not a Wii theme.
     {kind, name, id, wallpaper (image data URL or None), wallpaperSize [w,h], wallpaperFit ('cover' | 'stretch'),
      stockWallpaper (True when the file only carries the unmodified menu gradient), cursors {a,b,c: data URLs},
      cursorSize, errors [..]}. Never raises."""
     try:
-        return _read(path)
+        from wii_scene import read_package
+        return read_package(path, member, base_path)
     except Exception:
         return None
 
