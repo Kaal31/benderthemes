@@ -16,7 +16,7 @@ try{
  const states=await parts.evaluateAll(els=>els.map(el=>({width:getComputedStyle(el).width,height:getComputedStyle(el).height,transform:getComputedStyle(el).transform,x:el.getBoundingClientRect().x,y:el.getBoundingClientRect().y})));
  assert(states.every(s=>s.width==='14px'&&s.height==='24px'&&s.x<800&&s.y<600),'Referenced roots must use the instance bounds and reset standalone root transforms');
  const digits=clock.locator('[data-hud-file="GTNumL"][data-hud-pane="P_GTNum_00"]');
- assert.deepEqual(await digits.allTextContents(),[' ','9','0','7']);
+ assert.deepEqual(await digits.evaluateAll(es=>es.map(e=>e.querySelector('[data-switch-original-glyph]')?.getAttribute('aria-label')??e.textContent)),[' ','9','0','7']);
  assert(await digits.first().evaluate(el=>getComputedStyle(el).height==='17px'));
  assert.notEqual(await page.locator('.dht-switch-battery-number').evaluate(el=>getComputedStyle(el).visibility),'hidden');
  await page.getByRole('button',{name:'Toggle battery percentage'}).click({force:true});

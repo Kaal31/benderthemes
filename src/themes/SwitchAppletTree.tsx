@@ -1,32 +1,18 @@
+import {originalAppletGlyph} from './SwitchOriginalGlyph';
 import {SwitchFocusShadow} from './SwitchFocusShadow';
 import {SwitchPicture} from './SwitchPicture';
 import {useContext} from 'react';
 import {SwitchNativeContext} from './SwitchWidgetTree';
-import type {ReactNode} from 'react';
+
 import type {SwitchAnimation,SwitchEffect} from '../switchThemes';
 import {SwitchDockLabel,SwitchNewBadge} from './SwitchShared';
 import {SwitchWidgetTree} from './SwitchWidgetTree';
-import {SwitchMaterial,panelColor,nxColor,effectStyle} from './SwitchMaterial';
+import {SwitchMaterial,panelColor,nxColor,effectStyle,resolvePalette} from './SwitchMaterial';
 import {sampleTrack} from './switchConversion';
-import {Icon} from '../common';
+
 
 const FILES:Record<string,string>={news:'RdtBtnNtf',shop:'RdtBtnShop',album:'RdtBtnPvr',controller:'RdtBtnCtrl',settings:'RdtBtnSet',power:'RdtBtnPow',online:'RdtBtnLR',gameShare:'RdtBtnSplay',virtualCards:'RdtBtnVgc'};
-function glyph(id:string,name:string):ReactNode{
- const svg=(body:ReactNode)=><svg width="100%" height="100%" viewBox="0 0 48 48" fill="none" stroke="white" strokeWidth="3" strokeLinecap="round" strokeLinejoin="round">{body}</svg>;
- if(id==='controller'){
-  if(name==='P_Form')return svg(<g transform="rotate(45 24 24)"><rect x="15" y="2" width="18" height="44" rx="9"/></g>);
-  return <svg width="100%" height="100%" viewBox="0 0 10 10"><circle cx="5" cy="5" r={name==='P_Stick'?3.5:3} fill={name==='P_Stick'?'none':'white'} stroke="white" strokeWidth="1.5"/></svg>;
- }
- if(id==='power')return svg(<><path d="M24 5v21"/><path d="M15 10a17 17 0 1 0 18 0"/></>);
- if(id==='news')return name==='P_PictNtf_01'?<div style={{width:'100%',height:'100%',background:'white'}}/>:svg(<path d="M7 8h34v27H26l-10 8v-8H7z"/>);
- if(id==='album')return svg(<><rect x="4" y="7" width="40" height="34" rx="2"/><path d="M7 37l12-14 8 10 6-7 8 11"/><circle cx="14" cy="16" r="3"/></>);
- if(id==='shop')return svg(<><path d="M8 18h32l2 24H6z"/><path d="M16 18v-4a8 8 0 0 1 16 0v4"/></>);
- if(id==='settings')return <Icon name="gear" size={40} color="white"/>;
- if(id==='online')return svg(name==='P_LR_01'?<><circle cx="14" cy="17" r="2"/><circle cx="34" cy="30" r="2"/></>:<><rect x="4" y="6" width="17" height="36" rx="8"/><rect x="27" y="6" width="17" height="36" rx="8"/></>);
- if(id==='gameShare')return name==='P_Pict_00'?svg(<><rect x="3" y="14" width="16" height="28" rx="3"/><rect x="29" y="14" width="16" height="28" rx="3"/></>):svg(<path d="M3 24q21-18 42 0"/>);
- if(id==='virtualCards')return name==='P_Pict_00'?svg(<><rect x="7" y="3" width="34" height="42" rx="3"/><path d="M13 7h22v10H13z"/></>):<div style={{width:'100%',height:'100%',background:'white'}}/>;
- return null;
-}
+const glyph=originalAppletGlyph;
 
 export function SwitchAppletTree({id,label,art,effects,animations,modern,dark,enabled,active,pressed,scale,onActivate}:{id:string;label:string;art?:string;effects:Record<string,SwitchEffect>;animations:SwitchAnimation[];modern:boolean;dark:boolean;enabled:boolean;active:boolean;pressed:boolean;scale:number;onActivate:()=>void}){
  const file=FILES[id],native=useContext(SwitchNativeContext),pictures=native?.nativePictures?.[file];
@@ -50,13 +36,19 @@ export function SwitchAppletTree({id,label,art,effects,animations,modern,dark,en
     if(node.name==='P_PictMask')return {hidden:true};
    // P_Color is composited through the applet's picture mask on the console.
    // A CSS background paints an opaque rectangle when native colors are used.
-   if(node.name==='P_Color')return {hidden:!!pictures?.P_PictMask,attrs:{'data-nx-color-mask':true},content:<SwitchMaterial surfaceStyle={false} effect={effect}>{glyph(id,node.name)}</SwitchMaterial>};
+   if(node.name==='P_Color')return {hidden:!!art||!!pictures?.P_PictMask,attrs:{'data-nx-color-mask':true},content:<SwitchMaterial surfaceStyle={false} effect={effect}>{glyph(id,node.name)}</SwitchMaterial>};
     const primary=node.name===main[id];
     const picture=pictures?.[node.name];
-    const shape=art?(primary?<img src={art} alt="" style={{width:'100%',height:'100%',objectFit:'fill'}}/>:null):picture?<SwitchPicture picture={picture}/>:glyph(id,node.name);
+    // NXThemes applet replacements use channel flags 0x05050505: source
+    // alpha feeds every channel. Black RGB in the archive is not black ink.
+    const shape=art?(primary?<img src={art} alt="" style={{width:'100%',height:'100%',objectFit:'fill',filter:'brightness(0) invert(1)'}}/>:null):picture?<SwitchPicture picture={picture}/>:glyph(id,node.name);
+    // The installer's C_W=100 custom-picture binding uses the neutral glyph
+    // color. It must not reuse slot 100's static button-backing gray. Keep
+    // explicit registers and other palette indices intact.
+    const pictureEffect=art&&primary?resolvePalette(effect,dark,false,{100:dark?[220,220,220,255]:[110,120,121,255]}):effect;
     // Picture panes use a quad, not an inline text baseline. A one-pixel mask
     // scaled to screen size amplifies even a small baseline offset enormously.
-    return {alphaMask:true,content:shape&&<div style={{position:'absolute',inset:0,display:'flex'}}><SwitchMaterial surfaceStyle={false} effect={{...effect,Position:undefined,Scale:undefined,Rotation:undefined,Size:undefined}}>{shape}</SwitchMaterial></div>};
+    return {alphaMask:true,content:shape&&<div style={{position:'absolute',inset:0,display:'flex'}}><SwitchMaterial surfaceStyle={false} effect={{...pictureEffect,Position:undefined,Scale:undefined,Rotation:undefined,Size:undefined}}>{shape}</SwitchMaterial></div>};
    }
    return {};
   }}/></div>

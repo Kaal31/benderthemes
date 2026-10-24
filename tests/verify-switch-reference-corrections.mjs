@@ -14,11 +14,12 @@ assert.equal(referenceNeutralFill(pixels,1280,720,[570,30,700,65]),undefined,'Da
 pixels.fill(237);assert.equal(referenceNeutralFill(pixels,1280,720,[10,10,50,50]),237);
 
 const {server,url}=await startPreviewServer(0),browser=await chromium.launch();
+const folder=process.argv.find(x=>x.startsWith('--folder='))?.slice('--folder='.length)??'themezer-validation';
 try{
  for(const width of [1304,550])for(const id of ['1F098','1EFD1','F5EB']){
   const page=await browser.newPage({viewport:{width,height:960}}),errors=[];page.on('pageerror',e=>errors.push(e.message));
   try{
-   await page.goto(url.replace('preview.html',`themezer-validation/${id}.html?theme=switch&still=1&h=720`));await page.waitForTimeout(6200);
+   await page.goto(url.replace('preview.html',`${folder}/${id}.html?theme=switch&still=1&h=720`));await page.waitForTimeout(6200);
    if(id==='1F098'){
     await page.locator('.dht-switch-root[data-reference-corrections*=clock-anchor]').waitFor({timeout:12000});
     assert.match(await page.locator('.dht-switch-root').getAttribute('data-reference-corrections'),/clock-anchor/);

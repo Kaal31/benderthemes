@@ -7,7 +7,7 @@ import type {SwitchScenePane} from './switchSceneTypes';
 import {mergeSceneEffect,scenePaneLayout} from './switchSceneLayout';
 import {useSwitchPaneMotion} from './switchConversion';
 import {SwitchTextureMotionContext} from './switchTextureMotion';
-export type SceneRender=(node:SwitchScenePane,effect:SwitchEffect,path:SwitchScenePane[])=>{content?:ReactNode;style?:CSSProperties;hidden?:boolean;alphaMask?:boolean;partEvents?:string[];replacePart?:boolean;className?:string;attrs?:Record<string,string|number|boolean>};
+export type SceneRender=(node:SwitchScenePane,effect:SwitchEffect,path:SwitchScenePane[])=>{content?:ReactNode;style?:CSSProperties;offset?:[string,string];hidden?:boolean;alphaMask?:boolean;partEvents?:string[];replacePart?:boolean;className?:string;attrs?:Record<string,string|number|boolean>};
 type Props={list:SwitchScenePane[];effects:Record<string,SwitchEffect>;animations:SwitchAnimation[];dark:boolean;events:string[];enabled:boolean;render:SceneRender;root?:string;kind?:'widget'|'scene';parts?:Record<string,SwitchScenePane[]>;depth?:number;order?:Record<string,number>;materials?:Record<string,SwitchEffect>;parentAlpha?:string;path?:SwitchScenePane[]};
 function SceneNode({node,...props}:Omit<Props,'root'>&{node:SwitchScenePane}){
  const {list,effects,animations,dark,events,enabled,render,kind='scene',parts,depth=0,order,materials}=props;
@@ -28,6 +28,7 @@ function SceneNode({node,...props}:Omit<Props,'root'>&{node:SwitchScenePane}){
  const magnify=node.partMagnify??[1,1],partSize=layout.size.map((value,i)=>magnify[i]!==0?value/magnify[i]:value);
  const children=list.filter(p=>p.parent===node.name).sort((a,b)=>(order?.[a.name]??list.indexOf(a))-(order?.[b.name]??list.indexOf(b)));
  const style:CSSProperties={...layout.style,...(custom.style?.marginLeft!==undefined||custom.style?.marginTop!==undefined?{translate:'none'}:{}),...custom.style,...(custom.hidden?{display:'none'}:{})};
+ if(custom.offset)style.translate=`calc(${-layout.pivot.x}% + ${custom.offset[0]}) calc(${-layout.pivot.y}% + ${custom.offset[1]})`;
  // The native rounded-quad shader keeps circular corners when its quad is
  // stretched. CSS scales the corner ellipse unless its radii compensate.
  if(node.type==='pic1'&&layout.effect.radius){const sx=Math.abs(layout.base.Scale?.X??1),sy=Math.abs(layout.base.Scale?.Y??1);if(sx&&sy&&Math.abs(sx-sy)>.0001){const radius=Math.min(layout.effect.radius*Math.min(sx,sy),layout.size[0]*sx/2,layout.size[1]*sy/2);style.borderRadius=`${radius/sx}px / ${radius/sy}px`;}}

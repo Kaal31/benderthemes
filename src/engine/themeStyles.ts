@@ -49,6 +49,9 @@ THEME_STYLES.switch = [...(THEME_STYLES.switch ?? []), {
   key: "standardSkin", label: "Standard skin", group: "Appearance",
   choices: [{id:"white",name:"Basic White"},{id:"black",name:"Basic Black"}], def:"white",
 }, {
+  key: "systemGraphics", label: "Imported theme system graphics", group: "Theme file",
+  choices: [{id:"auto",name:"Automatic — use local resources when available"},{id:"builtin",name:"Built-in substitutes — no firmware resources"}], def:"auto",
+}, {
   key: "consoleConversion", label: "Console theme conversion", group: "Theme file",
   choices: [{id:true,name:"Convert supported layout and animations"},{id:false,name:"Artwork only"}], def:true,
 },{key:"firmwareLayout",label:"Switch firmware layout",group:"Theme file",choices:[{id:"auto",name:"Automatic - detect from theme"},{id:"classic",name:"Classic Home Menu - six applets"},{id:"modern",name:"Modern Home Menu - nine applets"}],def:"auto"},{key:"clockFormat",label:"Switch clock format",group:"Theme file",choices:[{id:"24",name:"24-hour"},{id:"12",name:"12-hour"}],def:"24"},{key:"firmwareColors",label:"Switch system colors",group:"Theme file",choices:[{id:"auto",name:"Automatic"},{id:"light",name:"Basic White"},{id:"dark",name:"Basic Black"}],def:"auto"}];

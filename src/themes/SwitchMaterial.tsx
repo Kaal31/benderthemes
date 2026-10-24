@@ -6,14 +6,14 @@ import type { CSSProperties, ReactNode } from "react";
 import type { SwitchEffect } from "../switchThemes";
 
 /** Index zero leaves the exported material register unchanged. */
-export function resolvePalette(effect:SwitchEffect|undefined,dark:boolean,selected:boolean|number=false):SwitchEffect|undefined {
+export function resolvePalette(effect:SwitchEffect|undefined,dark:boolean,selected:boolean|number=false,runtimeColors?:Record<number,number[]>):SwitchEffect|undefined {
   if(!effect?.palette)return effect;
   const resolved={...effect};
   for(const key of ["white","black","borderColor","shadowColor"] as const){
     const indices:number[]|undefined=effect.palette[key];if(!indices)continue;
     const state:number=typeof selected==="number"?selected:selected?1:effect.paletteState??0;
     const index=indices[state]??0;
-    const rgba=SWITCH_PALETTE[index]?.[dark?1:0];
+    const rgba=runtimeColors?.[index]??SWITCH_PALETTE[index]?.[dark?1:0];
     if(rgba)resolved[key]=rgba;
   }
   return resolved;

@@ -154,6 +154,8 @@ export function SwitchHome() {
   const parts = wall ? { ...parts0, background: wall, brightness: undefined, own: false } : parts0;
   const conversion = themeStyle<boolean>(s,"switch","consoleConversion") ? skin?.screens.home?.conversion : undefined;
   const referenceRoot=useSwitchReferenceHints(skin?.screens.home?.preview,conversion);
+  const systemGraphics=themeStyle<string>(s,"switch","systemGraphics");
+  const runtimeConversion=useMemo(()=>systemGraphics==='builtin'&&conversion?{...conversion,nativePictures:{},nativeTextures:{},nativeFonts:{}}:conversion,[conversion,systemGraphics]);
   const firmwareProfile=themeStyle<SwitchFirmwareProfile>(s,"switch","firmwareLayout");
   const panes = conversion?firmwarePanes(conversion.panes,firmwareProfile,conversion.targetFirmware,conversion.hideOnlineButton):{};
   const order:Record<string,number>={N_GameRoot:3,N_System:4,L_ChildLock:5,N_Balloon:6,N_MyPage:7,L_Hud:8,L_BalloonCtrl:9,...conversion?.paneOrder?.["RdtBase.bflyt"]},bgOrder=conversion?.paneOrder?.["BgNml.bflyt"]??{};
@@ -355,10 +357,10 @@ export function SwitchHome() {
   const cursorShadow=effects.cursorGlow?.shadowFunction!==undefined?"none":effectStyle(effects.cursor).boxShadow;
   return (
     <ThemeRoot onInput={onInput} hints={{ a: "Open", y: "Options", b: view === "home" ? undefined : "Back" } as any}>
-      <SwitchNativeContext.Provider value={conversion}><Stage background="#e6e6e6">
+      <SwitchNativeContext.Provider value={runtimeConversion}><Stage background="#e6e6e6">
         <style>{CSS}</style>
         {effects.cursor && <style>{`.dht-switch-focus{box-sizing:border-box;border-style:solid;animation:none!important;border-color:${nxColor(effects.cursorGlow?.white??effects.cursor.white,"#19bcc4")}!important;border-width:calc(${effects.cursor.borderWidth??3}px * var(--dht-switch-focus-unit,1))!important;border-radius:calc(${effects.cursor.radius??0}px * var(--dht-switch-focus-unit,1));box-shadow:${cursorShadow??`0 0 ${effects.cursor.shadow??0}px ${nxColor(effects.cursorGlow?.white,effects.cursor.white?nxColor(effects.cursor.white):"#19bcc4")}`}!important;${effects.cursor.borderDraw===false?"border:none!important;":""}}`}</style>}
-        <div ref={element=>{rootRef.current=element;captureSource.current=element;referenceRoot.current=element;}} className="dht-switch-root" data-standard={!conversion} data-standard-skin={!skin?standardSkin:undefined} data-motion={s.animations} data-resume-generation={resume} style={{position:"absolute",inset:0}}>
+        <div ref={element=>{rootRef.current=element;captureSource.current=element;referenceRoot.current=element;}} className="dht-switch-root" data-system-graphics={systemGraphics} data-standard={!conversion} data-standard-skin={!skin?standardSkin:undefined} data-motion={s.animations} data-resume-generation={resume} style={{position:"absolute",inset:0}}>
         {parts.background&&effects.backgroundContainer?.Visible===false&&<div className="dht-switch-wallpaper-backdrop" style={{position:"absolute",inset:0,backgroundImage:`url(${parts.background})`,backgroundSize:"cover",backgroundPosition:"center"}}/>}
         <div ref={bgRef} className="dht-switch-bg" data-raster-mode={bgRaster?'viewport':undefined} data-converted={!!conversion?.converted} data-dht-from-skin={parts.background ? "" : undefined} data-view={view} style={{ position: "absolute", inset: 0, ...bg,zIndex:bgOrder.exelixBG }} />
         <WallpaperVideo src={wall} style={{zIndex:bgOrder.exelixBG+.1}}/>{effects.backgroundPanel && (effects.backgroundPanel.Position||effects.backgroundPanel.Size) && effects.backgroundPanel.Visible!==false && <div className="dht-switch-background-panel" style={{position:"absolute",pointerEvents:"none",left:W/2+(effects.backgroundPanel.Position?.X??0)*k-(effects.backgroundPanel.Size?.X??1280)*k/2,top:H/2-(effects.backgroundPanel.Position?.Y??0)*k-(effects.backgroundPanel.Size?.Y??720)*k/2,width:(effects.backgroundPanel.Size?.X??1280)*k,height:(effects.backgroundPanel.Size?.Y??720)*k,background:panelColor(effects.backgroundPanel),zIndex:bgOrder.P_Bg_00,...paneStyle(effects.backgroundPanel)}}/>}

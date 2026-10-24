@@ -19,7 +19,7 @@ const latestBatch=[...cases].reverse().find(x=>x.batch)?.batch;
 const only=new Set((process.argv.find(x=>x.startsWith('--check-only='))?.split('=')[1]??'').split(',').filter(Boolean));
 const generateOnly=process.argv.includes('--generate-only');
 const out='preview/themezer-validation';mkdirSync(out,{recursive:true});
-const template=readFileSync('preview/preview.html','utf8');
+const template=readFileSync(process.argv.find(x=>x.startsWith('--template='))?.slice('--template='.length)??'preview/preview.html','utf8');
 const {server,url}=await startPreviewServer(0);const browser=await chromium.launch();
 try {
  for(const item of [...cases].sort((a,b)=>Number(b.batch===latestBatch)-Number(a.batch===latestBatch)).filter(x=>!only.size||only.has(x.id))){

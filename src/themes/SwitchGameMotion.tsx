@@ -1,6 +1,6 @@
 import {SwitchSceneTree} from './SwitchSceneTree';
 import {SCENE_DEFAULTS,SCENE_MOTION} from './switchSceneDefaults';
-import {useContext,useMemo,useState,useEffect} from "react";
+import {useContext,useMemo,useState,useEffect,useRef} from "react";
 import {SwitchNativeContext} from './SwitchWidgetTree';
 import {composeSwitchAnimations} from './switchAnimationFiles';
 import {SwitchPicture} from './SwitchPicture';
@@ -18,6 +18,11 @@ export function SwitchGameMotion({children,animations,effects,nativePanes,native
  children:ReactNode;animations:SwitchAnimation[];effects:Record<string,SwitchEffect>;nativePanes?:Record<string,Record<string,SwitchEffect>>;nativeAnimations?:Record<string,SwitchAnimation[]>;nativeMaterials?:Record<string,Record<string,SwitchEffect>>;modern:boolean;dark:boolean;active:boolean;enabled:boolean;unitX:number;unitY:number;focus:ReactNode;touch:boolean;running:boolean;launching?:boolean;downloadProgress?:number;installable?:boolean;
 }){
  const [ready,setReady]=useState(false),profile=modern?'modern':'classic',list=SCENE_DEFAULTS[profile].RdtBtnIconGame,native=useContext(SwitchNativeContext);
+ const imageHost=useRef<HTMLDivElement>(null);
+ const checkArtwork=()=>{const image=imageHost.current?.querySelector('img');setReady(!!image?.complete&&image.naturalWidth>0);};
+ // Cached covers may finish before React attaches the load listener. Resource
+ // substitutes do not generate incidental image loads to hide that race.
+ useEffect(checkArtwork,[children]);
  const aliases:Record<string,string>={RootPane:'gameOuter',N_Root:'gameRoot',N_DecideKey:'gameDecideKeyRoot',N_Delete:'gameDelete',N_DecideTouch:'gameDecideRoot',P_IconGame:'game',P_BtnBase:'gameBase',P_Blank:'gameBlank',P_BtnTouch:'gameTouch',P_BtnDecideKey:'gameDecide',P_InnerCursor:'gameInnerCursor',N_BtnFocusKey:'gameFocus',UF_Cursor:'gameCursor',N_Suspend:'gameSuspend',N_TextPos:'gameTextRoot',P_Suspend_00:'gameSuspendBase',T_Suspend:'gameSuspendText',P_Account_00:'gameAccount',P_Account_01:'gameAccount1',P_Account_02:'gameAccount2',P_Account_03:'gameAccount3',N_DL:'gameDownload',L_Promotion:'gamePromotion'};
  const patches=useMemo(()=>{
   const out:Record<string,SwitchEffect>={};
@@ -38,7 +43,7 @@ export function SwitchGameMotion({children,animations,effects,nativePanes,native
  const [retainedRunning,setRetainedRunning]=useState(running);
  useEffect(()=>{if(running){setRetainedRunning(true);return;}const duration=Math.max(0,...motion.filter(a=>a.event==='stopped').map(a=>a.frames*1000/60));const timer=setTimeout(()=>setRetainedRunning(false),enabled?duration:0);return()=>clearTimeout(timer);},[running,enabled,motion]);
  const events=[ready?'ready':'loading',active?'active':'inactive',...(active?['focus']:[]),...(touch?['touch','decide']:[]),...(running?['running','runningText','user1']:retainedRunning?['stopped']:[]),...(launching?['launch']:[])];
- return <div style={{position:'absolute',left:'50%',top:'50%',width:0,height:0,transform:`scale(${unitX},${unitY})`}} onLoadCapture={()=>setReady(true)}>
+ return <div ref={imageHost} style={{position:'absolute',left:'50%',top:'50%',width:0,height:0,transform:`scale(${unitX},${unitY})`}} onLoadCapture={checkArtwork} onErrorCapture={checkArtwork}>
   <SwitchSceneTree {...{list,events,enabled,materials}} root="RootPane" animations={motion} effects={patches} dark={dark} render={(node,effect)=>{
    const attrs=aliases[node.name]?{'data-nx-pane':aliases[node.name]}:undefined;
    if(node.name==='N_Root')return {className:'dht-switch-game-root',attrs};

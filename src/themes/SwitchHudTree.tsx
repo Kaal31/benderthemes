@@ -1,4 +1,5 @@
 import {SwitchPicture} from './SwitchPicture';
+import {originalHudGlyph} from './SwitchOriginalGlyph';
 import {useContext,useEffect,useMemo,useState} from 'react';
 import type {CSSProperties,ReactNode} from 'react';
 import type {SwitchEffect,SwitchAnimation} from '../switchThemes';
@@ -8,6 +9,7 @@ import {paneMotionFrame} from './switchConversion';
 import {SwitchSceneTree} from './SwitchSceneTree';
 import {SwitchNativeContext} from './SwitchWidgetTree';
 import {mergeSceneEffect} from './switchSceneLayout';
+import {switchHudFlow} from './switchHudFlow';
 
 export function SwitchHudTree({effects,animations,modern,dark,enabled,open,now,level,charging,hour12,scale,instanceSize}:{effects:Record<string,SwitchEffect>;animations:SwitchAnimation[];modern:boolean;dark:boolean;enabled:boolean;open:boolean;now:Date;level:number;charging:boolean;hour12:boolean;scale:number;instanceSize?:number[]}){
  const native=useContext(SwitchNativeContext),[offline,setOffline]=useState(!navigator.onLine),[percentage,setPercentage]=useState(true);
@@ -30,6 +32,7 @@ export function SwitchHudTree({effects,animations,modern,dark,enabled,open,now,l
  const fileForSlot=new Map(Object.entries(layouts).flatMap(([file,list])=>list.map(node=>[node.slot,file] as const)));
  const values={now,level,charging,hour12,offline,percentage};
  const serviceFrames:Record<string,number>={battery:String(Math.round(level*100)).length,clockFormat:hour12?1:0,clockDigits:(hour12?(now.getHours()%12||12):now.getHours())>=10?1:0,networkState:offline?1:0,batteryState:charging?1:level<0?2:0};
+ const flow=switchHudFlow(layouts.Hud,patches,motion,percentage,level,native?.animationFiles);
  const percent=String(Math.round(Math.max(0,Math.min(1,level))*100)),h=String(hour12?(now.getHours()%12||12):now.getHours()).padStart(2,' '),clock=h+String(now.getMinutes()).padStart(2,'0');
  return <div className="dht-switch-hud-tree" style={{position:'absolute',left:0,top:0,width:0,height:0,transform:`scale(${scale})`,color:'#fff',pointerEvents:'none'}}><SwitchSceneTree list={layouts.Hud} parts={layouts} effects={patches} animations={motion} materials={materials} {...{dark,enabled}} events={[open?'exit':'enter']} render={(node,effect,path)=>{
   const file=fileForSlot.get(node.slot)!,patch=patches[node.slot],style:CSSProperties={};let content:ReactNode=null;
@@ -37,13 +40,16 @@ export function SwitchHudTree({effects,animations,modern,dark,enabled,open,now,l
    const selected=motion.filter(a=>a.pane===node.slot&&a.event===event);
    if(selected.length)Object.assign(style,paneMotionFrame(selected,frame,{Position:{X:node.position[0],Y:node.position[1]},Scale:{X:node.scale[0],Y:node.scale[1]},Rotation:{X:node.rotation[0],Y:node.rotation[1],Z:node.rotation[2]},...effect},1,1,true));
   }
+  if(file==='Hud'&&flow[node.name]){style.left=`calc(50% + ${flow[node.name].x}px)`;if(node.name==='N_BatteryNum')style.width=flow[node.name].width;}
   const instance=[...path].reverse().find(p=>/^L_(?:GTNum|Num)_\d{2}$/.test(p.name)),index=instance?Number(instance.name.slice(-2)):0;
   const clockPart=path.some(p=>p.part==='HudTime'),digit=(clockPart?clock:percent.padStart(3,' '))[index]??' ';
   const numberMatch=node.name.match(/^L_(?:GTNum|Num)_(\d{2})$/);
   let digitClass=false;
   if(numberMatch){if(digit===' ')style.visibility='hidden';else if(patch?.Visible!==false)style.visibility='inherit';digitClass=file==='HudBatteryNum'&&digit!==' ';}
   if(file==='Hud'&&node.name==='N_BatteryNum'&&!percentage)style.visibility='hidden';
-  if(file==='Hud'&&node.name==='L_Time'){style.left=`calc(50% + ${effect.Position?.X??node.position[0]}px + var(--dht-reference-clock-x, 0px))`;style.top=`calc(50% - ${effect.Position?.Y??node.position[1]}px + var(--dht-reference-clock-y, 0px))`;}
+  // Apply optional reference alignment additively. Replacing left/top here
+  // erases clockDigits service positioning and overlaps the other HUD parts.
+  const offset:[string,string]|undefined=file==='Hud'&&node.name==='L_Time'?['var(--dht-reference-clock-x, 0px)','var(--dht-reference-clock-y, 0px)']:undefined;
   if(file==='HudTime'){
    if(node.name==='N_AMPM'&&!motion.some(a=>a.pane===node.slot&&a.event==='clockFormat'))style.visibility=hour12?'inherit':'hidden';
    if(node.name==='P_A')style.visibility=now.getHours()<12?'inherit':'hidden';
@@ -71,6 +77,7 @@ export function SwitchHudTree({effects,animations,modern,dark,enabled,open,now,l
   else if(node.name.startsWith('P_Gauge'))content=<div style={{width:`${Math.max(0,Math.min(1,values.level))*100}%`,height:'100%',background:values.level<.2?'#ff3428':'#95e700'}}/>;
   else if(node.name==='P_Charge')content=svg(<path d="M19 1L7 18h9l-4 13 13-19h-9z" fill="white"/>);
   else if(node.name==='P_Error')content=<span style={{fontSize:18,color:'white'}}>!</span>;
+  content=originalHudGlyph(file,node.name,digit)??content;
   const picture=native?.nativePictures?.[file]?.[node.name];
   if(picture&&content&&!node.name.startsWith('P_Gauge')){
    const number=file==='GTNumL'||file==='GTNumM',uv=number?picture.uv.map((v,i)=>i%2?v+Number(digit||0)/10:v):picture.uv;
@@ -83,6 +90,6 @@ export function SwitchHudTree({effects,animations,modern,dark,enabled,open,now,l
  }
   const className=[digitClass?'dht-switch-battery-digit':'',file==='Hud'&&node.name==='N_BatteryNum'?'dht-switch-battery-number':'',node.type==='bnd1'?'dht-switch-battery-hit':''].filter(Boolean).join(' ');
   if(node.type==='bnd1'){style.pointerEvents='auto';content=<button aria-label="Toggle battery percentage" onClick={()=>setPercentage(v=>!v)} style={{position:'absolute',inset:0,width:'100%',height:'100%',border:0,background:'transparent',pointerEvents:'auto'}}/>;}
-  return {content,style,alphaMask:node.type==='pic1'&&!!content&&!node.name.startsWith('P_Gauge'),className:className||undefined,attrs:{'data-hud-file':file,'data-hud-pane':node.name}};
+  return {content,style,offset,alphaMask:node.type==='pic1'&&!!content&&!node.name.startsWith('P_Gauge'),className:className||undefined,attrs:{'data-hud-file':file,'data-hud-pane':node.name}};
  }}/></div>;
 }

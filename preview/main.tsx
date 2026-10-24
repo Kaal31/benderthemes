@@ -136,7 +136,7 @@ setPreviewShots(
 );
 if (new URLSearchParams(location.search).get("trailer")) setPreviewTrailer(() => ({ name: "Test", thumb: "", mpd: new URLSearchParams(location.search).get("trailer")! }));
 setPreviewTier((id) => (["platinum", "gold", "silver", "bronze", "borked", "native"] as const)[id % 6]);
-setPreviewBattery({ level: 0.72, charging: false });
+setPreviewBattery({ level: 0.72, charging: new URLSearchParams(location.search).get('charging')==='1' });
 if (!new URLSearchParams(location.search).get("realsound")) setPreviewSound((kind,variation=0) => {
   const settings = getSettings();
   if(settings?.theme === "onyx"){

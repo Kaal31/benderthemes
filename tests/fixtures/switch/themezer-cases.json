@@ -376,5 +376,70 @@
     "discovery": true,
     "batch": "themezer-expansion-2026-10-23",
     "referenceSelection": 2
+  },
+  {
+    "id": "16FF2",
+    "slug": "sw2-neon-nebula-home-menu",
+    "category": "Additional clean-resource import discovery",
+    "regression": false,
+    "discovery": true,
+    "batch": "themezer-substitutes-2026-10-24"
+  },
+  {
+    "id": "164AE",
+    "slug": "atmosphere-2026-v2-home-menu",
+    "category": "Additional clean-resource import discovery",
+    "regression": false,
+    "discovery": true,
+    "batch": "themezer-substitutes-2026-10-24"
+  },
+  {
+    "id": "16057",
+    "slug": "nintendo-switch-2-black-menu",
+    "category": "Additional clean-resource import discovery",
+    "regression": false,
+    "discovery": true,
+    "batch": "themezer-substitutes-2026-10-24"
+  },
+  {
+    "id": "14AD3",
+    "slug": "persona-3-reload-home-screen",
+    "category": "Additional clean-resource import discovery",
+    "regression": false,
+    "discovery": true,
+    "batch": "themezer-substitutes-2026-10-24"
+  },
+  {
+    "id": "102EC",
+    "slug": "pokemon-scarlet-violet",
+    "category": "Additional clean-resource import discovery",
+    "regression": false,
+    "discovery": true,
+    "batch": "themezer-substitutes-2026-10-24"
+  },
+  {
+    "id": "14C8C",
+    "slug": "haniel-home",
+    "referenceBatteryPercentage": false,
+    "category": "Additional clean-resource import discovery",
+    "regression": false,
+    "discovery": true,
+    "batch": "themezer-substitutes-2026-10-24"
+  },
+  {
+    "id": "12251",
+    "slug": "minimal-home-menu-v20-x",
+    "category": "Additional clean-resource import discovery",
+    "regression": false,
+    "discovery": true,
+    "batch": "themezer-substitutes-2026-10-24"
+  },
+  {
+    "id": "10B35",
+    "slug": "home-menu-compact-w-user-icons",
+    "category": "Additional clean-resource import discovery",
+    "regression": false,
+    "discovery": true,
+    "batch": "themezer-substitutes-2026-10-24"
   }
 ]

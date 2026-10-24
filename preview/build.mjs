@@ -64,11 +64,14 @@ const dataThemes = existsSync("themes") ? readdirSync("themes").filter((d) => ex
   return { ...m, source: "bundled", packs, ...(icons ? { icons } : {}) };
 }) : [];
 const wallJs = `window.__dataThemes={base:location.origin+"/themes",wrap:location.origin+"/frame-wrap",themes:${JSON.stringify(dataThemes)}};window.__testPacks=[${[republicPack, ...suppliedPacks].filter(Boolean).map(p=>JSON.stringify(p)).join(",")}];window.__castleAudio=${JSON.stringify(castleAudio)};window.__bladesAudio=${JSON.stringify(bladesAudio)};window.__testP3t=${JSON.stringify(p3t)};window.__dialAssets=${JSON.stringify(dialAssets)};window.__testWalls=${JSON.stringify(walls)};window.__testAssets=${JSON.stringify(assets)};`;
+const previewOutput=process.env.PREVIEW_OUTPUT??"preview/preview.html";
 writePreview(
-  "preview/preview.html",
+  previewOutput,
   `<!doctype html><html><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>Deck Home Themes preview</title><style>html,body{margin:0;background:#0d0f13}</style></head><body><div id="root"></div><script>window.__themeCatalog=${JSON.stringify(previewCatalog)};window.__isThemePreview=true;</script><script>${wallJs}</script><script>${js}</script></body></html>`,
 );
-console.log("preview/preview.html", (js.length / 1024).toFixed(0), "KB");
+console.log(previewOutput, (js.length / 1024).toFixed(0), "KB");
+// Isolated builds avoid overwriting pages another preview session is reading.
+if(!process.env.PREVIEW_OUTPUT){
 
 // Self-contained reference previews: game artwork is demo-only, never part of the plugin.
 const referenceGames = {
@@ -121,3 +124,4 @@ writePreview("preview/wii-preview.html",baseHtml.replace("<script>",`<script>win
 }
 
 writePreview("preview/ios6-preview.html",baseHtml.replace("<script>",`<script>window.__themePreview="ios6";${defaultInit}</script><script>`));
+}
