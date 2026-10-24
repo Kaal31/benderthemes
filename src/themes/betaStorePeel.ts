@@ -3,17 +3,18 @@ export function captureStoreSheet(root:HTMLElement){
  const source=root.querySelector<HTMLElement>('.beta-store-sheet');if(!source)return null;
  const wrapper=document.createElement('div');wrapper.className='beta-perspective beta-store-peel';Object.assign(wrapper.style,{zIndex:'30',pointerEvents:'none'});wrapper.setAttribute('aria-hidden','true');wrapper.inert=true;
  const sheet=source.cloneNode(true) as HTMLElement,style=getComputedStyle(source);
- Object.assign(sheet.style,{transform:style.transform,opacity:'1',left:source.offsetLeft+'px',top:source.offsetTop+'px',width:source.offsetWidth+'px',height:source.offsetHeight+'px',transition:'none'});
+ Object.assign(sheet.style,{transform:style.transform,opacity:'1',left:style.left,top:style.top,width:style.width,height:style.height,transition:'none'});
  const original=[source,...source.querySelectorAll<HTMLElement>('*')],copies=[sheet,...sheet.querySelectorAll<HTMLElement>('*')];
- original.forEach((n,i)=>{const c=copies[i],s=getComputedStyle(n);Object.assign(c.style,{animation:'none',transition:'none',translate:s.translate,rotate:s.rotate,scale:s.scale});if(n.classList.contains('beta-store-layer'))Object.assign(c.style,{transform:s.transform,width:n.offsetWidth+'px',height:n.offsetHeight+'px'});if(n.classList.contains('beta-sheet-cover')){
-   // Grid tracks are fractional; offsetLeft/offsetWidth round them and cause a
-   // visible first-frame jump when the frozen leaf is put into perspective.
-   const grid=getComputedStyle(n.parentElement!),track=parseFloat(grid.gridTemplateColumns),row=parseFloat(grid.gridAutoRows),columnGap=parseFloat(grid.columnGap)||0,rowGap=parseFloat(grid.rowGap)||0;
-   const left=Number.isFinite(track)?Math.round(n.offsetLeft/(track+columnGap))*(track+columnGap):n.offsetLeft;
-   const top=Number.isFinite(row)?Math.round(n.offsetTop/(row+rowGap))*(row+rowGap):n.offsetTop;
+ original.forEach((n,i)=>{const c=copies[i],s=getComputedStyle(n);Object.assign(c.style,{animation:'none',transition:'none',translate:s.translate,rotate:s.rotate,scale:s.scale});if(n.classList.contains('beta-store-layer'))Object.assign(c.style,{transform:s.transform,width:s.width,height:s.height});if(n.classList.contains('beta-sheet-cover')){
+   // Preserve fractional coordinates for both grid and individually positioned
+   // leaves so the frozen perspective copy does not jump.
+   const grid=getComputedStyle(n.parentElement!),track=grid.display==='grid'?parseFloat(grid.gridTemplateColumns):NaN,row=grid.display==='grid'?parseFloat(grid.gridAutoRows):NaN,columnGap=parseFloat(grid.columnGap)||0,rowGap=parseFloat(grid.rowGap)||0;
+   const left=Number.isFinite(track)?Math.round(n.offsetLeft/(track+columnGap))*(track+columnGap):parseFloat(s.left)||n.offsetLeft;
+   const top=Number.isFinite(row)?Math.round(n.offsetTop/(row+rowGap))*(row+rowGap):parseFloat(s.top)||n.offsetTop;
    Object.assign(c.style,{position:'absolute',gridArea:'auto',left:left+'px',top:top+'px',width:s.width,height:s.height,transform:s.transform,opacity:s.opacity});
   }});
- wrapper.append(sheet);root.append(wrapper);return wrapper;
+ // Keep the frozen copy in the original perspective/flattening context.
+ wrapper.append(sheet);(source.closest('.beta-home-scene')??root).append(wrapper);return wrapper;
 }
 
 export const STORE_PEEL_DURATION=460;
@@ -24,7 +25,7 @@ function localPose(node:HTMLElement){
  const s=getComputedStyle(node),origin=s.transformOrigin.split(' ').map(parseFloat),size=[parseFloat(s.width)||node.offsetWidth,parseFloat(s.height)||node.offsetHeight];
  const length=(value:string|undefined,index:number)=>value?.endsWith('%')?parseFloat(value)*size[index]/100:parseFloat(value??'0')||0;
  const t=s.translate==='none'?[]:s.translate.split(' '),r=s.rotate==='none'?[]:s.rotate.split(' '),scale=s.scale==='none'?[]:s.scale.split(' ').map(Number);
- let m=new DOMMatrix().translate(node.offsetLeft,node.offsetTop).translate(origin[0]||0,origin[1]||0,origin[2]||0).translate(length(t[0],0),length(t[1],1),parseFloat(t[2])||0);
+ let m=new DOMMatrix().translate(s.position==='absolute'?(parseFloat(s.left)||0):node.offsetLeft,s.position==='absolute'?(parseFloat(s.top)||0):node.offsetTop).translate(origin[0]||0,origin[1]||0,origin[2]||0).translate(length(t[0],0),length(t[1],1),parseFloat(t[2])||0);
  if(r.length===1)m=m.rotate(parseFloat(r[0]));else if(r.length===4)m=m.rotateAxisAngle(Number(r[0]),Number(r[1]),Number(r[2]),parseFloat(r[3]));
  m=m.scale(scale[0]??1,scale[1]??scale[0]??1,scale[2]??1).multiply(new DOMMatrix(s.transform==='none'?undefined:s.transform));
  return m.translate(-(origin[0]||0),-(origin[1]||0),-(origin[2]||0));

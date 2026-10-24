@@ -34,14 +34,15 @@ export const OLD_BETA_SHEET_CSS=`
 /* Artwork lies directly on the sheet: no blue casing or illuminated seams. */
 .dht-oldbeta[data-mode=sheet] .beta-cover,.dht-oldbeta .beta-rear-cover,.dht-oldbeta .beta-sheet-cover{background:transparent;box-shadow:none;border:0}
 .dht-oldbeta[data-mode=sheet] .beta-cover::after{background:none;box-shadow:none}
-.dht-oldbeta[data-sheet-layout=reference] .beta-store-layer .beta-sheet-cover{transform:none;scale:1;rotate:0deg}
+.dht-oldbeta[data-sheet-layout=reference] .beta-store-layer .beta-sheet-cover{scale:1;rotate:0deg}
 .dht-oldbeta[data-sheet-layout=reference] .beta-store-layer{gap:0;grid-auto-rows:calc(var(--beta-w)*.67/3*215/460);align-content:start}
 /* Steeper diagonal and less foreshortening match the readable reference capsules. */
 .dht-oldbeta[data-sheet-layout=reference][data-mode=sheet] .beta-cover-board{transform:rotateX(48deg) rotateZ(-28deg) scale(.84)}
 .dht-oldbeta[data-sheet-layout=reference][data-mode=sheet][data-category="0"] .beta-store-sheet{transform:translate(-50%,-50%) translate3d(3%,0,0) rotateX(48deg) rotateZ(-28deg) scale(.94)}
 /* Rows slide independently: the near row does not inherit the far row's drift. */
 .dht-oldbeta[data-sheet-layout=reference][data-mode=sheet] .beta-cover[data-sheet-row="0"],
-.dht-oldbeta[data-sheet-layout=reference] .beta-store-layer-0 .beta-sheet-cover[data-sheet-row="0"]{animation-name:beta-flow-left;animation-duration:18s;animation-delay:-2s}
+.dht-oldbeta[data-sheet-layout=reference] .beta-store-layer-0 .beta-sheet-cover[data-sheet-row="0"]{animation-name:beta-flow-left;animation-duration:var(--flow-time,18s);animation-delay:var(--flow-phase,-2s)}
 .dht-oldbeta[data-sheet-layout=reference][data-mode=sheet] .beta-cover[data-sheet-row="1"],
-.dht-oldbeta[data-sheet-layout=reference] .beta-store-layer-0 .beta-sheet-cover[data-sheet-row="1"]{animation-name:beta-flow-right;animation-duration:23s;animation-delay:-7s}
+.dht-oldbeta[data-sheet-layout=reference] .beta-store-layer-0 .beta-sheet-cover[data-sheet-row="1"]{animation-name:beta-flow-right;animation-duration:var(--flow-time,23s);animation-delay:var(--flow-phase,-7s)}
+.dht-oldbeta[data-sheet-layout=reference] .beta-store-layer{display:block;height:calc(var(--beta-w)*.67*215/460*2/3)}
 `;
