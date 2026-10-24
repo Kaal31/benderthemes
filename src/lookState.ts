@@ -44,6 +44,7 @@ export function lookIdOf(s: Settings): string {
 export interface FileKind { path: Path; fx: (file: string) => string; prefix: string; look: (layout: ThemeId) => string }
 const own = (layout: ThemeId) => layout;
 export const FILE_KINDS: Partial<Record<ThemeId, FileKind>> = {
+  ps4: { path: ["ps4Skin"], fx: (file) => file ? `ps4:${file}` : "", prefix: "ps4", look: own },
   ps3: { path: ["xmb", "p3t"], fx: (f) => (f ? `p3t:${f}` : "ps3:"), prefix: "ps3", look: own },
   psp: { path: ["xmb", "psp"], fx: (f) => (f && f !== "-" ? `psp:${f}` : "psp:"), prefix: "psp", look: own },
   vita: { path: ["vita", "skin"], fx: (f) => (f ? `vita:${f}` : ""), prefix: "vita", look: () => "vita" },
@@ -68,7 +69,7 @@ const LAYOUT_OWN: Partial<Record<ThemeId, Path[]>> = {
   psp: [["xmb", "psp"], ["xmb", "pspColor"], ["xmb", "pspSize"], ["xmb", "pspAccurate"], ["xmb", "collectionFolders"]],
   x360: [["x360", "guideSide"], ["x360", "skin"], ["x360", "gamerpic"]],
   dial: [["dial"]],
-  ps4: [["ps4GameBackgrounds"]],
+  ps4: [["ps4GameBackgrounds"], ["ps4Skin"]],
   castle: [["castleWeather"], ["castleWindows"]],
   minecraft: [["minecraftFollowFocus"], ["minecraftWaitForSwipe"], ["minecraftSlim"]],
   wiiu: [["wiiuView"], ["wiiuTheme"], ["wiiuPlazaPositions"], ["wiiuPlazaTips"]],

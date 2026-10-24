@@ -1884,6 +1884,15 @@ class Plugin:
                         x360names[n] = t      # real package files are called F8E5B41D... : the menu shows the title instead
         except Exception as e:
             decky.logger.warning(f"x360 list failed: {e}")
+        ps4 = []
+        try:
+            import ps4_themes
+            os.makedirs(os.path.join(base, "ps4"), exist_ok=True)
+            for n, p in _skin_entries("ps4"):
+                if ps4_themes.peek(p):
+                    ps4.append(n)
+        except Exception as e:
+            decky.logger.warning(f"ps4 theme list failed: {e}")
         xbox = []
         try:
             import xbox_skins
@@ -1911,7 +1920,66 @@ class Plugin:
                     n3ds.append(n)
         except Exception as e:
             decky.logger.warning(f"3ds theme list failed: {e}")
-        return {"p3t": p3t, "vita": vita, "psp": psp, "x360": x360, "x360pics": x360pics, "x360names": x360names, "xbox": xbox, "wii": wii, "n3ds": n3ds, "dir": base}
+        return {"p3t": p3t, "vita": vita, "psp": psp, "ps4": ps4, "x360": x360, "x360pics": x360pics, "x360names": x360names, "xbox": xbox, "wii": wii, "n3ds": n3ds, "dir": base}
+
+    async def import_ps4_downloads(self):
+        import ps4_themes
+        return await asyncio.to_thread(ps4_themes.import_downloads,
+                                       os.path.join(decky.DECKY_USER_HOME, "Downloads"),
+                                       os.path.join(_skin_dir(), "ps4"))
+
+    async def get_ps4_skin(self, name: str):
+        if not name:
+            return None
+        try:
+            path = _skin_path("ps4", name)
+
+            def load():
+                import ps4_themes
+                import hashlib
+                key = ps4_themes.fingerprint(path)
+                folder = os.path.join(_cache_root(), "ps4-" + key[:20])
+
+                def frame_sink(raw):
+                    filename = hashlib.sha256(raw).hexdigest()[:24] + ".png"
+                    os.makedirs(folder, exist_ok=True)
+                    destination = os.path.join(folder, filename)
+                    if not os.path.isfile(destination):
+                        with tempfile.NamedTemporaryFile(dir=folder, delete=False) as stream:
+                            temporary = stream.name
+                            stream.write(raw)
+                        os.replace(temporary, destination)
+                    return f"k/ps4-{key[:20]}/{filename}"
+
+                def valid_cache(cached):
+                    return all(os.path.isfile(os.path.join(_cache_root(), frame["image"][2:])) for frame in cached.get("animation", []))
+
+                result = _pickle_cached("ps4skin", key, lambda: ps4_themes.read_ps4_theme(path, frame_sink))
+                if not valid_cache(result):
+                    result = ps4_themes.read_ps4_theme(path, frame_sink)
+                result = dict(result)
+                sounds = result.pop("_sounds", None)
+                music = result.pop("_music", None)
+                label = "PS4-" + key[:20]
+                result["soundPack"] = _theme_sound_pack(label + "-effects", sounds)
+                try:
+                    result.update(_theme_music_pack(label + "-music", music))
+                except Exception as error:
+                    result["errors"] = [*result["errors"], f"Could not decode music: {error}"]
+                return result
+
+            result = await asyncio.to_thread(load)
+            if result.get("animation"):
+                ready = await _ensure_server()
+                result["animation"] = [{**frame, "image": _vi.url(frame["image"])} for frame in result["animation"]] if ready else []
+                if (result.get("background") or "").startswith("k/"):
+                    result["background"] = _vi.url(result["background"]) if ready else result.get("preview")
+                if not ready:
+                    result["errors"] = [*result["errors"], "Animation media server is unavailable"]
+            return result
+        except Exception as e:
+            decky.logger.error(f"ps4 theme read failed: {e}")
+            return {"error": str(e)}
 
     async def get_wii_skin(self, name: str, member: str = "", base: str = ""):
         """Wii System Menu theme (.mym / .csm / .zip) from skins/wii/, or None."""
@@ -2424,7 +2492,7 @@ class Plugin:
         os.makedirs(os.path.join(_skin_dir(), "psp"), exist_ok=True)
         os.makedirs(os.path.join(_skin_dir(), "wiiu"), exist_ok=True)
         os.makedirs(_switch_dir(), exist_ok=True)
-        for kind in ("xbox", "wii", "3ds", "x360"):
+        for kind in ("xbox", "wii", "3ds", "x360", "ps4"):
             os.makedirs(os.path.join(_skin_dir(), kind), exist_ok=True)
         # Skins shipped in the zip (defaults/skins/<kind>, e.g. a private test build's themes) are not copied:
         # every importer lists and reads them in place (_skin_entries / _skin_path / _switch_folders), read-only,

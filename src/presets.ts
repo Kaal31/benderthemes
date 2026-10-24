@@ -44,7 +44,7 @@ export interface Preset {
 }
 
 let x360names: Record<string, string> = {}; // real 360 package files are called F8E5B41D…: their titles
-let skins = { p3t: [] as string[], vita: [] as string[], psp: [] as string[], xbox: [] as string[], wii: [] as string[], n3ds: [] as string[], x360: [] as string[], wiiu: [] as string[], switch: [] as SwitchListEntry[] };
+let skins = { ps4: [] as string[], p3t: [] as string[], vita: [] as string[], psp: [] as string[], xbox: [] as string[], wii: [] as string[], n3ds: [] as string[], x360: [] as string[], wiiu: [] as string[], switch: [] as SwitchListEntry[] };
 const listeners = new Set<() => void>();
 onThemesChanged(() => listeners.forEach((l) => l()));
 
@@ -70,7 +70,7 @@ export async function refreshPresets() {
   try {
     const r = await listSkins();
     x360names = r?.x360names ?? {};
-    skins = { ...skins, p3t: r?.p3t ?? [], vita: r?.vita ?? [], psp: r?.psp ?? [], xbox: r?.xbox ?? [], wii: r?.wii ?? [], n3ds: r?.n3ds ?? [], x360: r?.x360 ?? [] };
+    skins = { ...skins, ps4: r?.ps4 ?? [], p3t: r?.p3t ?? [], vita: r?.vita ?? [], psp: r?.psp ?? [], xbox: r?.xbox ?? [], wii: r?.wii ?? [], n3ds: r?.n3ds ?? [], x360: r?.x360 ?? [] };
   } catch {
     /* keep what we had */
   }
@@ -105,7 +105,7 @@ function lookFiles(look: string, layout: ThemeId): [string, string][] {
   const c = CONSOLE[layout] ?? layout;
   if (layout === "switch") return skins.switch.map((f) => [f.id, `${c} · ${f.name || pretty(tail(f.id))}`]);
   if (layout === "x360") return skins.x360.map((f) => [f, `${c} · ${x360names[f] || pretty(f)}`]);
-  const list = layout === "ps3" ? skins.p3t : layout === "psp" ? skins.psp : layout === "vita" ? skins.vita : layout === "wii" ? skins.wii : layout === "wiiu" ? skins.wiiu : layout === "n3ds" ? skins.n3ds : layout === "xbox" ? skins.xbox : [];
+  const list = layout === "ps4" ? skins.ps4 : layout === "ps3" ? skins.p3t : layout === "psp" ? skins.psp : layout === "vita" ? skins.vita : layout === "wii" ? skins.wii : layout === "wiiu" ? skins.wiiu : layout === "n3ds" ? skins.n3ds : layout === "xbox" ? skins.xbox : [];
   return list.map((f) => [f, `${c} · ${pretty(f)}`]);
 }
 export const filePresetId = (layout: ThemeId, file: string) => `${FILE_KINDS[layout]?.prefix ?? layout}:${file}`;
@@ -162,6 +162,7 @@ export function presetDiff(p: Preset, s: Settings = getRawSettings()): Record<st
   const stored = s.userPresets.find((u) => u.id === p.look);
   const d = JSON.parse(JSON.stringify(stored ? stored.diff : live("")));
   delete d.themeFx;
+  if (p.theme === "ps4") d.ps4GameBackgrounds = false;
   if (k) {
     setPath(d, k.path, p.file);
     const own = getPath(live(p.file), ["themeFx", k.fx(p.file)]);

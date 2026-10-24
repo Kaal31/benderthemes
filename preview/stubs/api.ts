@@ -202,6 +202,8 @@ const backend: Record<string, (...a: any[]) => any> = {
   // Xbox 360 packages: window.__testX360 = {"File name": read_x360 result (see tools/x360_corpus.py / py_modules/x360_themes.py)}
   get_x360_skin: (n: string) => realSkin("x360", n, (window as any).__testX360?.[n] ?? null),
   get_xbox_skin: (n: string) => realSkin("xbox", n, (window as any).__testXbox ?? null),
+  get_ps4_skin: (n: string) => realSkin("ps4", n, (window as any).__testPs4 ?? null),
+  import_ps4_downloads: () => (window as any).__testPs4Import ?? { success: true, imported: [], existing: [], errors: [] },
   get_psp_skin: (n: string) => R()?.skins?.psp?.[n] ?? null,
   get_p3t: (n: string) => realSkin("p3t", n, (window as any).__testP3t ?? null),
   get_vita_skin: () => (window as any).__testVita ?? null,

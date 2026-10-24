@@ -78,7 +78,38 @@ export interface ThemeText {
 const getVita = callable<[name: string], VitaSkin | null>("get_vita_skin");
 const getP3t = callable<[name: string], P3tSkin | null>("get_p3t");
 const getPsp = callable<[name: string], P3tSkin | null>("get_psp_skin");
-export const listSkins = callable<[], { p3t: string[]; vita: string[]; psp?: string[]; x360?: string[]; x360pics?: string[]; x360names?: Record<string, string>; xbox?: string[]; wii?: string[]; n3ds?: string[]; dir: string }>("list_skins");
+export interface Ps4Skin {
+  name: string;
+  background?: string | null;
+  functionBackground?: string | null;
+  icons: Record<string, string>;
+  glows: Record<string, string>;
+  colors: Record<string, string>;
+  preview?: string | null;
+  dynamic: boolean;
+  animation?: { image: string; durationMs: number }[];
+  errors: string[];
+  soundPack?: string;
+  musicPack?: string;
+  musicNeedsDecoder?: boolean;
+  musicNeedsCompress?: boolean;
+}
+const getPs4 = callable<[name: string], Ps4Skin | { error: string } | null>("get_ps4_skin");
+const ps4Cache = new Map<string, Ps4Skin | null>();
+onResourcesChanged(() => ps4Cache.clear());
+async function loadPs4(name: string): Promise<Ps4Skin | null> {
+  const skin = await getPs4(name);
+  return skin && "error" in skin ? { name, icons: {}, glows: {}, colors: {}, dynamic: false, errors: [skin.error] } : skin;
+}
+export function usePs4Skin(): Ps4Skin | null {
+  const settings = useSettings();
+  const skin = useSkin(settings.ps4Skin ?? "", ps4Cache, loadPs4);
+  const effects = themeFx(settings, `ps4:${settings.ps4Skin ?? ""}`);
+  useSkinPack("ps4", effects.sounds ? skin : null);
+  useSkinPack("ps4", skin?.musicPack ? { soundPack: skin.musicPack } as P3tSkin : null, "music");
+  return skin;
+}
+export const listSkins = callable<[], { ps4?: string[]; p3t: string[]; vita: string[]; psp?: string[]; x360?: string[]; x360pics?: string[]; x360names?: Record<string, string>; xbox?: string[]; wii?: string[]; n3ds?: string[]; dir: string }>("list_skins");
 
 /** Xbox 360 theme or gamer picture package (STFS) from skins/x360/. */
 export interface X360Skin {
@@ -400,7 +431,7 @@ let compressListener: ((folder: string) => void) | null = null;
 /** steam.ts compresses decoded theme music (WAV → Ogg Opus) when the UI supports it. */
 export const onMusicCompress = (cb: (folder: string) => void) => { compressListener = cb; };
 export const skinSoundPack = (theme: string, kind: "sfx" | "music" = "sfx"): string => skinPacks[kind === "sfx" ? theme : `${theme}:music`] ?? "";
-function useSkinPack(theme: "ps3" | "psp" | "vita", skin: { soundPack?: string } | null, kind: "sfx" | "music" = "sfx") {
+function useSkinPack(theme: "ps4" | "ps3" | "psp" | "vita", skin: { soundPack?: string } | null, kind: "sfx" | "music" = "sfx") {
   const key = kind === "sfx" ? theme : `${theme}:music`;
   const folder = skin?.soundPack ?? "";
   useEffect(() => {
@@ -444,9 +475,10 @@ export const cachedPspSkin = (name: string) => pspCache.get(name);
 
 /** One-off read of any console theme file (presets v2: a preset's slots can take a wallpaper or icons from a theme file
  *  of another console, see src/engine/assets.ts). Cached with the hooks above; null when it can't be read. */
-export async function loadSkinFile(kind: "p3t" | "psp" | "vita" | "x360" | "xbox" | "wii" | "n3ds", name: string): Promise<any> {
+export async function loadSkinFile(kind: "ps4" | "p3t" | "psp" | "vita" | "x360" | "xbox" | "wii" | "n3ds", name: string): Promise<any> {
   if (!name) return null;
   const pick: Record<string, [Map<string, any>, (n: string) => Promise<any>, ((n: string) => any) | undefined]> = {
+    ps4: [ps4Cache, loadPs4, undefined],
     p3t: [p3tCache, getP3t, override.p3t], psp: [pspCache, getPsp, override.psp], vita: [vitaCache, getVita, override.vita],
     x360: [x360Cache, loadX360, undefined], xbox: [xboxCache, loadXbox, undefined], wii: [wiiCache, loadWii, undefined], n3ds: [n3dsCache, loadN3ds, undefined],
   };

@@ -171,7 +171,7 @@ export const storeSectionOn = (s: Pick<Settings, "storeSections">, theme: ThemeI
  *  Everything else (clock, volume, library sorting, Ⓐ…) is the user's own. */
 export const LOOK_KEYS = [
   "theme", "activeTheme", "pages", "mix", "iconPicks", "themeOptions", "styles", "vita", "xmb", "x360", "dial", "wallpapers", "wallpaperDim", "packs", "musicPacks", "music",
-  "coverStyles", "titles", "iconSizes", "protondbThemes", "videoBackgrounds", "ps4GameBackgrounds", "castleWeather", "castleWindows",
+  "coverStyles", "titles", "iconSizes", "protondbThemes", "videoBackgrounds", "ps4GameBackgrounds", "ps4Skin", "castleWeather", "castleWindows",
   "minecraftFollowFocus", "minecraftWaitForSwipe", "minecraftSlim", "themeFx", "wiiuView", "wiiuTheme", "xboxSkin", "wiiSkin", "wiiSkinMember", "wiiSkinBase", "switchTheme", "wiiuPlazaPositions", "wiiuPlazaTips", "n3dsSkin", "n3dsCursor", "n3dsTop", "n3dsLayout", "hubStyle", "storeSections",
 ] as const;
 export type LookKey = (typeof LOOK_KEYS)[number];
@@ -188,7 +188,7 @@ export function cleanLook(v: any): Partial<Pick<Settings, LookKey>> {
   for (const k of LOOK_KEYS) {
     const x = v[k];
     // keys that have no default value (theme files, the Plaza switches) still have a type
-    const d: any = (DEFAULTS as any)[k] ?? (["wiiuTheme", "switchTheme", "wiiSkin", "wiiSkinMember", "wiiSkinBase", "xboxSkin", "n3dsSkin"].includes(k) ? "" : k === "wiiuPlazaTips" ? true : k === "wiiuPlazaPositions" ? {} : undefined);
+    const d: any = (DEFAULTS as any)[k] ?? (["wiiuTheme", "switchTheme", "wiiSkin", "wiiSkinMember", "wiiSkinBase", "xboxSkin", "n3dsSkin", "ps4Skin"].includes(k) ? "" : k === "wiiuPlazaTips" ? true : k === "wiiuPlazaPositions" ? {} : undefined);
     if (x === undefined || x === null) continue;
     const plain = typeof x === "object" && !Array.isArray(x);
     if (typeof d === "object" && d !== null ? !plain : d !== undefined ? typeof x !== typeof d : !(plain || ["string", "number", "boolean"].includes(typeof x))) continue;
@@ -349,6 +349,7 @@ export interface Settings {
   n3dsArrows?: "show" | "hide"; // 3DS look: the half-ring page arrows at the screen edges ("show" when unset; L1 / R1 and swipes still page)
   n3dsHandle?: "show" | "hide"; // 3DS look: the grey scroll bar along the bottom of the icon grid ("show" when unset)
   n3dsLayout?: N3dsLayout; // 3DS home: zoom level and where each icon / folder / badge sits (kept in presets, like the console's saved layouts)
+  ps4Skin?: string;
   xboxSkin?: string; // original Xbox skin: a folder or .zip name under skins/xbox ("" = none)
   switchTheme?: string; // Switch theme: a .nxtheme path under skins/switch ("file" or "folder/file") or ""
   x360: { style: X360Style; guideSide?: "left" | "right"; skin?: string; gamerpic?: string }; // skin / gamerpic: STFS package names in skins/x360 ("" = none); which Xbox 360 dashboard era
@@ -617,6 +618,7 @@ function merge(saved: any): Settings {
   if (typeof s.x360.skin !== "string") delete s.x360.skin;
   if (typeof s.x360.gamerpic !== "string") delete s.x360.gamerpic;
   s.wiiSkin = typeof saved?.wiiSkin === "string" ? saved.wiiSkin : "";
+  s.ps4Skin = typeof saved?.ps4Skin === "string" ? saved.ps4Skin : "";
   s.xboxSkin = typeof saved?.xboxSkin === "string" ? saved.xboxSkin : "";
   s.n3dsSkin = typeof saved?.n3dsSkin === "string" ? saved.n3dsSkin : "";
   s.n3dsCursor = saved?.n3dsCursor === "simple" ? "simple" : "3ds";
@@ -784,7 +786,7 @@ export function resetThemeSettings(theme: ThemeId) {
       if (p.x360?.skin) keys.push(`x360:${p.x360.skin}`);
     }
     if (theme === "dial") out.dial = { ...DEFAULTS.dial };
-    if (theme === "ps4") out.ps4GameBackgrounds = DEFAULTS.ps4GameBackgrounds;
+    if (theme === "ps4") { out.ps4GameBackgrounds = DEFAULTS.ps4GameBackgrounds; if (p.ps4Skin) keys.push(`ps4:${p.ps4Skin}`); }
     if (theme === "switch" && p.switchTheme) keys.push(`nx:${p.switchTheme}`);
     if (theme === "castle") Object.assign(out, { castleWeather: DEFAULTS.castleWeather, castleWindows: DEFAULTS.castleWindows });
     if (theme === "minecraft") Object.assign(out, { minecraftFollowFocus: true, minecraftWaitForSwipe: false, minecraftSlim: false });

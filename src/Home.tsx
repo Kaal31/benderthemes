@@ -77,7 +77,7 @@ import { useThemeDeckIntegration } from "./themeDeckIntegration";
 
 // CSS hook: which theme file is active, as "<kind>:<file name>" (empty for looks without theme files)
 const skinHook = (s: ReturnType<typeof getSettings>) => {
-  const n = s.theme === "vita" ? s.vita.skin : s.theme === "ps3" ? s.xmb.p3t : s.theme === "psp" ? pspFile(s) : s.theme === "switch" ? s.switchTheme ?? "" : s.theme === "xbox" ? s.xboxSkin ?? "" : s.theme === "wii" ? s.wiiSkin ?? "" : s.theme === "n3ds" ? s.n3dsSkin ?? "" : "";
+  const n = s.theme === "vita" ? s.vita.skin : s.theme === "ps4" ? s.ps4Skin ?? "" : s.theme === "ps3" ? s.xmb.p3t : s.theme === "psp" ? pspFile(s) : s.theme === "switch" ? s.switchTheme ?? "" : s.theme === "xbox" ? s.xboxSkin ?? "" : s.theme === "wii" ? s.wiiSkin ?? "" : s.theme === "n3ds" ? s.n3dsSkin ?? "" : "";
   return n ? `${s.theme === "ps3" ? "p3t" : s.theme}:${n}` : "";
 };
 

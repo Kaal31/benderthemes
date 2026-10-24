@@ -139,6 +139,10 @@ setPreviewTier((id) => (["platinum", "gold", "silver", "bronze", "borked", "nati
 setPreviewBattery({ level: 0.72, charging: new URLSearchParams(location.search).get('charging')==='1' });
 if (!new URLSearchParams(location.search).get("realsound")) setPreviewSound((kind,variation=0) => {
   const settings = getSettings();
+  if (settings?.theme === "ps4" && (window as any).__playPs4Sound) {
+    (window as any).__playPs4Sound(kind);
+    return;
+  }
   if(settings?.theme === "onyx"){
     if(!settings.sounds || ["none","steam"].includes(settings.packs.onyx??""))return;
     const names:Record<string,string>={move:"rotation-click",tile:"rotation-click",tab:"menu-press",select:"confirm-press",open:"confirm-press",launch:"confirm-press",back:"back-release",close:"back-release",menu:"menu-press",toggle:"wheel-press",end:"back-release"};

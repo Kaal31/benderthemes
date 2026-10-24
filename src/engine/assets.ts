@@ -21,7 +21,7 @@ import { ICON_SPOTS } from "./manifest";
 import { backgroundMediaKind } from "../backgroundMedia";
 
 export type AssetSlot = "wallpaper" | "icons" | "sounds" | "music" | "font" | "accent";
-export type FileKind = "p3t" | "psp" | "vita" | "x360" | "xbox" | "wii" | "n3ds" | "switch" | "wiiu";
+export type FileKind = "ps4" | "p3t" | "psp" | "vita" | "x360" | "xbox" | "wii" | "n3ds" | "switch" | "wiiu";
 
 /** What each layout draws of the shared slots. accent: the layout's own colour variables the accent is written to. */
 export interface LayoutCaps { background: boolean; videoBackground?:boolean; gameArt: boolean; tint: boolean; brightness: boolean; icons: boolean; font: boolean; accent: string[] }
@@ -80,7 +80,7 @@ export type ParsedRef =
   | { kind: "file"; file: FileKind; name: string }
   | { kind: "color"; value: string }
   | null;
-const FILE_KINDS: FileKind[] = ["p3t", "psp", "vita", "x360", "xbox", "wii", "n3ds", "switch", "wiiu"];
+const FILE_KINDS: FileKind[] = ["ps4", "p3t", "psp", "vita", "x360", "xbox", "wii", "n3ds", "switch", "wiiu"];
 export function parseRef(ref: string): ParsedRef {
   if (/^#[0-9a-f]{6}$/i.test(ref)) return { kind: "color", value: ref };
   if (ref.startsWith("@wp/")) return { kind: "wp", name: ref.slice(4) };
@@ -164,7 +164,7 @@ async function fileBackground(file: FileKind, name: string): Promise<string | nu
 }
 async function fileIcons(file: FileKind, name: string): Promise<Record<string, string>> {
   if (file === "switch") return toSpots((await loadSwitchSkin(name))?.icons);
-  if (file === "p3t" || file === "psp" || file === "vita") return toSpots((await loadSkinFile(file, name))?.icons);
+  if (file === "ps4" || file === "p3t" || file === "psp" || file === "vita") return toSpots((await loadSkinFile(file, name))?.icons);
   if (file === "xbox") return toSpots((await loadSkinFile(file, name))?.images);
   return {};
 }
@@ -222,6 +222,7 @@ export interface InstalledLists {
   themes: { id: string; name: string; wallpaper?:string; has: (slot: AssetSlot) => boolean }[];
 }
 const FILE_SOURCES: { kind: FileKind; label: string; background: boolean; icons: boolean; font?: boolean; accent?: boolean }[] = [
+  { kind: "ps4", label: "PS4 theme files", background: true, icons: true },
   { kind: "p3t", label: "PS3 theme files", background: true, icons: true },
   { kind: "psp", label: "PSP theme files", background: true, icons: true, font: true },
   { kind: "vita", label: "PS Vita themes", background: true, icons: true },

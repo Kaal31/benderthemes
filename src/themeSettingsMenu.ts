@@ -1,6 +1,7 @@
 import { saverOptions, updateSaver, addSaverMedia, previewSaver } from "./themeScreensavers";
 import { achievementPopupStatus, achievementPopupsBlocked, previewAchievementPopup } from "./achievementPopups";
 import {customProfilePicture,setProfilePicture,uploadProfilePicture} from "./profilePicture";
+import { importPs4Downloads } from "./ps4Imports";
 // Every option that belongs to one theme, as an in-theme menu (△ / Y → Theme options, and the
 // themes' own "Home Screen Settings" entries). Quick Access keeps only the options shared by all
 // themes, plus Reset and Delete theme.
@@ -337,6 +338,15 @@ function switchItems(): MenuItem[] {
 
 /** The console theme file of the look and its effects (Customize → Theme file). */
 function themeFileItems(th: ThemeId): MenuItem[] {
+  if (th === "ps4") {
+    const file = () => S().ps4Skin ?? "";
+    const part = (label: string, key: "background" | "icons" | "labels" | "sounds" | "sceneAnim") => toggle(label, () => themeFx(S(), `ps4:${file()}`)[key], (value) => updateThemeFx(`ps4:${file()}`, { [key]: value }), () => !file());
+    return [
+      { label: "Import PS4 themes from Downloads", action: importPs4Downloads },
+      ...customizeControls().filter((control) => control.id === "file").map((control) => choice(control.label, [...(control.special ?? []), ...control.groups.flatMap((group) => group.items.map((item) => ({ id: item.ref, name: item.name })))], control.get, control.set, undefined, "Put extracted PS4 theme folders, ZIPs or RARs in skins/ps4, then rescan theme files")),
+      part("Theme backgrounds", "background"), part("Theme animation", "sceneAnim"), part("Theme icons", "icons"), part("Theme colours", "labels"), part("Theme sound effects", "sounds"),
+    ];
+  }
   if (th === "vita") return vitaItems("file");
   if (th === "ps3" || th === "psp") return xmbItems(th, "file");
   if (th === "xbox") return xboxFileItems();
