@@ -24,7 +24,8 @@ export function OldBetaSettings({onExit,onReturnStart}:{onExit:()=>void;onReturn
 const CSS=`
 .dht-oldbeta .beta-settings-page{background:radial-gradient(ellipse at 12% 15%,#426c80,#173442 50%,#081a23 85%)}
 .dht-oldbeta .beta-settings-page>header{position:absolute;top:0;left:0;right:0;height:15%;display:grid;place-items:center;background:#071722d9;font-size:calc(var(--beta-w)*.03);color:#99b8c8;font-weight:300}
-.dht-oldbeta .beta-settings-list{position:absolute;left:37.5%;width:25%;top:18%;bottom:18%;display:flex;flex-direction:column;gap:calc(var(--beta-h)*.012);overflow:auto;scrollbar-width:thin;padding:3px}
+.dht-oldbeta .beta-settings-list{position:absolute;left:37.5%;width:25%;top:18%;bottom:18%;display:flex;flex-direction:column;gap:calc(var(--beta-h)*.012);overflow:auto;scrollbar-width:none;padding:3px}
+.dht-oldbeta .beta-settings-list::-webkit-scrollbar{display:none;width:0;height:0}
 .dht-oldbeta .beta-settings-list button{flex:none;width:100%;min-height:calc(var(--beta-h)*.048);background-image:linear-gradient(90deg,#ffffff08,transparent);background-color:#304653;color:#95aab6;text-align:left;padding:6px 10px;font-size:calc(var(--beta-w)*.013);border:1px solid transparent;overflow-wrap:anywhere}
 .dht-oldbeta .beta-settings-list button:focus{background-color:#d2dbde;color:#1b2f39;border-color:#caecff;box-shadow:0 0 7px #b3d9e8}.dht-oldbeta .beta-settings-list button:disabled{opacity:.45}
 .dht-oldbeta .beta-settings-page footer{bottom:8%;justify-content:center}.dht-oldbeta .beta-settings-page footer button{padding:4px 15px;background:linear-gradient(#344955,#0e2330)}.dht-oldbeta .beta-settings-page footer button:first-child{position:absolute;left:0;font-size:.85em;opacity:.7}.dht-oldbeta .beta-settings-page footer button:focus{outline:1px solid #c4e4f4}
