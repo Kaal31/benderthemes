@@ -5,7 +5,14 @@ export function captureStoreSheet(root:HTMLElement){
  const sheet=source.cloneNode(true) as HTMLElement,style=getComputedStyle(source);
  Object.assign(sheet.style,{transform:style.transform,opacity:'1',left:source.offsetLeft+'px',top:source.offsetTop+'px',width:source.offsetWidth+'px',height:source.offsetHeight+'px',transition:'none'});
  const original=[source,...source.querySelectorAll<HTMLElement>('*')],copies=[sheet,...sheet.querySelectorAll<HTMLElement>('*')];
- original.forEach((n,i)=>{const c=copies[i],s=getComputedStyle(n);Object.assign(c.style,{animation:'none',transition:'none',translate:s.translate,rotate:s.rotate,scale:s.scale});if(n.classList.contains('beta-store-layer'))Object.assign(c.style,{transform:s.transform,width:n.offsetWidth+'px',height:n.offsetHeight+'px'});if(n.classList.contains('beta-sheet-cover'))Object.assign(c.style,{position:'absolute',gridArea:'auto',left:n.offsetLeft+'px',top:n.offsetTop+'px',width:n.offsetWidth+'px',height:n.offsetHeight+'px',transform:s.transform,opacity:s.opacity});});
+ original.forEach((n,i)=>{const c=copies[i],s=getComputedStyle(n);Object.assign(c.style,{animation:'none',transition:'none',translate:s.translate,rotate:s.rotate,scale:s.scale});if(n.classList.contains('beta-store-layer'))Object.assign(c.style,{transform:s.transform,width:n.offsetWidth+'px',height:n.offsetHeight+'px'});if(n.classList.contains('beta-sheet-cover')){
+   // Grid tracks are fractional; offsetLeft/offsetWidth round them and cause a
+   // visible first-frame jump when the frozen leaf is put into perspective.
+   const grid=getComputedStyle(n.parentElement!),track=parseFloat(grid.gridTemplateColumns),row=parseFloat(grid.gridAutoRows),columnGap=parseFloat(grid.columnGap)||0,rowGap=parseFloat(grid.rowGap)||0;
+   const left=Number.isFinite(track)?Math.round(n.offsetLeft/(track+columnGap))*(track+columnGap):n.offsetLeft;
+   const top=Number.isFinite(row)?Math.round(n.offsetTop/(row+rowGap))*(row+rowGap):n.offsetTop;
+   Object.assign(c.style,{position:'absolute',gridArea:'auto',left:left+'px',top:top+'px',width:s.width,height:s.height,transform:s.transform,opacity:s.opacity});
+  }});
  wrapper.append(sheet);root.append(wrapper);return wrapper;
 }
 
