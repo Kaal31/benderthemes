@@ -170,6 +170,5 @@ export const OLD_BETA_CSS=`
 .dht-oldbeta .beta-light{opacity:.65}.dht-oldbeta .beta-focus-light{opacity:.6}
 .dht-oldbeta .beta-view-all{min-width:calc(var(--beta-w)*.12);padding:calc(var(--beta-h)*.014) 22px;font-size:calc(var(--beta-w)*.018);background:linear-gradient(#253c50,#101f30);box-shadow:inset 0 1px #91adc738,0 3px 8px #06111b66}
 .dht-oldbeta .beta-view-all small{font-size:calc(var(--beta-w)*.009)}
-.dht-oldbeta footer>button{min-width:calc(var(--beta-w)*.065);padding:5px 10px;background:linear-gradient(#526779,#1a2a3b);box-shadow:inset 0 1px #b4c3ce66,0 2px 4px #07111b66;border:1px solid #7d93a54d}
 .dht-oldbeta.no-motion *,.dht-oldbeta.no-motion *::before,.dht-oldbeta.no-motion *::after{transition:none!important;animation:none!important;scroll-behavior:auto!important}@media(prefers-reduced-motion:reduce){.dht-oldbeta *,.dht-oldbeta *::before,.dht-oldbeta *::after{transition:none!important;animation:none!important;scroll-behavior:auto!important}}
 `;
