@@ -5,22 +5,22 @@ import type {PersonalMii} from "./PersonalMii";
 import {FACE,packMiiArm,packMiiOutfit,POSE,POSE_SIZE,MII_SHOULDER,MII_ELBOW,MII_HIP,MII_WAIST_Y,MII_WAIST_FROM,MII_WAIST_TO,MII_NECK_Y,miiBodyGeometry,miiBodyMaterial,miiBodyScale,miiHead,miiFittedHair,miiHat,shapeGeometry,miiShade,miiFaceAtlas,miiFaceGeometry,miiFaceMaterial,faceLayer} from "./wiiuPlazaMiiModel";
 export type MiiDecal={part:string;point:[number,number,number];normal:[number,number,number];opacity:number;rotation:number;rotationX?:number;rotationY?:number;size:number};
 export const DEFAULT_DECAL:MiiDecal={part:"body",point:[0,5.65,.9],normal:[0,0,1],opacity:1,rotation:0,size:1.7};
-export function createMiiAvatar(m:PersonalMii){
+export function createMiiAvatar(m:PersonalMii,lod:0|1=0){
  const root=new THREE.Group(),targets:THREE.Mesh[]=[],textures:THREE.Texture[]=[],geometry:THREE.BufferGeometry[]=[],materials:THREE.Material[]=[];
  let mediaCleanup=()=>{};let disposed=false,decalMesh:THREE.Mesh|undefined,logo:THREE.Texture|undefined;
  let decalRest:{positions:Float32Array;normals:Float32Array;bones:number[];regions:number[]}|undefined;
  const remember=(g:THREE.BufferGeometry)=>{geometry.push(g);return g;};
  const add=(name:string,g:THREE.BufferGeometry,mat:THREE.Material,parent:THREE.Object3D=root,pick=true)=>{remember(g);materials.push(mat);const mesh=new THREE.Mesh(g,mat);mesh.name=name;parent.add(mesh);if(pick)targets.push(mesh);return mesh;};
  const c=(s:string)=>new THREE.Color(s),scale=miiBodyScale(m.height,m.build);
- const bodyGeo=miiBodyGeometry(m.female),n=bodyGeo.getAttribute("position").count;
+ const bodyGeo=miiBodyGeometry(m.female,lod),n=bodyGeo.getAttribute("position").count;
  const attr=(name:string,values:number[])=>bodyGeo.setAttribute(name,new THREE.Float32BufferAttribute(Array.from({length:n},()=>values).flat(),values.length));
  attr("aArmL",[0,0,packMiiArm(0,0),0]);attr("aArmR",[0,0,packMiiArm(0,0),0]);attr("aLegs",[0,0,0,0]);attr("aKnees",[0,0,0,0]);attr("aShirt",[...c(m.shirt).toArray(),1]);attr("aPants",[...c(m.pants??"#41464d").toArray(),1]);attr("aSkin",[...c(m.skin).toArray(),packMiiOutfit((m.outfit??0)+16,0)]);
  const body=add("body",bodyGeo,miiBodyMaterial(m.female,undefined,m.accent,true));body.scale.set(scale.x,scale.y,scale.x);
  const head=new THREE.Group();head.position.y=MII_NECK_Y*scale.y;root.add(head);const faceScales=[[1,1,1],[.9,1.08,1],[1.08,.94,1],[.92,.94,1],[1.04,1.05,1]][m.faceShape??0]??[1,1,1];head.scale.set(...faceScales as [number,number,number]);
- add("head",shapeGeometry(miiHead(0,m.faceStyle!=="detailed",m.faceStyle!=="detailed")),miiShade(new THREE.MeshLambertMaterial({color:m.skin,vertexColors:true})),head);
- const hair=shapeGeometry(miiFittedHair(m.hairStyle,m.hat??-1));
+ add("head",shapeGeometry(miiHead(lod,m.faceStyle!=="detailed",m.faceStyle!=="detailed")),miiShade(new THREE.MeshLambertMaterial({color:m.skin,vertexColors:true})),head);
+ const hair=shapeGeometry(miiFittedHair(m.hairStyle,m.hat??-1,lod));
  add("hair",hair,miiShade(new THREE.MeshLambertMaterial({color:m.hair,vertexColors:true,side:THREE.DoubleSide}),{gloss:.16}),head);
- if((m.hat??-1)>=0)add("hat",shapeGeometry(miiHat(m.hat)),miiShade(new THREE.MeshLambertMaterial({color:m.hatColor??"#e7b54b",vertexColors:true,side:THREE.DoubleSide}),{gloss:.12}),head);
+ if((m.hat??-1)>=0)add("hat",shapeGeometry(miiHat(m.hat,lod)),miiShade(new THREE.MeshLambertMaterial({color:m.hatColor??"#e7b54b",vertexColors:true,side:THREE.DoubleSide}),{gloss:.12}),head);
  let faceTexture:THREE.CanvasTexture|undefined,faceGeometry:THREE.BufferGeometry|undefined,lastExpression="";
  if(m.faceStyle!=="detailed"){
   const drawn=drawnMiiFace(m);faceTexture=drawn.texture;textures.push(drawn.texture);

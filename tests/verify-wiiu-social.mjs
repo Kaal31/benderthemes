@@ -27,11 +27,13 @@ try{
  await page.keyboard.press('Escape');await page.locator('.nt-dock button[data-place=miiverse]').click();
  const miiverse=page.getByRole('dialog',{name:'Miiverse',exact:true});await miiverse.waitFor();
  await page.screenshot({animations:'disabled',timeout:60000,path:'out/wiiu-refine/miiverse-activity.png'});
+ assert.equal(await miiverse.getByRole('tab',{name:'Friends around the world',exact:true}).getAttribute('aria-selected'),'true');
+ await page.keyboard.press('e');assert.equal(await miiverse.getByRole('tab',{name:'Activity',exact:true}).getAttribute('aria-selected'),'true');
  await page.keyboard.press('e');assert.equal(await miiverse.getByRole('tab',{name:'Communities',exact:true}).getAttribute('aria-selected'),'true');
- await page.keyboard.press('e');assert.equal(await miiverse.getByRole('tab',{name:'Friends around the world',exact:true}).getAttribute('aria-selected'),'true');
+ await page.keyboard.press('e');
  assert.equal(await miiverse.locator('.wu-city').count(),5);assert.ok(await miiverse.locator('.wu-world-caption').textContent().then(t=>t.includes('16 friends')));
  await page.screenshot({animations:'disabled',timeout:60000,path:'out/wiiu-refine/miiverse-world.png'});
- await page.emulateMedia({reducedMotion:'reduce'});assert.equal(await miiverse.locator('.wu-friend-mii img').first().evaluate(e=>getComputedStyle(e).animationName),'none');
+ await page.emulateMedia({reducedMotion:'reduce'});await page.waitForFunction(()=>document.querySelector('.wu-globe-canvas')?.getAttribute('data-motion')==='false');
  await page.keyboard.press('Escape');assert.equal(await page.locator('.wu-social').count(),0);
  assert.deepEqual(errors,[]);console.log('PASS: friend filters/detail/back, all status poses, long-list controller scrolling, Miiverse tabs/locations, reduced motion, no browser exceptions.');
 }finally{await browser.close();server.closeAllConnections();server.close();}
