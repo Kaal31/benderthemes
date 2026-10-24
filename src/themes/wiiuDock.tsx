@@ -8,12 +8,13 @@
 // rim / body / pictogram colours read from the theme's own button pictures.
 import {CSSProperties,ReactNode,useEffect,useId,useState} from "react";
 
-export type DockPlace="library"|"friends"|"store"|"browser"|"notifications"|"downloads"|"settings";
+export type DockPlace="library"|"miiverse"|"friends"|"store"|"browser"|"notifications"|"downloads"|"settings";
 export type DockLook={look:"icons"|"round";rim?:string;body?:string;ink?:string};
 
 // Pictograms on a 100 x 100 box. sil: the silhouette (base colour, gets the gloss), det: details in the detail
 // colour (white on the coloured icons, the button body on round buttons), top: base-colour parts over the details.
 const GLYPHS:Record<DockPlace,{sil?:ReactNode;det?:ReactNode;top?:ReactNode;color:string;side:string}>={
+ miiverse:{color:"#68d331",side:"#349c14",sil:<><circle cx="50" cy="25" r="13"/><circle cx="24" cy="38" r="10"/><circle cx="76" cy="38" r="10"/><path d="M37 41q13-9 26 0l8 32-12 2v17H44V75L30 72Zm-23 9q10-6 20 0l-1 26-10 2v12H12V74H5Zm52 0q10-6 20 0l9 24h-7v16H77V78l-10-2Z"/></>,det:<><circle cx="50" cy="25" r="7"/><circle cx="24" cy="38" r="5"/><circle cx="76" cy="38" r="5"/></>},
  library:{color:"#6f9fbf",side:"#456f8a",sil:<circle cx="50" cy="50" r="36"/>,det:<><circle cx="50" cy="50" r="14"/><path className="s" d="M50 22a28 28 0 0 1 25 15" strokeWidth="5" strokeLinecap="round" opacity=".75"/></>,top:<circle cx="50" cy="50" r="6"/>},
  friends:{color:"#f6911f",side:"#c25e06",sil:<rect x="14" y="16" width="72" height="68" rx="16"/>,det:<rect x="25" y="27" width="50" height="46" rx="7"/>,top:<><rect x="36" y="37" width="8" height="14" rx="4"/><rect x="56" y="37" width="8" height="14" rx="4"/><path className="s" d="M35 58q15 13 30 0" strokeWidth="7" strokeLinecap="round"/></>},
  store:{color:"#ffbd17",side:"#d38200",sil:<><path d="M20 40h60l-5 42a6 6 0 0 1-6 5H31a6 6 0 0 1-6-5Z"/><path d="M32 42V32a18 18 0 0 1 36 0v10h-8V32a10 10 0 0 0-20 0v10Z"/></>},

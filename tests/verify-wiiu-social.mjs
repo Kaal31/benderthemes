@@ -1,0 +1,37 @@
+import {startPreviewServer} from '../preview/server.mjs';
+import {launch} from './browser.mjs';
+import assert from 'node:assert/strict';
+const {server}=await startPreviewServer(),browser=await launch();
+try{
+ const page=await browser.newPage({viewport:{width:1280,height:930}}),errors=[];
+ page.setDefaultTimeout(12000);page.on('pageerror',e=>{errors.push(e.message);console.log('PAGE ERROR',e.message)});
+ await page.addInitScript(()=>{globalThis.friendStore={allFriends:Array.from({length:25},(_,i)=>({persona:{m_steamid:`sample-friend-${i}`,m_strPlayerName:['Alex','Jamie','Robin','Morgan','Sam'][i%5]+` ${i}`,m_ePersonaState:[1,3,4,0,2][i%5],m_strGameName:i===0?'Hades':undefined,location:i%3===0?['Tokyo, Japan','London, United Kingdom','Toronto, Canada'][i%3]:undefined}}))};});
+ await page.goto(`http://127.0.0.1:${server.address().port}/preview/${process.env.WIIU_SOCIAL_PREVIEW||"preview.html"}?theme=wiiu`,{waitUntil:'domcontentloaded'});
+ await page.locator('.nt-dock button[data-place=friends]').waitFor();
+ await page.evaluate(()=>{window.__updateTheme({animations:true,bootAnimations:false});});
+ await page.waitForTimeout(1200);
+ await page.locator('.nt-dock button[data-place=friends]').click();
+ const dialog=page.getByRole('dialog',{name:'Friend List',exact:true});await dialog.waitFor();
+ assert.equal(await dialog.locator('.wu-friend-row').count(),25);
+ await dialog.getByRole('tab',{name:'Online',exact:true}).click();assert.equal(await dialog.locator('.wu-friend-row').count(),20);
+ await dialog.getByRole('tab',{name:'Playing',exact:true}).click();assert.equal(await dialog.locator('.wu-friend-row').count(),1);
+ await dialog.locator('.wu-friend-row').click();await dialog.getByRole('heading',{name:'Alex 0'}).waitFor();
+ await page.keyboard.press('Escape');assert.equal(await dialog.locator('.wu-friend-row').count(),1);
+ await dialog.getByRole('tab',{name:'All friends',exact:true}).click();
+ for(const pose of ['online','playing','idle','sleeping','offline','busy'])assert.ok(await dialog.locator(`[data-pose=${pose}]`).count(),pose);
+ await dialog.locator('.wu-friend-row').first().focus();for(let i=0;i<23;i++)await page.keyboard.press('ArrowDown');
+ assert.ok(await dialog.locator('main').evaluate(e=>e.scrollTop)>0,'controller scrolls long list');
+ await dialog.locator('main').evaluate(e=>e.scrollTop=0);
+ await dialog.locator('.wu-friend-row').first().focus();
+ await page.screenshot({animations:'disabled',timeout:60000,path:'out/wiiu-refine/friends.png'});
+ await page.keyboard.press('Escape');await page.locator('.nt-dock button[data-place=miiverse]').click();
+ const miiverse=page.getByRole('dialog',{name:'Miiverse',exact:true});await miiverse.waitFor();
+ await page.screenshot({animations:'disabled',timeout:60000,path:'out/wiiu-refine/miiverse-activity.png'});
+ await page.keyboard.press('e');assert.equal(await miiverse.getByRole('tab',{name:'Communities',exact:true}).getAttribute('aria-selected'),'true');
+ await page.keyboard.press('e');assert.equal(await miiverse.getByRole('tab',{name:'Friends around the world',exact:true}).getAttribute('aria-selected'),'true');
+ assert.equal(await miiverse.locator('.wu-city').count(),5);assert.ok(await miiverse.locator('.wu-world-caption').textContent().then(t=>t.includes('16 friends')));
+ await page.screenshot({animations:'disabled',timeout:60000,path:'out/wiiu-refine/miiverse-world.png'});
+ await page.emulateMedia({reducedMotion:'reduce'});assert.equal(await miiverse.locator('.wu-friend-mii img').first().evaluate(e=>getComputedStyle(e).animationName),'none');
+ await page.keyboard.press('Escape');assert.equal(await page.locator('.wu-social').count(),0);
+ assert.deepEqual(errors,[]);console.log('PASS: friend filters/detail/back, all status poses, long-list controller scrolling, Miiverse tabs/locations, reduced motion, no browser exceptions.');
+}finally{await browser.close();server.closeAllConnections();server.close();}

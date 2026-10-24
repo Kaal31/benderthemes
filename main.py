@@ -2116,6 +2116,10 @@ class Plugin:
             decky.logger.error(f"wii u theme read failed: {e}")
             return None
 
+    async def get_public_friend_locations(self, steamids):
+        import friend_locations
+        return await asyncio.to_thread(friend_locations.lookup_many, steamids)
+
     async def wiiu_scan(self):
         try:
             return await asyncio.to_thread(_wiiu_scan)
