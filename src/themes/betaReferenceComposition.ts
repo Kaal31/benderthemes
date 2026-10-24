@@ -1,10 +1,10 @@
 /** Visible face centers traced from rechyyy 00:12.2 and TheFORMATstudios 00:11.
- * Coordinates are normalized to the Steam picture area, not the camera frame.
+ * Library coordinates are rectified from the photographed screen corners before normalization.
  * Occluded corners/depth remain estimates; these are not original Valve values.
  * Solve the resting sheet projection so each face keeps its own elevation.
  */
-const libraryFront=[[.48,.27],[.69,.24],[.59,.33],[.83,.37],[.34,.38],[.76,.31]];
-const libraryRear=[[[.23,.57],[.43,.62],[.62,.66]],[[.29,.77],[.79,.55],[.45,.72]],[[.21,.70],[.70,.58]]];
+const libraryFront=[[0.4721, 0.2605], [0.6777, 0.2266], [0.5858, 0.3012], [0.8414, 0.3586], [0.3331, 0.371], [0.7519, 0.283]];
+const libraryRear=[[[0.2126, 0.5703], [0.4125, 0.6215], [0.5907, 0.6299]], [[0.2955, 0.7565], [0.8063, 0.5342], [0.4407, 0.724]], [[0.2047, 0.7113], [0.6959, 0.5749]]];
 const storeFront=[[.38,.38],[.80,.35],[.58,.37],[.51,.58],[.65,.58],[.53,.27]];
 const storeRear=[[[.64,.24],[.70,.30],[.78,.54]],[[.34,.76],[.50,.65],[.65,.64]]];
 export function referenceCoverCenter(kind:'library'|'store',layer:number,index:number,w:number,h:number,z:number){

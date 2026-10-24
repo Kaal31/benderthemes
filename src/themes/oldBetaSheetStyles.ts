@@ -45,4 +45,6 @@ export const OLD_BETA_SHEET_CSS=`
 .dht-oldbeta[data-sheet-layout=reference][data-mode=sheet] .beta-cover[data-sheet-row="1"],
 .dht-oldbeta[data-sheet-layout=reference] .beta-store-layer-0 .beta-sheet-cover[data-sheet-row="1"]{animation-name:beta-flow-right;animation-duration:var(--flow-time,23s);animation-delay:var(--flow-phase,-7s)}
 .dht-oldbeta[data-sheet-layout=reference] .beta-store-layer{display:block;height:calc(var(--beta-w)*.67*215/460*2/3)}
+.dht-oldbeta[data-mode=sheet] .beta-categories{top:41%}
+.dht-oldbeta[data-mode=sheet][data-opening=true][data-store-open=true] .beta-categories{top:41%}
 `;
