@@ -243,7 +243,8 @@ export function useXboxLook(): { bg?: string; bgColor?: string; css: string } {
 export interface WiiSkin {
   scene?: import("./themes/WiiNativeScene").WiiScene;
   warnings?:string[];variants?:string[];selectedMember?:string;stages?:string[];
-  compatibility?:{textures:number;layouts:number;animations:number;baseRequired:boolean;partial:boolean};
+  compatibility?:{textures:number;layouts:number;animations:number;baseRequired:boolean;partial:boolean;standardTextures?:number;standardLayouts?:number};
+  defaultBaseApplied?:boolean;baseType?:"built-in"|"user";
   kind: "mym" | "csm";
   name: string;
   id: string;
@@ -267,13 +268,16 @@ export function useWiiSkin(): WiiSkin | null {
 }
 /** What the Wii theme gives the Wii menu after the per-file switches (ThemeFx key `wii:<file>`: "Theme wallpaper" =
  *  background, "Theme pointer hand" = icons). The home sets --dht-wii-skin-wallpaper from `wallpaper`. */
-export function useWiiLook(): { wallpaper?: string; fit: "cover" | "stretch"; cursor?: string; cursors: { a?: string; b?: string; c?: string };scene?:WiiSkin["scene"];skin?:WiiSkin } {
+const getWiiStandard=callable<[],WiiSkin>("get_wii_standard");
+let standardPromise:Promise<WiiSkin>|undefined;
+function useWiiStandard(enabled:boolean){const [skin,setSkin]=useState<WiiSkin>();useEffect(()=>{if(!enabled)return;let live=true;(standardPromise??=getWiiStandard()).then(s=>{if(live)setSkin(s);}).catch(()=>{standardPromise=undefined;});return()=>{live=false;};},[enabled]);return skin;}
+export function useWiiLook(enabled=true): { wallpaper?: string; fit: "cover" | "stretch"; cursor?: string; cursors: { a?: string; b?: string; c?: string };scene?:WiiSkin["scene"];skin?:WiiSkin } {
   const s = useSettings();
-  const sk = useWiiSkin();
+  const imported = useWiiSkin(),standard=useWiiStandard(enabled),sk=imported??standard;
   const fx = themeFx(s, `wii:${s.wiiSkin ?? ""}`);
   if (!sk) return { fit: "cover", cursors: {} };
   const cursors = fx.icons ? sk.cursors : {};
-  return { wallpaper: fx.background ? sk.wallpaper ?? undefined : undefined, fit: sk.wallpaperFit, cursor: cursors.a, cursors,scene:fx.icons?sk.scene:undefined,skin:sk };
+  return { wallpaper: fx.background ? sk.wallpaper ?? undefined : undefined, fit: sk.wallpaperFit, cursor: cursors.a, cursors,scene:sk.scene,skin:imported??undefined };
 }
 
 /** Nintendo 3DS HOME Menu theme (body_LZ.bin, alone or in a .zip / folder) from skins/3ds/. */

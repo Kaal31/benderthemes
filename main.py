@@ -1592,6 +1592,10 @@ async def _ensure_server():
 
 
 class Plugin:
+    async def wii_game_storage(self):
+        import wii_storage
+        return await asyncio.to_thread(wii_storage.scan_storage, _steam_libraries())
+
     async def theme_inventory(self):
         import theme_store
         return theme_store.local_inventory()
@@ -1997,6 +2001,10 @@ class Plugin:
         except Exception as e:
             decky.logger.error(f"ps4 theme read failed: {e}")
             return {"error": str(e)}
+
+    async def get_wii_standard(self):
+        import wii_standard
+        return await asyncio.to_thread(wii_standard.standard_skin)
 
     async def get_wii_skin(self, name: str, member: str = "", base: str = ""):
         """Wii System Menu theme (.mym / .csm / .zip) from skins/wii/, or None."""

@@ -27,7 +27,7 @@ import struct
 import zipfile
 import zlib
 
-READER_VERSION = 2
+READER_VERSION = 9
 
 U8_MAGIC = b"U\xaa8-"
 MAX_FILE = 128 * 1024 * 1024     # biggest theme file read into memory

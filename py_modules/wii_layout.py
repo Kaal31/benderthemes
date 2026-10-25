@@ -23,13 +23,15 @@ def finite(values):
     return list(values)
 
 def layout(data):
-    textures=[];materials=[];panes=[];stack=[];last=None;warnings=[];size=[608,456]
+    textures=[];fonts=[];materials=[];panes=[];stack=[];last=None;warnings=[];size=[608,456]
     for tag,s in sections(data,b"RLYT"):
         if tag=="lyt1" and len(s)>=20:size=finite(struct.unpack_from(">ff",s,12))
-        elif tag=="txl1":
+        elif tag in ("txl1","fnl1"):
             count,first=struct.unpack_from(">HH",s,8)
             if count>512 or 12+first+count*8>len(s):raise ValueError("texture table overflow")
-            textures=[string(s,12+struct.unpack_from(">I",s,12+first+i*8)[0]) for i in range(count)]
+            names=[string(s,12+struct.unpack_from(">I",s,12+first+i*8)[0]) for i in range(count)]
+            if tag=="txl1":textures=names
+            else:fonts=names
         elif tag=="mat1":
             count,first=struct.unpack_from(">HH",s,8)
             if count>512 or 12+first+4*count>len(s):raise ValueError("material table overflow")
@@ -45,15 +47,62 @@ def layout(data):
                 for j in range(srt_count):srt.append(finite(struct.unpack_from(">5f",s,cursor+j*20)))
                 cursor+=srt_count*20+coord_count*4+(4 if flags&(1<<25) else 0)
                 color=list(s[cursor:cursor+4]) if flags&(1<<27) and cursor+4<=len(s) else [255,255,255,255]
-                materials.append({"name":string(s,off,20),"textures":indices,"srt":srt,"wrap":wrap,"color":color,"complex":maps>1 or bool((flags>>18)&31)})
+                materials.append({"name":string(s,off,20),"textures":indices,"srt":srt,"coordGen":[list(s[off+64+maps*4+srt_count*20+n*4:off+68+maps*4+srt_count*20+n*4]) for n in range(coord_count)],"wrap":wrap,"color":color,"complex":maps>1 or bool((flags>>18)&31),"registers":[list(struct.unpack_from(">4h",s,off+20+n*8)) for n in range(3)],"constants":[list(s[off+44+n*4:off+48+n*4]) for n in range(4)]})
+                cursor+=4 if flags&(1<<27) else 0
+                swap=[[0,1,2,3],[0,0,0,3],[1,1,1,3],[2,2,2,3]]
+                if flags&(1<<12):
+                    if cursor+4>len(s):raise ValueError("swap table overflow")
+                    swap=[[s[cursor+j]&3,(s[cursor+j]>>2)&3,(s[cursor+j]>>4)&3,(s[cursor+j]>>6)&3] for j in range(4)];cursor+=4
+                cursor+=((flags>>13)&3)*20+((flags>>15)&7)*4
+                tev=[]
+                for j in range((flags>>18)&31):
+                    if cursor+16>len(s):raise ValueError("TEV table overflow")
+                    raw=s[cursor:cursor+16];tev.append({"coord":raw[0],"map":raw[2]+((raw[3]&1)<<8),"swapTex":(raw[3]>>3)&3,"swapRas":(raw[3]>>1)&3,"color":list(raw[4:8]),"alpha":list(raw[8:12]),"indirect":list(raw[12:16])});cursor+=16
+                alpha=None;blend=None
+                if flags&(1<<23):
+                    if cursor+4>len(s):raise ValueError("alpha compare overflow")
+                    alpha=list(s[cursor:cursor+4]);cursor+=4
+                if flags&(1<<24):
+                    if cursor+4>len(s):raise ValueError("blend overflow")
+                    blend=list(s[cursor:cursor+4])
+                materials[-1].update(tev=tev,swap=swap,alphaCompare=alpha,blend=blend)
+
         elif tag in ("pan1","pic1","wnd1","txt1","bnd1"):
             if len(s)<76:raise ValueError("truncated pane")
-            values=finite(struct.unpack_from(">10f",s,36));pane={"name":string(s,12,16),"kind":tag,"parent":stack[-1] if stack else -1,"visible":bool(s[8]&1),"inheritAlpha":bool(s[8]&2),"origin":s[9],"alpha":s[10]/255,"position":values[:3],"rotation":values[3:6],"scale":values[6:8],"size":values[8:10]}
+            values=finite(struct.unpack_from(">10f",s,36));pane={"name":string(s,12,16),"kind":tag,"parent":stack[-1] if stack else -1,"visible":bool(s[8]&1),"inheritAlpha":bool(s[8]&2),"wide":bool(s[8]&4),"origin":s[9],"alpha":s[10]/255,"position":values[:3],"rotation":values[3:6],"scale":values[6:8],"size":values[8:10]}
             if tag=="pic1" and len(s)>=96:
                 pane["colors"]=[list(s[i:i+4]) for i in range(76,92,4)];pane["material"]=struct.unpack_from(">H",s,92)[0]
                 count=s[94]
-                if count and len(s)>=128:pane["uv"]=finite(struct.unpack_from(">8f",s,96))
-            if tag in ("wnd1","txt1"):warnings.append(tag+" pane "+pane['name']+" uses fallback rendering")
+                if count>8 or 96+count*32>len(s):raise ValueError("UV array overflow")
+                if count:pane["uvs"]=[finite(struct.unpack_from(">8f",s,96+j*32)) for j in range(count)];pane["uv"]=pane["uvs"][0]
+            if tag=="txt1":
+                if len(s)<116:raise ValueError("truncated text pane")
+                capacity,length,material,font=struct.unpack_from(">4H",s,76);offset=struct.unpack_from(">I",s,88)[0]
+                if length>capacity or length%2 or offset<116 or offset+length>len(s):raise ValueError("text outside pane")
+                text=s[offset:offset+length].decode("utf-16-be","replace").split("\0",1)[0]
+                pane.update(material=material,colors=[list(s[92:96]),list(s[92:96]),list(s[96:100]),list(s[96:100])],text={"value":text,"font":font,"alignment":s[84],"metrics":finite(struct.unpack_from(">4f",s,100))})
+            if tag=="wnd1":
+                if len(s)<104:raise ValueError("truncated window pane")
+                inflation=finite(struct.unpack_from(">4f",s,76));count=s[92];content,table=struct.unpack_from(">II",s,96)
+                if count>8 or table+count*4>len(s) or content<104 or content+20>len(s):raise ValueError("window table bounds")
+                frames=[]
+                for j in range(count):
+                    q=struct.unpack_from(">I",s,table+j*4)[0]
+                    if q<104 or q+3>len(s):raise ValueError("window frame bounds")
+                    frames.append({"material":struct.unpack_from(">H",s,q)[0],"flip":s[q+2]})
+                pane.update(colors=[list(s[content+n:content+n+4]) for n in range(0,16,4)],material=struct.unpack_from(">H",s,content+16)[0],window={"inflation":inflation,"frames":frames})
+                n=s[content+18]
+                if n>8 or content+20+n*32>len(s):raise ValueError("window UV bounds")
+                if n:pane["uvs"]=[finite(struct.unpack_from(">8f",s,content+20+j*32)) for j in range(n)];pane["uv"]=pane["uvs"][0]
+                if count==1:
+                    pane["material"]=frames[0]["material"]
+                    flip=frames[0]["flip"];uv=[0,0,1,0,0,1,1,1]
+                    if flip==1:uv=[1,0,0,0,1,1,0,1]
+                    elif flip==2:uv=[0,1,1,1,0,0,1,0]
+                    elif flip==3:uv=[1,1,0,1,1,0,0,0]
+                    pane["uv"]=uv
+                    if flip>3:warnings.append("Unsupported window texture rotation: "+pane["name"])
+                elif count>1:warnings.append("Multi-frame window borders are not rendered: "+pane["name"])
             panes.append(pane);last=len(panes)-1
             if len(panes)>2048:raise ValueError("too many panes")
         elif tag=="pas1":
@@ -63,7 +112,7 @@ def layout(data):
             if not stack:raise ValueError("invalid pane nesting")
             stack.pop()
     if stack or min(size)<=0:raise ValueError("invalid layout hierarchy or size")
-    return {"size":size,"textures":textures,"materials":materials,"panes":panes,"warnings":warnings}
+    return {"size":size,"textures":textures,"fonts":fonts,"materials":materials,"panes":panes,"warnings":warnings}
 
 def animation(data):
     result={"frames":0,"loop":False,"tracks":[],"warnings":[]};key_total=0

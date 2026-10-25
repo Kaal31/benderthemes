@@ -1,0 +1,1 @@
+export function WiiPageArrow({left=false}:{left?:boolean}){return <svg viewBox="0 0 44 76" width="44" height="76" aria-hidden="true" style={{transform:left?'scaleX(-1)':undefined}}><path d="M6 7Q4 4 4 11L8 38 4 65Q4 72 9 67L37 40Q40 38 37 35Z" fill="#9de5f5" stroke="#4d8ea9" strokeWidth="3"/><path d="m7 11 25 27H11Z" fill="#d9faff" opacity=".7"/></svg>}

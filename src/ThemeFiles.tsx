@@ -208,6 +208,7 @@ export function ThemeFiles({ inputRef, initialKind = "psp" }: { inputRef: Mutabl
       <span className="dht-files-status" role="status">{loading && !items.length ? "Loading…" : info?.error ? info.error : `${info?.total ?? 0} ${query ? `results for “${query}”` : "themes"}${kind === "wiiflow" ? " · original source posts" : ` · saved to ${kindInfo?.dir ?? "skins"}/`}`}</span>
     </div>
     {more&&<button className="dht-files-load-more" onClick={()=>choose(items.length)} disabled={loading} style={{padding:"8px 16px",font:"inherit",marginBottom:8}}>{loading?"Loading…":`Show more · ${items.length} of ${info?.total}`}</button>}
+    {kind==="wii"&&<p className="dht-files-note">MYM themes use the built-in standard Wii menu automatically. An owned console base is optional; missing custom artwork remains visible in compatibility details.</p>}
     {kind==="wiiflow"&&<p className="dht-files-note" role="status">{wiiflowDownloads} ZIPs, RAR/7z archives and extracted theme folders are checked after downloads finish.</p>}
     {info?.warning && <p className="dht-files-note" role="status">{info.warning}</p>}
     <div className="dht-files-layout">
@@ -230,7 +231,7 @@ export function ThemeFiles({ inputRef, initialKind = "psp" }: { inputRef: Mutabl
           {current.fallbackImage && <small className="dht-files-by">If the original image fails, a screenshot of our converted theme is shown.</small>}
           {current.description && <p className="dht-files-note">{current.description}</p>}
           {(current.images?.length ?? 0) > 1 && <div style={{display:"flex",gap:6,overflowX:"auto"}}>{current.images!.slice(1).map(url=><img key={url} src={url} alt={`${current.name} screenshot`} loading="lazy" referrerPolicy="no-referrer" style={{width:120,height:90,objectFit:"contain"}} onError={e=>{e.currentTarget.style.display="none"}} />)}</div>}
-          {current.externalOnly && <p className="dht-files-note">Open the author's download page. Completed ZIPs and extracted WiiFlow folders in Downloads are imported automatically while this tab is open. Older links may have expired.</p>}
+          {current.externalOnly && <p className="dht-files-note">{kind==="wii"?"This is a multi-stage theme. Direct download is unavailable until all stages can be provided together. See the source page for details.":"Open the author’s download page. Completed ZIPs and extracted WiiFlow folders in Downloads are imported automatically while this tab is open. Older links may have expired."}</p>}
           {fileList === null ? <p className="dht-files-note">{(files[current.id] as any)?.error ?? "Reading the item’s files…"}</p> : <div className="dht-files-actions">
             {current.externalLinks?.map((url,i)=><button key={url} data-active={zone === "detail" && action === i} onClick={()=>openUrl(url)}>Author download page {i+1} ↗</button>)}
             {fileList.map((f, i) => {

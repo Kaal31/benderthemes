@@ -43,6 +43,7 @@ MAX_JSON = 8 * 1024 * 1024
 UA = "DeckHomeThemes/theme-files (+https://github.com/Kaal31)"
 
 SOURCES = {
+    "wiithemer": {"name":"WiiThemer", "url":"https://www.wiithemer.org/", "credit":"Wii themes and previews from WiiThemer. Themes belong to their original creators; creator names are not supplied by this catalog. MYM patches use the plugin’s standard Wii menu."},
     "gbatemp": {"name": "GBAtemp", "url": "https://gbatemp.net/threads/wiiflow-themes.180497/", "credit": "WiiFlow themes, descriptions and screenshots from public GBAtemp posts. Credits belong to the original creators; older image and download links may be unavailable."},
     "themezer": {"name": "Themezer", "url": "https://themezer.net",
                  "credit": "Themes and previews from Themezer (themezer.net) by their creators."},
@@ -64,7 +65,7 @@ KINDS = {
     "switch": {"label": "Switch", "dir": "switch", "exts": (".nxtheme",), "max": 24 << 20, "sources": ("themezer",)},
     "wiiu": {"label": "Wii U", "dir": "wiiu", "exts": (".utheme",), "max": 64 << 20, "sources": ("themezer",)},
     "3ds": {"label": "3DS", "dir": "3ds", "exts": (".zip",), "max": 24 << 20, "sources": ("themezer",)},
-    "wii": {"label": "Wii", "dir": "wii", "exts": (".mym", ".csm", ".zip"), "max": 32 << 20, "sources": ("archive",)},
+    "wii": {"label": "Wii", "dir": "wii", "exts": (".mym", ".csm", ".zip"), "max": 32 << 20, "sources": ("wiithemer", "archive")},
     "xbox": {"label": "Xbox", "dir": "xbox", "exts": (".zip",), "max": 160 << 20, "sources": ("archive",)},
 }
 NOT_BUILT = [
@@ -287,6 +288,8 @@ def _https(url, host=None):
 
 def _allowed_host(source, host):
     host = (host or "").lower()
+    if source == "wiithemer":
+        return host in ("wiithemer.org", "www.wiithemer.org")
     if source == "gbatemp":
         return host == "gbatemp.net"
     if source == "themezer":
@@ -409,6 +412,18 @@ def browse(kind, source, query="", page=1, refresh=False, fetch_json=None, fetch
             words = query.lower().split()
             hits = [i for i in every if all(w in (i["name"]+" "+i["description"]+" "+i["author"]).lower() for w in words)]
             res = {"items": hits[(page-1)*PAGE_SIZE:page*PAGE_SIZE], "total": len(hits), "pages": max(1, -(-len(hits)//PAGE_SIZE)), "skipped": len(failures), "warning": "Showing the saved public GBAtemp index from 2026-10-23. Refresh tries live pages; older links may have expired." if not live_gbatemp else "Some GBAtemp pages are unavailable. Showing available entries or the saved index from 2026-10-23; older links may have expired." if failures else ""}
+        elif source == "wiithemer":
+            from wiithemer_catalog import parse, ROOT
+            def load():return parse(fetch_text('wiithemer',ROOT+'index.js'))
+            warning=''
+            try:every=_cached(('wiithemer',),load,now,refresh)
+            except Exception:
+                from pathlib import Path
+                snapshot=json.loads(Path(__file__).with_name('wiithemer_index.json').read_text(encoding='utf-8'))
+                every=snapshot['items'];warning='WiiThemer is unavailable. Showing saved catalog metadata from '+snapshot['updated']+'. Preview and download links still require the source site.'
+            words=query.lower().split()
+            hits=[item for item in every if all(word in (item['name']+' '+item['id']).lower() for word in words)]
+            res={'items':hits[(page-1)*PAGE_SIZE:page*PAGE_SIZE],'total':len(hits),'pages':max(1,-(-len(hits)//PAGE_SIZE)),'warning':warning}
         elif source == "themezer":
             def load():
                 data = fetch_json("themezer", THEMEZER_API, json.dumps({"query": _themezer_query(kind, query, page)}).encode())
@@ -493,6 +508,10 @@ def download_url(kind, source, ident, file=""):
         raise ValueError("unknown kind or source")
     if source == "gbatemp":
         raise ValueError("Open the original author download page; WiiFlow archives require separate import.")
+    if source == "wiithemer":
+        from wiithemer_catalog import valid_file, ROOT
+        if not valid_file(ident) or re.search(r'stage[ _-]*\d+',ident,re.I):raise ValueError('Select a complete single-stage MYM from WiiThemer.')
+        return ROOT+'resources/mym/'+urllib.parse.quote(ident)
     if source == "themezer":
         if not _HEX.fullmatch(str(ident or "")):
             raise ValueError("bad Themezer id")
@@ -636,7 +655,7 @@ def download(skins_dir, kind, source, ident, file="", name="", opener=None):
             total = _int(r.headers.get("Content-Length"))
             if total > spec["max"]:
                 raise ValueError(f"the file is too large ({total >> 20} MB)")
-            given = _disposition_name(final, r.headers) or (file if source == "archive" else os.path.basename(ident) if source in ("pspunk", *GITHUB) else "")
+            given = _disposition_name(final, r.headers) or (file if source == "archive" else os.path.basename(ident) if source in ("wiithemer", "pspunk", *GITHUB) else "")
             ext = os.path.splitext(given)[1].lower()
             if ext not in spec["exts"]:
                 ext = spec["exts"][0]

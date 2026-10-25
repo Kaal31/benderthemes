@@ -27,7 +27,7 @@ with tempfile.TemporaryDirectory() as t:
     assert W.peek(path)=='mym'
     csm=u8_enc({'layout':{'common':{'board.ash':u8_enc({'arc':{'timg':{'my_BackPic_a.tpl':a}}})}}})
     complete=os.path.join(t,'complete.zip');make_zip(complete,{'download/theme.csm':csm,'theme.mym':stage(b)})
-    result=W.read_wii_theme(complete);assert result['kind']=='csm' and result['wallpaperSize']==[30,30]
+    result=W.read_wii_theme(complete);assert result['kind']=='csm' and result['wallpaperSize']==[30,30];assert result['scene']['background']==result['wallpaper']
     base=os.path.join(t,'base.app');Path(base).write_bytes(csm)
     inherited=os.path.join(t,'inherit.mym');make_zip(inherited,{'mym.ini':'[cont1]\nfile=layout/common/chansel.ash\ntype=ASH|U8'})
     assert not W.read_wii_theme(inherited)['wallpaper']
@@ -45,6 +45,27 @@ with tempfile.TemporaryDirectory() as t:
     pane=bytes([3,4,255,0])+b'Root'+bytes(20)+struct.pack('>10f',1,2,3,4,5,6,1,1,170,96)
     doc=document(b'RLYT',[section(b'pan1',pane),section(b'pas1',b''),section(b'pic1',pane),section(b'pae1',b'')])
     layout=L.layout(doc);assert layout['panes'][1]['parent']==0;assert layout['panes'][0]['rotation']==[4,5,6]
+    # Text offsets are section-relative, with bounded UTF-16 and authored font metrics.
+    label="Channel \u00e9".encode("utf-16-be")+b"\0\0"
+    text_header=struct.pack('>4H4BI8B4f',len(label),len(label),0,0,4,0,0,0,116,*([255]*8),24,28,1,2)
+    txt=section(b'txt1',pane+text_header+label)
+    parsed=L.layout(document(b'RLYT',[txt]))['panes'][0]
+    assert parsed['text']['value']=="Channel \u00e9" and parsed['text']['metrics']==[24,28,1,2]
+    broken=bytearray(txt);struct.pack_into('>I',broken,88,0xfffffff0)
+    try:L.layout(document(b'RLYT',[bytes(broken)]))
+    except ValueError:pass
+    else:raise AssertionError('Out-of-range text accepted')
+    # Single-frame window data includes content colors and an independently indexed border.
+    window_header=struct.pack('>4f4BII',0,0,0,0,1,0,0,0,104,124)
+    content=bytes([255]*16)+struct.pack('>HBB',2,0,0)
+    wnd=section(b'wnd1',pane+window_header+content+struct.pack('>I',128)+struct.pack('>HBB',3,1,0))
+    parsed=L.layout(document(b'RLYT',[wnd]))['panes'][0]
+    assert parsed['material']==3 and parsed['window']['frames']==[{'material':3,'flip':1}]
+    assert parsed['uv']==[1,0,0,0,1,1,0,1]
+    broken=bytearray(wnd);struct.pack_into('>I',broken,124,0xfffffff0)
+    try:L.layout(document(b'RLYT',[bytes(broken)]))
+    except ValueError:pass
+    else:raise AssertionError('Out-of-range window accepted')
     # A real-shaped RLAN pane track: key offsets are relative to their own records.
     keys=struct.pack('>3f',0,0,0)+struct.pack('>3f',60,360,0)
     track=struct.pack('>BBBBHHI',0,5,2,0,2,0,12)+keys
