@@ -34,11 +34,11 @@ export function createFriendActor(id:string,globe=false){
  const box=new THREE.Box3().setFromObject(avatar.root),height=box.getSize(new THREE.Vector3()).y;
  let previous="",lastAction="";
  function update(friend:Friend,time:number,motion:boolean,dt:number){
-  const status=friendPose(friend),action=friendAction(status,motion?time:status==="playing"?.35:1,globe),clip=ACTIONS[action.name];
+  const status=friendPose(friend),action=friendAction(status,motion?time+phase*.65:status==="playing"?.35:1,globe),clip=ACTIONS[action.name];
   target.fill(0);clip.pose(target,action.time,{stride:action.time*2,phase,style:action.style});
-  if(status==="sleeping"){target[POSE.HP]=.55+(globe?.08:.025)*Math.sin(time*1.4);target[POSE.HY]=0;target[POSE.HR]=.15;target[POSE.TP]=.15;}
+  if(status==="sleeping"){target[POSE.HP]=.55+(globe?.08:.025)*Math.sin(time*1.4+phase);target[POSE.HY]=0;target[POSE.HR]=.15;target[POSE.TP]=.15;}
   if(status==="idle")target[POSE.HY]=.55*Math.sin(time*.5+phase);
-  if(status==="busy"){target[POSE.HP]=.18;target[POSE.HY]=-.28;}
+  if(status==="busy"){target[POSE.HP]=.18+(motion?.06*Math.sin(time*.8+phase):0);target[POSE.HY]=-.28;}
   if(status==="offline")target.fill(0);
   const blend=!motion||!previous?1:1-Math.exp(-Math.min(dt,.1)*12);
   for(let i=0;i<POSE_SIZE;i++)pose[i]+=(target[i]-pose[i])*blend;

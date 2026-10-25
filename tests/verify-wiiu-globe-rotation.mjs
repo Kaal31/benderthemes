@@ -19,5 +19,11 @@ try{
  await cdp.send('Input.dispatchTouchEvent',{type:'touchEnd',touchPoints:[]});await page.waitForTimeout(250);assert.ok(Math.abs(await yaw()-touchYaw)>.4,'touch drag works with reduced motion');
  assert.equal(await canvas.getAttribute('data-dragging'),'false');
  const cards=await page.locator('[data-world-friend]').evaluateAll(nodes=>nodes.filter(n=>n.style.visibility!=='hidden').map(n=>{const r=n.getBoundingClientRect(),p=n.parentElement.getBoundingClientRect();return r.left>=p.left&&r.right<=p.right&&r.top>=p.top&&r.bottom<=p.bottom}));assert.ok(cards.every(Boolean),'visible labels stay inside the globe panel');
- assert.deepEqual(errors,[]);console.log('PASS: mouse drag, horizontal touchpad wheel, real touch drag, attached/occluded labels, reduced motion and disabled animation; no browser errors.');
+ await page.getByRole('button',{name:'Reset view',exact:true}).click();await page.waitForTimeout(150);assert.ok(Math.abs(await yaw())<.01,'reset returns to the original view');
+ for(let angle=0;angle<8;angle++){
+  await page.mouse.move(x,y);await page.mouse.wheel(100,0);await page.waitForTimeout(100);
+  const boxes=await page.locator('[data-world-friend]').evaluateAll(nodes=>nodes.filter(n=>Number(n.style.opacity)>.25).map(n=>{const r=n.getBoundingClientRect();return {left:r.left,right:r.right,top:r.top,bottom:r.bottom}}));
+  for(let i=0;i<boxes.length;i++)for(let j=i+1;j<boxes.length;j++){const a=boxes[i],b=boxes[j];assert.ok(a.right<=b.left||b.right<=a.left||a.bottom<=b.top||b.bottom<=a.top,'rotating labels do not overlap');}
+ }
+ assert.deepEqual(errors,[]);console.log('PASS: mouse drag, horizontal touchpad wheel, real touch drag, attached/occluded labels, reset, collision-free labels, reduced motion and disabled animation; no browser errors.');
 }finally{await browser.close();server.closeAllConnections();server.close()}

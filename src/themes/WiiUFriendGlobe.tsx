@@ -29,7 +29,7 @@ function statusTexture(status:string){
  const texture=new THREE.CanvasTexture(canvas);texture.colorSpace=THREE.SRGBColorSpace;return texture;
 }
 export function WiiUFriendGlobe({friends,motion}:{friends:Friend[];motion:boolean}){
- const canvas=useRef<HTMLCanvasElement>(null),live=useRef({friends,motion}),orientation=useRef({yaw:0,pitch:0}),[error,setError]=useState(false);live.current={friends,motion};
+ const resetView=useRef<()=>void>(()=>{}),canvas=useRef<HTMLCanvasElement>(null),live=useRef({friends,motion}),orientation=useRef({yaw:0,pitch:0}),[error,setError]=useState(false);live.current={friends,motion};
  const key=friends.map(friend=>friend.id).join(',');
  useEffect(()=>{
   const element=canvas.current;if(!element)return;let renderer:THREE.WebGLRenderer;
@@ -37,53 +37,65 @@ export function WiiUFriendGlobe({friends,motion}:{friends:Friend[];motion:boolea
   renderer.setPixelRatio(Math.min(devicePixelRatio,1.5));renderer.outputColorSpace=THREE.SRGBColorSpace;renderer.toneMapping=THREE.ACESFilmicToneMapping;renderer.toneMappingExposure=1.05;
   const scene=new THREE.Scene(),world=new THREE.Group(),camera=new THREE.OrthographicCamera(-11,11,5.2,-5.2,.1,100);camera.position.set(0,0,30);camera.lookAt(0,0,0);scene.add(world);world.rotation.order='YXZ';
   scene.add(new THREE.HemisphereLight(0xffffff,0x99b9b1,1.8));const light=new THREE.DirectionalLight(0xfffceb,2);light.position.set(-6,10,14);scene.add(light);const fill=new THREE.DirectionalLight(0xe4fff7,.65);fill.position.set(7,0,10);scene.add(fill);
-  const texture=earthTexture(),geometry=new THREE.SphereGeometry(3.25,64,48),material=new THREE.MeshStandardMaterial({map:texture,roughness:.78,metalness:0}),earth=new THREE.Mesh(geometry,material);earth.rotation.set(.08,-1.15,-.08);world.add(earth);
+  const texture=earthTexture(),geometry=new THREE.SphereGeometry(3.25,64,48),material=new THREE.MeshStandardMaterial({map:texture,bumpMap:texture,bumpScale:.018,roughness:.7,metalness:0}),earth=new THREE.Mesh(geometry,material);earth.rotation.set(.08,-1.15,-.08);world.add(earth);
   const atmosphereGeometry=new THREE.SphereGeometry(3.3,48,32),atmosphereMaterial=new THREE.ShaderMaterial({transparent:true,depthWrite:false,vertexShader:'varying vec3 n;varying vec3 v;void main(){vec4 p=modelViewMatrix*vec4(position,1.);n=normalize(normalMatrix*normal);v=normalize(-p.xyz);gl_Position=projectionMatrix*p;}',fragmentShader:'varying vec3 n;varying vec3 v;void main(){float rim=pow(1.-abs(dot(normalize(n),normalize(v))),3.);gl_FragColor=vec4(.68,1.,.91,rim*.2);}'});world.add(new THREE.Mesh(atmosphereGeometry,atmosphereMaterial));
   const shadowGeometry=new THREE.CircleGeometry(.25,24),shadowMaterial=new THREE.MeshBasicMaterial({color:0x377e67,transparent:true,opacity:.13,depthWrite:false});
   const statusTextures=new Map<string,THREE.CanvasTexture>();
   const actors=friends.map((friend,index)=>{
-   const actor=createFriendActor(friend.id,true),holder=new THREE.Group(),angle=THREE.MathUtils.degToRad([105,160,220,320,25][index]),normal=new THREE.Vector3(Math.cos(angle),Math.sin(angle),.27).normalize();
+   const actor=createFriendActor(friend.id,true),holder=new THREE.Group(),angle=THREE.MathUtils.degToRad([105,160,220,320,25][index]),normal=new THREE.Vector3(Math.cos(angle),Math.sin(angle),[.16,.36,.22,.32,.18][index]).normalize();
    holder.position.copy(normal.clone().multiplyScalar(3.27));holder.quaternion.setFromUnitVectors(new THREE.Vector3(0,1,0),normal);holder.scale.setScalar(1.38/actor.height);holder.add(actor.avatar.root);world.add(holder);
    const shadow=new THREE.Mesh(shadowGeometry,shadowMaterial);shadow.position.copy(normal.clone().multiplyScalar(3.263));shadow.quaternion.setFromUnitVectors(new THREE.Vector3(0,0,1),normal);world.add(shadow);
    const indicator=new THREE.Sprite(new THREE.SpriteMaterial({transparent:true,depthWrite:false,toneMapped:false}));indicator.scale.set(actor.height*.4,actor.height*.3,1);indicator.position.set(actor.height*.34,actor.height*.94,0);holder.add(indicator);
-   return {actor,holder,normal,indicator,label:element.parentElement?.querySelector<HTMLElement>(`[data-world-friend="${CSS.escape(friend.id)}"]`)};
+   return {actor,holder,normal,indicator,labelX:NaN,labelY:NaN,labelOpacity:0,label:element.parentElement?.querySelector<HTMLElement>(`[data-world-friend="${CSS.escape(friend.id)}"]`)};
   });
-  let frame=0,last=0,dirty=true,previous='',width=1,height=1,dragging=false,activePointer:number|null=null,lastPointer={x:0,y:0},lastInput=performance.now(),yaw=orientation.current.yaw,pitch=orientation.current.pitch;
+  let frame=0,last=0,dirty=true,previous='',width=1,height=1,dragging=false,activePointer:number|null=null,lastPointer={x:0,y:0},lastInput=performance.now(),yaw=orientation.current.yaw,pitch=orientation.current.pitch,speedYaw=0,speedPitch=0,lastMoveTime=0,labelsMoving=false;
   const resize=()=>{const rect=element.getBoundingClientRect();if(!rect.width||!rect.height)return;width=rect.width;height=rect.height;const aspect=width/height;camera.left=-5.2*aspect;camera.right=5.2*aspect;camera.updateProjectionMatrix();renderer.setSize(width,height,false);dirty=true;};
   const observer=new ResizeObserver(resize);observer.observe(element);resize();const reduced=matchMedia('(prefers-reduced-motion: reduce)'),projected=new THREE.Vector3(),normalWorld=new THREE.Vector3();
-  const labels=()=>{
+  const labels=(dt:number)=>{
    world.updateMatrixWorld(true);
-   for(const item of actors){
-    const label=item.label;if(!label)continue;
+   const targets=actors.flatMap(item=>{
+    const label=item.label;if(!label)return [];
     projected.copy(item.normal).multiplyScalar(4.4);world.localToWorld(projected);projected.project(camera);
     normalWorld.copy(item.normal).transformDirection(world.matrixWorld);
-    const dx=projected.x*width/2,dy=-projected.y*height/2;
-    const labelWidth=label.offsetWidth||240,labelHeight=label.offsetHeight||64;
-    // Keep a full text card beside the head, rather than drawing its underline across the face.
-    const side=item.normal.x<0?-1:1;
-    const x=Math.max(labelWidth/2+12,Math.min(width-labelWidth/2-12,width/2+dx+side*(labelWidth/2+38)));
-    const y=Math.max(labelHeight/2+12,Math.min(height-labelHeight/2-56,height/2+dy));
-    const opacity=THREE.MathUtils.clamp((normalWorld.z+.16)/.28,0,1);
-    label.style.transform=`translate(${x}px,${y}px) translate(-50%,-50%)`;label.style.opacity=String(opacity);label.style.visibility=opacity===0?'hidden':'visible';
+    const dx=projected.x*width/2,dy=-projected.y*height/2,w=label.offsetWidth||240,h=label.offsetHeight||64,side=item.normal.x<0?-1:1;
+    return [{item,label,w,h,x:THREE.MathUtils.clamp(width/2+dx+side*(w/2+38),w/2+12,width-w/2-12),y:THREE.MathUtils.clamp(height/2+dy,h/2+12,height-h/2-56),opacity:THREE.MathUtils.clamp((normalWorld.z+.16)/.28,0,1)}];
+   }).sort((a,b)=>a.y-b.y);
+   const placed:typeof targets=[];
+   for(const target of targets){
+    if(target.opacity<.15)continue;
+    const initial=target.y,candidates=[initial];
+    for(let step=1;step<=5;step++)for(const side of [-1,1])candidates.push(THREE.MathUtils.clamp(initial+side*step*(target.h+10),target.h/2+12,height-target.h/2-56));
+    const free=candidates.find(y=>placed.every(other=>Math.abs(target.x-other.x)>=(target.w+other.w)/2+10||Math.abs(y-other.y)>=(target.h+other.h)/2+10));
+    target.y=free??initial;placed.push(target);
    }
+   let unsettled=false;const easing=reduced.matches?1:1-Math.exp(-dt*18);
+   for(const target of targets){
+    const {item,label,x,y,opacity}=target,first=!Number.isFinite(item.labelX);
+    item.labelX=first?x:item.labelX+(x-item.labelX)*easing;item.labelY=first?y:item.labelY+(y-item.labelY)*easing;item.labelOpacity=first?opacity:item.labelOpacity+(opacity-item.labelOpacity)*easing;
+    unsettled ||= Math.abs(x-item.labelX)+Math.abs(y-item.labelY)>.1||Math.abs(opacity-item.labelOpacity)>.01;
+    label.style.transform=`translate(${item.labelX}px,${item.labelY}px) translate(-50%,-50%)`;label.style.opacity=String(item.labelOpacity);label.style.visibility=item.labelOpacity<.015?'hidden':'visible';
+   }
+   return unsettled;
   };
   const tick=(now:number)=>{
    frame=requestAnimationFrame(tick);if(now-last<1000/24)return;
    const moving=live.current.motion&&!reduced.matches&&!document.hidden,signature=JSON.stringify(live.current);
    const dt=Math.min(.1,(now-last)/1000);last=now;
+   if(!dragging&&!reduced.matches){orientation.current.yaw+=speedYaw*dt;orientation.current.pitch=THREE.MathUtils.clamp(orientation.current.pitch+speedPitch*dt,-.6,.6);const friction=Math.exp(-dt*6);speedYaw*=friction;speedPitch*=friction;}
    if(moving&&!dragging&&now-lastInput>8000)orientation.current.yaw+=dt*.025;
    const easing=reduced.matches?1:1-Math.exp(-dt*15);yaw+=(orientation.current.yaw-yaw)*easing;pitch+=(orientation.current.pitch-pitch)*easing;
    const turning=Math.abs(orientation.current.yaw-yaw)+Math.abs(orientation.current.pitch-pitch)>.0001;
-   if(!moving&&!dirty&&!turning&&previous===signature)return;previous=signature;dirty=false;
-   actors.forEach(({actor,indicator},i)=>{const friend=live.current.friends[i],status=friendPose(friend);actor.update(friend,moving?now/1000:0,moving,dt);indicator.visible=['sleeping','playing','busy'].includes(status);if(indicator.visible){if(!statusTextures.has(status))statusTextures.set(status,statusTexture(status));const texture=statusTextures.get(status)!;if(indicator.material.map!==texture){indicator.material.map=texture;indicator.material.needsUpdate=true;}indicator.position.y=actor.height*.94+(moving?Math.sin(now/1000*1.8+i)*.6:0);indicator.material.opacity=status==='sleeping'&&moving?.75+.2*Math.sin(now/1000*1.5):.9;}});world.rotation.set(pitch,yaw,0);renderer.render(scene,camera);labels();element.dataset.rendered='true';element.dataset.motion=String(moving);element.dataset.yaw=String(yaw);element.dataset.actions=actors.map(({actor})=>actor.action).join(',');
+   if(!moving&&!dirty&&!turning&&!labelsMoving&&Math.abs(speedYaw)+Math.abs(speedPitch)<.001&&previous===signature)return;previous=signature;dirty=false;
+   actors.forEach(({actor,indicator},i)=>{const friend=live.current.friends[i],status=friendPose(friend);actor.update(friend,moving?now/1000:0,moving,dt);indicator.visible=['sleeping','playing','busy'].includes(status);if(indicator.visible){if(!statusTextures.has(status))statusTextures.set(status,statusTexture(status));const texture=statusTextures.get(status)!;if(indicator.material.map!==texture){indicator.material.map=texture;indicator.material.needsUpdate=true;}indicator.position.y=actor.height*.94+(moving?Math.sin(now/1000*1.8+i)*.6:0);indicator.material.opacity=status==='sleeping'&&moving?.75+.2*Math.sin(now/1000*1.5):.9;}});world.rotation.set(pitch,yaw,0);renderer.render(scene,camera);labelsMoving=labels(dt);element.dataset.rendered='true';element.dataset.motion=String(moving);element.dataset.yaw=String(yaw);element.dataset.actions=actors.map(({actor})=>actor.action).join(',');
   };frame=requestAnimationFrame(tick);
   const invalidate=()=>{dirty=true;};reduced.addEventListener('change',invalidate);
-  const down=(event:PointerEvent)=>{if(event.button!==0||dragging)return;activePointer=event.pointerId;dragging=true;lastInput=performance.now();lastPointer={x:event.clientX,y:event.clientY};element.setPointerCapture(event.pointerId);element.dataset.dragging='true';};
-  const move=(event:PointerEvent)=>{if(!dragging||event.pointerId!==activePointer)return;orientation.current.yaw+=(event.clientX-lastPointer.x)*.008;orientation.current.pitch=THREE.MathUtils.clamp(orientation.current.pitch+(event.clientY-lastPointer.y)*.004,-.6,.6);lastPointer={x:event.clientX,y:event.clientY};lastInput=performance.now();dirty=true;};
-  const up=(event:PointerEvent)=>{if(event.pointerId!==activePointer)return;activePointer=null;dragging=false;lastInput=performance.now();element.dataset.dragging='false';if(element.hasPointerCapture(event.pointerId))element.releasePointerCapture(event.pointerId);};
-  const wheel=(event:WheelEvent)=>{event.preventDefault();const delta=(event.deltaX||event.deltaY)*(event.deltaMode===1?16:1);orientation.current.yaw+=THREE.MathUtils.clamp(delta*.004,-.45,.45);lastInput=performance.now();dirty=true;};
+  const down=(event:PointerEvent)=>{if(event.button!==0||dragging)return;activePointer=event.pointerId;dragging=true;speedYaw=speedPitch=0;lastMoveTime=performance.now();lastInput=lastMoveTime;lastPointer={x:event.clientX,y:event.clientY};element.setPointerCapture(event.pointerId);element.dataset.dragging='true';};
+  const move=(event:PointerEvent)=>{if(!dragging||event.pointerId!==activePointer)return;const now=performance.now(),elapsed=Math.max(.016,(now-lastMoveTime)/1000),dx=(event.clientX-lastPointer.x)*.008,dy=(event.clientY-lastPointer.y)*.004;orientation.current.yaw+=dx;orientation.current.pitch=THREE.MathUtils.clamp(orientation.current.pitch+dy,-.6,.6);speedYaw=THREE.MathUtils.clamp(dx/elapsed,-2,2);speedPitch=THREE.MathUtils.clamp(dy/elapsed,-.6,.6);lastPointer={x:event.clientX,y:event.clientY};lastMoveTime=now;lastInput=now;dirty=true;};
+  const up=(event:PointerEvent)=>{if(event.pointerId!==activePointer)return;activePointer=null;dragging=false;lastInput=performance.now();if(reduced.matches||lastInput-lastMoveTime>100)speedYaw=speedPitch=0;element.dataset.dragging='false';if(element.hasPointerCapture(event.pointerId))element.releasePointerCapture(event.pointerId);};
+  resetView.current=()=>{speedYaw=speedPitch=0;orientation.current={yaw:0,pitch:0};lastInput=performance.now();dirty=true;};
+  const wheel=(event:WheelEvent)=>{event.preventDefault();speedYaw=speedPitch=0;const delta=(event.deltaX||event.deltaY)*(event.deltaMode===1?16:1);orientation.current.yaw+=THREE.MathUtils.clamp(delta*.004,-.45,.45);lastInput=performance.now();dirty=true;};
   element.addEventListener('pointerdown',down);element.addEventListener('pointermove',move);element.addEventListener('pointerup',up);element.addEventListener('pointercancel',up);element.addEventListener('lostpointercapture',up);element.addEventListener('wheel',wheel,{passive:false});
-  return()=>{observer.disconnect();cancelAnimationFrame(frame);reduced.removeEventListener('change',invalidate);element.removeEventListener('pointerdown',down);element.removeEventListener('pointermove',move);element.removeEventListener('pointerup',up);element.removeEventListener('pointercancel',up);element.removeEventListener('lostpointercapture',up);element.removeEventListener('wheel',wheel);actors.forEach(({actor,indicator})=>{actor.dispose();indicator.material.dispose();});statusTextures.forEach(texture=>texture.dispose());geometry.dispose();material.dispose();texture.dispose();atmosphereGeometry.dispose();atmosphereMaterial.dispose();shadowGeometry.dispose();shadowMaterial.dispose();renderer.dispose();renderer.forceContextLoss();};
+  return()=>{resetView.current=()=>{};observer.disconnect();cancelAnimationFrame(frame);reduced.removeEventListener('change',invalidate);element.removeEventListener('pointerdown',down);element.removeEventListener('pointermove',move);element.removeEventListener('pointerup',up);element.removeEventListener('pointercancel',up);element.removeEventListener('lostpointercapture',up);element.removeEventListener('wheel',wheel);actors.forEach(({actor,indicator})=>{actor.dispose();indicator.material.dispose();});statusTextures.forEach(texture=>texture.dispose());geometry.dispose();material.dispose();texture.dispose();atmosphereGeometry.dispose();atmosphereMaterial.dispose();shadowGeometry.dispose();shadowMaterial.dispose();renderer.dispose();renderer.forceContextLoss();};
  },[key]);
- return <>{error?<div className="wu-globe-fallback" aria-label="World globe"/>:<canvas ref={canvas} className="wu-globe-canvas" aria-label="Drag or scroll to rotate the globe and your friends’ Miis"/>}</>;
+ return <><button className="wu-world-reset" onClick={()=>resetView.current()}>Reset view</button><span className="wu-world-gesture">Drag to turn · touchpad scroll</span>{error?<div className="wu-globe-fallback" aria-label="World globe"/>:<canvas ref={canvas} className="wu-globe-canvas" aria-label="Drag or scroll to rotate the globe and your friends’ Miis"/>}</>;
 }

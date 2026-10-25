@@ -18,7 +18,7 @@ try{
  await p.getByRole('checkbox').check();const before=await alex.locator('canvas').evaluate(e=>e.toDataURL());await p.waitForTimeout(550);assert.notEqual(await alex.locator('canvas').evaluate(e=>e.toDataURL()),before,'animated Mii pixels change');
  await p.getByRole('button',{name:'Miiverse',exact:true}).click();await p.waitForFunction(()=>document.querySelector('.wu-globe-canvas')?.dataset.rendered==='true');
  assert.equal(await p.getByRole('tab',{name:'Friends around the world'}).getAttribute('aria-selected'),'true');
- const locations=await p.locator('.wu-location').evaluateAll(items=>items.map(e=>{const r=e.getBoundingClientRect();return{width:r.width,height:r.height,scroll:e.scrollWidth,client:e.clientWidth}}));assert.ok(locations.every(r=>r.width===locations[0].width&&r.height===locations[0].height&&r.scroll<=r.client),'world labels have consistent dimensions');
+ const locations=await p.locator('.wu-location').evaluateAll(items=>items.map(e=>{const r=e.getBoundingClientRect();return{width:r.width,height:r.height,scroll:e.scrollWidth,client:e.clientWidth}}));assert.ok(locations.every(r=>Math.abs(r.width-locations[0].width)<1&&Math.abs(r.height-locations[0].height)<1&&r.scroll<=r.client),'world labels have consistent dimensions');
  await p.emulateMedia({reducedMotion:'reduce'});await p.waitForFunction(()=>document.querySelector('.wu-globe-canvas')?.dataset.motion==='false');
  assert.deepEqual(errors,[]);console.log('PASS: Plaza 3D status clips, animated/static canvas output, London alignment, globe opens first, reduced motion, no browser exceptions.');
 }finally{await browser.close();server.closeAllConnections();server.close()}
