@@ -1,3 +1,4 @@
+import {sleepingPose} from "./wiiuSleepingPoses";
 import * as THREE from "three";
 import type {Friend} from "../activity";
 import {DEFAULT_MII,miiPortraitUrl} from "./PersonalMii";
@@ -29,14 +30,14 @@ export function friendAction(status:string,time:number,globe=false):{name:Action
  return {name:"idle",time,style:status==="busy"?3:0};
 }
 export function createFriendActor(id:string,globe=false){
- const avatar=createMiiAvatar(friendMiiModel(id),1),pose=new Float32Array(POSE_SIZE),target=new Float32Array(POSE_SIZE),phase=(friendSeed(id)%100)/100*Math.PI*2;
+ const avatar=createMiiAvatar(friendMiiModel(id),1),pose=new Float32Array(POSE_SIZE),target=new Float32Array(POSE_SIZE),sleepScratch=new Float32Array(POSE_SIZE),phase=(friendSeed(id)%100)/100*Math.PI*2;
  avatar.setPose(pose);
  const box=new THREE.Box3().setFromObject(avatar.root),height=box.getSize(new THREE.Vector3()).y;
- let previous="",lastAction="";
+ let previous="",lastAction="",sleepName="";
  function update(friend:Friend,time:number,motion:boolean,dt:number){
   const status=friendPose(friend),action=friendAction(status,motion?time+phase*.65:status==="playing"?.35:1,globe),clip=ACTIONS[action.name];
   target.fill(0);clip.pose(target,action.time,{stride:action.time*2,phase,style:action.style});
-  if(status==="sleeping"){target[POSE.HP]=.55+(globe?.08:.025)*Math.sin(time*1.4+phase);target[POSE.HY]=0;target[POSE.HR]=.15;target[POSE.TP]=.15;}
+  sleepName=status==="sleeping"?sleepingPose(target,sleepScratch,time+phase,friendSeed(id),motion):"";
   if(status==="idle")target[POSE.HY]=.55*Math.sin(time*.5+phase);
   if(status==="busy"){target[POSE.HP]=.18+(motion?.06*Math.sin(time*.8+phase):0);target[POSE.HY]=-.28;}
   if(status==="offline")target.fill(0);
@@ -46,5 +47,5 @@ export function createFriendActor(id:string,globe=false){
   avatar.root.position.y=pose[POSE.Y]-(action.name==="sit"?1.1:0);
   previous=status;lastAction=action.name;
  }
- return {avatar,height,update,get action(){return lastAction;},dispose:avatar.dispose};
+ return {avatar,height,update,get action(){return lastAction;},get sleepingPose(){return sleepName;},dispose:avatar.dispose};
 }

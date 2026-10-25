@@ -28,7 +28,7 @@ function tick(now:number){
   const h=entry.actor.height*1.22;camera.left=-h*aspect/2;camera.right=h*aspect/2;camera.top=h/2;camera.bottom=-h/2;camera.updateProjectionMatrix();
   entry.actor.update(entry.friend(),now/1000,motion,dt);scene.add(entry.actor.avatar.root);renderer.render(scene,camera);
   const ctx=entry.canvas.getContext('2d');ctx?.clearRect(0,0,width,height);ctx?.drawImage(renderer.domElement,0,0);
-  entry.canvas.dataset.action=entry.actor.action;entry.canvas.dataset.motion=String(motion);entry.canvas.dataset.rendered="true";
+  entry.canvas.dataset.action=entry.actor.action;entry.canvas.dataset.sleepingPose=entry.actor.sleepingPose;entry.canvas.dataset.motion=String(motion);entry.canvas.dataset.rendered="true";
   scene.remove(entry.actor.avatar.root);entry.dirty=false;
  }
  frame=requestAnimationFrame(tick);
