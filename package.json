@@ -7,6 +7,7 @@
     "build": "rollup -c",
     "watch": "rollup -c -w",
     "typecheck": "tsc --noEmit",
+    "test:settings": "node tests/verify-settings-structure.mjs",
     "test:localization": "node tests/verify-localization.mjs && node tests/verify-localization-settings.mjs",
     "preview": "node preview/build.mjs",
     "package": "python tools/package_release.py",

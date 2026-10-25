@@ -92,7 +92,7 @@ export function BladesHome() {
 
   const options = () => {
     const extra: MenuItem[] = [
-      {label:t("optionsMenuSide"),sub:()=>["right","left"].map(side=>({label:side==="right"?t("rightSide"):t("leftSide"),checked:(s.x360.guideSide??"right")===side,action:()=>updateSettings({x360:{...s.x360,guideSide:side as "left"|"right"}})}))},
+      { settingsId:"native:options-menu-side", label:t("optionsMenuSide"),sub:()=>["right","left"].map(side=>({label:side==="right"?t("rightSide"):t("leftSide"),checked:(s.x360.guideSide??"right")===side,action:()=>updateSettings({x360:{...s.x360,guideSide:side as "left"|"right"}})}))},
       { label: t("presets"), sub: () => themeMenu(s.theme, api.switchTheme, THEMES) },
       { label: t("homeScreenSettings"), action: api.openSettings },
       { label: t("destMainMenu"), action: api.showSteamHome },

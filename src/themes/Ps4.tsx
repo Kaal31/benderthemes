@@ -108,7 +108,7 @@ export function Ps4Home() {
 
   const options = () => {
     const extra: MenuItem[] = [
-      { label: "Game backgrounds", sub: () => [
+      { settingsId:"native:game-backgrounds", label:"Game backgrounds", sub: () => [
         {label:"On",checked:s.ps4GameBackgrounds,action:()=>updateSettings({ps4GameBackgrounds:true})},
         {label:"Off · Library background",checked:!s.ps4GameBackgrounds,action:()=>updateSettings({ps4GameBackgrounds:false})},
       ] },

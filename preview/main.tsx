@@ -1,6 +1,6 @@
 import { startAchievementPopups, previewAchievementPopup, achievementPopupStatus } from "../src/achievementPopups";
 import {SILVER_REFERENCE as PREVIEW_REFERENCE} from "../src/themes/silverReference";
-import {openThemeSettings} from "../src/themeSettingsMenu";
+import {themeSettingsItems,customizeItems,manageThemeItems,globalSettingsItems,openThemeSettings} from "../src/themeSettingsMenu";
 import {ONYX_SOUND_PACK,ONYX_PREVIEW_CUES} from "./onyxSoundPack";
 import {REAL_GAME_ART} from "./realGameArt";
 import { THEME_STYLES } from "../src/engine/themeStyles";
@@ -15,7 +15,7 @@ import { l1Held } from "../src/input";
 import { useEffect, useState } from "react";
 import { ThemedHome } from "../src/Home";
 import { openSteam as openSteamPreview, setLibrarySource, setPreviewAchievements, setPreviewActions, openGamePage, openAchievements, launchGame, loadLibrary as loadLibraryPreview } from "../src/library";
-import { getSettings, initSettings, resetThemeSettings, seedSettings, THEMES, updateSettings, useSettings, ThemeId } from "../src/settings";
+import { getRawSettings, getSettings, initSettings, resetThemeSettings, seedSettings, THEMES, updateSettings, useSettings, ThemeId } from "../src/settings";
 import { refreshPacks, setPreviewBattery, setPreviewSound, setPreviewStatus, setPreviewUser, setWallpaperOverride, soundDiag } from "../src/steam";
 import { setPreviewTier } from "../src/badges";
 import { setPreviewLoadedPlugins } from "../src/pluginPresence";
@@ -357,3 +357,9 @@ createRoot(document.getElementById("root")!).render(<App />);
     { notificationID: "n3", title: "Download complete", body: "Stardew Valley is ready to play", appid: 413150, rtCreated: 3 },
   ] };
 }
+
+Object.assign(window,{__settingsRoot:themeSettingsItems,__settingsCustomize:customizeItems,__settingsManage:manageThemeItems,__settingsGlobal:globalSettingsItems});
+
+Object.assign(window,{__allSettingsThemeIds:THEMES.map(item=>item.id)});
+
+Object.assign(window,{__getRawSettingsForTest:getRawSettings});

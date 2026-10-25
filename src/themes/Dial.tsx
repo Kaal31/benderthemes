@@ -100,17 +100,17 @@ export function DialHome() {
   ];
   const options = () => {
     const common: MenuItem[] = [
-      { label: t("dialSkin"), sub: () => ([["classic",t("original")],["chrome",t("classicChrome")],["crimson",t("crimsonReactor")],["arctic",t("arcticCeramic")]] as const).map(([look,label]) => ({label,checked:getSettings().dial.look===look,action:()=>updateDial({look})})) },
-      { label: "Switch animation", sub: () => ([
+      { settingsId:"native:dial-skin", label:t("dialSkin"), sub: () => ([["classic",t("original")],["chrome",t("classicChrome")],["crimson",t("crimsonReactor")],["arctic",t("arcticCeramic")]] as const).map(([look,label]) => ({label,checked:getSettings().dial.look===look,action:()=>updateDial({look})})) },
+      { settingsId:"native:switch-animation", label:"Switch animation", sub: () => ([
         ["rhombus","Hourglass → Rhombus (video)"],["rhombus-slow","Slower morph (650 ms hold)"],["rotate","Rotate"],["pulse","Pulse"],["hologram","Hologram lift"],["none","None"],
       ] as [DialMotion,string][]).map(([motion,label]) => ({label,checked:motion === "none" ? motions.length === 0 : motions.includes(motion),action:()=>{const d=getSettings().dial;const selected=d.motions ?? (d.motion === "none" ? [] : [d.motion]);updateDial({motions:motion === "none" ? [] : selected.includes(motion) ? selected.filter(m=>m!==motion) : [...selected.filter(m => motion === "rhombus" ? m !== "rhombus-slow" : motion === "rhombus-slow" ? m !== "rhombus" : true),motion]});}})) },
-      { label: "Dial activation", sub: () => ([
+      { settingsId:"native:dial-activation", label:"Dial activation", sub: () => ([
         ["on-browse","Activate when browsing"],["always","Always activated"],["off","Keep idle appearance"],
       ] as const).map(([activation,label]) => ({label,checked:getSettings().dial.activation===activation,action:()=>{setBrowsed(false);updateDial({activation});}})) },
-      { label: t("floatingCover"), sub: () => [true,false].map(floatingCover => ({label:floatingCover?t("on"):t("off"),checked:getSettings().dial.floatingCover===floatingCover,action:()=>updateDial({floatingCover})})) },
-      { label: t("hologramLight"), sub: () => [true,false].map(projectionLight => ({label:projectionLight?t("on"):t("off"),checked:getSettings().dial.projectionLight===projectionLight,action:()=>updateDial({projectionLight})})) },
-      { label: t("reflections"), sub: () => [true,false].map(reflections => ({label:reflections?t("on"):t("off"),checked:getSettings().dial.reflections===reflections,action:()=>updateDial({reflections})})) },
-      { label: t("dialSfx"), sub: () => ([
+      { settingsId:"native:floating-cover", label:t("floatingCover"), sub: () => [true,false].map(floatingCover => ({label:floatingCover?t("on"):t("off"),checked:getSettings().dial.floatingCover===floatingCover,action:()=>updateDial({floatingCover})})) },
+      { settingsId:"native:hologram-light", label:t("hologramLight"), sub: () => [true,false].map(projectionLight => ({label:projectionLight?t("on"):t("off"),checked:getSettings().dial.projectionLight===projectionLight,action:()=>updateDial({projectionLight})})) },
+      { settingsId:"native:reflections", label:t("reflections"), sub: () => [true,false].map(reflections => ({label:reflections?t("on"):t("off"),checked:getSettings().dial.reflections===reflections,action:()=>updateDial({reflections})})) },
+      { settingsId:"native:dial-sound-effects", label:t("dialSfx"), sub: () => ([
         ["reference","Sounds from your video"],["pack","AudioLoader / Steam sounds"],["off","Off"],
       ] as const).map(([sound,label]) => ({label,checked:getSettings().dial.sound===sound,action:()=>updateDial({sound})})) },
       { label: t("destLibrary"), action: () => openSteam("library") },
