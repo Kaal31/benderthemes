@@ -1595,37 +1595,43 @@
     {
       "id": "nazarick",
       "name": "Nazarick",
-      "version": "1.0.4",
+      "version": "1.0.6",
       "theme": "nazarick",
       "description": "Artwork, sounds and optional skins for Nazarick.",
       "minPluginVersion": "1.10.2",
-      "size": 49330812,
+      "size": 66306706,
       "resources": [
         "assets/nazarick/downloads-video.mp4",
+        "assets/nazarick/downloads-video.webm",
         "assets/nazarick/downloads.png",
         "assets/nazarick/friends.png",
         "assets/nazarick/home-video.mp4",
+        "assets/nazarick/home-video.webm",
         "assets/nazarick/home.png",
         "assets/nazarick/library.png",
         "assets/nazarick/settings.png",
         "assets/nazarick/store-video.mp4",
+        "assets/nazarick/store-video.webm",
         "assets/nazarick/store.png",
         "assets/nazarick/wheel.png",
         "sounds/DHT Nazarick Music/menu_music.mp3",
         "sounds/DHT Nazarick Music/pack.json",
-        "assets/nazarick/downloads-video.webm",
-        "assets/nazarick/home-video.webm",
-        "assets/nazarick/store-video.webm"
+        "assets/nazarick/library-video.mp4",
+        "assets/nazarick/library-video.webm",
+        "assets/nazarick/settings-video.mp4",
+        "assets/nazarick/settings-video.webm"
       ],
-      "unpackedSize": 49783093,
-      "sha256": "80f655851347a5a30cce50642876b9bd88b1d39f06b2765957bb4b925ec0a3c9",
-      "url": "https://github.com/Kaal31/deckthemes-assets/releases/download/nazarick-v1.0.4/ThemeAssets-Nazarick-v1.0.4.zip",
+      "unpackedSize": 66811112,
+      "sha256": "3228e4a2fe8e05c63f2ad203d05672948e4e97e3fe4a5c68d32c6968270f9140",
+      "url": "https://github.com/Kaal31/deckthemes-assets/releases/download/nazarick-v1.0.6/ThemeAssets-Nazarick-v1.0.6.zip",
       "preview": null,
       "poster": null,
       "backgroundVideos": [
         "assets/nazarick/downloads-video.webm",
         "assets/nazarick/home-video.webm",
-        "assets/nazarick/store-video.webm"
+        "assets/nazarick/store-video.webm",
+        "assets/nazarick/library-video.webm",
+        "assets/nazarick/settings-video.webm"
       ]
     },
     {
