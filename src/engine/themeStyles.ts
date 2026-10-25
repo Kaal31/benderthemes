@@ -9,6 +9,7 @@ import { OPTIONS as wii } from "../themes/options/wii";
 import { OPTIONS as wiiu } from "../themes/options/wiiu";
 import { OPTIONS as ps2 } from "../themes/options/ps2";
 import { OPTIONS as ps5 } from "../themes/options/ps5";
+import { PLAYSTATION_SURFACE_OPTIONS } from "../themes/options/playstationSurface";
 import { OPTIONS as xbox } from "../themes/options/xbox";
 import { OPTIONS as aero } from "../themes/options/aero";
 import { OPTIONS as aero2 } from "../themes/options/aero2";
@@ -29,6 +30,8 @@ export type StyleOption = {
 };
 
 export const THEME_STYLES: Partial<Record<ThemeId, StyleOption[]>> = { gameamp, onyx, silver, wii, wiiu, ps2, ps5, xbox, aero, aero2, pain, nazarick, ps1, iisu };
+
+for (const theme of ["ps4", "ps5"] as const) THEME_STYLES[theme] = [...(THEME_STYLES[theme] ?? []), ...PLAYSTATION_SURFACE_OPTIONS.filter(option => theme === "ps5" || option.key !== "playGlass")];
 
 // Only layouts with game hero backgrounds expose this control. Cover tiles and
 // console wallpapers keep their own sizing.

@@ -7,7 +7,9 @@ import {ProfileAvatar} from "../ProfileAvatar";
 import { useEffect, useState } from "react";
 import { BatteryGlyph, GameArt, Icon, IconName, MenuItem, MenuView, themeMenu, useHome, useMenu, useRemembered } from "../common";
 import { clamp, Press, Stage, ThemeRoot, useStage } from "../input";
-import { fmtLastPlayed, fmtPlaytime, Game, openSteam, SteamPlace } from "../library";
+import { fmtLastPlayed, fmtPlaytime, Game, openAchievements, openSteam, SteamPlace } from "../library";
+import { usePs5Activities } from "./ps5Activities";
+import { playstationSurface } from "./playstationSurface";
 import { showTitle, THEMES } from "../settings";
 import { Badges } from "../badges";
 import { fmtTime, playSound, useBattery, useClock, useWallpaper } from "../steam";
@@ -30,6 +32,7 @@ type Zone = "tabs" | "tiles" | "play" | "cards";
 export function Ps5Home() {
   const api = useHome();
   const s = api.settings;
+  const surface = playstationSurface(s, "ps5");
   const { W, H } = useStage();
   const now = useClock(15000);
   const bat = useBattery();
@@ -74,13 +77,7 @@ export function Ps5Home() {
     return () => clearTimeout(t);
   }, [g?.appid, tab]);
 
-  const cards = g && showCards
-    ? [
-        { title: "Game Details", sub: "Achievements, news, properties", run: () => api.details(g) },
-        { title: "Play Time", sub: fmtPlaytime(g.playtime, g.lastPlayed, true), run: () => api.details(g) },
-        { title: "Last Played", sub: fmtLastPlayed(g.lastPlayed), run: () => api.details(g) },
-      ]
-    : [];
+  const cards = usePs5Activities(showCards ? g : undefined, () => { if (g) api.details(g); }, () => { if (g) openAchievements(g); });
   const topIcons: { icon: IconName; run: () => void }[] = [
     { icon: "search", run: () => openSteam("search") },
     { icon: "gear", run: () => api.openSettings() },
@@ -175,8 +172,8 @@ export function Ps5Home() {
   const [T, TS] = SIZES[st<string>("tileSize")] ?? SIZES.normal;
   const GAP = 14;
   const rowY = 96;
-  const playY = Math.min(544,H-250);
-  const cardsY = playY+92;
+  const playY = Math.min(520,H-280);
+  const cardsY = playY+78;
   const x0 = 70;
   const labelW = labelPos === "beside" ? Math.min(330, 14 * (cur?.label.length ?? 0) + 40) : 0;
   const xOf = (i: number) => {
@@ -187,20 +184,22 @@ export function Ps5Home() {
   const scrolledDown = zone === "cards";
 
   return (
-    <ThemeRoot onInput={onInput} hints={{ a: g ? "Play" : "Select", y: "Options", menu: "Options" }}>
+    <ThemeRoot onInput={onInput} hints={{ a: g ? "Play" : "Select", y: "Options", menu: "Options" }} style={{ fontFamily: 'var(--dht-font, "SST", "Motiva Sans", "Segoe UI", sans-serif)', fontWeight: 400 }}>
       <Stage background="#000">
         {/* background */}
         <div className="dht-ps5-bg" style={{ position: "absolute", inset: 0, background: `var(--dht-ps5-bg, ${wallCss})` }} />
+        <div className="dht-ps5-artwork-surface" data-fade={surface.fade} style={surface.artwork}>
         {wall && hubBg !== "solid" && <BackgroundMedia src={wall} style={{ position: "absolute", inset: 0, width: W, height: H, objectFit: "cover" }} />}
         {bg && hubBg !== "solid" && (
           <div key={bg.appid} style={{ position: "absolute", inset: 0, overflow: "hidden", animation: fade === "cut" ? "none" : (fade === "fade" || st<string>("heroScaling") !== "cover") ? "dhtFadeOnly5 450ms ease-out" : "dhtFade5 450ms ease-out" }}>
             <GameHero g={bg} theme="ps5" blurred={hubBg === "blur"} />
           </div>
         )}
-        <div style={{ position: "absolute", inset: 0, background: "linear-gradient(90deg, rgba(0,0,0,0.75) 0%, rgba(0,0,0,0.25) 55%, rgba(0,0,0,0.1) 100%), linear-gradient(180deg, rgba(0,0,0,0.55) 0%, rgba(0,0,0,0) 30%, rgba(0,0,0,0.0) 60%, rgba(0,0,0,0.8) 100%)" }} />
+        </div>
+        <div className="dht-ps5-readability-overlay" style={{ position: "absolute", inset: 0, opacity: surface.overlayOpacity, background: "linear-gradient(90deg, rgba(0,0,0,0.75) 0%, rgba(0,0,0,0.25) 55%, rgba(0,0,0,0.1) 100%), linear-gradient(180deg, rgba(0,0,0,0.55) 0%, rgba(0,0,0,0) 30%, rgba(0,0,0,0.0) 60%, rgba(0,0,0,0.8) 100%)" }} />
         <style>{`@keyframes dhtFade5 { from { opacity: 0; transform: scale(1.04) } to { opacity: 1; transform: scale(1) } } @keyframes dhtFadeOnly5 { from { opacity: 0 } to { opacity: 1 } }`}</style>
 
-        <div style={{ position: "absolute", inset: 0, transform: scrolledDown ? `translateY(-${H * 0.32}px)` : "none", transition: "transform 300ms ease-out" }}>
+        <div style={{ position: "absolute", inset: 0, transform: scrolledDown ? "translateY(-24px)" : "none", transition: "transform 220ms ease-out" }}>
           {/* tabs */}
           <div style={{ position: "absolute", left: x0, top: 30, display: "flex", gap: 34, fontSize: 22, color: "#fff" }}>
             {(["games", "media"] as const).map((t, i) => (
@@ -242,7 +241,7 @@ export function Ps5Home() {
           )}
 
           {/* logo / title */}
-          <div style={{ position: "absolute", left: x0, top: rowY + TS + 60, width: 520, height: Math.max(90,playY-rowY-TS-90), display: "flex", alignItems: "flex-end" }}>
+          <div style={{ position: "absolute", left: x0, top: rowY + TS + 60, width: 520, height: Math.max(90,playY-rowY-TS-126), display: "flex", alignItems: "flex-end" }}>
             {g ? (
               <GameArtLogo g={g} />
             ) : (
@@ -250,25 +249,26 @@ export function Ps5Home() {
             )}
           </div>
 
+          {g && st<boolean>("playtime") && <div className="dht-ps5-game-meta" style={{ position: "absolute", left: x0, top: playY-32, color: "#d6dce5", fontSize: 14, lineHeight: "20px", fontWeight: 400, textShadow: "0 1px 4px #000" }}>{fmtLastPlayed(g.lastPlayed)} · {fmtPlaytime(g.playtime, g.lastPlayed, true)}</div>}
           {/* play row */}
-          <div style={{ position: "absolute", left: x0, top: playY, display: "flex", gap: 16, alignItems: "center" }}>
-            <div onClick={()=>g?api.launch(g):activateTile(cur)} className="dht-ps5-play" data-selected={zone === "play" && psel === 0} style={{ height: 56, padding: "0 64px", borderRadius: 28, background: zone === "play" && psel === 0 ? "var(--dht-ps5-play, #fff)" : "rgba(255,255,255,0.88)", color: "#000", fontSize: 22, fontWeight: 600, display: "flex", alignItems: "center", boxShadow: zone === "play" && psel === 0 ? "0 0 0 4px rgba(255,255,255,0.4)" : "none", transform: zone === "play" && psel === 0 ? "scale(1.05)" : "none", transition: "transform 150ms" }}>
+          <div className="dht-ps5-play-panel" data-glass={surface.glass} style={{ position: "absolute", left: x0, top: playY, display: "flex", gap: 16, alignItems: "center", ...surface.glassStyle }}>
+            <div onClick={()=>g?api.launch(g):activateTile(cur)} className="dht-ps5-play" data-selected={zone === "play" && psel === 0} style={{ height: 52, padding: "0 58px", borderRadius: 28, background: zone === "play" && psel === 0 ? "var(--dht-ps5-play, #fff)" : "rgba(255,255,255,0.88)", color: "#000", fontSize: 20, fontWeight: 500, display: "flex", alignItems: "center", boxShadow: zone === "play" && psel === 0 ? "0 0 0 4px rgba(255,255,255,0.4)" : "none", transform: zone === "play" && psel === 0 ? "scale(1.05)" : "none", transition: "transform 150ms" }}>
               {g ? "Play" : "Open"}
             </div>
-            <div style={{ width: 56, height: 56, borderRadius: 28, background: zone === "play" && psel === 1 ? "#fff" : "rgba(60,60,60,0.8)", display: "flex", alignItems: "center", justifyContent: "center" }}>
+            <div role="button" aria-label="Game options" onClick={() => g ? api.nativeMenu(g) : options()} style={{ cursor: "pointer", width: 52, height: 52, borderRadius: 28, background: zone === "play" && psel === 1 ? "#fff" : "rgba(60,60,60,0.8)", display: "flex", alignItems: "center", justifyContent: "center" }}>
               <Icon name="dots" size={26} color={zone === "play" && psel === 1 ? "#000" : "#fff"} />
             </div>
-            {g && st<boolean>("playtime") && <span style={{ color: "#fff", opacity: 0.75, fontSize: 17, marginLeft: 10 }}>{fmtPlaytime(g.playtime, g.lastPlayed, true)}</span>}
             <Badges g={g} size={15} />
           </div>
 
           {/* activity cards */}
           <div style={{ position: "absolute", left: x0, top: cardsY, display: "flex", gap: 20 }}>
             {cards.map((c, i) => (
-              <div key={c.title} onClick={c.run} className="dht-ps5-card" data-selected={zone === "cards" && i === csel} style={{ width: 300, height: Math.min(150,H-cardsY-26), borderRadius: 14, padding: 20, boxSizing: "border-box", background: "rgba(30,34,42,0.82)", color: "#fff", boxShadow: zone === "cards" && i === csel ? "0 0 0 3px #fff" : "none", transform: zone === "cards" && i === csel ? "scale(1.04)" : "none", transition: "transform 150ms" }}>
-                <div style={{ fontSize: 14, opacity: 0.6, marginBottom: 10 }}>Activity</div>
-                <div style={{ fontSize: 21, fontWeight: 600 }}>{c.title}</div>
-                <div style={{ fontSize: 16, opacity: 0.8, marginTop: 8 }}>{c.sub}</div>
+              <div key={c.id} onClick={c.run} className="dht-ps5-card" data-activity={c.id} data-selected={zone === "cards" && i === csel} style={{ width: 300, height: Math.min(144,H-cardsY-44), borderRadius: 14, padding: 20, boxSizing: "border-box", background: "rgba(30,34,42,0.82)", color: "#fff", boxShadow: zone === "cards" && i === csel ? "0 0 0 3px #fff" : "none", transform: zone === "cards" && i === csel ? "scale(1.025)" : "none", transition: "transform 150ms" }}>
+                <div style={{ fontSize: 13, color: "#bdc6d3", fontWeight: 400, letterSpacing: ".02em", marginBottom: 10, display: "flex", alignItems: "center", justifyContent: "space-between", minHeight: 18 }}><span>{c.label}</span>{!!c.images?.length && <span style={{ display: "flex", gap: 4 }}>{c.images.map(item => <img key={item.image} src={item.image} alt={item.name} title={item.name} style={{ width: 18, height: 18, borderRadius: 3 }} />)}</span>}</div>
+                <div style={{ fontSize: 23, fontWeight: 500, lineHeight: 1.2, fontVariantNumeric: "tabular-nums", letterSpacing: "-.02em" }}>{c.title}</div>
+                <div style={{ fontSize: 14, color: "#c9d0db", marginTop: 8, lineHeight: 1.3 }}>{c.sub}{c.extra && <div style={{ fontSize: 12, lineHeight: "14px", marginTop: 3 }}>{c.extra}</div>}</div>
+                {c.progress !== undefined && <div role="progressbar" aria-label="Achievement progress" aria-valuemin={0} aria-valuemax={100} aria-valuenow={c.progress} style={{ marginTop: 8, height: 3, background: "rgba(255,255,255,.18)", borderRadius: 2, overflow: "hidden" }}><div style={{ height: "100%", width: `${c.progress}%`, background: "#fff" }} /></div>}
               </div>
             ))}
           </div>
@@ -282,7 +282,7 @@ export function Ps5Home() {
 function GameArtLogo({ g }: { g: Game }) {
   const [failed, setFailed] = useState(false);
   useEffect(() => setFailed(false), [g.appid]);
-  if (failed || !g.art.logo.length) return <div style={{ color: "#fff", fontSize: 44, fontWeight: 700, lineHeight: 1.1, textShadow: "0 3px 12px #000" }}>{g.name}</div>;
+  if (failed || !g.art.logo.length) return <div className="dht-ps5-game-title" style={{ color: "#fff", fontSize: g.name.length > 38 ? 34 : 40, fontWeight: 500, letterSpacing: "-.025em", lineHeight: 1.2, textShadow: "0 2px 8px rgba(0,0,0,.8)", display: "-webkit-box", WebkitLineClamp: 2, WebkitBoxOrient: "vertical", overflow: "hidden" }}>{g.name}</div>;
   return <LogoImg srcs={g.art.logo} onAllFailed={() => setFailed(true)} />;
 }
 function LogoImg({ srcs, onAllFailed }: { srcs: string[]; onAllFailed: () => void }) {

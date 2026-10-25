@@ -13,6 +13,7 @@ import { showTitle, THEMES, themeFx, updateSettings } from "../settings";
 import { usePs4Skin } from "../skins";
 import { currentLook } from "../presets";
 import { Ps4Animation } from "./Ps4Animation";
+import { playstationSurface } from "./playstationSurface";
 import { BatteryGlyph } from "../common";
 import { Badges } from "../badges";
 import { fmtTime, playSound, useBattery, useClock, useWallpaper } from "../steam";
@@ -63,6 +64,7 @@ function drawPs4Bg(ctx: CanvasRenderingContext2D, t: number, w: number, h: numbe
 export function Ps4Home() {
   const api = useHome();
   const s = api.settings;
+  const surface = playstationSurface(s, "ps4");
   const { W, H } = useStage();
   const now = useClock(15000);
   const bat = useBattery();
@@ -229,18 +231,20 @@ export function Ps4Home() {
     <ThemeRoot onInput={onInput} hints={{ a: "Select", y: "Options", menu: "Options" }}>
       <Stage background="#04122e">
         <div className="dht-ps4-bg" style={{ position: "absolute", inset: 0, background: "var(--dht-ps4-bg, radial-gradient(ellipse at 70% 20%, #2f8be0 0%, transparent 55%), linear-gradient(170deg, #0a3a86 0%, #0b2a63 45%, #061637 100%))" }} />
+        <div className="dht-ps4-artwork-surface" data-fade={surface.fade} style={surface.artwork}>
         {(wall || skinBackground) && <BackgroundMedia className="dht-ps4-theme-background" src={wall || skinBackground || ""} style={{ position: "absolute", inset: 0, width: W, height: H, objectFit: "cover" }} />}
         {showAnimation && skin?.animation && <Ps4Animation frames={skin.animation} animate={s.animations && fx.sceneAnim} />}
         {!wall && !skinBackground && <AnimCanvas width={W} height={H} animate={s.animations} draw={drawPs4Bg} fps={24} />}
+        </div>
         {skin && <style>{`.dht-theme-ps4 .dht-ps4-text{color:${importedText || "#fff"}!important}`}</style>}
         {skin && enhancedReadability && <style>{`.dht-theme-ps4 .dht-ps4-text{color:${readableText}!important;text-shadow:0 2px 4px #000,0 0 10px #000}.dht-theme-ps4 .dht-ps4-status,.dht-theme-ps4 .dht-ps4-caption,.dht-theme-ps4 .dht-ps4-function-label{background:rgba(8,14,24,.88);border-radius:6px;padding:6px 10px}.dht-theme-ps4 .dht-ps4-caption{padding:10px 14px}.dht-theme-ps4 .dht-ps4-caption-title{font-weight:400!important}.dht-theme-ps4 .dht-ps4-function-icon{background:rgba(8,14,24,.72)!important}.dht-theme-ps4 .dht-ps4-function-icon img{filter:drop-shadow(0 0 1px #fff) drop-shadow(0 1px 2px #000)}`}</style>}
         {s.ps4GameBackgrounds && bgGame && (
           <div className="dht-ps4-game-background" key={bgGame.appid} style={{ position: "absolute", inset: 0, animation: "dhtFade 500ms ease-out" }}>
-            <GameHero g={bgGame} theme="ps4" />
-            <div style={{ position: "absolute", inset: 0, background: "linear-gradient(180deg, rgba(5,15,40,0.55) 0%, rgba(5,15,40,0.25) 40%, rgba(5,15,40,0.85) 100%)" }} />
+            <div style={surface.artwork}><GameHero g={bgGame} theme="ps4" /></div>
+            <div className="dht-ps4-readability-overlay" style={{ position: "absolute", inset: 0, opacity: surface.overlayOpacity, background: "linear-gradient(180deg, rgba(5,15,40,0.55) 0%, rgba(5,15,40,0.25) 40%, rgba(5,15,40,0.85) 100%)" }} />
           </div>
         )}
-        {fx.background && fx.labels && skin?.colors[row === "func" ? "functionDimmer" : "homeDimmer"] && <div style={{ position: "absolute", inset: 0, background: skin.colors[row === "func" ? "functionDimmer" : "homeDimmer"], pointerEvents: "none" }} />}
+        {fx.background && fx.labels && skin?.colors[row === "func" ? "functionDimmer" : "homeDimmer"] && <div style={{ position: "absolute", inset: 0, opacity: surface.overlayOpacity, background: skin.colors[row === "func" ? "functionDimmer" : "homeDimmer"], pointerEvents: "none" }} />}
         <style>{`@keyframes dhtFade { from { opacity: 0 } to { opacity: 1 } }`}</style>
 
         {/* top-right status */}
@@ -287,7 +291,7 @@ export function Ps4Home() {
 
         {/* focused title + start */}
         {cur && (
-          <div className="dht-ps4-caption" style={{ position: "absolute", left: startX, top: rowY + TS + 18, transition: "top 220ms", color: "#fff", display: "flex", flexDirection: "column", gap: 10 }}>
+          <div className="dht-ps4-caption" data-glass="off" style={{ position: "absolute", left: startX, top: rowY + TS + 18, transition: "top 220ms", color: "#fff", display: "flex", flexDirection: "column", gap: 10 }}>
             <div className="dht-ps4-text dht-ps4-caption-title" style={{ fontSize: 28, fontWeight: 300, maxWidth: 760, whiteSpace: "nowrap", overflow: "hidden", textOverflow: "ellipsis", textShadow: "0 2px 8px rgba(0,0,0,0.6)", background: fx.labels ? skin?.colors.titleDimmer : undefined }}>{!cur.game || showTitle(s, "ps4", true) ? cur.label : ""}</div>
             {g && row !== "info" && (
               <div style={{ display: "flex", alignItems: "center", gap: 10 }}>
