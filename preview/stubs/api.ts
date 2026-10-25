@@ -210,10 +210,19 @@ const backend: Record<string, (...a: any[]) => any> = {
   list_videos: () => (window as any).__testVideos ?? { ok: true, videos: [] },
   list_music: () => (window as any).__testMusic ?? { ok: true, albums: [] },
 };
+async function avatarPreviewCall(name:string,args:any[]) {
+  if((window as any).__avatarEngineCall)return (window as any).__avatarEngineCall(name,args);
+  const address=new URLSearchParams(location.search).get('avatarBridge');
+  if(!address||!/^http:\/\/127\.0\.0\.1:\d+$/.test(address))return backend[name]?.(...args);
+  const response=await fetch(`${address}/${name}`,{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify(args)});
+  const value=await response.json();if(!response.ok)throw Error(value.error||'Avatar preview request failed');return value;
+}
 export const callable =
   (name: string) =>
   async (...args: any[]) =>
-    backend[name]?.(...args);
+    name.startsWith('x360_engine_')
+      ? avatarPreviewCall(name,args)
+      : backend[name]?.(...args);
 export const definePlugin = (f: any) => f;
 export const routerHook = { addRoute() {}, removeRoute() {}, addPatch() { return {}; }, removePatch() {} };
 export const fetchNoCors = (u: string, init?: any) => fetch(u, init);

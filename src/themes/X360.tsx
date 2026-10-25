@@ -19,6 +19,9 @@ import { useAssets } from "../assets";
 import { useX360Look, X360_SECTION } from "../skins";
 
 import { useReportFocus } from "../focus";
+import {MetroAvatar, MetroAvatarEditor} from './X360MetroAvatar';
+import {X360Avatar, avatarForName} from './X360Avatar';
+import {AvatarEditor, OWN_AVATAR_SET, savedAvatar, saveAvatar} from './X360AvatarEditor';
 interface XTile {
   key: string;
   x: number;
@@ -55,6 +58,10 @@ function X360MetroHome() {
   const look = useX360Look();
   const menu = useMenu();
   const games = api.lib.games;
+  const [avatarOpen,setAvatarOpen]=useState(false),[legacyOpen,setLegacyOpen]=useState(false),[avatarRevision,setAvatarRevision]=useState(0);
+  const ownAvatar=useAssets(OWN_AVATAR_SET);
+  const oldSpec=savedAvatar(s)??avatarForName(api.user);
+  const fallbackAvatar=<X360Avatar spec={oldSpec} model={ownAvatar.avatar} motion={s.animations}/>;
   // the dashboard's own white glyphs for the system tiles
   const ICO: Partial<Record<IconName, string>> = { game: "ico-games", store: "ico-marketplace", friends: "ico-addfriends", bell: "ico-messages", download: "ico-installedgame", library: "ico-controller", globe: "ico-internet", palette: "ico-changetheme", gear: "ico-settingspreferences", power: "ico-turnoff", apps: "ico-apps" };
 
@@ -85,6 +92,7 @@ function X360MetroHome() {
       sys("me", 0, 0, 300, 455, api.user, "user", () => openSteam("friends")),
       sys("fr", 315, 0, 270, 220, "friends", "friends", () => openSteam("friends"), "#2d2d2d"),
       sys("chat", 315, 235, 270, 220, "messages", "bell", () => openSteam("friends"), "#2d2d2d"),
+      sys("avatar", 600, 0, 270, 220, "my avatar", "user", () => setAvatarOpen(true)),
     ];
     // games: two rows of box art
     const gtiles: XTile[] = [sys("gl", 0, 0, 220, 455, "game library", "library", () => openSteam("library"))];
@@ -136,6 +144,7 @@ function X360MetroHome() {
   const options = () => {
     const g = cur?.game;
     const extra: MenuItem[] = [
+      { label: "my avatar", action: () => setAvatarOpen(true) },
       { label: "presets", sub: () => themeMenu(s.theme, api.switchTheme, THEMES) },
       { label: "home settings", action: api.openSettings },
       { label: "home", action: api.showSteamHome },
@@ -209,7 +218,7 @@ function X360MetroHome() {
         {a["xbox-logo-horiz"] && <img src={a["xbox-logo-horiz"]} aria-hidden="true" style={{ position: "absolute", left: 1012 * k, top: 42 * k, width: 170 * k, height: 35 * k }} />}
 
         {/* gamer corner */}
-        <div style={{ position: "absolute", right: 98 * k, top: 92 * k, display: "flex", alignItems: "center", gap: 14, fontFamily: FONT, color: "#fff", textShadow: SHADOW }}>
+        <div role="button" aria-label="Edit Xbox avatar" tabIndex={0} onClick={()=>setAvatarOpen(true)} onKeyDown={e=>{if(e.key==='Enter'||e.key===' '){e.preventDefault();setAvatarOpen(true);}}} style={{ position: "absolute", right: 98 * k, top: 92 * k, display: "flex", alignItems: "center", gap: 14, fontFamily: FONT, color: "#fff", textShadow: SHADOW, cursor:'pointer' }}>
           <div style={{ textAlign: "right" }}>
             <div style={{ fontSize: 20 }}>{api.user}</div>
             <div style={{ fontSize: 15, opacity: 0.7 }}>{fmtTime(now, s.clock24)}</div>
@@ -256,7 +265,10 @@ function X360MetroHome() {
                   cursor: "pointer",
                 }}
               >
-                {t.game ? (
+                {t.key==='me'?<>
+                  {!avatarOpen&&!legacyOpen&&<MetroAvatar revision={avatarRevision} fallback={fallbackAvatar}/>}
+                  <div style={label}>{t.label}</div>
+                </>:t.game ? (
                   <>
                     <GameArt g={t.game} kind={t.art ?? "landscape"} style={{ width: "100%", height: "100%" }} />
                     <div style={{ position: "absolute", left: 0, right: 0, bottom: 0, height: 46, background: "linear-gradient(180deg, rgba(0,0,0,0), rgba(0,0,0,0.75))" }} />
@@ -274,6 +286,8 @@ function X360MetroHome() {
             );
           })}
         </div>
+        {avatarOpen&&<MetroAvatarEditor fallback={fallbackAvatar} onClose={()=>{setAvatarOpen(false);setAvatarRevision(v=>v+1);}} onLegacy={()=>{setAvatarOpen(false);setAvatarRevision(v=>v+1);setLegacyOpen(true);}}/>}
+        {legacyOpen&&<AvatarEditor name={api.user} initial={oldSpec} firstRun={false} model={ownAvatar.avatar} motion={s.animations} onDone={spec=>{if(spec)saveAvatar(spec);setLegacyOpen(false);setAvatarRevision(v=>v+1);}}/>}
         <style>{`@keyframes dhtSlideIn { from { opacity: 0; transform: translateX(60px) } to { opacity: 1; transform: none } }`}</style>
 
         {/* focused game caption */}

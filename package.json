@@ -11,8 +11,8 @@
     "package": "python tools/package_release.py",
     "theme:viewer": "node sdk/viewer/server.mjs",
     "pretypecheck": "python tools/compile_bundled_themes.py",
-    "prebuild": "python tools/compile_bundled_themes.py",
-    "prepreview": "python tools/compile_bundled_themes.py"
+    "prebuild": "python tools/compile_bundled_themes.py && node tools/build_avatar_engine.mjs",
+    "prepreview": "python tools/compile_bundled_themes.py && node tools/build_avatar_engine.mjs"
   },
   "devDependencies": {
     "@decky/rollup": "^1.0.2",
@@ -21,6 +21,7 @@
     "@types/react-dom": "19.1.1",
     "@types/three": "0.156.0",
     "@types/webpack": "^5.28.5",
+    "avatar-three": "npm:three@^0.180.0",
     "esbuild": "^0.24.2",
     "playwright": "^1.63.0",
     "react": "^18.3.1",

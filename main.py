@@ -1476,7 +1476,24 @@ async def _serve(reader, writer):
         seg = path.strip("/").split("/")
         fpath = None
         if len(seg) >= 3 and seg[0] == _vi.token:
-            if seg[1] == "f" and len(seg) == 3:
+            if seg[1] == "avatar":
+                import x360_engine
+                from urllib.parse import unquote
+                engine = x360_engine.instance(_data_dir(), decky.DECKY_PLUGIN_SETTINGS_DIR)
+                tail = unquote('/'.join(seg[2:]))
+                try:
+                    texture = re.fullmatch(r'api/texture/([0-9a-f-]{36})/(face|\d{1,3})/(\d{1,3})\.dds', tail)
+                    prop = re.fullmatch(r'api/prop/([0-9a-f-]{36})\.json', tail)
+                    if texture or prop:
+                        if method not in ('GET', 'HEAD') or not engine.ready(): raise ValueError('Avatar assets unavailable')
+                        body = await asyncio.to_thread(engine.texture, *texture.groups()) if texture else json.dumps(await asyncio.to_thread(engine.prop, prop.group(1))).encode()
+                        await _send(writer, '200 OK', {**base, 'Content-Type': 'application/octet-stream' if texture else 'application/json', 'Content-Length': str(len(body))}, b'' if method == 'HEAD' else body)
+                        return
+                    fpath = str(engine.resource(tail))
+                except (ValueError, KeyError, IndexError, TypeError, OSError):
+                    await _send(writer, '404 Not Found', {**base, 'Content-Length': '0'})
+                    return
+            elif seg[1] == "f" and len(seg) == 3:
                 fpath = _vi.files.get(seg[2])
             elif seg[1] == "r" and len(seg) == 4 and _SEG.match(seg[3]) and seg[2] in _vi.dirs:
                 fpath = os.path.join(_vi.dirs[seg[2]], seg[3])
@@ -2287,6 +2304,31 @@ class Plugin:
         except Exception:
             pass
         return out
+
+    # Optional Metro assembly engine. Legacy procedural/imported avatars remain available.
+    async def x360_engine_status(self):
+        import x360_engine
+        status = await asyncio.to_thread(x360_engine.instance(_data_dir(), decky.DECKY_PLUGIN_SETTINGS_DIR).status)
+        status['base'] = f"http://127.0.0.1:{_vi.port}/{_vi.token}/avatar/" if await _ensure_server() else None
+        return status
+
+    async def x360_engine_install(self):
+        import x360_engine
+        return x360_engine.instance(_data_dir(), decky.DECKY_PLUGIN_SETTINGS_DIR).install()
+
+    async def x360_engine_build(self, description: dict):
+        import x360_engine
+        return await asyncio.to_thread(x360_engine.instance(_data_dir(), decky.DECKY_PLUGIN_SETTINGS_DIR).build, description)
+
+    async def x360_engine_save(self, description: dict):
+        import x360_engine
+        await asyncio.to_thread(x360_engine.instance(_data_dir(), decky.DECKY_PLUGIN_SETTINGS_DIR).save, description)
+        return await self.x360_engine_status()
+
+    async def x360_engine_legacy(self):
+        import x360_engine
+        await asyncio.to_thread(x360_engine.instance(_data_dir(), decky.DECKY_PLUGIN_SETTINGS_DIR).save, None, 'legacy')
+        return await self.x360_engine_status()
 
     # ───── your own Xbox 360 avatar (a 360sona export): assets/my-avatar/avatar.glb + gamerpic.png ─────
     def _x360_avatar_dir(self):
