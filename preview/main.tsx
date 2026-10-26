@@ -68,6 +68,8 @@ const apps = (referenceTitles ?? TITLES).map((name, i) => ({
   minutes_playtime_forever: ((i * 7919) % 6000) + (i % 4 === 0 ? 0 : 30),
   installed: themedPreview === "pain" ? i >= 6 : i % 4 !== 3,
   steam_deck_compat_category: [3, 2, 3, 1, 0][i % 5],
+  controller_support: [2, 1, 2, 0, -1][i % 5],
+  size_on_disk: (12 + i * 3) * 1024 ** 3,
   __art: art(name, i),
 }));
 

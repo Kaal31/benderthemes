@@ -9,10 +9,20 @@ try {
  await p.addInitScript(()=>{let assets;Object.defineProperty(window,'__testAssets',{configurable:true,get:()=>assets,set:value=>{assets=value;const base=location.origin+'/out/compatible-backgrounds/assets/nazarick/';assets.nazarick={...assets.nazarick,...Object.fromEntries(['home','library','settings'].map(id=>[id+'-video',base+id+'-video.webm']))};}});});
  await p.goto(url+'?theme=nazarick&still=1');await p.locator('.naz-terminal dl').waitFor();
  const terminal=p.locator('.naz-terminal');assert.equal(await terminal.locator('button').count(),0);
- assert.deepEqual(await terminal.locator('dt').allTextContents(),['Play time','Last played','Achievements','Status','Source']);
+ assert.deepEqual(await terminal.locator('dt').allTextContents(),['Deck compatibility','Controller support','Storage size','Status','Source']);
+ assert.deepEqual((await terminal.locator('dd').allTextContents()).slice(0,2),['Verified','Full']);
+ assert.equal(await terminal.locator('dd').nth(2).innerText(),'12.0 GB');
  const first=await terminal.locator('.naz-terminal-game').innerText();
  await p.locator('.naz-games button').nth(1).hover();await p.waitForFunction(name=>document.querySelector('.naz-terminal-game')?.textContent!==name,first);
  const chosen=await p.locator('.naz-games button').nth(1).getAttribute('aria-label');assert.equal(await terminal.locator('.naz-terminal-game').innerText(),chosen.replace(/^Play /,''));
+ assert.deepEqual((await terminal.locator('dd').allTextContents()).slice(0,2),['Playable','Partial']);
+ await p.locator('.naz-games button').nth(3).hover();
+ await p.waitForFunction(()=>document.querySelector('.naz-terminal dd')?.textContent==='Unsupported');
+ assert.equal(await terminal.locator('dd').nth(1).innerText(),'Not supported');
+ assert.equal(await terminal.locator('dd').nth(2).innerText(),'Unknown');
+ await p.locator('.naz-games button').nth(4).hover();
+ await p.waitForFunction(()=>document.querySelector('.naz-terminal dd')?.textContent==='Unknown');
+ assert.equal(await terminal.locator('dd').nth(1).innerText(),'Unknown');
  for(const page of ['library','settings']) {
   await p.evaluate(page=>window.__openPlace(page),page);
   await p.waitForFunction(page=>[...document.querySelectorAll('video')].some(v=>v.src.endsWith('/'+page+'-video.webm')&&!v.paused&&v.currentTime>.1),page);
