@@ -16,7 +16,7 @@ export const OLD_BIG_PICTURE_REFERENCE_CSS=`
 .dht-oldbigpicture:not([data-beta]):not([data-page=home]) .brand img{width:calc(var(--obp-width)*.038);height:calc(var(--obp-width)*.038)}
 .dht-oldbigpicture:not([data-beta]):is([data-page=library],[data-page=settings]) header .utilities button{display:none}
 .dht-oldbigpicture:not([data-beta])[data-page=library] main{padding:calc(var(--obp-height)*.025) calc(var(--obp-width)*.024) 0}
-.dht-oldbigpicture:not([data-beta]) .library-sidebar button{transition:background-color 110ms,color 110ms}
+.dht-oldbigpicture:not([data-beta]) .library-sidebar :is(button,select){transition:background-color 110ms,color 110ms}
 .dht-oldbigpicture:not([data-beta]) .library-shell{gap:calc(var(--obp-width)*.008);transition:grid-template-columns 180ms cubic-bezier(.22,.61,.36,1)}
 .dht-oldbigpicture:not([data-beta]) .library-body h2{font-size:calc(var(--obp-width)*.019);font-weight:300}
 .dht-oldbigpicture:not([data-beta]) .library-row{padding:12px 16px 16px}
@@ -29,7 +29,7 @@ export const OLD_BIG_PICTURE_REFERENCE_CSS=`
 .dht-oldbigpicture:not([data-beta]) .settings-columns{width:86%;max-width:none;margin-left:5%;gap:5%}
 .dht-oldbigpicture:not([data-beta]) .settings-columns h2{font-size:calc(var(--obp-width)*.016);font-weight:300;margin:calc(var(--obp-height)*.026) 0 4px}
 .dht-oldbigpicture:not([data-beta]) .settings-columns .settings-link{font-size:calc(var(--obp-width)*.0145);min-height:calc(var(--obp-height)*.045);margin:2px 0;padding:4px 8px;transition:background-color 110ms,color 110ms}
-.dht-oldbigpicture:not([data-beta]) .library-sidebar button:focus,
+.dht-oldbigpicture:not([data-beta]) .library-sidebar :is(button,select):focus,
 .dht-oldbigpicture:not([data-beta]) .settings-columns .settings-link:focus{background:linear-gradient(90deg,#8ecce8,#b4e2f5);color:#143b52;outline:0;box-shadow:none}
 .dht-oldbigpicture.no-motion *{transition:none!important}
 @media(prefers-reduced-motion:reduce){.dht-oldbigpicture *{transition:none!important}}
