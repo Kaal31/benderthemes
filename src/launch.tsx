@@ -42,7 +42,7 @@ export function beginLaunch(game: Game, preview?: (g: Game)=>void) {
   if (state && !state.failed) return;
   teardown();
   if (bootSound) playBootSound(); else playSound("launch");
-  if (bootClip) {
+  if (bootClip && !game.shortcut) {
     let gone = false;
     teardown = () => { gone = true; clipNext = null; };
     clipNext = () => { if (!gone) startGame(game, preview); };
@@ -62,10 +62,25 @@ function startGame(game: Game, preview?: (g: Game)=>void) {
   const update=(message:string,failed=false,waitingUI=false)=>{if(!dead) emit({game,message,failed,waitingUI});};
   if (preview) {
     preview(game);
+    if(game.shortcut){dismissLaunch();return;}
     timers.push(setTimeout(()=>update("Waiting for game window…"),700),setTimeout(dismissLaunch,2600));
     return;
   }
   const client=(globalThis as any).SteamClient;
+  if(game.shortcut){
+    // Shell/browser launchers may create windows under another ID (or report 0).
+    // Only Steam games wait for task/window events; shortcuts yield on acceptance.
+    try {
+      if(!client?.Apps?.RunGame)throw new Error("Steam launch service is unavailable.");
+      Promise.resolve(client.Apps.RunGame(game.gameid,"",-1,100)).then(()=>{
+        if(dead)return;
+        try { client.Overlay?.SetOverlayState?.(game.gameid,0); } catch {}
+        try { Navigation.CloseSideMenus(); } catch {}
+        dismissLaunch();
+      }).catch(error=>update(error instanceof Error?error.message:"Steam could not start this shortcut.",true));
+    } catch(error){update(error instanceof Error?error.message:"Steam could not start this shortcut.",true);}
+    return;
+  }
   const matches=(id:any)=>String(id)===String(game.appid)||String(id)===game.gameid;
   const register=(owner:any,name:string,cb:Function)=>{try{const r=owner?.[name]?.(cb);if(r)regs.push(r);}catch{}};
   const task=(name:string)=> {
