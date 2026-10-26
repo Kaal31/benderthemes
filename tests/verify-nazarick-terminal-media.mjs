@@ -27,6 +27,19 @@ try {
   await p.evaluate(page=>window.__openPlace(page),page);
   await p.waitForFunction(page=>[...document.querySelectorAll('video')].some(v=>v.src.endsWith('/'+page+'-video.webm')&&!v.paused&&v.currentTime>.1),page);
   const video=p.locator(`video[src$="/${page}-video.webm"]`).last(),before=await video.evaluate(v=>v.currentTime);await p.waitForTimeout(350);assert.notEqual(await video.evaluate(v=>v.currentTime),before);
+  if(page==='library') {
+   const collections=p.locator('.naz-library-collections'),selected=collections.locator('[aria-current=true]');
+   assert.deepEqual(await collections.locator('button').allTextContents(),['All games','Installed','Non-Steam','Favorites','RPGs']);
+   assert.equal(await selected.innerText(),'All games');
+   await p.keyboard.press('ArrowLeft');assert.equal(await selected.innerText(),'RPGs');
+   const expected=await p.evaluate(()=>window.__getThemeLibrary().collections.find(c=>c.name==='RPGs').games.map(g=>g.name));
+   assert.deepEqual(await p.locator('.dht-page-list .dht-row-label').allTextContents(),expected);
+   await p.keyboard.press('ArrowRight');assert.equal(await selected.innerText(),'All games');
+   await collections.getByRole('button',{name:'Non-Steam',exact:true}).click();assert.equal(await selected.innerText(),'Non-Steam');
+   assert.match(await p.locator('.dht-page-footer').innerText(),/← \/ → · Collections/);
+   assert.doesNotMatch(await p.locator('.dht-page-footer').innerText(),/Categories/);
+   console.log('PASS Nazarick D-pad collections wrap, filter and support touch');
+  }
   console.log('PASS native Nazarick '+page+' video advances');
   await p.keyboard.press('Escape');
  }

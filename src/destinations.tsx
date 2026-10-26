@@ -10,7 +10,7 @@ import { CSSProperties, useEffect, useRef, useState } from "react";
 import { opensKeyboardOnTap, showSteamKeyboard } from "./steamKeyboard";
 import { collectionMenu, GameArt, Icon, IconName, MenuView, themeMenu, useMenu } from "./common";
 import { friendFullName } from "./steamData";
-import { Game, Library, SteamPlace, achievements, fmtPlaytime, openNativeGamePage, openSteam } from "./library";
+import { Game, Library, SteamPlace, achievements, fmtPlaytime, loadLibrary, openNativeGamePage, openSteam } from "./library";
 import { Navigation } from "@decky/ui";
 import { Badges, protonDbEnabled } from "./badges";
 import { useProtonDbPresent } from "./pluginPresence";
@@ -44,6 +44,7 @@ export function DestinationView({destination,settings:homeSettings,lib,onClose,o
   const [history,setHistory]=useState<Destination[]>([]);
   const [sel,setSel]=useState(0);
   const [query,setQuery]=useState("");
+  const [libraryCategory,setLibraryCategory]=useState("all");
   const [notice,setNotice]=useState("");
   const [webUrl,setWebUrl]=useState(destination.url??(destination.place==="community"?"https://steamcommunity.com/":"https://store.steampowered.com/"));
   const [address,setAddress]=useState(webUrl);
@@ -65,10 +66,20 @@ export function DestinationView({destination,settings:homeSettings,lib,onClose,o
   let rows:Row[]=[];
   const game=page.game;
   let subtitle="";
+  const categoryLibrary=settings.theme==="nazarick"&&(page.place==="library"||page.place==="search")?loadLibrary("all",settings.sort,Number.MAX_SAFE_INTEGER):null;
+  const libraryCategories=categoryLibrary?[
+    {id:"all",name:"All games",games:categoryLibrary.all},
+    {id:"installed",name:"Installed",games:categoryLibrary.all.filter(g=>g.installed)},
+    {id:"non-steam",name:"Non-Steam",games:categoryLibrary.all.filter(g=>g.shortcut)},
+    ...categoryLibrary.collections.map(c=>({...c,id:"collection:"+c.id})),
+  ]:[];
+  const category=libraryCategories.find(c=>c.id===libraryCategory)??libraryCategories[0];
+  const chooseCategory=(id:string)=>{setLibraryCategory(id);setSel(0);playSound("tab");};
+  useEffect(()=>{surfaceRef.current?.querySelector(".naz-library-collections [aria-current=true]")?.scrollIntoView({block:"nearest",inline:"nearest"});},[libraryCategory,page.place]);
   const all=lib;
   if(page.place==="library"||page.place==="search") {
-    rows=all.games.filter(g=>g.name.toLowerCase().includes(query.toLowerCase())).map(g=>({label:g.name,sub:fmtPlaytime(g.playtime, g.lastPlayed)+(g.installed?" · Installed":" · Not installed"),game:g,run:()=>go({place:"game",game:g})}));
-    subtitle=`${rows.length} games`;
+    rows=(category?.games??all.games).filter(g=>g.name.toLowerCase().includes(query.toLowerCase())).map(g=>({label:g.name,sub:fmtPlaytime(g.playtime, g.lastPlayed)+(g.installed?" · Installed":" · Not installed"),game:g,run:()=>go({place:"game",game:g})}));
+    subtitle=`${category?category.name+" · ":""}${rows.length} games`;
   } else if(page.place==="game"&&game) {
     rows=[{label:game.installed?"Play":"Install / Play",icon:"play",run:()=>onLaunch(game)},{label:"Achievements",icon:"trophy",run:()=>go({place:"achievements",game})},{label:"Screenshots",icon:"photo",run:onMedia},{label:"Watch Trailer",icon:"video",run:()=>onTrailer(game)},{label:"Browse Store",icon:"store",run:()=>openSteam("store")}];
     subtitle=fmtPlaytime(game.playtime, game.lastPlayed);
@@ -112,7 +123,7 @@ export function DestinationView({destination,settings:homeSettings,lib,onClose,o
   // lists a look lays out as a grid (Switch All Software, 3DS HOME icons): the d-pad moves to the nearest tile on screen
   const gridMove=(btn:"up"|"down"|"left"|"right")=>{const list=listRef.current;if(!list||getComputedStyle(list).display!=="grid")return false;const points=[...list.querySelectorAll<HTMLElement>(".dht-destination-row")].map(el=>{const r=el.getBoundingClientRect();return{x:r.left+r.width/2,y:r.top+r.height/2};});const next=spatial(points,current,btn);if(next>=0){setSel(next);playSound("move");}return true;};
   const handler=useRef<(p:Press)=>boolean>(()=>true);
-  handler.current=p=>{if(menu.handle(p))return true;if(settings.theme!=="nazarick"&&(p.btn==="l1"||p.btn==="r1")){const index=tabs.indexOf(page.place as typeof tabs[number]);switchTab(tabs[(Math.max(0,index)+(p.btn==="l1"?tabs.length-1:1))%tabs.length]);return true;}if(settings.theme==="nazarick"&&(p.btn==="l1"||p.btn==="r1")){navigateNazarick(nextNazarickPage(page.place,p.btn==="l1"?-1:1));return true;}if(p.btn==="b")back();else if((p.btn==="up"||p.btn==="down"||p.btn==="left"||p.btn==="right")&&gridMove(p.btn)){}else if(p.btn==="up"||p.btn==="down"){setSel(Math.max(0,Math.min(rows.length-1,current+(p.btn==="up"?-1:1))));playSound("move");}else if(p.btn==="a")choose(current);else if(p.btn==="y"){showSteamKeyboard(inputRef.current);}return true;};
+  handler.current=p=>{if(menu.handle(p))return true;if(category&&(p.btn==="left"||p.btn==="right")){const index=libraryCategories.indexOf(category);chooseCategory(libraryCategories[(index+(p.btn==="left"?-1:1)+libraryCategories.length)%libraryCategories.length].id);return true;}if(settings.theme!=="nazarick"&&(p.btn==="l1"||p.btn==="r1")){const index=tabs.indexOf(page.place as typeof tabs[number]);switchTab(tabs[(Math.max(0,index)+(p.btn==="l1"?tabs.length-1:1))%tabs.length]);return true;}if(settings.theme==="nazarick"&&(p.btn==="l1"||p.btn==="r1")){navigateNazarick(nextNazarickPage(page.place,p.btn==="l1"?-1:1));return true;}if(p.btn==="b")back();else if((p.btn==="up"||p.btn==="down"||p.btn==="left"||p.btn==="right")&&gridMove(p.btn)){}else if(p.btn==="up"||p.btn==="down"){setSel(Math.max(0,Math.min(rows.length-1,current+(p.btn==="up"?-1:1))));playSound("move");}else if(p.btn==="a")choose(current);else if(p.btn==="y"){showSteamKeyboard(inputRef.current);}return true;};
   useEffect(()=>pushModalInput(p=>handler.current(p)),[]);
   useEffect(()=>{listRef.current?.querySelector("[data-selected=true]")?.scrollIntoView({block:"nearest",inline:"nearest"});},[current,page.place]);
   const itemStyle:CSSProperties={display:"flex",alignItems:"center",gap:22,padding:"16px 22px",minHeight:68,boxSizing:"border-box",borderRadius:skin.radius,border:"1px solid transparent",color:skin.text,width:"100%",textAlign:"left",font:"inherit",cursor:"pointer"};
@@ -123,6 +134,7 @@ export function DestinationView({destination,settings:homeSettings,lib,onClose,o
       <header className="dht-page-header" style={{display:"flex",alignItems:"center",gap:24,color:skin.tabText??skin.text}}>{settings.theme!=="nazarick"&&<button className="dht-page-back" onClick={back} style={{...itemStyle,width:"auto",minHeight:48,background:skin.panel}}>‹ Back</button>}<h1 className="dht-page-title" data-focus-label={page.place==="library"||page.place==="search"?rows[current]?.label??"":undefined} style={{fontSize:38,fontWeight:400,margin:0}}>{game?.name??names[page.place]}</h1></header>
       <div className="dht-page-main">{settings.theme!=="nazarick"&&<nav className="dht-page-tabs" aria-label="Page tabs">{tabs.map(place=><button key={place} style={{borderRadius:skin.radius,...skin.ring(page.place===place)}} aria-current={page.place===place?"page":undefined} onClick={()=>switchTab(place)}>{names[place]}</button>)}</nav>}
       <div className="dht-page-content">{subtitle&&<div className="dht-page-subtitle" style={{fontSize:21,color:skin.tabText??skin.sub}}>{subtitle}</div>}
+      {category&&<nav className="naz-library-collections" aria-label="Library collections" style={{display:"flex",gap:10,overflowX:"auto",flexShrink:0,padding:"4px 3px 10px"}}>{libraryCategories.map(c=><button key={c.id} aria-current={category.id===c.id?true:undefined} onClick={()=>chooseCategory(c.id)} style={{font:"inherit",fontSize:18,padding:"8px 14px",whiteSpace:"nowrap",borderRadius:skin.radius,border:`1px solid ${skin.sub}`,background:category.id===c.id?skin.accent:skin.panel,color:category.id===c.id?skin.accentText:skin.text,cursor:"pointer"}}>{c.name}</button>)}</nav>}
       {page.place==="game"&&game&&<Badges g={game} size={15} theme={settings.theme}/>}
       {(page.place==="search"||page.place==="library")&&<input ref={inputRef} {...opensKeyboardOnTap} aria-label="Search games" placeholder="Search games…" value={query} onChange={e=>{setQuery(e.target.value);setSel(0);}} onKeyDown={e=>e.stopPropagation()} style={{fontSize:24,padding:14,background:skin.panel,color:skin.text,border:`1px solid ${skin.sub}`,borderRadius:skin.radius}}/>}
       {notice&&<p role="status">{notice}</p>}
@@ -130,7 +142,7 @@ export function DestinationView({destination,settings:homeSettings,lib,onClose,o
         {game&&page.place==="game"&&settings.theme==="switch"?<SwitchGamePreview game={game}/>:game&&<GameArt g={game} kind="portrait" style={{width:250,alignSelf:"flex-start",maxHeight:"85%",borderRadius:skin.radius}}/>}
         <div ref={listRef} className="dht-page-list" data-place={page.place} style={{overflowY:"auto",flex:1,padding:6}}>{rows.length?rows.map((r,i)=><button key={`${r.label}-${i}`} className="dht-destination-row" data-selected={current===i} data-state={r.state} onClick={()=>choose(i)} style={{...itemStyle,marginBottom:8,background:current===i?skin.accent:skin.panel,color:current===i?skin.accentText:skin.text,...(current===i?{outline:`2px solid ${skin.sub}`,outlineOffset:1}:{} )}}><span className="dht-row-icon">{r.game?<GameArt g={r.game} kind="portrait" style={{width:42,height:58,borderRadius:3}}/>:<Icon name={r.icon??"info"} size={32}/>}</span><span className="dht-row-text"><span className="dht-row-label" style={{display:"block",fontSize:settings.tvMode?27:24}}>{r.label}</span>{r.sub&&<span className="dht-row-sub" style={{display:"block",fontSize:18,marginTop:5}}>{r.sub}</span>}{r.progress!==undefined&&r.progress>=0&&<span className="dht-row-progress" style={{display:"block",height:6,marginTop:8,borderRadius:3,background:"#0003",overflow:"hidden",width:"min(420px,100%)"}}><i style={{display:"block",height:"100%",width:`${r.progress*100}%`,background:"currentColor"}}/></span>}</span></button>):<p style={{fontSize:24}}>Nothing to display.</p>}</div>
       </div>}</div></div>
-      <footer className="dht-page-footer" style={{fontSize:19,color:skin.tabText??skin.text}}>{settings.theme==="nazarick"?"A · Select　 L1 / R1 · Categories　":"A · Select　 B · Back　"}{page.place==="library"||page.place==="search"?"Y · Search":""}</footer>
+      <footer className="dht-page-footer" style={{fontSize:19,color:skin.tabText??skin.text}}>{settings.theme==="nazarick"?`A · Select　 B · Back　 ${category?"← / → · Collections":"L1 / R1 · Tabs"}　`:"A · Select　 B · Back　"}{page.place==="library"||page.place==="search"?"Y · Search":""}</footer>
     </div><MenuView menu={menu} variant={menuVariant} appearance={settings.theme==="switch"?{panel:{background:skin.panel,color:skin.text},item:{color:skin.text},text:{color:skin.text},selectedItem:{color:skin.text,background:"var(--sw-panel)"}}:undefined} renderTitle={settings.theme==="switch"?title=><div style={{color:skin.sub,fontSize:18,padding:"0 30px 12px"}}>{title}</div>:undefined}/>
   </Stage></StageHost></div>;
 }
