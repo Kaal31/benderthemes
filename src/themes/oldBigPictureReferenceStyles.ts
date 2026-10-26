@@ -18,9 +18,12 @@ export const OLD_BIG_PICTURE_REFERENCE_CSS=`
 .dht-oldbigpicture:not([data-beta])[data-page=library] main{padding:calc(var(--obp-height)*.025) calc(var(--obp-width)*.024) 0}
 .dht-oldbigpicture:not([data-beta]) .library-shell{gap:calc(var(--obp-width)*.008);transition:grid-template-columns 180ms cubic-bezier(.22,.61,.36,1)}
 .dht-oldbigpicture:not([data-beta]) .library-body h2{font-size:calc(var(--obp-width)*.019);font-weight:300}
+.dht-oldbigpicture:not([data-beta]) .library-row{padding:12px 16px 16px}
 .dht-oldbigpicture:not([data-beta]) .library-row .game{background:none;transition:flex-basis 180ms cubic-bezier(.22,.61,.36,1),transform 140ms,box-shadow 140ms}
-.dht-oldbigpicture:not([data-beta]) .library-body .game:focus{outline:3px solid #b6eaff;box-shadow:0 0 5px 2px #76dfff80;transform:scale(1.025)}
-.dht-oldbigpicture:not([data-beta]) .library-body .game:focus .label{background:linear-gradient(90deg,#358cae,#2b7899)}
+.dht-oldbigpicture:not([data-beta]) .library-row .game .label{padding:4px 5px;line-height:1.35}
+.dht-oldbigpicture:not([data-beta]) .library-body .game small{font-size:clamp(12px,calc(var(--obp-width)*.012),20px);line-height:1.35}
+.dht-oldbigpicture:not([data-beta]) .library-body .game:focus{outline:2px solid #c3efff;box-shadow:0 0 3px 2px #b8ecffd9,0 0 8px 4px #64c9ed80;transform:scale(1.04)}
+.dht-oldbigpicture:not([data-beta]) .library-body .game:focus .label{background:linear-gradient(90deg,#287d9d,#2785a6)}
 .dht-oldbigpicture:not([data-beta])[data-page=settings] main{padding-top:calc(var(--obp-height)*.045)}
 .dht-oldbigpicture:not([data-beta]) .settings-columns{width:86%;max-width:none;margin-left:5%;gap:5%}
 .dht-oldbigpicture:not([data-beta]) .settings-columns h2{font-size:calc(var(--obp-width)*.016);font-weight:300;margin:calc(var(--obp-height)*.026) 0 4px}
