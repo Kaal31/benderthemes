@@ -4,4 +4,9 @@ export const OLD_BIG_PICTURE_CSS = ".dht-oldbigpicture{color-scheme:dark;font-fa
 .dht-oldbigpicture:is([data-page="friends"],[data-page="chat"]) main *{scrollbar-width:none}
 .dht-oldbigpicture:is([data-page="friends"],[data-page="chat"]) main::-webkit-scrollbar,
 .dht-oldbigpicture:is([data-page="friends"],[data-page="chat"]) main *::-webkit-scrollbar{display:none;width:0;height:0}
+
+/* Web/Chat remain anchored and clipped while selected; focus never expands the edge tiles. */
+.dht-oldbigpicture .home-navigation>.home-edge{position:absolute;top:0;width:calc(var(--obp-width)*.23);z-index:2}
+.dht-oldbigpicture .home-navigation>.home-edge.web{left:calc(var(--obp-width)*-.092)}
+.dht-oldbigpicture .home-navigation>.home-edge.chat{right:calc(var(--obp-width)*-.092)}
 `;
