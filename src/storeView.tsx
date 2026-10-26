@@ -13,7 +13,7 @@ import { CSSProperties, ReactNode, useEffect, useRef, useState } from "react";
 import { opensKeyboardOnTap, showSteamKeyboard } from "./steamKeyboard";
 import { Press, setModalInput, Stage, StageHost, useStage } from "./input";
 import { Game, Library, openSteam } from "./library";
-import { fmtPrice, loadStoreDetails, loadStoreLists, searchStore, STORE_TABS, StoreDetails, StoreItem, StoreTab } from "./store";
+import { fmtPrice, loadStoreDetails, loadStoreLists, searchStore, storePreferenceKey, STORE_TABS, StoreDetails, StoreItem, StoreTab } from "./store";
 import { TrailerVideo } from "./media";
 import { playSound } from "./steam";
 import {activeTheme} from "./engine/registry";
@@ -145,7 +145,7 @@ export function StoreView({ settings, lib, onClose, onLaunch }: { settings: Sett
   const close=castleWindow.close;
   const icons = useAssets("xmb-ps3");
   const [lists, setLists] = useState<Record<string, StoreItem[]> | null>(null);
-  const [failed, setFailed] = useState(false);
+  const [failed, setFailed] = useState<string|null>(null);
   const [tab, setTab] = useState<StoreTab>("featured");
   const [results, setResults] = useState<StoreItem[]>([]);
   const [query, setQuery] = useState("");
@@ -160,10 +160,18 @@ export function StoreView({ settings, lib, onClose, onLaunch }: { settings: Sett
   const [dsel, setDsel] = useState(0);
   const [shot, setShot] = useState(0);
 
+  const latestQuery=useRef(query);latestQuery.current=query;
   useEffect(() => {
-    loadStoreLists()
-      .then(setLists)
-      .catch(() => setFailed(true));
+    let gone=false,lastKey="",revision=0;
+    const sync=()=>{
+      const key=storePreferenceKey();if(key===lastKey)return;lastKey=key;
+      const current=++revision;
+      setLists(null);setResults([]);setDetail(null);setPeek(null);setFailed(null);setSel(0);setZone("items");
+      loadStoreLists().then(value=>{if(!gone&&current===revision)setLists(value);}).catch(error=>{if(!gone&&current===revision)setFailed(error instanceof Error?error.message:"The Store could not be loaded.");});
+      if(latestQuery.current)searchStore(latestQuery.current).then(value=>{if(!gone&&current===revision)setResults(value);}).catch(()=>{});
+    };
+    sync();const timer=setInterval(sync,1000);
+    return()=>{gone=true;clearInterval(timer);};
   }, []);
   const items: StoreItem[] = tab === "search" ? results : lists?.[tab] ?? [];
   const cur = items[Math.min(sel, Math.max(0, items.length - 1))];
@@ -202,7 +210,8 @@ export function StoreView({ settings, lib, onClose, onLaunch }: { settings: Sett
     setTab("search");
     setSel(0);
     setZone("items");
-    setResults(await searchStore(q).catch(() => []));
+    setResults([]);setFailed(null);
+    try {setResults(await searchStore(q));}catch(error){setFailed(error instanceof Error?error.message:"Store search is unavailable.");}
   };
   const switchTab = (d: number) => {
     const i = tabs.findIndex((t) => t.id === tab);
@@ -319,7 +328,7 @@ function StoreBody(p: {
   items: StoreItem[];
   sel: number;
   loading: boolean;
-  failed: boolean;
+  failed: string|null;
   query: string;
   peek: StoreDetails | null;
   detail: StoreDetails | null;
@@ -420,7 +429,7 @@ function StoreBody(p: {
   if (p.section) return <div className={`${skin.layout === "grid" ? "dht-store-grid" : "dht-store-list"} dht-store-sections`} style={base}>{header}{p.section}</div>;
 
   // ── lists ──
-  const empty = p.loading ? "Loading the store…" : p.failed ? "The store can't be reached right now (check the internet connection)." : p.tab === "search" ? (p.query ? "Nothing found." : "Press Y to search.") : "Nothing here right now.";
+  const empty = p.loading ? "Loading the store…" : p.failed ? p.failed : p.tab === "search" ? (p.query ? "Nothing found." : "Press Y to search.") : "Nothing here right now.";
   if (skin.layout === "grid") {
     const COLS = skin.compact ? 2 : 4;
     const tw = Math.floor((W - 112 - (COLS - 1) * 20) / COLS);

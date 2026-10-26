@@ -3,6 +3,8 @@
 // backend (fetchNoCors), cached for a few minutes. Buying still happens on
 // Steam's own store page, which every item links to.
 import { fetchNoCors } from "@decky/api";
+import {filterStoreContent,storeContentPreferenceKey} from "./storeContentPreferences";
+export const storePreferenceKey=()=>preview?"preview":storeContentPreferenceKey();
 
 export interface StoreItem {
   id: number;
@@ -93,7 +95,7 @@ const dedupe = (l: (StoreItem | null)[]) => {
 /** Featured, Specials, Top Sellers, New Releases and Coming Soon in one request. */
 export async function loadStoreLists(): Promise<Record<string, StoreItem[]>> {
   if (preview) return preview.lists;
-  return cached("lists", 5 * 60_000, async () => {
+  const lists=await cached("lists", 5 * 60_000, async () => {
     const j = await getJson("https://store.steampowered.com/api/featuredcategories?l=english");
     const specials = dedupe((j?.specials?.items ?? []).map(item));
     const top = dedupe((j?.top_sellers?.items ?? []).map(item));
@@ -109,13 +111,15 @@ export async function loadStoreLists(): Promise<Record<string, StoreItem[]>> {
     if (!featured.length) featured = dedupe([...top.slice(0, 6), ...specials.slice(0, 6)]);
     return { featured, specials, top, new: fresh, soon };
   });
+  const visible=new Set((await filterStoreContent(dedupe(Object.values(lists).flat()))).map(item=>item.id));
+  return Object.fromEntries(Object.entries(lists).map(([key,items])=>[key,items.filter(item=>visible.has(item.id))]));
 }
 
 export async function searchStore(q: string): Promise<StoreItem[]> {
   if (preview) return preview.search(q);
   const term = q.trim();
   if (!term) return [];
-  return cached(`s:${term.toLowerCase()}`, 5 * 60_000, async () => {
+  const results=await cached(`s:${term.toLowerCase()}`, 5 * 60_000, async () => {
     const j = await getJson(`https://store.steampowered.com/api/storesearch/?term=${encodeURIComponent(term)}&l=english`);
     return dedupe(
       (j?.items ?? []).map((x: any) =>
@@ -135,11 +139,13 @@ export async function searchStore(q: string): Promise<StoreItem[]> {
       ),
     );
   });
+  return filterStoreContent(results);
 }
 
 export async function loadStoreDetails(id: number): Promise<StoreDetails | null> {
   if (preview) return preview.details(id);
-  return cached(`d:${id}`, 30 * 60_000, async () => {
+  if(!(await filterStoreContent([{id}])).length)return null;
+  const details=await cached(`d:${id}`, 30 * 60_000, async () => {
     const j = await getJson(`https://store.steampowered.com/api/appdetails?appids=${id}&l=english`);
     const d = j?.[id]?.data;
     if (!d) return null;
@@ -167,6 +173,7 @@ export async function loadStoreDetails(id: number): Promise<StoreDetails | null>
         .map(([k]) => k),
     };
   });
+  return details&&(await filterStoreContent([{id}])).length?details:null;
 }
 
 export function fmtPrice(cents: number | undefined, currency?: string): string {
