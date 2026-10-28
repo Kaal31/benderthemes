@@ -31,6 +31,11 @@ export const OLD_BIG_PICTURE_REFERENCE_CSS=`
 .dht-oldbigpicture:not([data-beta]) .settings-columns .settings-link{font-size:calc(var(--obp-width)*.0145);min-height:calc(var(--obp-height)*.045);margin:2px 0;padding:4px 8px;transition:background-color 110ms,color 110ms}
 .dht-oldbigpicture:not([data-beta]) .library-sidebar :is(button,select):focus,
 .dht-oldbigpicture:not([data-beta]) .settings-columns .settings-link:focus{background:linear-gradient(90deg,#8ecce8,#b4e2f5);color:#143b52;outline:0;box-shadow:none}
+.dht-oldbigpicture:not([data-beta]) footer{background:linear-gradient(180deg,#071b2bd9,#03101de8);border-top:1px solid #21415770;color:#9aafbb;font-size:clamp(11px,calc(var(--obp-width)*.0105),17px)}
+.dht-oldbigpicture:not([data-beta]) footer>div{display:flex;align-items:center;gap:calc(var(--obp-width)*.006);white-space:pre}
+.dht-oldbigpicture:not([data-beta]) footer b{border:0;border-radius:2px;width:calc(var(--obp-width)*.025);height:calc(var(--obp-height)*.027);min-width:24px;min-height:16px;margin:0 0 0 calc(var(--obp-width)*.009);background:linear-gradient(180deg,#55687885,#263c5060 72%,#162a3c35);box-shadow:inset 0 1px #9db5c22e;color:#b5c5cf;font-size:clamp(10px,calc(var(--obp-width)*.0095),15px);font-weight:400;line-height:1}
+.dht-oldbigpicture:not([data-beta]) footer>button,.dht-oldbigpicture:not([data-beta]) footer .footer-home{border:0;border-radius:2px;padding:3px 12px;background:linear-gradient(180deg,#53677970,#243a4e50 75%,#14293b25);box-shadow:inset 0 1px #9db5c220;color:#9bafbD;font-size:inherit;line-height:1.25;outline:0;transition:background-color 110ms,color 110ms,box-shadow 110ms}
+.dht-oldbigpicture:not([data-beta]) footer>button:focus,.dht-oldbigpicture:not([data-beta]) footer .footer-home:focus,.dht-oldbigpicture:not([data-beta]) footer>button:hover{border:0;background:linear-gradient(180deg,#91c9e2,#6eafcc);color:#143b52;outline:0;box-shadow:0 0 5px #8cd9ed40,inset 0 1px #d1f4ff80}
 .dht-oldbigpicture.no-motion *{transition:none!important}
 @media(prefers-reduced-motion:reduce){.dht-oldbigpicture *{transition:none!important}}
 `;
