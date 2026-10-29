@@ -1,3 +1,4 @@
+import {startupIntroEnabled} from "../startupPreferences";
 import {callable} from "@decky/api";
 import {openDestination} from "../destinations";
 import {Navigation} from "@decky/ui";
@@ -126,7 +127,7 @@ const notifyOn=u&&st("notify")!=="off",detailOn=u&&st("detail")!=="off",notices=
  const pages=Math.max(1,Math.ceil(tiles.length/count));
  const [moving,setMoving]=useState(false);
  // 2: logo, then loading shapes · 1: fading out while the icons pop in · 0: done.
- const [bootPhase,setBootPhase]=useState(()=>u&&s.animations&&!wiiuBooted&&st("boot")!=="off"?2:0),boot=bootPhase===2,setBoot=(on:boolean)=>setBootPhase(on?2:p=>p&&1);
+ const [bootPhase,setBootPhase]=useState(()=>u&&startupIntroEnabled(s)&&s.animations&&!wiiuBooted&&st("boot")!=="off"?2:0),boot=bootPhase===2,setBoot=(on:boolean)=>setBootPhase(on?2:p=>p&&1);
  useEffect(()=>{if(!bootPhase)return;wiiuBooted=true;if(bootPhase===1){const done=setTimeout(()=>setBootPhase(0),520);return()=>clearTimeout(done);}const chime=setTimeout(()=>playSound("launch"),520),out=setTimeout(()=>setBoot(false),3200);return()=>{clearTimeout(chime);clearTimeout(out);};},[bootPhase]);
  const [page,setPage]=useState(0),[selected,setSelected]=useState(0),[zone,setZone]=useState<"grid"|"dock">("grid"),[dock,setDock]=useState(0),[banner,setBanner]=useState<Game|null>(null),[bannerStart,setBannerStart]=useState(true);
  useEffect(()=>{setPage(p=>Math.min(p,pages-1));},[pages]);

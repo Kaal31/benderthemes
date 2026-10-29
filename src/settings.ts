@@ -366,6 +366,9 @@ export interface Settings {
   gameBoot: string;
   /** False only on a fresh install until the first-run flow (Onboarding.tsx) is finished or skipped. */
   onboardingDone: boolean;
+  hubStartupAnimation?: boolean; // opt in to repeat ThemeHub branding after first install
+  hubStartupSeen?: boolean;
+  themeStartupIntros?: Record<string,boolean>; // false disables automatic intros for this theme
   explicitThemeDownloads?: boolean;
   version: number;
 }
@@ -585,6 +588,9 @@ function merge(saved: any): Settings {
   if (typeof s.vita.skin !== "string") s.vita.skin = "";
   if (typeof s.bootIntro !== "string" || s.bootIntro.length > 300) s.bootIntro = "";
   s.onboardingDone = saved?.onboardingDone !== false;
+  s.hubStartupAnimation = saved?.hubStartupAnimation === true;
+  s.hubStartupSeen = typeof saved?.hubStartupSeen === "boolean" ? saved.hubStartupSeen : saved?.onboardingDone !== false;
+  s.themeStartupIntros = Object.fromEntries(Object.entries(saved?.themeStartupIntros??{}).filter(([k,v])=>k.length<128&&typeof v==="boolean"));
   if (typeof s.gameBoot !== "string" || s.gameBoot.length > 300) s.gameBoot = "";
   s.xmb.pspAccurate = s.xmb.pspAccurate === true;
   // the old on/off switch: on stays the console's size; off (also the old default) becomes Auto, so theme files line up with their art

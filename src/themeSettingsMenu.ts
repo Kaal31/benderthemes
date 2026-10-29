@@ -369,6 +369,7 @@ function themeFileItems(th: ThemeId): MenuItem[] {
 /** The look's own options (Customize → Look options): what only this look has. */
 function lookOptionItems(th: ThemeId): MenuItem[] {
   const items: MenuItem[] = [];
+  items.push(toggle("Startup intro",()=>S().themeStartupIntros?.[S().activeTheme||th]!==false,v=>updateSettings(p=>({themeStartupIntros:{...p.themeStartupIntros,[S().activeTheme||th]:v}}))));
   if (th === "vita") items.push(...vitaItems("look"));
   if (th === "ps3" || th === "psp") items.push(...xmbItems(th, "look"));
   if (th === "x360") items.push(
@@ -735,6 +736,7 @@ export function globalSettingsItems(): MenuItem[] {
       choice("Background brightness", [100, 90, 80, 70, 60, 50].map((v, i) => ({ id: v, name: i ? `−${i} (${v}%)` : "Normal" })), () => getRawSettings().bgBrightness, (v) => updateSettings({ bgBrightness: v })),
       choice("Animated background quality", [{ id: "full", name: "Full resolution" }, { id: "half", name: "Half resolution · saves battery" }], () => getRawSettings().bgQuality, (v) => updateSettings({ bgQuality: v as any })),
       choice("Hub style", [{ id: "auto", name: "Auto (theme it was opened on)" }, { id: "neutral", name: "Neutral" }, { id: "preview", name: "Preview (the theme focused in Discover)" }, ...consoleThemeIds().map((id) => ({ id, name: hubThemeName(id) }))], () => S().hubStyle, (v) => updateSettings({ hubStyle: v })),
+      toggle("ThemeHub startup animation",()=>S().hubStartupAnimation===true,v=>updateSettings({hubStartupAnimation:v})),
       toggle("Themed store", () => S().themedStore !== false, (v) => updateSettings({ themedStore: v })),
       toggle("Steam Deck compatibility badges", () => S().badges.deck, (v) => updateSettings((p) => ({ badges: { ...p.badges, deck: v } }))),
       toggle("Hide Steam's top bar", () => S().hideSteamHeader, (v) => updateSettings({ hideSteamHeader: v })),

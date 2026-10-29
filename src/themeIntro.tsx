@@ -1,3 +1,4 @@
+import {startupIntroEnabled,hubStartupEnabled} from "./startupPreferences";
 // Console themes have an intro. Themes with a boot sequence of their own (Wii U logo, PS1 start-up screens, a PSP/PS3
 // theme file's boot intro, see bootIntro.tsx) play it when they first mount; this file adds a locally bundled
 // video startup for the others. The generic Hub reveal remains the fallback for
@@ -38,6 +39,8 @@ export function playThemeIntro(theme: string, opts: { fresh?: boolean; switched?
   try {
     if (!isConsoleTheme(theme) && !CONSOLE_STARTUPS[theme]) return;
     const s = getSettings();
+    if((opts.fresh||opts.switched)&&!startupIntroEnabled(s,theme))return;
+    if(!CONSOLE_STARTUPS[theme]&&!hasOwnIntro(s,theme)&&!hubStartupEnabled(s))return;
     if(["old-big-picture","old-beta-big-picture"].includes(theme)&&!themeResourcesReady(theme))return;
     if (slotUrl("bootVideo", s)) return;
     if (opts.fresh && hasOwnIntro({ ...s, theme: theme as ThemeId }, theme)) return;

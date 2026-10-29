@@ -1,3 +1,4 @@
+import {startupIntroEnabled} from "./startupPreferences";
 import {WiiFlowDownloadsWatcher} from "./wiiflowDownloads";
 import {ThemeLoadingScreen} from "./ThemeLoadingScreen";
 import { IOS6Home } from "./themes/IOS6";
@@ -452,9 +453,9 @@ function ThemedHomeContent({ standalone }: { standalone?: boolean }) {
       <DownloadStatus settings={s} hidden={!!overlay || !!destination || !!launching || market.opened} />
       <MenuView menu={themeMenu} variant={s.theme === "ps3" ? "xmb" : (s.theme === "frame" || s.theme === "native") ? "ps5" : s.theme} art={s.theme === "psp" ? { panel: cachedPspSkin(pspFile(s))?.visuals?.optionMenu, focus: cachedPspSkin(pspFile(s))?.visuals?.menuFocus } : undefined} />
       {launching && <LaunchView value={launching} settings={s}/>}
-      <BootIntro file={s.bootIntro} />
-      <ThemeIntro autoTheme={s.onboardingDone && !market.opened && !api.busy && !slotUrl("bootVideo", s) && (!["old-big-picture","old-beta-big-picture"].includes(s.theme)||introResourcesReady) ? s.theme : undefined} />
-      <VideoIntro url={slotUrl("bootVideo", s)} />
+      <BootIntro file={s.bootIntro} automatic={startupIntroEnabled(s)} />
+      <ThemeIntro autoTheme={startupIntroEnabled(s) && s.onboardingDone && !market.opened && !api.busy && !slotUrl("bootVideo", s) && (!["old-big-picture","old-beta-big-picture"].includes(s.theme)||introResourcesReady) ? s.theme : undefined} />
+      <VideoIntro url={startupIntroEnabled(s)?slotUrl("bootVideo", s):null} />
       {market.opened && <Marketplace requested={market.requested} from={market.from} initialTab={market.initialTab} />}
       <FirmwareNotice paused={market.opened || !!overlay || !!destination || !!launching} />
       <WiiFlowDownloadsWatcher active={true}/>

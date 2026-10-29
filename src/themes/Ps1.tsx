@@ -1,3 +1,4 @@
+import {startupIntroEnabled} from "../startupPreferences";
 // PS1 home: the console's own start-up screens (redrawn without any console
 // logo), the BIOS main menu with its two bevelled buttons, the Memory Card
 // manager (two cards of 15 blocks, the games as tiny pixel save icons, the
@@ -35,7 +36,7 @@ export function Ps1Home() {
   const now = useClock(15000);
   const t = WORDS[st<string>("language") === "ja" ? "ja" : "en"];
   const animate = s.animations !== false;
-  const [screen, setScreen] = useState<Screen>(() => (!booted && st<string>("boot") === "show" ? "boot" : st<string>("startScreen") === "card" ? "card" : "main"));
+  const [screen, setScreen] = useState<Screen>(() => (!booted && startupIntroEnabled(s) && st<string>("boot") === "show" ? "boot" : st<string>("startScreen") === "card" ? "card" : "main"));
   const [mainSel, setMainSel] = useRemembered("ps1-main", 0);
 
   // ───── memory cards ─────

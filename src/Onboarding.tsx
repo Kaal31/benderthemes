@@ -17,6 +17,7 @@ import { Img } from "./common";
 const CHOICES = THEMES.filter((t) => t.id !== "frame" && t.id !== "native");
 
 export function Onboarding() {
+  useEffect(()=>{updateSettings({hubStartupSeen:true});},[]);
   const start = Math.max(0, CHOICES.findIndex((t) => t.id === getSettings().theme));
   const [step, setStep] = useState(0);
   const [sel, setSel] = useState(start);
