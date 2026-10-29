@@ -5,6 +5,7 @@ import { frameLoop, useThemeActive } from "../performance";
 import { ReactNode, useEffect, useRef, useState } from "react";
 import { RafRuntime, RafSceneData } from "./rafScene";
 import { RafRenderer } from "./rafRender";
+import type { RafLayers } from "./rafLayers";
 
 const sceneCache = new Map<string, Promise<RafSceneData>>();
 function loadScene(url: string): Promise<RafSceneData> {
@@ -33,13 +34,16 @@ export function sceneDrawable(s: RafSceneData): boolean {
   return any;
 }
 
-export function RafBackground({ url, animate, fallback, fps = 30, dim = 0 }: { url: string; animate: boolean; fallback: ReactNode; fps?: number; dim?: number }) {
+export function RafBackground({ url, animate, fallback, fps = 30, dim = 0, layers = "all" }: { url: string; animate: boolean; fallback: ReactNode; fps?: number; dim?: number; layers?: RafLayers }) {
   const active = useThemeActive(), activeRef = useRef(active); activeRef.current = active;
+  const layersRef = useRef(layers); layersRef.current = layers;
+  const animateRef = useRef(animate); animateRef.current = animate;
   const redraw = useRef<(() => void) | null>(null);
-  useEffect(() => { redraw.current?.(); }, [active]);
+  useEffect(() => { redraw.current?.(); }, [active, layers, animate]);
   const ref = useRef<HTMLCanvasElement>(null);
   const [state, setState] = useState<"loading" | "ok" | "failed">("loading");
   useEffect(() => {
+    setState("loading");
     let dead = false, loop: ReturnType<typeof frameLoop> | undefined, r: RafRenderer | null = null;
     const cv = ref.current;
     if (!cv) return;
@@ -50,15 +54,16 @@ export function RafBackground({ url, animate, fallback, fps = 30, dim = 0 }: { u
       const rt = new RafRuntime(scene);
       rt.log = () => {};
       const size = () => [Math.max(1, cv.clientWidth), Math.max(1, cv.clientHeight)] as const;
-      const still = () => { if (!dead && r) { const [w, h] = size(); r.draw(rt, w, h); } };
+      const still = () => { if (!dead && r) { const [w, h] = size(); r.draw(rt, w, h, layersRef.current); } };
       let last = performance.now(), settled = false;
       r = new RafRenderer(cv, scene, () => loop?.invalidate(), base);
       rt.start();
       loop = frameLoop(cv, (now, moving) => {
         if (!moving && !settled) { for (let i = 0; i < 90; i++) rt.update(1 / 30); settled = true; }
         else if (moving) rt.update(Math.min(0.25, (now - last) / 1000));
+        if (moving) settled = true;
         last = now; still(); setState("ok");
-      }, () => animate, () => activeRef.current, fps);
+      }, () => animateRef.current, () => activeRef.current, fps);
       redraw.current = loop.invalidate;
     }).catch(() => { if (!dead) setState("failed"); });
     return () => {
@@ -66,11 +71,10 @@ export function RafBackground({ url, animate, fallback, fps = 30, dim = 0 }: { u
       redraw.current = null; loop?.dispose();
       r?.dispose();
     };
-  }, [url, animate, fps]);
-  if (state === "failed") return <>{fallback}</>;
+  }, [url, fps]);
   return (
     <>
-      {state === "loading" && fallback}
+      {state !== "ok" && fallback}
       <canvas ref={ref} className="dht-xmb-raf" data-dht-from-skin="" style={{ position: "absolute", inset: 0, width: "100%", height: "100%", pointerEvents: "none", opacity: state === "ok" ? 1 : 0, transition: "opacity 600ms" }} />
       {dim > 0 && <div className="dht-xmb-raf-dim" style={{ position: "absolute", inset: 0, background: `rgba(0,0,0,${dim})`, pointerEvents: "none" }} />}
     </>

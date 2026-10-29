@@ -31,6 +31,11 @@ export type StyleOption = {
 
 export const THEME_STYLES: Partial<Record<ThemeId, StyleOption[]>> = { gameamp, onyx, silver, wii, wiiu, ps2, ps5, xbox, aero, aero2, pain, nazarick, ps1, iisu };
 
+THEME_STYLES.ps3 = [
+  { key: "themeBackground", label: "Imported theme background", group: "Background", choices: [{ id: true, name: "On" }, { id: false, name: "Off" }], def: true },
+  { key: "themeEffects", label: "Imported animated effects", group: "Background", choices: [{ id: true, name: "On" }, { id: false, name: "Off" }], def: true },
+];
+
 for (const theme of ["ps4", "ps5"] as const) THEME_STYLES[theme] = [...(THEME_STYLES[theme] ?? []), ...PLAYSTATION_SURFACE_OPTIONS.filter(option => theme === "ps5" || option.key !== "playGlass")];
 
 // Only layouts with game hero backgrounds expose this control. Cover tiles and

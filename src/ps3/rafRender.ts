@@ -3,6 +3,7 @@
 import type { RafRuntime, RafSceneData } from "./rafScene";
 import { base64Bytes, decodeArgb, decodeDxt } from "./dxt";
 import { posedJoints } from "./edgeAnim";
+import { backgroundActors, RafLayers } from "./rafLayers";
 
 type M4 = Float32Array;
 const ident = (): M4 => { const m = new Float32Array(16); m[0] = m[5] = m[10] = m[15] = 1; return m; };
@@ -164,6 +165,7 @@ export class RafRenderer {
   loc: Record<string, any> = {};
   ready = 0;
   pending = 0; // textures still downloading
+  private backgroundIds: Set<string> | null = null;
 
   /** baseUrl: where a texture's cached .bin file (t.bin) is fetched from. */
   constructor(public canvas: HTMLCanvasElement, public scene: RafSceneData, onTextureLoaded?: () => void, baseUrl = "") {
@@ -323,11 +325,11 @@ export class RafRenderer {
     return true;
   }
 
-  draw(rt: RafRuntime, width: number, height: number) {
+  draw(rt: RafRuntime, width: number, height: number, layers: RafLayers = "all") {
     const gl = this.gl, L = this.loc;
     if (this.canvas.width !== width || this.canvas.height !== height) { this.canvas.width = width; this.canvas.height = height; }
     gl.viewport(0, 0, width, height);
-    gl.clearColor(0, 0, 0, 1);
+    gl.clearColor(0, 0, 0, layers === "effects" ? 0 : 1);
     gl.clear(gl.COLOR_BUFFER_BIT | gl.DEPTH_BUFFER_BIT);
     gl.useProgram(this.prog);
     const cam = rt.camera;
@@ -348,7 +350,9 @@ export class RafRenderer {
     gl.uniform1i(L.uTex, 0);
     gl.uniform1i(L.uSpec, 1);
     gl.activeTexture(gl.TEXTURE0);
+    const backgrounds = layers === "all" ? null : (this.backgroundIds ??= backgroundActors(rt.scene));
     for (const a of rt.actors) {
+      if (backgrounds && backgrounds.has(a.id) !== (layers === "background")) continue;
       if (!a.enable || a._color[3] <= 0.001) continue;
       const s = a._scale;
       if (Math.abs(s[0]) < 1e-6 && Math.abs(s[1]) < 1e-6 && Math.abs(s[2]) < 1e-6) continue;

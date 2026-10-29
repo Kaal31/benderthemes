@@ -1,4 +1,5 @@
 import {backgroundMediaKind} from "../backgroundMedia";
+import { styleOf } from "../engine/themeStyles";
 import {BackgroundMedia} from "../WallpaperMedia";
 import { GameHero } from "../common";
 import {customProfilePicture} from "../profilePicture";
@@ -256,6 +257,9 @@ function nightFactor(d: Date) {
 }
 
 function XmbBackground({ variant, color, animate, now, skin, fx, month = now.getMonth() }: { variant: Variant; color: RGB; animate: boolean; now: Date; skin: P3tSkin | null; fx: ThemeFx; month?: number }) {
+  const surface = styleOf(useSettings(), "ps3");
+  const themeBackground = surface<boolean>("themeBackground");
+  const themeEffects = surface<boolean>("themeEffects");
   const { W, H } = useStage();
   const userWall = useWallpaper(variant);
   const slides = !userWall ? skin?.slides ?? [] : [];
@@ -269,7 +273,7 @@ function XmbBackground({ variant, color, animate, now, skin, fx, month = now.get
   const cssPspFps = Math.round(clamp(parseFloat(useCssVar("--dht-psp-scene-fps")) || 30, 5, 60));
   const cssPspLevel = parseFloat(useCssVar("--dht-psp-wave-level"));
   const cssWave = useCssVar("--dht-xmb-wave").toLowerCase() !== "off";
-  const rafScene = useRafScene(variant === "ps3" ? p3tName : "", variant === "ps3" && !userWall && fx.sceneAnim && cssPs3Scene !== "off" ? skin?.rafScene : undefined);
+  const rafScene = useRafScene(variant === "ps3" ? p3tName : "", variant === "ps3" && fx.background && ((themeBackground && !userWall) || themeEffects) && fx.sceneAnim && cssPs3Scene !== "off" ? skin?.rafScene : undefined);
   const light = variant === "ps3" ? nightFactor(now) : 1;
   const top = darken(color, variant === "ps3" ? 0.75 - 0.35 * light : 0.62);
   const mid = darken(color, variant === "ps3" ? 0.5 - 0.35 * light : 0.25);
@@ -284,7 +288,12 @@ function XmbBackground({ variant, color, animate, now, skin, fx, month = now.get
   return (
     <div style={{ position: "absolute", inset: 0 }}>
       <div className="dht-xmb-bg" style={{ position: "absolute", inset: 0, background: `var(--dht-xmb-bg, ${bg})` }} />
-      {skin?.scene && (!userWall||backgroundMediaKind(userWall)==="image") && fx.background && cssPspScene !== "off" ? (
+      {variant === "ps3" && skin ? (
+        <>
+          {userWall ? <BackgroundMedia src={userWall} style={{ position: "absolute", inset: 0, width: "100%", height: "100%", objectFit: "cover" }} /> : !themeBackground && cssWave ? <AnimCanvas className="dht-xmb-wave" width={W} height={H} animate={animate} fps={30} draw={drawPs3Wave} /> : null}
+          {rafScene ? <RafBackground key={rafScene} url={rafScene} animate={animate} layers={themeEffects ? (themeBackground && !userWall ? "all" : "effects") : "background"} fallback={themeBackground && !userWall ? slideshow : null} fps={cssPs3Fps} dim={cssPs3Dim} /> : themeBackground && !userWall ? slideshow || (wall ? <BackgroundMedia src={wall} style={{ position: "absolute", inset: 0, width: "100%", height: "100%", objectFit: "cover" }} /> : null) : null}
+        </>
+      ) : skin?.scene && (!userWall||backgroundMediaKind(userWall)==="image") && fx.background && cssPspScene !== "off" ? (
         <PspThemeBg fps={cssPspFps} scene={skin.scene} background={skin.backgrounds[0] ?? null} wallpaper={userWall ?? ((skin as P3tSkin & { wallpaper?: boolean }).wallpaper ? skin.backgrounds[0] ?? null : null)} animate={animate && fx.sceneAnim} wave={fx.wave && cssWave} level={Number.isFinite(cssPspLevel) ? clamp(cssPspLevel, 0, 100) : fx.waveLevel} tint={skin.stock ? PSP_FIRMWARE_MONTHS[month] : null} waveTint={skin.stock ? PSP_FIRMWARE_WAVE[month] : null} />
       ) : slides.length ? (
         rafScene && fx.background ? (

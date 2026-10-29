@@ -1288,9 +1288,9 @@ def p3t_sounds(d, nodes, blob):
     for tag, a in nodes:
         if tag != "se" or not isinstance(a.get("id"), str):
             continue
-        left, right = a.get("left"), a.get("right")
+        source, left, right = a.get("src"), a.get("left"), a.get("right")
         try:
-            w = vag_to_wav(blob(left), blob(right) if right else None) if left else None
+            w = vag_to_wav(blob(source)) if source else vag_to_wav(blob(left), blob(right) if right else None) if left else None
         except Exception:
             w = None
         if w:

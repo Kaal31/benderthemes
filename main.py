@@ -290,7 +290,7 @@ def _read_p3t(path: str):
     return {"name": name, "author": author, "look": look, "backgrounds": backgrounds[:1], "icons": icons, "visuals": visuals, "_raf": raf[0] if raf else None, "_bgraw": bgraw if len(bgraw) > 1 and not raf else None, "_sounds": sounds}
 
 
-_P3T_READER = 2  # bump when _read_p3t's output changes: cached reads are made again
+_P3T_READER = 3  # bump when _read_p3t's output changes: cached reads are made again
 
 
 def _pickle_cached(subfolder: str, key_text: str, make, keep: int = 12, store=None):
