@@ -11,8 +11,8 @@
     "package": "python tools/package_release.py",
     "theme:viewer": "node sdk/viewer/server.mjs",
     "pretypecheck": "python tools/compile_bundled_themes.py",
-    "prebuild": "python tools/compile_bundled_themes.py && node tools/build_avatar_engine.mjs",
-    "prepreview": "python tools/compile_bundled_themes.py && node tools/build_avatar_engine.mjs"
+    "prebuild": "python tools/build_nxe_icons.py && python tools/build_themehub_banner.py && python tools/compile_bundled_themes.py && node tools/build_avatar_engine.mjs",
+    "prepreview": "python tools/build_nxe_icons.py && python tools/build_themehub_banner.py && python tools/compile_bundled_themes.py && node tools/build_avatar_engine.mjs"
   },
   "devDependencies": {
     "@decky/rollup": "^1.0.2",

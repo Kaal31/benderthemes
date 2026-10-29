@@ -173,9 +173,12 @@ const backend: Record<string, (...a: any[]) => any> = {
   ensure_frame_media: async (id:string) => {const w=window as any;(w.__frameMediaCalls??=[]).push(id);if(w.__frameMediaGate)await w.__frameMediaGate;return w.__frameMediaFailure?{success:false,error:"Preview media download failure"}:{success:true};},
   get_dial_asset: (n: string) => (window as any).__dialAssets?.[n] ?? null,
   cinematic_assets: (n: string) => (window as any).__cinematicAssets?.[n] ?? {video:`../bundle/cinematic/${n}.mp4`,poster:`../bundle/cinematic/${n}.jpg`},
-  get_assets: (n: string) => (window as any).__testAssets?.[n] ?? {},
+  console_artwork_status: () => ({packs:[],busy:false,percent:0}),
+  console_artwork_install: () => { (window as any).__consoleArtInstalled=true; return {success:true}; },
+  get_assets: (n: string) => new Set(['x360-blades-original','x360-kinect-dash','x360-metro-dash','x360-nxe-dash','xbox-original','xmb-ps3']).has(n)&&!(window as any).__consoleArtInstalled&&!new URLSearchParams(location.search).has('consoleArt')?{}:(window as any).__testAssets?.[n] ?? {},
   list_wallpapers: () => ({ dir: "~/homebrew/data/DeckHomeThemes/wallpapers", files: [] }),
   get_wallpaper: () => null,
+  get_x360_cabinet_wallpaper: (id:string) => /^[a-z0-9_]+$/i.test(id)?{background:`../out/import-fixtures/x360-cabinet/${id}.jpg`}:{error:"Unknown wallpaper"},
   // window.__testSwitchList = [{id,name,author,screens}] lists several .nxtheme files
   list_switch_themes: () => R() ? { themes: R().lists.switch ?? [], dir: "" } : ({ themes: (window as any).__testSwitchList ?? ((window as any).__testSwitch ? [{ id: "Test.nxtheme", name: (window as any).__testSwitch.name || "Test", author: (window as any).__testSwitch.author || "", screens: Object.keys((window as any).__testSwitch.screens || {}) }] : []), dir: "" }),
   get_switch_skin: (n: string) => realSkin("switch", n, (window as any).__testSwitch ?? null),

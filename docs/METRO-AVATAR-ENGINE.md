@@ -8,7 +8,8 @@ It is a native React theme view, not an iframe or a separately opened website.
 ## Fallback
 
 The existing procedural avatar, avatar editor, imported GLB and gamerpic support are retained.
-They remain the default until the new engine is installed and an avatar is explicitly saved.
+They remain the default while assets are unavailable. Once installed, the new engine displays the
+saved avatar or a default starter, unless the user has explicitly selected the legacy fallback.
 **Use current avatar** switches back and opens the existing editor. Failure to load or render the
 new engine shows the existing avatar. The two descriptions are stored independently.
 

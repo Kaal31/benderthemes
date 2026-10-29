@@ -77,12 +77,17 @@ const SRGB_ENCODE=`vec3 encodeSRGB(vec3 c){
   return mix(1.055*pow(max(c,vec3(0.0)),vec3(1.0/2.4))-0.055,c*12.92,step(c,vec3(0.0031308)));
 }`;
 
-const PRESENT_FRAG=`uniform sampler2D src;uniform sampler2D bloom;uniform float bloomGain;varying vec2 vUv;
+const PRESENT_FRAG=`uniform sampler2D src;uniform sampler2D bloom;uniform float bloomGain;uniform bool premultipliedOutput;varying vec2 vUv;
 ${SRGB_ENCODE}
 void main(){
   vec4 c=texture2D(src,vUv);
   vec3 lit=(c.rgb+texture2D(bloom,vUv).rgb*bloomGain)*2.0;
-  gl_FragColor=vec4(encodeSRGB(clamp(lit,0.0,1.0)),c.a);
+  // MSAA resolves edge RGB against transparent black. Recover the surface colour
+  // before nonlinear encoding, then premultiply in the canvas's display space.
+  if(premultipliedOutput){
+    vec3 straight=c.a>0.0001?lit/c.a:vec3(0.0);
+    gl_FragColor=vec4(encodeSRGB(clamp(straight,0.0,1.0))*c.a,c.a);
+  }else gl_FragColor=vec4(encodeSRGB(clamp(lit,0.0,1.0)),c.a);
 }`;
 
 // Debug blit: shows one intermediate buffer on the canvas, sRGB-encoded for viewing.
@@ -247,7 +252,7 @@ export class AvatarPipeline{
       poissonMap:{value:this.poisson},Projection:{value:new THREE.Vector4()},viewZSign:{value:-1}});
     this.blurMaterial=fs(BLUR_FRAG,{src:{value:null},texelStep:{value:new THREE.Vector2()}});
     this.brightMaterial=fs(BRIGHT_FRAG,{src:{value:this.mainTarget.texture}});
-    this.presentMaterial=fs(PRESENT_FRAG,{src:{value:this.mainTarget.texture},bloom:{value:black},bloomGain:this.uniforms.bloomGain});
+    this.presentMaterial=fs(PRESENT_FRAG,{src:{value:this.mainTarget.texture},bloom:{value:black},bloomGain:this.uniforms.bloomGain,premultipliedOutput:{value:false}});
     this.debugMaterial=fs(DEBUG_FRAG,{src:{value:null},shadowSrc:{value:depth},mode:{value:0},scale:{value:1}});
 
     const tri=new THREE.BufferGeometry();tri.setAttribute('position',new THREE.Float32BufferAttribute([-1,-1,0,3,-1,0,-1,3,0],3));

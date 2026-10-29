@@ -20,8 +20,15 @@ class EngineFallbackTests(unittest.TestCase):
 
     def test_missing_assets_keep_legacy_available(self):
         self.assertFalse(self.engine.status()['ready'])
+        self.assertEqual(self.engine.status()['mode'],'auto')
         self.assertEqual(self.engine.save(mode='legacy')['mode'],'legacy')
         self.assertFalse(self.engine.status()['installing'])
+
+    def test_explicit_fallback_is_preserved_after_assets_are_available(self):
+        self.engine.save(mode='legacy')
+        with patch.object(self.engine,'ready',return_value=True):
+            self.assertTrue(self.engine.status()['ready'])
+            self.assertEqual(self.engine.status()['mode'],'legacy')
 
     def test_corrupt_selection_returns_to_legacy(self):
         self.engine.state_file.parent.mkdir(parents=True)

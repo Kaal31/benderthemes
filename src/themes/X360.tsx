@@ -20,7 +20,7 @@ import { useX360Look, X360_SECTION } from "../skins";
 
 import { useReportFocus } from "../focus";
 import {MetroAvatar, MetroAvatarEditor} from './X360MetroAvatar';
-import {X360Avatar, avatarForName} from './X360Avatar';
+import {X360Avatar, avatarForName, AvatarSpec} from './X360Avatar';
 import {AvatarEditor, OWN_AVATAR_SET, savedAvatar, saveAvatar} from './X360AvatarEditor';
 interface XTile {
   key: string;
@@ -48,6 +48,15 @@ export function X360Home() {
   return <X360MetroHome />;
 }
 
+function LegacyMetroAvatar({spec,motion}:{spec:AvatarSpec;motion:boolean}) {
+  const own=useAssets(OWN_AVATAR_SET);
+  return <X360Avatar spec={spec} model={own.avatar} motion={motion}/>;
+}
+function LegacyMetroAvatarEditor({name,spec,motion,onDone}:{name:string;spec:AvatarSpec;motion:boolean;onDone:(spec?:AvatarSpec)=>void}) {
+  const own=useAssets(OWN_AVATAR_SET);
+  return <AvatarEditor name={name} initial={spec} firstRun={false} model={own.avatar} motion={motion} onDone={onDone}/>;
+}
+
 function X360MetroHome() {
   const api = useHome();
   const s = api.settings;
@@ -59,9 +68,8 @@ function X360MetroHome() {
   const menu = useMenu();
   const games = api.lib.games;
   const [avatarOpen,setAvatarOpen]=useState(false),[legacyOpen,setLegacyOpen]=useState(false),[avatarRevision,setAvatarRevision]=useState(0);
-  const ownAvatar=useAssets(OWN_AVATAR_SET);
   const oldSpec=savedAvatar(s)??avatarForName(api.user);
-  const fallbackAvatar=<X360Avatar spec={oldSpec} model={ownAvatar.avatar} motion={s.animations}/>;
+  const fallbackAvatar=<LegacyMetroAvatar spec={oldSpec} motion={s.animations}/>;
   // the dashboard's own white glyphs for the system tiles
   const ICO: Partial<Record<IconName, string>> = { game: "ico-games", store: "ico-marketplace", friends: "ico-addfriends", bell: "ico-messages", download: "ico-installedgame", library: "ico-controller", globe: "ico-internet", palette: "ico-changetheme", gear: "ico-settingspreferences", power: "ico-turnoff", apps: "ico-apps" };
 
@@ -81,45 +89,46 @@ function X360MetroHome() {
       if (g) home.push({ key: `h${n}`, x, y, w: 270, h: 150, label: g.name, game: g, art: "landscape", run: play(g) });
     });
     const smalls: [string, IconName, () => void][] = [
-      ["my games", "game", () => setPivot(2)],
+      ["my games", "game", () => setPivot(4)],
       ["steam store", "store", () => openSteam("store")],
       ["friends", "friends", () => openSteam("friends")],
       ["downloads", "download", () => openSteam("downloads")],
     ];
     smalls.forEach(([label, icon, run], k) => home.push(sys(`hs${k}`, k * 285, 335, 270, 120, label, icon, run, k === 0 ? GREEN : "#2d2d2d")));
-    // social
+    // 2011 Social: a narrow command column beside an open avatar floor.
     const social: XTile[] = [
-      sys("me", 0, 0, 300, 455, api.user, "user", () => openSteam("friends")),
-      sys("fr", 315, 0, 270, 220, "friends", "friends", () => openSteam("friends"), "#2d2d2d"),
-      sys("chat", 315, 235, 270, 220, "messages", "bell", () => openSteam("friends"), "#2d2d2d"),
-      sys("avatar", 600, 0, 270, 220, "my avatar", "user", () => setAvatarOpen(true)),
+      sys("fr",0,0,170,100,"friends","friends",()=>openSteam("friends")),
+      sys("social-apps",0,110,170,100,"social apps","apps",()=>openSteam("community")),
+      sys("signin",0,220,170,100,"sign in or out","user",()=>openSteam("mainmenu")),
+      sys("avatar",190,0,220,90,api.user,"user",()=>setAvatarOpen(true),"transparent"),
     ];
-    // games: two rows of box art
-    const gtiles: XTile[] = [sys("gl", 0, 0, 220, 455, "game library", "library", () => openSteam("library"))];
-    games.forEach((g, i) => {
-      const col = Math.floor(i / 2);
-      const row = i % 2;
-      gtiles.push({ key: `g${g.appid}`, x: 235 + col * 165, y: row * 235, w: 150, h: 220, label: g.name, game: g, art: "portrait", run: play(g) });
-    });
-    // apps
-    const apps: XTile[] = [
-      sys("web", 0, 0, 270, 220, "internet explorer", "globe", () => openSteam("browser")),
-      sys("media", 0, 235, 270, 220, "pictures", "photo", () => api.openMedia(), "#2d2d2d"),
-      sys("store2", 285, 0, 270, 220, "marketplace", "store", () => openSteam("store"), "#2d2d2d"),
-      sys("dl2", 285, 235, 270, 220, "active downloads", "download", () => openSteam("downloads"), "#2d2d2d"),
-    ];
-    api.lib.apps.forEach((g, i) => apps.push({ key: `a${g.appid}`, x: 570 + Math.floor(i / 2) * 285, y: (i % 2) * 235, w: 270, h: 220, label: g.name, game: g, art: "landscape", run: () => api.launch(g) }));
-    // settings
-    const settings: XTile[] = [
-      sys("theme", 0, 0, 270, 220, "presets", "palette", themes),
-      sys("hs", 0, 235, 270, 220, "home settings", "gear", api.openSettings, "#2d2d2d"),
-      sys("sys", 285, 0, 270, 220, "system", "steam", () => openSteam("settings"), "#2d2d2d"),
-      sys("pw", 285, 235, 270, 220, "turn off", "power", () => openSteam("power"), "#2d2d2d"),
-      sys("steamhome", 570, 0, 270, 220, "home", "home", api.showSteamHome, "#2d2d2d"),
+    // Marketplace landing pages keep the 2011 two-row composition.
+    const feature=(key:string,label:string,run:()=>void,offset=0):XTile[]=>{
+      const first=games[offset],second=games[offset+1],third=games[offset+2];
+      return [sys(key+'-library',0,0,170,155,label,'game',run),
+        sys(key+'-store',0,165,170,155,'marketplace','store',()=>openSteam('store')),
+        first?{key:key+'-feature',x:180,y:0,w:420,h:320,label:first.name,game:first,art:'hero',run:play(first)}:sys(key+'-feature',180,0,420,320,'featured','store',()=>openSteam('store')),
+        ...(second?[{key:key+'-second',x:610,y:0,w:230,h:155,label:second.name,game:second,art:'landscape' as const,run:play(second)}]:[]),
+        ...(third?[{key:key+'-third',x:610,y:165,w:230,h:155,label:third.name,game:third,art:'landscape' as const,run:play(third)}]:[])];
+    };
+    const gtiles=feature('games','my games',()=>openSteam('library'));
+    const video=feature('video','my videos',()=>api.openMedia(),3);
+    const apps:XTile[]=[sys('my-apps',0,0,170,155,'my apps','apps',()=>openSteam('library')),sys('apps-store',0,165,170,155,'apps marketplace','store',()=>openSteam('store'))];
+    api.lib.apps.forEach((g,i)=>apps.push({key:'app-'+g.appid,x:180+Math.floor(i/2)*240,y:i%2*165,w:230,h:155,label:g.name,game:g,art:'landscape',run:()=>api.launch(g)}));
+    if(!api.lib.apps.length)apps.push(sys('browser',180,0,420,320,'internet explorer','globe',()=>openSteam('browser'),'#246b9b'),sys('pictures',610,0,230,155,'pictures','photo',()=>api.openMedia()),sys('app-downloads',610,165,230,155,'downloads','download',()=>openSteam('downloads')));
+    const settings:XTile[]=[
+      sys('system',0,0,270,155,'system','gear',()=>openSteam('settings')),
+      sys('profile',280,0,270,155,'profile','user',()=>setAvatarOpen(true)),
+      sys('preferences',560,0,270,155,'preferences','gear',api.openSettings),
+      sys('theme',0,165,270,155,'themes','palette',themes),
+      sys('account',280,165,270,155,'account','user',()=>openSteam('mainmenu')),
+      sys('power',560,165,270,155,'turn off','power',()=>openSteam('power')),
     ];
     return [
+      { name: "bing", tiles: [sys("search",0,0,840,155,"search","search",()=>openSteam("search"))] },
+      { name: "home", tiles: [sys("quickplay",0,0,170,155,"quickplay","game",()=>openSteam("library")),sys("disc",0,165,170,155,"play game","game",()=>{if(games[0])play(games[0])();else openSteam("library");}),...home.filter(t=>t.game).slice(0,3).map((t,i)=>({...t,x:i===0?180:610,y:i===2?165:0,w:i===0?420:230,h:i===0?320:155}))] },
       { name: "social", tiles: social },
-      { name: "home", tiles: home },
+      { name: "video", tiles: video },
       { name: "games", tiles: gtiles },
       { name: "apps", tiles: apps },
       { name: "settings", tiles: settings },
@@ -193,13 +202,18 @@ function X360MetroHome() {
 
   // ───── layout ─────
   const k = Math.min(W / 1280, H / 720);
-  const X0 = 96;
-  const Y0 = Math.min(196, H * .25);
-  const tileScale = Math.min(1, Math.max(.65,(H-280)/455));
-  const contentW = Math.max(...pv.tiles.map((t) => t.x + t.w));
+  const X0 = 96*k;
+  const Y0 = H*.285;
+  // Tile rows are 320 units high; the old 455-unit fit shrank every category.
+  const tileScale = pv.name==='social'?Math.min(k*.83,H*.5/455):Math.min(k,H*.46/320);
+  const availableWidth=W-X0*2;
+  const stretch=pv.name==='social'?1:availableWidth/(840*tileScale);
+  const displayTiles=pv.tiles.map(tile=>({...tile,x:tile.x*stretch,w:tile.w*stretch}));
+  const displayCurrent=displayTiles[sel];
+  const contentW = Math.max(...displayTiles.map((t) => t.x + t.w));
   let scroll = 0;
-  if (cur) {
-    const right = cur.x + cur.w;
+  if (displayCurrent) {
+    const right = displayCurrent.x + displayCurrent.w;
     if (right - scroll > (W - X0 * 2)/tileScale) scroll = right - ((W - X0 * 2)/tileScale);
     scroll = clamp(scroll, 0, Math.max(0, contentW - ((W - X0 * 2)/tileScale)));
   }
@@ -214,34 +228,37 @@ function X360MetroHome() {
         {wall && <BackgroundMedia src={wall} style={{ position: "absolute", inset: 0, width: W, height: H, objectFit: "cover" }} />}
         {!wall && a["bottom-vignette"] && <img src={a["bottom-vignette"]} aria-hidden="true" style={{ position: "absolute", left: 0, bottom: 0, width: W, height: H * 300 / 720, pointerEvents: "none" }} />}
 
-        {/* Xbox 360 logo, top right */}
-        {a["xbox-logo-horiz"] && <img src={a["xbox-logo-horiz"]} aria-hidden="true" style={{ position: "absolute", left: 1012 * k, top: 42 * k, width: 170 * k, height: 35 * k }} />}
 
+        <div aria-hidden="true" style={{position:'absolute',left:0,right:0,top:H*.56,bottom:0,background:'linear-gradient(180deg,transparent,#bdbdbd66 18%,#181818bb 100%)',pointerEvents:'none'}}/>
         {/* gamer corner */}
-        <div role="button" aria-label="Edit Xbox avatar" tabIndex={0} onClick={()=>setAvatarOpen(true)} onKeyDown={e=>{if(e.key==='Enter'||e.key===' '){e.preventDefault();setAvatarOpen(true);}}} style={{ position: "absolute", right: 98 * k, top: 92 * k, display: "flex", alignItems: "center", gap: 14, fontFamily: FONT, color: "#fff", textShadow: SHADOW, cursor:'pointer' }}>
+        <div role="button" aria-label="Edit Xbox avatar" tabIndex={0} onClick={()=>setAvatarOpen(true)} onKeyDown={e=>{if(e.key==='Enter'||e.key===' '){e.preventDefault();setAvatarOpen(true);}}} style={{ position: "absolute", right: 80 * k, top: 24 * k, display: "flex", alignItems: "center", gap: 14, fontFamily: FONT, color: "#fff", textShadow: SHADOW, cursor:'pointer' }}>
           <div style={{ textAlign: "right" }}>
-            <div style={{ fontSize: 20 }}>{api.user}</div>
+            <div style={{ fontSize: 15 }}>{api.user}</div>
             <div style={{ fontSize: 15, opacity: 0.7 }}>{fmtTime(now, s.clock24)}</div>
           </div>
-          <div style={{ width: 54, height: 54, background: GREEN, display: "flex", alignItems: "center", justifyContent: "center" }}>
-            <ProfileAvatar size={44} fallback={<Icon name="user" size={38} color="#fff" />}/>
+          <div style={{ width: 32, height: 32, background: GREEN, display: "flex", alignItems: "center", justifyContent: "center" }}>
+            <ProfileAvatar size={28} fallback={<Icon name="user" size={38} color="#fff" />}/>
           </div>
         </div>
 
         {/* pivots */}
-        <div style={{ position: "absolute", left: X0, top: 104, display: "flex", gap: 38, fontFamily: FONT, transition: "transform 250ms ease-out", transform: `translateX(${-Math.max(0, pivot - 1) * 120}px)` }}>
+        <div style={{ position: "absolute", left: X0, top: H*.17, display: "flex", gap: 24*k, fontFamily: FONT, transition: "transform 250ms ease-out", transform: "none" }}>
           {pivots.map((pv2, i) => (
-            <span key={pv2.name} className="dht-x360-pivot" data-selected={i === pivot} style={{ fontSize: 40, fontWeight: 300, letterSpacing: -0.5, color: i === pivot ? "#fff" : "rgba(255,255,255,0.5)", textShadow: SHADOW, textDecoration: onBar && i === pivot ? "underline" : "none", textUnderlineOffset: 8 }}>
+            <span key={pv2.name} role="button" tabIndex={0} onClick={()=>setPivot(i)} onKeyDown={event=>{if(event.key==='Enter'||event.key===' '){event.preventDefault();setPivot(i);}}} className="dht-x360-pivot" data-selected={i === pivot} style={{ cursor:'pointer',fontSize: 29*k, fontWeight: 300, letterSpacing: -0.5, color: i === pivot ? "#fff" : "rgba(255,255,255,0.5)", textShadow: SHADOW, textDecoration: onBar && i === pivot ? "underline" : "none", textUnderlineOffset: 8 }}>
               {pv2.name}
             </span>
           ))}
         </div>
 
+        {/* Open Social stage: the shared avatar stands on the floor, outside tiles. */}
+        {pv.name==='social'&&!avatarOpen&&!legacyOpen&&<div data-social-avatar-stage style={{position:'absolute',left:X0+330*tileScale,top:Y0+20*tileScale,width:250*tileScale,height:330*tileScale}}>
+          <MetroAvatar revision={avatarRevision} fallback={fallbackAvatar} framing="nxe"/>
+        </div>}
         {/* tiles */}
         <div style={{ position: "absolute", left: X0, top: Y0, transform: `translateX(${-scroll*tileScale}px) scale(${tileScale})`, transformOrigin:"0 0", transition: "transform 250ms ease-out" }} key={pv.name}>
-          {pv.tiles.map((t, i) => {
+          {displayTiles.map((t, i) => {
             const on = i === sel && !onBar;
-            if (t.x - scroll > W || t.x + t.w - scroll < -X0) return null;
+            if ((t.x-scroll)*tileScale > W-X0 || (t.x+t.w-scroll)*tileScale < -X0) return null;
             return (
               <div
                 key={t.key}
@@ -257,9 +274,9 @@ function X360MetroHome() {
                   height: t.h,
                   background: t.color ?? "#222",
                   overflow: "hidden",
-                  transform: on ? "scale(1.045)" : "scale(1)",
+                  transform: on ? "scale(1.025)" : "scale(1)",
                   transition: "transform 140ms, box-shadow 140ms",
-                  boxShadow: on ? "0 0 0 3px #f4f4f4, 0 0 0 7px #262626, 0 12px 26px rgba(0,0,0,0.45)" : "0 2px 6px rgba(0,0,0,0.15)",
+                  boxShadow: t.color==="transparent" ? "none" : on ? "0 0 0 2px #f4f4f4, 0 3px 8px #0005" : "0 2px 6px rgba(0,0,0,0.15)",
                   zIndex: on ? 2 : 1,
                   animation: s.animations ? `dhtSlideIn 300ms ease-out ${Math.min(i, 8) * 25}ms backwards` : undefined,
                   cursor: "pointer",
@@ -287,19 +304,19 @@ function X360MetroHome() {
           })}
         </div>
         {avatarOpen&&<MetroAvatarEditor fallback={fallbackAvatar} onClose={()=>{setAvatarOpen(false);setAvatarRevision(v=>v+1);}} onLegacy={()=>{setAvatarOpen(false);setAvatarRevision(v=>v+1);setLegacyOpen(true);}}/>}
-        {legacyOpen&&<AvatarEditor name={api.user} initial={oldSpec} firstRun={false} model={ownAvatar.avatar} motion={s.animations} onDone={spec=>{if(spec)saveAvatar(spec);setLegacyOpen(false);setAvatarRevision(v=>v+1);}}/>}
+        {legacyOpen&&<LegacyMetroAvatarEditor name={api.user} spec={oldSpec} motion={s.animations} onDone={spec=>{if(spec)saveAvatar(spec);setLegacyOpen(false);setAvatarRevision(v=>v+1);}}/>}
         <style>{`@keyframes dhtSlideIn { from { opacity: 0; transform: translateX(60px) } to { opacity: 1; transform: none } }`}</style>
 
         {/* focused game caption */}
         {cur?.game && !onBar && (
-          <div style={{ position: "absolute", left: X0, top: Y0 + 455*tileScale + 20, fontFamily: FONT, color: "#fff", textShadow: SHADOW }}>
+          <div style={{ position: "absolute", left: X0, top: Y0 + Math.max(...displayTiles.map(tile=>tile.y+tile.h))*tileScale + 20, fontFamily: FONT, color: "#fff", textShadow: SHADOW }}>
             {showTitle(s, "x360", true) && <div style={{ fontSize: 26, fontWeight: 300 }}>{cur.game.name}</div>}
             <div style={{ fontSize: 16, opacity: 0.65 }}>{fmtPlaytime(cur.game.playtime, cur.game.lastPlayed)}</div>
             <Badges g={cur.game} size={14} style={{ marginTop: 6 }} />
           </div>
         )}
         {/* button legend */}
-        <div style={{ position: "absolute", left: 90 * k, bottom: Math.max(16, H - Y0 - 455 * tileScale - 140), display: "flex", gap: 30, alignItems: "center", fontFamily: FONT, fontSize: 18, color: "#fff", textShadow: SHADOW }}>
+        <div style={{ position: "absolute", left: 90 * k, bottom: H*.08, display: "flex", gap: 30, alignItems: "center", fontFamily: FONT, fontSize: 18, color: "#fff", textShadow: SHADOW }}>
           {([["legend-a", "select"], ["legend-y", "options"]] as const).map(([img, text]) => (
             <span key={img} style={{ display: "flex", alignItems: "center", gap: 6 }}>{a[img] && <img src={a[img]} style={{ width: 32, height: 32 }} />}{text}</span>
           ))}

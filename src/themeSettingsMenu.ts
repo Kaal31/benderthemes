@@ -1,3 +1,5 @@
+import {cabinetWallpapers} from "./x360Cabinet";
+import {consoleArtworkItems} from './consoleArtwork';
 import { saverOptions, updateSaver, addSaverMedia, previewSaver } from "./themeScreensavers";
 import { achievementPopupStatus, achievementPopupsBlocked, previewAchievementPopup } from "./achievementPopups";
 import {customProfilePicture,setProfilePicture,uploadProfilePicture} from "./profilePicture";
@@ -251,6 +253,7 @@ function x360FileItems(): MenuItem[] {
   const tg = (label: string, k: keyof ThemeFx) => toggle(label, () => !!fx()[k], (v) => updateThemeFx(key(), { [k]: v } as any));
   const none = (n: string) => [{ id: "", name: n }];
   return [
+    choice("Cabinet wallpaper (Kinect)", [{id:"",name:"None"},...cabinetWallpapers.map(item=>({id:item.id,name:item.name}))],()=>x().cabinetWallpaper??"",v=>setX({cabinetWallpaper:v}),undefined,"Emphatic’s cabinet wallpapers. Downloaded on selection and fitted to the Kinect dashboard’s 16:9 canvas; cached locally for offline use."),
     choice("Xbox 360 theme file", [...none("None"), ...lists.x360.map((n) => ({ id: n, name: x360Title(n) }))], () => x().skin ?? "", (v) => setX({ skin: v }), undefined, X360_NOTE),
     ...(x().skin ? [group("Theme file effects", () => [
       tg("Theme wallpaper (Metro, NXE, Kinect)", "background"),
@@ -368,13 +371,14 @@ function themeFileItems(th: ThemeId): MenuItem[] {
 
 /** The look's own options (Customize → Look options): what only this look has. */
 function lookOptionItems(th: ThemeId): MenuItem[] {
-  const items: MenuItem[] = [];
+  const items: MenuItem[] = [...consoleArtworkItems(th)];
   items.push(toggle("Startup intro",()=>S().themeStartupIntros?.[S().activeTheme||th]!==false,v=>updateSettings(p=>({themeStartupIntros:{...p.themeStartupIntros,[S().activeTheme||th]:v}}))));
   if (th === "vita") items.push(...vitaItems("look"));
   if (th === "ps3" || th === "psp") items.push(...xmbItems(th, "look"));
   if (th === "x360") items.push(
     // each dashboard era is a look of its own: picking one shows that look's preset
     choice("Dashboard", X360_STYLES, () => S().x360.style, (v) => showLook(`x360:${v}`)),
+    ...(S().x360.style==='nxe'?[toggle("Theme Hub corner logo", () => S().x360.showThemeHubLogo!==false, (v) => updateSettings(p => ({x360:{...p.x360,showThemeHubLogo:v}})))]:[]),
     choice("Options menu side", [{ id: "right", name: "Right side" }, { id: "left", name: "Left side" }], () => S().x360.guideSide ?? "right", (v) => updateSettings((p) => ({ x360: { ...p.x360, guideSide: v as "left" | "right" } }))),
   );
   if (th === "castle" || th === "republic") items.push(onOff("Video background", () => S().videoBackgrounds[th] !== false, (v) => updateSettings((p) => ({ videoBackgrounds: { ...p.videoBackgrounds, [th]: v } }))));

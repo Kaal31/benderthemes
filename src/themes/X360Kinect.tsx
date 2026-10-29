@@ -1,3 +1,5 @@
+import {cabinetWallpapers,useCabinetWallpaper} from "../x360Cabinet";
+import {KinectPages,KinectPage} from "./X360KinectPages";
 import {BackgroundMedia} from "../WallpaperMedia";
 import {customProfilePicture} from "../profilePicture";
 // Xbox 360 Kinect dashboard (2010), rebuilt from the Kinect-era dashboard in
@@ -7,16 +9,18 @@ import {customProfilePicture} from "../profilePicture";
 // postcards and 234×320 box art) with SlotSideShadow, the green aura behind,
 // and the button legend. Artwork is the asset set
 // x360-kinect-dash.
-import { CSSProperties } from "react";
+import { CSSProperties, useState } from "react";
 import { GameArt, Icon, IconName, MenuItem, MenuView, themeMenu, useHome, useMenu, useRemembered } from "../common";
 import { clamp, Press, Stage, ThemeRoot, useStage } from "../input";
-import { fmtLastPlayed, fmtPlaytime, Game, openAchievements, openSteam } from "../library";
+import { fmtLastPlayed, fmtPlaytime, Game } from "../library";
 import { showTitle, THEMES } from "../settings";
 import { Badges } from "../badges";
 import { playSound, useSteamStatus, useWallpaper } from "../steam";
 import { useAssets } from "../assets";
-import { X360Avatar } from "./X360Avatar";
-import { AvatarEditor, avatarMenu, saveAvatar, useMyAvatar } from "./X360AvatarEditor";
+import { X360Avatar, avatarForName, AvatarSpec } from "./X360Avatar";
+import { AvatarEditor, OWN_AVATAR_SET, savedAvatar, saveAvatar } from "./X360AvatarEditor";
+
+import {MetroAvatar, MetroAvatarEditor} from "./X360MetroAvatar";
 
 import { useX360Look, X360_SECTION } from "../skins";
 import { useReportFocus } from "../focus";
@@ -44,44 +48,67 @@ export function KinectHome() {
   const wall = useWallpaper("x360");
   const a = useAssets("x360-kinect-dash");
   const look = useX360Look();
+  const cabinet=useCabinetWallpaper(s.x360.cabinetWallpaper??"");
+  const cabinetInk=cabinet.background?cabinetWallpapers.find(item=>item.id===s.x360.cabinetWallpaper)?.ink:undefined;
   const menu = useMenu();
+  const [page,setPage]=useState<KinectPage|null>(null),[previewGame,setPreviewGame]=useState<Game|undefined>();
+  const openPage=(next:KinectPage,game?:Game)=>{setPreviewGame(game);setPage(next);playSound('select');};
+  const openVideos=()=>openPage('videos'),openMusic=()=>openPage('music');
   const games = api.lib.games;
-  // your avatar: your own exported model if you added one, otherwise the first visit opens the creator
-  const { spec: mine, model, editing, setEditing } = useMyAvatar(s, api.user);
-  const presets = () => menu.open(themeMenu(s.theme, api.switchTheme, THEMES), "Presets", { page: true });
-  const play = (g: Game): Slot => ({ key: `g${g.appid}`, label: g.name, sub: `${fmtPlaytime(g.playtime, g.lastPlayed, true)} · Last played ${fmtLastPlayed(g.lastPlayed)}`, game: g, run: () => api.activate(g, () => api.launch(g)) });
+  const [avatarOpen,setAvatarOpen]=useState(false),[legacyOpen,setLegacyOpen]=useState(false),[avatarRevision,setAvatarRevision]=useState(0);
+  const mine=savedAvatar(s)??avatarForName(api.user);
+  const fallbackAvatar=<LegacyKinectAvatar spec={mine} motion={s.animations}/>;
+  const presets = () => openPage("dashboards");
+  const play = (g: Game): Slot => ({ key: `g${g.appid}`, label: g.name, sub: `${fmtPlaytime(g.playtime, g.lastPlayed, true)} · Last played ${fmtLastPlayed(g.lastPlayed)}`, game: g, run: () => api.activate(g, () => openPage("library",g)) });
 
   // Kinect-era channel names; the slots open Steam's equivalents.
-  const channels: Channel[] = [
+  const originalChannels: Channel[] = [
     { id: "home", label: "home", slots: [
       ...games.slice(0, 1).map(play),
-      { key: "kinect", label: "Steam Store", sub: "New releases, deals and demos", art: "slot-xboxlive", glyph: "store", run: () => openSteam("store") },
-      { key: "basics", label: "Downloads", sub: st.downloads ? `${st.downloads} downloading` : "Queue and updates", art: "slot-xboxbasicsslot", glyph: "download", run: () => openSteam("downloads") },
+      { key: "kinect", label: "Steam Store", sub: "New releases, deals and demos", art: "slot-xboxlive", glyph: "store", run: () => openPage("info") },
+      { key: "basics", label: "Downloads", sub: st.downloads ? `${st.downloads} downloading` : "Queue and updates", art: "slot-xboxbasicsslot", glyph: "download", run: () => openPage("downloads") },
     ] },
     { id: "games", label: "games", slots: [
       ...games.slice(0, 10).map(play),
-      { key: "lib", label: "Game Library", sub: `${games.length} games`, art: "slot-games", glyph: "library", run: () => openSteam("library") },
-      { key: "ach", label: "Achievements", sub: "Your progress", art: "slot-kinect", glyph: "trophy", run: () => (games[0] ? openAchievements(games[0]) : openSteam("library")) },
+      { key: "lib", label: "Game Library", sub: `${games.length} games`, art: "slot-games", glyph: "library", run: () => openPage("library") },
+      { key: "ach", label: "Achievements", sub: "Your progress", art: "slot-kinect", glyph: "trophy", run: () => openPage("achievements") },
     ] },
     { id: "video", label: "video", slots: [
-      { key: "shots", label: "Screenshots", sub: "Your captures", glyph: "photo", run: () => api.openMedia() },
-      { key: "web", label: "Internet", sub: "Web browser", glyph: "globe", run: () => openSteam("browser") },
+      { key: "shots", label: "Screenshots", sub: "Your captures", glyph: "photo", run: () => openPage("pictures") },
+      { key: "web", label: "Internet", sub: "Web browser", glyph: "globe", run: () => openPage("browser") },
     ] },
     { id: "social", label: "social", slots: [
-      { key: "friends", label: "Friends", sub: st.friendsOnline !== undefined ? `${st.friendsOnline} online` : "Friends and chat", art: "slot-friends", glyph: "friends", run: () => openSteam("friends") },
-      { key: "msg", label: "Messages", sub: st.notifications ? `${st.notifications} new` : "Notifications", glyph: "bell", run: () => openSteam("notifications") },
-      { key: "community", label: "Community", sub: "Hubs, guides and workshop", art: "slot-family", glyph: "globe", run: () => openSteam("community") },
+      { key: "friends", label: "Friends", sub: st.friendsOnline !== undefined ? `${st.friendsOnline} online` : "Friends and chat", art: "slot-friends", glyph: "friends", run: () => openPage("friends") },
+      { key: "msg", label: "Messages", sub: st.notifications ? `${st.notifications} new` : "Notifications", glyph: "bell", run: () => openPage("messages") },
+      { key: "community", label: "Community", sub: "Hubs, guides and workshop", art: "slot-family", glyph: "globe", run: () => openPage("community") },
     ] },
     { id: "settings", label: "settings", slots: [
-      ...([{ key: "avatar", label: "My Avatar", sub: model ? "Your imported 360sona avatar · change, import or remove" : "Change your avatar's look and clothes", art: "slot-avatars", glyph: "user" as const, run: () => setEditing("edit") }]),
-      { key: "settings", label: "System Settings", sub: "Steam settings", glyph: "gear", run: () => openSteam("settings") },
-      { key: "home", label: "Home Screen", sub: "ThemeHub options", glyph: "home", run: api.openSettings },
+      ...([{ key: "avatar", label: "My Avatar", sub: "Change your avatar's look and clothes", art: "slot-avatars", glyph: "user" as const, run: () => setAvatarOpen(true) }]),
+      { key: "settings", label: "System Settings", sub: "Steam settings", glyph: "gear", run: () => openPage("settings") },
+      { key: "home", label: "Home Screen", sub: "ThemeHub options", glyph: "home", run: () => openPage("home") },
       { key: "presets", label: "Dashboards", sub: "Switch presets", glyph: "palette", run: presets },
       { key: "steamhome", label: "Home", sub: "Steam's own home", glyph: "steam", run: api.showSteamHome },
-      { key: "power", label: "Turn Off", sub: "Power options", glyph: "power", run: () => openSteam("power") },
+      { key: "power", label: "Turn Off", sub: "Power options", glyph: "power", run: () => openPage("power") },
     ] },
   ];
-  const [ch, setCh] = useRemembered("kinect-ch", 1);
+  const byId=(id:string)=>originalChannels.find(channel=>channel.id===id)!;
+  const channels:Channel[]=[
+    {...byId('home'),id:'welcome',label:'Welcome'},
+    {id:'spotlight',label:'Spotlight',slots:[...games.slice(0,4).map(play),{key:'spotlight-store',label:'Steam Store',glyph:'store',run:()=>openPage("store")}]},
+    {id:'myxbox',label:'My Xbox',slots:[
+      {key:'profile',label:api.user,sub:st.online?'Online':'Offline',art:'slot-avatars',glyph:'user',run:()=>openPage('profile')},
+      {key:'my-games',label:'Game Library',glyph:'game',run:()=>openPage("library")},
+      {key:'my-videos',label:'Video Library',glyph:'photo',run:openVideos},
+      {key:'my-music',label:'Music Library',glyph:'music',run:openMusic},
+      ...byId('settings').slots,
+    ]},
+    {...byId('games'),label:'Game Marketplace'},
+    {...byId('video'),label:'Video Marketplace'},
+    {id:'music',label:'Music Marketplace',slots:[{key:'music',label:'Music Library',glyph:'music',run:openMusic},{key:'music-settings',label:'Music Settings',glyph:'gear',run:()=>openPage("home")}]},
+    {...byId('social'),label:'Friends'},
+    {...byId('settings'),label:'Settings'},
+  ];
+  const [ch, setCh] = useRemembered("kinect-reference-channel", 2);
   const [sels, setSels] = useRemembered<Record<string, number>>("kinect-sels", {});
   const ci = clamp(ch, 0, channels.length - 1);
   const chan = channels[ci];
@@ -92,7 +119,7 @@ export function KinectHome() {
   const options = () => {
     const extra: MenuItem[] = [
       { label: "Presets", sub: () => themeMenu(s.theme, api.switchTheme, THEMES) },
-      { label: "My Avatar", sub: () => avatarMenu(model, setEditing) },
+      { label: "My Avatar", action: () => setAvatarOpen(true) },
       { label: "Home Screen Settings", action: api.openSettings },
       { label: "Home", action: api.showSteamHome },
     ];
@@ -100,12 +127,13 @@ export function KinectHome() {
     menu.open(g ? [{ label: "Play", action: () => api.launch(g) }, { label: "Game Details", action: () => api.details(g) }, { label: "Watch Trailer", action: () => api.playTrailer(g) }, { label: "Game Options", action: () => api.nativeMenu(g) }, ...extra] : extra, g?.name);
   };
   const onInput = (p: Press): boolean => {
+    if(page||avatarOpen||legacyOpen)return true;
     if (menu.handle(p)) return true;
     const k = p.btn;
     if (k === "y") return options(), true;
     // the names above the current one are the following channels, so ↓ brings the next one down
     if (k === "up" || k === "down") {
-      const n = clamp(ci + (k === "down" ? 1 : -1), 0, channels.length - 1);
+      const n = clamp(ci + (k === "up" ? 1 : -1), 0, channels.length - 1);
       if (n !== ci) (setCh(n), playSound("tab"));
       else playSound("end");
       return true;
@@ -138,11 +166,11 @@ export function KinectHome() {
     const on = i === sel;
     const w = widths[i];
     const left = LIST_X + xs[i] - shift;
-    if (left > 1400 || left + w < -200) return null;
+    // Keep outgoing cards mounted until the slide ends; the Stage clips them.
     const art = e.art ? a[e.art] : undefined;
     const glass = e.game ? a["portrait-placeholder-glass"] : a["postcard-placeholder-glass"];
     return (
-      <div key={e.key} className="dht-x360n-card dht-tile" data-selected={on} data-name={e.label} onClick={() => (on ? e.run() : setSels((m) => ({ ...m, [chan.id]: i })))}
+      <div key={e.key} className="dht-x360n-card dht-tile" role="button" tabIndex={on?0:-1} aria-label={e.label} onKeyDown={event=>{if(event.key==="Enter"||event.key===" "){event.preventDefault();event.stopPropagation();e.run();}}} data-selected={on} data-name={e.label} onClick={() => (on ? e.run() : setSels((m) => ({ ...m, [chan.id]: i })))}
         style={{ position: "absolute", left, top: ROW_Y, width: w, height: SLOT_H, transition: `left ${anim}, transform ${anim}, opacity ${anim}`, transform: on ? "scale(1.04)" : "none", transformOrigin: "50% 60%", zIndex: on ? 10 : 1, opacity: i < sel ? 0.55 : 1, cursor: "pointer", WebkitBoxReflect: "below 2px linear-gradient(transparent 78%, rgba(255,255,255,.18))" } as CSSProperties}>
         {/* SlotSideShadow on the right edge */}
         {a.slotsideshadow && <img src={a.slotsideshadow} aria-hidden="true" style={{ position: "absolute", left: w - 74, top: 0, width: 148, height: SLOT_H, opacity: 0.6, pointerEvents: "none" }} />}
@@ -152,7 +180,7 @@ export function KinectHome() {
           ) : (
             <>
               <div style={{ position: "absolute", left: 0, top: 0, width: w, height: ART_H, overflow: "hidden", background: "linear-gradient(180deg,#bcd3e4,#e9f0f4)" }}>
-                {art ? <img src={art} style={{ width: "100%", height: "100%", objectFit: "cover" }} /> : <div style={{ position: "absolute", inset: 0, display: "flex", alignItems: "center", justifyContent: "center" }}><Icon name={e.glyph ?? "folder"} size={110} color="#5a8f17" /></div>}
+                {e.key==="home"||e.key==="steamhome"?<div data-kinect-home-icon style={{position:"absolute",inset:0,display:"grid",placeItems:"center"}}><KinectHomeIcon/></div>:art ? <img src={art} style={{ width: "100%", height: "100%", objectFit: "cover" }} /> : <div style={{ position: "absolute", inset: 0, display: "flex", alignItems: "center", justifyContent: "center" }}><Icon name={e.glyph ?? "folder"} size={110} color="#5a8f17" /></div>}
                 {a["slot-gradient"] && <img src={a["slot-gradient"]} aria-hidden="true" style={{ position: "absolute", left: -2, bottom: -2, width: w + 4, height: 154, opacity: 0.35 }} />}
               </div>
               <div style={{ position: "absolute", left: 18, right: 18, top: ART_H + 16, color: "#3a3a3a", fontSize: 24, whiteSpace: "nowrap", overflow: "hidden", textOverflow: "ellipsis" }}>{e.label}</div>
@@ -174,24 +202,27 @@ export function KinectHome() {
   return (
     <ThemeRoot onInput={onInput} hints={{ a: "Select", y: "Options" }}>
       <Stage background="#7fb21a">
-        {wall || look.bg || a.background ? <BackgroundMedia src={wall ?? look.bgFor(X360_SECTION[chan.id] ?? "home") ?? a.background} className="dht-x360n-bg" data-dht-from-skin={!wall && look.bg ? "x360" : undefined} style={{ position: "absolute", inset: 0, width: W, height: H, objectFit: "cover" }} /> : <div className="dht-x360n-bg" style={{ position: "absolute", inset: 0, background: "radial-gradient(ellipse at 50% 45%, #d4ef2a 0%, #8cc21c 45%, #3f7d10 100%)" }} />}
-        <div style={{ position: "absolute", left: ox, top: oy, width: 1280, height: 720, transform: `scale(${k})`, transformOrigin: "0 0", fontFamily: FONT, color: INK }}>
+        <style>{`@keyframes dhtKinectGuide{from{opacity:0;transform:translateY(12px) scale(.96)}to{opacity:1;transform:none}} @media(prefers-reduced-motion:reduce){.dht-x360n-card,.dht-x360n-channel,[data-kinect-channel]{animation:none!important;transition:none!important}}`}</style>
+        {cabinet.background?<><div style={{position:"absolute",inset:0,background:"#242624"}}/><img className="dht-kinect-cabinet-wallpaper" src={cabinet.background} alt="" style={{position:"absolute",left:ox,top:oy,width:1280*k,height:720*k,objectFit:"contain"}}/></>:wall || look.bg || a.background ? <BackgroundMedia src={wall ?? look.bgFor(X360_SECTION[chan.id] ?? "home") ?? a.background} className="dht-x360n-bg" data-dht-from-skin={!wall && look.bg ? "x360" : undefined} style={{ position: "absolute", inset: 0, width: W, height: H, objectFit: "cover" }} /> : <div className="dht-x360n-bg" style={{ position: "absolute", inset: 0, background: "radial-gradient(ellipse at 50% 45%, #d4ef2a 0%, #8cc21c 45%, #3f7d10 100%)" }} />}
+        {!cabinet.background&&!wall&&!look.bg&&(a["aura-floor"]?<img aria-hidden="true" src={a["aura-floor"]} style={{position:'absolute',inset:0,width:W,height:H,pointerEvents:'none'}}/>:<div aria-hidden="true" style={{position:'absolute',inset:0,background:'linear-gradient(to bottom,transparent 38%,#f0f3ed00 45%,#eff2eb 70%,#a0a5a0 100%)',pointerEvents:'none'}}/>)}
+        {cabinet.error&&<div role="status" style={{position:"absolute",right:20,bottom:20,zIndex:80}}>Cabinet wallpaper unavailable. Try selecting it again.</div>}
+        <div style={{ position: "absolute", left: ox, top: oy, width: 1280, height: 720, transform: `scale(${k})`, transformOrigin: "0 0", fontFamily: FONT, color: cabinetInk??INK }}>
           {/* channel list: current name lowest and 1.2× larger, the following ones above it about 35px apart */}
-          <div style={{ position: "absolute", left: LIST_X, top: 0, width: 800, height: ROW_Y, overflow: "hidden" }}>
+          <div style={{ position: "absolute", left: LIST_X, top: 0, width: 800, height: ROW_Y, overflow: "hidden", zIndex:60,visibility:page&&page!=="power"?"hidden":undefined }}>
             {channels.map((c, i) => {
               const d = i - ci;
-              if (d < -1 || d > 5) return null;
+              if (d < 0 || d > 5) return null;
               const on = d === 0;
               return (
-                <div key={c.id} className="dht-x360n-channel" data-selected={on} onClick={() => (setCh(i), playSound("tab"))}
-                  style={{ position: "absolute", left: 0, top: on ? LIST_Y + 14 : LIST_Y - 26 - (d - 1) * 35, fontSize: on ? 36 : 26, lineHeight: "44px", whiteSpace: "nowrap", textShadow: TEXT_SHADOW, opacity: on ? 1 : d < 0 ? 0 : Math.max(0.3, 0.75 - (d - 1) * 0.12), transition: `top ${anim}, opacity ${anim}, font-size ${anim}`, cursor: "pointer" }}>
+                <div key={c.id} className="dht-x360n-channel" role="button" tabIndex={0} onKeyDown={event=>{if(event.key==='Enter'||event.key===' '){event.preventDefault();event.stopPropagation();setCh(i);playSound("tab");}}} data-selected={on} onClick={() => (setCh(i), playSound("tab"))}
+                  style={{ position: "absolute", left: 0, top: on ? LIST_Y + 14 : LIST_Y - 26 - (d - 1) * 35, fontSize: on ? 36 : 26, lineHeight: "44px", whiteSpace: "nowrap", textShadow: cabinetInk==="#343c37"?"0 1px 1px #fff5":TEXT_SHADOW, opacity: on ? 1 : d < 0 ? 0 : Math.max(0.3, 0.75 - (d - 1) * 0.12), transition: `top ${anim}, opacity ${anim}, font-size ${anim}`, cursor: "pointer" }}>
                   {c.label}
                 </div>
               );
             })}
           </div>
 
-          <div key={chan.id} style={{ position: "absolute", inset: 0, animation: s.animations ? "dhtKinectIn 300ms ease-out" : undefined }}>
+          <div key={chan.id} data-kinect-channel={chan.id} style={{ position: "absolute", inset: 0, opacity:page&&page!=="power"?0:1,pointerEvents:page?"none":undefined, animation: s.animations ? "dhtKinectIn 300ms ease-out" : undefined }}>
             <style>{`@keyframes dhtKinectIn { from { opacity: 0; transform: translateY(-28px) } to { opacity: 1; transform: none } }`}</style>
             {chan.slots.map(slot)}
           </div>
@@ -206,19 +237,37 @@ export function KinectHome() {
           )}
 
           {/* your avatar, standing on the floor in front of the far panels */}
-          <div aria-hidden="true" style={{ position: "absolute", left: 1075, top: 236, width: 220, height: 360, zIndex: 50, pointerEvents: "none" }}>
-            <div style={{ position: "absolute", left: 50, top: 316, width: 120, height: 22, borderRadius: "50%", background: "radial-gradient(closest-side, rgba(0,0,0,.35), transparent)" }} />
-            {customProfilePicture()?<img src={customProfilePicture()} alt="Custom profile picture" style={{width:"100%",height:"100%",objectFit:"contain"}}/>:<X360Avatar spec={mine} model={model} motion={s.animations} faceX={-0.6} />}
+          <div aria-hidden="true" style={{ position: "absolute", left: page==="profile"?620:970, top: 192, width: 280, height: 420, zIndex: 50, pointerEvents: "none" }}>
+            {customProfilePicture()?<img src={customProfilePicture()} alt="Custom profile picture" style={{width:"100%",height:"100%",objectFit:"contain"}}/>:(!avatarOpen&&!legacyOpen&&(!page||page==="profile")&&<MetroAvatar revision={avatarRevision} fallback={fallbackAvatar} framing="nxe"/>)}
           </div>
           {/* button legend */}
-          <div style={{ position: "absolute", left: LIST_X, top: 632, height: 32, display: "flex", gap: 34, alignItems: "center", fontSize: 18, textShadow: TEXT_SHADOW }}>
+          <div style={{ position: "absolute", left: LIST_X, top: 632, height: 32,visibility:page?"hidden":undefined, display: "flex", gap: 34, alignItems: "center", fontSize: 18, textShadow: TEXT_SHADOW }}>
             {legend(a["legend-a"], "A", "#3fb83f", "Select")}
             {legend(a["legend-y"], "Y", "#e9c31d", "Options")}
           </div>
         </div>
-        {editing && <AvatarEditor name={api.user} initial={mine} firstRun={editing === "first"} start={editing === "import" ? "import" : undefined} model={model} motion={s.animations} onDone={(spec) => (spec && saveAvatar(spec), setEditing(null))} />}
-        <MenuView menu={menu} variant="x360" />
+        {page&&<KinectPages key={page} page={page} game={previewGame} onClose={()=>{setPage(null);setPreviewGame(undefined);}} onPage={next=>openPage(next)} onAvatar={()=>{setPage(null);setAvatarOpen(true);}}/>}
+        {avatarOpen&&<MetroAvatarEditor variant="kinect" fallback={fallbackAvatar} onClose={()=>{setAvatarOpen(false);setAvatarRevision(v=>v+1);}} onLegacy={()=>{setAvatarOpen(false);setAvatarRevision(v=>v+1);setLegacyOpen(true);}}/>}
+        {legacyOpen&&<LegacyKinectEditor name={api.user} spec={mine} motion={s.animations} onDone={spec=>{if(spec)saveAvatar(spec);setLegacyOpen(false);setAvatarRevision(v=>v+1);}}/>}
+        <MenuView menu={menu} variant="x360" appearance={{backdrop:{background:'#0009'},panel:{position:'absolute',left:ox+368*k,top:oy+148*k,width:544*k,minHeight:360*k,right:'auto',bottom:'auto',transform:'none',borderRadius:0,background:'linear-gradient(#f5f7f3,#d8dfd6)',color:'#414a40',padding:20*k,boxShadow:'0 4px 18px #0005',animation:s.animations?'dhtKinectGuide 220ms ease-out':undefined},item:{fontSize:21*k,padding:12*k,borderRadius:0},selectedItem:{background:'#78b918',color:'#fff'},text:{color:'#414a40'}}}/>
       </Stage>
     </ThemeRoot>
   );
 }
+
+function LegacyKinectAvatar({spec,motion}:{spec:AvatarSpec;motion:boolean}) {
+ const own=useAssets(OWN_AVATAR_SET);
+ return <X360Avatar spec={spec} model={own.avatar} motion={motion} faceX={-0.6}/>;
+}
+function LegacyKinectEditor({name,spec,motion,onDone}:{name:string;spec:AvatarSpec;motion:boolean;onDone:(spec?:AvatarSpec)=>void}) {
+ const own=useAssets(OWN_AVATAR_SET);
+ return <AvatarEditor name={name} initial={spec} firstRun={false} model={own.avatar} motion={motion} onDone={onDone}/>;
+}
+
+/** Independently drawn pictogram, following the flat Kinect card icon language. */
+function KinectHomeIcon(){return <svg viewBox="0 0 160 130" width="140" height="118" aria-hidden="true">
+ <path d="M18 58 80 10l62 48-10 13-52-40-52 40Z" fill="#729c27"/>
+ <path d="M36 66 80 32l44 34v53H94V84H66v35H36Z" fill="#68736b"/>
+ <path d="M99 30V16h16v26Z" fill="#68736b"/>
+ <path d="M45 72h17v17H45zm53 0h17v17H98Z" fill="#e8f1e4"/>
+ </svg>;}

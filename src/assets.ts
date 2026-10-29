@@ -1,3 +1,5 @@
+import {useSettings} from './settings';
+export const CONSOLE_ARTWORK_SETS = new Set(['x360-blades-original','x360-kinect-dash','x360-metro-dash','x360-nxe-dash','xbox-original','xmb-ps3']);
 // Image sets shipped with the plugin (defaults/assets/<set>): the RetroArch
 // monochrome XMB icons, and in personal test builds extra sets such as the
 // Xbox 360 dashboard icons. Themes fall back to their own drawn icons when a
@@ -31,6 +33,7 @@ export function loadAssets(name: string): Promise<AssetSet> {
 }
 
 export function useAssets(name: string): AssetSet {
+  const enabled=useSettings().originalConsoleArtwork!==false||!CONSOLE_ARTWORK_SETS.has(name);
   const [set, setSet] = useState<AssetSet>(() => cache.get(name) ?? {});
   const rev = useResourceRevision(); // files added or removed on the Deck (an imported avatar, a new pack)
   useEffect(() => {
@@ -40,5 +43,5 @@ export function useAssets(name: string): AssetSet {
       alive = false;
     };
   }, [name, rev]);
-  return set;
+  return enabled?set:{};
 }

@@ -129,7 +129,7 @@ setPreviewUser("DeckPlayer");
 (window as any).__openDestination = openDestination; // tests: open the shared music player / captures
 (window as any).__musicPlayer = musicPlayer; // tests: drive the shared music player
 (window as any).__refreshPacks = () => refreshPacks();
-setWallpaperOverride((n) => (window as any).__testWalls?.[n] ?? null);
+setWallpaperOverride((n) => (window as any).__testWalls?.[n] ?? (/^\/preview\/import-samples\/[a-z0-9-]+\.(jpg|png|webp)$/i.test(n) ? n : null));
 setPreviewStatus({ friendsOnline: 3, notifications: 3, downloads: 0, online: true, avatar: PREVIEW_REFERENCE.previewAvatar });
 setPreviewAchievements((id) => (id % 3 === 2 ? null : { unlocked: (id * 7) % 40, total: 57 }));
 // sample screenshots (drawn) and an optional local test trailer (?trailer=http://…/dash_h264.mpd)
@@ -198,7 +198,7 @@ seedSettings({
   wiiuView: params.get("plaza") ? "plaza" : "grid",
   xmb: { ps3Color: -1, pspColor: -1, collectionFolders: true, p3t: params.get("p3t") ?? "" },
     trailers: { preview: params.get("trailers") === "1", sound: false, video: params.get("tv") === "1" },
-  x360: { style: (params.get("xs") as any) ?? "metro", ...(params.get("x360skin") ? { skin: params.get("x360skin")! } : {}), ...(params.get("x360pic") ? { gamerpic: params.get("x360pic")! } : {}) },
+  x360: { style: (params.get("xs") as any) ?? "metro", ...(params.get("cabinet")?{cabinetWallpaper:params.get("cabinet")!}:{}), ...(params.get("x360skin") ? { skin: params.get("x360skin")! } : {}), ...(params.get("x360pic") ? { gamerpic: params.get("x360pic")! } : {}) },
   xboxSkin: params.get("xboxskin") ?? "",
   wiiSkin: params.get("wiiskin") ?? "",
   n3dsSkin: params.get("n3ds") ?? "",

@@ -1,0 +1,12 @@
+import assert from 'node:assert/strict';import {chromium} from 'playwright';
+const b=await chromium.launch({channel:'msedge',headless:true});try{
+ const p=await b.newPage({viewport:{width:1280,height:900}}),errors=[],oldAssets=[];p.on('pageerror',e=>errors.push(e.message));p.on('request',r=>{if(/\/bundle\/assets\/x360-nxe(?:-dash)?\//.test(r.url()))oldAssets.push(r.url());});
+ await p.goto('http://127.0.0.1:8911/preview/x360-original-icons.html?theme=x360&xs=nxe&avatarBridge=http%3A%2F%2F127.0.0.1%3A62883');await p.waitForTimeout(7000);
+ const press=async detail=>{await p.evaluate(detail=>window.dispatchEvent(new CustomEvent('preview-controller-input',{detail})),detail);await p.waitForTimeout(260);};
+ const svgImages=p.locator('[data-nxe-original-icon],[data-nxe-card-icon]');assert(await svgImages.count()>5);await svgImages.evaluateAll(images=>Promise.all(images.map(i=>i.decode())));assert(await svgImages.evaluateAll(images=>images.every(i=>i.src.startsWith('data:image/svg+xml;base64,')&&i.naturalWidth>0)));
+ assert.equal(await p.locator('[data-nxe-original-icon="online"]').count(),1);assert.equal(await p.locator('[data-nxe-original-icon="achievements-small"]').count(),1);
+ await press(12);await p.locator('[data-avatar-engine=ready]').waitFor({timeout:60000});await p.screenshot({path:'preview/nxe-original-icons-dashboard.png'});await press(1);const editor=p.getByRole('dialog',{name:'My Avatar',exact:true});await editor.waitFor();await editor.getByRole('button',{name:'Shoes',exact:true}).waitFor({timeout:60000});assert(await editor.locator('[data-nxe-original-icon="button-a"]').count());await press(2);assert.equal(await p.locator('[data-nxe-avatar-editor]').count(),0);
+ for(let i=0;i<4;i++)await press(12);await press(1);const settings=p.getByRole('dialog',{name:'System Settings',exact:true});await settings.waitFor();assert.equal(await settings.locator('[data-nxe-original-icon="button-b"]').count(),1);assert.equal(await settings.locator('[data-nxe-original-icon="online"]').count(),1);await press(2);
+ for(let i=0;i<5;i++)await press(11);await press(1);await p.getByRole('dialog',{name:'Profile',exact:true}).waitFor();assert.equal(await p.locator('[data-nxe-profile-popup] [data-nxe-original-icon="achievements-small"]').count(),1);await p.screenshot({path:'preview/nxe-original-icons-profile.png'});await press(2);
+ assert.deepEqual(errors,[]);assert.deepEqual(oldAssets,[]);console.log('PASS embedded original icons, revised gamer tiles, wordmark, editor/settings/profile and no old NXE bitmap requests');
+}finally{await b.close();}

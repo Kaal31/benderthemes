@@ -352,7 +352,8 @@ export interface Settings {
   ps4Skin?: string;
   xboxSkin?: string; // original Xbox skin: a folder or .zip name under skins/xbox ("" = none)
   switchTheme?: string; // Switch theme: a .nxtheme path under skins/switch ("file" or "folder/file") or ""
-  x360: { style: X360Style; guideSide?: "left" | "right"; skin?: string; gamerpic?: string }; // skin / gamerpic: STFS package names in skins/x360 ("" = none); which Xbox 360 dashboard era
+  originalConsoleArtwork?: boolean; // installed GitFlic UI pack; original/procedural UI is the fallback
+  x360: { style: X360Style; cabinetWallpaper?: string; guideSide?: "left" | "right"; skin?: string; gamerpic?: string; showThemeHubLogo?: boolean }; // skin / gamerpic: STFS package names in skins/x360 ("" = none); which Xbox 360 dashboard era
   dial: DialSettings;
   hubStyle: string; // Hub look: "auto" (the theme home it was opened on), "neutral", "preview" (the theme focused in Discover) or a console theme id (always that look when installed)
   themedStore: boolean; // Store entries open the store styled like the current theme

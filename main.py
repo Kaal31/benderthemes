@@ -2051,6 +2051,10 @@ class Plugin:
             decky.logger.error(f"xbox skin read failed: {e}")
             return None
 
+    async def get_x360_cabinet_wallpaper(self, ident: str):
+        import x360_cabinet
+        return await asyncio.to_thread(x360_cabinet.wallpaper, _data_dir(), ident)
+
     async def get_x360_skin(self, name: str):
         """Xbox 360 theme / gamer picture package from skins/x360/ (any file name), or None."""
         p = _skin_path("x360", name)
@@ -2279,12 +2283,23 @@ class Plugin:
         mime = "audio/wav"
         return "data:" + mime + ";base64," + payload
 
+    async def console_artwork_status(self):
+        import console_artwork
+        return await asyncio.to_thread(console_artwork.status)
+
+    async def console_artwork_install(self, theme: str):
+        import console_artwork
+        return await asyncio.to_thread(console_artwork.install, theme)
+
     async def get_assets(self, name: str):
+        import console_artwork
+        optional = console_artwork.spec(name)
+        optional_dir = console_artwork.resource_dir(name) if optional else None
         relative = "assets/" + _safe_name(name)
         folder = os.path.join(_data_dir(), relative)
         out = {}
         try:
-            names = set(_resource_names(relative))
+            names = set(p.name for p in optional_dir.iterdir()) if optional_dir else (set() if optional else set(_resource_names(relative)))
             if os.path.isdir(folder):
                 names.update(os.listdir(folder))
             # Resolve duplicate video encodings as one logical asset: WebM is portable
@@ -2296,7 +2311,7 @@ class Plugin:
                 ext = os.path.splitext(n)[1].lower()
                 if ext not in IMAGE_EXT + (".glb",) + WALLPAPER_VIDEO_EXT:
                     continue
-                path = _user_resource(folder, n, relative)  # override each file, not the whole downloaded set
+                path = os.path.join(folder, n) if os.path.isfile(os.path.join(folder,n)) else (str(optional_dir/n) if optional_dir else _resource(relative+"/"+n))  # user overrides, external console pack, then normal resources
                 if not os.path.isfile(path):
                     continue
                 if ext in WALLPAPER_VIDEO_EXT or ext == ".gif":

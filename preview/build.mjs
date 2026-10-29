@@ -32,7 +32,7 @@ for (const root of ["assets", "bundle/assets", "defaults/assets"]) {
     // PREVIEW_JPG_ASSETS=1: also .jpg / .gif, as the plugin's get_assets reads them (main.py IMAGE_EXT); off by default because
     // the preview serves them as plain URLs, and the 3D dashboards (Xbox 360 NXE / Kinect) then can't use them as WebGL textures
     // from a file:// page (verify-launch-audio). Presets v2's mixing sheets were shot with it on (Hub .jpg backgrounds).
-    const ext = process.env.PREVIEW_JPG_ASSETS ? /\.(png|webp|jpe?g|gif|mp4)$/i : /\.(png|webp|mp4)$/i;
+    const ext = (process.env.PREVIEW_JPG_ASSETS || set === "x360-nxe-dash") ? /\.(png|webp|jpe?g|gif|mp4)$/i : /\.(png|webp|mp4)$/i;
     for (const f of readdirSync(`${root}/${set}`)) if (ext.test(f)) assets[set][f.replace(ext, "")] = `../${root}/${set}/${f}`;
   }
 }

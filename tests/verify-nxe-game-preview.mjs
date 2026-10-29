@@ -1,0 +1,43 @@
+import assert from 'node:assert/strict';
+import {chromium} from 'playwright';
+const browser=await chromium.launch({headless:true});
+try{
+ const page=await browser.newPage({viewport:{width:1280,height:900}}),errors=[];
+ page.setDefaultTimeout(12000);
+ page.on('pageerror',e=>errors.push(e.message));
+ const url='http://127.0.0.1:8911/preview/x360-card-pages.html?theme=x360&xs=nxe&gamepreview=1';
+ await page.goto(url,{waitUntil:'domcontentloaded',timeout:60000});await page.waitForTimeout(6500);
+ await page.evaluate(()=>{window.__testToasts=[];window.__previewToast=s=>window.__testToasts.push(s);});
+ const press=async button=>{await page.evaluate(button=>window.dispatchEvent(new CustomEvent('preview-controller-input',{detail:button})),button);await page.waitForTimeout(400);};
+ await press(12);await press(12);await press(1);
+ let library=page.getByRole('dialog',{name:'Game Library',exact:true});await library.waitFor();
+ await library.getByRole('button',{name:'Favorites',exact:true}).click();await press(10);
+ const selected=await library.locator('[role=option][aria-selected=true]').innerText();
+ await press(1);const preview=page.locator('[data-nxe-page="game-preview"]');await preview.waitFor();
+ assert((await preview.getAttribute('aria-label')).includes(selected.split('\n')[0].trim()));
+ assert.equal(await preview.getByRole('option',{name:/^(Play|Install) Game$/}).count(),1);
+ for(const name of ['Downloads','Game Options'])assert.equal(await preview.getByRole('option',{name,exact:true}).count(),1);
+ await press(12);assert.equal(await preview.getByRole('option',{name:'View Achievements',exact:true}).count(),1);
+ await press(12);for(const name of ['Screenshots','Watch Trailer','Game Options'])assert.equal(await preview.getByRole('option',{name,exact:true}).count(),1);
+ await press(11);await press(11);
+ assert.equal(await preview.getByRole('navigation',{name:'Library collections'}).count(),0);
+ assert.equal((await page.evaluate(()=>window.__testToasts)).filter(s=>s.includes('Launching')).length,0,'Opening preview must not launch');
+ await page.screenshot({path:'preview/nxe-game-preview-screen.png'});
+ await press(10);assert.equal(await preview.getByRole('option',{name:'Downloads',exact:true}).getAttribute('aria-selected'),'true');
+ await press(2);await library.waitFor();assert.equal(await library.getByRole('button',{name:'Favorites',exact:true}).getAttribute('aria-pressed'),'true');assert.equal(await library.locator('[role=option][aria-selected=true]').innerText(),selected);
+ await press(4);await preview.waitFor();await press(2);await library.waitFor();await press(2);await library.waitFor({state:'hidden'});
+ // Home Screen card has distinct artwork; system display has a persistent logo switch.
+ for(let i=0;i<4;i++)await press(12);
+ const card=page.locator('[data-nxe-card-icon="home"]');assert(await card.count());
+ assert.notEqual(await card.getAttribute('src'),await page.locator('[data-nxe-original-icon="online"]').first().getAttribute('src'));
+ await page.screenshot({path:'preview/nxe-themehub-card-redrawn.png'});
+ await press(11);await press(1);let settings=page.getByRole('dialog',{name:'System Settings',exact:true});await settings.waitFor();
+ await settings.getByRole('option',{name:'Console Settings',exact:true}).click();await page.getByRole('option',{name:'Display',exact:true}).click();
+ const toggle=page.getByRole('option').filter({hasText:'Theme Hub Corner Logo'});await toggle.click();assert.equal(await page.locator('[data-nxe-original-icon="online"]').count(),0);
+ await press(2);await press(2);await press(2);await page.locator('[data-nxe-page]').waitFor({state:'hidden'});assert.equal(await page.locator('[data-nxe-original-icon="online"]').count(),0,'Logo hidden on dashboard too');
+ await page.waitForTimeout(600);assert.equal(await page.evaluate(()=>window.__previewSettings.x360.showThemeHubLogo),false,'Logo preference is saved through settings bridge');
+ await page.evaluate(()=>{const s=window.__getThemeSettings();window.__updateTheme({x360:{...s.x360,showThemeHubLogo:true}});});
+ assert(await page.locator('[data-nxe-original-icon="online"]').count());
+ for(let i=0;i<6;i++)await press(9);await press(1);await preview.waitFor();await press(2);await preview.waitFor({state:'hidden'});assert.equal(await page.locator('[data-nxe-page]').count(),0,'Direct game card returns to dashboard');
+ assert.deepEqual(errors,[]);console.log('PASS game preview actions/back stack, collection preservation, distinct Hub card, logo toggle across pages and saved settings');
+}finally{await browser.close();}

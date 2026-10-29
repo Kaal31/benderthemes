@@ -66,6 +66,7 @@ class Engine:
             value = json.loads(self.state_file.read_text())
             if value.get('description'): validate(value['description'])
             return value
+        except FileNotFoundError: return {'mode': 'auto', 'description': None}
         except (OSError, ValueError, TypeError, AttributeError): return {'mode': 'legacy', 'description': None}
 
     def status(self):
