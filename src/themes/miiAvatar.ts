@@ -13,6 +13,7 @@ export function createMiiAvatar(m:PersonalMii,lod:0|1=0){
  const add=(name:string,g:THREE.BufferGeometry,mat:THREE.Material,parent:THREE.Object3D=root,pick=true)=>{remember(g);materials.push(mat);const mesh=new THREE.Mesh(g,mat);mesh.name=name;parent.add(mesh);if(pick)targets.push(mesh);return mesh;};
  const c=(s:string)=>new THREE.Color(s),scale=miiBodyScale(m.height,m.build);
  const bodyGeo=miiBodyGeometry(m.female,lod),n=bodyGeo.getAttribute("position").count;
+ root.userData.nativeMii=!!bodyGeo.userData.nativeMii;
  const attr=(name:string,values:number[])=>bodyGeo.setAttribute(name,new THREE.Float32BufferAttribute(Array.from({length:n},()=>values).flat(),values.length));
  attr("aArmL",[0,0,packMiiArm(0,0),0]);attr("aArmR",[0,0,packMiiArm(0,0),0]);attr("aLegs",[0,0,0,0]);attr("aKnees",[0,0,0,0]);attr("aShirt",[...c(m.shirt).toArray(),1]);attr("aPants",[...c(m.pants??"#41464d").toArray(),1]);attr("aSkin",[...c(m.skin).toArray(),packMiiOutfit((m.outfit??0)+16,0)]);
  const body=add("body",bodyGeo,miiBodyMaterial(m.female,undefined,m.accent,true));body.scale.set(scale.x,scale.y,scale.x);

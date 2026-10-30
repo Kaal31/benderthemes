@@ -1,3 +1,4 @@
+import {useNativeMii} from "../nativeMii";
 import {useEffect,useRef,useState} from "react";
 import * as THREE from "three";
 import type {Friend} from "../activity";
@@ -29,6 +30,7 @@ function statusTexture(status:string){
  const texture=new THREE.CanvasTexture(canvas);texture.colorSpace=THREE.SRGBColorSpace;return texture;
 }
 export function WiiUFriendGlobe({friends,motion}:{friends:Friend[];motion:boolean}){
+ const nativeRevision=useNativeMii();
  const resetView=useRef<()=>void>(()=>{}),canvas=useRef<HTMLCanvasElement>(null),live=useRef({friends,motion}),orientation=useRef({yaw:0,pitch:0}),[error,setError]=useState(false);live.current={friends,motion};
  const key=friends.map(friend=>friend.id).join(',');
  useEffect(()=>{
@@ -96,6 +98,6 @@ export function WiiUFriendGlobe({friends,motion}:{friends:Friend[];motion:boolea
   const wheel=(event:WheelEvent)=>{event.preventDefault();speedYaw=speedPitch=0;const delta=(event.deltaX||event.deltaY)*(event.deltaMode===1?16:1);orientation.current.yaw+=THREE.MathUtils.clamp(delta*.004,-.45,.45);lastInput=performance.now();dirty=true;};
   element.addEventListener('pointerdown',down);element.addEventListener('pointermove',move);element.addEventListener('pointerup',up);element.addEventListener('pointercancel',up);element.addEventListener('lostpointercapture',up);element.addEventListener('wheel',wheel,{passive:false});
   return()=>{resetView.current=()=>{};observer.disconnect();cancelAnimationFrame(frame);reduced.removeEventListener('change',invalidate);element.removeEventListener('pointerdown',down);element.removeEventListener('pointermove',move);element.removeEventListener('pointerup',up);element.removeEventListener('pointercancel',up);element.removeEventListener('lostpointercapture',up);element.removeEventListener('wheel',wheel);actors.forEach(({actor,indicator})=>{actor.dispose();indicator.material.dispose();});statusTextures.forEach(texture=>texture.dispose());geometry.dispose();material.dispose();texture.dispose();atmosphereGeometry.dispose();atmosphereMaterial.dispose();shadowGeometry.dispose();shadowMaterial.dispose();renderer.dispose();renderer.forceContextLoss();};
- },[key]);
+ },[key,nativeRevision]);
  return <><button className="wu-world-reset" onClick={()=>resetView.current()}>Reset view</button><span className="wu-world-gesture">Drag to turn · touchpad scroll</span>{error?<div className="wu-globe-fallback" aria-label="World globe"/>:<canvas ref={canvas} className="wu-globe-canvas" aria-label="Drag or scroll to rotate the globe and your friends’ Miis"/>}</>;
 }

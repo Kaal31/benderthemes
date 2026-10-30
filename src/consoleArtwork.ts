@@ -4,6 +4,10 @@ import {getSettings,updateSettings,ThemeId} from './settings';
 import {resourcesChanged} from './marketplaceState';
 const download=callable<[theme:string],{success:boolean;error?:string}>('console_artwork_install');
 export function consoleArtworkItems(theme:ThemeId):MenuItem[]{
+ if(['wii','wiiu'].includes(theme))return [
+  {label:'Use native Mii models from GitFlic',get checked(){return getSettings().originalConsoleArtwork!==false;},action:()=>updateSettings({originalConsoleArtwork:getSettings().originalConsoleArtwork===false})},
+  {label:'Download / retry native Mii models',action:()=>{void download('mii').then(result=>{if(!result?.success)throw new Error(result?.error??'Mii download unavailable');updateSettings({originalConsoleArtwork:true});resourcesChanged();}).catch(error=>toaster.toast({title:'Mii download failed',body:String(error)}));}},
+ ];
  if(!['x360','xbox','ps3','psp'].includes(theme))return [];
  return [
   {label:'Use original console artwork when installed',get checked(){return getSettings().originalConsoleArtwork!==false;},action:()=>updateSettings({originalConsoleArtwork:getSettings().originalConsoleArtwork===false})},

@@ -4,7 +4,7 @@ from pathlib import Path,PurePosixPath
 from urllib.request import Request
 from theme_network import urlopen
 MANIFEST=Path(__file__).with_name('console-assets.json')
-GROUPS={'x360':['x360-blades-original','x360-kinect-dash','x360-metro-dash','x360-nxe-dash'],'xbox':['xbox-original'],'ps3':['xmb-ps3'],'psp':['xmb-ps3']}
+GROUPS={'x360':['x360-blades-original','x360-kinect-dash','x360-metro-dash','x360-nxe-dash'],'xbox':['xbox-original'],'ps3':['xmb-ps3'],'psp':['xmb-ps3'],'mii':['nintendo-mii-runtime']}
 _lock=threading.Lock();_progress={'busy':False,'percent':0,'message':''}
 def manifest():return json.loads(MANIFEST.read_text(encoding='utf-8'))
 def spec(name):return next((p for p in manifest()['packs'] if p['id']==name),None)
@@ -45,7 +45,7 @@ def _extract(pack,archive,staging):
   if len(entries)!=pack['files']:raise ValueError('Unexpected artwork entry count')
   for entry in entries:
    p=PurePosixPath(entry.filename)
-   if p.is_absolute() or '..' in p.parts or '\\' in entry.filename or p.parent!=prefix or ':' in p.name or '\x00' in p.name or p.suffix.lower() not in {'.png','.jpg','.jpeg','.webp','.gif'} or stat.S_ISLNK(entry.external_attr>>16) or entry.filename.casefold() in seen:raise ValueError('Invalid artwork entry')
+   if p.is_absolute() or '..' in p.parts or '\\' in entry.filename or p.parent!=prefix or ':' in p.name or '\x00' in p.name or p.suffix.lower() not in ({'.json'} if pack['id']=='nintendo-mii-runtime' else {'.png','.jpg','.jpeg','.webp','.gif'}) or stat.S_ISLNK(entry.external_attr>>16) or entry.filename.casefold() in seen:raise ValueError('Invalid artwork entry')
    seen.add(entry.filename.casefold());total+=entry.file_size
    if total>pack['unpackedBytes']:raise ValueError('Expanded artwork exceeds expected size')
    target=staging.joinpath(*p.parts);target.parent.mkdir(parents=True,exist_ok=True)

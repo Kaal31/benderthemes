@@ -62,6 +62,17 @@
       "unpackedBytes": 115279,
       "files": 29,
       "url": "https://gitflic.ru/project/spon4ik67/themehubconsoleassets/release/05b18c1d-4919-4461-90d8-42fee69fc69d/abe10bbd-3175-4d47-9812-2575af6f669d/download"
+    },
+    {
+      "id": "nintendo-mii-runtime",
+      "file": "nintendo-mii-runtime-v2.zip",
+      "files": 1,
+      "unpackedBytes": 2224487,
+      "bytes": 302157,
+      "sha256": "d2e599e07ff87a61bc08b1e2ab7594b67ae52335ed81c87170ac5c381ba7fada",
+      "sourceVersion": "Wii v514 / local Wii U Menu extraction",
+      "note": "Native body and head/hair geometry. Independent motion, facial features and materials. No complete FFL face renderer.",
+      "url": "https://gitflic.ru/project/spon4ik67/themehubconsoleassets/release/ccf560b7-82bf-4e89-bf1a-af86764c41ad/4cdabf5f-1bca-45d6-b2a1-699e7e9151c5/download"
     }
   ]
 }

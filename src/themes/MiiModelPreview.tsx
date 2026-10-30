@@ -1,3 +1,4 @@
+import {useNativeMii} from "../nativeMii";
 import {MiiCycle} from "./miiControls";
 import {ACTIONS,POSE_SIZE} from "./wiiuPlazaMiiModel";
 import {useEffect,useRef,useState} from "react";
@@ -5,6 +6,7 @@ import * as THREE from "three";
 import type {PersonalMii} from "./PersonalMii";
 import {createMiiAvatar,DEFAULT_DECAL,type MiiDecal} from "./miiAvatar";
 export function MiiModelPreview({m,editing,focusHead=false,onDecal,onCapture}:{m:PersonalMii;editing:boolean;focusHead?:boolean;onDecal:(d:MiiDecal)=>void;onCapture?:(fn:()=>string)=>void}){
+ const nativeRevision=useNativeMii();
  const [rotating,setRotating]=useState(false);
  const canvas=useRef<HTMLCanvasElement>(null),runtime=useRef<{move:(x:number,y:number,flip?:boolean)=>void;turn:()=>void;nudge:(x:number,y:number)=>void;rotate:(amount:number)=>void}|null>(null),live=useRef({m,editing,focusHead,rotating,onDecal,onCapture});live.current={m,editing,focusHead,rotating,onDecal,onCapture};
  const framing=useRef<{y:number;z:number;lookY:number}|undefined>(undefined);
@@ -15,7 +17,7 @@ export function MiiModelPreview({m,editing,focusHead=false,onDecal,onCapture}:{m
  useEffect(()=>{if(!canvas.current)return;let renderer:THREE.WebGLRenderer;try{renderer=new THREE.WebGLRenderer({canvas:canvas.current,alpha:true,antialias:true,preserveDrawingBuffer:true});}catch{setError("3D preview unavailable. Enable WebGL to edit the model.");return;}
   const scene=new THREE.Scene(),view=new THREE.PerspectiveCamera(29,320/360,.1,100);view.position.set(0,8,34);view.lookAt(0,7.1,0);
   scene.add(new THREE.HemisphereLight(0xffffff,0x899baa,2.3));const light=new THREE.DirectionalLight(0xfff6e8,2.2);light.position.set(-8,15,16);scene.add(light);const fill=new THREE.DirectionalLight(0xd8f5ff,.9);fill.position.set(8,8,-12);scene.add(fill);
-  const avatar=createMiiAvatar(live.current.m);avatarRef.current=avatar;scene.add(avatar.root);avatar.setPose(new Float32Array(POSE_SIZE));avatar.root.updateMatrixWorld(true);
+  const avatar=createMiiAvatar(live.current.m);avatarRef.current=avatar;canvas.current.dataset.modelSource=avatar.root.userData.nativeMii?"gitflic-native":"authored-fallback";scene.add(avatar.root);avatar.setPose(new Float32Array(POSE_SIZE));avatar.root.updateMatrixWorld(true);
   const box=new THREE.Box3().setFromObject(avatar.root),extent=box.getSize(new THREE.Vector3()),center=box.getCenter(new THREE.Vector3()),distance=Math.max(extent.y,extent.x/view.aspect)/(2*Math.tan(THREE.MathUtils.degToRad(view.fov/2)))*1.13+extent.z*.5;
   const headBox=new THREE.Box3().setFromObject(avatar.root.getObjectByName("head")?.parent??avatar.root),headExtent=headBox.getSize(new THREE.Vector3()),headCenter=headBox.getCenter(new THREE.Vector3());
   let fullDistance=distance,headDistance=distance,lookY=framing.current?.lookY??center.y;
@@ -51,7 +53,7 @@ export function MiiModelPreview({m,editing,focusHead=false,onDecal,onCapture}:{m
   const deckInput=(e:Event)=>{const key=(e as CustomEvent).detail;if(document.activeElement!==el)return;if(!live.current.editing||live.current.rotating){if(key==='left')rotate(-.18);if(key==='right')rotate(.18);return;}if(key==='left')nudge(-.02,0);if(key==='right')nudge(.02,0);if(key==='up')nudge(0,-.02);if(key==='down')nudge(0,.02);};window.addEventListener("dht-mii-input",deckInput);
   el.addEventListener("pointerdown",down);el.addEventListener("pointermove",motion);el.addEventListener("pointerup",up);el.addEventListener("pointercancel",up);
   return()=>{observer.disconnect();cancelAnimationFrame(raf);window.removeEventListener("dht-mii-input",deckInput);el.removeEventListener("pointerdown",down);el.removeEventListener("pointermove",motion);el.removeEventListener("pointerup",up);el.removeEventListener("pointercancel",up);avatar.dispose();renderer.dispose();avatarRef.current=null;runtime.current=null;};
- },[signature]);
+ },[signature,nativeRevision]);
  useEffect(()=>{avatarRef.current?.setDecal(m.decal??DEFAULT_DECAL);},[m.decal]);
  return <div className="mii-3d"><canvas ref={canvas} aria-label="Interactive 3D Mii" tabIndex={0} data-side={back?"back":"front"} style={{width:"100%",height:360,touchAction:"none",cursor:editing&&!rotating?"crosshair":"grab"}} onKeyDown={e=>{if(["ArrowLeft","ArrowRight","ArrowUp","ArrowDown"].includes(e.key)){e.preventDefault();const x=e.key==="ArrowRight"?.02:e.key==="ArrowLeft"?-.02:0;const y=e.key==="ArrowUp"?-.02:e.key==="ArrowDown"?.02:0;if(!editing||rotating){if(x)runtime.current?.rotate(x*9);}else runtime.current?.nudge(x,y);}if(e.key.toLowerCase()==="f")runtime.current?.turn();}}/>
  {editing&&<div className="mii-model-tools" role="group" aria-label="Artwork tool"><button type="button" aria-pressed={!rotating} onClick={()=>setRotating(false)}>Place artwork</button><button type="button" aria-pressed={rotating} onClick={()=>setRotating(true)}>Rotate model</button></div>}

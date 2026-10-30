@@ -198,6 +198,7 @@ const backend: Record<string, (...a: any[]) => any> = {
   x360_avatar_import: (path: string) => { const w = window as any; if (!w.__testAvatarGlb || !/\.glb$/i.test(path)) return { success: false, error: "Not a glTF 2.0 binary (.glb) with a model in it" }; w.__testAssets = { ...(w.__testAssets ?? {}), "my-avatar": { ...(w.__testAssets?.["my-avatar"] ?? {}), avatar: w.__testAvatarGlb } }; return { success: true, kind: "model" }; },
   x360_avatar_remove: () => { const w = window as any; if (w.__testAssets?.["my-avatar"]) w.__testAssets["my-avatar"] = {}; return { success: true }; },
   wiiu_decide: () => ({ success: true, theme: "Test.utheme" }),
+  get_native_mii: () => new URLSearchParams(location.search).has("nativeMii")?{url:"../out/native-mii-preview/models.json"}:{},
   get_wii_skin: (n: string) => realSkin("wii", n, (window as any).__testWii ?? null),
   get_3ds_skin: (n: string) => realSkin("n3ds", n, (window as any).__test3ds ?? null),
   // 3DS home badges: window.__test3dsBadges = {sets:[{name, badges:[{id,name,w,h,url}]}]} (py_modules/n3ds_themes.py list_badges)

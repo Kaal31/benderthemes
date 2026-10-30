@@ -2291,6 +2291,22 @@ class Plugin:
         import console_artwork
         return await asyncio.to_thread(console_artwork.install, theme)
 
+    async def get_native_mii(self):
+        """Verified external mesh data, delivered over the existing local file server."""
+        import console_artwork
+        folder = console_artwork.resource_dir("nintendo-mii-runtime")
+        if folder is None:
+            result = await asyncio.to_thread(console_artwork.install, "mii")
+            if not result.get("success"):
+                return {}
+            folder = console_artwork.resource_dir("nintendo-mii-runtime")
+        path = folder / "models.json" if folder else None
+        if path is None or not path.is_file() or not await _ensure_server():
+            return {}
+        ident = "native-mii-" + console_artwork.spec("nintendo-mii-runtime")["sha256"][:16] + ".json"
+        _vi.files[ident] = str(path)
+        return {"url": f"http://127.0.0.1:{_vi.port}/{_vi.token}/f/{ident}"}
+
     async def get_assets(self, name: str):
         import console_artwork
         optional = console_artwork.spec(name)
