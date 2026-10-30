@@ -91,7 +91,12 @@ class DataThemes(unittest.TestCase):
             self.assertIsNone(data_themes.resolve("mine", bad), bad)
         self.assertIsNone(data_themes.resolve("nope", "a.png"))
         if hasattr(os, "symlink"):
-            os.symlink(Path(self.tmp.name) / "secret.txt", self.user / "mine" / "link.png")
+            try:
+                os.symlink(Path(self.tmp.name) / "secret.txt", self.user / "mine" / "link.png")
+            except OSError as error:
+                if getattr(error, "winerror", None) != 1314:
+                    raise
+                self.skipTest("Windows account lacks symlink privileges; traversal checks passed")
             self.assertIsNone(data_themes.resolve("mine", "link.png"))
 
     def test_bad_manifests_are_skipped(self):
