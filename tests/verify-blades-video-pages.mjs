@@ -2,7 +2,7 @@ import assert from 'node:assert/strict';import {chromium} from 'playwright';
 const b=await chromium.launch();
 try{
  const p=await b.newPage({viewport:{width:1280,height:900}}),errors=[];p.on('pageerror',e=>errors.push(e.message));
- await p.goto('http://127.0.0.1:8911/preview/x360-blades-video-pages.html?theme=x360&xs=blades&consoleArt='+ (process.env.FALLBACK==='1'?'0':'1'),{waitUntil:'domcontentloaded'});
+ await p.goto((process.env.BLADES_PREVIEW||'http://127.0.0.1:8911/preview/x360-blades-video-pages.html')+'?theme=x360&xs=blades&consoleArt='+ (process.env.FALLBACK==='1'?'0':'1'),{waitUntil:'domcontentloaded'});
  await p.locator('.dht-blades-profile').waitFor();await p.waitForTimeout(7000);
  const press=async n=>{await p.evaluate(n=>window.dispatchEvent(new CustomEvent('preview-controller-input',{detail:n})),n);};
  const tab=async name=>{await p.locator(`.dht-x360b-tab[aria-label="${name}"]`).evaluate(n=>n.click());await p.waitForTimeout(300);};
