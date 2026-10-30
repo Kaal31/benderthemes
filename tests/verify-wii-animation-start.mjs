@@ -1,0 +1,12 @@
+import {build} from 'esbuild';
+import {createRequire} from 'node:module';
+import assert from 'node:assert/strict';
+const result=await build({entryPoints:['src/themes/WiiLayoutGpu.ts'],bundle:true,write:false,format:'cjs',platform:'node'}),module={exports:{}};
+new Function('require','module','exports',result.outputFiles[0].text)(createRequire(import.meta.url),module,module.exports);
+const pane={name:'DockArrow',kind:'pan1',parent:-1,visible:true,alpha:1,origin:4,position:[-100,-190,0],rotation:[0,0,0],scale:[1,1],size:[32,64]};
+const animation={id:'dock',tracks:[{pane:'DockArrow',type:'RLPA',target:0,index:0,material:false,interpolation:'step',keys:[[100,25,0],[110,50,0]]}]};
+const actor=new module.exports.WiiActor({data:{animations:[animation]}},{id:'test',area:'test',panes:[pane],materials:[],textures:[]});
+actor.apply('dock',0);assert.equal(actor.pose[0].position[0],-100,'Future events must preserve the authored dock anchor');
+actor.apply('dock',105);assert.equal(actor.pose[0].position[0],25,'Started events must animate normally');
+actor.apply('dock',120);assert.equal(actor.pose[0].position[0],50);
+actor.dispose();console.log('PASS: animation events preserve layout anchors until their first key');

@@ -1,3 +1,4 @@
+import {useXboxArtwork} from "./xboxFallbackArtwork";
 import {cabinetWallpapers,useCabinetWallpaper} from "../x360Cabinet";
 import {KinectPages,KinectPage} from "./X360KinectPages";
 import {BackgroundMedia} from "../WallpaperMedia";
@@ -22,7 +23,7 @@ import { AvatarEditor, OWN_AVATAR_SET, savedAvatar, saveAvatar } from "./X360Ava
 
 import {MetroAvatar, MetroAvatarEditor} from "./X360MetroAvatar";
 
-import { useX360Look, X360_SECTION } from "../skins";
+import { useX360Gamerpic, useX360Look, X360_SECTION } from "../skins";
 import { useReportFocus } from "../focus";
 type Slot = { key: string; label: string; sub?: string; game?: Game; art?: string; glyph?: IconName; run: () => void };
 type Channel = { id: string; label: string; slots: Slot[] };
@@ -45,8 +46,10 @@ export function KinectHome() {
   const s = api.settings;
   const { W, H } = useStage();
   const st = useSteamStatus();
+  const gamerPicture=useX360Gamerpic();
+  const profilePicture=gamerPicture??st.avatar;
   const wall = useWallpaper("x360");
-  const a = useAssets("x360-kinect-dash");
+  const a = useXboxArtwork("x360-kinect-dash");
   const look = useX360Look();
   const cabinet=useCabinetWallpaper(s.x360.cabinetWallpaper??"");
   const cabinetInk=cabinet.background?cabinetWallpapers.find(item=>item.id===s.x360.cabinetWallpaper)?.ink:undefined;
@@ -207,6 +210,15 @@ export function KinectHome() {
         {!cabinet.background&&!wall&&!look.bg&&(a["aura-floor"]?<img aria-hidden="true" src={a["aura-floor"]} style={{position:'absolute',inset:0,width:W,height:H,pointerEvents:'none'}}/>:<div aria-hidden="true" style={{position:'absolute',inset:0,background:'linear-gradient(to bottom,transparent 38%,#f0f3ed00 45%,#eff2eb 70%,#a0a5a0 100%)',pointerEvents:'none'}}/>)}
         {cabinet.error&&<div role="status" style={{position:"absolute",right:20,bottom:20,zIndex:80}}>Cabinet wallpaper unavailable. Try selecting it again.</div>}
         <div style={{ position: "absolute", left: ox, top: oy, width: 1280, height: 720, transform: `scale(${k})`, transformOrigin: "0 0", fontFamily: FONT, color: cabinetInk??INK }}>
+          {/* Kinect reference: small signed-in name and gamer picture at
+              x≈1173/y≈54 (right edge), independent of the full-body avatar. */}
+          <button data-kinect-profile-header aria-label={`Profile: ${api.user}`} onClick={()=>openPage('profile')} onKeyDown={event=>{if(event.key==='Enter'||event.key===' '){event.preventDefault();event.stopPropagation();openPage('profile');}}} style={{position:'absolute',right:108,top:54,height:64,maxWidth:390,display:'flex',alignItems:'flex-start',gap:12,padding:0,border:0,background:'transparent',font:'inherit',color:cabinetInk??INK,textAlign:'right',cursor:'pointer',zIndex:65,visibility:page?'hidden':undefined}}>
+            <span style={{paddingTop:2,minWidth:0}}><span data-kinect-profile-name style={{display:'block',fontSize:22,lineHeight:'26px',maxWidth:310,overflow:'hidden',whiteSpace:'nowrap',textOverflow:'ellipsis',textShadow:cabinetInk==='#343c37'?'0 1px #fff5':TEXT_SHADOW}}>{api.user}</span><span style={{display:'block',fontSize:15,lineHeight:'22px',opacity:.9}}>{st.online?'Online':'Offline'}{st.notifications!==undefined?` · ${st.notifications} notifications`:''}</span></span>
+            <span style={{position:'relative',display:'grid',placeItems:'center',width:64,height:64,flexShrink:0,background:'#7b9869',border:'1px solid #f3f5ecaa',boxSizing:'border-box',boxShadow:'0 1px 2px #0005',color:'#fff',fontSize:30}} aria-hidden={!profilePicture}>
+              <span aria-hidden="true">{api.user.trim().charAt(0).toUpperCase()}</span>
+              {profilePicture&&<img src={profilePicture} alt="Gamer picture" onError={event=>{event.currentTarget.style.visibility='hidden';}} style={{position:'absolute',inset:0,width:'100%',height:'100%',objectFit:'cover'}}/>}
+            </span>
+          </button>
           {/* channel list: current name lowest and 1.2× larger, the following ones above it about 35px apart */}
           <div style={{ position: "absolute", left: LIST_X, top: 0, width: 800, height: ROW_Y, overflow: "hidden", zIndex:60,visibility:page&&page!=="power"?"hidden":undefined }}>
             {channels.map((c, i) => {

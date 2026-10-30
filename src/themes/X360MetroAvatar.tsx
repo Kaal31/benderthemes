@@ -17,7 +17,6 @@ function runtime(base:string) {
   return pending;
 }
 
-function LoadingAvatar(){return <div role="status" style={{position:'absolute',inset:0,display:'grid',placeItems:'center',color:'rgba(255,255,255,.8)',fontSize:14}}>Loading new avatar…</div>;}
 
 function Preview({base,description,fallback,onError,framing='editor'}:{base:string;description:Description;fallback?:ReactNode;onError?:(message:string)=>void;framing?:'social'|'editor'|'nxe'|'nxe-editor'}) {
   const host=useRef<HTMLDivElement>(null),stage=useRef<any>(null);
@@ -40,7 +39,7 @@ function Preview({base,description,fallback,onError,framing='editor'}:{base:stri
     return()=>{cancelled=true;clearTimeout(timer);};
   },[base,description,version]);
   return <div data-avatar-engine={failed?'failed':visible?'ready':'loading'} style={{position:'absolute',inset:0}}>
-    {failed?fallback:!visible?<LoadingAvatar/>:null}
+    {failed?fallback:null}
     <div ref={host} style={{position:'absolute',inset:0,visibility:visible&&!failed?'visible':'hidden'}} />
   </div>;
 }
@@ -52,7 +51,7 @@ export function MetroAvatar({fallback,revision=0,framing='social'}:{fallback:Rea
     if(s?.ready&&s.mode!=='legacy'&&s.base&&!s.description){const {data}=await runtime(s.base);s={...s,description:data.presets[0].description};}
     if(alive){setStatus(s);setResolved(true);}
   }).catch(()=>{if(alive){setStatus(undefined);setResolved(true);}});return()=>{alive=false;};},[revision]);
-  if(!resolved)return <LoadingAvatar/>;
+  if(!resolved)return null;
   if(!status?.ready||status.mode==='legacy'||!status.base||!status.description)return <>{fallback}</>;
   return <div style={{position:'absolute',top:'calc(8px - 10%)',left:'-40%',right:'-40%',bottom:framing==='nxe'?'calc(12px - 10%)':'calc(40px - 10%)'}}><Preview base={status.base} description={status.description} fallback={fallback} framing={framing}/></div>;
 }
@@ -129,7 +128,7 @@ export function MetroAvatarEditor({onClose,onLegacy,fallback,variant='metro',nam
 
         <div style={{position:'absolute',left:96,top:52,fontSize:27,textShadow:'0 1px 3px #0008'}}>{name}</div>
         <div style={{position:'absolute',left:650,top:50,width:350,textAlign:'center',fontSize:26,textShadow:'0 1px 3px #0008',visibility:kinect&&avatarMenu?'hidden':undefined}}>{title}{!avatarMenu&&<div style={{fontSize:20,marginTop:5,minHeight:26}}>{label}</div>}</div>
-        <div style={{position:'absolute',left:130,top:72,width:500,height:560}}>{status?.ready&&status.base&&description?<Preview framing="nxe-editor" base={status.base} description={description} fallback={fallback} onError={setNote}/>:dataFailed||status&&!status.ready?fallback:<LoadingAvatar/>}</div>
+        <div style={{position:'absolute',left:130,top:72,width:500,height:560}}>{status?.ready&&status.base&&description?<Preview framing="nxe-editor" base={status.base} description={description} fallback={fallback} onError={setNote}/>:dataFailed||status&&!status.ready?fallback:null}</div>
         {!status?.ready?<div style={{position:'absolute',left:650,top:190,width:440,padding:24,background:'#263944dd',borderRadius:4}}><h2>Original avatar library</h2><p>Download the avatar library once to customize your avatar offline.</p>{status?.installing?<><progress value={status.completed??0} max={status.total??73}/><p>{status.completed??0} / {status.total??73} packs</p></>:<button style={button} onClick={install}>Download avatar library</button>}<p>{status?.error||note}</p></div>:<>
           {avatarMenu?<div data-nxe-avatar-menu style={{position:'absolute',left:690,top:172,width:360,display:'flex',flexDirection:'column',gap:13,transform:'perspective(1000px) rotateY(-10deg)'}}>{avatarActions.map((action,i)=><button key={action.name} aria-pressed={avatarMenuSelection===i} onFocus={()=>setAvatarMenuSelection(i)} onMouseEnter={()=>setAvatarMenuSelection(i)} onClick={action.run} style={{height:65,padding:'0 18px',textAlign:'left',border:avatarMenuSelection===i?'3px solid #b4e651':'2px solid #dce7e2',background:avatarMenuSelection===i?'linear-gradient(#c0ee49,#79b319)':'linear-gradient(#e8eeec,#a9b9ba)',color:'#243841',font:'inherit',fontSize:23,cursor:'pointer',transform:avatarMenuSelection===i?'translateX(-22px) scale(1.07)':'none',transition:'transform 130ms ease-out'}}>{action.name}</button>)}</div>:<div data-nxe-avatar-grid style={{position:'absolute',left:654,top:174,width:405,display:'grid',gridTemplateColumns:'repeat(3,126px)',gap:9,transform:'perspective(1100px) rotateY(-9deg)',transformOrigin:'50% 50%'}}>
             {styleMenu?editorCategories.map(([title,mask],i)=>{const item=data?.catalogue.items.find((item:any)=>(item.m&mask)!==0&&(item.g==='both'||item.g===description?.gender)&&item.stock);return <button key={title} aria-label={title} aria-pressed={styleSelection===i} onMouseEnter={()=>setStyleSelection(i)} onClick={()=>{setCategory(i);setStyleSelection(i);setSelection(0);setStyleMenu(false);}} style={{...tile,...(styleSelection===i?focused:{})}}>{item&&status.base?<img alt="" src={`${status.base}data/thumbs/${item.id}.webp`} style={{width:94,height:92,objectFit:'contain'}}/>:<span style={{fontSize:20}}>{title}</span>}</button>;}):shown.map((choice:any,i:number)=><button key={choice.id} aria-label={choice.n} aria-pressed={selection===page*9+i} onMouseEnter={()=>setSelection(page*9+i)} onClick={()=>choose(page*9+i)} style={{...tile,...(selection===page*9+i?focused:{})}}>{!choice.description&&<img alt="" loading="lazy" src={`${status.base}data/thumbs/${choice.id}.webp`} style={{width:94,height:92,objectFit:'contain'}}/>}{choice.description&&<span style={{fontSize:18}}>{choice.n}</span>}</button>)}
@@ -145,7 +144,7 @@ export function MetroAvatarEditor({onClose,onLegacy,fallback,variant='metro',nam
   return <div role="dialog" aria-label="Metro avatar editor" style={{position:'absolute',inset:0,zIndex:100,background:'radial-gradient(ellipse at 25% 40%,#719d39,#23351c)',color:'#fff',fontFamily:'Segoe UI, sans-serif',padding:'32px 48px',boxSizing:'border-box'}}>
     <h1 style={{fontSize:38,fontWeight:300,margin:0}}>my avatar</h1>
     <div style={{position:'absolute',left:25,top:95,bottom:80,width:'40%'}}>
-      {status?.ready&&status.base&&description?<Preview base={status.base} description={description} fallback={fallback} onError={setNote}/>:dataFailed||status&&!status.ready?fallback:<LoadingAvatar/>}
+      {status?.ready&&status.base&&description?<Preview base={status.base} description={description} fallback={fallback} onError={setNote}/>:dataFailed||status&&!status.ready?fallback:null}
     </div>
     <div style={{position:'absolute',left:'43%',right:40,top:110,bottom:85,overflow:'auto'}}>
       {!status?.ready?<>

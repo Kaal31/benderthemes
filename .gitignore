@@ -16,3 +16,6 @@ src/engine/bundledStyles.generated.ts
 src/themes/santaSnow.generated.ts
 
 src/engine/bundledThemes.generated.ts
+
+# Local firmware research: never include extracted console resources or keys.
+/work/wii-firmware-reference/

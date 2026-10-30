@@ -110,3 +110,37 @@ Screenshots and raw reports are local preview/work artifacts. Missing resource d
 The initial standard-resource fallback incorrectly generated opaque gradients for missing IplTopMask textures. Native layouts draw those after the channel panes, covering the grid. Missing compositing masks now use transparent substitutes; the authored menu background has a separate resource name. Supplied theme masks remain untouched. Reader cache version 9 invalidates earlier imports. The browser theme matrix now checks raster diversity inside all twelve card regions, in addition to navigation; earlier navigation-only results did not establish visual completeness.
 
 Title balloons measure font advances, wrap at word boundaries, grow vertically, and clamp against screen edges. Package-supplied balloon graphics and animations are retained.
+
+
+### Firmware-informed procedural resource contracts (reader 12)
+
+A local System Menu v514 WAD (title 0000000100000002) was inspected after verifying all nine content hashes. The resource archive was identified from its U8 entries, rather than assuming a fixed content index. No firmware, decrypted archives, original textures, or native animation data are bundled in the application. All generated replacements remain procedural artwork in `wii_standard.py`.
+
+The previous transparent-mask workaround is superseded: standard channel masks now provide mirrored corner coverage and outlines. The dimensions and texture roles were checked against the native resource interface:
+
+| Resource | Replacement dimensions | Sampling contract |
+| --- | --- | --- |
+| IplTopMask16x9 / Edge16x9 | 128 × 64 | Mirrored corner mask / contour |
+| IplTopMask4x3 / Egde4x3 | 64 × 64 | Mirrored corner mask / contour |
+| my_TVSheet_b | 608 × 8 | Repeating monochrome ramp |
+| my_TVSheet_e / f | 256 × 64 | Half-width curved fill / contour |
+| my_TVSheet_g | 256 × 96 | Soft shadow |
+| my_TV_d | 16 × 16 | Repeating scanlines |
+| my_TV_f | 64 × 64 | Mirrored focus corner |
+| my_TopBtn_base_a / b | 64 × 128 / 16 × 128 | Rounded cap / connecting strip |
+| my_TopBtn_a0 | 48 × 32 | Message envelope mark |
+
+Curves, feathering, scanlines and symbols are newly generated using mathematical primitives. The standalone authored standard menu uses separate full-image resource names so it does not accidentally sample native quarter textures as complete pictures. Native UV coordinates are preserved; earlier focus UV normalization, hard-coded clock displacement, card border painting, and wallpaper substitution on clock materials have been removed. The unread-envelope mark is hidden when there is no unread count.
+
+`tools/inspect_wii_wad.py` is a local research tool. It requires optional `pycryptodome` and an explicitly supplied 16-byte common-key file; no key is embedded. It validates sizes, ticket/TMD title agreement, content indices and SHA-1 hashes before creating an output folder. Usage: `python tools/inspect_wii_wad.py menu.wad output-folder --common-key local-key.bin`. It performs no download or console installation. Format behavior was cross-checked against https://github.com/wii-tools/wadlib (MIT).
+
+PNG replacement textures now receive alpha-ink bounds after loading, as decoded TPL textures already did. Clock centering uses these bounds instead of transparent sprite margins. The raster clock check covers six themes at four times (24 combinations), including native and PNG glyphs. The authored-resource browser matrix passed visible-cover and navigation checks for 36 MYM fixtures; the standalone authored base also passed paging and system navigation. These checks do not assert exact reproduction of every custom effect.
+
+
+### Focus, incomplete clocks and theme-specific dock placement
+
+Generated focus textures use a stable, opaque cyan contour at the active cover. Incomplete theme material alpha or imported spin/scale event data can no longer hide this fallback; supplied custom focus textures keep their own behavior. Only one actor is visible during focus handoff. Pointer exit hides focus, while external selection changes restore controller focus.
+
+The authored clock layout tints imported white glyphs for contrast and fits their alpha bounds into its glyph cells. Native clock layouts retain their materials. This fixes the white-on-pale, widely padded Apple fallback clock; the clock raster check now includes Apple (28 combinations).
+
+Animation tracks no longer apply their first key before its event starts. This preserves Leopard OS's dock arrow positions instead of moving them to stock screen edges. The previous hard-coded 0.82 horizontal scaling of panes marked wide was also removed: the renderer already projects the menu onto its chosen viewport, and a second compression misaligned the dock. SD initialization samples the native entrance clip to completion; dock layouts align the SD control between the relocated navigation arrows. Options, message-board, SD and paging hit areas follow the rendered controls. Other icons baked into the background are decorative and do not acquire invented application actions.

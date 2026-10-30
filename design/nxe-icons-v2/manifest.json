@@ -1,0 +1,195 @@
+{
+  "version": 2,
+  "count": 27,
+  "items": [
+    {
+      "source": "x360-nxe/console.png",
+      "alternative": "console-small.svg",
+      "label": "Console",
+      "group": "Small icons",
+      "notes": ""
+    },
+    {
+      "source": "x360-nxe/friends.png",
+      "alternative": "friends-small.svg",
+      "label": "Friends",
+      "group": "Small icons",
+      "notes": ""
+    },
+    {
+      "source": "x360-nxe/gamertiles.png",
+      "alternative": "achievements-small.svg",
+      "label": "Achievements / gamer tiles",
+      "group": "Small icons",
+      "notes": ""
+    },
+    {
+      "source": "x360-nxe/live.png",
+      "alternative": "community-small.svg",
+      "label": "Community",
+      "group": "Small icons",
+      "notes": ""
+    },
+    {
+      "source": "x360-nxe/mail.png",
+      "alternative": "mail-small.svg",
+      "label": "Mail",
+      "group": "Small icons",
+      "notes": ""
+    },
+    {
+      "source": "x360-nxe/messages.png",
+      "alternative": "messages-small.svg",
+      "label": "Messages",
+      "group": "Small icons",
+      "notes": ""
+    },
+    {
+      "source": "x360-nxe/store.png",
+      "alternative": "store-small.svg",
+      "label": "Store",
+      "group": "Small icons",
+      "notes": ""
+    },
+    {
+      "source": "x360-nxe/themes.png",
+      "alternative": "cast-themes-small.svg",
+      "label": "Themes",
+      "group": "Small icons",
+      "notes": ""
+    },
+    {
+      "source": "x360-nxe/a.png",
+      "alternative": "button-a.svg",
+      "label": "A button - small set",
+      "group": "Buttons",
+      "notes": ""
+    },
+    {
+      "source": "x360-nxe/b.png",
+      "alternative": "button-b.svg",
+      "label": "B button - small set",
+      "group": "Buttons",
+      "notes": ""
+    },
+    {
+      "source": "x360-nxe/x.png",
+      "alternative": "button-x.svg",
+      "label": "X button - small set",
+      "group": "Buttons",
+      "notes": ""
+    },
+    {
+      "source": "x360-nxe/y.png",
+      "alternative": "button-y.svg",
+      "label": "Y button - small set",
+      "group": "Buttons",
+      "notes": ""
+    },
+    {
+      "source": "x360-nxe-dash/icon-disc.png",
+      "alternative": "disc.svg",
+      "label": "Play / disc",
+      "group": "Dashboard icons",
+      "notes": ""
+    },
+    {
+      "source": "x360-nxe-dash/icon-gamelib.png",
+      "alternative": "games.svg",
+      "label": "Game library",
+      "group": "Dashboard icons",
+      "notes": ""
+    },
+    {
+      "source": "x360-nxe-dash/icon-musiclib.png",
+      "alternative": "music.svg",
+      "label": "Music library",
+      "group": "Dashboard icons",
+      "notes": ""
+    },
+    {
+      "source": "x360-nxe-dash/icon-picturelib.png",
+      "alternative": "pictures.svg",
+      "label": "Picture library",
+      "group": "Dashboard icons",
+      "notes": ""
+    },
+    {
+      "source": "x360-nxe-dash/icon-videolib.png",
+      "alternative": "video.svg",
+      "label": "Video library",
+      "group": "Dashboard icons",
+      "notes": ""
+    },
+    {
+      "source": "x360-nxe-dash/icon-settings.png",
+      "alternative": "settings.svg",
+      "label": "Settings",
+      "group": "Dashboard icons",
+      "notes": ""
+    },
+    {
+      "source": "x360-nxe-dash/avatar-silhouette.png",
+      "alternative": "avatar.svg",
+      "label": "Avatar",
+      "group": "Dashboard icons",
+      "notes": ""
+    },
+    {
+      "source": "x360-nxe-dash/legend-a.png",
+      "alternative": "button-a.svg",
+      "label": "A button - dashboard set",
+      "group": "Buttons",
+      "notes": "Shares the same replacement as the small-set variant."
+    },
+    {
+      "source": "x360-nxe-dash/legend-b.png",
+      "alternative": "button-b.svg",
+      "label": "B button - dashboard set",
+      "group": "Buttons",
+      "notes": "Shares the same replacement as the small-set variant."
+    },
+    {
+      "source": "x360-nxe-dash/legend-x.png",
+      "alternative": "button-x.svg",
+      "label": "X button - dashboard set",
+      "group": "Buttons",
+      "notes": "Shares the same replacement as the small-set variant."
+    },
+    {
+      "source": "x360-nxe-dash/legend-y.png",
+      "alternative": "button-y.svg",
+      "label": "Y button - dashboard set",
+      "group": "Buttons",
+      "notes": "Shares the same replacement as the small-set variant."
+    },
+    {
+      "source": "x360-nxe-dash/legend-highlight.png",
+      "alternative": "focus-small.svg",
+      "label": "Focus indicator",
+      "group": "Buttons",
+      "notes": ""
+    },
+    {
+      "source": "x360-nxe-dash/legend-menu.png",
+      "alternative": "guide.svg",
+      "label": "Guide button",
+      "group": "Dashboard icons",
+      "notes": "Neutral four-pane emblem; no Xbox logo."
+    },
+    {
+      "source": "x360-nxe-dash/mobychannelzero.png",
+      "alternative": "channel-small.svg",
+      "label": "Current channel marker",
+      "group": "Small icons",
+      "notes": ""
+    },
+    {
+      "source": "x360-nxe-dash/xboxlive.png",
+      "alternative": "online.svg",
+      "label": "Theme Hub wordmark",
+      "group": "Dashboard icons",
+      "notes": "Our Theme Hub tile emblem and lettering, styled in green and orange."
+    }
+  ]
+}

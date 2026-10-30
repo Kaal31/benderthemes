@@ -6,7 +6,7 @@ import functools
 import math
 import os
 
-VERSION = 2
+VERSION = 3
 
 
 def _pane(name, kind="pan1", parent=-1, x=0, y=0, width=0, height=0, material=None):
@@ -30,14 +30,24 @@ def artwork(name,W):
     role='blank'
     if 'clock_a' in n:w,h=32,48;role='digit'
     elif 'clock_b' in n:w,h=40,24;role='period'
-    elif 'tvsheet' in n:w,h=608,120;role='footer'
+    elif 'tvsheet_b' in n:w,h=608,8;role='ramp'
+    elif 'tvsheet_e' in n:w,h=256,64;role='ribbonmask'
+    elif 'tvsheet_f' in n:w,h=256,64;role='ribbonedge'
+    elif 'tvsheet_g' in n:w,h=256,96;role='ribbonshadow'
+    elif 'standard_footer' in n:w,h=608,120;role='footer'
     elif 'standard_background' in n or 'grad' in n:w,h=32,128;role='gradient'
+    elif 'ipltopmask' in n:w,h=(64 if '4x3' in n else 128),64;role='maskedge' if 'edge' in n or 'egde' in n else 'maskcorner'
     elif 'mask' in n:role='transparent'
     elif 'arw' in n:w,h=32,64;role='arrow'
     elif 'balloon' in n or 'fukidashi' in n:w,h=512,96;role='balloon'
     elif 'sdcard' in n:w,h=48,64;role='sd'
+    elif 'topbtn_base_a' in n:w,h=64,128;role='dockcap'
+    elif 'topbtn_base_b' in n:w,h=16,128;role='dockmiddle'
+    elif n.endswith('/my_topbtn_a0'):w,h=48,32;role='envelope'
     elif 'topbtn' in n or 'combtn' in n:role='button'
-    elif 'my_tv_f' in n or 'my_tv_d' in n:w,h=128,96;role='focus'
+    elif 'my_tv_d' in n:w,h=16,16;role='scanlines'
+    elif 'my_tv_f' in n:w=h=64;role='focuscorner'
+    elif 'standard_focus' in n:w,h=128,96;role='focus'
     elif 'my_tv' in n:w,h=128,96;role='tile'
     elif 'shade' in n:role='transparent'
     rgba=bytearray(w*h*4)
@@ -48,15 +58,36 @@ def artwork(name,W):
             c=(255,255,255,0)
             if role=='gradient':
                 v=int(233+17*math.sin(y/h*math.pi));c=(v,min(255,v+2),min(255,v+3),255)
+            elif role in ('maskcorner','maskedge','focuscorner'):
+                # A quarter of a rounded rectangle, repeated with mirrored UVs.
+                margin=3.5 if role=='focuscorner' else 5.5*(w/128)
+                edge=margin+28*(w/128)*math.exp(-max(0,y-3)/4)
+                distance=min(x-edge,y-3)
+                alpha=max(0,min(1,.5-distance)) if role=='maskcorner' else max(0,min(1,2-abs(distance)))
+                c=(255,255,255,int(alpha*255))
+            elif role in ('ribbonmask','ribbonedge','ribbonshadow'):
+                t=max(0,min(1,(x-42)/136));curve=5+54*(t*t*(3-2*t))
+                alpha=max(0,min(1,curve-y+.5)) if role=='ribbonmask' else max(0,1-abs(y-curve)) if role=='ribbonedge' else .18*math.exp(-max(0,y-curve)/12) if y>curve else 0
+                c=(255,255,255,int(alpha*255))
+            elif role=='ramp':
+                v=int(255-35*y/max(1,h-1));c=(v,v,v,255)
+            elif role=='scanlines':c=(255,255,255,255 if y%4==0 else 0)
+            elif role in ('dockcap','dockmiddle'):
+                d=abs(math.hypot(x-63.5,y-63.5)-60) if role=='dockcap' else min(abs(y-3.5),abs(y-123.5))
+                c=(255,255,255,int(max(0,1-d/2)*80))
+            elif role=='envelope':
+                border=5<x<43 and 6<y<27 and (x<7 or x>41 or y<8 or y>25 or abs(y-(8+abs(x-24)*.65))<1.4)
+                if border:c=(255,255,255,255)
             elif role=='footer':
                 top=8+35*math.exp(-((x-w/2)/145)**4)
                 if y>=top:
                     v=int(225+15*(1-y/h));c=(v,v+2,min(255,v+5),255)
                     if y<top+2:c=(130,205,223,255)
-            elif role in ('tile','focus','balloon'):
+            elif role in ('tile','focus','frame','balloon'):
                 d=_round(x+.5,y+.5,w,h,24 if role=='balloon' else 12)
                 if d<0:
-                    if role=='focus':c=(45,199,231,255 if d>-3 else 0)
+                    if role=='frame':c=(235,240,244,255 if d>-1.5 else 0)
+                    elif role=='focus':c=(45,199,231,255 if d>-3 else 0)
                     else:
                         v=int(239-17*y/h);c=(v,min(255,v+3),min(255,v+5),255)
                         if d>-2:c=(184,200,208,255)
@@ -95,9 +126,9 @@ def _template():
     main=[_pane('Root'),_pane('MenuBackground','pic1',0,width=608,height=456,material=0),_pane('Footer','pic1',0,y=-168,width=608,height=120,material=1),_pane('N_Clock1',parent=0,y=-163)]
     for i in range(12):
         j=len(main);main.append(_pane('N_Ch_c'+str(i+1).zfill(2),parent=0,x=(-210+(i%4)*140),y=142-(i//4)*104,width=132,height=96));main.append(_pane('Tile'+str(i),'pic1',j,width=132,height=96,material=2))
-    layouts=[_layout('chansel/my_ipltop_a',['standard_background','my_TVSheet_b','my_TV_a'],main,['base','board0','tile'])]
+    layouts=[_layout('chansel/my_ipltop_a',['standard_background','standard_footer','my_TV_a'],main,['base','board0','tile'])]
     layouts.append(_layout('chansel/my_ipltop_b',['my_TV_a'],[_pane('Root'),_pane('EmptyTile','pic1',0,width=168,height=88,material=0)]))
-    layouts.append(_layout('chansel/my_ipltop_d',['my_TV_f'],[_pane('Root'),_pane('Focus','pic1',0,width=134,height=98,material=0)]))
+    layouts.append(_layout('chansel/my_ipltop_d',['standard_focus'],[_pane('Root'),_pane('Focus','pic1',0,width=134,height=98,material=0)]))
     controls=[_pane('Root')]
     for name,group,x,y,w,h,mat in [('B_Set','N_BtnL_a0_Set',-255,-192,49,49,0),('B_Bbs','N_BtnR_a0_Bbs',255,-192,49,49,1),('B_ArwL','N_ArwL',-286,35,23,42,2),('B_ArwR','N_ArwR',286,35,23,42,2)]:
         j=len(controls);controls.append(_pane(group,parent=0,x=x,y=y,width=w,height=h));controls.append(_pane(name,'pic1',j,width=w,height=h,material=mat))
@@ -106,7 +137,7 @@ def _template():
     layouts.append(_layout('cmnbtn/mn_sdcard_btn',['mn_Top_SdCard_a'],[_pane('Root'),_pane('Sdcard_00','pic1',0,width=34,height=42,material=0)]))
     textures=['my_Clock_a'+str(i) for i in range(10)]+['my_Clock_aa','my_Clock_ab','my_Clock_b0','my_Clock_b1']
     panes=[_pane('Root')];names=['Clock3','Clock2','ClockTen','Clock1','Clock0','AM_PM_R'];positions=[-34,-17,-2,13,30,54];indices=[10,0,11,0,0,12]
-    for i,(name,x,index) in enumerate(zip(names,positions,indices)):panes.append(_pane(name,'pic1',0,x=x,width=14 if name!='AM_PM_R' else 20,height=24 if name!='AM_PM_R' else 12,material=i))
+    for i,(name,x,index) in enumerate(zip(names,positions,indices)):panes.append(_pane(name,'pic1',0,x=x,width=4 if name=='ClockTen' else 14 if name!='AM_PM_R' else 20,height=24 if name!='AM_PM_R' else 12,material=i))
     clock=_layout('chansel/my_clock_a',textures,panes)
     clock['materials']=[dict(name=name,textures=[index],complex=False,registers=[[0]*4,[255]*4,[0]*4],color=[255]*4) for name,index in zip(names,indices)]
     layouts.append(clock)
