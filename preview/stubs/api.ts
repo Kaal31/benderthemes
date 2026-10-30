@@ -203,7 +203,7 @@ const backend: Record<string, (...a: any[]) => any> = {
   // 3DS home badges: window.__test3dsBadges = {sets:[{name, badges:[{id,name,w,h,url}]}]} (py_modules/n3ds_themes.py list_badges)
   list_3ds_badges: () => (window as any).__test3dsBadges ?? { sets: [], dir: "~/homebrew/data/DeckHomeThemes/skins/3ds-badges" },
   // Xbox 360 packages: window.__testX360 = {"File name": read_x360 result (see tools/x360_corpus.py / py_modules/x360_themes.py)}
-  get_x360_skin: (n: string) => realSkin("x360", n, (window as any).__testX360?.[n] ?? null),
+  get_x360_skin: (n: string) => /^archive-[0-9a-f]{12}$/.test(n) && !R() ? fetch(`/out/import-fixtures/x360-archive/${n}.json`).then(r => r.ok ? r.json() : null) : realSkin("x360", n, (window as any).__testX360?.[n] ?? null),
   get_xbox_skin: (n: string) => realSkin("xbox", n, (window as any).__testXbox ?? null),
   get_ps4_skin: (n: string) => realSkin("ps4", n, (window as any).__testPs4 ?? null),
   import_ps4_downloads: () => (window as any).__testPs4Import ?? { success: true, imported: [], existing: [], errors: [] },
