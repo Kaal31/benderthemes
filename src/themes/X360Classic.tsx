@@ -1,3 +1,4 @@
+import {bladesSmallFallback} from "./xboxFallbackArtwork";
 import {BladesPages,BladesPage} from "./BladesPages";
 import {useBladesSweep} from "./useBladesSweep";
 import {openMarketplace} from "../marketplaceState";
@@ -50,7 +51,7 @@ export function BladesHome() {
   const { W, H } = useStage();
   const st = useSteamStatus();
   const wall = useWallpaper("x360");
-  const a = useAssets("x360-blades");
+  const a = bladesSmallFallback;
   const pickedPic = useX360Gamerpic(); // gamer picture package chosen in Theme options
   const consoleAssets = useAssets("x360-blades-original");
   const original = useMemo(()=>({...bladesFallback,...consoleAssets}),[consoleAssets]);
@@ -185,7 +186,7 @@ export function BladesHome() {
       <Stage background="#c8c7ce">
         <style>{`${BLADES_FONT_CSS}
           @property --dht-blade-x{syntax:"<length>";inherits:true;initial-value:116px}
-          .dht-blades{font-family:"DHT MC360",Tahoma,sans-serif;color:#39362d}
+          .dht-blades{font-family:"DHT Blades",Tahoma,sans-serif;color:#39362d}
           .dht-blades[data-in-page=true]>.dht-x360b-tab,.dht-blades[data-in-page=true]>.dht-blades-active-edge{transform:translateX(-1500px);pointer-events:none!important}
           .dht-blades[data-in-page=true]>.dht-x360b-tab[data-right=true]{transform:translateX(1500px)}
           .dht-blades>.dht-x360b-tab,.dht-blades>.dht-blades-active-edge{transition:transform 240ms ease-in}

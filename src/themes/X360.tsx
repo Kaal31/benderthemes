@@ -1,3 +1,4 @@
+import {useXboxArtwork} from "./xboxFallbackArtwork";
 import {BackgroundMedia} from "../WallpaperMedia";
 import {ProfileAvatar} from "../ProfileAvatar";
 // Xbox 360 Metro-era dashboard (2011): lowercase pivots across the top and a
@@ -63,7 +64,7 @@ function X360MetroHome() {
   const { W, H } = useStage();
   const now = useClock(15000);
   const wall = useWallpaper("x360");
-  const a = useAssets("x360-metro-dash");
+  const a = useXboxArtwork("x360-metro-dash");
   const look = useX360Look();
   const menu = useMenu();
   const games = api.lib.games;

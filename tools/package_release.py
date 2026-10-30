@@ -89,7 +89,7 @@ with zipfile.ZipFile(target,'w',zipfile.ZIP_DEFLATED,compresslevel=6) as z:
                     continue
                 # Console UI originals stay in the separately downloaded GitFlic pack, including offline builds.
                 relparts=p.relative_to(folder).parts
-                if relparts[:1]==('assets',) and len(relparts)>1 and relparts[1] in {'x360-blades-original','x360-kinect-dash','x360-metro-dash','x360-nxe-dash','xbox-original','xmb-ps3'}:
+                if relparts[:1]==('assets',) and len(relparts)>1 and relparts[1] in {'x360-blades','x360-nxe','x360-metro','x360-blades-original','x360-kinect-dash','x360-metro-dash','x360-nxe-dash','xbox-original','xmb-ps3'}:
                     continue
                 # pictures, sounds and videos are already compressed
                 stored=p.suffix.lower() in ('.png','.jpg','.jpeg','.webp','.gif','.mp3','.ogg','.opus','.mp4','.webm','.zip','.p3t','.ctf','.ptf','.nxtheme','.utheme','.mym','.csm')

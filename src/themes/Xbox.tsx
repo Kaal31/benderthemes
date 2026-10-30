@@ -1,3 +1,4 @@
+import {useXboxArtwork} from "./xboxFallbackArtwork";
 import {BackgroundMedia} from "../WallpaperMedia";
 import { openDestination } from "../destinations";
 // Original Xbox dashboard: the glowing green orb with its jelly shells and
@@ -13,7 +14,6 @@ import { showTitle, THEMES, updateSettings } from "../settings";
 import { Badges } from "../badges";
 import { fmtDate, fmtTime, playSound, useClock, useWallpaper } from "../steam";
 import { XBOX_ORIGINAL_FONT_CSS } from "./xboxOriginalFont";
-import { useAssets } from "../assets";
 import { useXboxLook } from "../skins";
 import { TheseusSurface } from "./TheseusSurface";
 import { styleOf } from "../engine/themeStyles";
@@ -99,7 +99,7 @@ function meshPath(W: number, H: number, cx: number, cy: number): string {
 
 function Backdrop({ W, H, cx, cy, animate, plain, tint }: { W: number; H: number; cx: number; cy: number; animate: boolean; plain?: boolean; tint?: string }) {
   const d = useMemo(() => meshPath(W, H, cx, cy), [W, H, cx, cy]);
-  const assets = useAssets("xbox-original");
+  const assets = useXboxArtwork("xbox-original");
   return (
     <div className="dht-xbox-bg" style={{ position: "absolute", inset: 0, overflow: "hidden", filter: tint, background: `var(--dht-xbox-bg, radial-gradient(ellipse at ${(cx / W) * 100}% ${(cy / H) * 100}%, #000d00 0%, #001300 30%, #032603 62%, #073005 100%))` }}>
       {!plain && assets.cellwall && <TheseusSurface src={assets.cellwall} W={W} H={H} animate={animate}/>}
@@ -130,7 +130,7 @@ function Backdrop({ W, H, cx, cy, animate, plain, tint }: { W: number; H: number
 function Orb({ x, y, r, animate, burst, glow = "normal" }: { x: number; y: number; r: number; animate: boolean; burst: number; glow?: string }) {
   const g = glow === "soft" ? { o: 0.35, k: 1.35, f: "brightness(0.85)" } : glow === "bright" ? { o: 1, k: 1.8, f: "brightness(1.12) drop-shadow(0 0 18px rgba(190,255,60,0.6))" } : { o: 0.65, k: 1.55, f: undefined };
   const S = r * 3.4;
-  const assets = useAssets("xbox-original");
+  const assets = useXboxArtwork("xbox-original");
 
 
   return (
@@ -182,7 +182,7 @@ function Orb({ x, y, r, animate, burst, glow = "normal" }: { x: number; y: numbe
 // ───────────── shapes ─────────────
 /** Menu bar with the dashboard's chamfered ends. */
 function Bar({ x, y, w, h, on, children, onClick, className, name }: { x: number; y: number; w: number; h: number; on: boolean; children: ReactNode; onClick?: () => void; className?: string; name?: string }) {
-  const assets=useAssets("xbox-original");
+  const assets=useXboxArtwork("xbox-original");
   const c = h * 0.32;
   const pts = `0,${c * 0.6} ${c * 0.6},0 ${w - c},0 ${w},${c} ${w},${h - c * 0.4} ${w - c * 0.4},${h} ${c},${h} 0,${h - c}`;
   return (
@@ -302,7 +302,7 @@ function Plate({ W, H, title, sub, children }: { W: number; H: number; title: st
 
 /** Rows inside the plate (slanted right end, bright yellow-green when selected). */
 function Rows({ W, H, items, sel, onPick, vis = 5 }: { W: number; H: number; items: { key: string; label: string; value?: string }[]; sel: number; onPick: (i: number) => void; vis?: number }) {
-  const assets=useAssets("xbox-original");
+  const assets=useXboxArtwork("xbox-original");
   const x = W * 0.39;
   const w = W * 0.415;
   const y0 = H * 0.215;

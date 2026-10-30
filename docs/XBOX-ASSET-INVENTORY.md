@@ -22,3 +22,13 @@ Remaining exceptions requiring separate treatment:
 Independently authored fallback SVG icons, procedural surfaces, the Theme Hub banner and the new Kinect Home icon are separate from those optional original packs. Matching the layout does not imply original texture provenance.
 
 No assets were removed or migrated in this audit.
+
+## Authored fallback completion
+
+Added `src/themes/xboxFallbackArtwork.ts` with authored Original Xbox surface/orb/highlight/panel textures, Kinect card faces/glass/floor, Metro backgrounds/vignette/icons/controller legends, and the Blades small icon set. Existing independently authored NXE icons are reused. Optional installed originals still override these images per file. Standalone exports: 61 SVG files in `design/xbox-fallbacks/`, refreshed with `node tools/export_xbox_fallbacks.mjs` (a mix of newly drawn surfaces and reused approved icons).
+
+The MC360 font and converted Original Xbox font payloads have been replaced with local system-font aliases. Blades no longer requests the legacy small bitmap set. Both package builders now exclude all three legacy small sets in addition to the existing optional packs. The source files remain in the checkout for now; no external pack was uploaded or republished. Audio remains a separate outstanding provenance/delivery task, and original avatar data stays separate by user choice.
+
+Validation: all five themes rendered with original packs disabled; no authored-SVG decode failures or browser errors. This verifies functional fallback coverage, not a pixel-identical match to the original dashboards or a blanket provenance audit of all historical source/model data.
+
+Download configuration: the normal Wii/Wii U/Original Xbox/Xbox 360 resource entries in `theme-catalog.json` still point to GitHub releases. Wii's current default entry is only an 82-byte configuration payload, plus separate audio dependencies; Wii U's entry contains six artwork files plus audio dependencies. Optional console UI packs are separately resolved through GitFlic. These local fallback changes do not rewrite existing published GitHub archives.
