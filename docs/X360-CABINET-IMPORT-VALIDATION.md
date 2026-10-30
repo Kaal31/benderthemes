@@ -30,12 +30,3 @@ Validation: all 11 wallpaper files decode in browser; fitted aspect ratios at 12
 The original Kinect video frames (work/kinect-reference/3.jpg) show the signed-in name and square gamer picture at the upper-right, around x=1173 (right edge), y=54 on the 1280×720 canvas. This header was missing in the standard dashboard as well as cabinet previews. Both now share the corrected header: Steam display name, chosen gamer picture or Steam profile image, and live online/notification status. The full-body avatar remains separate. The header opens the existing profile page and returns cleanly with Back. No corner logo was restored.
 
 Browser validation: tests/verify-kinect-profile-header.mjs passes for standard and cabinet layouts, verifies the picture loads, the new avatar engine reaches ready, reference anchors match, and profile open/back works without browser errors.
-
-
-## Expanded archive and profile validation (2026-10-30)
-
-The local archive corpus now contains 18 packages, all successfully parsed. The interactive test chooser is `preview/x360-import-theme-chooser.html`; it can show their decoded wallpapers in Kinect, NXE or Metro. It links to the separate 11-wallpaper cabinet chooser. Extracted fixtures remain under `out/import-fixtures/x360-archive`, outside the shipped plugin. Premium packages are explicitly labelled wallpaper-only: their console scenery and animation are not reproduced. Package target hints are displayed; this does not certify cross-dashboard fidelity.
-
-The shared Kinect profile header now uses a compact 20px normal-weight Segoe UI name, 64px square gamer picture, restrained border and compact online/notification status, anchored at right 106/top 52 in the fitted dashboard. This applies to standard and imported backgrounds.
-
-Validation: TypeScript check passed; profile header browser checks passed on standard and cabinet backgrounds, including new avatar engine readiness and profile open/back; all 18 archive wallpapers switched and decoded in the running Kinect dashboard with no browser exceptions. Chooser enumerates all 18. Screenshots were visually inspected. The preview uses a sample Steam identity; the installed plugin reads the actual user identity.
