@@ -56,7 +56,7 @@ export const BUILT_IN_THEMES = ["reading", "ios6", "gameamp", "old-beta-big-pict
 let downloaded: Record<string, string> | null = null;
 export async function refreshInventory(): Promise<Record<string, string>> {
   const remote = await remoteInventory();
-  downloaded = { ...(remote ?? {}) };
+  downloaded = { reading:"built-in", ...(remote ?? {}) };
   return downloaded;
 }
 /** A console (layout) whose pack is downloaded or built in; true until the inventory has been read. */

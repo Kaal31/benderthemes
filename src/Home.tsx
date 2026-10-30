@@ -216,7 +216,7 @@ function VerifiedThemedHome({ standalone }: { standalone?: boolean }) {
     let alive = true;
     setState("checking");
     const shipped=activeTheme(settings);
-    if((settings.theme === "old-big-picture" || settings.theme === "old-beta-big-picture")){setState("ready");return;}
+    if((settings.theme === "reading" || settings.theme === "old-big-picture" || settings.theme === "old-beta-big-picture")){setState("ready");return;}
     if(shipped?.source==="bundled"){
       void inventory().then(async installed=>{
         if(!installed[shipped.id]){if(alive){setState("missing");openMarketplace("frame",{from:"frame"});}return;}
