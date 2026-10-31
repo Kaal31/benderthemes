@@ -6,7 +6,7 @@ import {useStage} from "../input";
 
 /** MC360 TheDialogs: right-hand 100px edge joined to its tile at x=388 (720x576). */
 export function BladesGuide({menu,assets,animate,side="right",compact=false}:{menu:MenuState;assets:Record<string,string>;animate:boolean;side?:"left"|"right";compact?:boolean}){
- const {W,H}=useStage(),sx=W/720,sy=H/576;
+ const {W,H}=useStage(),sx=W/(compact?1280:720),sy=H/(compact?720:576);
  const panel=useRef<HTMLDivElement>(null);
  const current=menu.stack[menu.stack.length-1];
  const [retained,setRetained]=useState<typeof current|undefined>(current);
