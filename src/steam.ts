@@ -227,9 +227,10 @@ export const PACK_MATCH: Record<string, { re: RegExp[]; suggest: string }> = {
   "old-beta-big-picture": {re:[/^Old Big Picture UI$/i,/^Big Picture Mode$/i,/^Steam Big Picture Ambience$/i],suggest:"Big Picture Mode"},
   "old-big-picture": {re:[/^Old Big Picture UI$/i,/^Big Picture Mode$/i,/^Steam Big Picture Ambience$/i],suggest:"Big Picture Mode"},
   gamecube: {re:[/Nintendo GameCube Menu/i],suggest:"Nintendo GameCube Menu SFX"},
-  wii: {re:[/^wii(?![ _-]*u)/i],suggest:"Wii Menu Sounds"},
+  wii: {re:[/^Wii Menu Sounds$/i,/^Wii Menu Music$/i,/^wii(?![ _-]*u)/i],suggest:"Wii Menu Sounds"},
+  "wiiflow-default": {re:[/^Wii Menu Sounds$/i,/^Wii Menu Music$/i,/^wii(?![ _-]*u)/i],suggest:"Wii Menu Sounds"},
   wiiu: {re:[/wii[ _-]*u/i],suggest:"Wii U Menu Sounds"},
-  switch: {re:[/(^|[^a-z0-9])switch([^a-z0-9]|$)/i],suggest:"Switch Menu Sounds"},
+  switch: {re:[/^Switch$/i,/(^|[^a-z0-9])switch([^a-z0-9]|$)/i],suggest:"Switch"},
   n3ds: {re:[/nintendo\s*3ds|3ds.*home/i],suggest:"Nintendo 3DS UI"},
   minecraft: { re: [/Minecraft Console Legacy/i], suggest: "Minecraft Console Legacy" },
   republic: { re: [/DHT Verified Republic/i], suggest: "DHT Verified Republic" },
@@ -257,7 +258,7 @@ export const PACK_MATCH: Record<string, { re: RegExp[]; suggest: string }> = {
 export type PackKind = "sfx" | "music";
 /** Which PACK_MATCH entry applies (Xbox 360 depends on the chosen dashboard). */
 export function matchKey(theme: ThemeId): string {
-  if (theme === "frame" && ["gamecube", "old-big-picture"].includes(getSettings().activeTheme ?? "")) return getSettings().activeTheme!;
+  if (theme === "frame" && ["gamecube", "old-big-picture", "wiiflow-default"].includes(getSettings().activeTheme ?? "")) return getSettings().activeTheme!;
   if (theme === "x360") return `x360:${getSettings().x360?.style ?? "metro"}`;
   return theme === "aero2" ? "aero" : theme;
 }

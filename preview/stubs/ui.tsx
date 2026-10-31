@@ -1,6 +1,7 @@
 // Browser stand-ins for @decky/ui so the themes run in a normal page.
 // Keyboard: arrows = D-pad, Enter = Ⓐ, Esc/Backspace = Ⓑ, X = Ⓧ, Y = Ⓨ/△, M = ≡, Q/E = L1/R1 (hold Q + arrows = theme switcher), Z/C = L2/R2.
-import { CSSProperties, ReactNode, useEffect, useRef } from "react";
+import {createPreviewPadPoller} from "../controllerInput";
+import { CSSProperties, ReactNode, forwardRef, useEffect, useLayoutEffect, useRef } from "react";
 export function ProgressBarWithInfo({ nProgress, sOperationText }: any) { return <div>{sOperationText}<progress value={nProgress} max={100} /></div>; }
 
 export enum GamepadButton {
@@ -18,7 +19,7 @@ if (typeof window !== "undefined") {
   window.addEventListener("keydown", (k) => {
     const top = stack[stack.length - 1]?.current;
     if (!top) return;
-    if ((k.target as HTMLElement)?.closest('input,textarea,select,[contenteditable="true"]') && k.key !== 'Escape') return;
+    if ((k.target as HTMLElement)?.closest?.('input,textarea,select,[contenteditable="true"]') && k.key !== 'Escape') return;
     const r = k.repeat;
     const dirs: Record<string, number> = { ArrowUp: 9, ArrowDown: 10, ArrowLeft: 11, ArrowRight: 12, PageUp: 11, PageDown: 12 };
     if (dirs[k.key]) return k.preventDefault(), top.onGamepadDirection?.(ev(dirs[k.key], r));
@@ -44,8 +45,13 @@ if (typeof window !== "undefined") {
     if (key === "q") top?.onButtonUp?.(ev(5, false));
     if (key === "e") top?.onButtonUp?.(ev(6, false));
   });
-  const dispatchPreviewButton=(button:number,repeat=false)=>{
+  const dispatchPreviewButton=(button:number,repeat=false,source='Preview buttons')=>{
     const top=stack[stack.length-1]?.current;if(!top)return;
+    if(!repeat)window.dispatchEvent(new CustomEvent('preview-input-observed',{detail:{button,source}}));
+    if((window as any).__previewEmulateSteamFocus){
+      const name=[9,10,11,12].includes(button)?'vgp_ondirection':({1:'vgp_onok',3:'vgp_onsecondaryaction',4:'vgp_onoptions',14:'vgp_onmenu'} as Record<number,string>)[button]??'vgp_onbuttondown';
+      document.activeElement?.dispatchEvent(new CustomEvent(name,{bubbles:true,cancelable:true,detail:{button,is_repeat:repeat,source:0}}));return;
+    }
     const e=ev(button,repeat);
     if([9,10,11,12].includes(button))top.onGamepadDirection?.(e);
     else if(button===1)top.onOKButton?.(e);
@@ -55,26 +61,25 @@ if (typeof window !== "undefined") {
     else top.onButtonDown?.(e);
   };
   window.addEventListener('preview-controller-input',(event:Event)=>dispatchPreviewButton((event as CustomEvent<number>).detail));
-  let previous=new Set<number>(),lastDirection=0;
+  const samplePad=createPreviewPadPoller((button,repeat)=>dispatchPreviewButton(button,repeat,'Gamepad'),button=>stack[stack.length-1]?.current.onButtonUp?.(ev(button,false)));
   const pollGamepad=(now:number)=>{
     if(!document.hidden){
-      const pads=Array.from(navigator.getGamepads?.()??[]).filter((p):p is Gamepad=>!!p?.connected);
-      const pad=pads.find(p=>p.buttons.some(b=>b.pressed)||p.axes.some(a=>Math.abs(a)>.55))??pads[0];
-      const down=new Set<number>();
-      if(pad){for(const [i,button] of [[0,1],[1,2],[2,3],[3,4],[4,5],[5,6],[6,7],[7,8],[9,14],[12,9],[13,10],[14,11],[15,12]])if(pad.buttons[i]?.pressed)down.add(button);
-       if(pad.axes[0]<-.55||pad.axes[2]<-.55)down.add(11);if(pad.axes[0]>.55||pad.axes[2]>.55)down.add(12);if(pad.axes[1]<-.55||pad.axes[3]<-.55)down.add(9);if(pad.axes[1]>.55||pad.axes[3]>.55)down.add(10);
-      }
-      for(const button of down){const repeat=previous.has(button);if(!repeat||([9,10,11,12].includes(button)&&now-lastDirection>180)){dispatchPreviewButton(button,repeat);if([9,10,11,12].includes(button))lastDirection=now;}}
-      for(const button of previous)if(!down.has(button))stack[stack.length-1]?.current.onButtonUp?.(ev(button,false));
-      previous=down;
-    }
+      try{samplePad(Array.from(navigator.getGamepads?.()??[]),now);}catch{/* Browser policy may disable the Gamepad API. Keyboard input remains available. */}
+    }else samplePad([],now);
     requestAnimationFrame(pollGamepad);
   };
   // Node tests import this stub with a minimal window, without a browser frame loop.
   if(typeof requestAnimationFrame === "function") requestAnimationFrame(pollGamepad);
 }
 
-export function Focusable(props: any) {
+export const Focusable=forwardRef<HTMLDivElement,any>(function Focusable(props,forwardedRef) {
+  const surface=useRef<HTMLDivElement|null>(null);
+  useLayoutEffect(()=>{if((window as any).__previewEmulateSteamFocus&&props.navRef){
+    props.navRef.current={TakeFocus:()=>{surface.current?.focus({preventScroll:true});return true;}};
+    const names:Record<string,string>={vgp_ondirection:'onGamepadDirection',vgp_onok:'onOKButton',vgp_onsecondaryaction:'onSecondaryButton',vgp_onoptions:'onOptionsButton',vgp_onmenu:'onMenuButton',vgp_onbuttondown:'onButtonDown'};
+    const listeners=Object.entries(names).map(([name,prop])=>{const listener=(e:Event)=>entry.current.current[prop]?.(e);surface.current?.addEventListener(name,listener);return {name,listener};});
+    return()=>{listeners.forEach(({name,listener})=>surface.current?.removeEventListener(name,listener));props.navRef.current=null;};
+  }},[]);
   const entry = useRef<{ current: Handlers }>({ current: props });
   entry.current.current = props; // latest handlers every render
   useEffect(() => {
@@ -84,8 +89,8 @@ export function Focusable(props: any) {
     };
   }, []);
   const { style, children } = props;
-  return <div style={style as CSSProperties}>{children as ReactNode}</div>;
-}
+  return <div ref={node=>{surface.current=node;if(typeof forwardedRef==='function')forwardedRef(node);else if(forwardedRef)forwardedRef.current=node;}} tabIndex={(window as any).__previewEmulateSteamFocus?0:undefined} style={style as CSSProperties}>{children as ReactNode}</div>;
+});
 
 const toast = (msg: string) => (window as any).__previewToast?.(msg);
 export const Navigation = {
@@ -124,3 +129,7 @@ export const findClassModule = (f: (m: any) => boolean) => {
   const m = { FooterLegend: "dhtPreviewFooterLegend" };
   return f(m) ? m : undefined;
 };
+
+// Reading Room intercepts the physical Steam menu only in the real client.
+export const Router = {};
+export function replacePatch(object:any,property:string,handler:(args:any[])=>any){const original=object[property];object[property]=(...args:any[])=>handler(args);return {unpatch(){object[property]=original;}};}

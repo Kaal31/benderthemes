@@ -2,7 +2,21 @@
 
 In Options → Customize → Sound effects or Music, open **DeckThemes · for this theme** for matching packs or **DeckThemes · other packs** for the rest of our curated catalogue. Missing packs show **Download**; existing packs show **Installed**. Choosing a missing pack downloads and applies it. Failure leaves the previous choice intact and shows an error. Retrying the same choice retries the download.
 
-The catalogue contains 37 unique site IDs: the 20 source packs already used by this project and the 17 additions requested for Wii, 3DS, Switch, XMB, PS5, Xbox 360 dashboard variants, Aero and Wii U. It is not an unrestricted site-wide browser. The full source list lives in `py_modules/deckthemes_audio_catalog.json`.
+The catalogue contains 44 unique site IDs. The full source list lives in `py_modules/deckthemes_audio_catalog.json`.
+
+## Console defaults added where audio was missing
+
+The Hub downloads these original Audio Loader packs as part of the theme download, before activation:
+
+| Theme | Sound effects | Music |
+| --- | --- | --- |
+| Switch | [Switch by EMERALD0874](https://deckthemes.com/packs/view?themeId=28c07fe6-6ead-44b1-8c31-2372cfffcb60) | None, matching the HOME menu |
+| Wii / WiiFlow Default | [Wii Menu Sounds](https://deckthemes.com/packs/view?themeId=10494ed2-1526-4b69-b5b4-67c2f743fccb) | [Wii Menu Music](https://deckthemes.com/packs/view?themeId=f3d6b5e1-55e5-43ab-90f8-51e8a622763a) |
+| Nintendo 3DS | [Nintendo 3DS UI](https://deckthemes.com/packs/view?themeId=a3fddc99-d74a-413a-adc5-3f9d81b4be73) | [Nintendo 3DS Home Menu (No intro)](https://deckthemes.com/packs/view?themeId=9eb68e00-d0ed-4ed2-935b-e6992e588192) |
+
+These five sources were already available as manual downloads; they are now automatic dependencies for those four previously unassigned themes. WiiFlow uses the Wii menu packs. Existing theme audio and user-selected packs are preserved. No Nintendo startup sound is added by these assignments.
+
+Three additional, optional alternatives are available under Customize → Sound effects → DeckThemes · for this theme: [Switch 2 Sounds](https://deckthemes.com/packs/view?themeId=12b04b34-00c1-4600-8e71-eb0a77f47962), [Wii Sports SFX Pack](https://deckthemes.com/packs/view?themeId=fb1780d7-12af-493d-a36d-28700870528a), and [Nintendo DSi UI Sounds](https://deckthemes.com/packs/view?themeId=61867c03-9f24-4c1c-a482-28a6f1841d04). These alternatives do not install automatically or replace the defaults. All eight packs' live metadata, ZIP manifests, and audio contents were verified on 2026-10-22.
 
 Downloads go into `<Decky home>/sounds/DeckThemes-<pack ID>/`, in AudioLoader-compatible format. Existing packs with the same ID are reused, preferring a DHT Verified copy. They are not overwritten or deleted. AudioLoader does not need to be installed. Playback uses the plugin's local media server and existing audio ownership behavior; internet is needed for the initial download only.
 
@@ -23,4 +37,4 @@ The new online pack payloads omit approximately 98.6 MiB of uncompressed local a
 - Browser checks cover the real Customize menu, apply-on-download, reuse and unchanged settings on failure.
 - Packaging checks confirm all 20 existing source IDs are dependencies and every unmatched sound folder remains in online theme ZIPs.
 
-No new theme assets or plugin release have been published as part of this implementation.
+The new assignments download the original packs from DeckThemes; their audio is not republished in our assets repository.

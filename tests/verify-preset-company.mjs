@@ -1,6 +1,6 @@
 import {build} from 'esbuild';import assert from 'node:assert/strict';
-const code=await build({stdin:{contents:'export {presetPickerState,getPresets,applyPreset} from "./src/presets";export {seedSettings,getSettings,updateSettings} from "./src/settings";',resolveDir:process.cwd()},bundle:true,write:false,platform:'node',format:'esm',alias:{'@decky/api':'./preview/stubs/api.ts'}});
-globalThis.window={};const m=await import('data:text/javascript;base64,'+Buffer.from(code.outputFiles[0].text).toString('base64'));
+const code=await build({stdin:{contents:'export {presetPickerState,getPresets,applyPreset} from "./src/presets";export {seedSettings,getSettings,updateSettings} from "./src/settings";',resolveDir:process.cwd()},bundle:true,write:false,platform:'node',format:'esm',alias:{'@decky/api':'./preview/stubs/api.ts','@decky/ui':'./preview/stubs/ui.tsx'}});
+globalThis.window=new EventTarget();const m=await import('data:text/javascript;base64,'+Buffer.from(code.outputFiles[0].text).toString('base64'));
 m.seedSettings({theme:'ps3'});
 for(const company of ['Microsoft','Bonus','Sony']){
  m.updateSettings({presetCompany:company});let state=m.presetPickerState(m.getSettings(),m.getPresets());assert.equal(state.company,company);assert.ok(state.options.some(o=>o.data===state.selected));assert.equal(m.getSettings().theme,'ps3');

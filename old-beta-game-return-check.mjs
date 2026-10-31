@@ -1,0 +1,15 @@
+import assert from 'node:assert/strict';
+import {launch} from './tests/browser.mjs';
+const browser=await launch();
+try{
+ const page=await browser.newPage({viewport:{width:1280,height:1100}}),errors=[];page.on('pageerror',e=>errors.push(e.message));
+ await page.emulateMedia({reducedMotion:'reduce'});await page.goto('http://127.0.0.1:8793/preview/preview.html?theme=old-beta-big-picture');const root=page.locator('.dht-oldbeta').first();await root.waitFor();await root.locator('[data-category="1"]').click();await page.keyboard.press('Enter');const game=root.locator(':scope > .beta-game-page');await game.waitFor();await page.emulateMedia({reducedMotion:'no-preference'});
+ for(let i=0;i<6;i++){await page.keyboard.press('ArrowRight');await page.waitForTimeout(80);const detail=game.locator('.beta-game-detail');assert.equal(await detail.evaluate(n=>getComputedStyle(n).scrollbarWidth),'none');assert.equal(await detail.evaluate(n=>getComputedStyle(n,'::-webkit-scrollbar').display),'none');assert.equal(await root.evaluate(n=>n.scrollTop),0);}
+ for(let i=0;i<6;i++)await page.keyboard.press('ArrowLeft');await page.waitForTimeout(400);await page.keyboard.press('Enter');for(let i=0;i<5;i++)await page.keyboard.press('ArrowDown');
+ const visible=await page.locator(':focus').evaluate(n=>{const r=n.getBoundingClientRect(),p=n.closest('.beta-game-detail').getBoundingClientRect();return r.top>=p.top-1&&r.bottom<=p.bottom+1;});assert.equal(visible,true,'Focused detail actions stay visible without a scrollbar');
+ await page.keyboard.press('Escape');await page.keyboard.press('Escape');await game.evaluate(n=>n.getAnimations().forEach(a=>{a.pause();a.currentTime=399.99;}));assert.equal(await game.getAttribute('data-closing'),'true');await game.evaluate(n=>n.getAnimations().forEach(a=>a.finish()));await game.waitFor({state:'detached'});assert.equal(await page.locator(':focus').getAttribute('data-selected'),'true');
+ await root.evaluate(async n=>{n.querySelector('.beta-cover[data-selected=true]').click();await new Promise(r=>requestAnimationFrame(r));n.querySelector('.beta-game-page').getAnimations().forEach(a=>{a.pause();a.currentTime=100;});});
+ const result=await game.evaluate(async n=>{const before=getComputedStyle(n).transform;document.dispatchEvent(new KeyboardEvent('keydown',{key:'Escape',code:'Escape',bubbles:true}));await new Promise(r=>requestAnimationFrame(r));n.getAnimations().forEach(a=>{a.pause();a.currentTime=0;});return {before,after:getComputedStyle(n).transform,animations:n.getAnimations().length};});assert.equal(result.before,result.after,'Interrupted entrance must not snap before exiting');assert.equal(result.animations,1);
+ await game.evaluate(n=>n.getAnimations().forEach(a=>a.play()));await page.emulateMedia({reducedMotion:'reduce'});await game.waitFor({state:'detached'});assert.equal(await root.evaluate(n=>n.scrollTop),0);assert.deepEqual(errors,[]);
+ console.log('PASS: game preview navigation hides scrollbars, focused actions scroll into view, Back restores Library focus, interrupted entrance and reduced motion clean up.');
+}finally{await browser.close();}

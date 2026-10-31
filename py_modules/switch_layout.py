@@ -16,7 +16,7 @@ BASE_PANES = {"N_Root","N_GameRoot", "N_Game", "N_ScrollArea", "N_ScrollWindow",
 DOCK = {"L_BtnNoti": "news", "L_BtnShop": "shop", "L_BtnPvr": "album", "L_BtnCtrl": "controller", "L_BtnSet": "settings", "L_BtnPow": "power", "L_BtnLR":"online", "L_BtnSplay":"gameShare", "L_BtnVgc":"virtualCards"}
 GAME_PANES = {"RootPane", "P_IconGame"}
 
-GAME_BINDINGS={"RootPane":"game", "N_Root":"gameRoot", "P_IconGame":"game", "N_BtnFocusKey":"gameFocus", "P_InnerCursor":"gameInnerCursor", "P_BtnBase":"gameBase", "P_Blank":"gameBlank", "P_BtnTouch":"gameTouch", "P_BtnDecideKey":"gameDecide", "N_Suspend":"gameSuspend", "B_Hit":"gameHit", "N_DecideTouch":"gameDecideRoot", "P_Account_00":"gameAccount", "N_Tip":"gameTooltip", "N_TextPos":"gameTextRoot", "UF_Cursor":"gameCursor", "L_Balloon":"gameBalloon", "N_Delete":"gameDelete", "P_Account_01":"gameAccount1", "P_Account_02":"gameAccount2", "P_Account_03":"gameAccount3"}
+GAME_BINDINGS={"RootPane":"game", "N_Root":"gameRoot", "P_IconGame":"game", "N_BtnFocusKey":"gameFocus", "P_InnerCursor":"gameInnerCursor", "P_BtnBase":"gameBase", "P_Blank":"gameBlank", "P_BtnTouch":"gameTouch", "P_BtnDecideKey":"gameDecide", "N_Suspend":"gameSuspend", "B_Hit":"gameHit", "N_DecideTouch":"gameDecideRoot", "P_Account_00":"gameAccount", "N_Tip":"gameTooltip", "N_TextPos":"gameTextRoot", "UF_Cursor":"gameCursor", "L_Balloon":"gameBalloon", "N_Delete":"gameDelete", "P_Account_01":"gameAccount1", "P_Account_02":"gameAccount2", "P_Account_03":"gameAccount3", "N_DecideKey":"gameDecideKeyRoot", "P_Suspend_00":"gameSuspendBase"}
 
 def number(value, limit=10000000):
     return isinstance(value, (int, float)) and not isinstance(value, bool) and math.isfinite(value) and abs(value) <= limit
@@ -81,6 +81,9 @@ def convert_layout(archive, target, warning_limit=80):
         if not isinstance(document, dict):
             warnings.add(member + ": expected an object")
             continue
+        if member=='layout.json':
+            if number(document.get('TargetFirmware')):result['targetFirmware']=int(document['TargetFirmware'])
+            if isinstance(document.get('HideOnlineBtn'),bool):result['hideOnlineButton']=document['HideOnlineBtn']
         files = document.get("Files", [])
         if not isinstance(files, list):
             warnings.add(member + ": invalid Files")
@@ -159,6 +162,8 @@ def convert_layout(archive, target, warning_limit=80):
                     result.setdefault("groups",{})[filename+":"+name]=[slot(filename,p) for p in group["Panes"]]
                 elif filename.rsplit("/",1)[-1] in HUD_PANES and isinstance(group.get("Panes"),list) and all(p in HUD_PANES[filename.rsplit("/",1)[-1]] for p in group["Panes"]):
                     result.setdefault("groups",{})[filename+":"+name]=[slot(filename,p) for p in group["Panes"]]
+                elif filename.rsplit("/",1)[-1] in SCENE_PANES and isinstance(group.get("Panes"),list) and all(p in SCENE_PANES[filename.rsplit("/",1)[-1]] for p in group["Panes"]):
+                    result.setdefault("groups",{})[filename+":"+name]=[slot(filename,p) for p in group["Panes"]]
                 elif filename.endswith("FooterAll.bflyt") and group.get("Panes")==["N_Root_00"]:
                     result.setdefault('groups',{})[filename+':'+name]=['footer']
                 elif filename.endswith("DBaseNml.bflyt") and group.get("Panes")==["N_Root"]:
@@ -207,7 +212,7 @@ def convert_layout(archive, target, warning_limit=80):
                 name = entry.get("Name")
                 semantic = "batteryNumber" if filename=="anim/Hud_BatteryNum.bflan" and name=="N_BatteryNum" else "scene" if filename.startswith("anim/RdtBase_") and name=="N_Root" else "background" if name in ("L_BgNml", "exelixBG") else GAME_BINDINGS.get(name) if "RdtBtnIconGame_" in filename else None
                 suffix=filename.rsplit("_",1)[-1].removesuffix(".bflan")
-                event = "battery" if filename=="anim/Hud_BatteryNum.bflan" else {"Active":"active","Inactive":"inactive","Blank":"loading","BaseOut":"ready","SuspendIn":"running","FocusTouch":"touch","FocusKey":"focus","EffectLaunchOut":"launch","01":"user1"}.get(suffix) if "RdtBtnIconGame_" in filename else "exit" if suffix=="SystemAppletIn" else "enter" if any(x in filename for x in ("Enter", "GameOut", "SystemAppletOut")) else None
+                event = "battery" if filename=="anim/Hud_BatteryNum.bflan" else {"Active":"active","Inactive":"inactive","Blank":"loading","BaseOut":"ready","SuspendIn":"running","FocusTouch":"touch","FocusKey":"focus","EffectLaunchOut":"launch","DecideKey":"decide","SuspendOut":"stopped","SuspendText":"runningText","01":"user1"}.get(suffix) if "RdtBtnIconGame_" in filename else "exit" if suffix=="SystemAppletIn" else "enter" if any(x in filename for x in ("Enter", "GameOut", "SystemAppletOut")) else None
                 # Layout names can contain underscores (e.g. WaiticonS_Sound).
                 # Resolve the longest resource prefix before its event suffix.
                 known=set(SCENE_PANES)|set(HUD_PANES)|set(WIDGET_PANES)
@@ -268,6 +273,10 @@ def convert_layout(archive, target, warning_limit=80):
                             prop=21
                         elif tag.get("TagType")=="FLEU" and track.get("FLEUEntryName")=="S_DropShadowVolume" and prop==0 and track.get("Index",0)==0 and name in (set(WIDGET_PANES.get(anim_file,[]))|set(SCENE_PANES.get(anim_file,[]))|set(HUD_PANES.get(anim_file,[]))):
                             prop=25
+                        elif tag.get("TagType")=="FLVC" and isinstance(prop,int) and 0<=prop<16 and track.get("Index",0)==0:
+                            prop=32+prop # Four independent RGBA vertex colors.
+                        elif tag.get("TagType")=="FLMC" and isinstance(prop,int) and 0<=prop<8 and track.get("Index",0)==0:
+                            prop=64+prop # Black and white material registers.
                         elif tag.get("TagType") == "FLVC" and prop == 16:
                             prop = 16  # whole-pane alpha in NXTheme animation exports
                         elif tag.get("TagType") == "FLVI" and prop == 0:

@@ -78,7 +78,38 @@ export interface ThemeText {
 const getVita = callable<[name: string], VitaSkin | null>("get_vita_skin");
 const getP3t = callable<[name: string], P3tSkin | null>("get_p3t");
 const getPsp = callable<[name: string], P3tSkin | null>("get_psp_skin");
-export const listSkins = callable<[], { p3t: string[]; vita: string[]; psp?: string[]; x360?: string[]; x360pics?: string[]; x360names?: Record<string, string>; xbox?: string[]; wii?: string[]; n3ds?: string[]; dir: string }>("list_skins");
+export interface Ps4Skin {
+  name: string;
+  background?: string | null;
+  functionBackground?: string | null;
+  icons: Record<string, string>;
+  glows: Record<string, string>;
+  colors: Record<string, string>;
+  preview?: string | null;
+  dynamic: boolean;
+  animation?: { image: string; durationMs: number }[];
+  errors: string[];
+  soundPack?: string;
+  musicPack?: string;
+  musicNeedsDecoder?: boolean;
+  musicNeedsCompress?: boolean;
+}
+const getPs4 = callable<[name: string], Ps4Skin | { error: string } | null>("get_ps4_skin");
+const ps4Cache = new Map<string, Ps4Skin | null>();
+onResourcesChanged(() => ps4Cache.clear());
+async function loadPs4(name: string): Promise<Ps4Skin | null> {
+  const skin = await getPs4(name);
+  return skin && "error" in skin ? { name, icons: {}, glows: {}, colors: {}, dynamic: false, errors: [skin.error] } : skin;
+}
+export function usePs4Skin(): Ps4Skin | null {
+  const settings = useSettings();
+  const skin = useSkin(settings.ps4Skin ?? "", ps4Cache, loadPs4);
+  const effects = themeFx(settings, `ps4:${settings.ps4Skin ?? ""}`);
+  useSkinPack("ps4", effects.sounds ? skin : null);
+  useSkinPack("ps4", skin?.musicPack ? { soundPack: skin.musicPack } as P3tSkin : null, "music");
+  return skin;
+}
+export const listSkins = callable<[], { ps4?: string[]; p3t: string[]; vita: string[]; psp?: string[]; x360?: string[]; x360pics?: string[]; x360names?: Record<string, string>; xbox?: string[]; wii?: string[]; n3ds?: string[]; dir: string }>("list_skins");
 
 /** Xbox 360 theme or gamer picture package (STFS) from skins/x360/. */
 export interface X360Skin {
@@ -208,8 +239,12 @@ export function useXboxLook(): { bg?: string; bgColor?: string; css: string } {
   return { bg, bgColor, css: vars ? `.dht-root{${vars}}` : "" };
 }
 
-/** Wii System Menu theme (.mym / .csm) from skins/wii/: the menu wallpaper and the pointer hands. */
+/** Imported Wii System Menu assets, scene data and compatibility diagnostics. */
 export interface WiiSkin {
+  scene?: import("./themes/WiiNativeScene").WiiScene;
+  warnings?:string[];variants?:string[];selectedMember?:string;stages?:string[];
+  compatibility?:{textures:number;layouts:number;animations:number;baseRequired:boolean;partial:boolean;standardTextures?:number;standardLayouts?:number};
+  defaultBaseApplied?:boolean;baseType?:"built-in"|"user";
   kind: "mym" | "csm";
   name: string;
   id: string;
@@ -221,25 +256,28 @@ export interface WiiSkin {
   cursorSize: number;
   errors: string[];
 }
-const getWii = callable<[name: string], WiiSkin | null>("get_wii_skin");
-const wiiCache = new BoundedCache<string, WiiSkin | null>();
+const getWii = callable<[name: string, member?: string, base?:string], WiiSkin | null>("get_wii_skin");
+const wiiCache = new Map<string, WiiSkin | null>();
 onResourcesChanged(() => wiiCache.clear());
-const loadWii = async (name: string): Promise<WiiSkin | null> => (await getWii(name).catch(() => null)) ?? null;
+const loadWii = async (key: string): Promise<WiiSkin | null> => {const [name,member,base]=JSON.parse(key) as [string,string,string];return (await getWii(name,member,base).catch(()=>null))??null;};
 /** The Wii theme chosen in Theme options (null while loading / none). */
 export function useWiiSkin(): WiiSkin | null {
   const s = useSettings();
-  const sk = useSkin(s.wiiSkin ?? "", wiiCache, loadWii);
+  const sk = useSkin(s.wiiSkin?JSON.stringify([s.wiiSkin,s.wiiSkinMember??"",s.wiiSkinBase??""]):"", wiiCache, loadWii);
   return sk && sk.name !== undefined ? sk : null;
 }
 /** What the Wii theme gives the Wii menu after the per-file switches (ThemeFx key `wii:<file>`: "Theme wallpaper" =
  *  background, "Theme pointer hand" = icons). The home sets --dht-wii-skin-wallpaper from `wallpaper`. */
-export function useWiiLook(): { wallpaper?: string; fit: "cover" | "stretch"; cursor?: string; cursors: { a?: string; b?: string; c?: string } } {
+const getWiiStandard=callable<[],WiiSkin>("get_wii_standard");
+let standardPromise:Promise<WiiSkin>|undefined;
+function useWiiStandard(enabled:boolean){const [skin,setSkin]=useState<WiiSkin>();useEffect(()=>{if(!enabled)return;let live=true;(standardPromise??=getWiiStandard()).then(s=>{if(live)setSkin(s);}).catch(()=>{standardPromise=undefined;});return()=>{live=false;};},[enabled]);return skin;}
+export function useWiiLook(enabled=true): { wallpaper?: string; fit: "cover" | "stretch"; cursor?: string; cursors: { a?: string; b?: string; c?: string };scene?:WiiSkin["scene"];skin?:WiiSkin } {
   const s = useSettings();
-  const sk = useWiiSkin();
+  const imported = useWiiSkin(),standard=useWiiStandard(enabled),sk=imported??standard;
   const fx = themeFx(s, `wii:${s.wiiSkin ?? ""}`);
   if (!sk) return { fit: "cover", cursors: {} };
   const cursors = fx.icons ? sk.cursors : {};
-  return { wallpaper: fx.background ? sk.wallpaper ?? undefined : undefined, fit: sk.wallpaperFit, cursor: cursors.a, cursors };
+  return { wallpaper: fx.background ? sk.wallpaper ?? undefined : undefined, fit: sk.wallpaperFit, cursor: cursors.a, cursors,scene:sk.scene,skin:imported??undefined };
 }
 
 /** Nintendo 3DS HOME Menu theme (body_LZ.bin, alone or in a .zip / folder) from skins/3ds/. */
@@ -397,7 +435,7 @@ let compressListener: ((folder: string) => void) | null = null;
 /** steam.ts compresses decoded theme music (WAV → Ogg Opus) when the UI supports it. */
 export const onMusicCompress = (cb: (folder: string) => void) => { compressListener = cb; };
 export const skinSoundPack = (theme: string, kind: "sfx" | "music" = "sfx"): string => skinPacks[kind === "sfx" ? theme : `${theme}:music`] ?? "";
-function useSkinPack(theme: "ps3" | "psp" | "vita", skin: { soundPack?: string } | null, kind: "sfx" | "music" = "sfx") {
+function useSkinPack(theme: "ps4" | "ps3" | "psp" | "vita", skin: { soundPack?: string } | null, kind: "sfx" | "music" = "sfx") {
   const key = kind === "sfx" ? theme : `${theme}:music`;
   const folder = skin?.soundPack ?? "";
   useEffect(() => {
@@ -441,9 +479,10 @@ export const cachedPspSkin = (name: string) => pspCache.get(name);
 
 /** One-off read of any console theme file (presets v2: a preset's slots can take a wallpaper or icons from a theme file
  *  of another console, see src/engine/assets.ts). Cached with the hooks above; null when it can't be read. */
-export async function loadSkinFile(kind: "p3t" | "psp" | "vita" | "x360" | "xbox" | "wii" | "n3ds", name: string): Promise<any> {
+export async function loadSkinFile(kind: "ps4" | "p3t" | "psp" | "vita" | "x360" | "xbox" | "wii" | "n3ds", name: string): Promise<any> {
   if (!name) return null;
   const pick: Record<string, [Map<string, any>, (n: string) => Promise<any>, ((n: string) => any) | undefined]> = {
+    ps4: [ps4Cache, loadPs4, undefined],
     p3t: [p3tCache, getP3t, override.p3t], psp: [pspCache, getPsp, override.psp], vita: [vitaCache, getVita, override.vita],
     x360: [x360Cache, loadX360, undefined], xbox: [xboxCache, loadXbox, undefined], wii: [wiiCache, loadWii, undefined], n3ds: [n3dsCache, loadN3ds, undefined],
   };

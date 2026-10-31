@@ -19,6 +19,8 @@ export function SwitchGameTitle({conversion,effects,title,running,dark,modern,en
    // Native identities take precedence. Compatibility aliases support old cached skins.
    const patch=conversion.nativePanes?native:effects[aliases[file]?.[node.name]];if(patch)result[node.slot]=patch;
   }
+  // Static root scale is already included in the host's slot dimensions.
+  const root=result['RdtBtnIconGame:RootPane'];if(root)result['RdtBtnIconGame:RootPane']={...root,Scale:{X:1,Y:1},Rotation:{X:0,Y:0,Z:0}};
   // qlaunch reserves card-prefix width only while a cartridge prefix is present.
   // The host library has no inserted-cartridge service, so its prefix is absent.
   const balloon=conversion.nativePanes?.RdtBtnIconGame?.L_Balloon??effects.gameBalloon;
@@ -37,10 +39,12 @@ export function SwitchGameTitle({conversion,effects,title,running,dark,modern,en
  const animations=useMemo(()=>{
   const native=Object.entries(conversion.nativeAnimations??{}).filter(([file])=>file in defaults).flatMap(([file,list])=>list.map(a=>({...a,pane:file+':'+a.pane})));
   const compatible=conversion.nativeAnimations?[]:conversion.animations.filter(a=>a.pane==='gameTooltip'||a.pane==='gameBalloon').map(a=>({...a,pane:'RdtBtnIconGame:'+(a.pane==='gameTooltip'?'N_Tip':'L_Balloon')}));
-  return composeSwitchAnimations(SCENE_MOTION[profile].RdtBalloon,[...compatible,...native],conversion.animationFiles);
+  const scale=conversion.nativePanes?.RdtBtnIconGame?.RootPane?.Scale;
+  const normalized=native.map(a=>a.pane==='RdtBtnIconGame:RootPane'?{...a,tracks:a.tracks.map(t=>[0,1,6,7].includes(t.property)?{...t,keys:t.keys.map(k=>{const divisor=(t.property===0||t.property===6?scale?.X:scale?.Y)??1;return divisor?{...k,value:k.value/divisor,slope:k.slope/divisor}:k;})}:t)}:a);
+  return composeSwitchAnimations(SCENE_MOTION[profile].RdtBalloon,[...compatible,...normalized],conversion.animationFiles);
  },[conversion,defaults,profile]);
  return <div className="dht-switch-native-title" style={{position:'absolute',left:'50%',top:'50%',width:0,height:0,transform:`scale(${unitX},${unitY})`,pointerEvents:'none'}}>
-  <SwitchSceneTree list={defaults.RdtBtnIconGame} root="N_Tip" parts={defaults} effects={patches} {...{animations,dark,enabled}} materials={materials} events={['active','enter','rest','focus']} render={(node,effect)=>{
+  <SwitchSceneTree list={defaults.RdtBtnIconGame.filter(node=>node.name==='RootPane'||node.name==='N_Tip'||node.parent==='N_Tip')} root="RootPane" parts={defaults} effects={patches} {...{animations,dark,enabled}} materials={materials} events={['active','enter','rest','focus']} render={(node,effect)=>{
    if(node.name==='N_Scissor')return {style:{clipPath:'inset(0)'}};
    if(node.name==='P_Reset'||node.name==='W_Fade'||node.name==='P_Color'||node.name==='P_Card')return {hidden:true};
    if(node.type==='txt1'){
@@ -48,7 +52,7 @@ export function SwitchGameTitle({conversion,effects,title,running,dark,modern,en
     // The native title uses the text as a mask for the P_Color pane.
     const mask=defaults.RdtBalloon.find(p=>p.name==='P_Color')!,maskInk=resolvePalette(mergeSceneEffect(mergeSceneEffect(mask.effect,mask.material?materials[mask.material]:undefined),patches[mask.slot]),dark);
     const corners=effect.corners?.ColorTR?{ColorTL:effect.corners.ColorTR,ColorTR:effect.corners.ColorTR,ColorBL:effect.corners.ColorBR??effect.corners.ColorTR,ColorBR:effect.corners.ColorBR??effect.corners.ColorTR}:undefined;
-    return {className:node.name==='T_Main'?'dht-switch-native-title-text':undefined,content:<div style={{position:'absolute',inset:0,display:'flex'}}><SwitchMaterial surfaceStyle={false} effect={{...maskInk,corners}}><SwitchText text={text} {...{metrics,enabled}} marquee={node.name==='T_Main'}/></SwitchMaterial></div>};
+    return {className:node.name==='T_Main'?'dht-switch-native-title-text':undefined,content:<div style={{position:'absolute',inset:0,display:'flex'}}><SwitchMaterial surfaceStyle={false} effect={{...maskInk,corners:corners?Object.fromEntries(Object.entries(corners).map(([key,rgba])=>[key,rgba.map((value,i)=>value*(maskInk?.corners?.[key]?.[i]??255)/255)])):maskInk?.corners}}><SwitchText text={text} {...{metrics,enabled}} marquee={node.name==='T_Main'}/></SwitchMaterial></div>};
    }
    return {};
   }}/>

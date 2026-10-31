@@ -1411,11 +1411,11 @@
     {
       "id": "castle",
       "name": "Floating Castle",
-      "version": "1.0.1",
+      "version": "1.0.3",
       "theme": "castle",
       "description": "Artwork, sounds and optional skins for Floating Castle.",
       "minPluginVersion": "1.10.2",
-      "size": 6283940,
+      "size": 6998736,
       "resources": [
         "cinematic/castle.jpg",
         "cinematic/castle.mp4",
@@ -1428,22 +1428,26 @@
         "sounds/DHT Verified SAO/ExitMenu.wav",
         "sounds/DHT Verified SAO/MenuTick.wav",
         "sounds/DHT Verified SAO/pack.json",
-        "sounds/DHT Verified SAO/simplify sounds.txt"
+        "sounds/DHT Verified SAO/simplify sounds.txt",
+        "cinematic/castle.webm"
       ],
-      "unpackedSize": 6771669,
-      "sha256": "2564214dde8c0e036739f543fb19bf21a745a5812134ab036080e383e27c5879",
-      "url": "https://github.com/Kaal31/deckthemes-assets/releases/download/castle-v1.0.1/ThemeAssets-Floating-Castle-v1.0.1.zip",
+      "unpackedSize": 7487867,
+      "sha256": "cd5b72558207fe3bc421fd2a2ef39f9aea269fb4978304e8b6f940e8ff0026e9",
+      "url": "https://github.com/Kaal31/deckthemes-assets/releases/download/castle-v1.0.3/ThemeAssets-Floating-Castle-v1.0.3.zip",
       "preview": null,
-      "poster": null
+      "poster": null,
+      "backgroundVideos": [
+        "cinematic/castle.webm"
+      ]
     },
     {
       "id": "republic",
       "name": "Republic Office",
-      "version": "1.0.1",
+      "version": "1.0.3",
       "theme": "republic",
       "description": "Artwork, sounds and optional skins for Republic Office.",
       "minPluginVersion": "1.10.2",
-      "size": 11684804,
+      "size": 12424587,
       "resources": [
         "cinematic/republic.jpg",
         "cinematic/republic.mp4",
@@ -1456,13 +1460,17 @@
         "sounds/DHT Verified Republic/pack.json",
         "sounds/DHT Verified Republic/slider.wav",
         "sounds/DHT Verified Republic/tab.wav",
-        "sounds/DHT Verified Republic/tab_alt.wav"
+        "sounds/DHT Verified Republic/tab_alt.wav",
+        "cinematic/republic.webm"
       ],
-      "unpackedSize": 11840348,
-      "sha256": "a7b780a6683963e9aad7dee30f1720f3084cafb383d7db899152f5b30fffae59",
-      "url": "https://github.com/Kaal31/deckthemes-assets/releases/download/republic-v1.0.1/ThemeAssets-Republic-Office-v1.0.1.zip",
+      "unpackedSize": 12582119,
+      "sha256": "15d1747a41a9a6a8444eb5ed0eea0dbb3edee037fdb9800c394761a1f2d6b63b",
+      "url": "https://github.com/Kaal31/deckthemes-assets/releases/download/republic-v1.0.3/ThemeAssets-Republic-Office-v1.0.3.zip",
       "preview": null,
-      "poster": null
+      "poster": null,
+      "backgroundVideos": [
+        "cinematic/republic.webm"
+      ]
     },
     {
       "id": "iisu",
@@ -1587,30 +1595,44 @@
     {
       "id": "nazarick",
       "name": "Nazarick",
-      "version": "1.0.2",
+      "version": "1.0.6",
       "theme": "nazarick",
       "description": "Artwork, sounds and optional skins for Nazarick.",
       "minPluginVersion": "1.10.2",
-      "size": 43025690,
+      "size": 66306706,
       "resources": [
         "assets/nazarick/downloads-video.mp4",
+        "assets/nazarick/downloads-video.webm",
         "assets/nazarick/downloads.png",
         "assets/nazarick/friends.png",
         "assets/nazarick/home-video.mp4",
+        "assets/nazarick/home-video.webm",
         "assets/nazarick/home.png",
         "assets/nazarick/library.png",
         "assets/nazarick/settings.png",
         "assets/nazarick/store-video.mp4",
+        "assets/nazarick/store-video.webm",
         "assets/nazarick/store.png",
         "assets/nazarick/wheel.png",
         "sounds/DHT Nazarick Music/menu_music.mp3",
-        "sounds/DHT Nazarick Music/pack.json"
+        "sounds/DHT Nazarick Music/pack.json",
+        "assets/nazarick/library-video.mp4",
+        "assets/nazarick/library-video.webm",
+        "assets/nazarick/settings-video.mp4",
+        "assets/nazarick/settings-video.webm"
       ],
-      "unpackedSize": 43478604,
-      "sha256": "d74359fcda411ced75185cddc13c805b47bdfad2da6f1f3b7608925fa5cce6c3",
-      "url": "https://github.com/Kaal31/deckthemes-assets/releases/download/nazarick-v1.0.2/ThemeAssets-Nazarick-v1.0.2.zip",
+      "unpackedSize": 66811112,
+      "sha256": "3228e4a2fe8e05c63f2ad203d05672948e4e97e3fe4a5c68d32c6968270f9140",
+      "url": "https://github.com/Kaal31/deckthemes-assets/releases/download/nazarick-v1.0.6/ThemeAssets-Nazarick-v1.0.6.zip",
       "preview": null,
-      "poster": null
+      "poster": null,
+      "backgroundVideos": [
+        "assets/nazarick/downloads-video.webm",
+        "assets/nazarick/home-video.webm",
+        "assets/nazarick/store-video.webm",
+        "assets/nazarick/library-video.webm",
+        "assets/nazarick/settings-video.webm"
+      ]
     },
     {
       "id": "extras",
@@ -1701,12 +1723,12 @@
     {
       "id": "old-big-picture",
       "name": "Old Big Picture",
-      "version": "1.0.0",
+      "version": "1.0.2",
       "theme": null,
       "frameTheme": "old-big-picture",
       "description": "Downloadable media for Old Big Picture.",
       "minPluginVersion": "1.10.10",
-      "size": 2127083,
+      "size": 5755842,
       "resources": [
         "assets/frame-themes/old-big-picture/assets/downloads.png",
         "assets/frame-themes/old-big-picture/assets/exit.png",
@@ -1719,27 +1741,49 @@
         "assets/frame-themes/old-big-picture/assets/steam_home.png",
         "assets/frame-themes/old-big-picture/sounds/activation.wav",
         "assets/frame-themes/old-big-picture/sounds/focus_change.wav",
-        "assets/frame-themes/old-big-picture/sounds/txting_press_b.wav"
+        "assets/frame-themes/old-big-picture/sounds/txting_press_b.wav",
+        "sounds/Old Big Picture UI/deck_ui_default_activation.wav",
+        "sounds/Old Big Picture UI/deck_ui_hide_modal.wav",
+        "sounds/Old Big Picture UI/deck_ui_into_game_detail.wav",
+        "sounds/Old Big Picture UI/deck_ui_launch_game.wav",
+        "sounds/Old Big Picture UI/deck_ui_navigation.wav",
+        "sounds/Old Big Picture UI/deck_ui_out_of_game_detail.wav",
+        "sounds/Old Big Picture UI/deck_ui_tab_transition_01.wav",
+        "sounds/Old Big Picture UI/deck_ui_tile_scroll.wav",
+        "sounds/Old Big Picture UI/pack.json",
+        "assets/frame-themes/old-big-picture/intro.mp4",
+        "assets/frame-themes/old-big-picture/intro-source.json"
       ],
-      "unpackedSize": 2305449,
-      "sha256": "8ddc35eaef96e598c64f7b288e9a9b100d3160197b7596c29fcc70a15bff7b69",
-      "url": "https://github.com/Kaal31/deckthemes-assets/releases/download/old-big-picture-v1.0.0/ThemeAssets-old-big-picture-v1.0.0.zip",
+      "unpackedSize": 6427901,
+      "sha256": "54fe42c6d121340ca6a8129df13efb8be8ef37efe3280f274b565aed78dee26f",
+      "url": "https://github.com/Kaal31/deckthemes-assets/releases/download/old-big-picture-v1.0.2/ThemeAssets-old-big-picture-v1.0.2.zip",
       "preview": null,
       "poster": null,
       "audioPacks": [
         "cadb90ee-b772-493c-8d7d-72443029960a",
         "e5875375-c3c0-4ab2-a1d0-5f58f6b5b000"
+      ],
+      "soundResources": [
+        "sounds/Old Big Picture UI/deck_ui_default_activation.wav",
+        "sounds/Old Big Picture UI/deck_ui_hide_modal.wav",
+        "sounds/Old Big Picture UI/deck_ui_into_game_detail.wav",
+        "sounds/Old Big Picture UI/deck_ui_launch_game.wav",
+        "sounds/Old Big Picture UI/deck_ui_navigation.wav",
+        "sounds/Old Big Picture UI/deck_ui_out_of_game_detail.wav",
+        "sounds/Old Big Picture UI/deck_ui_tab_transition_01.wav",
+        "sounds/Old Big Picture UI/deck_ui_tile_scroll.wav",
+        "sounds/Old Big Picture UI/pack.json"
       ]
     },
     {
       "id": "santa-express",
       "name": "Santa Express",
-      "version": "1.0.0",
+      "version": "1.0.1",
       "theme": null,
       "frameTheme": "santa-express",
       "description": "Downloadable media for Santa Express.",
       "minPluginVersion": "1.10.10",
-      "size": 19364095,
+      "size": 19841197,
       "resources": [
         "assets/frame-themes/santa-express/background.png",
         "assets/frame-themes/santa-express/button-glass.png",
@@ -1751,9 +1795,9 @@
         "assets/frame-themes/santa-express/lever-housing.png",
         "assets/frame-themes/santa-express/lever-knob.png"
       ],
-      "unpackedSize": 19901364,
-      "sha256": "8cca065bfce7a995278be105019559605bf7b60eef7515f3c5aa2074124e1f05",
-      "url": "https://github.com/Kaal31/deckthemes-assets/releases/download/santa-express-v1.0.0/ThemeAssets-santa-express-v1.0.0.zip",
+      "unpackedSize": 20346060,
+      "sha256": "da726ab9425555f00ef53ad01603c785bf94777004e2ccb71d0bf545d7cde58c",
+      "url": "https://github.com/Kaal31/deckthemes-assets/releases/download/santa-express-v1.0.1/ThemeAssets-santa-express-v1.0.1.zip",
       "preview": null,
       "poster": null,
       "audioPacks": []
@@ -1784,7 +1828,10 @@
       "url": "https://github.com/Kaal31/deckthemes-assets/releases/download/wiiflow-default-v1.0.0/ThemeAssets-wiiflow-default-v1.0.0.zip",
       "preview": null,
       "poster": null,
-      "audioPacks": []
+      "audioPacks": [
+        "10494ed2-1526-4b69-b5b4-67c2f743fccb",
+        "f3d6b5e1-55e5-43ab-90f8-51e8a622763a"
+      ]
     },
     {
       "id": "onyx",
@@ -1832,7 +1879,11 @@
       ],
       "sha256": "835c4c54002a029e5e27d11d37daf08c9df6da55090d0a5f466b79186935b603",
       "url": "https://github.com/Kaal31/deckthemes-assets/releases/download/wii-v1.0.0/ThemeAssets-Wii-v1.0.0.zip",
-      "defaultConsole": true
+      "defaultConsole": true,
+      "audioPacks": [
+        "10494ed2-1526-4b69-b5b4-67c2f743fccb",
+        "f3d6b5e1-55e5-43ab-90f8-51e8a622763a"
+      ]
     },
     {
       "id": "switch",
@@ -1848,7 +1899,10 @@
       ],
       "sha256": "afe2dbc6ffa2d57235ffd796081c09e8fa6efa63700106cabc547c8d2edc4b94",
       "url": "https://github.com/Kaal31/deckthemes-assets/releases/download/switch-v1.0.0/ThemeAssets-switch-v1.0.0.zip",
-      "defaultConsole": true
+      "defaultConsole": true,
+      "audioPacks": [
+        "28c07fe6-6ead-44b1-8c31-2372cfffcb60"
+      ]
     },
     {
       "id": "n3ds",
@@ -1864,7 +1918,11 @@
       ],
       "sha256": "5aed943a886c3181941ce07f81d684d6b3c9eef19090bd55709c52eb8b78b460",
       "url": "https://github.com/Kaal31/deckthemes-assets/releases/download/n3ds-v1.0.0/ThemeAssets-n3ds-v1.0.0.zip",
-      "defaultConsole": true
+      "defaultConsole": true,
+      "audioPacks": [
+        "9eb68e00-d0ed-4ed2-935b-e6992e588192",
+        "a3fddc99-d74a-413a-adc5-3f9d81b4be73"
+      ]
     },
     {
       "id": "ps1",

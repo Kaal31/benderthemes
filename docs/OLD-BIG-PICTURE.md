@@ -4,7 +4,9 @@ Registered as the `old-big-picture` layout in Home.tsx and builtin.ts. Rendered 
 
 Library/actions use HomeApi, friends and achievements use activity hooks, downloads use useDownloads, Store uses store.ts, screenshots/videos use media hooks, music uses musicPlayer, settings use updateSettings, and controller input uses ThemeRoot. Full Steam chat/controller configuration opens native Steam interfaces.
 
-Artwork is embedded in oldBigPictureAssets.ts to avoid a frame asset-server dependency; CSS is scoped to .dht-oldbigpicture. Original sounds live under defaults/sounds/Old Big Picture UI and use the shared sound settings/lifecycle. Valve retains rights to original client assets.
+Artwork and original UI sounds are downloaded from the verified Old Big Picture asset pack on Kaal31/deckthemes-assets. The native layout waits for media installation and resolves images through the local media server; CSS remains scoped to .dht-oldbigpicture. Old Beta Big Picture shares this pack. The sounds use the shared sound settings/lifecycle. Valve retains rights to original client assets.
+
+Media pack v1.0.2 adds the user-provided **Steam - Big Picture | OG Intro [Original 1080p]** clip credited to Rybz. The original 5.09-second 1920×1080 MP4 is preserved byte-for-byte; `intro-source.json` records its checksum and provenance. Both Old Big Picture and Old Beta Big Picture play this shared local video once their media are ready. Any button or tap skips it, and the existing animations/reduced-motion settings and custom boot-video choice retain priority.
 
 # Reference comparison
 
@@ -48,3 +50,8 @@ Validation: typecheck and native preview checks, including focused-cover/sidebar
 Home’s Web and Chat edge tiles carry LB/RB prompts and open their corresponding pages when focused. LB/RB also open these from Home. Web/Friends transitions use horizontal movement; Library retains the vertical reveal. Home mouse-wheel input no longer opens Library. Browser Favorites matches the 0:49–0:51 MingeBag reference with History / Current / Favorites tabs and five website tiles; visits are tracked for this mounted session and open in Steam’s browser. Remote pages are not embedded in an iframe.
 
 Store and product loading use the three staggered cyan bars seen around 0:32/0:43, with a static reduced-motion fallback. Theme options now have a dedicated classic blue/cyan MenuView style, and the Hub uses matching square cards, gradients and cyan focus lighting. The footer Home button uses a contained focus highlight. Browser-edge, history, wheel, menu and Hub checks are in old-big-picture-edge-pages-check.mjs.
+
+
+## Native Deck controller focus
+
+The default theme now uses the same explicit Steam navigation node and logical-control focus handling as Old Beta Big Picture. Steam retains actual focus on the outer input node, while navigation, A activation and CSS highlights follow the selected inner button. This avoids treating the input container as an extra invisible control. The native focus scope includes the default theme’s options window, preserves text editing and yields to external Steam overlays. Native-event emulation checks cover the home carousel, Library/details, Store, Community, Web, Chat, Settings, options and power dialog; actual Deck confirmation remains a device test.

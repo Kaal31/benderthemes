@@ -10,8 +10,8 @@ try{
  const targets={onyx:'.silver-home',aero:'.aero-desktop',nazarick:'.naz-home','blue-glass':'#dashboard',ios6:'#dashboard',gameamp:'#dashboard',gamecube:'#screen','old-big-picture':'[data-react-theme]' ,'santa-express':'#stage','wiiflow-default':'#wiiflow-background'};
  for(const [id,selector] of Object.entries(targets)){
   const native=!['onyx','aero','nazarick'].includes(id);
-  await page.evaluate(({id,native})=>window.__updateTheme({theme:native?'frame':id,activeTheme:native?id:'',animations:false}),{id,native});
-  const area=native?page.locator(['gamecube','wiiflow-default'].includes(id)?`[data-native-theme="${id}"]`:`[data-react-theme="${id}"]`):page.locator('[data-dht-root]');await area.waitFor();
+  await page.evaluate(({id,native})=>window.__updateTheme({theme:native&&!['ios6','gameamp','santa-express','old-big-picture'].includes(id)?'frame':id,activeTheme:native?id:'',animations:false}),{id,native});
+  const area=native?page.locator(['gamecube','wiiflow-default','ios6','gameamp'].includes(id)?`[data-native-theme="${id}"]`:`[data-react-theme="${id}"]`):page.locator('[data-dht-root]');await area.waitFor();
   for(const [width,height] of [[1280,800],[1280,720],[960,600]]){
    await page.setViewportSize({width,height});
    await page.waitForFunction(({native,selector,width,height,id})=>{

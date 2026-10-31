@@ -182,16 +182,16 @@ import {interfaceExtension} from './interfaceExtension.js';
   for(const entry of entries.values()){const up=new T.Vector3(0,1,0).applyQuaternion(entry.group.quaternion);if(up.y<.85||(window.WiiFlowImport?.spinClearance===true&&entry.spinRemaining>35))entry.shadow.visible=false;}
   extension?.viewport(renderer,camera);renderer.render(scene,camera);
   const reflectionAlpha=flow?flow.reflectionAlpha():.2;
-  if(reflectionAlpha>0&&!moving){
-  const width=renderer.domElement.width,height=renderer.domElement.height;if(reflectedCanvas.width!==width||reflectedCanvas.height!==height){reflectedCanvas.width=width;reflectedCanvas.height=height;}
+  if(reflectionAlpha>0){
+  const reflectionScale=Math.min(1,640/renderer.domElement.width,480/renderer.domElement.height),width=Math.max(1,Math.round(renderer.domElement.width*reflectionScale)),height=Math.max(1,Math.round(renderer.domElement.height*reflectionScale));if(reflectedCanvas.width!==width||reflectedCanvas.height!==height){reflectedCanvas.width=width;reflectedCanvas.height=height;}
   reflectedCanvas.style.width=renderer.domElement.style.width;reflectedCanvas.style.height=renderer.domElement.style.height;reflectedCanvas.style.left=renderer.domElement.style.left;reflectedCanvas.style.top=renderer.domElement.style.top;
   const logicalHeight=parseFloat(renderer.domElement.style.height)||480,ctx=reflectedContext;let floor=height*(314+(logicalHeight-480)/2)/logicalHeight;
   if(document.body.classList.contains('game-open'))for(const entry of entries.values())if(entry.offset===0&&entry.group.visible){entry.box.updateWorldMatrix(true,false);for(const x of [-.525,.525])for(const y of [-.75,.75])for(const z of [-.07,.07]){const point=new T.Vector3(x,y,z).applyMatrix4(entry.box.matrixWorld).project(camera);floor=Math.max(floor,(1-point.y)*height/2+height/logicalHeight*6);}}
   floor=Math.min(height,floor);ctx.clearRect(0,0,width,height);
-  ctx.save();ctx.beginPath();ctx.rect(0,floor,width,height-floor);ctx.clip();ctx.translate(0,2*floor);ctx.scale(1,-1);ctx.drawImage(renderer.domElement,0,0);ctx.restore();
+  ctx.save();ctx.beginPath();ctx.rect(0,floor,width,height-floor);ctx.clip();ctx.translate(0,2*floor);ctx.scale(1,-1);ctx.drawImage(renderer.domElement,0,0,width,height);ctx.restore();
   ctx.save();ctx.globalCompositeOperation='destination-in';const fade=ctx.createLinearGradient(0,floor,0,height);fade.addColorStop(0,'rgba(0,0,0,'+reflectionAlpha+')');fade.addColorStop(1,'rgba(0,0,0,0)');ctx.fillStyle=fade;ctx.fillRect(0,0,width,height);ctx.restore();
   }else if(!reflectedCanvas.hidden){reflectedContext.clearRect(0,0,reflectedCanvas.width,reflectedCanvas.height);reflectedCanvas.hidden=true;}
-  if(reflectionAlpha>0)reflectedCanvas.hidden=moving;
+  if(reflectionAlpha>0)reflectedCanvas.hidden=false;
   if(moving)invalidate();
  }
  function invalidate(){if(active&&!document.hidden&&!window.WiiFlowImport?.sourceMenuOpen&&!raf)raf=requestAnimationFrame(draw);}

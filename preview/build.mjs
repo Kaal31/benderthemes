@@ -32,7 +32,7 @@ for (const root of ["assets", "bundle/assets", "defaults/assets"]) {
     // PREVIEW_JPG_ASSETS=1: also .jpg / .gif, as the plugin's get_assets reads them (main.py IMAGE_EXT); off by default because
     // the preview serves them as plain URLs, and the 3D dashboards (Xbox 360 NXE / Kinect) then can't use them as WebGL textures
     // from a file:// page (verify-launch-audio). Presets v2's mixing sheets were shot with it on (Hub .jpg backgrounds).
-    const ext = process.env.PREVIEW_JPG_ASSETS ? /\.(png|webp|jpe?g|gif|mp4)$/i : /\.(png|webp|mp4)$/i;
+    const ext = (process.env.PREVIEW_JPG_ASSETS || set === "x360-nxe-dash") ? /\.(png|webp|jpe?g|gif|mp4)$/i : /\.(png|webp|mp4)$/i;
     for (const f of readdirSync(`${root}/${set}`)) if (ext.test(f)) assets[set][f.replace(ext, "")] = `../${root}/${set}/${f}`;
   }
 }
@@ -64,11 +64,14 @@ const dataThemes = existsSync("themes") ? readdirSync("themes").filter((d) => ex
   return { ...m, source: "bundled", packs, ...(icons ? { icons } : {}) };
 }) : [];
 const wallJs = `window.__dataThemes={base:location.origin+"/themes",wrap:location.origin+"/frame-wrap",themes:${JSON.stringify(dataThemes)}};window.__testPacks=[${[republicPack, ...suppliedPacks].filter(Boolean).map(p=>JSON.stringify(p)).join(",")}];window.__castleAudio=${JSON.stringify(castleAudio)};window.__bladesAudio=${JSON.stringify(bladesAudio)};window.__testP3t=${JSON.stringify(p3t)};window.__dialAssets=${JSON.stringify(dialAssets)};window.__testWalls=${JSON.stringify(walls)};window.__testAssets=${JSON.stringify(assets)};`;
+const previewOutput=process.env.PREVIEW_OUTPUT??"preview/preview.html";
 writePreview(
-  "preview/preview.html",
+  previewOutput,
   `<!doctype html><html><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>Deck Home Themes preview</title><style>html,body{margin:0;background:#0d0f13}</style></head><body><div id="root"></div><script>window.__themeCatalog=${JSON.stringify(previewCatalog)};window.__isThemePreview=true;</script><script>${wallJs}</script><script>${js}</script></body></html>`,
 );
-console.log("preview/preview.html", (js.length / 1024).toFixed(0), "KB");
+console.log(previewOutput, (js.length / 1024).toFixed(0), "KB");
+// Isolated builds avoid overwriting pages another preview session is reading.
+if(!process.env.PREVIEW_OUTPUT){
 
 // Self-contained reference previews: game artwork is demo-only, never part of the plugin.
 const referenceGames = {
@@ -88,6 +91,7 @@ for (const [name,id] of Object.entries(referenceGames)) {
   referenceArt[name] = art;
 }
 for (const [theme,names] of Object.entries({
+  reading:["Hollow Knight","Stardew Valley","Hades","Elden Ring","Balatro","Portal 2"],
   republic:["STAR WARS Jedi: Survivor","STAR WARS Battlefront II","Elden Ring","Cyberpunk 2077","Hades","Balatro","Hollow Knight"],
   castle:["SWORD ART ONLINE Fractured Daydream","Elden Ring","Hades","Hollow Knight","Stardew Valley","Balatro"],
   dial:["Cyberpunk 2077","The Witcher 3","Portal 2","Grand Theft Auto V","Red Dead Redemption 2","Elden Ring","Hollow Knight"],
@@ -97,7 +101,7 @@ for (const [theme,names] of Object.entries({
   aero:["Cyberpunk 2077","Hades","Stardew Valley","Elden Ring","Balatro","Hollow Knight"],
 })) {
   const init = `window.__themePreview=${JSON.stringify(theme)};window.__referenceTitles=${JSON.stringify(names)};window.__referenceArt=${JSON.stringify(referenceArt)};`;
-  const html = readFileSync("preview/preview.html","utf8").replace("<script>",`<script>${init}</script><script>`).replace("<title>Deck Home Themes preview</title>",`<title>${theme === "dial" ? "Alien Dial" : theme === "castle" ? "Floating Castle" : theme === "republic" ? "Galactic Republic" : "Aero"} - preview</title>`);
+  const html = readFileSync("preview/preview.html","utf8").replace("<script>",`<script>${init}</script><script>`).replace("<title>Deck Home Themes preview</title>",`<title>${theme === "reading" ? "Reading Room" : theme === "dial" ? "Alien Dial" : theme === "castle" ? "Floating Castle" : theme === "republic" ? "Galactic Republic" : "Aero"} - preview</title>`);
   writePreview(`preview/${theme}-preview.html`,html);
 }
 
@@ -121,3 +125,4 @@ writePreview("preview/wii-preview.html",baseHtml.replace("<script>",`<script>win
 }
 
 writePreview("preview/ios6-preview.html",baseHtml.replace("<script>",`<script>window.__themePreview="ios6";${defaultInit}</script><script>`));
+}

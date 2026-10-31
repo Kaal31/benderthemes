@@ -2,6 +2,15 @@ import { useEffect, useLayoutEffect, useRef } from "react";
 import type { CSSProperties } from "react";
 import type { SwitchAnimation, SwitchEffect, SwitchPane, SwitchTrack } from "../switchThemes";
 const registeredAlphaProperties=new Set<string>();
+function registerMotionProperty(name:string,syntax:string,initialValue:string){
+ if(typeof CSS==='undefined'||!CSS.registerProperty||registeredAlphaProperties.has(name))return;
+ try{CSS.registerProperty({name,syntax,inherits:true,initialValue});}
+ catch(error){
+  // CSS registrations survive plugin reloads; the module-local Set does not.
+  if((error as {name?:string})?.name!=='InvalidModificationError')throw error;
+ }
+ registeredAlphaProperties.add(name);
+}
 
 export type SwitchBackgroundRaster={width:number;height:number;texture:NonNullable<SwitchEffect['texture']>};
 /** Atlas transforms must paint into the viewport rather than an enlarged GPU
@@ -37,6 +46,7 @@ export function paneMotionFrame(animations:SwitchAnimation[],frame:number,base:S
  if(values.has(19))result['--dht-nx-uv-x']=String(values.get(19)!);
  if(values.has(20))result['--dht-nx-uv-y']=String(values.get(20)!);
  if(values.has(21))result[alphaProperty.startsWith('--')?'--dht-nx-border-width':'borderWidth']=`${Math.max(0,values.get(21)!)*unitX}px`;
+ for(const [property,value] of values)if(property>=32&&property<48||property>=64&&property<72)result['--dht-nx-color-'+property]=String(Math.max(0,Math.min(255,value)));
  if(values.has(25))result['--dht-nx-shadow-volume']=String(Math.max(0,values.get(25)!));
  if(values.has(22))result['--dht-nx-uv-angle']=String(values.get(22)!);
  if(values.has(23))result['--dht-nx-uv-offset-x']=String(values.get(23)!);
@@ -78,16 +88,15 @@ export function useSwitchPaneMotion(animations:SwitchAnimation[],pane:string,eve
  // paint so the compressed atlas is never exposed during startup.
  useLayoutEffect(()=>{
   const el=ref.current;if(!el)return;
-  if(alphaProperty.startsWith('--')&&typeof CSS!=='undefined'&&CSS.registerProperty&&!registeredAlphaProperties.has(alphaProperty)){
-   CSS.registerProperty({name:alphaProperty,syntax:'<number>',inherits:true,initialValue:'1'});registeredAlphaProperties.add(alphaProperty);
+  if(alphaProperty.startsWith('--')){
+   registerMotionProperty(alphaProperty,'<number>','1');
+   registerMotionProperty('--dht-nx-border-width','<length>','0px');
   }
-  if(alphaProperty.startsWith('--')&&typeof CSS!=='undefined'&&CSS.registerProperty&&!registeredAlphaProperties.has('--dht-nx-border-width')){
-   CSS.registerProperty({name:'--dht-nx-border-width',syntax:'<length>',inherits:true,initialValue:'0px'});registeredAlphaProperties.add('--dht-nx-border-width');
-  }
-  if(typeof CSS!=='undefined'&&CSS.registerProperty&&!registeredAlphaProperties.has('--dht-nx-shadow-volume')){
-   CSS.registerProperty({name:'--dht-nx-shadow-volume',syntax:'<number>',inherits:true,initialValue:'1'});registeredAlphaProperties.add('--dht-nx-shadow-volume');
-  }
-  const selected=events.flatMap(event=>animations.filter(a=>a.pane===pane&&a.event===event));
+  registerMotionProperty('--dht-nx-shadow-volume','<number>','1');
+  for(const animation of animations)if(animation.pane===pane)for(const track of animation.tracks)if(track.property>=32&&track.property<48||track.property>=64&&track.property<72)registerMotionProperty('--dht-nx-color-'+track.property,'<number>','255');
+  // composeSwitchAnimations puts authored tracks after firmware defaults.
+  // Keep that precedence across concurrent active/focus event channels.
+  const selected=animations.filter(a=>a.pane===pane&&events.includes(a.event));
   if(!selected.length)return;
   const duration=Math.max(1,...selected.map(a=>a.frames));
   const discrete=selected.some(animation=>animation.tracks.some(isFrameSequence));

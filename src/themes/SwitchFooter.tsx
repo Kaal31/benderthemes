@@ -1,12 +1,12 @@
 import {useSwitchFont} from './useSwitchFont';
 import {useContext} from 'react';
+import {SwitchPromptGlyph} from './SwitchPromptGlyph';
 import type {ReactNode} from 'react';
 import type {SwitchAnimation,SwitchEffect} from '../switchThemes';
 import {SwitchNativeScene} from './SwitchNativeScene';
 import {panelColor,SwitchMaterial} from './SwitchMaterial';
 import {SwitchNativeContext} from './SwitchWidgetTree';
 import {SCENE_DEFAULTS} from './switchSceneDefaults';
-import {SwitchPicture} from './SwitchPicture';
 
 type Props={effects:Record<string,SwitchEffect>;animations:SwitchAnimation[];modern:boolean;dark:boolean;enabled:boolean;open:boolean;pressed:boolean;scale:number;height:number;view:string;controller:ReactNode};
 type Shared=Pick<Props,'effects'|'animations'|'modern'|'dark'|'enabled'>;
@@ -17,7 +17,7 @@ function buttonMetrics(label:string,modern:boolean,patches:Record<string,SwitchE
  const tail=size('N_TailPadding'),head=size('N_HeadPadding'),gap=size('N_KeyPadding'),hold=patches?.N_HoldPadding?.Visible===true?size('N_HoldPadding'):0,text=size('T_00',labelWidth(label,family)),key=size('N_Key',36);
  return {tail,head,gap,hold,text,key,width:tail+text+gap+hold+key+head};
 }
-function FooterButton({label,symbol,pressed,...shared}:Shared&{label:string;symbol:string;pressed:boolean}){
+function FooterButton({label,symbol,pressed,...shared}:Shared&{label:string;symbol:'A'|'+';pressed:boolean}){
  const {family}=useSwitchFont();
  const native=useContext(SwitchNativeContext),{tail,head,gap,hold,text,key,width}=buttonMetrics(label,shared.modern,native?.nativePanes?.FooterBtn,family),keyX=-(tail+text+gap+hold+key/2),runtime:Record<string,SwitchEffect>={
   'FooterBtn:NH_Root':{Size:{X:width,Y:70}},'FooterBtn:T_00':{Position:{X:-tail,Y:16},Size:{X:text,Y:33}},'FooterBtn:T_01':{Visible:false},
@@ -28,7 +28,7 @@ function FooterButton({label,symbol,pressed,...shared}:Shared&{label:string;symb
  };
  return <div style={{position:'absolute',left:'50%',top:'50%',width:0,height:0}}><SwitchNativeScene file="FooterBtn" {...shared} rootSize={[width,62]} events={['enter',...(pressed?['touch']:[])]} runtime={runtime} render={(node,effect)=>{
   if(node.name==='T_00')return {content:<SwitchMaterial surfaceStyle={false} effect={effect}><span style={{position:'absolute',inset:0,display:'flex',alignItems:'center',fontSize:22,fontFamily:family,whiteSpace:'nowrap',color:'white'}}>{label}</span></SwitchMaterial>};
-  if(node.name==='T_Key')return {content:<SwitchMaterial surfaceStyle={false} effect={effect}><span style={{display:'flex',width:28,height:28,alignItems:'center',justifyContent:'center',borderRadius:'50%',background:'white',color:shared.dark?'#222':'#eee',fontSize:symbol==='+'?24:17,fontWeight:700,lineHeight:1}}>{symbol}</span></SwitchMaterial>};
+  if(node.name==='T_Key')return {content:<SwitchMaterial surfaceStyle={false} effect={effect}><SwitchPromptGlyph symbol={symbol}/></SwitchMaterial>};
   if(node.name==='P_TouchEff')return {hidden:!pressed,style:{background:panelColor(effect),opacity:pressed?1:0}};
   return {};
  }}/></div>;
@@ -41,10 +41,10 @@ export function SwitchFooter({open,pressed,scale,height,view,controller,...share
  const footer=<SwitchNativeScene file="FooterAll" {...shared} rootSize={[1280,720]} runtime={runtime} events={[open?'exit':'enter']} render={(node,effect)=>{
   if(/^L_Btn_0[2-5]$/.test(node.name)||node.name==='N_BtnOvlWrp')return {hidden:true};
   if(/^L_Btn_0[01]$/.test(node.name)){const main=node.name==='L_Btn_00',label=main?start:'Options';return {content:<FooterButton {...shared} {...{label,pressed}} symbol={main?'A':'+'}/>};}
-  if(node.name==='L_Ctrl')return {content:local(<SwitchNativeScene file="FooterCtrl" {...shared} rootSize={[(effect.Size?.X??node.size[0]),(effect.Size?.Y??node.size[1])]} events={['enter']} render={(part,ink)=>{
-   if(part.name==='P_CtrlDummy'){const picture=native?.nativePictures?.FooterCtrl?.P_CtrlDummy;return {alphaMask:true,content:<SwitchMaterial surfaceStyle={false} effect={ink}>{picture?<SwitchPicture picture={picture}/>:controller}</SwitchMaterial>};}
+  if(node.name==='L_Ctrl')return {content:local(<SwitchNativeScene file="FooterCtrl" {...shared} rootSize={[(effect.Size?.X??node.size[0]),(effect.Size?.Y??node.size[1])]} runtime={{'FooterCtrl:P_CtrlDummy':{Visible:true},'FooterCtrl:L_Indi_00':{Visible:false}}} events={['enter']} render={(part,ink)=>{
+   if(part.name==='P_CtrlDummy')return {alphaMask:true,content:<SwitchMaterial surfaceStyle={false} effect={ink}>{controller}</SwitchMaterial>};
    if(part.name==='L_Indi_00')return {content:local(<SwitchNativeScene file="CntrIndicatorS" {...shared} rootSize={[8,38]} events={['enter']} render={(p,e)=>({style:p.type==='pic1'?{background:panelColor(e),borderRadius:'50%'}:undefined})}/>)};
-   if(part.name==='P_IcoKey')return {content:<SwitchMaterial surfaceStyle={false} effect={ink}><span style={{fontSize:24,color:'white'}}>⌨</span></SwitchMaterial>};
+   if(part.name==='P_IcoKey')return {hidden:native?.nativePanes?.FooterCtrl?.P_IcoKey?.Visible!==true,content:<SwitchMaterial surfaceStyle={false} effect={ink}><span style={{fontSize:24,color:'white'}}>⌨</span></SwitchMaterial>};
    return {};
   }}/>) };
   if(node.part==='LineFooter')return {content:local(<SwitchNativeScene file="LineFooter" {...shared} rootSize={node.size} runtime={{'LineFooter:P_Line':{Size:{X:effect.Size?.X??node.size[0],Y:1}}}} events={['enter']} render={(part,ink)=>({style:part.name==='P_Line'?{background:panelColor(ink)}:undefined})}/>)};

@@ -1,7 +1,9 @@
+import {nativeMiiShape} from "../nativeMii";
 import * as THREE from "three";
 import {mergeGeometries} from "three/examples/jsm/utils/BufferGeometryUtils.js";
 
-// Original Mii-style models for the WaraWara Plaza, built in code from simple shapes.
+// Optional native geometry is loaded from the verified GitFlic pack.
+// The Mii-style geometry below remains the authored fallback.
 // Proportions follow real Wii U Miis at the default height and build (Mii Maker / Mii Studio full-body
 // renders and WaraWara Plaza captures): the head is almost as tall as the whole body below it, the arms
 // hang close to the sides and end in round fists in the shirt colour, male Miis wear a shirt over trousers,
@@ -128,14 +130,17 @@ export function miiBody(female: boolean, lod: Lod = 0): MiiShape {
 
 // The body as a BufferGeometry with the per-vertex attributes the body material reads (aPart = bone, region, occlusion; aBall).
 export function miiBodyGeometry(female: boolean, lod: Lod = 0) {
-  const s = miiBody(female, lod), g = new THREE.BufferGeometry();
+  const native=nativeMiiShape("bodies",(female?"FemaleBody":"MaleBody")+(lod?"_lod":""));
+  const s = native??miiBody(female, lod), g = new THREE.BufferGeometry();
   g.setAttribute("position", new THREE.Float32BufferAttribute(s.positions, 3));
   g.setAttribute("aClothRest", new THREE.Float32BufferAttribute(s.positions, 3));
   g.setAttribute("normal", new THREE.Float32BufferAttribute(s.normals, 3));
   // Bone, region and occlusion share one attribute (a vertex shader has only 16 attribute slots, and the instanced pose uses many).
-  g.setAttribute("aPart", new THREE.Float32BufferAttribute(s.bones.flatMap((b, i) => [b, s.regions[i], s.ao[i]]), 3));
+  g.setAttribute("aPart", new THREE.Float32BufferAttribute(s.bones.flatMap((b, i) => [b, native&&s.positions[i*3+1]>MII_NECK_Y-.45&&Math.abs(s.positions[i*3])<.75?2:native&&female&&b===0&&s.regions[i]===1?0:s.regions[i], s.ao[i]]), 3));
   g.setAttribute("aBall", new THREE.Float32BufferAttribute(s.balls, 4));
   g.setIndex(s.indices);
+  if(native)g.computeVertexNormals();
+  g.userData.nativeMii=!!native;
   return g;
 }
 // Head, hair and hats as BufferGeometry, with the ambient-occlusion factor as a grey vertex colour (multiplied with the instance tint).
@@ -150,6 +155,7 @@ export function shapeGeometry(s: MiiShape) {
 
 // Head: a rounded block with a flat face at the front, a small nose and ears. Its origin is the neck joint.
 export function miiHead(lod: Lod = 0, flatFace=false,referenceShape=false): MiiShape {
+  const native=nativeMiiShape("heads","0");if(native)return native;
   const d = DETAIL[lod], face = new THREE.SphereGeometry(1, d.head[0], d.head[1]), p = face.getAttribute("position"), v = new THREE.Vector3();
   for (let i = 0; i < p.count; i++) {
     v.fromBufferAttribute(p, i);
@@ -182,6 +188,7 @@ export function miiHead(lod: Lod = 0, flatFace=false,referenceShape=false): MiiS
 // towards the forehead, which closes the thin light seam that used to show between fringe and brow in close views.
 export const HAIR_STYLES = 6;
 export function miiHair(style = 0, lod: Lod = 0): MiiShape {
+  const native=nativeMiiShape("hair",String([0,8,33,3,10,46][style]??0));if(native)return native;
   const d = DETAIL[lod], bob = style === 1, long = style === 3, curly = style === 5, spiky = style === 2, hangs = bob || long;
   const rings = hangs ? Math.round(d.hair[1] * (long ? 1.2 : 1)) : Math.round(d.hair[1] * .75);
   const cap = new THREE.SphereGeometry(1, d.hair[0], rings, 0, Math.PI * 2, 0, Math.PI * (hangs ? .97 : curly ? .8 : .74)), p = cap.getAttribute("position"), v = new THREE.Vector3();

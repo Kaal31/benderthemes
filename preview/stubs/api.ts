@@ -25,6 +25,7 @@ const PLUGIN_CATALOG_FIXTURE = {
   ],
 };
 const THEME_SOURCE_INFO: Record<string, any> = {
+  gbatemp:{name:"GBAtemp",url:"https://gbatemp.net/threads/wiiflow-themes.180497/",credit:"WiiFlow themes by their original creators."},
   themezer: { name: "Themezer", url: "https://themezer.net", credit: "Themes and previews from Themezer (themezer.net) by their creators." },
   pspunk: { name: "PSPunk", url: "https://www.pspunk.com/psp-themes/", credit: "Themes and screenshots from PSPunk (pspunk.com), collected from their creators." },
   ps3pro: { name: "PS3-Pro Themes (GitHub)", url: "https://github.com/PS3-Pro/Themes", credit: "Themes from the PS3-Pro/Themes repository on GitHub, made by their creators." },
@@ -32,7 +33,7 @@ const THEME_SOURCE_INFO: Record<string, any> = {
   archive: { name: "Internet Archive", url: "https://archive.org", credit: "Uploads on the Internet Archive (archive.org) by its users. Not checked by Deck Home Themes." },
 };
 const THEME_SOURCES_KINDS: any = {
-  kinds: [["psp", "PSP", "psp", [".ptf", ".ctf"], ["pspunk", "shenron0", "archive"]], ["p3t", "PS3", "p3t", [".p3t"], ["themezer", "ps3pro", "archive"]], ["vita", "PS Vita", "vita", [".zip"], ["archive"]],
+  kinds: [["wiiflow","WiiFlow","wiiflow",[".zip",".rar",".7z"],["gbatemp"]],["psp", "PSP", "psp", [".ptf", ".ctf"], ["pspunk", "shenron0", "archive"]], ["p3t", "PS3", "p3t", [".p3t"], ["themezer", "ps3pro", "archive"]], ["vita", "PS Vita", "vita", [".zip"], ["archive"]],
     ["switch", "Switch", "switch", [".nxtheme"], ["themezer"]], ["wiiu", "Wii U", "wiiu", [".utheme"], ["themezer"]], ["3ds", "3DS", "3ds", [".zip"], ["themezer"]],
     ["wii", "Wii", "wii", [".mym", ".csm"], ["archive"]], ["xbox", "Xbox", "xbox", [".zip"], ["archive"]]].map(([id, label, dir, exts, sources]) => ({ id, label, dir: `skins/${dir}`, exts, sources })),
   sources: THEME_SOURCE_INFO,
@@ -114,12 +115,14 @@ const backend: Record<string, (...a: any[]) => any> = {
   // replaces a page (tests inject real backend output with local pictures). Downloads are recorded in __themeSourceDownloads.
   theme_sources: () => THEME_SOURCES_KINDS,
   theme_sources_browse: (kind: string, source: string, query: string, page: number) => {
+    if ((window as any).__themeSourceBrowse) return (window as any).__themeSourceBrowse(kind, source, query, page);
     const real = (window as any).__themeSources?.[`${kind}:${source}`];
     const base = real ?? themeSourcePage(kind, source);
     const words = (query || "").toLowerCase().split(/\s+/).filter(Boolean);
     const items = base.items.filter((i: any) => words.every(w => i.name.toLowerCase().includes(w)));
     return { ...base, kind, page: page || 1, total: words.length ? items.length : base.total, items, source: { ...THEME_SOURCES_KINDS.sources[source], id: source } };
   },
+  wiiflow_scan_downloads: () => {const w=window as any;w.__wiiflowScanCalls=(w.__wiiflowScanCalls??0)+1;return w.__wiiflowScanResult??{busy:false,imported:[],pending:0,errors:[]};},
   theme_sources_files: (_kind: string, id: string) => ({ files: [{ name: `${id}/Theme One.mym`, size: 420000 }, { name: "Theme Two.csm", size: 7300000 }] }),
   theme_sources_saved: (kind:string) => Object.fromEntries(Object.entries((window as any).__savedThemeSources??{}).filter(([key])=>key.startsWith(kind+":"))),
   theme_sources_download: async (kind: string, source: string, id: string, file: string, name: string) => {
@@ -167,11 +170,15 @@ const backend: Record<string, (...a: any[]) => any> = {
   },
   media_server: () => (window as any).__testServer ?? null,
   list_data_themes: () => (window as any).__dataThemes ?? { base: null, themes: [] },
-  ensure_frame_media: async () => {if((window as any).__frameMediaGate)await (window as any).__frameMediaGate;return {success:true};},
+  ensure_frame_media: async (id:string) => {const w=window as any;(w.__frameMediaCalls??=[]).push(id);if(w.__frameMediaGate)await w.__frameMediaGate;return w.__frameMediaFailure?{success:false,error:"Preview media download failure"}:{success:true};},
   get_dial_asset: (n: string) => (window as any).__dialAssets?.[n] ?? null,
-  get_assets: (n: string) => (window as any).__testAssets?.[n] ?? {},
+  cinematic_assets: (n: string) => (window as any).__cinematicAssets?.[n] ?? {video:`../bundle/cinematic/${n}.mp4`,poster:`../bundle/cinematic/${n}.jpg`},
+  console_artwork_status: () => ({packs:[],busy:false,percent:0}),
+  console_artwork_install: () => { (window as any).__consoleArtInstalled=true; return {success:true}; },
+  get_assets: (n: string) => new Set(['x360-blades-original','x360-kinect-dash','x360-metro-dash','x360-nxe-dash','xbox-original','xmb-ps3']).has(n)&&!(window as any).__consoleArtInstalled&&!new URLSearchParams(location.search).has('consoleArt')?{}:(window as any).__testAssets?.[n] ?? {},
   list_wallpapers: () => ({ dir: "~/homebrew/data/DeckHomeThemes/wallpapers", files: [] }),
   get_wallpaper: () => null,
+  get_x360_cabinet_wallpaper: (id:string) => /^[a-z0-9_]+$/i.test(id)?{background:`../out/import-fixtures/x360-cabinet/${id}.jpg`}:{error:"Unknown wallpaper"},
   // window.__testSwitchList = [{id,name,author,screens}] lists several .nxtheme files
   list_switch_themes: () => R() ? { themes: R().lists.switch ?? [], dir: "" } : ({ themes: (window as any).__testSwitchList ?? ((window as any).__testSwitch ? [{ id: "Test.nxtheme", name: (window as any).__testSwitch.name || "Test", author: (window as any).__testSwitch.author || "", screens: Object.keys((window as any).__testSwitch.screens || {}) }] : []), dir: "" }),
   get_switch_skin: (n: string) => realSkin("switch", n, (window as any).__testSwitch ?? null),
@@ -184,12 +191,14 @@ const backend: Record<string, (...a: any[]) => any> = {
   // Wii U themes: window.__testWiiu = a skin ({name, author, art:{slot: url}, …}) or {"File.utheme": skin}; window.__testWiiuFound = scan results
   list_wiiu_themes: () => { if (R()) return { themes: R().lists.wiiu ?? [], stock: {}, dir: "" }; const t = (window as any).__testWiiu; return { themes: !t ? [] : t.art || t.needsStock !== undefined || t.name ? ["Test.utheme"] : Object.keys(t), stock: {}, dir: "~/homebrew/data/DeckHomeThemes/skins/wiiu" }; },
   get_wiiu_skin: (n: string) => { if (R()) return R().skins?.wiiu?.[n] ?? null; const t = (window as any).__testWiiu; return !t ? null : t.name || t.art ? t : t[n] ?? null; },
+  wiiu_import_file: () => ({success:true}),
   wiiu_scan: () => (window as any).__testWiiuFound ?? [],
   // your own avatar (a 360sona export): window.__testAvatarFound = scan results, window.__testAvatarGlb = a data URL the import "copies"
   x360_avatar_scan: () => (window as any).__testAvatarFound ?? [],
   x360_avatar_import: (path: string) => { const w = window as any; if (!w.__testAvatarGlb || !/\.glb$/i.test(path)) return { success: false, error: "Not a glTF 2.0 binary (.glb) with a model in it" }; w.__testAssets = { ...(w.__testAssets ?? {}), "my-avatar": { ...(w.__testAssets?.["my-avatar"] ?? {}), avatar: w.__testAvatarGlb } }; return { success: true, kind: "model" }; },
   x360_avatar_remove: () => { const w = window as any; if (w.__testAssets?.["my-avatar"]) w.__testAssets["my-avatar"] = {}; return { success: true }; },
   wiiu_decide: () => ({ success: true, theme: "Test.utheme" }),
+  get_native_mii: () => new URLSearchParams(location.search).has("nativeMii")?{url:"../out/native-mii-preview/models.json"}:{},
   get_wii_skin: (n: string) => realSkin("wii", n, (window as any).__testWii ?? null),
   get_3ds_skin: (n: string) => realSkin("n3ds", n, (window as any).__test3ds ?? null),
   // 3DS home badges: window.__test3dsBadges = {sets:[{name, badges:[{id,name,w,h,url}]}]} (py_modules/n3ds_themes.py list_badges)
@@ -197,16 +206,27 @@ const backend: Record<string, (...a: any[]) => any> = {
   // Xbox 360 packages: window.__testX360 = {"File name": read_x360 result (see tools/x360_corpus.py / py_modules/x360_themes.py)}
   get_x360_skin: (n: string) => realSkin("x360", n, (window as any).__testX360?.[n] ?? null),
   get_xbox_skin: (n: string) => realSkin("xbox", n, (window as any).__testXbox ?? null),
+  get_ps4_skin: (n: string) => realSkin("ps4", n, (window as any).__testPs4 ?? null),
+  import_ps4_downloads: () => (window as any).__testPs4Import ?? { success: true, imported: [], existing: [], errors: [] },
   get_psp_skin: (n: string) => R()?.skins?.psp?.[n] ?? null,
   get_p3t: (n: string) => realSkin("p3t", n, (window as any).__testP3t ?? null),
   get_vita_skin: () => (window as any).__testVita ?? null,
   list_videos: () => (window as any).__testVideos ?? { ok: true, videos: [] },
   list_music: () => (window as any).__testMusic ?? { ok: true, albums: [] },
 };
+async function avatarPreviewCall(name:string,args:any[]) {
+  if((window as any).__avatarEngineCall)return (window as any).__avatarEngineCall(name,args);
+  const address=new URLSearchParams(location.search).get('avatarBridge');
+  if(!address||!/^http:\/\/127\.0\.0\.1:\d+$/.test(address))return backend[name]?.(...args);
+  const response=await fetch(`${address}/${name}`,{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify(args)});
+  const value=await response.json();if(!response.ok)throw Error(value.error||'Avatar preview request failed');return value;
+}
 export const callable =
   (name: string) =>
   async (...args: any[]) =>
-    backend[name]?.(...args);
+    name.startsWith('x360_engine_')
+      ? avatarPreviewCall(name,args)
+      : backend[name]?.(...args);
 export const definePlugin = (f: any) => f;
 export const routerHook = { addRoute() {}, removeRoute() {}, addPatch() { return {}; }, removePatch() {} };
 export const fetchNoCors = (u: string, init?: any) => fetch(u, init);

@@ -74,6 +74,9 @@ def build():
             continue
         if relative.parts[0] == "skins":
             continue  # test skins remain archived in the assets repository for import
+        # Original console UI is an optional GitFlic pack. Default theme packs retain original/procedural fallbacks.
+        if relative.parts[0]=='assets' and len(relative.parts)>1 and relative.parts[1] in {'x360-blades','x360-nxe','x360-metro','x360-blades-original','x360-kinect-dash','x360-metro-dash','x360-nxe-dash','xbox-original','xmb-ps3'}:
+            continue
         assigned = owners(relative)
         if relative.parts[0] == "sounds" and relative.parts[1] in remote_audio:
             for key in assigned:

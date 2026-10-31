@@ -1,3 +1,4 @@
+import {useNativeMii} from "../nativeMii";
 import {PlazaGameArt,type PlazaArtwork} from "./PlazaGameArt";
 import {PLAZA_POST_INTERVALS,PLAZA_POST_LIFETIME,PLAZA_REPLY_DELAY,schedulePlazaPosts} from "./plazaPostTiming";
 import {PlazaPostPolicy} from "./plazaPostPolicy";
@@ -73,12 +74,13 @@ const CAM_CLOSE=new THREE.Vector3(0,2.7,10.5),LOOK_CLOSE=new THREE.Vector3(0,1.2
 const INTRO={closeUp:1.7,pullBack:1.5,titles:1.75,dropFrom:3,dropSpread:3.2};
 const SPARKLES=Array.from({length:18},(_,i)=>({left:`${(i*37)%100}%`,delay:`${-(i*.29)%2.4}s`,size:3+(i*7)%5}));
 
-// Original Nintendo geometry; faces, lighting and crowd movement are reconstructed.
+// Optional native Mii geometry with authored fallback; faces, lighting and crowd movement are reconstructed.
 // After the opening the crowd mills around each title, and two Miis at a time show a
 // post about the title they stand by.
 // The chosen artwork is shared by tiles and post thumbnails.
 
 export function WaraWaraPlaza({artwork="square",iconGlass=false,posts:postsOn=true,postEvery=PLAZA_POST_INTERVALS.calm,drawings=true,crowd:crowdSize=1,games,selected,active,motion,hold=false,floorTexture,flatFloor=false,positions,tips,editing,onMove,onFocus,onPick,view:viewProp="console",marks="rings",feed=[]}:{artwork?:PlazaArtwork;iconGlass?:boolean;feed?:FeedPost[];posts?:boolean;postEvery?:number;drawings?:boolean;crowd?:number;view?:PlazaView;marks?:"rings"|"shadows"|"both";games:Game[];selected:number;active:boolean;motion:boolean;hold?:boolean;flatFloor?:boolean;floorTexture?:string;positions:Record<string,Spot>;tips:boolean;editing:boolean;onMove:(id:number,pos:Spot)=>void;onFocus:(i:number)=>void;onPick:(i:number)=>void}){
+ const nativeRevision=useNativeMii();
  const personalMii=useSettings().personalMii;
  const [drag,setDrag]=useState<{id:number;pos:Spot}|null>(null),[posts,setPosts]=useState<Post[]>([]);
  const dragState=useRef<{id:number;startX:number;startY:number;moved:boolean}|null>(null),suppress=useRef(false);
@@ -184,6 +186,7 @@ export function WaraWaraPlaza({artwork="square",iconGlass=false,posts:postsOn=tr
   const placeMarks=()=>{const m=new THREE.Matrix4(),q=new THREE.Quaternion().setFromEuler(new THREE.Euler(-Math.PI/2,0,0)),one=new THREE.Vector3(1,1,1),flat=new THREE.Vector3(1.1,.7,1);liveSpots.current.slice(0,realCount).forEach((spot,i)=>{rings.setMatrixAt(i,m.compose(new THREE.Vector3(spot.x,.015,spot.z),q,one));coverShadows.setMatrixAt(i,m.compose(new THREE.Vector3(spot.x,.012,spot.z+2.6),q,flat));});rings.instanceMatrix.needsUpdate=coverShadows.instanceMatrix.needsUpdate=true;};
   // Mii meshes: bodies per gender, heads, six hair styles and two hats, each at two levels of detail (near / far).
   const bodies=[0,1].map(lod=>[false,true].map(female=>{const g=miiBodyGeometry(female,lod as Lod);geometries.push(g);return g;}));
+  canvas.current!.dataset.modelSource=bodies[0][0].userData.nativeMii?"gitflic-native":"authored-fallback";
   const shape=(s:ReturnType<typeof miiHead>)=>{const g=shapeGeometry(s);geometries.push(g);return g;};
   const headGeo=[0,1].map(lod=>shape(miiHead(lod as Lod))),hairGeo=[0,1].map(lod=>Array.from({length:HAIR_STYLES},(_,s)=>shape(miiHair(s,lod as Lod)))),hatGeo=Array.from({length:HAT_STYLES},(_,s)=>shape(miiHat(s,0)));
   const fittedHatHair=[0,1].map(lod=>shape(miiFittedHair(0,0,lod as Lod)));
@@ -422,7 +425,7 @@ export function WaraWaraPlaza({artwork="square",iconGlass=false,posts:postsOn=tr
    fill();renderer.render(scene,view);el.dataset.calls=String(renderer.info.render.calls);el.dataset.tris=String(renderer.info.render.triangles);hook.frame=++frame;
   };draw(performance.now());setReady(true);
   return()=>{personalAvatar?.dispose();disposed=true;cancelAnimationFrame(raf);shades.dispose();rings.dispose();coverShadows.dispose();batches.forEach(b=>b.m.dispose());people.current=[];floorMap?.dispose();textures.forEach(t=>t.dispose());geometries.forEach(g=>g.dispose());materials.forEach(m=>m.dispose());el.removeEventListener("webglcontextlost",lost);renderer.dispose();};
- },[games.length,floorTexture,flatFloor,crowdSize,personalMii]);
+ },[games.length,floorTexture,flatFloor,crowdSize,personalMii,nativeRevision]);
  return <section className="nt-plaza dht-wiiu-plaza" aria-label="WaraWara Plaza" data-view={viewProp} data-ready={ready&&!failed} data-hold={hold} data-opening={opening}>
   <canvas ref={canvas} className="dht-wiiu-plaza-canvas" aria-hidden="true"/>
   {failed&&<p className="nt-plaza-fallback dht-wiiu-plaza-note">3D crowd unavailable. Your games are still available.</p>}

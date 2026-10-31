@@ -1,0 +1,78 @@
+{
+  "schema": 1,
+  "version": "console-ui-v1",
+  "repository": "https://gitflic.ru/project/spon4ik67/themehubconsoleassets",
+  "packs": [
+    {
+      "id": "x360-blades-original",
+      "name": "x360-blades-original",
+      "file": "x360-blades-original-v1.zip",
+      "sha256": "185ab4a36a0f4019c78186857b938b11863ba8ecc175f505b8b53d738c18cf22",
+      "bytes": 5667629,
+      "unpackedBytes": 5743078,
+      "files": 274,
+      "url": "https://gitflic.ru/project/spon4ik67/themehubconsoleassets/release/05b18c1d-4919-4461-90d8-42fee69fc69d/394df2b7-fb92-4105-9ed9-4482fd02dec9/download"
+    },
+    {
+      "id": "x360-kinect-dash",
+      "name": "x360-kinect-dash",
+      "file": "x360-kinect-dash-v1.zip",
+      "sha256": "f063e1a869746520331b6837d6f89766b83426bedecabe30640aec9b61632889",
+      "bytes": 489521,
+      "unpackedBytes": 617366,
+      "files": 24,
+      "url": "https://gitflic.ru/project/spon4ik67/themehubconsoleassets/release/05b18c1d-4919-4461-90d8-42fee69fc69d/4196c84d-c5bf-41a1-98b5-45cde1c621f7/download"
+    },
+    {
+      "id": "x360-metro-dash",
+      "name": "x360-metro-dash",
+      "file": "x360-metro-dash-v1.zip",
+      "sha256": "9170f55e034da71cb68bd52fea5c1af8f0e89827be0e3e463962823457cfe7e5",
+      "bytes": 347193,
+      "unpackedBytes": 504068,
+      "files": 22,
+      "url": "https://gitflic.ru/project/spon4ik67/themehubconsoleassets/release/05b18c1d-4919-4461-90d8-42fee69fc69d/b777710a-898a-4e5f-afd6-66fc5c4b79cc/download"
+    },
+    {
+      "id": "x360-nxe-dash",
+      "name": "x360-nxe-dash",
+      "file": "x360-nxe-dash-v1.zip",
+      "sha256": "c70ab1a53f564fff2a2b35f052f09df65194e426f8a98f42afcf993d2873979a",
+      "bytes": 443094,
+      "unpackedBytes": 576295,
+      "files": 30,
+      "url": "https://gitflic.ru/project/spon4ik67/themehubconsoleassets/release/05b18c1d-4919-4461-90d8-42fee69fc69d/31e8e793-c005-48ee-ab9a-fc2580d4c551/download"
+    },
+    {
+      "id": "xbox-original",
+      "name": "xbox-original",
+      "file": "xbox-original-v1.zip",
+      "sha256": "14c22655397ff724f5b20dc6ca866d0f489924f5026f348a1e768e5f0003fd4c",
+      "bytes": 123736,
+      "unpackedBytes": 125788,
+      "files": 4,
+      "url": "https://gitflic.ru/project/spon4ik67/themehubconsoleassets/release/05b18c1d-4919-4461-90d8-42fee69fc69d/2a8a7db5-11b1-4925-9287-7edcb40d0a4f/download"
+    },
+    {
+      "id": "xmb-ps3",
+      "name": "xmb-ps3",
+      "file": "xmb-ps3-v1.zip",
+      "sha256": "4ba39bdfeb71f9a4c3fde9eec7ee4a1e3b41c8eee65c18191bca1bb1b757f3bb",
+      "bytes": 118747,
+      "unpackedBytes": 115279,
+      "files": 29,
+      "url": "https://gitflic.ru/project/spon4ik67/themehubconsoleassets/release/05b18c1d-4919-4461-90d8-42fee69fc69d/abe10bbd-3175-4d47-9812-2575af6f669d/download"
+    },
+    {
+      "id": "nintendo-mii-runtime",
+      "file": "nintendo-mii-runtime-v2.zip",
+      "files": 1,
+      "unpackedBytes": 2224487,
+      "bytes": 302157,
+      "sha256": "d2e599e07ff87a61bc08b1e2ab7594b67ae52335ed81c87170ac5c381ba7fada",
+      "sourceVersion": "Wii v514 / local Wii U Menu extraction",
+      "note": "Native body and head/hair geometry. Independent motion, facial features and materials. No complete FFL face renderer.",
+      "url": "https://gitflic.ru/project/spon4ik67/themehubconsoleassets/release/ccf560b7-82bf-4e89-bf1a-af86764c41ad/4cdabf5f-1bca-45d6-b2a1-699e7e9151c5/download"
+    }
+  ]
+}

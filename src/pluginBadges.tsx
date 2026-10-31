@@ -11,6 +11,8 @@ const slots: Record<ThemeId, CSSProperties> = {
  "santa-express":{right:"15%",top:"34%"},
  "old-beta-big-picture":{right:"4%",bottom:"12%"},
  "old-big-picture":{right:"4%",bottom:"12%"},
+
+ reading:{right:"5%",top:"60%"},
   onyx:{left:"50%",top:"56%",transform:"translateX(-50%)"}, silver:{left:"21%",top:"43%"},
   wii:{left:"50%",top:"2.5%",transform:"translateX(-50%)"},
   wiiu:{left:"50%",top:"75%",transform:"translateX(-50%)"},
@@ -30,6 +32,8 @@ const looks: Record<ThemeId, {bg:string; ink:string; radius:string; font?:string
  "santa-express":{bg:"#5c100c",ink:"#ffe4bb",radius:"18px"},
  "old-beta-big-picture":{bg:"#12334d",ink:"#a5dcf0",radius:"2px"},
  "old-big-picture":{bg:"#12334d",ink:"#a5dcf0",radius:"2px"},
+
+ reading:{bg:"#e7cfaa",ink:"#485638",radius:"5px"},
   onyx:{bg:"linear-gradient(#262b32ee,#101318ee)",ink:"#eef5ff",radius:"7px"},
   silver:{bg:"linear-gradient(#f4f5f8,#b7bcc6)",ink:"#262c35",radius:"6px"},
   wii:{bg:"linear-gradient(#fff,#e4f4fb)",ink:"#4c788a",radius:"999px"},

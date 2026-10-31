@@ -56,6 +56,8 @@ const X360: Record<string, HubStyle> = {
 };
 
 export const HUB_STYLES: Record<string, HubStyle> = {
+
+  reading:mk({light:true,bg:"linear-gradient(120deg,#efdcb9,#dfc39a)",panel:"#f3e3c6",panelHi:"#f9edda",text:"#443725",sub:"#806b4f",cardText:"#443725",cardSub:"#806b4f",accent:"#65734d",accentText:"#fff0d3",radius:7,pill:9,tagline:"A quiet room. Your next adventure."}),
   onyx: mk({bg:"repeating-linear-gradient(135deg,#ffffff03 0 1px,transparent 1px 4px),radial-gradient(ellipse at 50% 20%,#27292c,#08090b)",panel:"linear-gradient(#24262a,#111215)",panelHi:"#34373c",accent:"#eeeeef",accentText:"#111",ring:"0 0 0 2px #ddd",radius:18,pill:30,tagline:"Cover flow, dark texture and a circular wheel."}),
   silver: mk({light:true,bg:"linear-gradient(120deg,#eee,#aaa,#fafafa)",panel:"#e5e5e5",panelHi:"#fff",text:"#252525",sub:"#666",cardText:"#252525",cardSub:"#666",accent:"#444",accentText:"#fff",line:"#bbb",tab:"#ddd",tabText:"#222",radius:22,pill:30,ring:"0 0 0 3px #555",tagline:"Turn the wheel. Find your next game."}),
   wii: mk({ light: true, bg: "radial-gradient(ellipse at 50% 0%,#fff 0%,#eef4f8 55%,#d6e4ee 100%)", panel: "linear-gradient(#fff,#eef4f8)", panelHi: "#fff", line: "#c9d8e2", text: "#4d6877", sub: "#778f9d", cardText: "#4d6877", cardSub: "#778f9d", accent: "#37bce9", accentText: "#fff", tab: "#dff3fb", tabText: "#1f8db5", radius: 24, pill: 22, font: '"Trebuchet MS","Segoe UI",Arial,sans-serif', ring: "0 0 0 4px #37bce9,0 6px 16px #5aa9c855", shadow: "0 2px 6px #8aa6b655", track: "-.6px", deco: "wii", glow: "#37bce9", tagline: "Pick a channel and make it yours." }),

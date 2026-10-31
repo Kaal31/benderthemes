@@ -30,10 +30,25 @@ class CatalogTests(unittest.TestCase):
             return FIXTURE
         ts._cache.clear()
         result = ts.browse('wiiflow', 'gbatemp', 'Blue', fetch_text=fetch)
-        self.assertEqual(len(result['items']), len(gt.THREADS))
+        self.assertTrue({url.split('.')[-1].strip('/')+'-1' for url in gt.THREADS}.issubset({i['id'] for i in result['items']}))
         ts.browse('wiiflow', 'gbatemp', fetch_text=fetch)
         self.assertEqual(len(calls), len(gt.THREADS))
         with self.assertRaises(ValueError): ts.download_url('wiiflow', 'gbatemp', '180497-0')
+
+    def test_saved_index_paginates_and_partial_live_refresh_keeps_other_sources(self):
+        ts._cache.clear()
+        first=ts.browse('wiiflow','gbatemp')
+        second=ts.browse('wiiflow','gbatemp',page=2)
+        self.assertGreater(first['pages'],1)
+        pages=[ts.browse('wiiflow','gbatemp',page=n) for n in range(1,first['pages']+1)]
+        self.assertEqual(sum(len(p['items']) for p in pages),first['total'])
+        self.assertTrue(any('Rhapsodii' in i['name'] for i in second['items']))
+        ts._cache.clear()
+        def partial(source,url):
+            if url != gt.THREADS[0]:raise OSError('offline')
+            return FIXTURE
+        refreshed=ts.browse('wiiflow','gbatemp',fetch_text=partial)
+        self.assertGreaterEqual(refreshed['total'],first['total'])
 
     def test_block_pages_and_unsafe_links(self):
         with self.assertRaises(ValueError): gt.parse('<html>Forbidden</html>', gt.THREADS[0])

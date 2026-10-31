@@ -340,5 +340,701 @@
       "height": 243.24609375
     },
     "pass": true
+  },
+  {
+    "id": "E87B",
+    "width": 1304,
+    "errors": [],
+    "backgroundPlayers": 0,
+    "navigation": [
+      "Cyberpunk 2077",
+      "Hades",
+      "Elden Ring"
+    ],
+    "selectedArtwork": {
+      "x": 659,
+      "y": 382.6895446777344,
+      "width": 256,
+      "height": 256.0000305175781
+    },
+    "coverPaint": {
+      "colors": 691,
+      "variance": 2338.7421982487576,
+      "painted": true
+    },
+    "visualPass": true,
+    "dockNavigation": [
+      "Album",
+      "Controllers",
+      "Settings"
+    ],
+    "pass": true
+  },
+  {
+    "id": "E87B",
+    "width": 550,
+    "errors": [],
+    "backgroundPlayers": 0,
+    "navigation": [
+      "Cyberpunk 2077",
+      "Hades",
+      "Elden Ring"
+    ],
+    "selectedArtwork": {
+      "x": 277.8765563964844,
+      "y": 465.4518127441406,
+      "width": 105.19998168945312,
+      "height": 105.20004272460938
+    },
+    "coverPaint": {
+      "colors": 294,
+      "variance": 2340.721238946655,
+      "painted": true
+    },
+    "visualPass": true,
+    "dockNavigation": [
+      "Album",
+      "Controllers",
+      "Settings"
+    ],
+    "pass": true
+  },
+  {
+    "id": "F5C1",
+    "width": 1304,
+    "errors": [],
+    "backgroundPlayers": 0,
+    "navigation": [
+      "Cyberpunk 2077",
+      "Hades",
+      "Elden Ring"
+    ],
+    "selectedArtwork": {
+      "x": 559.6964111328125,
+      "y": 354.5523681640625,
+      "width": 184.575927734375,
+      "height": 276.864013671875
+    },
+    "coverPaint": {
+      "colors": 676,
+      "variance": 2219.5027734665055,
+      "painted": true
+    },
+    "visualPass": true,
+    "dockNavigation": [
+      "News",
+      "Shop",
+      "Album"
+    ],
+    "pass": true
+  },
+  {
+    "id": "F5C1",
+    "width": 550,
+    "errors": [],
+    "backgroundPlayers": 0,
+    "navigation": [
+      "Cyberpunk 2077",
+      "Hades",
+      "Elden Ring"
+    ],
+    "selectedArtwork": {
+      "x": 237.06898498535156,
+      "y": 461.716064453125,
+      "width": 75.84916687011719,
+      "height": 113.7738037109375
+    },
+    "coverPaint": {
+      "colors": 281,
+      "variance": 2065.8717458495357,
+      "painted": true
+    },
+    "visualPass": true,
+    "dockNavigation": [
+      "News",
+      "Shop",
+      "Album"
+    ],
+    "pass": true
+  },
+  {
+    "id": "1360A",
+    "width": 1304,
+    "errors": [],
+    "backgroundPlayers": 0,
+    "navigation": [
+      "Cyberpunk 2077",
+      "Hades",
+      "Elden Ring"
+    ],
+    "selectedArtwork": {
+      "x": 659,
+      "y": 357,
+      "width": 256,
+      "height": 256
+    },
+    "coverPaint": {
+      "colors": 843,
+      "variance": 2692.734018855619,
+      "painted": true
+    },
+    "visualPass": true,
+    "dockNavigation": [
+      "Nintendo Switch Online",
+      "News",
+      "Shop"
+    ],
+    "pass": true
+  },
+  {
+    "id": "1360A",
+    "width": 550,
+    "errors": [],
+    "backgroundPlayers": 0,
+    "navigation": [
+      "Cyberpunk 2077",
+      "Hades",
+      "Elden Ring"
+    ],
+    "selectedArtwork": {
+      "x": 277.8765563964844,
+      "y": 462.72186279296875,
+      "width": 105.19998168945312,
+      "height": 105.20001220703125
+    },
+    "coverPaint": {
+      "colors": 276,
+      "variance": 2017.5386139899347,
+      "painted": true
+    },
+    "visualPass": true,
+    "dockNavigation": [
+      "Nintendo Switch Online",
+      "News",
+      "Shop"
+    ],
+    "pass": true
+  },
+  {
+    "id": "EDE3",
+    "width": 1304,
+    "errors": [],
+    "backgroundPlayers": 0,
+    "navigation": [
+      "Cyberpunk 2077",
+      "Hades",
+      "Elden Ring"
+    ],
+    "selectedArtwork": {
+      "x": 644.1882934570312,
+      "y": 528.9382934570312,
+      "width": 245.0921630859375,
+      "height": 245.0921630859375
+    },
+    "coverPaint": {
+      "colors": 648,
+      "variance": 2475.4662097528526,
+      "painted": true
+    },
+    "visualPass": true,
+    "dockNavigation": [
+      "News",
+      "Album",
+      "Controllers"
+    ],
+    "pass": true
+  },
+  {
+    "id": "EDE3",
+    "width": 550,
+    "errors": [],
+    "backgroundPlayers": 0,
+    "navigation": [
+      "Cyberpunk 2077",
+      "Hades",
+      "Elden Ring"
+    ],
+    "selectedArtwork": {
+      "x": 271.8444519042969,
+      "y": 533.432373046875,
+      "width": 100.6083984375,
+      "height": 100.6083984375
+    },
+    "coverPaint": {
+      "colors": 268,
+      "variance": 2142.120195982221,
+      "painted": true
+    },
+    "visualPass": true,
+    "dockNavigation": [
+      "News",
+      "Album",
+      "Controllers"
+    ],
+    "pass": true
+  },
+  {
+    "id": "1F098",
+    "width": 1304,
+    "errors": [],
+    "backgroundPlayers": 0,
+    "navigation": [
+      "Cyberpunk 2077",
+      "Hades",
+      "Elden Ring"
+    ],
+    "selectedArtwork": {
+      "x": 527.9343872070312,
+      "y": 634.1843872070312,
+      "width": 217.5999755859375,
+      "height": 217.5999755859375
+    },
+    "coverPaint": {
+      "colors": 559,
+      "variance": 2461.028635809107,
+      "painted": true
+    },
+    "visualPass": true,
+    "dockNavigation": [
+      "News",
+      "Album",
+      "Controllers"
+    ],
+    "pass": true
+  },
+  {
+    "id": "1F098",
+    "width": 550,
+    "errors": [],
+    "backgroundPlayers": 0,
+    "navigation": [
+      "Cyberpunk 2077",
+      "Hades",
+      "Elden Ring"
+    ],
+    "selectedArtwork": {
+      "x": 224.01678466796875,
+      "y": 576.6273193359375,
+      "width": 89.41998291015625,
+      "height": 89.41998291015625
+    },
+    "coverPaint": {
+      "colors": 206,
+      "variance": 1856.672348484849,
+      "painted": true
+    },
+    "visualPass": true,
+    "dockNavigation": [
+      "News",
+      "Album",
+      "Controllers"
+    ],
+    "pass": true
+  },
+  {
+    "id": "13782",
+    "width": 1304,
+    "errors": [],
+    "backgroundPlayers": 0,
+    "navigation": [
+      "Cyberpunk 2077",
+      "Hades",
+      "Elden Ring"
+    ],
+    "selectedArtwork": {
+      "x": 337.41552734375,
+      "y": 663.7341918945312,
+      "width": 129.1689453125,
+      "height": 129.1689453125
+    },
+    "coverPaint": {
+      "colors": 349,
+      "variance": 2427.04493374298,
+      "painted": true
+    },
+    "visualPass": true,
+    "dockNavigation": [
+      "Album",
+      "Controllers",
+      "Settings"
+    ],
+    "pass": true
+  },
+  {
+    "id": "13782",
+    "width": 550,
+    "errors": [],
+    "backgroundPlayers": 0,
+    "navigation": [
+      "Cyberpunk 2077",
+      "Hades",
+      "Elden Ring"
+    ],
+    "selectedArtwork": {
+      "x": 145.58328247070312,
+      "y": 587.1336059570312,
+      "width": 53.36468505859375,
+      "height": 53.36468505859375
+    },
+    "coverPaint": {
+      "colors": 117,
+      "variance": 2238.0673023431227,
+      "painted": true
+    },
+    "visualPass": true,
+    "dockNavigation": [
+      "Album",
+      "Controllers",
+      "Settings"
+    ],
+    "pass": true
+  },
+  {
+    "id": "1EFD1",
+    "width": 1304,
+    "errors": [],
+    "backgroundPlayers": 0,
+    "navigation": [
+      "Cyberpunk 2077",
+      "Hades",
+      "Elden Ring"
+    ],
+    "selectedArtwork": {
+      "x": 384,
+      "y": 741,
+      "width": 120,
+      "height": 120
+    },
+    "coverPaint": {
+      "colors": 44,
+      "variance": 2202.234829080826,
+      "painted": true
+    },
+    "visualPass": true,
+    "dockNavigation": [
+      "Shop",
+      "Album",
+      "Controllers"
+    ],
+    "pass": true
+  },
+  {
+    "id": "1EFD1",
+    "width": 550,
+    "errors": [],
+    "backgroundPlayers": 0,
+    "navigation": [
+      "Cyberpunk 2077",
+      "Hades",
+      "Elden Ring"
+    ],
+    "selectedArtwork": {
+      "x": 162.40321350097656,
+      "y": 602.2388305664062,
+      "width": 54.24357604980469,
+      "height": 54.24359130859375
+    },
+    "coverPaint": {
+      "colors": 66,
+      "variance": 2452.859127872809,
+      "painted": true
+    },
+    "visualPass": true,
+    "dockNavigation": [
+      "Shop",
+      "Album",
+      "Controllers"
+    ],
+    "pass": true
+  },
+  {
+    "id": "1F012",
+    "width": 1304,
+    "errors": [],
+    "backgroundPlayers": 0,
+    "navigation": [
+      "Cyberpunk 2077",
+      "Hades",
+      "Elden Ring"
+    ],
+    "selectedArtwork": {
+      "x": 950,
+      "y": 299,
+      "width": 128,
+      "height": 128
+    },
+    "coverPaint": {
+      "colors": 335,
+      "variance": 2461.437689887136,
+      "painted": true
+    },
+    "visualPass": true,
+    "dockNavigation": [
+      "Album",
+      "Controllers",
+      "Settings"
+    ],
+    "pass": true
+  },
+  {
+    "id": "1F012",
+    "width": 550,
+    "errors": [],
+    "backgroundPlayers": 0,
+    "navigation": [
+      "Cyberpunk 2077",
+      "Hades",
+      "Elden Ring"
+    ],
+    "selectedArtwork": {
+      "x": 397.4593505859375,
+      "y": 438.88751220703125,
+      "width": 52.600006103515625,
+      "height": 52.5999755859375
+    },
+    "coverPaint": {
+      "colors": 115,
+      "variance": 1675.602729440694,
+      "painted": true
+    },
+    "visualPass": true,
+    "dockNavigation": [
+      "Album",
+      "Controllers",
+      "Settings"
+    ],
+    "pass": true
+  },
+  {
+    "id": "183BE",
+    "width": 1304,
+    "errors": [],
+    "backgroundPlayers": 0,
+    "navigation": [
+      "Cyberpunk 2077",
+      "Hades",
+      "Elden Ring"
+    ],
+    "selectedArtwork": {
+      "x": 328,
+      "y": 677,
+      "width": 128,
+      "height": 128
+    },
+    "coverPaint": {
+      "colors": 335,
+      "variance": 2461.437689887136,
+      "painted": true
+    },
+    "visualPass": true,
+    "dockNavigation": [
+      "Shop",
+      "Album",
+      "Controllers"
+    ],
+    "pass": true
+  },
+  {
+    "id": "183BE",
+    "width": 550,
+    "errors": [],
+    "backgroundPlayers": 0,
+    "navigation": [
+      "Cyberpunk 2077",
+      "Hades",
+      "Elden Ring"
+    ],
+    "selectedArtwork": {
+      "x": 141.8562469482422,
+      "y": 594.2218627929688,
+      "width": 52.59999084472656,
+      "height": 52.60003662109375
+    },
+    "coverPaint": {
+      "colors": 105,
+      "variance": 1563.6832666145265,
+      "painted": true
+    },
+    "visualPass": true,
+    "dockNavigation": [
+      "Shop",
+      "Album",
+      "Controllers"
+    ],
+    "pass": true
+  },
+  {
+    "id": "1F043",
+    "width": 1304,
+    "errors": [],
+    "backgroundPlayers": 0,
+    "navigation": [
+      "Cyberpunk 2077",
+      "Hades",
+      "Elden Ring"
+    ],
+    "selectedArtwork": {
+      "x": 643.484375,
+      "y": 528.234375,
+      "width": 246.5,
+      "height": 246.5
+    },
+    "coverPaint": {
+      "colors": 622,
+      "variance": 2552.338350274308,
+      "painted": true
+    },
+    "visualPass": true,
+    "dockNavigation": [
+      "News",
+      "Shop",
+      "Album"
+    ],
+    "pass": true
+  },
+  {
+    "id": "1F043",
+    "width": 550,
+    "errors": [],
+    "backgroundPlayers": 0,
+    "navigation": [
+      "Cyberpunk 2077",
+      "Hades",
+      "Elden Ring"
+    ],
+    "selectedArtwork": {
+      "x": 271.8744812011719,
+      "y": 533.4623413085938,
+      "width": 100.54833984375,
+      "height": 100.54840087890625
+    },
+    "coverPaint": {
+      "colors": 251,
+      "variance": 2150.1384180622326,
+      "painted": true
+    },
+    "visualPass": true,
+    "dockNavigation": [
+      "News",
+      "Shop",
+      "Album"
+    ],
+    "pass": true
+  },
+  {
+    "id": "F068",
+    "width": 1304,
+    "errors": [],
+    "backgroundPlayers": 0,
+    "navigation": [
+      "Cyberpunk 2077",
+      "Hades",
+      "Elden Ring"
+    ],
+    "selectedArtwork": {
+      "x": 337.76080322265625,
+      "y": 667.7099609375,
+      "width": 128.4783935546875,
+      "height": 128.4783935546875
+    },
+    "coverPaint": {
+      "colors": 282,
+      "variance": 1369.619916703985,
+      "painted": true
+    },
+    "visualPass": true,
+    "dockNavigation": [
+      "Album",
+      "Controllers",
+      "Settings"
+    ],
+    "pass": true
+  },
+  {
+    "id": "F068",
+    "width": 550,
+    "errors": [],
+    "backgroundPlayers": 0,
+    "navigation": [
+      "Cyberpunk 2077",
+      "Hades",
+      "Elden Ring"
+    ],
+    "selectedArtwork": {
+      "x": 145.35671997070312,
+      "y": 585.7451171875,
+      "width": 53.81779479980469,
+      "height": 53.8177490234375
+    },
+    "coverPaint": {
+      "colors": 107,
+      "variance": 1810.6286972522685,
+      "painted": true
+    },
+    "visualPass": true,
+    "dockNavigation": [
+      "Album",
+      "Controllers",
+      "Settings"
+    ],
+    "pass": true
+  },
+  {
+    "id": "F5EB",
+    "width": 1304,
+    "errors": [],
+    "backgroundPlayers": 0,
+    "navigation": [
+      "Cyberpunk 2077",
+      "Hades",
+      "Elden Ring"
+    ],
+    "selectedArtwork": {
+      "x": 553.4243774414062,
+      "y": 424.42437744140625,
+      "width": 197.1199951171875,
+      "height": 197.1199951171875
+    },
+    "coverPaint": {
+      "colors": 514,
+      "variance": 2394.179520777114,
+      "painted": true
+    },
+    "visualPass": true,
+    "dockNavigation": [
+      "News",
+      "Shop",
+      "Album"
+    ],
+    "pass": true
+  },
+  {
+    "id": "F5EB",
+    "width": 550,
+    "errors": [],
+    "backgroundPlayers": 0,
+    "navigation": [
+      "Cyberpunk 2077",
+      "Hades",
+      "Elden Ring"
+    ],
+    "selectedArtwork": {
+      "x": 234.4915771484375,
+      "y": 490.4290771484375,
+      "width": 81.00399780273438,
+      "height": 81.0040283203125
+    },
+    "coverPaint": {
+      "colors": 201,
+      "variance": 2161.8763305555585,
+      "painted": true
+    },
+    "visualPass": true,
+    "dockNavigation": [
+      "News",
+      "Shop",
+      "Album"
+    ],
+    "pass": true
   }
 ]

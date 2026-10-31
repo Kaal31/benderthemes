@@ -1,10 +1,11 @@
 {
+  "coverPaintFailures": 0,
   "nativeIgnoredPropertyEntries": 29,
   "redundantAssignmentEntries": 1,
-  "ignoredTargetEntries": 15,
-  "themeCount": 40,
-  "newThemes": 32,
-  "latestBatchThemes": 16,
+  "ignoredTargetEntries": 16,
+  "themeCount": 52,
+  "newThemes": 44,
+  "latestBatchThemes": 12,
   "downloadFailures": 0,
   "themesWithWarnings": 0,
   "warningEntries": 0,
@@ -12,7 +13,7 @@
   "artworkOnly": 1,
   "browserErrors": 0,
   "renderFailures": 0,
-  "interactionChecks": 19,
+  "interactionChecks": 43,
   "interactionFailures": 0,
   "categories": {}
 }

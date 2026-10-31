@@ -1,9 +1,11 @@
+import {startupIntroEnabled,hubStartupEnabled} from "./startupPreferences";
 // Console themes have an intro. Themes with a boot sequence of their own (Wii U logo, PS1 start-up screens, a PSP/PS3
 // theme file's boot intro, see bootIntro.tsx) play it when they first mount; this file adds a locally bundled
 // video startup for the others. The generic Hub reveal remains the fallback for
 // consoles with an existing startup when explicitly replayed.
 // Skipped with reduced motion / the animations setting; any button or tap ends it; it can never block the home.
 import { RecordedConsoleStartup } from "./recordedConsoleStartup";
+import {themeResourcesReady} from "./themeResources";
 import { CONSOLE_STARTUPS } from "./consoleStartup";
 import { useEffect, useRef, useState } from "react";
 import { pushModalInput } from "./input";
@@ -37,12 +39,16 @@ export function playThemeIntro(theme: string, opts: { fresh?: boolean; switched?
   try {
     if (!isConsoleTheme(theme) && !CONSOLE_STARTUPS[theme]) return;
     const s = getSettings();
+    if((opts.fresh||opts.switched)&&!startupIntroEnabled(s,theme))return;
+    if(!CONSOLE_STARTUPS[theme]&&!hasOwnIntro(s,theme)&&!hubStartupEnabled(s))return;
+    if(["old-big-picture","old-beta-big-picture"].includes(theme)&&!themeResourcesReady(theme))return;
     if (slotUrl("bootVideo", s)) return;
     if (opts.fresh && hasOwnIntro({ ...s, theme: theme as ThemeId }, theme)) return;
     if (!opts.fresh && (theme === "psp" || theme === "ps3") && s.bootIntro) { setTimeout(playBootIntro, 350); return; }
     // the Wii U mounts fresh after a switch and plays its own logo once more; re-activating the open one gets the reveal
     if (!opts.fresh && opts.switched && theme === "wiiu" && hasOwnIntro({ ...s, theme: theme as ThemeId }, theme)) { resetWiiuBoot(); return; }
     pending = { theme, n: ++counter };
+    if(["old-big-picture","old-beta-big-picture"].includes(theme))autoPlayed.add(theme);
     listeners.forEach((l) => l());
   } catch { /* an intro must never break anything */ }
 }

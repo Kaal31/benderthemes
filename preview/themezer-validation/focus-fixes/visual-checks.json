@@ -1,0 +1,27 @@
+{
+  "revision": 36,
+  "focusedThemes": {
+    "failed": 0,
+    "passed": 6
+  },
+  "typecheck": "passed",
+  "tests": [
+    "verify-switch-reference-corrections.mjs",
+    "verify-switch-themezer-focus.mjs",
+    "verify-switch-shadow-functions.mjs",
+    "verify-switch-native-widgets.mjs"
+  ],
+  "referenceCorrections": {
+    "themes": [
+      "1F098",
+      "1EFD1",
+      "F5EB"
+    ],
+    "widths": [
+      1304,
+      550
+    ],
+    "passed": 6,
+    "failed": 0
+  }
+}

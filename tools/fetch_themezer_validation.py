@@ -18,10 +18,15 @@ out = ROOT / 'work/themezer-validation'
 out.mkdir(parents=True, exist_ok=True)
 parser = argparse.ArgumentParser(description=__doc__)
 parser.add_argument('--refresh-pages', action='store_true')
+parser.add_argument('--ids', help='Comma-separated fixture IDs; preserve other cached manifest entries')
 args = parser.parse_args()
 cases = json.loads((ROOT / 'tests/fixtures/switch/themezer-cases.json').read_text())
 manifest_path = out / 'manifest.json'
-cached = {x['id']: x for x in json.loads(manifest_path.read_text()) if 'fetchError' not in x} if manifest_path.exists() else {}
+previous = json.loads(manifest_path.read_text()) if manifest_path.exists() else []
+cached = {x['id']: x for x in previous if 'fetchError' not in x}
+selected = {x.strip().upper() for x in args.ids.split(',') if x.strip()} if args.ids else set()
+if selected - {x['id'] for x in cases}:
+    parser.error('Unknown fixture IDs: ' + ', '.join(sorted(selected - {x['id'] for x in cases})))
 
 def get(url):
     request = urllib.request.Request(url, headers={'User-Agent': 'ThemeHub-conversion-validation/1.0'})
@@ -79,8 +84,11 @@ def fetch(case):
     return item
 
 with ThreadPoolExecutor(max_workers=4) as executor:
-    manifest = list(executor.map(fetch, cases))
+    fetched = list(executor.map(fetch, [x for x in cases if not selected or x['id'] in selected]))
+updates = {x['id']: x for x in fetched}
+prior = {x['id']: x for x in previous}
+manifest = [updates.get(x['id'], prior.get(x['id'], x)) for x in cases]
 manifest_path.write_text(json.dumps(manifest, indent=2), encoding='utf-8')
-print('Fetched', sum('fetchError' not in x for x in manifest), 'of', len(cases), 'themes')
-if any('fetchError' in x for x in manifest):
+print('Fetched', sum('fetchError' not in x for x in fetched), 'of', len(fetched), 'selected themes; manifest contains', len(manifest))
+if any('fetchError' in x for x in fetched):
     sys.exit(1)

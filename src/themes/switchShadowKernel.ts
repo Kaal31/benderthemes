@@ -15,10 +15,14 @@ export function switchShadowCurve(distance:number,kind:number){
 }
 /** The standalone native shadow pass excludes the unexpanded picture bounds.
  * Radius behavior differs for the final three functions when size > radius. */
-export function switchShadowAlpha(x:number,y:number,width:number,height:number,size:number,radius:number,kind:number){
- if(Math.abs(x)<width/2&&Math.abs(y)<height/2)return 0;
+export function switchShadowAlpha(x:number,y:number,width:number,height:number,size:number,radius:number,kind:number,silhouette=false){
+ if(!silhouette&&Math.abs(x)<width/2&&Math.abs(y)<height/2)return 0;
  if(size<=0)return 1;
  const r=Math.min(width/2-.0001,height/2-.0001,Math.max(0,radius));
+ if(silhouette){
+  const sx=Math.abs(x)-(width/2-r),sy=Math.abs(y)-(height/2-r);
+  if(Math.hypot(Math.max(sx,0),Math.max(sy,0))+Math.min(Math.max(sx,sy),0)-r<0)return 0;
+ }
  const edge=kind>=3?Math.max(r,size):r;
  const qx=Math.abs(x)-(width/2-edge),qy=Math.abs(y)-(height/2-edge);
  const distance=Math.hypot(Math.max(qx,0),Math.max(qy,0))+Math.min(Math.max(qx,qy),0)-edge;

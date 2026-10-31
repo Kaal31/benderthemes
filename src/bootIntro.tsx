@@ -14,8 +14,8 @@ export function playBootIntro() {
   listeners.forEach((l) => l());
 }
 
-export function BootIntro({ file }: { file: string }) {
-  const [run, setRun] = useState(() => (!played && file ? 1 : 0));
+export function BootIntro({ file, automatic=true }: { file: string; automatic?:boolean }) {
+  const [run, setRun] = useState(() => (!played && automatic && file ? 1 : 0));
   useEffect(() => {
     const l = () => setRun((r) => r + 1);
     listeners.add(l);

@@ -5,12 +5,12 @@ import { startPreviewServer } from '../preview/server.mjs';
 const { server, url } = await startPreviewServer();
 const browser = await launch();
 // the Hub lists every catalog theme plus the built-in themes without a pack of their own (Wii, Switch, 3DS, PS1)
-const catalog = JSON.parse(readFileSync(new URL('../theme-catalog.json', import.meta.url), 'utf8')).themes.filter(p => p.theme);
+const catalog = JSON.parse(readFileSync(new URL('../theme-catalog.json', import.meta.url), 'utf8')).themes;
 const presetsSource = readFileSync(new URL('../src/presets.ts', import.meta.url), 'utf8');
 const builtInDeclaration = presetsSource.match(/export const BUILT_IN_THEMES = (\[[^;]*?\]) as const;/);
 assert.ok(builtInDeclaration, 'built-in theme declaration found');
 const BUILT_IN = JSON.parse(builtInDeclaration[1]);
-const baseCards = new Set([...catalog.map(p => p.theme), ...BUILT_IN]).size;
+const catalogIds=catalog.map(p=>p.frameTheme??p.theme).filter(Boolean);
 mkdirSync('out/theme-previews', { recursive: true });
 try {
   const page = await browser.newPage({ viewport: { width: 1304, height: 930 } });
@@ -20,8 +20,8 @@ try {
   await page.locator('[data-dht-root]').waitFor();
   await page.getByRole('button', { name: 'Hub (from this home)', exact: true }).click();
   await page.locator('.market-card').first().waitFor();
-  const bundled = await page.evaluate(() => window.__dataThemes.themes.filter(t => !/test/i.test(t.name)).length);
-  const expectedCards = baseCards + bundled;
+  const bundled = await page.evaluate(() => window.__dataThemes.themes.filter(t => !/test/i.test(t.name)).map(t=>t.id));
+  const expectedCards = new Set([...catalogIds,...BUILT_IN,...bundled]).size;
   assert.equal(await page.locator('.market-card').count(), expectedCards);
   for (const name of ['Blue Glass','GameAmp']) assert.equal(await page.locator('.market-card').filter({hasText:name}).count(),1);
   // Code-only console layouts also stay out of Your themes until downloaded.

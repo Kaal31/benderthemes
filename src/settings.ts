@@ -19,7 +19,7 @@ export const VITA_LOOKS: { id: VitaLook; name: string }[] = [
   { id: "sakura", name: "Sakura" },
 ];
 
-export type ThemeId = "ios6" | "gameamp" | "santa-express" | "old-big-picture" | "old-beta-big-picture" | "native" | "onyx" | "silver" | "frame" | "wii" | "wiiu" | "switch" | "n3ds" | "vita" | "ps2" | "ps3" | "psp" | "ps4" | "ps5" | "x360" | "aero" | "aero2" | "xbox" | "dial" | "castle" | "republic" | "minecraft" | "pain" | "nazarick" | "ps1" | "iisu";
+export type ThemeId = "reading" | "ios6" | "gameamp" | "santa-express" | "old-big-picture" | "old-beta-big-picture" | "native" | "onyx" | "silver" | "frame" | "wii" | "wiiu" | "switch" | "n3ds" | "vita" | "ps2" | "ps3" | "psp" | "ps4" | "ps5" | "x360" | "aero" | "aero2" | "xbox" | "dial" | "castle" | "republic" | "minecraft" | "pain" | "nazarick" | "ps1" | "iisu";
 export type StyleValue = string | number | boolean;
 export type SortMode = "recent" | "alpha" | "playtime";
 export type AAction = "theme" | "launch" | "details";
@@ -42,6 +42,8 @@ export const THEMES: { id: ThemeId; name: string; blurb: string }[] = [
   {id:"santa-express",name:"Santa Express",blurb:"Native Christmas dashboard with chrome controls, snowfall and music"},
   {id:"old-beta-big-picture",name:"Old Beta Big Picture",blurb:"Early Steam Big Picture with a transforming cover sheet and games carousel"},
   {id:"old-big-picture",name:"Old Big Picture",blurb:"Classic Steam blue dashboard, carousel and native library pages"},
+
+  {id:"reading",name:"Reading Room",blurb:"A sunset room, pinned paper panels and an ordered day/night wallpaper cycle"},
   {id:"onyx",name:"Onyx Wheel (bonus)",blurb:"Black textured body, cover flow and circular touch navigation"},
   {id:"silver",name:"Silver Wheel (bonus)",blurb:"Brushed aluminum, reflected covers and circular wheel navigation"},
   {id:"wii",name:"Wii",blurb:"Channel grid, curved system bar and channel launch banners"},
@@ -171,8 +173,8 @@ export const storeSectionOn = (s: Pick<Settings, "storeSections">, theme: ThemeI
  *  Everything else (clock, volume, library sorting, Ⓐ…) is the user's own. */
 export const LOOK_KEYS = [
   "theme", "activeTheme", "pages", "mix", "iconPicks", "themeOptions", "styles", "vita", "xmb", "x360", "dial", "wallpapers", "wallpaperDim", "packs", "musicPacks", "music",
-  "coverStyles", "titles", "iconSizes", "protondbThemes", "videoBackgrounds", "ps4GameBackgrounds", "castleWeather", "castleWindows",
-  "minecraftFollowFocus", "minecraftWaitForSwipe", "minecraftSlim", "themeFx", "wiiuView", "wiiuTheme", "xboxSkin", "wiiSkin", "switchTheme", "wiiuPlazaPositions", "wiiuPlazaTips", "n3dsSkin", "n3dsCursor", "n3dsTop", "n3dsLayout", "hubStyle", "storeSections",
+  "coverStyles", "titles", "iconSizes", "protondbThemes", "videoBackgrounds", "ps4GameBackgrounds", "ps4Skin", "castleWeather", "castleWindows",
+  "minecraftFollowFocus", "minecraftWaitForSwipe", "minecraftSlim", "themeFx", "wiiuView", "wiiuTheme", "xboxSkin", "wiiSkin", "wiiSkinMember", "wiiSkinBase", "switchTheme", "wiiuPlazaPositions", "wiiuPlazaTips", "n3dsSkin", "n3dsCursor", "n3dsTop", "n3dsLayout", "hubStyle", "storeSections",
 ] as const;
 export type LookKey = (typeof LOOK_KEYS)[number];
 /** A stored preset (v2): "my:<n>" for the user's own, or a built-in / theme-file preset's id once its state was kept. */
@@ -188,7 +190,7 @@ export function cleanLook(v: any): Partial<Pick<Settings, LookKey>> {
   for (const k of LOOK_KEYS) {
     const x = v[k];
     // keys that have no default value (theme files, the Plaza switches) still have a type
-    const d: any = (DEFAULTS as any)[k] ?? (["wiiuTheme", "switchTheme", "wiiSkin", "xboxSkin", "n3dsSkin"].includes(k) ? "" : k === "wiiuPlazaTips" ? true : k === "wiiuPlazaPositions" ? {} : undefined);
+    const d: any = (DEFAULTS as any)[k] ?? (["wiiuTheme", "switchTheme", "wiiSkin", "wiiSkinMember", "wiiSkinBase", "xboxSkin", "n3dsSkin", "ps4Skin"].includes(k) ? "" : k === "wiiuPlazaTips" ? true : k === "wiiuPlazaPositions" ? {} : undefined);
     if (x === undefined || x === null) continue;
     const plain = typeof x === "object" && !Array.isArray(x);
     if (typeof d === "object" && d !== null ? !plain : d !== undefined ? typeof x !== typeof d : !(plain || ["string", "number", "boolean"].includes(typeof x))) continue;
@@ -223,6 +225,8 @@ export interface ThemeScreensaver {
 }
 export interface Settings {
   personalMii?: {faceShape?:number;beardStyle?:number;moustacheStyle?:number;glassesStyle?:number;earrings?:number;faceStyle?:"drawn"|"detailed";portrait?:string;logoMedia?:"image"|"animated"|"video";decal?:{part:string;point:[number,number,number];normal:[number,number,number];opacity:number;rotation:number;rotationX?:number;rotationY?:number;size:number};accent?:string;logo?:string;logoGame?:string;hat?:number;hatColor?:string;pants?:string;outfit?:number;brows?:number;eyeColor?:string;lipColor?:string;eyeSpacing?:number;eyeY?:number;mouthY?:number;beard?:boolean;moustache?:boolean;name:string;skin:string;hair:string;shirt:string;hairStyle:number;eyes:number;mouth:number;glasses:boolean;female:boolean;height:number;build:number};
+
+  readingWindowPositions?:Record<string,{x:number;y:number}>;
   screensaversDisabled?: boolean;
   themeScreensavers?: Record<string, ThemeScreensaver>;
   screensaverSteamBackup?: Record<string, string | number>;
@@ -340,6 +344,8 @@ export interface Settings {
   wiiuPlazaTips?: boolean;
   wiiuView?: "grid" | "plaza";
   wiiuTheme?: string; // Wii U custom theme (.utheme file name in skins/wiiu) or ""
+  wiiSkinBase?: string;
+  wiiSkinMember?: string;
   wiiSkin?: string; // Wii System Menu theme: a .mym / .csm name under skins/wii ("" = none)
   n3dsSkin?: string; // Nintendo 3DS theme: a .zip / folder / body_LZ.bin name under skins/3ds ("" = the built-in stock look)
   n3dsTop?: "show" | "hide" | "split"; // 3DS look: "hide" shows only the bottom screen, as large as possible ("show" when unset)
@@ -347,9 +353,11 @@ export interface Settings {
   n3dsArrows?: "show" | "hide"; // 3DS look: the half-ring page arrows at the screen edges ("show" when unset; L1 / R1 and swipes still page)
   n3dsHandle?: "show" | "hide"; // 3DS look: the grey scroll bar along the bottom of the icon grid ("show" when unset)
   n3dsLayout?: N3dsLayout; // 3DS home: zoom level and where each icon / folder / badge sits (kept in presets, like the console's saved layouts)
+  ps4Skin?: string;
   xboxSkin?: string; // original Xbox skin: a folder or .zip name under skins/xbox ("" = none)
   switchTheme?: string; // Switch theme: a .nxtheme path under skins/switch ("file" or "folder/file") or ""
-  x360: { style: X360Style; guideSide?: "left" | "right"; skin?: string; gamerpic?: string }; // skin / gamerpic: STFS package names in skins/x360 ("" = none); which Xbox 360 dashboard era
+  originalConsoleArtwork?: boolean; // installed GitFlic UI pack; original/procedural UI is the fallback
+  x360: { style: X360Style; cabinetWallpaper?: string; guideSide?: "left" | "right"; skin?: string; gamerpic?: string; showThemeHubLogo?: boolean }; // skin / gamerpic: STFS package names in skins/x360 ("" = none); which Xbox 360 dashboard era
   dial: DialSettings;
   hubStyle: string; // Hub look: "auto" (the theme home it was opened on), "neutral", "preview" (the theme focused in Discover) or a console theme id (always that look when installed)
   themedStore: boolean; // Store entries open the store styled like the current theme
@@ -363,6 +371,9 @@ export interface Settings {
   gameBoot: string;
   /** False only on a fresh install until the first-run flow (Onboarding.tsx) is finished or skipped. */
   onboardingDone: boolean;
+  hubStartupAnimation?: boolean; // opt in to repeat ThemeHub branding after first install
+  hubStartupSeen?: boolean;
+  themeStartupIntros?: Record<string,boolean>; // false disables automatic intros for this theme
   explicitThemeDownloads?: boolean;
   version: number;
 }
@@ -582,6 +593,9 @@ function merge(saved: any): Settings {
   if (typeof s.vita.skin !== "string") s.vita.skin = "";
   if (typeof s.bootIntro !== "string" || s.bootIntro.length > 300) s.bootIntro = "";
   s.onboardingDone = saved?.onboardingDone !== false;
+  s.hubStartupAnimation = saved?.hubStartupAnimation === true;
+  s.hubStartupSeen = typeof saved?.hubStartupSeen === "boolean" ? saved.hubStartupSeen : saved?.onboardingDone !== false;
+  s.themeStartupIntros = Object.fromEntries(Object.entries(saved?.themeStartupIntros??{}).filter(([k,v])=>k.length<128&&typeof v==="boolean"));
   if (typeof s.gameBoot !== "string" || s.gameBoot.length > 300) s.gameBoot = "";
   s.xmb.pspAccurate = s.xmb.pspAccurate === true;
   // the old on/off switch: on stays the console's size; off (also the old default) becomes Auto, so theme files line up with their art
@@ -615,6 +629,7 @@ function merge(saved: any): Settings {
   if (typeof s.x360.skin !== "string") delete s.x360.skin;
   if (typeof s.x360.gamerpic !== "string") delete s.x360.gamerpic;
   s.wiiSkin = typeof saved?.wiiSkin === "string" ? saved.wiiSkin : "";
+  s.ps4Skin = typeof saved?.ps4Skin === "string" ? saved.ps4Skin : "";
   s.xboxSkin = typeof saved?.xboxSkin === "string" ? saved.xboxSkin : "";
   s.n3dsSkin = typeof saved?.n3dsSkin === "string" ? saved.n3dsSkin : "";
   s.n3dsCursor = saved?.n3dsCursor === "simple" ? "simple" : "3ds";
@@ -729,6 +744,7 @@ export const setLookChangeHook = (h: LookChangeHook | null) => { lookChangeHook 
 export function updateSettings(patch: Partial<Settings> | ((s: Settings) => Partial<Settings>)) {
   let p = typeof patch === "function" ? patch(current) : patch;
   if (lookChangeHook && loaded) p = lookChangeHook(current, p);
+  if(p.wiiSkin!==undefined&&p.wiiSkin!==current.wiiSkin&&p.wiiSkinMember===undefined)p={...p,wiiSkinMember:""};
   current = { ...current, ...p };
   emit();
   if (storeUnread) {
@@ -781,7 +797,7 @@ export function resetThemeSettings(theme: ThemeId) {
       if (p.x360?.skin) keys.push(`x360:${p.x360.skin}`);
     }
     if (theme === "dial") out.dial = { ...DEFAULTS.dial };
-    if (theme === "ps4") out.ps4GameBackgrounds = DEFAULTS.ps4GameBackgrounds;
+    if (theme === "ps4") { out.ps4GameBackgrounds = DEFAULTS.ps4GameBackgrounds; if (p.ps4Skin) keys.push(`ps4:${p.ps4Skin}`); }
     if (theme === "switch" && p.switchTheme) keys.push(`nx:${p.switchTheme}`);
     if (theme === "castle") Object.assign(out, { castleWeather: DEFAULTS.castleWeather, castleWindows: DEFAULTS.castleWindows });
     if (theme === "minecraft") Object.assign(out, { minecraftFollowFocus: true, minecraftWaitForSwipe: false, minecraftSlim: false });

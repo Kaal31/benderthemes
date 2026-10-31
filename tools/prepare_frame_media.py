@@ -26,13 +26,20 @@ def prepare():
         with zipfile.ZipFile(archive) as z:
             if set(z.namelist())!=set(pack["resources"]):raise ValueError("Unexpected archive contents")
             for entry in z.infolist():
-                if not entry.filename.startswith(prefix):raise ValueError("Unexpected resource root")
-                relative=entry.filename[len(prefix):]
-                target=(ROOT/"out/frame-media"/ident/relative).resolve()
-                if not target.is_relative_to((ROOT/"out/frame-media"/ident).resolve()):raise ValueError("Unsafe media path")
-                if not target.exists():
+                if entry.filename in pack.get("soundResources",[]):
+                    if not entry.filename.startswith("sounds/"):raise ValueError("Unexpected audio resource root")
+                    destination=ROOT/"out/asset-packs"/ident
+                    relative=entry.filename
+                else:
+                    if not entry.filename.startswith(prefix):raise ValueError("Unexpected resource root")
+                    destination=ROOT/"out/frame-media"/ident
+                    relative=entry.filename[len(prefix):]
+                target=(destination/relative).resolve()
+                if not target.is_relative_to(destination.resolve()):raise ValueError("Unsafe media path")
+                raw=z.read(entry)
+                if not target.exists() or target.read_bytes()!=raw:
                     target.parent.mkdir(parents=True,exist_ok=True)
-                    target.write_bytes(z.read(entry))
+                    target.write_bytes(raw)
     print("Verified frame media ready in out/frame-media",flush=True)
 
 

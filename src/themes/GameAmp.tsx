@@ -46,5 +46,5 @@ export function GameAmpHome(){
   return()=>{disposed=true;resize.disconnect();W.clearInterval(meter);runtime.current?.destroy();runtime.current=null;handlers.forEach(f=>f());timeouts.forEach(id=>W.clearTimeout(id));intervals.forEach(id=>W.clearInterval(id));root.replaceChildren();};
  },[]);
  useEffect(()=>{runtime.current?.state({games:api.lib.games,settings:api.settings,saved:api.settings.frameData.gameamp,capabilities:{pages:1}});},[api.lib,api.settings]);
- return <ThemeRoot onInput={p=>{if(api.busy)return false;runtime.current?.input(p.btn);return true;}} hints={{a:'Select',x:'Game details',y:'Theme options'}}><div ref={host} style={{position:'absolute',inset:0,overflow:'hidden',background:'#080d15'}}/></ThemeRoot>;
+ return <ThemeRoot onInput={p=>{if(api.busy)return false;runtime.current?.input(p.btn);return true;}} hints={{a:'Select',x:'Game details',y:'Theme options'}}><div ref={host} data-native-theme="gameamp" style={{position:'absolute',inset:0,overflow:'hidden',background:'#080d15'}}/></ThemeRoot>;
 }

@@ -275,5 +275,171 @@
     "regression": false,
     "discovery": true,
     "batch": "native-expansion"
+  },
+  {
+    "id": "E87B",
+    "slug": "project-clean-home",
+    "category": "Hidden applets and multicolor Atmosphere album icon",
+    "regression": false,
+    "discovery": true,
+    "batch": "themezer-expansion-2026-10-23"
+  },
+  {
+    "id": "F5C1",
+    "slug": "vertical-lava-lamp-blue-homelayout",
+    "category": "Vertical artwork and Lava Lamp motion",
+    "regression": false,
+    "discovery": true,
+    "batch": "themezer-expansion-2026-10-23",
+    "referenceSelection": 2
+  },
+  {
+    "id": "1360A",
+    "slug": "mk-switch-2-edition-home-menu",
+    "category": "Modern Switch 2 layout and custom game sizing",
+    "regression": false,
+    "discovery": true,
+    "batch": "themezer-expansion-2026-10-23"
+  },
+  {
+    "id": "EDE3",
+    "slug": "black-edition-nes-jumping-mario-switch-remake",
+    "category": "NES pixel-art wallpaper and custom game focus",
+    "regression": false,
+    "discovery": true,
+    "batch": "themezer-expansion-2026-10-23"
+  },
+  {
+    "id": "1F098",
+    "slug": "kotone-p5x-home-menu",
+    "category": "Gravity/Flow layout and custom common dialogs",
+    "regression": false,
+    "discovery": true,
+    "batch": "themezer-expansion-2026-10-23"
+  },
+  {
+    "id": "13782",
+    "slug": "devil-may-cry-home",
+    "category": "Custom character background and applet layout",
+    "regression": false,
+    "discovery": true,
+    "batch": "themezer-expansion-2026-10-23"
+  },
+  {
+    "id": "1EFD1",
+    "slug": "nfsu-home-menu",
+    "category": "Racing layout and icon arrangement",
+    "regression": false,
+    "discovery": true,
+    "batch": "themezer-expansion-2026-10-23",
+    "firmwareProfile": "modern"
+  },
+  {
+    "id": "1F012",
+    "slug": "pixel-halloween-home-menu-dark-mansion",
+    "category": "Pixel artwork and dark Home layout",
+    "regression": false,
+    "discovery": true,
+    "batch": "themezer-expansion-2026-10-23"
+  },
+  {
+    "id": "183BE",
+    "slug": "green-floral-home",
+    "category": "Light floral palette and custom icons",
+    "regression": false,
+    "discovery": true,
+    "batch": "themezer-expansion-2026-10-23"
+  },
+  {
+    "id": "1F043",
+    "slug": "sewerslvt-homemenu",
+    "category": "Alternate Home pane arrangement",
+    "regression": false,
+    "discovery": true,
+    "batch": "themezer-expansion-2026-10-23",
+    "systemColors": "light"
+  },
+  {
+    "id": "F068",
+    "slug": "windows-xp-home",
+    "category": "Desktop-style Home layout",
+    "regression": false,
+    "discovery": true,
+    "batch": "themezer-expansion-2026-10-23",
+    "referenceSelection": 6
+  },
+  {
+    "id": "F5EB",
+    "slug": "lava-lamp-dark-homelayout",
+    "category": "Dark Lava Lamp cards, shells and custom applets",
+    "regression": false,
+    "discovery": true,
+    "batch": "themezer-expansion-2026-10-23",
+    "referenceSelection": 2
+  },
+  {
+    "id": "16FF2",
+    "slug": "sw2-neon-nebula-home-menu",
+    "category": "Additional clean-resource import discovery",
+    "regression": false,
+    "discovery": true,
+    "batch": "themezer-substitutes-2026-10-24"
+  },
+  {
+    "id": "164AE",
+    "slug": "atmosphere-2026-v2-home-menu",
+    "category": "Additional clean-resource import discovery",
+    "regression": false,
+    "discovery": true,
+    "batch": "themezer-substitutes-2026-10-24"
+  },
+  {
+    "id": "16057",
+    "slug": "nintendo-switch-2-black-menu",
+    "category": "Additional clean-resource import discovery",
+    "regression": false,
+    "discovery": true,
+    "batch": "themezer-substitutes-2026-10-24"
+  },
+  {
+    "id": "14AD3",
+    "slug": "persona-3-reload-home-screen",
+    "category": "Additional clean-resource import discovery",
+    "regression": false,
+    "discovery": true,
+    "batch": "themezer-substitutes-2026-10-24"
+  },
+  {
+    "id": "102EC",
+    "slug": "pokemon-scarlet-violet",
+    "category": "Additional clean-resource import discovery",
+    "regression": false,
+    "discovery": true,
+    "batch": "themezer-substitutes-2026-10-24"
+  },
+  {
+    "id": "14C8C",
+    "slug": "haniel-home",
+    "referenceBatteryPercentage": false,
+    "category": "Additional clean-resource import discovery",
+    "regression": false,
+    "discovery": true,
+    "batch": "themezer-substitutes-2026-10-24"
+  },
+  {
+    "id": "12251",
+    "slug": "minimal-home-menu-v20-x",
+    "category": "Additional clean-resource import discovery",
+    "regression": false,
+    "discovery": true,
+    "batch": "themezer-substitutes-2026-10-24"
+  },
+  {
+    "id": "10B35",
+    "slug": "home-menu-compact-w-user-icons",
+    "category": "Additional clean-resource import discovery",
+    "regression": false,
+    "discovery": true,
+    "batch": "themezer-substitutes-2026-10-24"
   }
 ]

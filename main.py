@@ -290,7 +290,7 @@ def _read_p3t(path: str):
     return {"name": name, "author": author, "look": look, "backgrounds": backgrounds[:1], "icons": icons, "visuals": visuals, "_raf": raf[0] if raf else None, "_bgraw": bgraw if len(bgraw) > 1 and not raf else None, "_sounds": sounds}
 
 
-_P3T_READER = 2  # bump when _read_p3t's output changes: cached reads are made again
+_P3T_READER = 3  # bump when _read_p3t's output changes: cached reads are made again
 
 
 def _pickle_cached(subfolder: str, key_text: str, make, keep: int = 12, store=None):
@@ -1405,15 +1405,16 @@ def _read_xbox_cached(path: str):
     return _pickle_cached("xboxskin", text, lambda: xbox_skins.read_xbox_skin(path))
 
 
-def _read_wii_cached(path: str):
+def _read_wii_cached(path: str, member: str = "", base_path: str = ""):
     """wii_themes.read_wii_theme, remembered on disk."""
     import wii_themes
     try:
         st = os.stat(path)
-        text = f"{os.path.realpath(path)}|{st.st_size}|{st.st_mtime_ns}|{wii_themes.READER_VERSION}"
+        base_st = os.stat(base_path) if base_path else None
+        text = f"{os.path.realpath(path)}|{st.st_size}|{st.st_mtime_ns}|{wii_themes.READER_VERSION}|{member}|{base_path}|{base_st.st_mtime_ns if base_st else 0}|{base_st.st_size if base_st else 0}"
     except Exception:
-        return wii_themes.read_wii_theme(path)
-    return _pickle_cached("wiiskin", text, lambda: wii_themes.read_wii_theme(path))
+        return wii_themes.read_wii_theme(path, member, base_path)
+    return _pickle_cached("wiiskin", text, lambda: wii_themes.read_wii_theme(path, member, base_path))
 
 def _read_3ds_cached(path: str):
     """n3ds_themes.read_3ds_theme, remembered on disk (the wallpapers are decoded to PNG)."""
@@ -1475,7 +1476,24 @@ async def _serve(reader, writer):
         seg = path.strip("/").split("/")
         fpath = None
         if len(seg) >= 3 and seg[0] == _vi.token:
-            if seg[1] == "f" and len(seg) == 3:
+            if seg[1] == "avatar":
+                import x360_engine
+                from urllib.parse import unquote
+                engine = x360_engine.instance(_data_dir(), decky.DECKY_PLUGIN_SETTINGS_DIR)
+                tail = unquote('/'.join(seg[2:]))
+                try:
+                    texture = re.fullmatch(r'api/texture/([0-9a-f-]{36})/(face|\d{1,3})/(\d{1,3})\.dds', tail)
+                    prop = re.fullmatch(r'api/prop/([0-9a-f-]{36})\.json', tail)
+                    if texture or prop:
+                        if method not in ('GET', 'HEAD') or not engine.ready(): raise ValueError('Avatar assets unavailable')
+                        body = await asyncio.to_thread(engine.texture, *texture.groups()) if texture else json.dumps(await asyncio.to_thread(engine.prop, prop.group(1))).encode()
+                        await _send(writer, '200 OK', {**base, 'Content-Type': 'application/octet-stream' if texture else 'application/json', 'Content-Length': str(len(body))}, b'' if method == 'HEAD' else body)
+                        return
+                    fpath = str(engine.resource(tail))
+                except (ValueError, KeyError, IndexError, TypeError, OSError):
+                    await _send(writer, '404 Not Found', {**base, 'Content-Length': '0'})
+                    return
+            elif seg[1] == "f" and len(seg) == 3:
                 fpath = _vi.files.get(seg[2])
             elif seg[1] == "r" and len(seg) == 4 and _SEG.match(seg[3]) and seg[2] in _vi.dirs:
                 fpath = os.path.join(_vi.dirs[seg[2]], seg[3])
@@ -1574,6 +1592,10 @@ async def _ensure_server():
 
 
 class Plugin:
+    async def wii_game_storage(self):
+        import wii_storage
+        return await asyncio.to_thread(wii_storage.scan_storage, _steam_libraries())
+
     async def theme_inventory(self):
         import theme_store
         return theme_store.local_inventory()
@@ -1638,6 +1660,14 @@ class Plugin:
     async def theme_sources_browse(self, kind: str, source: str, query: str = "", page: int = 1, refresh: bool = False):
         import theme_sources
         return await asyncio.to_thread(theme_sources.browse, str(kind), str(source), str(query or ""), page, bool(refresh))
+
+    async def wiiflow_scan_downloads(self):
+        import wiiflow_downloads
+        roots = [os.path.join(decky.DECKY_USER_HOME, "Downloads")]
+        try:
+            return await asyncio.to_thread(wiiflow_downloads.scan, roots, os.path.join(_skin_dir(), "wiiflow-downloads.json"))
+        except Exception as error:
+            return {"busy": False, "imported": [], "pending": 0, "errors": [str(error)[:200]]}
 
     async def theme_sources_files(self, kind: str, ident: str):
         import theme_sources
@@ -1875,6 +1905,15 @@ class Plugin:
                         x360names[n] = t      # real package files are called F8E5B41D... : the menu shows the title instead
         except Exception as e:
             decky.logger.warning(f"x360 list failed: {e}")
+        ps4 = []
+        try:
+            import ps4_themes
+            os.makedirs(os.path.join(base, "ps4"), exist_ok=True)
+            for n, p in _skin_entries("ps4"):
+                if ps4_themes.peek(p):
+                    ps4.append(n)
+        except Exception as e:
+            decky.logger.warning(f"ps4 theme list failed: {e}")
         xbox = []
         try:
             import xbox_skins
@@ -1889,7 +1928,7 @@ class Plugin:
             import wii_themes
             os.makedirs(os.path.join(base, "wii"), exist_ok=True)
             for n, p in _skin_entries("wii"):
-                if n.lower().endswith((".mym", ".csm", ".zip")) and wii_themes.peek(p):
+                if n.lower().endswith((".mym", ".csm", ".zip", ".app")) and wii_themes.peek(p):
                     wii.append(n)
         except Exception as e:
             decky.logger.warning(f"wii theme list failed: {e}")
@@ -1902,15 +1941,78 @@ class Plugin:
                     n3ds.append(n)
         except Exception as e:
             decky.logger.warning(f"3ds theme list failed: {e}")
-        return {"p3t": p3t, "vita": vita, "psp": psp, "x360": x360, "x360pics": x360pics, "x360names": x360names, "xbox": xbox, "wii": wii, "n3ds": n3ds, "dir": base}
+        return {"p3t": p3t, "vita": vita, "psp": psp, "ps4": ps4, "x360": x360, "x360pics": x360pics, "x360names": x360names, "xbox": xbox, "wii": wii, "n3ds": n3ds, "dir": base}
 
-    async def get_wii_skin(self, name: str):
+    async def import_ps4_downloads(self):
+        import ps4_themes
+        return await asyncio.to_thread(ps4_themes.import_downloads,
+                                       os.path.join(decky.DECKY_USER_HOME, "Downloads"),
+                                       os.path.join(_skin_dir(), "ps4"))
+
+    async def get_ps4_skin(self, name: str):
+        if not name:
+            return None
+        try:
+            path = _skin_path("ps4", name)
+
+            def load():
+                import ps4_themes
+                import hashlib
+                key = ps4_themes.fingerprint(path)
+                folder = os.path.join(_cache_root(), "ps4-" + key[:20])
+
+                def frame_sink(raw):
+                    filename = hashlib.sha256(raw).hexdigest()[:24] + ".png"
+                    os.makedirs(folder, exist_ok=True)
+                    destination = os.path.join(folder, filename)
+                    if not os.path.isfile(destination):
+                        with tempfile.NamedTemporaryFile(dir=folder, delete=False) as stream:
+                            temporary = stream.name
+                            stream.write(raw)
+                        os.replace(temporary, destination)
+                    return f"k/ps4-{key[:20]}/{filename}"
+
+                def valid_cache(cached):
+                    return all(os.path.isfile(os.path.join(_cache_root(), frame["image"][2:])) for frame in cached.get("animation", []))
+
+                result = _pickle_cached("ps4skin", key, lambda: ps4_themes.read_ps4_theme(path, frame_sink))
+                if not valid_cache(result):
+                    result = ps4_themes.read_ps4_theme(path, frame_sink)
+                result = dict(result)
+                sounds = result.pop("_sounds", None)
+                music = result.pop("_music", None)
+                label = "PS4-" + key[:20]
+                result["soundPack"] = _theme_sound_pack(label + "-effects", sounds)
+                try:
+                    result.update(_theme_music_pack(label + "-music", music))
+                except Exception as error:
+                    result["errors"] = [*result["errors"], f"Could not decode music: {error}"]
+                return result
+
+            result = await asyncio.to_thread(load)
+            if result.get("animation"):
+                ready = await _ensure_server()
+                result["animation"] = [{**frame, "image": _vi.url(frame["image"])} for frame in result["animation"]] if ready else []
+                if (result.get("background") or "").startswith("k/"):
+                    result["background"] = _vi.url(result["background"]) if ready else result.get("preview")
+                if not ready:
+                    result["errors"] = [*result["errors"], "Animation media server is unavailable"]
+            return result
+        except Exception as e:
+            decky.logger.error(f"ps4 theme read failed: {e}")
+            return {"error": str(e)}
+
+    async def get_wii_standard(self):
+        import wii_standard
+        return await asyncio.to_thread(wii_standard.standard_skin)
+
+    async def get_wii_skin(self, name: str, member: str = "", base: str = ""):
         """Wii System Menu theme (.mym / .csm / .zip) from skins/wii/, or None."""
         p = _skin_path("wii", name)
         if not name or not os.path.isfile(p):
             return None
         try:
-            return await asyncio.to_thread(_read_wii_cached, p)
+            return await asyncio.to_thread(_read_wii_cached, p, member, _skin_path("wii", base) if base else "")
         except Exception as e:
             decky.logger.error(f"wii theme read failed: {e}")
 
@@ -1948,6 +2050,10 @@ class Plugin:
         except Exception as e:
             decky.logger.error(f"xbox skin read failed: {e}")
             return None
+
+    async def get_x360_cabinet_wallpaper(self, ident: str):
+        import x360_cabinet
+        return await asyncio.to_thread(x360_cabinet.wallpaper, _data_dir(), ident)
 
     async def get_x360_skin(self, name: str):
         """Xbox 360 theme / gamer picture package from skins/x360/ (any file name), or None."""
@@ -2107,12 +2213,36 @@ class Plugin:
             decky.logger.error(f"wii u theme read failed: {e}")
             return None
 
+    async def get_public_friend_locations(self, steamids):
+        import friend_locations
+        return await asyncio.to_thread(friend_locations.lookup_many, steamids)
+
     async def wiiu_scan(self):
         try:
             return await asyncio.to_thread(_wiiu_scan)
         except Exception as e:
             decky.logger.warning(f"wii u scan failed: {e}")
             return []
+
+    async def wiiu_import_file(self, path: str):
+        def import_selected():
+            import wiiu_themes
+            selected = os.path.realpath(path)
+            if os.path.basename(selected) in wiiu_themes.STOCK:
+                selected = os.path.dirname(selected)
+            kind = wiiu_themes._classify(selected)
+            if not kind:
+                return {"success": False, "error": "Choose a .utheme or a Wii U menu dump (ZIP, folder, Men.pack or Men2.pack)."}
+            st = os.stat(selected)
+            with _wiiu_lock:
+                state = _wiiu_load_state()
+                state[selected] = {"size": st.st_size, "mtime": int(st.st_mtime), "kind": kind}
+                _wiiu_save_state(state)
+            return _wiiu_decide(selected, True)
+        try:
+            return await asyncio.to_thread(import_selected)
+        except Exception as error:
+            return {"success": False, "error": str(error)[:200]}
 
     async def wiiu_decide(self, path: str, accept: bool):
         try:
@@ -2153,17 +2283,91 @@ class Plugin:
         mime = "audio/wav"
         return "data:" + mime + ";base64," + payload
 
+    async def console_artwork_status(self):
+        import console_artwork
+        return await asyncio.to_thread(console_artwork.status)
+
+    async def console_artwork_install(self, theme: str):
+        import console_artwork
+        return await asyncio.to_thread(console_artwork.install, theme)
+
+    async def get_native_mii(self):
+        """Verified external mesh data, delivered over the existing local file server."""
+        import console_artwork
+        folder = console_artwork.resource_dir("nintendo-mii-runtime")
+        if folder is None:
+            result = await asyncio.to_thread(console_artwork.install, "mii")
+            if not result.get("success"):
+                return {}
+            folder = console_artwork.resource_dir("nintendo-mii-runtime")
+        path = folder / "models.json" if folder else None
+        if path is None or not path.is_file() or not await _ensure_server():
+            return {}
+        ident = "native-mii-" + console_artwork.spec("nintendo-mii-runtime")["sha256"][:16] + ".json"
+        _vi.files[ident] = str(path)
+        return {"url": f"http://127.0.0.1:{_vi.port}/{_vi.token}/f/{ident}"}
+
     async def get_assets(self, name: str):
-        folder = _user_resource(os.path.join(_data_dir(), "assets"), name, "assets")  # your own files on the Deck come first
+        import console_artwork
+        optional = console_artwork.spec(name)
+        optional_dir = console_artwork.resource_dir(name) if optional else None
+        relative = "assets/" + _safe_name(name)
+        folder = os.path.join(_data_dir(), relative)
         out = {}
         try:
-            for n in sorted(os.listdir(folder)):
-                if n.lower().endswith(IMAGE_EXT + (".glb", ".mp4",)):
-                    with open(os.path.join(folder, n), "rb") as f:
-                        out[os.path.splitext(n)[0]] = _data_url(f.read(), "model/gltf-binary" if n.lower().endswith(".glb") else _mime(n))
+            names = set(p.name for p in optional_dir.iterdir()) if optional_dir else (set() if optional else set(_resource_names(relative)))
+            if os.path.isdir(folder):
+                names.update(os.listdir(folder))
+            # Resolve duplicate video encodings as one logical asset: WebM is portable
+            # across Steam CEF builds; a user-supplied file still wins over downloaded media.
+            def asset_order(n):
+                user = os.path.isfile(os.path.join(folder, n))
+                return (user, os.path.splitext(n)[1].lower() == ".webm", n)
+            for n in sorted(names, key=asset_order):
+                ext = os.path.splitext(n)[1].lower()
+                if ext not in IMAGE_EXT + (".glb",) + WALLPAPER_VIDEO_EXT:
+                    continue
+                path = os.path.join(folder, n) if os.path.isfile(os.path.join(folder,n)) else (str(optional_dir/n) if optional_dir else _resource(relative+"/"+n))  # user overrides, external console pack, then normal resources
+                if not os.path.isfile(path):
+                    continue
+                if ext in WALLPAPER_VIDEO_EXT or ext == ".gif":
+                    # Keep multi-megabyte movies out of Decky's JSON/WebSocket messages.
+                    if await _ensure_server():
+                        import hashlib
+                        ident = "asset-" + hashlib.sha256(os.path.realpath(path).encode()).hexdigest()[:24] + ext
+                        _vi.files[ident] = path
+                        out[os.path.splitext(n)[0]] = f"http://127.0.0.1:{_vi.port}/{_vi.token}/f/{ident}"
+                    continue
+                with open(path, "rb") as f:
+                    out[os.path.splitext(n)[0]] = _data_url(f.read(), "model/gltf-binary" if ext == ".glb" else _mime(n))
         except Exception:
             pass
         return out
+
+    # Optional Metro assembly engine. Legacy procedural/imported avatars remain available.
+    async def x360_engine_status(self):
+        import x360_engine
+        status = await asyncio.to_thread(x360_engine.instance(_data_dir(), decky.DECKY_PLUGIN_SETTINGS_DIR).status)
+        status['base'] = f"http://127.0.0.1:{_vi.port}/{_vi.token}/avatar/" if await _ensure_server() else None
+        return status
+
+    async def x360_engine_install(self):
+        import x360_engine
+        return x360_engine.instance(_data_dir(), decky.DECKY_PLUGIN_SETTINGS_DIR).install()
+
+    async def x360_engine_build(self, description: dict):
+        import x360_engine
+        return await asyncio.to_thread(x360_engine.instance(_data_dir(), decky.DECKY_PLUGIN_SETTINGS_DIR).build, description)
+
+    async def x360_engine_save(self, description: dict):
+        import x360_engine
+        await asyncio.to_thread(x360_engine.instance(_data_dir(), decky.DECKY_PLUGIN_SETTINGS_DIR).save, description)
+        return await self.x360_engine_status()
+
+    async def x360_engine_legacy(self):
+        import x360_engine
+        await asyncio.to_thread(x360_engine.instance(_data_dir(), decky.DECKY_PLUGIN_SETTINGS_DIR).save, None, 'legacy')
+        return await self.x360_engine_status()
 
     # ───── your own Xbox 360 avatar (a 360sona export): assets/my-avatar/avatar.glb + gamerpic.png ─────
     def _x360_avatar_dir(self):
@@ -2242,7 +2446,7 @@ class Plugin:
         if name not in ("castle", "republic") or not await _ensure_server():
             return {}
         result = {}
-        for key, ext in (("video", ".mp4"), ("poster", ".jpg")):
+        for key, ext in (("video", ".mp4"), ("video", ".webm"), ("poster", ".jpg")):
             path = _resource("cinematic/" + name + ext)
             if os.path.isfile(path):
                 ident = "cinematic-" + name + "-" + key + ext
@@ -2265,6 +2469,9 @@ class Plugin:
     async def ensure_frame_media(self, ident: str):
         import frame_media
         try:
+            import background_media
+            if str(ident) in background_media.catalog():
+                return await asyncio.to_thread(background_media.ensure, str(ident))
             return await asyncio.to_thread(frame_media.ensure, str(ident))
         except Exception as error:
             return {"success": False, "error": str(error)}
@@ -2366,7 +2573,7 @@ class Plugin:
         os.makedirs(os.path.join(_skin_dir(), "psp"), exist_ok=True)
         os.makedirs(os.path.join(_skin_dir(), "wiiu"), exist_ok=True)
         os.makedirs(_switch_dir(), exist_ok=True)
-        for kind in ("xbox", "wii", "3ds", "x360"):
+        for kind in ("xbox", "wii", "3ds", "x360", "ps4"):
             os.makedirs(os.path.join(_skin_dir(), kind), exist_ok=True)
         # Skins shipped in the zip (defaults/skins/<kind>, e.g. a private test build's themes) are not copied:
         # every importer lists and reads them in place (_skin_entries / _skin_path / _switch_folders), read-only,

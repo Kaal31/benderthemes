@@ -1,0 +1,33 @@
+import assert from 'node:assert/strict';
+import {launch} from './tests/browser.mjs';
+const browser=await launch();
+try{
+ const page=await browser.newPage({viewport:{width:1440,height:1100}}),errors=[];page.on('pageerror',e=>errors.push(e.message));
+ await page.goto('http://127.0.0.1:8793/preview/preview.html?theme=old-beta-big-picture');
+ const root=page.locator('.dht-oldbeta');await root.waitFor();
+ const finish=async()=>{await root.evaluate(n=>n.getAnimations({subtree:true}).filter(a=>a.effect.getTiming().iterations!==Infinity).forEach(a=>a.finish()));await page.waitForTimeout(30);};
+ await root.locator('button[data-category="1"]').click();await finish();
+ assert.equal(await root.getAttribute('data-carousel-entering'),null);
+ await page.keyboard.press('ArrowRight');
+ assert.equal(await root.locator('.beta-cover[data-selected=true]').evaluate(n=>n.getAnimations().some(a=>a.animationName==='beta-carousel-selection')),false,'Title navigation must not replay the opening highlight');
+ await page.keyboard.press('e');await root.locator('.beta-friends-page').waitFor();await finish();await page.waitForTimeout(220);
+ const second=root.locator('.beta-friend-row').nth(1);await second.focus();
+ const fade=await second.evaluate(n=>{getComputedStyle(n).backgroundColor;const a=n.getAnimations().find(a=>a.transitionProperty==='background-color');if(!a)return null;a.pause();a.currentTime=80;const frames=a.effect.getKeyframes();return {mid:getComputedStyle(n).backgroundColor,start:frames[0].backgroundColor,end:frames.at(-1).backgroundColor};});
+ assert.ok(fade,'Friend highlight should interpolate');assert.notEqual(fade.mid,fade.start);assert.notEqual(fade.mid,fade.end);
+ await page.keyboard.press('Escape');await finish();await root.locator('.beta-friends-page').waitFor({state:'detached'});
+ await page.keyboard.press('Escape');await finish();
+ await root.locator('button[aria-label="Settings"]').click();
+ const shared=page.locator('.beta-settings-page');await shared.waitFor();
+ const link=shared.locator('.beta-settings-list button').first();assert.ok((await link.evaluate(n=>getComputedStyle(n).transitionProperty)).includes('background-color'));
+ await shared.locator('footer button').first().click();
+ const menu=page.locator('.dht-menu--old-beta-big-picture');await menu.waitFor();
+ await menu.evaluate(n=>n.getAnimations({subtree:true}).filter(a=>a.effect.getTiming().iterations!==Infinity).forEach(a=>a.finish()));
+ await page.keyboard.press('ArrowDown');await page.waitForTimeout(30);
+ const menuFade=await menu.locator('.dht-menu-item[data-selected=true]').evaluate(n=>{getComputedStyle(n,'::before').opacity;const a=n.getAnimations({subtree:true}).find(a=>a.transitionProperty==='opacity');if(!a)return null;a.pause();a.currentTime=80;return Number(getComputedStyle(n,'::before').opacity);});
+ assert.ok(menuFade>0&&menuFade<1,'Theme hub selection should fade between rows');
+ await page.emulateMedia({reducedMotion:'reduce'});
+ assert.equal(await link.evaluate(n=>getComputedStyle(n).transitionDuration),'0s');
+ assert.equal(await menu.locator('.dht-menu-item').first().evaluate(n=>getComputedStyle(n,'::before').transitionDuration),'0s');
+ assert.deepEqual(errors,[]);
+ console.log('PASS: focus highlights interpolate, carousel entry animation does not replay on navigation, Beta settings buttons share easing, and reduced motion disables feedback transitions.');
+}finally{await browser.close();}

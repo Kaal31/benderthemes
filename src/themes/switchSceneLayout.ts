@@ -3,13 +3,14 @@ import type {SwitchEffect} from '../switchThemes';
 import type {SwitchScenePane} from './switchSceneTypes';
 import {switchPaneOrigin} from './switchPaneOrigin';
 import {effectStyle,resolvePalette} from './SwitchMaterial';
+import {switchAppletPalette} from './switchAppletPalette';
 /** Vectors replace whole vectors; palette/corner entries patch independently. */
 export function mergeSceneEffect(base:SwitchEffect|undefined,patch:SwitchEffect|undefined):SwitchEffect{
  return {...base,...patch,palette:{...base?.palette,...patch?.palette},corners:{...base?.corners,...patch?.corners}};
 }
 const axis=(value:number)=>value===1?-.5:value===2?.5:0;
 export function scenePaneLayout(node:SwitchScenePane,parent:SwitchScenePane|undefined,patch:SwitchEffect|undefined,parentPatch:SwitchEffect|undefined,dark:boolean){
- const effect=resolvePalette(mergeSceneEffect(node.effect,patch),dark)!;
+ const effect=resolvePalette(mergeSceneEffect(node.effect,patch),dark,false,switchAppletPalette(node.slot))!;
  const position=effect.Position?[effect.Position.X??0,effect.Position.Y??0]:node.position,size=effect.Size?[effect.Size.X??0,effect.Size.Y??0]:node.size;
  const origin=switchPaneOrigin(node.origin),ox=effect.OriginX??origin.x,oy=effect.OriginY??origin.y,px=effect.ParentOriginX??origin.parentX,py=effect.ParentOriginY??origin.parentY;
  const parentSize=parent?(parentPatch?.Size?[parentPatch.Size.X??0,parentPatch.Size.Y??0]:parent.size):[0,0];

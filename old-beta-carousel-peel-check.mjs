@@ -1,0 +1,32 @@
+import assert from 'node:assert/strict';
+import {launch} from './tests/browser.mjs';
+const browser=await launch();
+try{
+ const page=await browser.newPage({viewport:{width:1440,height:1100}}),errors=[];
+ page.on('pageerror',error=>errors.push(error.message));
+ await page.goto('http://127.0.0.1:8793/preview/preview.html?theme=old-beta-big-picture');
+ const root=page.locator('.dht-oldbeta');await root.waitFor();
+ const snapshot=()=>root.locator('.beta-cover').evaluateAll(nodes=>nodes.slice(0,5).map(n=>{const r=n.getBoundingClientRect();return [r.x,r.y,r.width,r.height];}));
+ await root.evaluate(n=>n.getAnimations({subtree:true}).forEach(a=>a.pause()));
+ const before=await snapshot();
+ await page.keyboard.press('Enter');
+ await root.evaluate(n=>n.getAnimations({subtree:true}).filter(a=>a.effect.getTiming().iterations!==Infinity).forEach(a=>{a.pause();a.currentTime=0;}));
+ const start=await snapshot();
+ assert.ok(before.every((box,i)=>box.every((v,k)=>Math.abs(v-start[i][k])<1)),`opening start jumps: ${JSON.stringify({before,start})}`);
+ const boardFrames=await root.locator('.beta-cover-board').evaluate(n=>n.getAnimations().find(a=>a.effect.getTiming().duration===400).effect.getKeyframes());
+ assert.ok(boardFrames.every(f=>f.left&&f.top&&f.opacity===undefined),'Board position and tilt must animate together without flattening');
+ const selectedFrames=await root.locator('.beta-cover[data-selected=true]').evaluate(n=>n.getAnimations().find(a=>a.effect.getKeyframes().some(f=>f.offset===.7&&f.transform)).effect.getKeyframes());
+ assert.ok(String(selectedFrames.find(f=>f.offset===.7).transform).includes('scale(1)'));
+ assert.ok(String(selectedFrames.at(-1).transform).includes('scale(1.45)'));
+ assert.equal(await root.locator('.beta-stacked-sheets').evaluate(n=>getComputedStyle(n).visibility),'visible');
+ const retreat=await root.locator('.beta-rear-cover').first().evaluate(n=>n.getAnimations().find(a=>a.effect.getTiming().duration===300).effect.getKeyframes());
+ assert.equal(Number(retreat.at(-1).opacity),0);assert.notEqual(retreat[0].transform,retreat.at(-1).transform);
+ await root.evaluate(n=>n.getAnimations({subtree:true}).filter(a=>a.effect.getTiming().iterations!==Infinity).forEach(a=>a.finish()));
+ await page.waitForTimeout(50);
+ assert.equal(await root.locator('.beta-stacked-sheets').evaluate(n=>getComputedStyle(n).visibility),'hidden');
+ await page.keyboard.press('Escape');await page.waitForTimeout(500);
+ assert.equal(await root.getAttribute('data-mode'),'sheet');
+ assert.equal(await root.locator('.beta-stacked-sheets').evaluate(n=>getComputedStyle(n).visibility),'visible');
+ assert.deepEqual(errors,[]);
+ console.log('PASS: Library peel preserves first-frame geometry, stages row before selection growth, retreats rear sheets, and restores them on Back.');
+}finally{await browser.close();}

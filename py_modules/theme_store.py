@@ -91,9 +91,12 @@ def catalog(refresh=False):
     merged = {p["id"]: p for p in (_catalog or {}).get("themes", [])}
     for pack in shipped.get("themes", []):
         previous = merged.get(pack["id"])
-        if (pack.get("frameTheme") and previous is None) or (pack.get("defaultConsole") and
-                (previous is None or version_key(pack["version"]) > version_key(previous["version"]))):
+        if (pack.get("frameTheme") or pack.get("defaultConsole") or pack.get("backgroundVideos")) and (
+                previous is None or version_key(pack["version"]) > version_key(previous["version"])):
             merged[pack["id"]] = pack
+        elif previous and pack.get("audioPacks") and pack["version"] == previous["version"] and pack["sha256"] == previous["sha256"]:
+            # Dependency-only updates do not require republishing identical artwork ZIPs.
+            merged[pack["id"]] = {**previous, "audioPacks": sorted(set(previous.get("audioPacks", [])) | set(pack["audioPacks"]))}
     if merged:
         validate_catalog({"schema": 1, "themes": list(merged.values())})
     installed_themes = local_inventory()

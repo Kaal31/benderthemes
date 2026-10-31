@@ -24,13 +24,23 @@ export const OPTIONS: StyleOption[] = [
   },
   {
     key: "profile",
-    label: "User and Mii",
+    label: "Profile tile",
     group: "Software grid",
     choices: [
       { id: "on", name: "Show" },
       { id: "off", name: "Hide" },
     ],
     def: "on",
+  },
+  {
+    key: "profilePicture",
+    label: "Profile picture",
+    group: "Profile",
+    choices: [
+      { id: "steam", name: "Steam profile picture (default)" },
+      { id: "mii", name: "Personal Mii" },
+    ],
+    def: "steam",
   },
   {
     key: "logo",

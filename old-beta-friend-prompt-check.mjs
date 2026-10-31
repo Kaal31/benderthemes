@@ -1,0 +1,30 @@
+import assert from 'node:assert/strict';
+import {launch} from './tests/browser.mjs';
+const browser=await launch();
+try{
+ const page=await browser.newPage({viewport:{width:1440,height:1100}}),errors=[];page.on('pageerror',e=>errors.push(e.message));
+ await page.goto('http://127.0.0.1:8793/preview/preview.html?theme=old-beta-big-picture');
+ const root=page.locator('.dht-oldbeta');await root.waitFor();
+ await root.locator('[data-category="2"]').click();
+ const community=root.locator('.beta-community-page');await community.waitFor();await page.waitForTimeout(850);
+ await community.locator('.beta-community-person').first().click();
+ const dialog=community.getByRole('dialog');await dialog.waitFor();await page.waitForTimeout(450);
+ assert.equal(await dialog.locator('.beta-friend-prompt-actions button').count(),5);
+ assert.equal(await page.locator(':focus').innerText(),'Send Message');
+ assert.equal(await community.locator('.beta-community-content').evaluate(n=>n.inert),true);
+ const box=await dialog.boundingBox(),frame=await root.boundingBox();assert.ok(Math.abs(box.width/frame.width-.20)<.01);
+ await page.keyboard.press('ArrowDown');assert.equal(await page.locator(':focus').innerText(),'Start Voice Chat');
+ await page.screenshot({path:'out/old-beta-big-picture/friend-prompt.png'});
+ await page.keyboard.press('Escape');await dialog.waitFor({state:'detached'});
+ assert.equal(await page.locator(':focus').getAttribute('class'),'beta-community-person');
+ await page.keyboard.press('ArrowDown');assert.equal(await community.getAttribute('data-feed'),'true');
+ await page.evaluate(()=>{globalThis.notificationStore.m_rgNotificationTray=[];});
+ await community.locator('.beta-community-feed').waitFor({state:'detached',timeout:6500});
+ assert.equal(await community.getByRole('button',{name:'↓ ACTIVITY FEED',exact:true}).count(),0);
+ await page.keyboard.press('ArrowDown');assert.equal(await community.getAttribute('data-feed'),'false');
+ await page.emulateMedia({reducedMotion:'reduce'});
+ await community.locator('.beta-community-person').first().click();await dialog.waitFor();await page.keyboard.press('Escape');await dialog.waitFor({state:'detached'});
+ await page.keyboard.press('Escape');await community.waitFor({state:'detached'});
+ await root.locator('[data-category="0"]').click();const tabs=root.locator('.beta-store-tabs');await tabs.waitFor();const width=await tabs.evaluate(n=>n.getBoundingClientRect().width/n.closest('.dht-oldbeta').getBoundingClientRect().width);assert.ok(Math.abs(width-.46)<.005);
+ assert.deepEqual(errors,[]);console.log('PASS: reference friend panel, controller focus/Back, reduced motion, empty activity feed hidden, and page tab sizing.');
+}finally{await browser.close();}

@@ -29,6 +29,22 @@ def archive(files):
 
 
 class ThemeStoreTests(unittest.TestCase):
+    def test_shipped_background_media_upgrade_replaces_legacy_catalog(self):
+        upgraded = {**self.pack, "version": "1.10.1", "backgroundVideos": ["cinematic/castle.webm"],
+                    "url": self.pack["url"].replace("v1.10.0/", "v1.10.1/").replace("v1.10.0.zip", "v1.10.1.zip")}
+        (self.plugin / "theme-catalog.json").write_text(json.dumps({"schema": 1, "themes": [upgraded]}))
+        store._catalog = {"schema": 1, "themes": [self.pack]}
+        self.assertEqual(store.catalog()["themes"][0]["version"], "1.10.1")
+
+    def test_shipped_audio_dependencies_update_identical_cached_artwork(self):
+        ident = "28c07fe6-6ead-44b1-8c31-2372cfffcb60"
+        shipped = {**self.pack, "audioPacks": [ident]}
+        (self.plugin / "theme-catalog.json").write_text(json.dumps({"schema": 1, "themes": [shipped]}))
+        store._catalog = {"schema": 1, "themes": [self.pack]}
+        self.assertEqual(store.catalog()["themes"][0]["audioPacks"], [ident])
+        store._catalog = {"schema": 1, "themes": [{**self.pack, "sha256": "b" * 64}]}
+        self.assertNotIn("audioPacks", store.catalog()["themes"][0], "Dependencies cannot be copied to different archive contents")
+
     def test_shipped_gallery_keeps_new_theme_previews_with_legacy_catalog(self):
         pinned = {"themes": ["gamecube", "ios6"], "sha256": "a" * 64, "size": 100, "url": "pinned-gallery"}
         (self.plugin / "theme-catalog.json").write_text(json.dumps({"schema": 1, "themes": [], "gallery": pinned}))
@@ -43,6 +59,15 @@ class ThemeStoreTests(unittest.TestCase):
         store._catalog = {"schema": 1, "themes": [self.pack]}
         result = store.catalog()
         self.assertEqual(result["themes"][0]["version"], "1.10.1")
+
+    def test_shipped_native_media_upgrade_replaces_cached_older_pack(self):
+        clean = {**self.pack, "version": "1.10.1", "frameTheme": "vita",
+                 "url": self.pack["url"].replace("1.10.0", "1.10.1")}
+        (self.plugin / "theme-catalog.json").write_text(json.dumps({"schema": 1, "themes": [clean]}))
+        self.assertEqual(store.catalog()["themes"][0]["version"], "1.10.1")
+        newer = {**clean, "version": "1.10.2", "url": clean["url"].replace("1.10.1", "1.10.2")}
+        store._catalog = {"schema": 1, "themes": [newer]}
+        self.assertEqual(store.catalog()["themes"][0]["version"], "1.10.2")
 
     def setUp(self):
         self.temp = tempfile.TemporaryDirectory()

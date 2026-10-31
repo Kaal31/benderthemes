@@ -1,3 +1,4 @@
+import {installNativeThemeFocus} from "./nativeThemeFocus";
 import {themeHomeOwnsRoute} from "./otherPlugins";
 // One focusable root per theme. Steam's gamepad events are turned into a
 // simple button stream; the theme decides what each press does and whether
@@ -82,16 +83,20 @@ export function setModalInput(h: InputHandler | null) {
 export function ThemeRoot({
   onInput,
   activationGate,
+  nativeControlFocus=false,
   hints,
   children,
   style,
 }: {
   onInput: InputHandler;
+  nativeControlFocus?:boolean;
   activationGate?: (press:Press,run:()=>boolean)=>boolean;
   hints?: Hints;
   children: ReactNode;
   style?: CSSProperties;
 }) {
+  const surface=useRef<HTMLDivElement>(null),steamNav=useRef<{TakeFocus:()=>unknown}|null>(null);
+  useLayoutEffect(()=>{if(nativeControlFocus&&surface.current)return installNativeThemeFocus(surface.current,()=>steamNav.current);return undefined;},[nativeControlFocus]);
   const direction = useRef<Btn | null>(null);
   const latest = useRef(onInput);
   latest.current = onInput;
@@ -170,6 +175,8 @@ export function ThemeRoot({
   );
   return (
     <Focusable
+      ref={surface}
+      {...(nativeControlFocus?{navRef:steamNav,focusable:true,childFocusDisabled:true}:{})}
       // @ts-ignore autoFocus exists at runtime
       autoFocus
       noFocusRing

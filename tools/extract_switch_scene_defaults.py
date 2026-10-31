@@ -9,11 +9,12 @@ sys.path.insert(0,str(Path(__file__).resolve().parents[1]/'py_modules'))
 from switch_effects import convert_effect
 from read_switch_base_animation import read as read_animation
 
-FILES=['RdtBtnIconGame','RdtBalloon','Footer','FooterAll','FooterBtn','FooterCtrl','LineFooter','CntrIndicatorS','RdtBtnChangeUser','RdtProgressBarDl','RdtProgressBarErr','RdtProgressBarOffline','RdtProgressBar','RdtIconDl','RdtIconErr','RdtIconPromotion','ProgressBar','ProgressBarFraction','RdtBalloonSystemApplet','RdtBase','DBaseNml','IconError','RdtIconNewFrd','UserIconName','UserIconNameStatus','DCntUserIconNameStatus','DBtmBaseNml','BlurBg','BlurBg2','MaskBlack','SystemAppletFader']
+FILES=['RdtBtnIconGame','RdtBalloon','Footer','FooterAll','FooterBtn','FooterCtrl','LineFooter','CntrIndicatorS','RdtBtnChangeUser','RdtProgressBarDl','RdtProgressBarErr','RdtProgressBarOffline','RdtProgressBar','RdtIconDl','RdtIconErr','RdtIconPromotion','ProgressBar','ProgressBarFraction','RdtBalloonSystemApplet','RdtBase','DBaseNml','IconError','RdtIconNewFrd','UserIconName','UserIconNameStatus','DCntUserIconNameStatus','DBtmBaseNml','BlurBg','BlurBg2','MaskBlack','SystemAppletFader','BgMask']
 SUPPORTED_USD={'C_W','C_B','C_Id','S_RoundRadius','S_BorderSize','S_BorderDrawMode','S_BorderVolume','S_BorderColorSelect0','S_BorderColor0','S_DropShadowDrawMode','S_DropShadowVolume','S_DropShadowColorSelect','S_DropShadowColor','S_DropShadowAngle','S_DropShadowDistance','S_DropShadowSize','S_DropShadowFunction'}
+base_root=Path(sys.argv[1]) if len(sys.argv)>1 else Path('work/switch-base-analysis')
 out={};motion={};provenance={}
 for version,profile in [('19.0.1','classic'),('22.5.0','modern')]:
- root=Path('work/switch-base-analysis/firmware-'+version)
+ root=base_root/('firmware-'+version)
  analysis=json.loads((root/'base-layout-analysis.json').read_text())
  out[profile]={};motion[profile]={};provenance[profile]={}
  for file in FILES:
@@ -21,16 +22,16 @@ for version,profile in [('19.0.1','classic'),('22.5.0','modern')]:
   if not any(k.endswith('/'+file+'.bflyt') for k in analysis):
    # Historical account layouts remain valid imported resources. Retain their
    # measured source version rather than inventing modern pane defaults.
-   source_version='19.0.1';source_root=Path('work/switch-base-analysis/firmware-'+source_version)
+   source_version='19.0.1';source_root=base_root/('firmware-'+source_version)
    source_analysis=json.loads((source_root/'base-layout-analysis.json').read_text())
   from switch_numeric_layout import numeric_layout
   key,layout,panes=numeric_layout(source_root,source_analysis,file,lambda f,n:f+':'+n)
   if file=='RdtBase':panes=[{**pane,'parent':None} for pane in panes if pane['name']=='T_Blank']
   # These dialog panes have real host bindings: fixed header, scrolling content
-  # bounds and an indicator driven by that scroll position. The mask and margin
-  # helper are not implemented and must retain unsupported diagnostics.
+  # bounds and an indicator driven by that scroll position. The mask is a
+  # referenced BgMask layout; the margin helper has no host binding yet.
   if file=='SystemAppletFader':panes=[pane for pane in panes if pane['name'] not in ('W_Mask','L_Bg')]
-  if file=='DBaseNml':panes=[pane for pane in panes if pane['name'] not in ('L_Mask','N_IndicatorAreaMargin')]
+  if file=='DBaseNml':panes=[pane for pane in panes if pane['name'] not in ('N_IndicatorAreaMargin',)]
   out[profile][file]=panes;provenance[profile][file]={'firmware':source_version,'sha256':layout['sha256'],'path':key}
   motion[profile][file]=[]
   # State animation baselines run before authored replacement tracks.

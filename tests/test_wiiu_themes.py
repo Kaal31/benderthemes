@@ -354,6 +354,7 @@ def test_theme_end_to_end():
                     d = d[:len(d) // 2] + b"\xff" * 10 + d[len(d) // 2 + 10:]
                     d = d[:-4] + struct.pack("<I", zlib.crc32(d[:-4]))  # still looks well formed
                 zz.writestr(n, d)
+        raw.close()  # release the source ZIP before TemporaryDirectory cleanup on Windows
         r = W.read_utheme(bad, stock, du)
         assert "swap-arrow" in r["art"] and "tile-glass" not in r["art"] and any(e.startswith("Men2") for e in r["errors"]), r
         # Theme Café's tool: arbitrary patch names mapped to the file they patch

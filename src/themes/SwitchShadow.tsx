@@ -4,8 +4,8 @@ import {switchShadowAlpha} from './switchShadowKernel';
 
 /** Analytic native shadow pass. Its alpha follows the pane's paint alpha,
  * independently of the pane's content and its descendants. */
-export function SwitchShadow({effect,alpha,animated=false,motionKey='',volumeProperty}:{effect:SwitchEffect;alpha?:string;animated?:boolean;motionKey?:string;volumeProperty?:string}){
- const signature=[effect.shadow,effect.radius,effect.shadowFunction,effect.shadowDraw,effect.shadowColor?.join(','),effect.shadowOpacity,effect.shadowAngle,effect.shadowDistance].join('|');
+export function SwitchShadow({effect,alpha,animated=false,motionKey='',volumeProperty,silhouette=false}:{effect:SwitchEffect;alpha?:string;animated?:boolean;motionKey?:string;volumeProperty?:string;silhouette?:boolean}){
+ const signature=[effect.shadow,effect.radius,effect.shadowFunction,effect.shadowDraw,effect.shadowColor?.join(','),effect.shadowOpacity,effect.shadowAngle,effect.shadowDistance,silhouette].join('|');
  const host=useRef<HTMLSpanElement>(null),canvas=useRef<HTMLCanvasElement>(null),volume=useRef<SVGFEFuncAElement>(null),filterId='nx-shadow-'+useId().replace(/[^a-zA-Z0-9]/g,'');
  useLayoutEffect(()=>{
   let frame=0;
@@ -31,7 +31,7 @@ export function SwitchShadow({effect,alpha,animated=false,motionKey='',volumePro
    target.width=Math.max(1,Math.ceil(fullWidth*density));target.height=Math.max(1,Math.ceil(fullHeight*density));
    const image=context.createImageData(target.width,target.height),color=effect.shadowColor??[0,0,0,136];
    for(let y=0;y<target.height;y++)for(let x=0;x<target.width;x++){
-    const at=(y*target.width+x)*4,a=switchShadowAlpha((x+.5)*fullWidth/target.width-fullWidth/2,(y+.5)*fullHeight/target.height-fullHeight/2,width,height,size,effect.radius??0,effect.shadowFunction??0);
+    const at=(y*target.width+x)*4,a=switchShadowAlpha((x+.5)*fullWidth/target.width-fullWidth/2,(y+.5)*fullHeight/target.height-fullHeight/2,width,height,size,effect.radius??0,effect.shadowFunction??0,silhouette);
     for(let c=0;c<3;c++)image.data[at+c]=color[c]??0;
     image.data[at+3]=a*(color[3]??255);
    }

@@ -93,13 +93,24 @@ class Downloads(unittest.TestCase):
 
     def test_catalog_scope(self):
         specs = audio.catalog()
-        self.assertEqual(len(specs), 41)
-        self.assertEqual(len({s["id"] for s in specs}), 41)
+        self.assertEqual(len(specs), 44)
+        self.assertEqual(len({s["id"] for s in specs}), 44)
         self.assertEqual(sum(bool(s.get("folders")) for s in specs), 24)
         folders = {f for s in specs for f in s.get("folders", [])}
         self.assertNotIn("DHT Verified Republic", folders)
         self.assertNotIn("Theseus Xbox Dashboard", folders)
         self.assertNotIn("DHT Verified Xbox 360 Metro Dashboard", folders)
+
+    def test_missing_console_audio_defaults_only(self):
+        automatic = {theme for spec in audio.catalog() if spec.get("installWithTheme") for theme in spec["themes"]}
+        self.assertEqual(automatic - {"gamecube", "old-big-picture"}, {"wii", "wiiflow-default", "switch", "n3ds"})
+        for filename in ("asset-catalog.json", "theme-catalog.json"):
+            packs = json.loads((Path(__file__).resolve().parents[1] / filename).read_text(encoding="utf-8"))["themes"]
+            for theme in ("wii", "wiiflow-default", "switch", "n3ds"):
+                expected = {spec["id"] for spec in audio.catalog() if spec.get("installWithTheme") and theme in spec["themes"]}
+                self.assertEqual(set(next(p for p in packs if p["id"] == theme)["audioPacks"]), expected)
+        for ident in ("12b04b34-00c1-4600-8e71-eb0a77f47962", "fb1780d7-12af-493d-a36d-28700870528a", "61867c03-9f24-4c1c-a482-28a6f1841d04"):
+            self.assertFalse(audio.entry(ident).get("installWithTheme"), "Alternate console packs remain opt-in")
 
     def test_theme_install_dependencies_and_failure_fallback(self):
         tree = ast.parse((Path(__file__).resolve().parents[1] / "main.py").read_text(encoding="utf-8"))
