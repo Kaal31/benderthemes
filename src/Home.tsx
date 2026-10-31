@@ -1,3 +1,4 @@
+import {ReadingRoomHome} from "./themes/ReadingRoom";
 import { t } from "./i18n";
 import { IOS6Home } from "./themes/IOS6";
 import {GameAmpHome} from "./themes/GameAmp";
@@ -84,6 +85,7 @@ const THEME_COMPONENTS: Record<ThemeId, () => ReactNode> = {
   "santa-express": () => <SantaHome />,
   "old-beta-big-picture": () => <OldBetaBigPictureHome />,
   "old-big-picture": () => <OldBigPictureHome />,
+  reading: () => <ReadingRoomHome />,
   native: () => <NativeLayout />,
   onyx: () => <SilverHome dark />,
   silver: () => <SilverHome />,
