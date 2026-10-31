@@ -22,7 +22,7 @@ export function refreshCustomizeLists() {
   refreshPacks().catch(() => {});
 }
 
-const FILE_LIST: Record<FileKind, keyof ReturnType<typeof installedFiles>> = { p3t: "p3t", psp: "psp", vita: "vita", x360: "x360", xbox: "xbox", wii: "wii", n3ds: "n3ds", switch: "switch", wiiu: "wiiu" };
+const FILE_LIST: Record<FileKind, keyof ReturnType<typeof installedFiles>> = { ps4: "ps4", p3t: "p3t", psp: "psp", vita: "vita", x360: "x360", xbox: "xbox", wii: "wii", n3ds: "n3ds", switch: "switch", wiiu: "wiiu" };
 const pretty = (f: string) => f.replace(/\.(p3t|zip|ptf|ctf|nxtheme|mym|csm|utheme)$/i, "").replace(/[_-]+/g, " ");
 function lists() {
   const f = installedFiles();
