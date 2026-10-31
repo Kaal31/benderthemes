@@ -1,0 +1,32 @@
+name: Localization integration build checks
+on:
+  push:
+    branches: [experimental-localization-pr]
+  workflow_dispatch:
+permissions:
+  contents: read
+jobs:
+  validation:
+    runs-on: ubuntu-latest
+    timeout-minutes: 35
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+      - name: Install dependencies
+        run: npm ci
+      - name: TypeScript typecheck
+        run: npm run typecheck
+      - name: Settings structure tests
+        run: npm run test:settings
+      - name: Localization tests
+        run: npm run test:localization
+      - name: Python unit tests
+        run: python -m unittest discover -s tests -p "test_*.py"
+      - name: Production build
+        run: npm run build
