@@ -14,7 +14,7 @@ import {applyNicknames,friendName,nicknameOf} from "./steamData";
 
 export type NoticeKind="friend"|"message"|"download"|"achievement"|"other";
 export interface Notice{id:string;kind:NoticeKind;title:string;body:string;appid?:number;time?:number;unread:boolean}
-export interface Friend{id:string;name:string;persona?:string;nickname?:string;online:boolean;game?:string;appid?:number;avatar?:string}
+export interface Friend{id:string;name:string;persona?:string;nickname?:string;online:boolean;status?:string;game?:string;appid?:number;avatar?:string;location?:string;countryCode?:string}
 export interface Ach{id:string;name:string;desc:string;achieved:boolean;time:number;image?:string;percent?:number}
 export interface AchList{unlocked:number;total:number;percent:number;items:Ach[];recent:Ach[];loaded:boolean}
 
@@ -68,17 +68,30 @@ export function readFriends():Friend[]{
     const fs=root().friendStore;
     return arr(fs?.allFriends??fs?.m_FriendsUIFriendStore?.allFriends).map((f:any,i:number)=>{
       const p=f?.persona??f,persona=String(p?.m_strPlayerName??p?.display_name??p?.name??""),nickname=nicknameOf(f,fs),name=friendName(f,fs);
-      const online=p?.is_online===true||p?.m_bIsOnline===true||Number(p?.m_ePersonaState??p?.ePersonaState??0)>0;
+      const state=Number(p?.m_ePersonaState??p?.ePersonaState??0);
+      const online=p?.is_online===true||p?.m_bIsOnline===true||state>0;
+      const status=state===0&&online?"Online":(["Offline","Online","Busy","Away","Snooze","Looking to Trade","Looking to Play","Invisible"][state]??(online?"Online":"Offline"));
       const game=String(p?.m_strGameName??p?.game_name??"")||undefined,hash=p?.m_strAvatarHash;
-      return {id:String(p?.m_steamid??p?.steamid??`${persona}:${i}`),name,persona,nickname:nickname||undefined,online,game,appid:Number(p?.m_gameid??p?.game_id??0)||undefined,avatar:typeof hash==="string"&&/^[0-9a-f]{40}$/i.test(hash)&&!/^0+$/.test(hash)?`https://avatars.steamstatic.com/${hash}_medium.jpg`:undefined};
+      return {id:String(p?.m_steamid??p?.steamid??`${persona}:${i}`),name,persona,nickname:nickname||undefined,online,status,game,appid:Number(p?.m_gameid??p?.game_id??0)||undefined,...friendLocation(p),avatar:typeof hash==="string"&&/^[0-9a-f]{40}$/i.test(hash)&&!/^0+$/.test(hash)?`https://avatars.steamstatic.com/${hash}_medium.jpg`:undefined};
     }).filter((f:Friend)=>f.name);
   }catch{return [];}
 }
 /** Friends who are online, those playing something first. Refreshed every few seconds. */
-export function useFriends(on=true):Friend[]{
+/** Read only profile location fields supplied by Steam; never infer from IP or game servers. */
+export function friendLocation(persona:any):{location?:string;countryCode?:string}{
+ const raw=persona?.loccountrycode??persona?.country_code??persona?.m_strCountryCode;
+ const countryCode=typeof raw==="string"&&/^[a-z]{2}$/i.test(raw)?raw.toUpperCase():undefined;
+ const supplied=persona?.location??persona?.m_strLocation;
+ let country=countryCode;
+ if(countryCode)try{const Names=(Intl as any).DisplayNames;country=new Names([navigator.language||"en"],{type:"region"}).of(countryCode);}catch{}
+ const city=persona?.city_name??persona?.m_strCityName;
+ const location=typeof supplied==="string"&&supplied.trim()?supplied.trim():[typeof city==="string"?city.trim():undefined,country].filter(Boolean).join(", ")||undefined;
+ return {location,countryCode};
+}
+export function useFriends(on=true,includeOffline=false):Friend[]{
   const [list,setList]=useState<Friend[]>(()=>readFriends());
   useActiveInterval(() => { const next = readFriends(); setList(prev => JSON.stringify(prev) === JSON.stringify(next) ? prev : next); }, 6000, on);
-  return list.filter(f=>f.online).sort((a,b)=>Number(!!b.game)-Number(!!a.game));
+  return list.filter(f=>includeOffline||f.online).sort((a,b)=>Number(!!b.game)-Number(!!a.game));
 }
 
 // ───────────── achievements ─────────────
