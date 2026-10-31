@@ -11,7 +11,7 @@ ROOT = Path(__file__).resolve().parents[1]
 
 
 def identity(version, channel, build, attempt, commit):
-    if channel not in ("beta", "experimental", "optimization-testing") or not re.fullmatch(r"\d+\.\d+\.\d+", version):
+    if channel not in ("beta", "experimental", "optimization-testing", "experimental-localization") or not re.fullmatch(r"\d+\.\d+\.\d+", version):
         raise ValueError("Invalid release channel or numeric package version")
     if not re.fullmatch(r"[1-9]\d*", str(build)) or not re.fullmatch(r"[1-9]\d*", str(attempt)):
         raise ValueError("Invalid workflow build number or attempt")
