@@ -26,7 +26,7 @@ import { iisuPageVars, iisuSchemeAttr } from "./themes/iisuStyles";
 import { downloadLine, pauseDownload, removeDownload, resumeDownload, useDownloads } from "./downloads";
 import { t, lang } from "./i18n";
 
-export type Destination = {place: SteamPlace | "game" | "achievements" | "music"; game?:Game; url?:string};
+export type Destination = {place: SteamPlace | "game" | "achievements" | "music" | "collections"; collectionId?:string; game?:Game; url?:string};
 let opener: ((destination:Destination)=>void)|null=null;
 export const setDestinationOpener=(fn:typeof opener)=>{opener=fn;};
 export const openDestination=(destination:Destination)=>{if(!opener)return false;opener(destination);return true;};
