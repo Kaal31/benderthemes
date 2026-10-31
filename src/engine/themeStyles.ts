@@ -10,6 +10,7 @@ import { OPTIONS as wii } from "../themes/options/wii";
 import { OPTIONS as wiiu } from "../themes/options/wiiu";
 import { OPTIONS as ps2 } from "../themes/options/ps2";
 import { OPTIONS as ps5 } from "../themes/options/ps5";
+import { PLAYSTATION_SURFACE_OPTIONS } from "../themes/options/playstationSurface";
 import { OPTIONS as xbox } from "../themes/options/xbox";
 import { OPTIONS as aero } from "../themes/options/aero";
 import { OPTIONS as aero2 } from "../themes/options/aero2";
@@ -31,6 +32,12 @@ export type StyleOption = {
 
 export const THEME_STYLES: Partial<Record<ThemeId, StyleOption[]>> = { gameamp, onyx, silver, wii, wiiu, ps2, ps5, xbox, aero, aero2, pain, nazarick, ps1, iisu, switch: switchOpt };
 
+THEME_STYLES.ps3 = [
+  { key: "themeBackground", label: "Imported theme background", group: "Background", choices: [{ id: true, name: "On" }, { id: false, name: "Off" }], def: true },
+  { key: "themeEffects", label: "Imported animated effects", group: "Background", choices: [{ id: true, name: "On" }, { id: false, name: "Off" }], def: true },
+];
+for (const theme of ["ps4", "ps5"] as const) THEME_STYLES[theme] = [...(THEME_STYLES[theme] ?? []), ...PLAYSTATION_SURFACE_OPTIONS.filter(option => theme === "ps5" || option.key !== "playGlass")];
+
 // Only layouts with game hero backgrounds expose this control. Cover tiles and
 // console wallpapers keep their own sizing.
 export const HERO_SCALING_THEMES: ThemeId[] = ["ps4", "ps5", "ps3", "psp", "vita"];
@@ -47,6 +54,9 @@ for (const theme of HERO_SCALING_THEMES) {
 }
 
 THEME_STYLES.switch = [...(THEME_STYLES.switch ?? []), {
+  key: "systemGraphics", label: "Imported theme system graphics", group: "Theme file",
+  choices: [{id:"auto",name:"Automatic — use local resources when available"},{id:"builtin",name:"Built-in substitutes — no firmware resources"}], def:"auto",
+}, {
   key: "consoleConversion", label: "Console theme conversion", group: "Theme file",
   choices: [{id:true,name:"Convert supported layout and animations"},{id:false,name:"Artwork only"}], def:true,
 },{key:"firmwareLayout",label:"Switch firmware layout",group:"Theme file",choices:[{id:"auto",name:"Automatic - detect from theme"},{id:"classic",name:"Classic Home Menu - six applets"},{id:"modern",name:"Modern Home Menu - nine applets"}],def:"auto"},{key:"clockFormat",label:"Switch clock format",group:"Theme file",choices:[{id:"24",name:"24-hour"},{id:"12",name:"12-hour"}],def:"24"},{key:"firmwareColors",label:"Switch system colors",group:"Theme file",choices:[{id:"auto",name:"Automatic"},{id:"light",name:"Basic White"},{id:"dark",name:"Basic Black"}],def:"auto"}];
