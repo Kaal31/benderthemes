@@ -22,13 +22,13 @@ export function refreshCustomizeLists() {
   refreshPacks().catch(() => {});
 }
 
-const FILE_LIST: Record<FileKind, keyof ReturnType<typeof installedFiles>> = { ps4: "ps4", p3t: "p3t", psp: "psp", vita: "vita", x360: "x360", xbox: "xbox", wii: "wii", n3ds: "n3ds", switch: "switch", wiiu: "wiiu" };
+const FILE_LIST: Partial<Record<FileKind, keyof ReturnType<typeof installedFiles>>> = { p3t: "p3t", psp: "psp", vita: "vita", x360: "x360", xbox: "xbox", wii: "wii", n3ds: "n3ds", switch: "switch", wiiu: "wiiu" };
 const pretty = (f: string) => f.replace(/\.(p3t|zip|ptf|ctf|nxtheme|mym|csm|utheme)$/i, "").replace(/[_-]+/g, " ");
 function lists() {
   const f = installedFiles();
   const files: Partial<Record<FileKind, { id: string; name: string }[]>> = {};
   for (const k of Object.keys(FILE_LIST) as FileKind[]) {
-    const raw = (f as any)[FILE_LIST[k]] as any[];
+    const raw = FILE_LIST[k] ? (f as any)[FILE_LIST[k]!] as any[] : [];
     files[k] = (raw ?? []).map((x: any) => (typeof x === "string" ? { id: x, name: k === "x360" ? f.x360names[x] || x : pretty(x) } : { id: x.id, name: x.name || pretty(x.id) }));
   }
   const themes = allThemes().filter((t) => t.source !== "builtin").map((t) => ({ id: t.id, name: t.name, wallpaper:t.slots?.wallpaper, has: (slot: AssetSlot) => hasSlot(t, slot as SlotKind) }));
