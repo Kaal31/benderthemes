@@ -68,7 +68,7 @@ const LAYOUT_OWN: Partial<Record<ThemeId, Path[]>> = {
   psp: [["xmb", "psp"], ["xmb", "pspColor"], ["xmb", "pspSize"], ["xmb", "pspAccurate"], ["xmb", "collectionFolders"]],
   x360: [["x360", "guideSide"], ["x360", "skin"], ["x360", "gamerpic"]],
   dial: [["dial"]],
-  ps4: [["ps4GameBackgrounds"]],
+  ps4: [["ps4GameBackgrounds"], ["ps4Skin"]],
   castle: [["castleWeather"], ["castleWindows"]],
   minecraft: [["minecraftFollowFocus"], ["minecraftWaitForSwipe"], ["minecraftSlim"]],
   wiiu: [["wiiuView"], ["wiiuTheme"], ["wiiuPlazaPositions"], ["wiiuPlazaTips"]],
