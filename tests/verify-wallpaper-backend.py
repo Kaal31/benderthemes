@@ -22,7 +22,7 @@ with tempfile.TemporaryDirectory() as folder:
             assert vi.files[url.rsplit('/',1)[1]]==os.path.join(folder,name)
         assert await scope['get_wallpaper'](None,'d.txt') is None
         assert await scope['get_wallpaper'](None,'missing.mp4') is None
-        scope['_resource'] = lambda name: os.path.join(folder, os.path.basename(name))
+        scope['_resource'] = lambda name: os.path.join(downloaded, os.path.basename(name)) if name.startswith('assets/nazarick/') else os.path.join(folder, os.path.basename(name))
         for theme in ('castle', 'republic'):
             for ext in ('.mp4', '.jpg'):
                 open(os.path.join(folder, theme + ext), 'wb').write(b'fixture')
