@@ -759,3 +759,12 @@ function styleItems(th: ThemeId, own: StyleOption[]): MenuItem[] {
   return own.map(o => choice(t(o.label), o.choices.map(option => ({...option,name:t(option.name)})),
     () => style(S(), th, o.key), value => setStyle(th, o.key, value)));
 }
+
+/** Compatibility entry point for native themes; keeps the localized four-section settings model. */
+export function essentialItems(moved: MenuItem[] = [], steamHome?: () => void): MenuItem[] {
+  return [
+    ...themeSettingsItems(),
+    ...moved.filter(item => ![t("presets"),t("customize"),t("globalSettings"),t("manageTheme")].includes(item.label)),
+    ...(steamHome ? [{label:t("steamHome"),action:steamHome}] : []),
+  ];
+}
