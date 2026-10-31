@@ -32,6 +32,7 @@ export const setDestinationOpener=(fn:typeof opener)=>{opener=fn;};
 export const openDestination=(destination:Destination)=>{if(!opener)return false;opener(destination);return true;};
 interface Row {label:string; sub?:string; icon?:IconName; game?:Game; run?:()=>void; state?:"on"|"off"; progress?:number}
 const destinationNames = (): Record<Destination["place"], string> => ({
+  collections: t("destLibrary"),
   library: t("destLibrary"),
   search: t("destSearch"),
   game: t("destGame"),
