@@ -1,3 +1,4 @@
+import {ThemeLoadingScreen} from "../ThemeLoadingScreen";
 import { t } from "../i18n";
 // Native API v1. This deliberately executes installed code in the plugin realm.
 import * as React from "react";
@@ -72,7 +73,7 @@ export function NativeLayout({ destination, fallback, onClose }: { destination?:
   }, [key, loaded, !!destination]);
   if (!theme?.native) return <>{fallback ?? <Failure message="No installed native layout selected"/>}</>;
   if (error) return <Failure message={error}/>;
-  if (loaded?.key !== key) return <div role="status">{t("loadingNativeLayout")}</div>;
+  if (loaded?.key !== key) return <ThemeLoadingScreen id={theme.id}/>;
   const View = destination ? loaded.module.pages?.[destination.place] : loaded.module.Home;
   if (!View) return <>{fallback}</>;
   return <NativeBoundary key={key + (destination?.place ?? "home")} reset={key}><NativeView View={View} theme={theme} destination={destination} onClose={onClose}/></NativeBoundary>;
