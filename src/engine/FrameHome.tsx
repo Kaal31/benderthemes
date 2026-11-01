@@ -3,8 +3,8 @@ import {GameAmpHome} from "../themes/GameAmp";
 import {GlassHome} from "../themes/Glass";
 import { BundledThemeSurface, hasBundledRenderer, NativeThemePort } from "./BundledThemeSurface";
 import { frameRoute, FrameRoute } from "./frameNavigation";
-import { ensureThemeAudio } from "../audioDownloads";
-import { callable } from "@decky/api";
+import {prepareThemeResources,themeResourcesReady,ResourceProgress} from "../themeResources";
+import {ThemeResourceProgress} from "../ThemeResourceProgress";
 // HTML theme host: compiled native surfaces for trusted bundled themes, isolated frames for imported HTML.
 //
 // The interface is an HTML page from the theme's folder. It runs in an iframe
@@ -60,11 +60,11 @@ export function FrameHome() {
  const api=useHome(),theme=activeTheme(api.settings);
  return theme?.source==="bundled"&&["blue-glass","ios6","gameamp"].includes(theme.id)?<NativeMediaGate id={theme.id}>{theme.id==="gameamp"?<GameAmpHome/>:<GlassHome ios={theme.id==="ios6"}/>}</NativeMediaGate>:<LegacyFrameHome/>;
 }
-function NativeMediaGate({id,children}:{id:string;children:import("react").ReactNode}){
+export function NativeMediaGate({id,children}:{id:string;children:import("react").ReactNode}){
  const api=useHome();
- const [state,setState]=useState<{id:string;ready:boolean;error?:string}>({id,ready:false}),[attempt,retry]=useState(0);
- useEffect(()=>{let alive=true;setState({id,ready:false});void Promise.all([ensureMedia(id),ensureThemeAudio(id)]).then(([media,audio])=>{if(alive)setState({id,ready:media.success&&audio,error:media.error||(!audio?"Could not download theme audio.":undefined)});}).catch(e=>{if(alive)setState({id,ready:false,error:String(e)});});return()=>{alive=false;};},[id,attempt]);
- return state.id===id&&state.ready?<>{children}</>:<ThemeRoot hints={{a:state.error?"Retry download":undefined,y:"Options"}} onInput={({btn})=>{if(btn==="a"&&state.error){retry(n=>n+1);return true;}if(btn==="y"||btn==="menu"){api.openSettings();return true;}return false;}}><div role="status" style={{padding:48,color:"white"}}>{state.error??"Downloading theme media…"}{state.error&&<button onClick={()=>retry(n=>n+1)}>Retry download</button>}</div></ThemeRoot>;
+ const [state,setState]=useState<{id:string;ready:boolean;error?:string;progress?:ResourceProgress}>({id,ready:themeResourcesReady(id)}),[attempt,retry]=useState(0);
+ useEffect(()=>{let alive=true;setState({id,ready:themeResourcesReady(id)});void prepareThemeResources(id,progress=>{if(alive)setState({id,ready:false,progress});}).then(()=>{if(alive)setState({id,ready:true});}).catch(e=>{if(alive)setState({id,ready:false,error:String(e)});});return()=>{alive=false;};},[id,attempt]);
+ return themeResourcesReady(id)||(state.id===id&&state.ready)?<>{children}</>:<ThemeRoot hints={{a:state.error?"Retry download":undefined,y:"Options"}} onInput={({btn})=>{if(btn==="a"&&state.error){retry(n=>n+1);return true;}if(btn==="y"||btn==="menu"){api.openSettings();return true;}return false;}}><ThemeResourceProgress id={id} progress={state.progress} error={state.error} retry={()=>retry(n=>n+1)}/></ThemeRoot>;
 }
 function LegacyFrameHome() {
   const api = useHome();
@@ -72,15 +72,15 @@ function LegacyFrameHome() {
   const status = useSteamStatus();
   const requests = useRef({ at: 0, count: 0, pending: 0 });
   const theme = activeTheme(api.settings);
-  const [media,setMedia]=useState<{id?:string;ready:boolean;error?:string}>({ready:false});
+  const [media,setMedia]=useState<{id?:string;ready:boolean;error?:string;progress?:ResourceProgress}>({ready:false});
   const [mediaAttempt,setMediaAttempt]=useState(0);
   useEffect(()=>{
     let alive=true;
-    setMedia({id:theme?.id,ready:theme?.source!=="bundled"});
-    if(theme?.source==="bundled")void Promise.all([ensureMedia(theme.id),ensureThemeAudio(theme.id)]).then(([result,audioReady])=>{if(alive)setMedia({id:theme.id,ready:result.success&&audioReady,error:result.error||(!audioReady?"Could not download theme audio. Please retry.":undefined)});}).catch(error=>{if(alive)setMedia({id:theme.id,ready:false,error:String(error)});});
+    setMedia({id:theme?.id,ready:theme?.source!=="bundled"||themeResourcesReady(theme.id)});
+    if(theme?.source==="bundled")void prepareThemeResources(theme.id,progress=>{if(alive)setMedia({id:theme.id,ready:false,progress});}).then(()=>{if(alive)setMedia({id:theme.id,ready:true});}).catch(error=>{if(alive)setMedia({id:theme.id,ready:false,error:String(error)});});
     return()=>{alive=false;};
   },[theme?.id,theme?.source,mediaAttempt]);
-  const frameAvailable=theme?.source!=="bundled"||(media.id===theme.id&&media.ready);
+  const frameAvailable=theme?.source!=="bundled"||themeResourcesReady(theme.id)||(media.id===theme.id&&media.ready);
   const frame = useRef<HTMLIFrameElement>(null);
   const nativePort=useRef<NativeThemePort|null>(null);
   const nativeReceive=useRef<((message:Record<string,unknown>)=>void)|null>(null);
