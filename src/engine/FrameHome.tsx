@@ -35,7 +35,6 @@ import { framePageRequest } from "./framePages";
 import { useReportFocus } from "../focus";
 
 export const FRAME_PROTOCOL = 1;
-const ensureMedia=callable<[id:string],{success:boolean;error?:string}>("ensure_frame_media");
 const BUTTONS: Btn[] = ["up", "down", "left", "right", "a", "b", "x", "y", "menu", "l1", "r1"];
 const PLACES: SteamPlace[] = ["library", "store", "friends", "settings", "downloads", "search", "power", "mainmenu"];
 const MAX_SAVE = 64 * 1024;
