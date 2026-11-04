@@ -92,6 +92,21 @@ class MusicLibraryTests(unittest.TestCase):
         self.assertEqual([t["file"] for t in al["Music"]["tracks"]], ["a.mp3"])
         self.assertEqual(sorted(t["file"] for t in al["Sub"]["tracks"]), ["a.flac", "b.mp3"])
 
+    def test_more_than_one_thousand_tracks_in_one_album(self):
+        for i in range(1105):
+            write(os.path.join(self.music, "Large album", f"Track {i:04d}.mp3"), SONG)
+        tracks = self.albums()["Large album"]["tracks"]
+        self.assertEqual(len(tracks), 1105)
+        self.assertTrue(all(t["id"] in self.main._music_files for t in tracks))
+        self.assertEqual(tracks[-1]["file"], "Track 1104.mp3")
+
+    def test_more_than_one_thousand_loose_music_files(self):
+        for i in range(1105):
+            write(os.path.join(self.music, f"Track {i:04d}.mp3"), SONG)
+        tracks = self.albums()["Music"]["tracks"]
+        self.assertEqual(len(tracks), 1105)
+        self.assertTrue(all(os.path.isfile(self.main._music_files[t["id"]]) for t in tracks))
+
     def test_rescan_keeps_tracks_reachable(self):
         write(os.path.join(self.music, "Album", "01 One.mp3"), SONG)
         write(os.path.join(self.music, "Album", "02 Two.mp3"), SONG)

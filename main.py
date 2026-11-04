@@ -1316,7 +1316,7 @@ def _music_album(folder: str, name: str, source: str, appid: int = 0, budget=Non
         cid = _vid(best)
         files_out[cid] = best
         cover = _vi.url(f"m/{cid}")
-    return {"id": _vid(folder), "name": name, "source": source, "appid": appid, "cover": cover, "tracks": tracks[:400]}
+    return {"id": _vid(folder), "name": name, "source": source, "appid": appid, "cover": cover, "tracks": tracks}
 
 
 def _list_music():
@@ -1357,7 +1357,7 @@ def _scan_music(found):
         if not os.path.isdir(r) or os.path.realpath(r) in seen:
             continue
         seen.add(os.path.realpath(r))
-        loose = _music_album(r, os.path.basename(r), "local", 0, [400], found, top_only=True) if any(
+        loose = _music_album(r, os.path.basename(r), "local", 0, budget, found, top_only=True) if any(
             os.path.splitext(n)[1].lower() in _MUSIC_EXT for n in os.listdir(r)) else None
         try:
             subs = sorted(n for n in os.listdir(r) if not n.startswith(".") and os.path.isdir(os.path.join(r, n)))
