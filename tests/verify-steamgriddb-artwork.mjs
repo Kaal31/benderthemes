@@ -1,0 +1,9 @@
+import {build} from 'esbuild';import assert from 'node:assert/strict';import {writeFileSync,mkdirSync} from 'node:fs';import {pathToFileURL} from 'node:url';import {resolve} from 'node:path';
+mkdirSync('out/cross-theme-audit',{recursive:true});
+const code=await build({stdin:{contents:'export {setLibrarySource,loadLibrary,gameIconUrls} from "./src/library";',resolveDir:process.cwd()},bundle:true,write:false,platform:'node',format:'esm',alias:{'@decky/api':'./preview/stubs/api.ts','@decky/ui':'./preview/stubs/ui.tsx'}});
+const file=resolve('out/cross-theme-audit/artwork-fixture.mjs');writeFileSync(file,code.outputFiles[0].text);globalThis.window=new EventTarget();
+globalThis.appStore={GetCustomVerticalCapsuleURLs:a=>['https://custom.test/'+a.appid+'/portrait.png'],GetCustomLandscapeImageURLs:a=>['https://custom.test/'+a.appid+'/wide.png'],GetCustomHeroImageURLs:a=>['https://custom.test/'+a.appid+'/hero.png'],GetCustomLogoImageURLs:a=>['https://custom.test/'+a.appid+'/logo.png'],GetCustomIconURLs:a=>['https://custom.test/'+a.appid+'/icon.png']};
+const m=await import(pathToFileURL(file));m.setLibrarySource({allApps:()=>[{appid:10,app_type:1,display_name:'Steam game'},{appid:20,app_type:1073741824,display_name:'Shortcut'}],collections:()=>[]});
+const library=m.loadLibrary('all','alpha',400);assert.equal(library.games.length,2);
+for(const g of library.games){for(const kind of ['portrait','landscape','hero','logo'])assert.ok(g.art[kind][0].startsWith('https://custom.test/'),kind+' prefers custom Steam artwork');assert.ok(m.gameIconUrls(g)[0].endsWith('/icon.png'));if(g.shortcut)assert.ok(Object.values(g.art).flat().every(u=>!u.includes('steamstatic.com')));}
+console.log('PASS custom Steam artwork precedes CDN fallback for Steam games and non-Steam shortcuts; custom icons are read.');
