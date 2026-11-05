@@ -2,7 +2,7 @@
 
 Status: design baseline; no runtime compatibility claimed yet.
 Target branch: `wallpaper-engine-interpreter`.
-Goal: import locally supplied Wallpaper Engine scene packages **without Wallpaper Engine or Workshop at runtime**, translate supported features into a shared, versioned ThemeHub scene representation, and play them as live backgrounds in Steam Game Mode.
+Goal: achieve high visual and behavioral fidelity for **real representative imported scenes** without Wallpaper Engine or Workshop at runtime. Build or refine source-specific import/playback features against fixtures first. **Unify only proven reusable capabilities afterward**, with regression coverage. A unified editor is a later phase, after runtime features stabilize.
 
 ## 1. Architectural baseline (audited)
 
@@ -56,44 +56,60 @@ Compatibility is per-asset: unsupported effects should fall back to skipping jus
 
 Reference: Wallpaper Engine Designer Documentation (effects, particles, SceneScript, timelines); linux-wallpaperengine README; open-wallpaper-engine and related independent renderer implementations. A reference project's implementation is **not** evidence that ThemeHub already supports that feature.
 
-## 4. Shared runtime design
+## 4. Sample-first compatibility program (the controlling plan)
 
-Proposed code boundaries (future; paths not yet created):
+We **do not begin with a universal engine rewrite**. Use a catalog of legally usable test scenes, build a detailed feature inventory from them, implement import and playback fidelity **per scene**, and refactor reusable functions into a shared runtime only after multiple working implementations demonstrate common behavior. This supersedes the earlier shared-schema-first delivery plan.
 
-- `py_modules/wallpaper_scene/`: format detection, safe bounded archive reader, texture decode, manifest converter, feature report.
-- `src/scene/types.ts`: versioned scene JSON schema; 2D/3D primitives, transform tree, animation tracks and effect capabilities.
-- `src/scene/runtime.ts`: clocks, scene lifecycle, bindings, scene graph, visibility, resource disposal.
-- `src/scene/renderers/`: common Three.js renderer and effect-pass adapters.
-- `src/scene/importers/`: console adapters and Wallpaper Engine adapter *into one schema*.
-- `src/scene/diagnostics.ts`: compatibility warnings, FPS, memory and dropped-effect counts.
-- `src/engine/`: registry/slot extension to reference scene IDs while retaining existing wallpaper images/videos.
+### Representative fixture matrix
 
-Do not replace specialized PSP/PS3 code until reference images/video and animation behavior match. First integrate their reusable primitives (transform/timeline) or use an adapter preserving existing semantics.
+| ID | Representative scene | Capabilities to exercise | First-pass target |
+|---|---|---|---|
+| S01 | Basic static multi-layer 2D | PKG parsing, TEX decode, draw order, positioning, alpha | Pixel-aligned static rendering |
+| S02 | Animated layered landscape | Translation, rotation, scale, timeline, looping, easing | Frame-sequence parity |
+| S03 | Camera/parallax wallpaper | 2D/3D camera, depth, perspective, mouse response | Parallax and aspect-ratio parity |
+| S04 | Masked composition | Alpha mask, blend modes, clipping, offscreen buffers | Correct composite order |
+| S05 | Weather/particle wallpaper | Emitters, velocity, lifetime, gravity, sprite particles | Visually representative particle behavior |
+| S06 | Deformation/puppet scene | Mesh warp, bones/deformation, eye motion | Reference pose and movement |
+| S07 | Color/effect-heavy scene | Blur, bloom, color correction, glow, distortion | Matched effect appearance |
+| S08 | Animated texture / atlas | Spritesheets, animated textures, UV changes | Correct frame timing |
+| S09 | Simple 3D scene | Meshes, materials, lights, cameras | Geometry and lighting parity |
+| S10 | Audio-responsive scene | Audio input/bands, reactive bindings, fallback | Explicit input behavior |
+| S11 | User-property-driven scene | Toggles, sliders, color variants, conditional effects | Property parity |
+| S12 | SceneScript-driven scene | Scripted properties, events, timers, supported bindings | Documented behavior subset |
+| S13 | Multi-effect stress scene | Composition, resource lifetime, mobile GPU limits | Stable Game Mode playback |
+| S14 | Real mixed-feature scene | Coverage interaction and asset edge cases | End-to-end fidelity report |
 
-Schema should support:
-- immutable resources and named references;
-- coordinate system, viewport, fit/crop behavior, perspective/orthographic camera;
-- hierarchy, draw order, render groups/compositions;
-- typed node data (sprite, text, model, particle, audio, light, camera);
-- typed animation tracks, triggers and input bindings;
-- declarative effects plus explicit unsupported-feature records;
-- imported provenance/format version and conversion diagnostics.
+These are **sampling targets, not existing collected files or claims of working support**. Select actual scenes to maximize distinct feature coverage (set-cover approach); one scene may cover multiple categories. For any unique format variant, add a dedicated fixture. Maintain manifest of source files, format version, expected behavior, permission/license status, and reference captures. Do not redistribute Workshop files by default.
 
-## 5. Practical delivery plan
+### Compatibility inventory (per sample)
 
-**Phase 0 — research & fixtures:** identify small legally redistributable fixture scenes (or construct own); catalog known WE versions, pkg/tex variants and schema samples; build capability inventory. Preserve screenshots and source-to-output mapping.
+Capture source type/version, parser dependencies, resource types, geometry/materials, draw order, blend/effect stack, animation tracks, scripts/properties, controls, renderer limitations, performance cost, and target visual behavior. Mark each function: **missing**, **parsed**, **implemented**, **visually matched**, or **Deck-verified**. Store fidelity issues separately from parsing failures. No misleading 'supported' status from successful parsing alone.
 
-**Phase 1 — shared schema and nonbreaking integration:** add types/validator and an adapter-independent runtime contract; test built-in scene in browser preview, then Steam Deck. Keep all legacy layouts intact.
+### Per-scene development loop
 
-**Phase 2 — minimal importer:** file/folder selection; bounded archive detection and format parsing; copy only referenced assets; static preview + report of supported elements. No external Wallpaper Engine process.
+1. Acquire a legal example and record baseline screenshots/video at fixed times and viewport sizes where available.
+2. Inspect exact features and dependencies; produce a capability checklist and unknowns.
+3. Implement the smallest source-format parser and playback behavior needed for that sample. Specialized code is allowed at this stage.
+4. Compare deterministic frames at 0%, 25%, 50%, and 75% of a loop (plus interactions or events), document differences, refine until as faithful as practical.
+5. Verify real Steam Game Mode: layer behind UI, scaling, input behavior, suspend/resume, theme switching, cleanup and performance.
+6. Freeze a regression fixture and add automated checks for those capabilities. Mark unsupported effects explicitly.
+7. Select the next sample that introduces useful uncovered functions; repeat.
 
-**Phase 3 — first live scene:** animated 2D sprites, transforms, camera, timeline. Test import-to-Game-Mode lifecycle and per-layout selection.
+A scene is 'perfected' only after its expected features are accounted for, comparisons are documented, and Deck validation passes. If fidelity is blocked by undocumented shaders, unavailable baseline capture or unsupported hardware, record **best-effort / blocked** rather than calling it perfect.
 
-**Phase 4 — visual parity:** masks/blending/particles/deformation/effects, each demonstrated by a fixture scene and golden image sequence.
+## 5. Consolidation, then editor
 
-**Phase 5 — advanced:** 3D, audio-reactivity, user properties, scripting compatibility, custom effects as separately gated work.
+**Stage A — map**: collect feature inventory and representative fixture candidates. No speculative universal schema or large renderer rewrite.
 
-Milestone definition: a user imports an independently supplied `scene.pkg` containing a simple moving layered 2D wallpaper, sees meaningful warnings for unsupported features, activates it on the existing home layout, returns from a game/suspend without leaks or a black screen, and does not need Workshop or Wallpaper Engine installed.
+**Stage B — import and perfect**: build scene-specific adapters/effects and playback, with the minimal stable integration to ThemeHub's wallpaper selection; retain existing console theme renderers. Begin with S01/S02 then expand by feature coverage, not by a rigid type order.
+
+**Stage C — identify actual overlap**: once several diverse scenes and console renderers work, audit their implementations: transforms, easing, timeline clocks, layered composition, camera, sprites, blend/effects, resource lifetimes. Compare semantics first; similar names don't guarantee identical behavior.
+
+**Stage D — unify carefully**: extract proven common modules with adapters for source-specific semantics. Every migration must pass unchanged fixture baselines and existing PSP/PS3 import regression tests; use feature flags/fallback paths until parity is established. Only now settle a general, versioned editable scene representation wherever beneficial.
+
+**Stage E — unified editor**: build hierarchy, property/effect inspector, animation timeline and export after the runtime has sufficiently reusable primitives. Feature metadata should be added when extracting modules so editor controls can be generated later.
+
+**Critical acceptance milestone:** several real, distinct imported Wallpaper Engine scenes (including animated 2D, masking/particles, and simple 3D) run locally without Wallpaper Engine/Workshop; their features and failures are measured; shared modules are extracted only when parity tests prove consolidation safe.
 
 ## 6. Testing and performance gates
 
@@ -111,7 +127,8 @@ Milestone definition: a user imports an independently supplied `scene.pkg` conta
 3. Keep console-specific renderers intact until tests prove parity.
 4. Prefer declarative conversion over executing foreign SceneScript; avoid assuming a browser iframe is a sufficient privileged-script sandbox.
 5. Keep user-provided files local; do not ship third-party Workshop content or unlicensed dependencies.
-6. Implement by compatibility tiers, not by promising complete WE fidelity.
+6. Implement from representative scenes and their actual function sets; prioritize visual fidelity, then consolidate reusable functionality only after cross-scene and console parity tests.
+7. Defer a unified editor until multiple imported scene types are running well, and the reusable runtime has emerged from proven implementations.
 
 ## 8. Research sources
 
