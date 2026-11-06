@@ -188,4 +188,12 @@ export const NINTENDO_CSS=`
 .nt-banner-title .nt-detail-facts span[data-state=installed]{color:#b9ee9b}.nt-banner-title .nt-detail-facts .dht-wiiu-detail-compat{background:#ffffff2e;color:#fff}
 .nt-banner-title .nt-detail-ach{margin-top:8px;font-size:19px;max-width:560px}.nt-banner-title .nt-detail-ach b{color:#fff}.nt-banner-title .nt-detail-ach small{color:#cfdde3;font-size:16px}.nt-banner-title .nt-detail-bar{background:#ffffff40}
 .nt-banner-title .nt-detail-recent{margin-top:8px}.nt-banner-title .nt-detail-recent li{background:#ffffff26;font-size:16px}
+/* Selection settles smoothly without moving the projected cover anchor. */
+.nt-home .nt-plaza-game{transition:scale 280ms cubic-bezier(.22,.75,.24,1),border-color 220ms ease,box-shadow 260ms ease;will-change:scale}
+.nt-home .nt-plaza-game[data-focus=true]{scale:1.055}
+.nt-home .nt-plaza-game:focus-visible{outline:none}
+.nt-home .nt-plaza-game>span{opacity:0;transform:translate(-50%,4px);transition:opacity 190ms ease,transform 250ms cubic-bezier(.22,.75,.24,1);pointer-events:none}
+.nt-home .nt-plaza-game[data-focus=true]>span{opacity:1;transform:translate(-50%,0)}
+.nt-home[data-motion=false] .nt-plaza-game,.nt-home[data-motion=false] .nt-plaza-game>span{transition:none}
+@media(prefers-reduced-motion:reduce){.nt-home .nt-plaza-game,.nt-home .nt-plaza-game>span{transition:none}}
 `;

@@ -1,3 +1,4 @@
+import {authoredXboxIcon} from "./authoredConsoleArtwork";
 import {useXboxArtwork} from "./xboxFallbackArtwork";
 import {cabinetWallpapers,useCabinetWallpaper} from "../x360Cabinet";
 import {KinectPages,KinectPage} from "./X360KinectPages";
@@ -49,7 +50,7 @@ export function KinectHome() {
   const gamerPicture=useX360Gamerpic();
   const profilePicture=gamerPicture??st.avatar;
   const wall = useWallpaper("x360");
-  const a = useXboxArtwork("x360-kinect-dash");
+  const a = useXboxArtwork("x360-kinect-dash"),nativeCardArt=useAssets("x360-kinect-dash");
   const look = useX360Look();
   const cabinet=useCabinetWallpaper(s.x360.cabinetWallpaper??"");
   const cabinetInk=cabinet.background?cabinetWallpapers.find(item=>item.id===s.x360.cabinetWallpaper)?.ink:undefined;
@@ -171,6 +172,7 @@ export function KinectHome() {
     const left = LIST_X + xs[i] - shift;
     // Keep outgoing cards mounted until the slide ends; the Stage clips them.
     const art = e.art ? a[e.art] : undefined;
+    const authoredIcon=(s.originalConsoleArtwork===false||!Object.keys(nativeCardArt).length)?authoredXboxIcon(({user:"avatar",bell:"mail",globe:"search",folder:"library",home:"apps",steam:"apps",trophy:"apps"} as Record<string,string>)[e.glyph??"apps"]??e.glyph??"apps","#527d22"):undefined;
     const glass = e.game ? a["portrait-placeholder-glass"] : a["postcard-placeholder-glass"];
     return (
       <div key={e.key} className="dht-x360n-card dht-tile" role="button" tabIndex={on?0:-1} aria-label={e.label} onKeyDown={event=>{if(event.key==="Enter"||event.key===" "){event.preventDefault();event.stopPropagation();e.run();}}} data-selected={on} data-name={e.label} onClick={() => (on ? e.run() : setSels((m) => ({ ...m, [chan.id]: i })))}
@@ -183,7 +185,7 @@ export function KinectHome() {
           ) : (
             <>
               <div style={{ position: "absolute", left: 0, top: 0, width: w, height: ART_H, overflow: "hidden", background: "linear-gradient(180deg,#bcd3e4,#e9f0f4)" }}>
-                {e.key==="home"||e.key==="steamhome"?<div data-kinect-home-icon style={{position:"absolute",inset:0,display:"grid",placeItems:"center"}}><KinectHomeIcon/></div>:art ? <img src={art} style={{ width: "100%", height: "100%", objectFit: "cover" }} /> : <div style={{ position: "absolute", inset: 0, display: "flex", alignItems: "center", justifyContent: "center" }}><Icon name={e.glyph ?? "folder"} size={110} color="#5a8f17" /></div>}
+                {authoredIcon?<div style={{position:"absolute",inset:0,display:"grid",placeItems:"center"}}><img data-icon-source="independent-fallback" src={authoredIcon} alt="" style={{width:106,height:106}}/></div>:e.key==="home"||e.key==="steamhome"?<div data-kinect-home-icon style={{position:"absolute",inset:0,display:"grid",placeItems:"center"}}><KinectHomeIcon/></div>:art ? <img src={art} style={{ width: "100%", height: "100%", objectFit: "cover" }} /> : <div style={{ position: "absolute", inset: 0, display: "flex", alignItems: "center", justifyContent: "center" }}><Icon name={e.glyph ?? "folder"} size={110} color="#5a8f17" /></div>}
                 {a["slot-gradient"] && <img src={a["slot-gradient"]} aria-hidden="true" style={{ position: "absolute", left: -2, bottom: -2, width: w + 4, height: 154, opacity: 0.35 }} />}
               </div>
               <div style={{ position: "absolute", left: 18, right: 18, top: ART_H + 16, color: "#3a3a3a", fontSize: 24, whiteSpace: "nowrap", overflow: "hidden", textOverflow: "ellipsis" }}>{e.label}</div>
