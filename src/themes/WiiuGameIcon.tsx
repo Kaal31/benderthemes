@@ -28,10 +28,10 @@ function useArtwork(urls:string[],kind:"icon"|"logo"){
 }
 export function WiiuGameIcon({game,clean=false}:{game:Game;clean?:boolean}){
  const icon=useArtwork(gameIconUrls(game),"icon"),logo=useArtwork(game.art.logo,"logo");
- return <div className="nt-game-icon" data-artwork={icon?"square-icon":logo?"fitted-logo":"fitted-cover"} style={{position:"absolute",inset:0,overflow:"hidden",background:clean?(logo&&darkLogos.has(logo)?"linear-gradient(145deg,#fff,#e1e9ed)":"linear-gradient(145deg,#456075,#182f41)"):"#263945"}}>
+ return <div className="nt-game-icon" data-artwork={icon?"square-icon":logo?"fitted-logo":"square-crop"} style={{position:"absolute",inset:0,overflow:"hidden",background:clean?(logo&&darkLogos.has(logo)?"linear-gradient(145deg,#fff,#e1e9ed)":"linear-gradient(145deg,#456075,#182f41)"):"#263945"}}>
   {icon?<img src={icon} alt="" draggable={false} style={{position:"absolute",inset:0,width:"100%",height:"100%",objectFit:"contain"}}/>:<>
    {!clean&&<GameArt g={game} kind="hero" flat style={{position:"absolute",inset:0,width:"100%",height:"100%",objectFit:"cover",filter:"brightness(.7) saturate(.85)"}}/>}
-   {logo?<img src={logo} alt="" draggable={false} style={{position:"absolute",left:"7%",top:"10%",width:"86%",height:"80%",objectFit:"contain",filter:"drop-shadow(0 1px 3px #0009)"}}/>:<GameArt g={game} kind="portrait" flat fit="contain" style={{position:"absolute",inset:0,width:"100%",height:"100%"}}/>}
+   {logo?<img src={logo} alt="" draggable={false} style={{position:"absolute",left:"7%",top:"10%",width:"86%",height:"80%",objectFit:"contain",filter:"drop-shadow(0 1px 3px #0009)"}}/>:<GameArt g={game} kind="portrait" flat fit="cover" style={{position:"absolute",inset:0,width:"100%",height:"100%"}}/>}
   </>}
  </div>;
 }

@@ -124,7 +124,7 @@ export const OPTIONS: StyleOption[] = [
       { id: "landscape", name: "Fitted landscape" },
       { id: "logos", name: "Game logos / square icons" },
     ],
-    def: "square",
+    def: "logos",
   },
   {
     key: "iconGlass",
