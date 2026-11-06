@@ -1,0 +1,69 @@
+.dht-theme-ps5 .dht-menu {
+  background: linear-gradient(145deg, rgba(36,44,58,.97), rgba(15,20,29,.98)) !important;
+  color: #eef2f8 !important;
+  border: 1px solid #ffffff24 !important;
+  border-radius: 16px !important;
+  padding: 24px !important;
+  box-shadow: 0 24px 80px #0009 !important;
+  animation: ps5PanelEnter 240ms cubic-bezier(.22,.7,.2,1) both;
+}
+.dht-theme-ps5 .dht-menu-item {
+  border-radius: 8px !important;
+  min-height: 48px;
+  padding: 12px 18px !important;
+  font-size: 19px !important;
+  font-weight: 400 !important;
+  margin: 3px 0;
+  transition: background 160ms ease, color 160ms ease, box-shadow 160ms ease;
+}
+.dht-theme-ps5 .dht-menu-item[data-selected=true] {
+  background: #eef3fa !important;
+  color: #17202d !important;
+  box-shadow: 0 0 0 2px #ffffff50 !important;
+}
+.dht-destination[data-theme=ps5] .dht-stage {
+  background: radial-gradient(ellipse at 20% 0%, #26394f, #101822 60%, #080d15) !important;
+}
+.dht-destination[data-theme=ps5] .dht-page-frame {
+  font-family: "Segoe UI", sans-serif !important;
+  gap: 24px !important;
+  animation: ps5PanelEnter 260ms cubic-bezier(.22,.7,.2,1) both;
+}
+.dht-destination[data-theme=ps5] .dht-page-title {
+  font-size: 34px !important;
+  font-weight: 300 !important;
+  letter-spacing: -.025em;
+}
+.dht-destination[data-theme=ps5] .dht-page-tabs button,
+.dht-destination[data-theme=ps5] .dht-page-back {
+  border-radius: 9px !important;
+  background: #ffffff0a !important;
+  color: #cbd5e3 !important;
+  border: 1px solid #ffffff12 !important;
+  padding: 12px 18px !important;
+  transition: background 180ms ease, color 180ms ease;
+}
+.dht-destination[data-theme=ps5] .dht-page-tabs button[aria-current=page] {
+  color: white !important;
+  background: #ffffff18 !important;
+  box-shadow: inset 0 -2px #e6efff !important;
+}
+.dht-destination[data-theme=ps5] .dht-destination-row {
+  background: #ffffff06 !important;
+  color: #e8edf4 !important;
+  border-radius: 10px !important;
+  border: 1px solid #ffffff10 !important;
+  padding: 14px 18px !important;
+  transition: background 160ms ease, outline 160ms ease;
+}
+.dht-destination[data-theme=ps5] .dht-destination-row[data-selected=true] {
+  background: #ffffff16 !important;
+  outline: 2px solid #edf4ff !important;
+}
+.dht-destination[data-theme=ps5] .dht-row-label { font-size: 21px !important; font-weight: 400; }
+.dht-destination[data-theme=ps5] .dht-row-sub { font-size: 14px !important; color: #b4c1d1; }
+.dht-destination[data-theme=ps5] .dht-page-footer { font-size: 14px !important; color: #aab9cc !important; }
+@keyframes ps5PanelEnter { from { opacity: 0; transform: translateY(12px); } to { opacity: 1; transform: translateY(0); } }
+@media (prefers-reduced-motion: reduce) {
+  .dht-theme-ps5 *, .dht-destination[data-theme=ps5] * { animation: none !important; transition: none !important; }
+}
