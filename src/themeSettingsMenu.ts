@@ -1,9 +1,11 @@
+import {consoleArtworkItems} from "./consoleArtwork";
+import {importPs4Downloads} from "./ps4Imports";
 import { categorized, categoryOf, styleCategory, type SettingsCategory } from "./settingsCategories";
 import { t, lang } from "./i18n";
 import { saverOptions, updateSaver, addSaverMedia, previewSaver } from "./themeScreensavers";
 import { achievementPopupStatus, achievementPopupsBlocked, previewAchievementPopup } from "./achievementPopups";
 import {customProfilePicture,setProfilePicture,uploadProfilePicture} from "./profilePicture";
-// Shared four-entry settings model for the themed home, context menus and Quick Access.
+// Shared three-entry settings model for the themed home, context menus and Quick Access.
 import { musicPlaybackItems } from "./musicPlayer";
 import { protonDbEnabled, protonDbThemeKey } from "./badges";
 import { setStyle, style, StyleOption, THEME_STYLES } from "./engine/themeStyles";
@@ -342,6 +344,16 @@ function switchItems(): MenuItem[] {
 
 /** The console theme file of the look and its effects (Customize → Theme file). */
 function themeFileItems(th: ThemeId): MenuItem[] {
+  if (th === "ps4") {
+    const file = () => S().ps4Skin ?? "";
+    const part = (label: string, key: "background" | "icons" | "labels" | "sounds" | "sceneAnim") => toggle(label, () => themeFx(S(), `ps4:${file()}`)[key], (value) => updateThemeFx(`ps4:${file()}`, { [key]: value }), () => !file());
+    return [
+      { label: "Import PS4 themes from Downloads", action: importPs4Downloads },
+      ...customizeControls().filter((control) => control.id === "file").map((control) => choice(control.label, [...(control.special ?? []), ...control.groups.flatMap((group) => group.items.map((item) => ({ id: item.ref, name: item.name })))], control.get, control.set, undefined, "Put extracted PS4 theme folders, ZIPs or RARs in skins/ps4, then rescan theme files")),
+      part("Theme backgrounds", "background"), part("Theme animation", "sceneAnim"), part("Theme icons", "icons"), part("Theme colours", "labels"), part("Theme sound effects", "sounds"),
+    ];
+  }
+
   if (th === "vita") return vitaItems("file");
   if (th === "ps3" || th === "psp") return xmbItems(th, "file");
   if (th === "xbox") return xboxFileItems();
@@ -362,12 +374,14 @@ function themeFileItems(th: ThemeId): MenuItem[] {
 
 /** Native and registered style controls carry stable categories before localization. */
 function lookOptionItems(th: ThemeId): MenuItem[] {
-  const items: MenuItem[] = [];
+  const items: MenuItem[] = consoleArtworkItems(th).map((item,i)=>categorized("screen",`native:console-artwork:${i}`,item));
+  items.push(categorized("screen","native:startup-intro",toggle(t("themeStartupIntro"),()=>S().themeStartupIntros?.[S().activeTheme||th]!==false,v=>updateSettings(p=>({themeStartupIntros:{...p.themeStartupIntros,[S().activeTheme||th]:v}})))));
   if (th === "vita") items.push(...vitaItems("look"));
   if (th === "ps3" || th === "psp") items.push(...xmbItems(th, "look"));
   if (th === "x360") items.push(
     // each dashboard era is a look of its own: picking one shows that look's preset
     categorized("presets", "native:dashboard", choice("Dashboard", X360_STYLES, () => S().x360.style, (v) => showLook(`x360:${v}`))),
+    ...(S().x360.style==='nxe'?[categorized("screen","native:themehub-corner-logo",toggle("Theme Hub corner logo", () => S().x360.showThemeHubLogo!==false, (v) => updateSettings(p => ({x360:{...p.x360,showThemeHubLogo:v}}))))]:[]),
     categorized("screen", "native:options-menu-side", choice("Options menu side", [{ id: "right", name: "Right side" }, { id: "left", name: "Left side" }], () => S().x360.guideSide ?? "right", (v) => updateSettings((p) => ({ x360: { ...p.x360, guideSide: v as "left" | "right" } })))),
   );
   if (th === "castle" || th === "republic") items.push(categorized("screen", "native:video-background", onOff("Video background", () => S().videoBackgrounds[th] !== false, (v) => updateSettings((p) => ({ videoBackgrounds: { ...p.videoBackgrounds, [th]: v } })))));
@@ -422,22 +436,50 @@ function gameCubeSaved(settings: Settings): Record<string, unknown> {
   const data = settings.frameData.gamecube;
   return data && typeof data === "object" && !Array.isArray(data) ? data as Record<string, unknown> : {};
 }
+// Keep imported WiiFlow controls scoped to its theme id and avoid duplicate fill switches.
+const isWiiFlow = () => !!activeTheme(S())?.id.startsWith("wiiflow-");
+const flowValue = <T,>(key:string, fallback:T):T => ((S().frameData[activeTheme(S())!.id] as Record<string,unknown>|undefined)?.[key] ?? fallback) as T;
+const setFlow = (patch:Record<string,unknown>) => {const id=activeTheme(S())!.id;updateSettings(p=>({frameData:{...p.frameData,[id]:{...(p.frameData[id] as Record<string,unknown>??{}),...patch}}}));};
+const flowItem = (key:string,item:MenuItem) => categorized("screen",`wiiflow:${key}`,item);
+function wiiFlowBackgroundItems():MenuItem[] {
+  if(!isWiiFlow())return [];
+  return [
+    flowItem("fit",choice(t("wiiflowBackgroundFit"),[{id:"original",name:t("wiiflowOriginalLayout")},{id:"extend",name:t("wiiflowSoftEdges")},{id:"fill",name:t("fillScreen")}],()=>flowValue("backgroundFit","fill"),backgroundFit=>setFlow({backgroundFit}))),
+    ...(flowValue("backgroundFit","fill")==="fill"?[
+      flowItem("interface",choice(t("wiiflowInterfaceExtension"),[{id:"off",name:t("off")},{id:"automatic",name:t("wiiflowAutomaticMapping")},{id:"frame",name:t("wiiflowPreserveFrame")}],()=>!flowValue("extendInterface",true)||flowValue<string>("artworkMapping","automatic")==="off"?"off":flowValue<string>("artworkMapping","automatic"),artworkMapping=>setFlow({artworkMapping,extendInterface:artworkMapping!=="off"}))),
+      flowItem("coverflow-width",toggle(t("wiiflowWidenCoverflow"),()=>flowValue("extendCoverflow",true),extendCoverflow=>setFlow({extendCoverflow}))),
+      ...(flowValue("extendCoverflow",true)?[flowItem("repeat",toggle(t("wiiflowRepeatCovers"),()=>flowValue("continueCoverPattern",false),continueCoverPattern=>setFlow({continueCoverPattern})))]:[]),
+    ]:[]),
+  ];
+}
+function wiiFlowCaseItems():MenuItem[] {
+  if(!isWiiFlow())return [];
+  return [flowItem("cases",group(t("wiiflowCaseAppearance"),()=>[
+    flowItem("edge",choice(t("wiiflowCaseBorder"),[{id:"dark",name:t("wiiflowDarkEdge")},{id:"gray",name:t("wiiflowGrayFrame")}],()=>flowValue("caseEdge","dark"),caseEdge=>setFlow({caseEdge}))),
+    flowItem("realistic",toggle(t("wiiflowDetailedEdges"),()=>flowValue("realisticCaseEdges",true),realisticCaseEdges=>setFlow({realisticCaseEdges}))),
+    ...(flowValue("realisticCaseEdges",true)?[flowItem("swap",toggle(t("wiiflowSwapSpine"),()=>flowValue("swapCaseSides",false),swapCaseSides=>setFlow({swapCaseSides})))]:[]),
+    flowItem("spine",choice(t("wiiflowSpineArtwork"),[{id:"enhanced",name:t("wiiflowEnhancedSpine")},{id:"classic",name:t("wiiflowClassicSpine")}],()=>flowValue("automaticSpineStyle","enhanced"),automaticSpineStyle=>setFlow({automaticSpineStyle}))),
+  ]))];
+}
+function wiiFlowGameItems():MenuItem[] {
+  if(!isWiiFlow())return [];
+  return [
+    categorized("games","wiiflow:arrows",toggle(t("wiiflowNavigationArrows"),()=>!flowValue("hideNavigationArrows",false),visible=>setFlow({hideNavigationArrows:!visible}))),
+    categorized("games","wiiflow:title",toggle(t("wiiflowGameTitle"),()=>!flowValue("hideCoverTitle",false),visible=>setFlow({hideCoverTitle:!visible}))),
+  ];
+}
 function customizeSectionItems(section: SettingsCategory): MenuItem[] {
   const th = S().theme;
   const own = [...lookOptionItems(th), ...(nativeExtras.get(th) ?? [])].filter(item => categoryOf(item) === section);
   const controls=customizeControls().filter(c=>c.id!=="file");
   const pageBackgrounds=controls.filter(c=>c.id.startsWith("wallpaper:"));
+  const standard=standardCategoryItems(th,section);
+  const combinedBackground=section==="screen" && (pageBackgrounds.length>0 || isWiiFlow());
   return [
-    ...(section === "screen" && (pageBackgrounds.length || activeTheme(S())?.id.startsWith("wiiflow-")) ? [group(t("background"),()=>[
+    ...(combinedBackground ? [group(t("background"),()=>[
       ...pageBackgrounds.map(slotItem),
-      ...(activeTheme(S())?.id.startsWith("wiiflow-") ? [choice(t("fit") || "Fit", [{id:"original",name:t("fitOriginal") || "Original"},{id:"extend",name:t("fitExtend")},{id:"fill",name:t("fillScreen") || "Fill"}],
-        () => (S().frameData[activeTheme(S())!.id] as {backgroundFit?:string}|undefined)?.backgroundFit ?? (activeTheme(S())?.id.startsWith("wiiflow-")?"fill":"original"),
-        (value) => {const id=activeTheme(S())!.id;updateSettings(p=>({frameData:{...p.frameData,[id]:{...(p.frameData[id] as Record<string,unknown> ?? {}),backgroundFit:value}}}));}),
-        choice("Artwork extension",[{id:"automatic",name:"Automatic (verified mappings)"},{id:"frame",name:"Manual: preserve frame and extend edges"},{id:"off",name:"Off"}],
-          ()=>(S().frameData[activeTheme(S())!.id] as {artworkMapping?:string}|undefined)?.artworkMapping??"automatic",
-          value=>{const id=activeTheme(S())!.id;updateSettings(p=>({frameData:{...p.frameData,[id]:{...(p.frameData[id] as Record<string,unknown>??{}),artworkMapping:value}}}));}),
-        toggle("Extend interface with Fill",()=> (S().frameData[activeTheme(S())!.id] as {extendInterface?:boolean}|undefined)?.extendInterface!==false,
-          value=>{const id=activeTheme(S())!.id;updateSettings(p=>({frameData:{...p.frameData,[id]:{...(p.frameData[id] as Record<string,unknown> ?? {}),extendInterface:value}}}));})] : []),
+      ...wiiFlowBackgroundItems(),
+      ...(standard.find(item=>item.settingsId==="background")?.sub?.() ?? []),
     ])] : []),
     ...(section === "games" && th === "santa-express" ? [
       toggle("Show game title", () => (S().frameData["santa-express"] as {showGameTitle?:boolean}|undefined)?.showGameTitle === true,
@@ -446,37 +488,14 @@ function customizeSectionItems(section: SettingsCategory): MenuItem[] {
     ...controls.filter(c => !c.id.startsWith("wallpaper:") &&
       (section === "audio" ? ["sounds", "music"].includes(c.id) : section === "screen" && !["sounds", "music"].includes(c.id))).map(slotItem),
     ...mergeBubbleItems(own),
+    ...(section === "screen" ? wiiFlowCaseItems() : []),
+    ...(section === "games" && th === "wiiu" ? [
+      categorized("games","native:plaza-advice",toggle(t("plazaAdvice"),()=>S().wiiuPlazaTips!==false,wiiuPlazaTips=>updateSettings({wiiuPlazaTips}))),
+      categorized("games","native:plaza-reset",{label:t("resetPlazaLayout"),action:()=>updateSettings({wiiuPlazaPositions:{}})}),
+    ] : []),
     ...(section === "games" ? [
       { ...collectionMenu(th), label: t("showInThisTheme") },
-      ...(activeTheme(S())?.id.startsWith("wiiflow-") ? [toggle("Extend coverflow with Fill",()=> (S().frameData[activeTheme(S())!.id] as {extendCoverflow?:boolean}|undefined)?.extendCoverflow!==false,
-        value=>{const id=activeTheme(S())!.id;updateSettings(p=>({frameData:{...p.frameData,[id]:{...(p.frameData[id] as Record<string,unknown> ?? {}),extendCoverflow:value}}}));})] : []),
-      ...(activeTheme(S())?.id.startsWith("wiiflow-") ? [toggle("Continue cover pattern with Fill",()=> (S().frameData[activeTheme(S())!.id] as {continueCoverPattern?:boolean}|undefined)?.continueCoverPattern===true,
-        value=>{const id=activeTheme(S())!.id;updateSettings(p=>({frameData:{...p.frameData,[id]:{...(p.frameData[id] as Record<string,unknown> ?? {}),continueCoverPattern:value}}}));})] : []),
-      ...(activeTheme(S())?.id.startsWith("wiiflow-") ? [toggle("Show navigation arrows", () => {
-        const id = activeTheme(S())!.id;
-        return (S().frameData[id] as { hideNavigationArrows?: boolean } | undefined)?.hideNavigationArrows !== true;
-      }, (visible) => {
-        const id = activeTheme(S())!.id;
-        updateSettings((p) => ({ frameData: { ...p.frameData, [id]: { ...(p.frameData[id] as Record<string, unknown> ?? {}), hideNavigationArrows: !visible } } }));
-      })] : []),
-      ...(activeTheme(S())?.id.startsWith("wiiflow-") ? [toggle("Realistic case edges",()=> (S().frameData[activeTheme(S())!.id] as {realisticCaseEdges?:boolean}|undefined)?.realisticCaseEdges!==false,
-        value=>{const id=activeTheme(S())!.id;updateSettings(p=>({frameData:{...p.frameData,[id]:{...(p.frameData[id] as Record<string,unknown>??{}),realisticCaseEdges:value}}}));})] : []),
-      ...(activeTheme(S())?.id.startsWith("wiiflow-") ? [toggle("Swap case left/right",()=> (S().frameData[activeTheme(S())!.id] as {swapCaseSides?:boolean}|undefined)?.swapCaseSides===true,
-        value=>{const id=activeTheme(S())!.id;updateSettings(p=>({frameData:{...p.frameData,[id]:{...(p.frameData[id] as Record<string,unknown>??{}),swapCaseSides:value}}}));},
-        ()=>(S().frameData[activeTheme(S())!.id] as {realisticCaseEdges?:boolean}|undefined)?.realisticCaseEdges===false)] : []),
-      ...(activeTheme(S())?.id.startsWith("wiiflow-") ? [choice("Automatic spine appearance",[{id:"enhanced",name:"Enhanced"},{id:"classic",name:"Previous look"}],
-        ()=>(S().frameData[activeTheme(S())!.id] as {automaticSpineStyle?:string}|undefined)?.automaticSpineStyle??"enhanced",
-        value=>{const id=activeTheme(S())!.id;updateSettings(p=>({frameData:{...p.frameData,[id]:{...(p.frameData[id] as Record<string,unknown>??{}),automaticSpineStyle:value}}}));})] : []),
-      ...(activeTheme(S())?.id.startsWith("wiiflow-") ? [choice("Case edge",[{id:"dark",name:"Thin dark edge"},{id:"gray",name:"Original gray frame"}],
-        ()=>(S().frameData[activeTheme(S())!.id] as {caseEdge?:string}|undefined)?.caseEdge??"dark",
-        value=>{const id=activeTheme(S())!.id;updateSettings(p=>({frameData:{...p.frameData,[id]:{...(p.frameData[id] as Record<string,unknown>??{}),caseEdge:value}}}));})] : []),
-      ...(activeTheme(S())?.id.startsWith("wiiflow-") ? [toggle("Cover title", () => {
-        const id = activeTheme(S())!.id;
-        return (S().frameData[id] as { hideCoverTitle?: boolean } | undefined)?.hideCoverTitle !== true;
-      }, (visible) => {
-        const id = activeTheme(S())!.id;
-        updateSettings((p) => ({ frameData: { ...p.frameData, [id]: { ...(p.frameData[id] as Record<string, unknown> ?? {}), hideCoverTitle: !visible } } }));
-      })] : []),
+      ...wiiFlowGameItems(),
       toggle(t("protonDbBadgesThisTheme"), () => protonDbEnabled(S()), (v) => updateSettings((p) => ({ protondbThemes: { ...p.protondbThemes, [protonDbThemeKey(S())]: v } }))),
       ...(th !== "ios6" ? [choice(t("iconSize"), [75, 85, 100, 110].map((v) => ({ id: v, name: `${v}%${v === 100 ? ` · ${t("default")}` : ""}` })), () => S().iconSizes?.[th] ?? 100, (v) => updateSettings((p) => ({ iconSizes: { ...p.iconSizes, [th]: v } })))] : []),
       ...(USES.titles.includes(th) ? [choice(t("gameTitles"), TITLE_MODES, () => S().titles[th] ?? "show", (v) => updateSettings((p) => ({ titles: { ...p.titles, [th]: v } })))] : []),
@@ -486,18 +505,26 @@ function customizeSectionItems(section: SettingsCategory): MenuItem[] {
     // the themed store's optional sections (src/storeSections.tsx), per theme, hidden by default
     ...(section === "screen" ? [group(t("storeSections"), () => (["themes", "plugins"] as const).map((k) => toggle(k === "themes" ? t("storeSectionThemes") : t("storeSectionPlugins"), () => storeSectionOn(S(), th, k), (v) => updateSettings((p) => ({ storeSections: { ...p.storeSections, [th]: { ...p.storeSections?.[th], [k]: v } } })))))] : []),
     ...(section === "screen" && th !== "frame" ? [group(t("pagesAllThemes"), pageItems)] : []),
-    ...standardCategoryItems(th, section),
+    ...standard.filter(item=>!combinedBackground || item.settingsId!=="background"),
     ...(section === "screen" ? [group(t("screensaver"), screensaverItems), ...((S().bootIntro || S().gameBoot || (th === "psp" && pspFile(S()))) ? [group(t("pspIntroAndGameBoot"), () => pspClipItems(th === "psp" ? pspFile(S()) : ""))] : [])] : []),
   ];
 }
 
-/** The same four-entry settings root is used by home, context menus and Quick Access. */
+/** The same three-entry settings root is used by home, context menus and Quick Access. */
 export function themeSettingsItems(): MenuItem[] {
   return [
-    {label:t("presets"), sub:presetItems},
+    {label:t("settingsTheme"), sub:themeItems},
     {label:t("customize"), sub:customizeItems},
     {label:t("globalSettings"), sub:globalSettingsItems},
-    {label:t("manageTheme"), sub:manageThemeItems},
+  ];
+}
+/** Choosing a look and managing its files belong together; destructive actions stay nested. */
+export function themeItems(): MenuItem[] {
+  const presets = presetItems();
+  return [
+    ...presets.filter(item => item.settingsId !== "preset:reset"),
+    ...manageThemeItems(),
+    {...resetGroup(), sub:() => [...presets.filter(item => item.settingsId === "preset:reset"), {label:t("useAllThemeValues"), action:() => updateSettings(p => ({themeOptions:{...p.themeOptions,[S().theme]:{}}}))}, ...resetGroup().sub!()]},
   ];
 }
 export function customizeItems(): MenuItem[] {
@@ -534,9 +561,8 @@ export function manageThemeItems(): MenuItem[] {
   return [
     ...themeFileItems(th),
     ...lookOptionItems(th).filter(item => categoryOf(item) === "manage"),
+    ...(nativeExtras.get(th) ?? []).filter(item => categoryOf(item) === "manage"),
     {label:t("qamRescan"), action:() => {refreshThemeLists(); void refreshPresets();}},
-    {label:t("useAllThemeValues"), action:() => updateSettings(p => ({themeOptions:{...p.themeOptions,[th]:{}}}))},
-    ...resetGroup().sub!(),
   ];
 }
 /**
@@ -667,8 +693,8 @@ export function presetItems(): MenuItem[] {
       : { label: lang("savedPresetsMaxNotice", { max: MAX_USER_PRESETS }), disabled: true },
     { label: lang("renamePresetNamed", { name }), action: rename },
     ...(p?.origin === "saved"
-      ? [confirm(lang("deletePresetNamed", { name }), t("deleteSavedPresetAction"), () => deleteUserPreset(cur))]
-      : p?.user ? [confirm(lang("resetPresetNamed", { name }), t("forgetPresetChangesAction"), () => deleteUserPreset(cur))] : []),
+      ? [{...confirm(lang("deletePresetNamed", { name }), t("deleteSavedPresetAction"), () => deleteUserPreset(cur)), settingsId:"preset:reset"}]
+      : p?.user ? [{...confirm(lang("resetPresetNamed", { name }), t("forgetPresetChangesAction"), () => deleteUserPreset(cur)), settingsId:"preset:reset"}] : []),
   ];
 }
 
@@ -737,6 +763,7 @@ export function globalSettingsItems(): MenuItem[] {
     group(t("settingsIntegration"), () => [
       toggle(t("themedHomeScreen"), () => S().enabled, enabled => updateSettings({enabled})),
       ...fields.filter(item => item.settingsCategory === "global"),
+      toggle(t("hubStartupAnimation"),()=>S().hubStartupAnimation===true,v=>updateSettings({hubStartupAnimation:v})),
       toggle(t("themedKeyboard"), () => S().keyboardSkin === true, keyboardSkin => updateSettings({keyboardSkin})),
       ...(S().keyboardSkin ? [choice(t("keyboardSpacing"), [0,.5,1,1.5,2,3,4,5].map(id=>({id,name:`${id} px`})), () => S().keyboardSpacing ?? 1, keyboardSpacing => updateSettings({keyboardSpacing}))] : []),
     ]),
@@ -760,11 +787,11 @@ function styleItems(th: ThemeId, own: StyleOption[]): MenuItem[] {
     () => style(S(), th, o.key), value => setStyle(th, o.key, value)));
 }
 
-/** Compatibility entry point for native themes; keeps the localized four-section settings model. */
+/** Compatibility entry point for native themes; keeps the localized three-section settings model. */
 export function essentialItems(moved: MenuItem[] = [], steamHome?: () => void): MenuItem[] {
   return [
     ...themeSettingsItems(),
-    ...moved.filter(item => ![t("presets"),t("customize"),t("globalSettings"),t("manageTheme")].includes(item.label)),
+    ...moved.filter(item => ![t("settingsTheme"),t("presets"),t("customize"),t("globalSettings"),t("manageTheme")].includes(item.label)),
     ...(steamHome ? [{label:t("steamHome"),action:steamHome}] : []),
   ];
 }

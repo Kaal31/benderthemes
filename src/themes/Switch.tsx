@@ -41,10 +41,10 @@ import {ProfileAvatar} from "../ProfileAvatar";
 // A .nxtheme (see switchThemes.ts) supplies the wallpaper, optional wallpapers for "All Software" and
 // "Settings", and the round button pictures; each part has its own toggle in Theme options.
 import { CSSProperties, useEffect, useState, useRef, useMemo } from "react";
-import { GameArt, Icon, IconName, themeMenu, useHome, useMenu, useRemembered } from "../common";
+import { GameArt, Icon, IconName, useHome, useMenu, useRemembered } from "../common";
 import { clamp, Press, Stage, ThemeRoot, useStage } from "../input";
 import { Game, openSteam, SteamPlace } from "../library";
-import { showTitle, THEMES } from "../settings";
+import { showTitle } from "../settings";
 import { styleOf } from "../engine/themeStyles";
 import { t } from "../i18n";
 import { playSound, useBattery, useClock, useWallpaper } from "../steam";
@@ -247,7 +247,7 @@ export function SwitchHome() {
   const runDockAction = (i: number) => {
     const d = dock[i]; playSound("select");setPressed(true);setTimeout(()=>setPressed(false),180);
     if (d.action === "album") api.openMedia();
-    else if (d.action === "settings") { setView("set"); menu.open([...themeSettingsItems(), { label: t("presets"), sub: () => themeMenu(s.theme, api.switchTheme, THEMES) }, { label: t("homeScreenSettings"), action: api.openSettings }], t("destSettings"), { page: true }); }
+    else if (d.action === "settings") { setView("set"); menu.open(themeSettingsItems(), t("destSettings"), { page: true }); }
     else if (d.place) openSteam(d.place);
   };
 

@@ -576,7 +576,7 @@ export function N3dsHome() {
     items.push(
       { label: t("arrangeIconsBadges"), action: () => startArrange(false) },
       { label: t("placeBadges"), action: () => startArrange(true) },
-      { label: t("gridSizeRows", { rows }), sub: gridSizeItems },
+      { settingsId:"native:grid-size", label: t("gridSizeRows", { rows }), sub: gridSizeItems },
       { label: t("destPower"), action: () => openSteam("power") },
       { label: t("destMainMenu"), action: api.showSteamHome },
     );

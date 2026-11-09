@@ -16,7 +16,10 @@ try {
     const ids = window.__allSettingsThemeIds;
     for(const theme of ids) {
       seed({theme});
-      check(window.__settingsRoot().map(item=>item.label).join('|') === 'Presets|Customize|Global settings|Manage theme', theme+': root');
+      check(window.__settingsRoot().map(item=>item.label).join('|') === 'Theme|Customize|Global settings', theme+': root');
+      const themeItems = window.__settingsRoot()[0].sub();
+      check(themeItems.some(item => item.label === 'Reset or delete'), theme+': nested reset/delete');
+      check(!themeItems.some(item => item.settingsId === 'preset:reset'), theme+': preset reset is nested');
       check(categories().map(item=>item.label).join('|') === 'Screen|Games|Audio', theme+': categories');
       for(const name of ['Screen','Games','Audio']) {
         const items = section(name);
@@ -28,6 +31,32 @@ try {
       for(const option of registered) check(located.some(item=>item.settingsId === `style:${theme}:${option.key}`), theme+': missing style '+option.key);
       check(!window.__settingsManage().some(item=>item.label==='Reset all settings'), theme+': global reset leaked');
     }
+    // Imported WiiFlow controls must remain scoped and appear only in their canonical section.
+    seed({theme:'frame',activeTheme:'wiiflow-default',frameData:{'wiiflow-default':{backgroundFit:'original',extendCoverflow:false,continueCoverPattern:true,extendInterface:false,artworkMapping:'frame',realisticCaseEdges:false,swapCaseSides:true,caseEdge:'gray',lastAppid:123}}});
+    const sectionItems = name => section(name);
+    const background = () => sectionItems('Screen').find(item => item.label === 'Background')?.sub() ?? [];
+    const byId = (items,id) => items.find(item=>item.settingsId===`wiiflow:${id}`);
+    check(!!byId(background(),'fit'),'WiiFlow fit belongs in Screen / Background');
+    check(!byId(background(),'interface'),'Fill-only interface controls hidden with Original fit');
+    const cases = () => byId(sectionItems('Screen'),'cases')?.sub() ?? [];
+    check(!!byId(cases(),'edge') && !!byId(cases(),'spine'),'WiiFlow border/spine belong in Screen / Case appearance');
+    check(!byId(cases(),'swap'),'Spine side hidden when detailed edges are disabled');
+    check(!!byId(sectionItems('Games'),'arrows') && !!byId(sectionItems('Games'),'title'),'WiiFlow navigation/title belong in Games');
+    check(!sectionItems('Games').some(item=>['cases','fit','edge','spine'].some(id=>item.settingsId===`wiiflow:${id}`)),'No duplicate WiiFlow appearance controls in Games');
+    byId(background(),'fit').sub()[2].action();
+    check(!!byId(background(),'interface') && !!byId(background(),'coverflow-width'),'Fill reveals separate interface/coverflow controls');
+    check(!byId(background(),'repeat'),'Repeating pattern hidden when widening is disabled');
+    byId(background(),'coverflow-width').action();
+    check(!!byId(background(),'repeat'),'Repeating pattern available with widened coverflow');
+    byId(background(),'interface').sub()[0].action();
+    let flow=window.__getThemeSettings().frameData['wiiflow-default'];
+    check(flow.artworkMapping==='off' && flow.extendInterface===false,'One interface selector stores compatible legacy flags');
+    byId(cases(),'realistic').action();
+    check(!!byId(cases(),'swap'),'Spine side returns with detailed edges');
+    flow=window.__getThemeSettings().frameData['wiiflow-default'];
+    check(flow.lastAppid===123 && flow.caseEdge==='gray' && flow.swapCaseSides===true,'WiiFlow saved options survive hierarchy changes');
+    seed({theme:'frame',activeTheme:'gamecube'});
+    check(!sectionItems('Screen').some(item=>item.settingsId?.startsWith('wiiflow:')),'WiiFlow controls do not leak into GameCube');
     seed({theme:'vita'});
     check(section('Games').filter(item=>item.settingsId==='native:bubbles').length===1,'One Vita Bubbles editor');
     check(!section('Screen').some(item=>item.settingsId==='native:bubbles'),'Vita Bubbles in Games only');
@@ -70,7 +99,7 @@ try {
   await page.evaluate(() => {window.LocalizationManager={m_rgLocalesToUse:['brazilian']}; window.__seedSettings({theme:'gameamp'});});
   const localized = await page.evaluate(() => ({root:window.__settingsRoot().map(item=>item.label), categories:window.__settingsCustomize().map(item=>item.label)}));
   assert.equal(localized.root[2],'Configurações globais');
-  assert.equal(localized.root[3],'Gerenciar tema');
+  assert.deepEqual(localized.root,['Tema','Personalizar','Configurações globais']);
   assert.deepEqual(localized.categories,['Tela','Jogos','Áudio']);
   await page.evaluate(() => {window.LocalizationManager={m_rgLocalesToUse:['english']};window.__seedSettings({theme:'ps5',enabled:true,onboardingDone:true});});
   await page.waitForTimeout(6500); // Let the console intro finish before exercising controller input.
