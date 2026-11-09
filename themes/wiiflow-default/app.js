@@ -65,10 +65,11 @@
   let lastWheel=0;document.getElementById('stage').addEventListener('wheel',e=>{e.preventDefault();if(gameOpen)return;if(performance.now()-lastWheel<180||Math.abs(e.deltaX)+Math.abs(e.deltaY)<8)return;lastWheel=performance.now();choose(selected+((Math.abs(e.deltaX)>Math.abs(e.deltaY)?e.deltaX:e.deltaY)>0?1:-1));},{passive:false});
   hub.on('state',state=>{
     if(state.saved?.importedCollectionId){const c=state.collections?.find(c=>String(c.id)===String(state.saved.importedCollectionId));platform=c?{source:'collection',target:String(c.id),title:c.name,appids:(c.appids||[]).map(Number)}:null;}else if(platform?.source==='collection'&&!state.collections?.some(c=>String(c.id)===platform.target))platform=null;
+    if(state.previewAppid){installed=false;platform=null;gameOpen=true;zone=1;control=0;document.body.classList.add('game-open');}
     all=Array.isArray(state.games)?state.games:[];document.body.classList.toggle('still',state.settings?.animations===false);
     const appid=restored?current()?.appid:state.saved?.lastAppid;
     if(!restored){installed=state.saved?.installedOnly===true;flat=state.saved?.flat===true;restored=true;}
-    games=all.filter(g=>(!installed||g.installed)&&(!platform||(platform.source==='collection'&&platform.appids.includes(Number(g.appid)))||String(g.pluginMagic||g.platformId||g.platform||'').toLowerCase()===platform.target||platform.source==='all'));selected=Math.max(0,games.findIndex(g=>g.appid===appid));render();
+    games=all.filter(g=>(!installed||g.installed)&&(!platform||(platform.source==='collection'&&platform.appids.includes(Number(g.appid)))||String(g.pluginMagic||g.platformId||g.platform||'').toLowerCase()===platform.target||platform.source==='all'));selected=Math.max(0,games.findIndex(g=>g.appid===(state.previewAppid||appid)));render();
   });
   hub.on('error',message=>{$('subtitle').textContent=String(message);});
   function resize(){document.documentElement.style.setProperty('--scale',Math.min(innerWidth/640,innerHeight/480));}

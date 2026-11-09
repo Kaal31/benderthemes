@@ -54,9 +54,9 @@ function publicGame(g: Game, abs: (u: string) => string) {
   };
 }
 
-export function FrameHome() {
+export function FrameHome({previewAppid,onPreviewClose}:{previewAppid?:number;onPreviewClose?:()=>void}={}) {
  const api=useHome(),theme=activeTheme(api.settings);
- return theme?.source==="bundled"&&["blue-glass","ios6","gameamp"].includes(theme.id)?<NativeMediaGate id={theme.id}>{theme.id==="gameamp"?<GameAmpHome/>:<GlassHome ios={theme.id==="ios6"}/>}</NativeMediaGate>:<LegacyFrameHome/>;
+ return theme?.source==="bundled"&&["blue-glass","ios6","gameamp"].includes(theme.id)?<NativeMediaGate id={theme.id}>{theme.id==="gameamp"?<GameAmpHome/>:<GlassHome ios={theme.id==="ios6"}/>}</NativeMediaGate>:<LegacyFrameHome previewAppid={previewAppid} onPreviewClose={onPreviewClose}/>;
 }
 export function NativeMediaGate({id,children}:{id:string;children:import("react").ReactNode}){
  const api=useHome();
@@ -64,7 +64,7 @@ export function NativeMediaGate({id,children}:{id:string;children:import("react"
  useEffect(()=>{let alive=true;setState({id,ready:themeResourcesReady(id)});void prepareThemeResources(id,progress=>{if(alive)setState({id,ready:false,progress});}).then(()=>{if(alive)setState({id,ready:true});}).catch(e=>{if(alive)setState({id,ready:false,error:String(e)});});return()=>{alive=false;};},[id,attempt]);
  return themeResourcesReady(id)||(state.id===id&&state.ready)?<>{children}</>:<ThemeRoot hints={{a:state.error?"Retry download":undefined,y:"Options"}} onInput={({btn})=>{if(btn==="a"&&state.error){retry(n=>n+1);return true;}if(btn==="y"||btn==="menu"){api.openSettings();return true;}return false;}}><ThemeResourceProgress id={id} progress={state.progress} error={state.error} retry={()=>retry(n=>n+1)}/></ThemeRoot>;
 }
-function LegacyFrameHome() {
+function LegacyFrameHome({previewAppid,onPreviewClose}:{previewAppid?:number;onPreviewClose?:()=>void}) {
   const api = useHome();
   const downloads = useDownloads();
   const status = useSteamStatus();
@@ -138,12 +138,13 @@ function LegacyFrameHome() {
       apps: api.lib.apps.map((g) => publicGame(g, abs)),
       collections: api.lib.collections.map((c) => ({ id: c.id, name: c.name, appids: c.games.map((g) => g.appid) })),
       saved: theme ? s.frameData[theme.id] ?? null : null,
+      previewAppid,
       busy: api.busy,
       route: { ...route, canGoBack: routes.length > 1 },
       active: !((nativePort.current?.ownerDocument??frame.current?.ownerDocument)?.hidden ?? false) && !api.busy,
       capabilities: { pages: 1, audio: 1, focus: 1, navigation: 1, lifecycle: 1, savePatch: 1 },
     };
-  }, [api.lib, api.settings, api.user, api.busy, status.avatar, theme?.id, ready, routes]);
+  }, [previewAppid, api.lib, api.settings, api.user, api.busy, status.avatar, theme?.id, ready, routes]);
 
   useEffect(() => {
     if (ready) post({ type: "state", ...state });
@@ -288,6 +289,7 @@ function LegacyFrameHome() {
   }, [url, ready, reload, frameAvailable, isNative]);
 
   const onInput = (p: Press) => {
+    if(p.btn==="b"&&onPreviewClose){onPreviewClose();return true;}
     if (!frameAvailable && media.error && p.btn === "a") { setMediaAttempt(n=>n+1); return true; }
     if (p.btn === "b" && (!ready || pageError) && back()) return true;
     if (ready?.handles.has(p.btn)) {

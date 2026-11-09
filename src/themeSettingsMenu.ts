@@ -498,7 +498,7 @@ export function customizeItems(): MenuItem[] {
       ...(activeTheme(S())?.id.startsWith("wiiflow-") ? [choice("Automatic spine appearance",[{id:"enhanced",name:"Enhanced"},{id:"classic",name:"Previous look"}],
         ()=>(S().frameData[activeTheme(S())!.id] as {automaticSpineStyle?:string}|undefined)?.automaticSpineStyle??"enhanced",
         value=>{const id=activeTheme(S())!.id;updateSettings(p=>({frameData:{...p.frameData,[id]:{...(p.frameData[id] as Record<string,unknown>??{}),automaticSpineStyle:value}}}));})] : []),
-      ...(activeTheme(S())?.id.startsWith("wiiflow-") ? [choice("Case edge",[{id:"dark",name:"Thin dark edge"},{id:"gray",name:"Original gray frame"}],
+      ...(activeTheme(S())?.id.startsWith("wiiflow-") ? [choice("Case edge",[{id:"dark",name:"Thin dark edge"},{id:"gray",name:"Original gray frame"},{id:"frameless",name:"Frameless artwork"},{id:"paper",name:"Thin white paper line"}],
         ()=>(S().frameData[activeTheme(S())!.id] as {caseEdge?:string}|undefined)?.caseEdge??"dark",
         value=>{const id=activeTheme(S())!.id;updateSettings(p=>({frameData:{...p.frameData,[id]:{...(p.frameData[id] as Record<string,unknown>??{}),caseEdge:value}}}));})] : []),
       ...(activeTheme(S())?.id.startsWith("wiiflow-") ? [toggle("Cover title", () => {
