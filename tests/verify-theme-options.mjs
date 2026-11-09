@@ -35,7 +35,11 @@ try {
     assert.equal(await page.locator('.dht-safe-area').evaluate(el=>getComputedStyle(el).getPropertyValue('--dht-icon-scale').trim()),'0.75');
     await page.evaluate(()=>window.__openPlace('library'));
     await page.locator('.dht-destination[data-place=library]').waitFor();
-    assert.equal(await page.locator('.dht-destination-row').count(),combined.length);
+    if(theme==='nazarick'){
+      // Nazarick's dedicated Library defaults to All games, not the home-screen collection filter.
+      await page.locator('.naz-library-collections [aria-current=true]').waitFor();
+      assert.ok(await page.locator('.dht-destination-row').count()>=combined.length,'All games must include the selected home collection');
+    }else assert.equal(await page.locator('.dht-destination-row').count(),combined.length);
     await page.locator('[data-dht-root]').screenshot({path:`out/theme-previews/pages/${theme}-library.png`});
     await page.keyboard.press('Escape');
     console.log(`PASS ${theme}: collections, combined games, icon setting, themed library`);
