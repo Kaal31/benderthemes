@@ -11,6 +11,7 @@ import type { PointerEvent as RPointerEvent } from "react";
 import { fmtTime, useClock } from "../steam";
 import { getSettings, Settings } from "../settings";
 import type { VitaSkin } from "../skins";
+import { t, getCurrentLanguage } from "../i18n";
 
 declare const SteamClient: any;
 
@@ -225,10 +226,14 @@ export function VitaLockScreen({ skin, h24, W, H, onUnlock, animate }: { skin: V
       >
         <div style={{ position: "absolute", ...clockPos, color, textShadow: "0 2px 8px rgba(0,0,0,0.55)", pointerEvents: "none", animation: animate ? "dhtLockIn 700ms cubic-bezier(.2,.8,.2,1) both" : undefined }}>
           <div className="dht-vita-lock-time" style={{ fontSize: 96, fontWeight: 300, lineHeight: 1, fontVariantNumeric: "tabular-nums" }}>{fmtTime(now, h24)}</div>
-          <div className="dht-vita-lock-date" style={{ fontSize: 30, marginTop: 10 }}>{DAYS[now.getDay()]}, {MONTHS[now.getMonth()]} {now.getDate()}</div>
+          <div className="dht-vita-lock-date" style={{ fontSize: 30, marginTop: 10 }}>
+            {getCurrentLanguage() === "ptBr"
+              ? `${t(DAYS[now.getDay()])}, ${now.getDate()} de ${t(MONTHS[now.getMonth()])}`
+              : `${t(DAYS[now.getDay()])}, ${t(MONTHS[now.getMonth()])} ${now.getDate()}`}
+          </div>
         </div>
         <div style={{ position: "absolute", left: 0, right: 0, bottom: 34, textAlign: "center", color: "#fff", fontSize: 18, textShadow: "0 1px 3px #000", pointerEvents: "none", opacity: Math.max(0, 1 - pulled / 260), animation: animate ? "dhtLockHint 2.6s ease-in-out infinite" : undefined }}>
-          Swipe or press Ⓐ to unlock
+          {t("vitaUnlockPrompt")}
         </div>
       </div>
       {/* the folded-over back of the page */}

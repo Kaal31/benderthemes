@@ -1,3 +1,4 @@
+import { t } from "./i18n";
 // Downloads shown the way each console showed them: a progress bar on the game's own
 // tile (drawn by GameArt, so every theme has it) and a small status in the corner of the
 // home while something downloads. Both are styled per theme with the CSS below.
@@ -32,12 +33,14 @@ export function DownloadStatus({ settings, hidden }: { settings: Settings; hidde
   const skin = storeSkin(settings);
   const pct = cur.progress >= 0 ? Math.floor(cur.progress * 100) : -1;
   const waiting = items.filter((d) => !d.completed).length;
+  const titleKey = STATUS_TITLE[settings.theme] ?? "destDownloads";
+  const title = t(titleKey) !== titleKey ? t(titleKey) : titleKey;
   return (
     <div className="dht-dl-status" data-theme={settings.theme} data-variant={settings.theme === "x360" ? settings.x360?.style ?? "metro" : undefined} data-running={running} role="status"
       style={{ "--dl-panel": skin.panel, "--dl-text": skin.text, "--dl-sub": skin.sub, "--dl-fill": skin.sale, fontFamily: skin.font } as CSSProperties}>
       <span className="dht-dl-icon" aria-hidden="true">⬇</span>
       <span className="dht-dl-text">
-        <b>{STATUS_TITLE[settings.theme] ?? "Downloads"}{waiting > 1 ? ` (${waiting})` : ""}</b>
+        <b>{title}{waiting > 1 ? ` (${waiting})` : ""}</b>
         <small>{downloadLine(cur)}</small>
       </span>
       {pct >= 0 && <span className="dht-dl-track"><i style={{ width: `${pct}%` }} /></span>}
@@ -46,9 +49,9 @@ export function DownloadStatus({ settings, hidden }: { settings: Settings; hidde
 }
 
 const STATUS_TITLE: Record<string, string> = {
-  ps3: "Download", psp: "Download", vita: "Downloading", ps4: "Downloads", ps5: "Downloads", ps2: "Downloading",
-  x360: "Active Downloads", xbox: "Xbox Live Download", wii: "WiiConnect24", wiiu: "Download Management",
-  aero: "Steam - Downloads", aero2: "Steam - Downloads", minecraft: "Downloading", dial: "Downloading",
+  ps3: "downloadTitle", psp: "downloadTitle", vita: "downloadingTitle", ps4: "destDownloads", ps5: "destDownloads", ps2: "downloadingTitle",
+  x360: "activeDownloads", xbox: "xboxLiveDownload", wii: "WiiConnect24", wiiu: "downloadManagement",
+  aero: "steamDownloads", aero2: "steamDownloads", minecraft: "downloadingTitle", dial: "downloadingTitle",
 };
 
 const S = (t: string) => `.dht-dl-status[data-theme=${t}]`;

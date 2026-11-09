@@ -1,3 +1,4 @@
+import { t, lang } from "./i18n";
 // Steam's download queue, followed live (SteamClient.Downloads): what each theme shows as progress
 // bars, the PSP's info bar and busy icon. One subscription is shared by every theme.
 import { useEffect, useState } from "react";
@@ -118,15 +119,15 @@ export function fmtBytes(n: number): string {
 }
 export function fmtLeft(sec: number): string {
   if (!sec || sec < 0) return "";
-  if (sec < 60) return "less than a minute left";
+  if (sec < 60) return t("lessThanMinLeft");
   const m = Math.round(sec / 60);
-  return m < 60 ? `${m} min left` : `${Math.floor(m / 60)} h ${m % 60} min left`;
+  return m < 60 ? lang("minLeft", { min: m }) : lang("hoursMinLeft", { hours: Math.floor(m / 60), min: m % 60 });
 }
 /** "Downloading… 45% · 12.3 MB/s · 5 min left" and the like. */
 export function downloadLine(d: DownloadState): string {
-  if (d.completed) return "Download complete";
+  if (d.completed) return t("downloadComplete");
   const pct = d.progress >= 0 ? `${Math.floor(d.progress * 100)}%` : "";
-  if (d.paused) return ["Paused", pct].filter(Boolean).join(" · ");
-  if (!d.active) return ["Waiting to download", pct].filter(Boolean).join(" · ");
-  return ["Downloading… " + pct, d.rate ? `${fmtBytes(d.rate)}/s` : "", fmtLeft(d.secondsLeft)].filter(Boolean).join(" · ");
+  if (d.paused) return [t("paused"), pct].filter(Boolean).join(" · ");
+  if (!d.active) return [t("waitingToDownload"), pct].filter(Boolean).join(" · ");
+  return [`${t("downloading")}… ${pct}`.trim(), d.rate ? `${fmtBytes(d.rate)}/s` : "", fmtLeft(d.secondsLeft)].filter(Boolean).join(" · ");
 }

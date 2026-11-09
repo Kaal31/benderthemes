@@ -1,3 +1,4 @@
+import { t } from "./i18n";
 import { Navigation } from "@decky/ui";
 import { callable } from "@decky/api";
 import { Fragment, MutableRefObject, ReactNode, useEffect, useMemo, useRef, useState } from "react";
@@ -99,7 +100,7 @@ export function Badges({ item }: { item: SearchItem }) {
   return <span className="dht-spotlight-badges">
     {item.source === "spotlight" ? <b className="dht-spotlight-badge" data-kind="spotlight">✦ Spotlight</b>
       : <b className="dht-spotlight-badge" data-kind="unreviewed" title="Not reviewed by ThemeHub">Not in the store (unreviewed)</b>}
-    {item.installed && <b className="dht-spotlight-badge" data-kind="installed">✓ Installed</b>}
+    {item.installed && <b className="dht-spotlight-badge" data-kind="installed">✓ {t("installed")}</b>}
     {item.root && <b className="dht-spotlight-badge" data-kind="root">Needs root</b>}
     {item.archived && <b className="dht-spotlight-badge" data-kind="archived">Archived</b>}
     {item.forkOf && <b className="dht-spotlight-badge" data-kind="fork" title={`Another repository of ${item.forkOf}`}>Fork of {item.forkOf}</b>}
@@ -212,16 +213,16 @@ export function PluginSpotlight({ inputRef }: { inputRef: MutableRefObject<Input
   useEffect(() => () => { inputRef.current = null; }, []);
   const total = merged.length;
   const explorerCount = merged.filter(i => i.source === "explorer").length;
-  return <section className="plugin-spotlight dht-spotlight" aria-label="Plugin Spotlight">
+  return <section className="plugin-spotlight dht-spotlight" aria-label={t("pluginSpotlight")}>
     <style>{SPOTLIGHT_CSS}</style>
     <div className="spotlight-intro dht-spotlight-intro">
-      <div><h2>Plugin Spotlight</h2><p>Our picks of independent Decky plugins, and a search across every public Decky plugin.</p></div>
+      <div><h2>{t("pluginSpotlight")}</h2><p>{t("pluginSpotlightDesc")}</p></div>
       <label className="dht-spotlight-search" data-focused={zone === "search"}>
         <span aria-hidden="true">⌕</span>
-        <input ref={searchRef} {...opensKeyboardOnTap} type="search" aria-label="Search all Decky plugins" placeholder={loading && !catalog ? "Search all Decky plugins (loading the list…)" : `Search ${total} Decky plugins: name, author, tag…`}
+        <input ref={searchRef} {...opensKeyboardOnTap} type="search" aria-label={t("searchAllDeckyPlugins")} placeholder={loading && !catalog ? "Search all Decky plugins (loading the list…)" : `Search ${total} Decky plugins: name, author, tag…`}
           value={query} onFocus={() => setZone("search")} onChange={e => setQuery(e.target.value)}
           onKeyDown={e => { e.stopPropagation(); if (e.key === "Enter" || e.key === "ArrowDown") { e.preventDefault(); leaveSearch(true); } if (e.key === "Escape") { e.preventDefault(); leaveSearch(false); } }} />
-        {query && <button type="button" aria-label="Clear search" onClick={() => { setQuery(""); openSearch(); }}>✕</button>}
+        {query && <button type="button" aria-label={t("clearSearch")} onClick={() => { setQuery(""); openSearch(); }}>✕</button>}
       </label>
     </div>
     <div className="dht-spotlight-status">
@@ -229,7 +230,7 @@ export function PluginSpotlight({ inputRef }: { inputRef: MutableRefObject<Input
         : <span>{SPOTLIGHT_PLUGINS.length} picks · press ↑ then A to search {explorerCount ? `${explorerCount} more plugins` : "all plugins"}</span>}
       {catalog?.error && <span className="dht-spotlight-note">{catalog.error}</span>}
       <span className="dht-spotlight-attribution">Plugin data: <button type="button" onClick={() => openUrl(catalog?.source?.url || EXPLORER_PAGE)}>Decky Plugins Explorer by safetzahirovic ↗</button>
-        <button type="button" disabled={loading} onClick={() => load(true)}>{loading ? "Updating…" : "↻ Update list"}</button></span>
+        <button type="button" disabled={loading} onClick={() => load(true)}>{loading ? t("updatingDots") : t("updateList")}</button></span>
     </div>
     {!current ? <div className="spotlight-empty dht-spotlight-empty"><span aria-hidden="true">✦</span><h3>{query.trim() ? "Nothing found" : "The first spotlight is coming soon."}</h3><p>{query.trim() ? "Search matches plugin names, authors, tags, descriptions and README text." : "Featured plugins will appear here with a closer look at what they do and a link to their creators’ projects."}</p></div> : <div className="spotlight-layout">
       <div className="spotlight-list dht-spotlight-results" ref={listRef}>{results.map((item, i) =>
@@ -251,9 +252,9 @@ export function PluginSpotlight({ inputRef }: { inputRef: MutableRefObject<Input
           <p>{current.pick.whyFeatured}</p>
           {current.pick.aiAssisted && <><p>{current.pick.aiAssisted.note}</p><a href={current.pick.aiAssisted.sourceUrl} target="_blank" rel="noreferrer" onClick={e => { e.preventDefault(); openUrl(current.pick!.aiAssisted!.sourceUrl); }}>Read the creator’s development notes ↗</a></>}
           {current.pick.unreviewed && <div className="dht-spotlight-warning" role="note">
-            <strong>Not reviewed by ThemeHub</strong>
-            <span>We have not checked this plugin's code.{current.pick.install ? " ThemeHub installs it only from the release ZIP below and only after you confirm." : " It has no release ZIP we could verify, so it is not installed from here: read the project page and install it from there or from Decky's store."}</span>
-            {current.root && <span>It asks to run <b>as root</b> (full access to your system).</span>}
+            <strong>{t("notReviewedByThemeHub")}</strong>
+            <span>{t("notReviewedByThemeHubDesc")}</span>
+            {current.root && <span>{t("runsAsRootWarning")}</span>}
           </div>}
           {current.pick.install && current.pick.unreviewed && confirm > 0 ? <div className="dht-spotlight-confirm" role="alertdialog" aria-label="Confirm installation">
             {confirm === 1 ? <><strong>Install {current.name} without a review?</strong>
@@ -261,11 +262,11 @@ export function PluginSpotlight({ inputRef }: { inputRef: MutableRefObject<Input
               : <><strong>This plugin runs as root.</strong><span>It gets full access to your system, beyond what normal plugins can do. Install only if you trust {current.author}.</span></>}
             <div><button className="market-primary dht-spotlight-primary dht-spotlight-confirm-yes" disabled={busy} onClick={() => void install()}>
               {busy ? "Opening Decky…" : confirm === 1 && current.root ? "Continue · A" : "Install anyway · A"}</button>
-              <button className="market-remove dht-spotlight-confirm-no" onClick={() => setConfirm(0)}>Cancel · B</button></div>
+              <button className="market-remove dht-spotlight-confirm-no" onClick={() => setConfirm(0)}>{t("cancelB")}</button></div>
           </div> : current.pick.install ? <>
             <button className="market-primary dht-spotlight-primary" disabled={busy} onClick={() => void install()}>{busy ? "Opening Decky…" : `Install · ${current.pick.install.version}`}</button>
             <button className="market-remove dht-spotlight-project" onClick={() => openUrl(current.url)}>Visit project · X ↗</button>
-            <p>Decky will ask you to confirm before downloading and installing.</p>
+            <p>{t("deckyConfirmNote")}</p>
           </> : current.pick.unreviewed ? <button className="market-primary dht-spotlight-primary dht-spotlight-project" onClick={() => openUrl(current.url)}>View project · X ↗</button> : <>
             <button className="market-primary dht-spotlight-primary" disabled>Coming soon</button>
             <button className="market-remove dht-spotlight-project" onClick={() => openUrl(current.url)}>Visit project · X ↗</button>
@@ -273,11 +274,11 @@ export function PluginSpotlight({ inputRef }: { inputRef: MutableRefObject<Input
         </> : <>
           <p>{current.description || "No description."}</p>
           <div className="dht-spotlight-warning" role="note">
-            <strong>Not reviewed by ThemeHub</strong>
+            <strong>{t("notReviewedByThemeHub")}</strong>
             <span>This plugin comes from the public list of Decky plugin repositories. We have not checked its code, and it may or may not be in Decky’s own store. Read the project page first, and install from Decky’s store when it is listed there. ThemeHub installs an unreviewed plugin only from a known release ZIP and only after you confirm.</span>
-            {current.root && <span>It asks to run <b>as root</b> (full access to your system).</span>}
-            {current.archived && <span>The author has <b>archived</b> this repository; it may no longer work.</span>}
-            {current.forkOf && <span>Another repository of <b>{current.forkOf}</b> with the same name and author (a fork or a move).</span>}
+            {current.root && <span>{t("runsAsRootWarning")}</span>}
+            {current.archived && <span>{t("repoArchivedWarning")}</span>}
+            {current.forkOf && <span>{t("forkWarning", { repo: current.forkOf })}</span>}
           </div>
           {current.zipUrl && confirm > 0 ? <div className="dht-spotlight-confirm" role="alertdialog" aria-label="Confirm installation">
             {confirm === 1 ? <><strong>Install {current.name} without a review?</strong>
@@ -285,7 +286,7 @@ export function PluginSpotlight({ inputRef }: { inputRef: MutableRefObject<Input
               : <><strong>This plugin runs as root.</strong><span>It gets full access to your system, beyond what normal plugins can do. Install only if you trust {current.author || current.repo.split("/")[0]}.</span></>}
             <div><button className="market-primary dht-spotlight-primary dht-spotlight-confirm-yes" disabled={busy} onClick={() => void installUnreviewed()}>
               {busy ? "Opening Decky…" : confirm === 1 && current.root ? "Continue · A" : "Install anyway · A"}</button>
-              <button className="market-remove dht-spotlight-confirm-no" onClick={() => setConfirm(0)}>Cancel · B</button></div>
+              <button className="market-remove dht-spotlight-confirm-no" onClick={() => setConfirm(0)}>{t("cancelB")}</button></div>
           </div> : <>
             <button className="market-primary dht-spotlight-primary dht-spotlight-project" onClick={() => openUrl(current.url)}>View project · X ↗</button>
             {current.zipUrl && <button className="market-remove dht-spotlight-install-unreviewed" onClick={() => void installUnreviewed()}>Install release {current.release || "ZIP"}… · ☰</button>}
@@ -294,7 +295,7 @@ export function PluginSpotlight({ inputRef }: { inputRef: MutableRefObject<Input
         {(current.tags.length > 0 || current.release || current.downloads) && <dl className="dht-spotlight-facts">
           {current.tags.length > 0 && <div><dt>Tags</dt><dd>{current.tags.join(", ")}</dd></div>}
           {current.release && <div><dt>Latest release</dt><dd>{current.release}</dd></div>}
-          {!!current.downloads && <div><dt>Release downloads</dt><dd>{current.downloads.toLocaleString()}</dd></div>}
+          {!!current.downloads && <div><dt>{t("releaseDownloads")}</dt><dd>{current.downloads.toLocaleString()}</dd></div>}
         </dl>}
         {current.readme && <><h4>From the README</h4><ReadmeExcerpt text={current.readme} />{current.readmeUrl && <button className="dht-spotlight-more" onClick={() => openUrl(current.readmeUrl)}>Read the full README ↗</button>}</>}
         {message && <p role="status">{message}</p>}

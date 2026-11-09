@@ -1,3 +1,4 @@
+import {t} from "../i18n";
 import {useNxeIcons,NxeOriginalIcon,NxeButtonHint,NxeWordmark} from './X360NxeIcons';
 import {nxeRect,nxeReference,nxeRowPitch,nxeFocusDuration} from './X360NxeReference';
 import {useNxeWindow} from './X360NxeWindow';
@@ -67,23 +68,23 @@ export function NxeHome() {
 
   // NXE channel names; the panels behind them open Steam's equivalents.
   const channels: Channel[] = [
-    { id: "spotlight", label: "Spotlight", slots: [
+    { id: "spotlight", label: t("spotlight"), slots: [
       ...games.slice(0, 1).map(play),
-      { key: "store", label: "Steam Store", sub: "New releases, deals and demos", tray: "slot-orange", icon: nxeIcons["store-small"], glyph: "store", run: () => setPage("store") },
-      { key: "community", label: "Community", sub: "Hubs, guides and workshop", tray: "slot-green", icon: nxeIcons["community-small"], glyph: "globe", run: () => setPage("community") },
+      { key: "store", label: t("destSteamStore"), sub: t("storeDescNew"), tray: "slot-orange", icon: nxeIcons["store-small"], glyph: "store", run: () => setPage("store") },
+      { key: "community", label: t("destCommunity"), sub: t("communityDesc"), tray: "slot-green", icon: nxeIcons["community-small"], glyph: "globe", run: () => setPage("community") },
     ] },
-    { id: "games", label: "Games", slots: [
+    { id: "games", label: t("tabGames"), slots: [
       ...games.slice(0, 10).map(play),
-      { key: "lib", label: "Game Library", sub: `${games.length} games`, tray: "slot-games", icon: nxeIcons.games, glyph: "library", run: () => setPage("library") },
-      { key: "ach", label: "Achievements", sub: "Your progress", tray: "slot-green", icon: nxeIcons["achievements-small"], glyph: "trophy", run: () => setPage("achievements") },
+      { key: "lib", label: t("destLibrary"), sub: `${games.length} games`, tray: "slot-games", icon: nxeIcons.games, glyph: "library", run: () => setPage("library") },
+      { key: "ach", label: t("destAchievements"), sub: t("achievementsProgress"), tray: "slot-green", icon: nxeIcons["achievements-small"], glyph: "trophy", run: () => setPage("achievements") },
     ] },
     { id: "market", label: "Game Marketplace", slots: [
-      { key: "store2", label: "Steam Store", sub: "Featured and specials", tray: "slot-orange", icon: nxeIcons["store-small"], glyph: "store", run: () => setPage("store") },
-      { key: "dl", label: "Active Downloads", sub: st.downloads ? `${st.downloads} downloading` : "Queue and updates", tray: "slot-green", glyph: "download", run: () => setPage("downloads") },
+      { key: "store2", label: t("destSteamStore"), sub: "Featured and specials", tray: "slot-orange", icon: nxeIcons["store-small"], glyph: "store", run: () => setPage("store") },
+      { key: "dl", label: "Active Downloads", sub: st.downloads ? `${st.downloads} downloading` : t("downloadsQueueUpdates"), tray: "slot-green", glyph: "download", run: () => setPage("downloads") },
     ] },
-    { id: "friends", label: "Friends", slots: [
-      { key: "friends", label: "Friends", sub: st.friendsOnline !== undefined ? `${st.friendsOnline} online` : "Friends and chat", tray: "slot-friends", icon:nxeIcons["friends-small"], run: () => setPage("friends") },
-      { key: "msg", label: "Messages", sub: st.notifications ? `${st.notifications} new` : "Notifications", tray: "slot-green", icon: nxeIcons["mail-small"], glyph: "bell", run: () => setPage("messages") },
+    { id: "friends", label: t("destFriends"), slots: [
+      { key: "friends", label: t("destFriends"), sub: st.friendsOnline !== undefined ? `${st.friendsOnline} online` : t("friendsAndChat"), tray: "slot-friends", icon:nxeIcons["friends-small"], run: () => setPage("friends") },
+      { key: "msg", label: "Messages", sub: st.notifications ? `${st.notifications} new` : t("destNotifications"), tray: "slot-green", icon: nxeIcons["mail-small"], glyph: "bell", run: () => setPage("messages") },
     ] },
     {id:'video',label:'Video Library',slots:[
       {key:'videos',label:'My Videos',icon:nxeIcons.video,sub:'Videos and screenshots on this device',glyph:'photo',run:()=>setPage("videos")},
@@ -98,18 +99,18 @@ export function NxeHome() {
       {key:'pictures',label:'My Pictures',icon:nxeIcons.pictures,sub:'Screenshots and pictures on this device',glyph:'photo',run:()=>setPage('pictures')},
       {key:'picture-settings',label:'Theme Background',icon:nxeIcons['cast-themes-small'],sub:'Choose a dashboard theme',glyph:'palette',run:()=>setPage('themes')},
     ]},
-    { id: "myxbox", label: "My Xbox", slots: [
-      { key: "me", label: api.user, sub: st.online ? "Online" : "Offline", tray: "slot-profile", icon: customProfilePicture() ?? pickedPic ?? nxeIcons.avatar, glyph: "user", run: () => setPage("friends") },
-      ...([{ key: "avatar", label: "My Avatar", sub: "Change your avatar's look and clothes", tray: "slot-profile", icon: nxeIcons.avatar, glyph: "user" as const, run: () => setAvatarOpen(true) }]),
-      { key: "lib2", label: "Game Library", sub: `${games.length} games`, tray: "slot-games", icon: nxeIcons.games, glyph: "library", run: () => setPage("library") },
+    { id: "myxbox", label: t("myXbox"), slots: [
+      { key: "me", label: api.user, sub: st.online ? t("statusOnline") : t("statusOffline"), tray: "slot-profile", icon: customProfilePicture() ?? pickedPic ?? nxeIcons.avatar, glyph: "user", run: () => setPage("friends") },
+      ...([{ key: "avatar", label: t("myAvatar"), sub: "Change your avatar's look and clothes", tray: "slot-profile", icon: nxeIcons.avatar, glyph: "user" as const, run: () => setAvatarOpen(true) }]),
+      { key: "lib2", label: t("destLibrary"), sub: `${games.length} games`, tray: "slot-games", icon: nxeIcons.games, glyph: "library", run: () => setPage("library") },
       { key: "pics", label: "Picture Library", sub: "Screenshots", tray: "slot-photos", icon: nxeIcons.pictures, glyph: "photo", run: () => setPage("pictures") },
       { key: "web", label: "Video Library", sub: "Local videos and Steam recordings", tray: "slot-videos", icon: nxeIcons.video, glyph: "photo", run: () => setPage("videos") },
-      { key: "settings", label: "System Settings", sub: "Steam settings", tray: "slot-tray", icon: nxeIcons.settings, glyph: "gear", run: () => setPage("settings") },
+      { key: "settings", label: t("systemSettings"), sub: t("steamSettingsDesc"), tray: "slot-tray", icon: nxeIcons.settings, glyph: "gear", run: () => setPage("settings") },
       { key: "home", label: "Home Screen", sub: "ThemeHub options", icon:nxeIcons["theme-hub"], tray: "slot-tray", glyph: "home", run:()=>setPage('home') },
-      { key: "presets", label: "Dashboards", sub: "Switch presets", tray: "slot-tray", icon: nxeIcons.dashboards, glyph: "palette", run: presets },
-      { key: "internet", label: "Internet", sub: "Web browser", glyph: "globe", run:()=>setPage("browser") },
-      { key: "steamhome", label: "Home", sub: "Steam's own home", tray: "slot-tray", icon: nxeIcons.home, glyph: "steam", run: api.showSteamHome },
-      { key: "power", label: "Turn Off", sub: "Power options", tray: "slot-tray", glyph: "power", run: () => setPage("power") },
+      { key: "presets", label: "Dashboards", sub: t("switchPresetsDesc"), tray: "slot-tray", icon: nxeIcons.dashboards, glyph: "palette", run: presets },
+      { key: "internet", label: "Internet", sub: t("destWebBrowser"), glyph: "globe", run:()=>setPage("browser") },
+      { key: "steamhome", label: t("destMainMenu"), sub: "Steam's own home", tray: "slot-tray", icon: nxeIcons.home, glyph: "steam", run: api.showSteamHome },
+      { key: "power", label: "Turn Off", sub: t("powerOptionsDesc"), tray: "slot-tray", glyph: "power", run: () => setPage("power") },
     ] },
   ];
   const [ch, setCh] = useRemembered("nxe-reference-ch", 7);
@@ -147,13 +148,13 @@ export function NxeHome() {
 
   const options = () => {
     const extra: MenuItem[] = [
-      { label: "Presets", sub: () => themeMenu(s.theme, api.switchTheme, THEMES) },
-      { label: "My Avatar", action: () => setAvatarOpen(true) },
-      { label: "Home Screen Settings", action: api.openSettings },
-      { label: "Home", action: api.showSteamHome },
+      { label: t("presets"), sub: () => themeMenu(s.theme, api.switchTheme, THEMES) },
+      { label: t("myAvatar"), action: () => setAvatarOpen(true) },
+      { label: t("homeScreenSettings"), action: api.openSettings },
+      { label: t("destMainMenu"), action: api.showSteamHome },
     ];
     const g = cur?.game;
-    menu.open(g ? [{ label: "Play", action: () => api.launch(g) }, { label: "Game Details", action: () => openGamePreview(g) }, { label: "Watch Trailer", action: () => api.playTrailer(g) }, { label: "Game Options", action: () => api.nativeMenu(g) }, ...extra] : extra, g?.name);
+    menu.open(g ? [{ label: t("play"), action: () => api.launch(g) }, { label: t("gameDetails"), action: () => openGamePreview(g) }, { label: t("watchTrailer"), action: () => api.playTrailer(g) }, { label: t("gameOptions"), action: () => api.nativeMenu(g) }, ...extra] : extra, g?.name);
   };
   const onInput = (p: Press): boolean => {
     if (menu.handle(p)) return true;
@@ -242,7 +243,7 @@ export function NxeHome() {
   const legend=(button:'a'|'b'|'x'|'y',text:string)=><NxeButtonHint button={button} label={text} size={32}/>;
 
   return (
-    <ThemeRoot onInput={onInput} hints={{ a: profileActive?"Select action":"Select", b:profileActive?"Back":undefined, y: "Options" }}>
+    <ThemeRoot onInput={onInput} hints={{ a: profileActive?"Select action":t("select"), b:profileActive?"Back":undefined, y: t("options") }}>
       <div data-nxe-surface style={{position:'absolute',inset:0}}><style>{`[data-nxe-surface],[data-nxe-surface] *{scrollbar-width:none!important}[data-nxe-profile-row],[data-nxe-page] [role=option],[data-nxe-media] [role=option]{opacity:.7;transition:opacity ${nxeFocusDuration}ms linear}[data-nxe-profile-row][data-selected=true],[data-nxe-page] [aria-selected=true],[data-nxe-media] [aria-selected=true]{opacity:1}[data-nxe-surface]::-webkit-scrollbar,[data-nxe-surface] *::-webkit-scrollbar{display:none!important;width:0!important;height:0!important}`}</style>
       <Stage background="#9fb98c">
         {wall || look.bg || consoleArt.background ? <BackgroundMedia src={wall ?? look.bgFor(X360_SECTION[chan.id] ?? "home") ?? look.bg ?? consoleArt.background ?? ""} className="dht-x360n-bg" data-dht-from-skin={!wall && look.bg ? "x360" : undefined} style={{ position: "absolute", inset: 0, width: W, height: H, objectFit: "cover" }} /> : <div className="dht-x360n-bg" style={{ position: "absolute", inset: 0, background: "radial-gradient(ellipse at 24% 0%,#67a60099,transparent 55%),radial-gradient(ellipse at 95% 48%,#e6ed9d88,transparent 40%),linear-gradient(180deg,#364b2e 0%,#789a64 27%,#cfddda 47%,#ecf5f1 57%,#9da7a8 100%)" }} />}
@@ -289,8 +290,8 @@ export function NxeHome() {
 
           {/* button legend */}
           <div style={{ position: "absolute", left: SAFE_X, top: 670, height: 32, display: "flex", gap: 34, alignItems: "center", fontSize: 18, color: "#ebebeb", textShadow: "0 1px 1px rgba(15,15,15,.5)" }}>
-            {legend("a","Select")}
-            {profileActive?legend("b","Back"):legend("y","Options")}
+            {legend("a",t("select"))}
+            {profileActive?legend("b","Back"):legend("y",t("options"))}
           </div>
 
           <NxeWordmark/>

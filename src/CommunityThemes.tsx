@@ -1,3 +1,4 @@
+import { t } from "./i18n";
 import { callable } from "@decky/api";
 import { Navigation } from "@decky/ui";
 import { MutableRefObject, useEffect, useRef, useState } from "react";
@@ -100,28 +101,28 @@ export function CommunityThemes({ inputRef }: { inputRef: MutableRefObject<Input
     };
     return () => { inputRef.current = null; };
   }, [busy]);
-  return <section ref={root} className="dht-community" aria-label="Community themes" aria-busy={busy}>
+  return <section ref={root} className="dht-community" aria-label={t("communityThemes")} aria-busy={busy}>
     <style>{CSS}</style>
-    <div className="community-intro"><h2>Community repositories</h2><p>Install themes and assets hosted by their creators on GitHub. Frame themes run in a sandbox. Native React layouts are marked UI overhaul.</p></div>
-    <div className="community-actions"><button disabled={busy} onClick={() => void run(async () => { await checkCommunityUpdates(true); await reload(); setMessage("Community update check complete."); })}>Check all theme updates</button><span role="status">{updates.updateCount ? `${updates.updateCount} theme update${updates.updateCount === 1 ? "" : "s"} available` : "No known theme updates"} · Checks every 6 hours</span></div>
+    <div className="community-intro"><h2>{t("communityReposTitle")}</h2><p>{t("communityReposDesc")}</p></div>
+    <div className="community-actions"><button disabled={busy} onClick={() => void run(async () => { await checkCommunityUpdates(true); await reload(); setMessage("Community update check complete."); })}>{t("checkAllThemeUpdates")}</button><span role="status">{updates.updateCount ? `${updates.updateCount} theme update${updates.updateCount === 1 ? "" : "s"} available` : "No known theme updates"} · Checks every 6 hours</span></div>
     <form onSubmit={e => { e.preventDefault(); void manageSource(repo, "add"); }}>
-      <label htmlFor="community-repo">GitHub repository</label>
-      <div className="community-add"><input ref={box} id="community-repo" value={repo} onChange={e => setRepo(e.target.value)} placeholder="owner/repository or https://github.com/owner/repository" disabled={busy} {...opensKeyboardOnTap}/><button disabled={busy || !repo.trim()} type="submit">Add repository</button></div>
-      <small>A repository without themehub-catalog.json is treated as one theme.</small>
+      <label htmlFor="community-repo">{t("githubRepository")}</label>
+      <div className="community-add"><input ref={box} id="community-repo" value={repo} onChange={e => setRepo(e.target.value)} placeholder="owner/repository or https://github.com/owner/repository" disabled={busy} {...opensKeyboardOnTap}/><button disabled={busy || !repo.trim()} type="submit">{t("addRepository")}</button></div>
+      <small>{t("repoCatalogNote")}</small>
     </form>
     {(message || progress) && <p role="status" className="community-message">{progress || message}</p>}
-    {!sources.length && <p>Add a creator’s repository to browse their themes. Compiled theme ZIPs and ready-to-run theme repositories are supported.</p>}
+    {!sources.length && <p>{t("noSourcesDesc")}</p>}
     {sources.map(source => <article key={source.repo} className="community-source">
       <header><div><h3>{source.repo}</h3><small>{source.featured ? "Featured repository · " : ""}{source.mode === "catalog" ? "Theme catalog" : "Single theme repository"}{source.checkedAt ? ` · Checked ${new Date(source.checkedAt * 1000).toLocaleString()}` : ""}</small></div><div className="community-actions">
-        <button disabled={busy} onClick={() => Navigation.NavigateToSteamWeb(`https://github.com/${source.repo}`)}>View repository</button>
-        <button disabled={busy} onClick={() => void manageSource(source.repo, "refresh")}>Check updates</button>
-        {!source.featured && <button disabled={busy || source.themes.some(t => !!t.installedVersion)} title="Uninstall its themes first" onClick={() => void manageSource(source.repo, "remove")}>Remove repository</button>}
+        <button disabled={busy} onClick={() => Navigation.NavigateToSteamWeb(`https://github.com/${source.repo}`)}>{t("viewRepository")}</button>
+        <button disabled={busy} onClick={() => void manageSource(source.repo, "refresh")}>{t("checkUpdates")}</button>
+        {!source.featured && <button disabled={busy || source.themes.some(t => !!t.installedVersion)} title={t("uninstallThemesFirst")} onClick={() => void manageSource(source.repo, "remove")}>{t("removeRepository")}</button>}
       </div></header>
       {source.error && <p role="status">{source.error}</p>}
-      {source.themes.map(theme => <div key={theme.id} className="community-theme"><div>{theme.preview && <img src={theme.preview} alt={`${theme.name} preview`} loading="lazy" referrerPolicy="no-referrer" style={{ width: "100%", maxWidth: 260, maxHeight: 150, objectFit: "contain", borderRadius: 6 }}/>}<h4>{theme.name} {theme.uiOverhaul && <span className="community-overhaul-badge">UI overhaul</span>}</h4><small>By {theme.author} · {theme.version}{theme.size ? ` · ${(theme.size / 1048576).toFixed(1)} MB` : ""}{theme.installedVersion ? ` · Installed ${theme.installedVersion}` : ""}</small><p>{theme.description}</p>{theme.updateAvailable && theme.installedVersion === theme.version && <p>Assets/package update available</p>}{!theme.compatible && <p>Requires a newer ThemeHub version.</p>}</div><div className="community-actions">
-        {(!theme.installedVersion || theme.updateAvailable) && <button disabled={busy || !theme.compatible} onClick={() => void manageTheme(source, theme, "install")}>{theme.installedVersion ? "Update" : "Install"}</button>}
-        {theme.installedVersion && <><button disabled={busy} onClick={() => activate(theme)}>Use theme</button><button disabled={busy} onClick={() => void manageTheme(source, theme, "remove")}>Uninstall</button></>}
-        {theme.canRollback && <button disabled={busy} onClick={() => void manageTheme(source, theme, "rollback")}>Restore previous version</button>}
+      {source.themes.map(theme => <div key={theme.id} className="community-theme"><div>{theme.preview && <img src={theme.preview} alt={`${theme.name} preview`} loading="lazy" referrerPolicy="no-referrer" style={{ width: "100%", maxWidth: 260, maxHeight: 150, objectFit: "contain", borderRadius: 6 }}/>}<h4>{theme.name} {theme.uiOverhaul && <span className="community-overhaul-badge">UI overhaul</span>}</h4><small>By {theme.author} · {theme.version}{theme.size ? ` · ${(theme.size / 1048576).toFixed(1)} MB` : ""}{theme.installedVersion ? ` · Installed ${theme.installedVersion}` : ""}</small><p>{theme.description}</p>{theme.updateAvailable && theme.installedVersion === theme.version && <p>{t("assetsPackageUpdateAvailable")}</p>}{!theme.compatible && <p>{t("requiresNewerThemeHub")}</p>}</div><div className="community-actions">
+        {(!theme.installedVersion || theme.updateAvailable) && <button disabled={busy || !theme.compatible} onClick={() => void manageTheme(source, theme, "install")}>{theme.installedVersion ? t("update") : t("install")}</button>}
+        {theme.installedVersion && <><button disabled={busy} onClick={() => activate(theme)}>{t("useTheme")}</button><button disabled={busy} onClick={() => void manageTheme(source, theme, "remove")}>{t("uninstall")}</button></>}
+        {theme.canRollback && <button disabled={busy} onClick={() => void manageTheme(source, theme, "rollback")}>{t("restorePreviousVersion")}</button>}
       </div></div>)}
     </article>)}
   </section>;

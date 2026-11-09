@@ -1,30 +1,30 @@
 # Simplified settings structure
 
-Agreed design, 2026-10-25. Applies to the local `experimental` branch. This document supersedes the navigation proposal in [the settings audit](SETTINGS-STRUCTURE-AUDIT.md); that audit remains the source inventory and findings. This is an implementation specification, not an implemented change.
+Agreed design, 2026-10-25. Implemented on `experimental-localization-pr` using the existing settings storage and localized menu labels. The navigation proposal was developed from the local experimental branch audit. Runtime checks cover all registered layouts; Steam Deck hardware validation remains outstanding.
 
 ## 1. Root menu
 
-The settings root has exactly four entries, in this order:
+The settings root has exactly three entries, in this order:
 
-1. **Presets**
+1. **Theme**
 2. **Customize**
 3. **Global settings**
-4. **Manage theme**
 
 Each entry answers a different question:
 
 | Entry | Purpose |
 | --- | --- |
-| Presets | Choose or save a complete setup. |
+| Theme | Choose or save a complete setup, import files, rescan, and manage the theme. |
 | Customize | Change the current theme's screen, games, or audio. |
 | Global settings | Change defaults and behavior shared across themes. |
-| Manage theme | Import resources, repair, reset, or remove a theme. |
 
 Do not add Appearance, Look options, Advanced, Standard options, System, or Media as parallel root categories. Do not use Plugin settings as an alternative label for Global settings.
 
 Steam Home, the music player, captures, and the Hub remain navigation destinations outside the settings hierarchy. Existing theme navigation can retain shortcuts to them. A game context menu keeps its game actions and one **Theme settings** entry that opens this root.
 
-## 2. Presets
+## 2. Theme
+
+Keep reset/delete actions in a nested **Reset or delete** group, including saved-preset deletion.
 
 Show the current preset and available presets, followed by Save as new preset, Rename, and the applicable reset/delete action for the selected preset. Other looks can be a secondary browser when the list is large.
 
@@ -71,7 +71,7 @@ Combine game selection, browsing, and game artwork:
 
 Distinguish interface icons from game artwork: interface icon replacements go in Screen; game-cover or game-icon presentation goes in Games.
 
-Arrangement reset belongs beside the arrangement editor. It must explain whether it resets folders, positions, or badges. It is not equivalent to Manage theme → Reset theme settings.
+Arrangement reset belongs beside the arrangement editor. It must explain whether it resets folders, positions, or badges. It is not equivalent to Theme → Reset or delete → Reset theme settings.
 
 ### Audio
 
@@ -105,7 +105,7 @@ Some current theme-native controls write global fields, including profile pictur
 
 Page appearance assignments currently use shared `settings.pages`. Screen can link to that editor, but it must say **All themes** until a separate scope change is implemented. Apply the same rule to any other shared field exposed through a native screen.
 
-## 5. Manage theme
+## 5. Theme
 
 Use the active theme's name in the page title. Show only relevant actions:
 
@@ -123,7 +123,7 @@ Preserve separate operations and confirmation text for preset reset, layout rese
 
 ## 6. Per-theme placement
 
-All themes use the same root. The table describes their specific content inside Customize; applicable common controls are added according to actual renderer support. Imported-file selection and file-part controls go in Manage theme unless stated otherwise.
+All themes use the same root. The table describes their specific content inside Customize; applicable common controls are added according to actual renderer support. Imported-file selection and file-part controls go in Theme unless stated otherwise.
 
 | Theme | Screen | Games | Audio / other placement |
 | --- | --- | --- | --- |
@@ -134,11 +134,11 @@ All themes use the same root. The table describes their specific content inside 
 | Old Big Picture | Background and supported icons/font. | Supported library presentation. | Shared supported audio. |
 | Onyx Wheel | Screen glass, cover glass, supported interface icons. | Carousel style and game artwork. | Shared audio. |
 | Silver Wheel | Surface beneath covers and supported interface icons. | Game artwork and browsing. | Shared audio. |
-| Wii | Background, channel highlight, System Menu bar, Message Board button, clock colon; burn-in reduction beside screensaver. | Channels/page, preview, pointer and browsing. | Shared audio. Extra shortcut setting is global. Manage Wii file and parts in Manage theme. |
+| Wii | Background, channel highlight, System Menu bar, Message Board button, clock colon; burn-in reduction beside screensaver. | Channels/page, preview, pointer and browsing. | Shared audio. Extra shortcut setting is global. Manage Wii file and parts in Theme. |
 | Wii U | Background/accent; startup logo/view; user/Mii, logo, dock; native notification/detail presentation. | Software grid; title bubbles; Plaza posts/frequency/screenshots/crowd/artwork/icon edges. | Shared audio. Native details/notifications remain separate from global popup settings. Manage imported Wii U file/parts. |
 | Switch | Background/accent; firmware layout and colours; native clock format. | Supported tile and library controls. | Shared audio. Manage imports, menu resources/fonts, theme set/parts and conversion in one place. |
-| Nintendo 3DS | Top-screen mode, background and scrolling, cursor appearance/accent, arrows and scrollbar. | Grid rows, collection folders, positions/folders/badges and arrangement reset. | Shared audio. Manage theme file/parts. |
-| PS Vita Default and Sakura | Background/hero fit, colour look via Presets, lock screen. | One Bubbles editor: system bubbles, collections, art source/style/edges/fit/scale, focus, 3D/sway, gyro/touch, arrangement. | Shared audio; required decoder in Manage theme. Preserve look/preset scope. |
+| Nintendo 3DS | Top-screen mode, background and scrolling, cursor appearance/accent, arrows and scrollbar. | Grid rows, collection folders, positions/folders/badges and arrangement reset. | Shared audio. Theme file/parts. |
+| PS Vita Default and Sakura | Background/hero fit, colour look via Presets, lock screen. | One Bubbles editor: system bubbles, collections, art source/style/edges/fit/scale, focus, 3D/sway, gyro/touch, arrangement. | Shared audio; required decoder in Theme. Preserve look/preset scope. |
 | PS1 | BIOS colour/light, scanlines, start screen/page, language and clock. | Memory-card count, save icons, animation and colours. | CD Player colour/disc editor remains accessible with its native player; shared audio controls alongside its shortcut. |
 | PS2 | Main backdrop, tower count/motion, fog, browser colour, scanlines, language and clock. | Save icon motion, box-art shape and icons/row. | Native sound shortcut opens canonical audio controls. |
 | PS3 | XMB monthly colour, backdrop/game art, hero fit and readability brightness. | Collection folders, titles, browsing and animated trailer icons. | Trailer sound/video availability and shared audio. Imported icons/pictures/colour/font/sounds/dynamic scene/glow/slideshow effects stay in the selected-file editor with contextual shortcuts. |
@@ -146,7 +146,7 @@ All themes use the same root. The table describes their specific content inside 
 | PS4 | One background editor containing source, game backgrounds and hero scaling. | Tiles, titles, cover style and supported library controls. | Shared audio. Do not assume newer beta-branch import features exist here. |
 | PS5 | Game-hub background, wallpaper colour, transition/fit, startup Games/Media tab, top-right status. | Tile size/name, activity cards, playtime. | Shared audio. |
 | Xbox | Dashboard version, palette, glow, wall/background, language and clock. | Disc item, rows and game browsing. | Native audio screen links to canonical sound/music/volume with scope visible. Manage skin file/parts. TV mode remains global. |
-| Xbox 360: Blades, NXE, Kinect, Metro | Supported background/icons/font/accent; guide side. | Era-supported library presentation. | Shared audio. Dashboard era belongs in Presets; STFS theme/effects and gamer pictures in Manage theme. Gamer pictures remain distinct from global profile upload. |
+| Xbox 360: Blades, NXE, Kinect, Metro | Supported background/icons/font/accent; guide side. | Era-supported library presentation. | Shared audio. Dashboard era belongs in Presets; STFS theme/effects and gamer pictures in Theme. Gamer pictures remain distinct from global profile upload. |
 | Aero and Aero v.2 | Window colour/intensity/transparency/scheme, window animation/selection, taskbar/orb/icons/battery/gadgets and background. | Shared supported library presentation. | Shared audio. Preserve separate theme values. |
 | Alien Dial | Dial skin/activation, floating cover, hologram light, reflections and background. | Carousel and game presentation. | Dial reference/pack/off sound mode beside shared navigation sound controls. |
 | Floating Castle | Background/video toggle; status/weather; replace/layered windows. | Supported library controls. | Shared audio. |
@@ -165,7 +165,7 @@ Large native editors can keep their existing presentation. Their shortcut locati
 
 ## 7. Navigation and wording rules
 
-- Keep the four root labels and three Customize labels identical across themes.
+- Keep the three root labels and three Customize labels identical across themes.
 - Use direct labels for controls. Avoid synonyms such as Look, Appearance, Visuals, and Display as competing groups.
 - Only add a submenu when it holds a meaningful set of related controls or a dedicated editor. A single toggle stays inline.
 - Show only supported controls, with dependencies respected: gyro with 3D bubbles, iiSU density for its active mode, keyboard spacing when enabled, selected-file effects when a file exists.
@@ -182,7 +182,7 @@ Create a shared definition for setting identity, category, support/dependencies,
 Implementation should be accepted only after checking:
 
 1. Every existing setting/action from the audit has a destination or a retained native editor.
-2. The root contains only the agreed four entries; Customize contains only Screen, Games and Audio where applicable.
+2. The root contains only the agreed three entries; Customize contains only Screen, Games and Audio where applicable.
 3. No duplicate Background, Bubbles, Theme file, individual-icon or reaction-toggle editor is generated.
 4. Global writes and inherited overrides are labeled correctly; both native and host routes read/write the same value.
 5. Switching themes, presets, Vita looks, Xbox eras and imported files retains existing behavior and saved values.
@@ -190,3 +190,13 @@ Implementation should be accepted only after checking:
 7. Controller navigation, long labels, focus/back restoration and Deck-sized layouts work in runtime testing.
 
 The supporting audit is a source review. Runtime support and ergonomics must be checked during implementation; this document does not claim those checks have already passed.
+
+## WiiFlow grouping (2026-11-10)
+
+- **Theme:** presets and imported files, rescan, then a nested Reset or delete group.
+- **Customize → Screen → Background:** fit, interface extension, coverflow width, repeated cover pattern, and shared background controls. Fill-only controls appear only with Fill. One interface selector replaces the overlapping mapping/on-off controls while reading and writing their existing fields.
+- **Customize → Screen → Case appearance:** case border, detailed plastic edges, spine/opening side, and generated spine artwork. The side switch is shown only with detailed edges. Final retains dark, gray, frameless and thin paper borders; the localization branch retains the modes implemented by its own renderer.
+- **Customize → Games:** collection selection, navigation arrows, selected-game title and applicable game controls.
+- **Customize → Audio:** sound/music sources and shared volume controls.
+
+Hiding a dependent option never clears its stored value. These editors continue to use the active imported theme's frameData entry.

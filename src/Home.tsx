@@ -1,3 +1,4 @@
+import {t} from "./i18n";
 import {startupIntroEnabled} from "./startupPreferences";
 import {WiiFlowDownloadsWatcher} from "./wiiflowDownloads";
 import {ThemeLoadingScreen} from "./ThemeLoadingScreen";
@@ -34,7 +35,7 @@ import { BootIntro } from "./bootIntro";
 import { Onboarding } from "./Onboarding";
 import { ThemeIntro } from "./themeIntro";
 import {useThemeResourcesReady} from "./themeResources";
-import { essentialItems, globalSettingsItems, refreshThemeLists, setThemeSettingsOpener, themeSettingsItems } from "./themeSettingsMenu";
+import { refreshThemeLists, setThemeSettingsOpener, themeSettingsItems } from "./themeSettingsMenu";
 import { cachedPspSkin, loadPspSkin } from "./skins";
 // The themed home: builds the shared API every theme uses, picks the theme
 // and hosts it in a full-screen layer. Also the switch that decides between
@@ -251,10 +252,10 @@ function VerifiedThemedHome({ standalone }: { standalone?: boolean }) {
       return false;
     }}>
     <div style={{textAlign:"center",maxWidth:520,padding:32}}>
-      <h2>{state === "checking" ? "Checking theme files…" : state === "error" ? "Couldn’t check theme files" : "Download this theme to continue"}</h2>
-      {state === "missing" && <p>The theme’s artwork and resources haven’t been installed yet.</p>}
-      {state !== "checking" && <button onClick={() => state === "missing" ? openMarketplace(settings.theme, {from:settings.theme}) : setRetry(n=>n+1)}>{state === "missing" ? "Open theme downloads" : "Try again"}</button>}
-      <button onClick={showNativeSteamHome}>Steam Home</button>
+      <h2>{state === "checking" ? t("checkingThemeFiles") : state === "error" ? t("couldNotCheckThemeFiles") : t("downloadThemeToContinue")}</h2>
+      {state === "missing" && <p>{t("themeResourcesNotInstalled")}</p>}
+      {state !== "checking" && <button onClick={() => state === "missing" ? openMarketplace(settings.theme, {from:settings.theme}) : setRetry(n=>n+1)}>{state === "missing" ? t("openThemeDownloads") : t("tryAgain")}</button>}
+      <button onClick={showNativeSteamHome}>{t("steamHome")}</button>
     </div>
     {market.opened && <Marketplace requested={market.requested} from={market.from} />}
     </ThemeRoot>
@@ -338,7 +339,7 @@ function ThemedHomeContent({ standalone }: { standalone?: boolean }) {
   const openThemeSettings = () => {
     const name = engineTheme?.name ?? THEMES.find((t) => t.id === s.theme)?.name ?? s.theme;
     // the same as the options menu (△ / Y): this theme's options, then everything shared by all themes
-    themeMenu.open([...essentialItems([], () => api.showSteamHome()), ...themeSettingsItems(), { label: "Global settings", sub: globalSettingsItems }], `${name} options`, { page: true });
+    themeMenu.open(themeSettingsItems(), `${name} options`, { page: true });
   };
   useEffect(() => { setThemeSettingsOpener(openThemeSettings); return () => setThemeSettingsOpener(null); });
   useEffect(()=>{setDestinationOpener(d=>transitionPage(s,()=>{if(d.place==="media"&&s.theme!=="reading"){setOverlay({kind:"shots"});setDestination(null);}else if(d.place==="music"&&s.theme!=="reading"){setOverlay({kind:"music"});setDestination(null);}else{setOverlay(null);setDestination(d);}},doc));return()=>{setDestinationOpener(null);};},[s.theme,s.animations,doc]);

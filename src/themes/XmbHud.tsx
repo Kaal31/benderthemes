@@ -1,3 +1,4 @@
+import { t } from "../i18n";
 // PSP / PS3 XMB extras: the PSP's info bar that slides down from the top, its busy icon, progress
 // bars drawn with the theme's own pictures, and the music player screen. Positions come from the
 // firmware layout (480 × 272 screen, centre origin, y up), scaled to the Deck's screen.
@@ -160,7 +161,7 @@ export function XmbMusicScreen({ W, H, art, k = 1, accentText }: { W: number; H:
     });
   }, [open]);
   if (!open || !p.album) return null;
-  const t = p.album.tracks[p.index];
+  const track = p.album.tracks[p.index];
   const cover = p.album.cover || art?.musicTrack || art?.musicAlbum;
   const font = (n: number) => n * 1.15 * u;
   const text: CSSProperties = { fontFamily: "var(--dht-xmb-font, inherit)", color: "var(--dht-xmb-text, #fff)", textShadow: "var(--dht-xmb-text-shadow, 0 1px 3px rgba(0,0,0,0.6))", whiteSpace: "nowrap", overflow: "hidden", textOverflow: "ellipsis" };
@@ -181,29 +182,29 @@ export function XmbMusicScreen({ W, H, art, k = 1, accentText }: { W: number; H:
       </div>
       {/* track, album, artist */}
       <div style={{ position: "absolute", left: colX, top: H / 2 - 56 * u, width: colW, display: "flex", flexDirection: "column", gap: 5 * u }}>
-        <div style={{ ...text, fontSize: font(10.5) }}>{t?.title ?? ""}</div>
+        <div style={{ ...text, fontSize: font(10.5) }}>{track?.title ?? ""}</div>
         <div style={{ ...text, fontSize: font(7.5), opacity: 0.85 }}>{p.album.name}</div>
         {p.album.artist && <div style={{ ...text, fontSize: font(7.5), opacity: 0.85 }}>{p.album.artist}</div>}
         <div style={{ ...text, fontSize: font(6.5), opacity: 0.65 }}>
           {p.error || <>{p.index + 1} / {p.album.tracks.length}
-          {t?.disc ? ` · ${t.disc}` : ""}</>}
+          {track?.disc ? ` · ${track.disc}` : ""}</>}
         </div>
       </div>
       {/* status and time */}
       <div style={{ position: "absolute", left: colX, top: H / 2 + 26 * u, width: colW, color: "var(--dht-xmb-text, #fff)" }}>
         <div className="dht-xmb-music-controls" style={{ display: "flex", alignItems: "center", gap: 2 * u, marginBottom: 7 * u }}>
-          <button type="button" aria-label="Previous" onClick={() => musicPlayer.prev()}>⏮</button>
-          <button type="button" aria-label="Rewind 10 seconds" onClick={() => musicPlayer.seek(-10)}>⏪</button>
-          <button type="button" aria-label={p.playing ? "Pause" : "Play"} onClick={() => musicPlayer.toggle()}><Glyph d={p.playing ? G.pause : G.play} size={12 * u} /></button>
-          <button type="button" aria-label="Forward 10 seconds" onClick={() => musicPlayer.seek(10)}>⏩</button>
-          <button type="button" aria-label="Next" onClick={() => musicPlayer.next()}>⏭</button>
-          <button type="button" aria-label="Shuffle" aria-pressed={p.shuffle} onClick={() => musicPlayer.setShuffle(!p.shuffle)}><Glyph d={G.shuffle} size={10 * u} on={p.shuffle} /></button>
-          <button type="button" aria-label={`Repeat ${p.repeat}`} aria-pressed={p.repeat !== "off"} onClick={() => musicPlayer.cycleRepeat()}>
+          <button type="button" aria-label={t("previous")} onClick={() => musicPlayer.prev()}>⏮</button>
+          <button type="button" aria-label={t("rewind10s")} onClick={() => musicPlayer.seek(-10)}>⏪</button>
+          <button type="button" aria-label={p.playing ? t("pause") : t("play")} onClick={() => musicPlayer.toggle()}><Glyph d={p.playing ? G.pause : G.play} size={12 * u} /></button>
+          <button type="button" aria-label={t("forward10s")} onClick={() => musicPlayer.seek(10)}>⏩</button>
+          <button type="button" aria-label={t("next")} onClick={() => musicPlayer.next()}>⏭</button>
+          <button type="button" aria-label={t("shuffle")} aria-pressed={p.shuffle} onClick={() => musicPlayer.setShuffle(!p.shuffle)}><Glyph d={G.shuffle} size={10 * u} on={p.shuffle} /></button>
+          <button type="button" aria-label={`${t("repeat")} ${p.repeat}`} aria-pressed={p.repeat !== "off"} onClick={() => musicPlayer.cycleRepeat()}>
             <Glyph d={G.repeat} size={10 * u} on={p.repeat !== "off"} />
             {p.repeat === "one" && <span style={{ ...text, fontSize: font(5) }}>1</span>}
           </button>
-          <button type="button" aria-label="Stop" onClick={() => musicPlayer.stop()}>■</button>
-          {p.crossfade > 0 && <span style={{ ...text, fontSize: font(5.6), opacity: p.fading ? 1 : 0.7 }} title="Crossfade">⇌ {p.crossfade}s</span>}
+          <button type="button" aria-label={t("stop")} onClick={() => musicPlayer.stop()}>■</button>
+          {p.crossfade > 0 && <span style={{ ...text, fontSize: font(5.6), opacity: p.fading ? 1 : 0.7 }} title={t("crossfade")}>⇌ {p.crossfade}s</span>}
         </div>
         <XmbBar value={p.duration ? p.time / p.duration : 0} w={colW} h={6 * u} base={art?.progressBase} fill={art?.progressBar} />
         <div style={{ display: "flex", justifyContent: "space-between", marginTop: 4 * u, ...text, fontSize: font(6.5) }}>
@@ -213,13 +214,13 @@ export function XmbMusicScreen({ W, H, art, k = 1, accentText }: { W: number; H:
       </div>
       {/* button guide, like the firmware's operation guide at the bottom */}
       <div style={{ ...text, position: "absolute", left: 0, right: 0, bottom: 8 * u, display: "flex", justifyContent: "center", gap: 14 * u, fontSize: font(5.6), opacity: 0.85 }}>
-        <span>Ⓐ {p.playing ? "Pause" : "Play"}</span>
-        <span>◀ ▶ Track</span>
-        <span>L / R Rewind · Forward</span>
-        <span>Ⓧ Shuffle</span>
-        <span>Ⓨ Repeat</span>
-        <span>Ⓑ Back</span>
-        <span>☰ Stop</span>
+        <span>Ⓐ {p.playing ? t("pause") : t("play")}</span>
+        <span>◀ ▶ {t("track")}</span>
+        <span>L / R {t("rewindForward")}</span>
+        <span>Ⓧ {t("shuffle")}</span>
+        <span>Ⓨ {t("repeat")}</span>
+        <span>Ⓑ {t("back")}</span>
+        <span>☰ {t("stop")}</span>
       </div>
     </div>
   );

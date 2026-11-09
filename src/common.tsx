@@ -1,3 +1,4 @@
+import {t} from "./i18n";
 // Shared building blocks for the themes: images with fallbacks, a small
 // original icon set, an in-theme options menu, and the shared home context.
 import { DownloadBar } from "./downloadUi";
@@ -10,7 +11,7 @@ import type { LocalVideo } from "./media";
 import { playSound } from "./steam";
 import { CaseArt, CASE_THEMES } from "./CaseArt";
 import { getSettings, updateSettings, Settings, ThemeId } from "./settings";
-import { essentialItems, globalSettingsItems, presetItems, themeSettingsItems } from "./themeSettingsMenu";
+import { presetItems, themeSettingsItems } from "./themeSettingsMenu";
 import { style as themeStyle } from "./engine/themeStyles";
 import { iconUrl } from "./engine/registry";
 
@@ -304,6 +305,8 @@ export function BatteryGlyph({ level, charging, color = "#fff", w = 30 }: { leve
 
 // ───────────── in-theme options menu ─────────────
 export interface MenuItem {
+  settingsId?: string;
+  settingsCategory?: import("./settingsCategories").SettingsCategory;
   label: string;
   action?: () => void; // runs and closes the menu
   sub?: () => MenuItem[]; // opens a nested menu
@@ -340,20 +343,14 @@ export function collectionMenu(theme: ThemeId): MenuItem {
     } };
 }
 
-// entries every theme's menu has that are not the theme's own: they move behind "Global settings"
+// Legacy navigation aliases are retained for native theme context menus.
 const GLOBAL_ENTRY = /^(presets|home|steam home|hub|background music · all themes|reset theme settings|delete theme)$/i;
-// entries that only reopened these same settings
 const SETTINGS_ENTRY = /^(home screen settings|home settings|theme options|theme settings)$/i;
-const baseLabel = (l: string) => l.split(":")[0].trim().toLowerCase();
-/** The options menu (△ / Y), the same on every theme: the theme's own entries (game actions, its
- *  unique settings), then Presets / Steam Home / Reset / Delete, then its options, then "Global settings"
- *  with everything shared by all themes. */
+/** Context menus retain game actions and open the shared settings root once. */
 export function optionsMenu(items: MenuItem[]): MenuItem[] {
-  const own = items.filter((i) => !GLOBAL_ENTRY.test(i.label) && !SETTINGS_ENTRY.test(i.label));
-  const moved = items.filter((i) => GLOBAL_ENTRY.test(i.label)).map((i) => (/^home$/i.test(i.label) ? { ...i, label: "Steam Home" } : i));
-  const seen = new Set(own.map((i) => baseLabel(i.label)));
-  const themeOwn = themeSettingsItems().filter((i) => !seen.has(baseLabel(i.label)));
-  return [...own, ...essentialItems(moved), ...themeOwn, { label: "Global settings", sub: globalSettingsItems }];
+  const navigation = new Set(["presets", "steamHome", "destMainMenu", "qamHub", "homeScreenSettings", "themeSettings"].map(key => t(key)));
+  const own = items.filter(item => !item.settingsId && !GLOBAL_ENTRY.test(item.label) && !SETTINGS_ENTRY.test(item.label) && !navigation.has(item.label));
+  return [...own, {label:t("themeSettings"), sub:themeSettingsItems}];
 }
 
 /** State machine for the theme's own options menu (△ / Y). Each theme draws it in its own style. */

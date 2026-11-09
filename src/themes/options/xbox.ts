@@ -7,6 +7,6 @@ export const OPTIONS: StyleOption[] = [
   { key: "glow", label: "Orb glow", group: "Look", choices: [{ id: "soft", name: "Soft" }, { id: "normal", name: "Normal" }, { id: "bright", name: "Bright" }], def: "normal" },
   { key: "wall", label: "Background", group: "Look", choices: [{ id: "cells", name: "Cell wall" }, { id: "plain", name: "Plain" }], def: "cells" },
   { key: "disc", label: "Disc item", group: "Menu", choices: [{ id: "off", name: "Off" }, { id: "last", name: "Last game" }], def: "off" },
-  { key: "lang", label: "Language", group: "Menu", choices: [{ id: "en", name: "English" }, { id: "de", name: "Deutsch" }, { id: "fr", name: "Français" }, { id: "es", name: "Español" }, { id: "it", name: "Italiano" }], def: "en" },
+  { key: "lang", label: "Language", group: "Menu", choices: [{ id: "en", name: "English" }, { id: "ptBr", name: "Português" }, { id: "de", name: "Deutsch" }, { id: "fr", name: "Français" }, { id: "es", name: "Español" }, { id: "it", name: "Italiano" }], def: "en" },
   { key: "rows", label: "List rows", group: "Menu", choices: [{ id: 5, name: "5" }, { id: 8, name: "8" }], def: 5 },
 ];

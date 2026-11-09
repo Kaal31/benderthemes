@@ -1,3 +1,4 @@
+import { t } from "../i18n";
 // PS2 main menu: towers of light in a dark space, the Browser /
 // System Configuration menu, memory-card devices, and a grid of slowly
 // turning save-data style icons for the games.
@@ -261,11 +262,11 @@ export function Ps2Home() {
 
   const devices = useMemo(
     () => [
-      { label: "Memory Card (PS2) /1", sub: "Your games", color: "#2a2f3a", games: api.lib.games, kind: "card" as const },
-      { label: "Memory Card (PS2) /2", sub: "All games", color: "#5a6170", games: api.lib.all.slice(0, s.maxGames), kind: "card" as const },
-      { label: "Steam Library", sub: "Open the library", color: "", games: [] as Game[], kind: "disc" as const },
-      { label: "Online Store", sub: "Steam Store", color: "", games: [] as Game[], kind: "disc" as const },
-      { label: "Downloads", sub: "Steam download queue", color: "", games: [] as Game[], kind: "disc" as const },
+      { label: t("ps2Card1"), sub: t("ps2Card1Sub"), color: "#2a2f3a", games: api.lib.games, kind: "card" as const },
+      { label: t("ps2Card2"), sub: t("ps2Card2Sub"), color: "#5a6170", games: api.lib.all.slice(0, s.maxGames), kind: "card" as const },
+      { label: t("destLibrary"), sub: t("openLibrary"), color: "", games: [] as Game[], kind: "disc" as const },
+      { label: t("steamStore"), sub: t("steamStore"), color: "", games: [] as Game[], kind: "disc" as const },
+      { label: t("destDownloads"), sub: t("steamDlQueue"), color: "", games: [] as Game[], kind: "disc" as const },
     ],
     [api.lib, s.maxGames],
   );
@@ -281,21 +282,21 @@ export function Ps2Home() {
 
   const infoOpts = g
     ? [
-        { label: "Start", run: () => api.launch(g) },
-        { label: "Watch Trailer", run: () => api.playTrailer(g) },
-        { label: "Game Page", run: () => api.details(g) },
-        { label: "Steam Menu", run: () => api.nativeMenu(g) },
-        { label: "Back", run: () => go("card") },
+        { label: t("start"), run: () => api.launch(g) },
+        { label: t("watchTrailer"), run: () => api.playTrailer(g) },
+        { label: t("gameDetails"), run: () => api.details(g) },
+        { label: t("gameOptions"), run: () => api.nativeMenu(g) },
+        { label: t("back"), run: () => go("card") },
       ]
     : [];
   const configOpts: { label: string; value?: string; run: () => void }[] = [
-    { label: "Preset", value: getPresets().find((p) => p.id === currentPresetId(s))?.label, run: () => menu.open(themeMenu(s.theme, api.switchTheme, THEMES), "Presets", { page: true }) },
-    { label: "Clock", value: s.clock24 ? "24-hour" : "12-hour", run: () => updateSettings({ clock24: !s.clock24 }) },
-    { label: "Sound Effects", value: s.sounds ? "On" : "Off", run: () => updateSettings({ sounds: !s.sounds }) },
-    { label: "Home Screen Settings", run: api.openSettings },
-    { label: "System Settings", run: () => openSteam("settings") },
-    { label: "Steam Home", run: api.showSteamHome },
-    { label: "Exit", run: () => go("main") },
+    { label: t("qamPreset"), value: getPresets().find((p) => p.id === currentPresetId(s))?.label, run: () => menu.open(themeMenu(s.theme, api.switchTheme, THEMES), t("presets"), { page: true }) },
+    { label: t("clock"), value: s.clock24 ? t("clock24") : t("clock12"), run: () => updateSettings({ clock24: !s.clock24 }) },
+    { label: t("soundEffects"), value: s.sounds ? t("on") : t("off"), run: () => updateSettings({ sounds: !s.sounds }) },
+    { label: t("homeScreenSettings"), run: api.openSettings },
+    { label: t("systemSettings"), run: () => openSteam("settings") },
+    { label: t("destMainMenu"), run: api.showSteamHome },
+    { label: t("exit"), run: () => go("main") },
   ];
 
   const go = (sc: Screen) => {
@@ -305,10 +306,10 @@ export function Ps2Home() {
 
   const options = () => {
     const extra: MenuItem[] = [
-      { label: "Presets", sub: () => themeMenu(s.theme, api.switchTheme, THEMES) },
-      { label: "Home Screen Settings", action: api.openSettings },
+      { label: t("presets"), sub: () => themeMenu(s.theme, api.switchTheme, THEMES) },
+      { label: t("homeScreenSettings"), action: api.openSettings },
     ];
-    if ((screen === "card" || screen === "info") && g) menu.open([{ label: "Start", action: () => api.launch(g) }, { label: "Game Page", action: () => api.details(g) }, ...extra], g.name);
+    if ((screen === "card" || screen === "info") && g) menu.open([{ label: t("start"), action: () => api.launch(g) }, { label: t("gameDetails"), action: () => api.details(g) }, ...extra], g.name);
     else menu.open(extra);
   };
 
@@ -352,7 +353,7 @@ export function Ps2Home() {
         if (b === "up" || b === "down") mv(isel, setIsel, infoOpts.length, b === "up" ? -1 : 1);
         else if (b === "a") {
           const o = infoOpts[isel];
-          if (o?.label === "Start" && g) api.activate(g, () => api.launch(g));
+          if (isel === 0 && g) api.activate(g, () => api.launch(g));
           else o?.run();
         } else if (b === "b") go("card");
         return true;
@@ -385,7 +386,7 @@ export function Ps2Home() {
   const firstRow = Math.max(0, row - 1);
 
   const hints =
-    screen === "main" ? { a: "Enter" } : screen === "card" ? { a: "Information", b: "Back", x: "Start", y: "Options" } : { a: "Enter", b: "Back" };
+    screen === "main" ? { a: t("enter") } : screen === "card" ? { a: t("information"), b: t("back"), x: t("start"), y: t("options") } : { a: t("enter"), b: t("back") };
 
   return (
     <ThemeRoot onInput={onInput} hints={hints}>
@@ -401,10 +402,12 @@ export function Ps2Home() {
 
         {screen === "main" && (
           <div style={{ position: "absolute", left: W * 0.54, top: H * 0.44, display: "flex", flexDirection: "column", gap: 14, animation: "dhtIn2 500ms" }}>
-            {["Browser", "System Configuration"].map((label, i) => (
-              <div key={label} className="dht-ps2-item" data-selected={msel === i} style={{ display: "flex", alignItems: "center", gap: 26 }}>
-                
-                <span style={text(msel === i, 28)}>{L(label)}</span>
+            {[
+              { key: "Browser", label: t("browser") },
+              { key: "System Configuration", label: t("systemConfiguration") },
+            ].map((it, i) => (
+              <div key={it.key} className="dht-ps2-item" data-selected={msel === i} style={{ display: "flex", alignItems: "center", gap: 26 }}>
+                <span style={text(msel === i, 28)}>{lang === "ja" ? JA[it.key] : it.label}</span>
               </div>
             ))}
           </div>
@@ -412,7 +415,7 @@ export function Ps2Home() {
 
         {screen === "browser" && (
           <div style={{ position: "absolute", inset: 0, animation: "dhtIn2 300ms" }}>
-            <div style={{ position: "absolute", left: 60, top: 36, ...text(true, 26) }}>{L("Browser")}</div>
+            <div style={{ position: "absolute", left: 60, top: 36, ...text(true, 26) }}>{L(t("browser"))}</div>
             <div style={{ position: "absolute", left: 0, right: 0, top: H * 0.33, display: "flex", justifyContent: "center", gap: 60 }}>
               {devices.map((d, i) => (
                 <MemoryCard key={d.label} label={L(d.label)} color={d.color} on={i === dsel} kind={d.kind} />
@@ -420,7 +423,7 @@ export function Ps2Home() {
             </div>
             <div style={{ position: "absolute", left: 0, right: 0, top: H * 0.75, textAlign: "center", ...text(false, 18) }}>
               {dev.sub}
-              {dev.kind === "card" ? ` · ${dev.games.length} items` : ""}
+              {dev.kind === "card" ? ` · ${t("itemsCount", { count: dev.games.length })}` : ""}
             </div>
           </div>
         )}
@@ -428,7 +431,7 @@ export function Ps2Home() {
         {screen === "card" && (
           <div style={{ position: "absolute", inset: 0, animation: "dhtIn2 300ms" }}>
             <div style={{ position: "absolute", left: 60, top: 36, ...text(true, 24) }}>{L(dev.label)}</div>
-            <div style={{ position: "absolute", left: 0, right: 0, top: 84, textAlign: "center", ...text(true, 26), whiteSpace: "nowrap", overflow: "hidden", textOverflow: "ellipsis", padding: "0 120px" }}>{g ? (showTitle(s, "ps2", true) ? g.name : "") : "No data"}</div>
+            <div style={{ position: "absolute", left: 0, right: 0, top: 84, textAlign: "center", ...text(true, 26), whiteSpace: "nowrap", overflow: "hidden", textOverflow: "ellipsis", padding: "0 120px" }}>{g ? (showTitle(s, "ps2", true) ? g.name : "") : t("noData")}</div>
             <div style={{ position: "absolute", left: (W - COLS * GX) / 2 + (GX - ICON) / 2, top: 150 }}>
               {games.slice(firstRow * COLS, firstRow * COLS + COLS * 3).map((gm, k) => {
                 const i = firstRow * COLS + k;
@@ -441,7 +444,7 @@ export function Ps2Home() {
               })}
             </div>
             <div style={{ position: "absolute", left: 60, bottom: 50, ...text(false, 17) }}>
-              {games.length} items · {g ? fmtPlaytime(g.playtime, g.lastPlayed, true) : ""}
+              {t("itemsCount", { count: games.length })} · {g ? fmtPlaytime(g.playtime, g.lastPlayed, true) : ""}
             </div>
           </div>
         )}
@@ -457,9 +460,9 @@ export function Ps2Home() {
               <div style={{ ...text(false, 18), lineHeight: 1.7 }}>
                 {fmtPlaytime(g.playtime, g.lastPlayed, true)}
                 <br />
-                Last played: {fmtLastPlayed(g.lastPlayed)}
+                {t("lastPlayedVal", { val: fmtLastPlayed(g.lastPlayed) })}
                 <br />
-                {g.installed ? "Installed" : "Not installed"}
+                {g.installed ? t("installed") : t("notInstalled")}
               </div>
               <Badges g={g} size={15} style={{ marginTop: 12 }} />
               <div style={{ marginTop: 40, display: "flex", flexDirection: "column", gap: 18 }}>
@@ -476,7 +479,7 @@ export function Ps2Home() {
 
         {screen === "config" && (
           <div style={{ position: "absolute", inset: 0, animation: "dhtIn2 300ms" }}>
-            <div style={{ position: "absolute", left: 60, top: 36, ...text(true, 26) }}>{L("System Configuration")}</div>
+            <div style={{ position: "absolute", left: 60, top: 36, ...text(true, 26) }}>{lang === "ja" ? JA["System Configuration"] : t("systemConfiguration")}</div>
             <div style={{ position: "absolute", left: W * 0.2, top: H * 0.2, width: W * 0.6, display: "flex", flexDirection: "column", gap: 4 }}>
               {configOpts.map((o, i) => (
                 <div key={o.label} className="dht-ps2-item" data-selected={i === csel} style={{ display: "flex", justifyContent: "space-between", padding: "12px 24px", background: i === csel ? "linear-gradient(90deg, rgba(80,110,255,0.35), rgba(80,110,255,0))" : "none", borderLeft: i === csel ? "3px solid #9fb4ff" : "3px solid transparent" }}>

@@ -1,3 +1,4 @@
+import { t } from "./i18n";
 // Full-screen overlays shared by every theme: the capture viewer (Steam's own screenshots and the
 // videos on the Deck), the trailer player and the video player. They are drawn in the look of the
 // theme showing the "media" page (see mediaCenter.tsx). While one is open it receives all input, and
@@ -98,7 +99,7 @@ export function ScreenshotGallery({ appid, index, tab, lib, onClose, onVideo }: 
       title={appid ? name(appid) : "Captures"}
       tabs={[{ id: "shots", label: "Screenshots", on: mode === "shots" }, { id: "videos", label: "Videos", on: mode === "videos" }]}
       onTab={(id) => switchTo(id as "shots" | "videos")}
-      hints={["Ⓐ View", "L1 R1 Screenshots / Videos", "Ⓨ Newest", "Ⓑ Close"]}
+      hints={[t("hintView"), t("hintScreenshotsVideos"), t("hintNewest"), t("closePrompt")]}
     >
       <CaptureGrid
         loaded={mode === "shots" ? all !== null : vids !== null}
@@ -125,7 +126,7 @@ function CaptureGrid({ loaded, empty, items, sel, onPick }: { loaded: boolean; e
   const top = Math.max(0, row - visibleRows + 1);
   return (
     <>
-      {!loaded && <div style={{ position: "absolute", left: 56, top: 110, opacity: 0.7 }}>Loading…</div>}
+      {!loaded && <div style={{ position: "absolute", left: 56, top: 110, opacity: 0.7 }}>{t("loadingDots")}</div>}
       {loaded && !items.length && <div style={{ position: "absolute", left: 56, top: 110, opacity: 0.8 }}>{empty}</div>}
       {items.slice(top * COLS, top * COLS + COLS * visibleRows).map((it, k) => {
         const i = top * COLS + k;
@@ -180,7 +181,7 @@ export function TrailerPlayer({ game, onClose }: { game: Game; onClose: () => vo
       <TrailerVideo appid={game.appid} sound quality="high" loop={false} style={{ position: "absolute", inset: 0, width: "100%", height: "100%", objectFit: "contain" }} onReady={() => setState("playing")} onNone={() => setState("none")} onEnded={onClose} />
       <div className="dht-media-info" style={{ opacity: showInfo || state !== "playing" ? 1 : 0 }}>
         <div style={{ fontSize: 22 }}>{game.name} · {state === "loading" ? "loading trailer…" : state === "none" ? "no trailer available" : "Trailer"}</div>
-        <div style={{ fontSize: 14, color: "var(--m-sub)", marginTop: 6 }}>Ⓑ Close</div>
+        <div style={{ fontSize: 14, color: "var(--m-sub)", marginTop: 6 }}>{t("closePrompt")}</div>
       </div>
     </div>
   );
@@ -233,7 +234,7 @@ export function VideoPlayer({ video, lib, onClose }: { video: LocalVideo; lib: M
     return true;
   });
   const dur = el && isFinite(el.duration) && el.duration > 0 ? el.duration : video.duration;
-  const t = el?.currentTime ?? 0;
+  const currentTime = el?.currentTime ?? 0;
   const paused = !!el?.paused;
   const date = video.created ? new Date(video.created * 1000).toLocaleString() : "";
   return (
@@ -248,16 +249,16 @@ export function VideoPlayer({ video, lib, onClose }: { video: LocalVideo; lib: M
         {state === "playing" ? (
           <div style={{ display: "flex", alignItems: "center", gap: 14, marginTop: 12, fontSize: 15 }}>
             <span style={{ width: 18 }}>{paused ? "▶" : "❚❚"}</span>
-            <span>{fmtDuration(t) || "0:00"}</span>
+            <span>{fmtDuration(currentTime) || "0:00"}</span>
             <div className="dht-media-bar" style={{ flex: 1 }}>
-              <div style={{ width: `${dur ? Math.min(100, (t / dur) * 100) : 0}%` }} />
+              <div style={{ width: `${dur ? Math.min(100, (currentTime / dur) * 100) : 0}%` }} />
             </div>
             <span>{fmtDuration(dur)}</span>
           </div>
         ) : (
-          <div style={{ marginTop: 10, fontSize: 16, color: "var(--m-sub)" }}>{state === "loading" ? "Loading…" : "This video can't be played here (unsupported format)."}</div>
+          <div style={{ marginTop: 10, fontSize: 16, color: "var(--m-sub)" }}>{state === "loading" ? t("loadingDots") : t("videoUnsupportedFormat")}</div>
         )}
-        <div style={{ fontSize: 13, color: "var(--m-sub)", marginTop: 8 }}>Ⓐ Pause · ◀ ▶ 10 s · L1 R1 1 min · Ⓑ Close</div>
+        <div style={{ fontSize: 13, color: "var(--m-sub)", marginTop: 8 }}>{t("trailerControlsPrompt")}</div>
       </div>
     </div>
   );

@@ -1,3 +1,4 @@
+import {t} from "../i18n";
 import {authoredXboxIcon} from "./authoredConsoleArtwork";
 import {useXboxArtwork} from "./xboxFallbackArtwork";
 import {cabinetWallpapers,useCabinetWallpaper} from "../x360Cabinet";
@@ -69,30 +70,30 @@ export function KinectHome() {
   const originalChannels: Channel[] = [
     { id: "home", label: "home", slots: [
       ...games.slice(0, 1).map(play),
-      { key: "kinect", label: "Steam Store", sub: "New releases, deals and demos", art: "slot-xboxlive", glyph: "store", run: () => openPage("info") },
-      { key: "basics", label: "Downloads", sub: st.downloads ? `${st.downloads} downloading` : "Queue and updates", art: "slot-xboxbasicsslot", glyph: "download", run: () => openPage("downloads") },
+      { key: "kinect", label: t("destSteamStore"), sub: t("storeDescNew"), art: "slot-xboxlive", glyph: "store", run: () => openPage("info") },
+      { key: "basics", label: t("destDownloads"), sub: st.downloads ? `${st.downloads} downloading` : t("queueAndUpdates"), art: "slot-xboxbasicsslot", glyph: "download", run: () => openPage("downloads") },
     ] },
-    { id: "games", label: "games", slots: [
+    { id: "games", label: t("tabGames"), slots: [
       ...games.slice(0, 10).map(play),
-      { key: "lib", label: "Game Library", sub: `${games.length} games`, art: "slot-games", glyph: "library", run: () => openPage("library") },
-      { key: "ach", label: "Achievements", sub: "Your progress", art: "slot-kinect", glyph: "trophy", run: () => openPage("achievements") },
+      { key: "lib", label: t("destLibrary"), sub: `${games.length} games`, art: "slot-games", glyph: "library", run: () => openPage("library") },
+      { key: "ach", label: t("destAchievements"), sub: t("achievementsProgress"), art: "slot-kinect", glyph: "trophy", run: () => openPage("achievements") },
     ] },
     { id: "video", label: "video", slots: [
       { key: "shots", label: "Screenshots", sub: "Your captures", glyph: "photo", run: () => openPage("pictures") },
-      { key: "web", label: "Internet", sub: "Web browser", glyph: "globe", run: () => openPage("browser") },
+      { key: "web", label: "Internet", sub: t("destWebBrowser"), glyph: "globe", run: () => openPage("browser") },
     ] },
     { id: "social", label: "social", slots: [
-      { key: "friends", label: "Friends", sub: st.friendsOnline !== undefined ? `${st.friendsOnline} online` : "Friends and chat", art: "slot-friends", glyph: "friends", run: () => openPage("friends") },
-      { key: "msg", label: "Messages", sub: st.notifications ? `${st.notifications} new` : "Notifications", glyph: "bell", run: () => openPage("messages") },
-      { key: "community", label: "Community", sub: "Hubs, guides and workshop", art: "slot-family", glyph: "globe", run: () => openPage("community") },
+      { key: "friends", label: t("destFriends"), sub: st.friendsOnline !== undefined ? `${st.friendsOnline} online` : t("friendsAndChat"), art: "slot-friends", glyph: "friends", run: () => openPage("friends") },
+      { key: "msg", label: "Messages", sub: st.notifications ? `${st.notifications} new` : t("destNotifications"), glyph: "bell", run: () => openPage("messages") },
+      { key: "community", label: t("destCommunity"), sub: t("communityDesc"), art: "slot-family", glyph: "globe", run: () => openPage("community") },
     ] },
     { id: "settings", label: "settings", slots: [
-      ...([{ key: "avatar", label: "My Avatar", sub: "Change your avatar's look and clothes", art: "slot-avatars", glyph: "user" as const, run: () => setAvatarOpen(true) }]),
-      { key: "settings", label: "System Settings", sub: "Steam settings", glyph: "gear", run: () => openPage("settings") },
+      ...([{ key: "avatar", label: t("myAvatar"), sub: "Change your avatar's look and clothes", art: "slot-avatars", glyph: "user" as const, run: () => setAvatarOpen(true) }]),
+      { key: "settings", label: t("systemSettings"), sub: t("steamSettingsDesc"), glyph: "gear", run: () => openPage("settings") },
       { key: "home", label: "Home Screen", sub: "ThemeHub options", glyph: "home", run: () => openPage("home") },
-      { key: "presets", label: "Dashboards", sub: "Switch presets", glyph: "palette", run: presets },
-      { key: "steamhome", label: "Home", sub: "Steam's own home", glyph: "steam", run: api.showSteamHome },
-      { key: "power", label: "Turn Off", sub: "Power options", glyph: "power", run: () => openPage("power") },
+      { key: "presets", label: "Dashboards", sub: t("switchPresetsDesc"), glyph: "palette", run: presets },
+      { key: "steamhome", label: t("destMainMenu"), sub: "Steam's own home", glyph: "steam", run: api.showSteamHome },
+      { key: "power", label: "Turn Off", sub: t("powerOptionsDesc"), glyph: "power", run: () => openPage("power") },
     ] },
   ];
   const byId=(id:string)=>originalChannels.find(channel=>channel.id===id)!;
@@ -122,13 +123,13 @@ export function KinectHome() {
 
   const options = () => {
     const extra: MenuItem[] = [
-      { label: "Presets", sub: () => themeMenu(s.theme, api.switchTheme, THEMES) },
-      { label: "My Avatar", action: () => setAvatarOpen(true) },
-      { label: "Home Screen Settings", action: api.openSettings },
-      { label: "Home", action: api.showSteamHome },
+      { label: t("presets"), sub: () => themeMenu(s.theme, api.switchTheme, THEMES) },
+      { label: t("myAvatar"), action: () => setAvatarOpen(true) },
+      { label: t("homeScreenSettings"), action: api.openSettings },
+      { label: t("destMainMenu"), action: api.showSteamHome },
     ];
     const g = cur?.game;
-    menu.open(g ? [{ label: "Play", action: () => api.launch(g) }, { label: "Game Details", action: () => api.details(g) }, { label: "Watch Trailer", action: () => api.playTrailer(g) }, { label: "Game Options", action: () => api.nativeMenu(g) }, ...extra] : extra, g?.name);
+    menu.open(g ? [{ label: t("play"), action: () => api.launch(g) }, { label: t("gameDetails"), action: () => api.details(g) }, { label: t("watchTrailer"), action: () => api.playTrailer(g) }, { label: t("gameOptions"), action: () => api.nativeMenu(g) }, ...extra] : extra, g?.name);
   };
   const onInput = (p: Press): boolean => {
     if(page||avatarOpen||legacyOpen)return true;
@@ -205,7 +206,7 @@ export function KinectHome() {
   );
 
   return (
-    <ThemeRoot onInput={onInput} hints={{ a: "Select", y: "Options" }}>
+    <ThemeRoot onInput={onInput} hints={{ a: t("select"), y: t("options") }}>
       <Stage background="#7fb21a">
         <style>{`@keyframes dhtKinectGuide{from{opacity:0;transform:translateY(12px) scale(.96)}to{opacity:1;transform:none}} @media(prefers-reduced-motion:reduce){.dht-x360n-card,.dht-x360n-channel,[data-kinect-channel]{animation:none!important;transition:none!important}}`}</style>
         {cabinet.background?<><div style={{position:"absolute",inset:0,background:"#242624"}}/><img className="dht-kinect-cabinet-wallpaper" src={cabinet.background} alt="" style={{position:"absolute",left:ox,top:oy,width:1280*k,height:720*k,objectFit:"contain"}}/></>:wall || look.bg || a.background ? <BackgroundMedia src={wall ?? look.bgFor(X360_SECTION[chan.id] ?? "home") ?? a.background} className="dht-x360n-bg" data-dht-from-skin={!wall && look.bg ? "x360" : undefined} style={{ position: "absolute", inset: 0, width: W, height: H, objectFit: "cover" }} /> : <div className="dht-x360n-bg" style={{ position: "absolute", inset: 0, background: "radial-gradient(ellipse at 50% 45%, #d4ef2a 0%, #8cc21c 45%, #3f7d10 100%)" }} />}
@@ -256,8 +257,8 @@ export function KinectHome() {
           </div>
           {/* button legend */}
           <div style={{ position: "absolute", left: LIST_X, top: 632, height: 32,visibility:page?"hidden":undefined, display: "flex", gap: 34, alignItems: "center", fontSize: 18, textShadow: TEXT_SHADOW }}>
-            {legend(a["legend-a"], "A", "#3fb83f", "Select")}
-            {legend(a["legend-y"], "Y", "#e9c31d", "Options")}
+            {legend(a["legend-a"], "A", "#3fb83f", t("select"))}
+            {legend(a["legend-y"], "Y", "#e9c31d", t("options"))}
           </div>
         </div>
         {page&&<KinectPages key={page} page={page} game={previewGame} onClose={()=>{setPage(null);setPreviewGame(undefined);}} onPage={next=>openPage(next)} onAvatar={()=>{setPage(null);setAvatarOpen(true);}}/>}

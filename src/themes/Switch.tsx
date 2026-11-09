@@ -42,23 +42,24 @@ import {ProfileAvatar} from "../ProfileAvatar";
 // A .nxtheme (see switchThemes.ts) supplies the wallpaper, optional wallpapers for "All Software" and
 // "Settings", and the round button pictures; each part has its own toggle in Theme options.
 import { CSSProperties, useEffect, useState, useRef, useMemo } from "react";
-import { GameArt, Icon, IconName, themeMenu, useHome, useMenu, useRemembered } from "../common";
+import { GameArt, Icon, IconName, useHome, useMenu, useRemembered } from "../common";
 import { clamp, Press, Stage, ThemeRoot, useStage } from "../input";
 import { Game, openSteam, SteamPlace } from "../library";
-import { showTitle, THEMES } from "../settings";
+import { showTitle } from "../settings";
+import { t } from "../i18n";
 import { playSound, useBattery, useClock, useWallpaper } from "../steam";
 import { themeSettingsItems } from "../themeSettingsMenu";
 import { switchParts, useSwitchSkin } from "../switchThemes";
 import { useReportFocus } from "../focus";
 
 type Dock = { id: string; label: string; icon: IconName; art?: string; place?: SteamPlace; action?: "settings" | "album" };
-const DOCK: Dock[] = [
-  { id: "news", label: "News", icon: "bell", art: "news", place: "community" },
-  { id: "shop", label: "Shop", icon: "store", art: "shop", place: "store" },
-  { id: "album", label: "Album", icon: "photo", art: "album", action: "album" },
-  { id: "controller", label: "Controllers", icon: "game", art: "controller", place: "qam" },
-  { id: "settings", label: "Settings", icon: "gear", art: "settings", action: "settings" },
-  { id: "power", label: "Power", icon: "power", art: "power", place: "power" },
+const dockItems = (): Dock[] => [
+  { id: "news", label: t("news"), icon: "bell", art: "news", place: "community" },
+  { id: "shop", label: t("shop"), icon: "store", art: "shop", place: "store" },
+  { id: "album", label: t("album"), icon: "photo", art: "album", action: "album" },
+  { id: "controller", label: t("controllers"), icon: "game", art: "controller", place: "qam" },
+  { id: "settings", label: t("destSettings"), icon: "gear", art: "settings", action: "settings" },
+  { id: "power", label: t("destPower"), icon: "power", art: "power", place: "power" },
 ];
 /** The console's own dock symbols, drawn as outlines (news, eShop bag, album, controller); settings and power use the shared icons. */
 function DockGlyph({ id, size, color }: { id: string; size: number; color: string }) {
@@ -142,6 +143,7 @@ function AnimatedGameLayer({children,animations,pane,event,active,style}: {child
  return <div ref={ref} className={`dht-switch-layer-${pane}`} style={{position:"absolute",inset:0,pointerEvents:"none",...style}}>{children}</div>;
 }
 export function SwitchHome() {
+  const DOCK=dockItems();
   const api = useHome(), s = api.settings, { W, H } = useStage(), menu = useMenu();
   const hostStatus=useSteamStatus();
   const now = useClock(15000), bat = useBattery(), skin = useSwitchSkin(), downloads = useDownloads();
@@ -240,15 +242,15 @@ export function SwitchHome() {
       ...((conversion.notes?.length??0)?[{label:'Source layout notes',sub:()=>conversion.notes!.map(w=>({label:w,disabled:true}))}]:[]),
       ...((conversion.resourceWarnings?.length??0)?[{label:'Menu resource issues',sub:()=>conversion.resourceWarnings!.map(w=>({label:w,disabled:true}))}]:[]),
     ]}] : []),
-    ...(g ? [{ label: "Start", action: () => launchGame(g) }, { label: "Information", action:showInformation },{label:"Save data",action:showSaves}, { label: "Game Options", action: () => api.nativeMenu(g) }] : []),
-    ...(skin?.screens.lock?.background ? [{ label: "Lock screen", action: () => setView("lock") }] : []),
-    { label: "Home", action: api.showSteamHome },
+    ...(g ? [{ label: t("start"), action: () => launchGame(g) }, { label: t("information"), action:showInformation },{label:"Save data",action:showSaves}, { label: t("gameOptions"), action: () => api.nativeMenu(g) }] : []),
+    ...(skin?.screens.lock?.background ? [{ label: t("lockScreen"), action: () => setView("lock") }] : []),
+    { label: t("destMainMenu"), action: api.showSteamHome },
   ], g?.name ?? "Switch");
   const runDock = (i:number)=>{void withCapture(()=>runDockAction(i));};
   const runDockAction = (i: number) => {
     const d = dock[i]; playSound("select");setPressed(true);setTimeout(()=>setPressed(false),180);
     if (d.action === "album") api.openMedia();
-    else if (d.action === "settings") { setView("set"); menu.open([...themeSettingsItems(), { label: "Presets", sub: () => themeMenu(s.theme, api.switchTheme, THEMES) }, { label: "Home Screen Settings", action: api.openSettings }], "Settings", { page: true }); }
+    else if (d.action === "settings") { setView("set"); menu.open(themeSettingsItems(), t("destSettings"), { page: true }); }
     else if (d.place) openSteam(d.place);
   };
 
@@ -340,7 +342,7 @@ export function SwitchHome() {
   const titleWidth = Math.min((effects.gameTitle?.Size?.X??400)*k,W-40*k);
   const titleHeight = (effects.gameTitle?.Size?.Y??40)*k;
   const titlePosition:CSSProperties = rotatedTitle ? {left:startX-38*k-titleWidth/2,top:Math.max(titleWidth/2+10*k,Math.min(H-titleWidth/2-10*k,tileY+tileHeight/2))-titleHeight/2,width:titleWidth,height:titleHeight,justifyContent:"center",transformOrigin:"center",boxSizing:"border-box"} : {};
-  const label = (i: number) => i < n ? games[i].name : "All Software";
+  const label = (i: number) => i < n ? games[i].name : t("allSoftware");
   const texture=effects.background?.texture;
   const backgroundImage=useSwitchMirroredImage(parts.background,texture?.mirrorX,texture?.mirrorY);
   const bg: CSSProperties = parts.background
@@ -356,7 +358,7 @@ export function SwitchHome() {
   const refreshRef=useSwitchPaneMotion(refreshMotion,'N_Game',['refresh'],animationOn,{Position:panes.N_Game?.Position},k*(panes.N_GameRoot?.Scale?.X??1),k*(panes.N_GameRoot?.Scale?.Y??1),true,`${resume}:${api.lib.games.length}`);
   const cursorShadow=effects.cursorGlow?.shadowFunction!==undefined?"none":effectStyle(effects.cursor).boxShadow;
   return (
-    <ThemeRoot onInput={onInput} hints={{ a: "Open", y: "Options", b: view === "home" ? undefined : "Back" } as any}>
+    <ThemeRoot onInput={onInput} hints={{ a: t("open"), y: t("options"), b: view === "home" ? undefined : t("back") } as any}>
       <SwitchNativeContext.Provider value={runtimeConversion}><Stage background="#e6e6e6">
         <style>{CSS}</style>
         {effects.cursor && <style>{`.dht-switch-focus{box-sizing:border-box;border-style:solid;animation:none!important;border-color:${nxColor(effects.cursorGlow?.white??effects.cursor.white,"#19bcc4")}!important;border-width:calc(${effects.cursor.borderWidth??3}px * var(--dht-switch-focus-unit,1))!important;border-radius:calc(${effects.cursor.radius??0}px * var(--dht-switch-focus-unit,1));box-shadow:${cursorShadow??`0 0 ${effects.cursor.shadow??0}px ${nxColor(effects.cursorGlow?.white,effects.cursor.white?nxColor(effects.cursor.white):"#19bcc4")}`}!important;${effects.cursor.borderDraw===false?"border:none!important;":""}}`}</style>}
@@ -368,7 +370,7 @@ export function SwitchHome() {
           <div className="dht-switch-lock" style={{ position: "absolute", inset: 0, zIndex: 20, color: ink, textShadow: dark ? "0 1px 6px #000a" : "none", fontFamily: "inherit" }}>
             <div style={{ position: "absolute", inset: 0, backgroundImage: `url(${parts.background})`, backgroundSize: "cover", backgroundPosition: "center" }} />
             <div style={{ position: "absolute", left: 0, right: 0, top: H * 0.38, textAlign: "center", fontSize: 96, fontWeight: 300 }}>{clock24h(now)}</div>
-            <div style={{ position: "absolute", left: 0, right: 0, bottom: H * 0.08, textAlign: "center", fontSize: 20 }}>Press any button</div>
+            <div style={{ position: "absolute", left: 0, right: 0, bottom: H * 0.08, textAlign: "center", fontSize: 20 }}>{t("pressAnyButton")}</div>
           </div>
         )}
         {effects.libraryLine&&<div className="dht-switch-library-line" style={{position:"absolute",left:30*k,right:30*k,bottom:72*k,height:k,background:panelColor(effects.libraryLine),...effectStyle(effects.libraryLine)}}/>}
@@ -405,7 +407,7 @@ export function SwitchHome() {
           <SwitchFooterController effects={effects} animations={[]} modern={!!panes.L_BtnSplay} dark={dark} enabled={animationOn}><ConsoleGlyph w={68 * k} color={ink} /></SwitchFooterController>
           <span style={{ display: "flex", gap: 36 * k, marginLeft:"auto",position:"relative" }}>{(pressed||pointerPressed)&&effects.footerTouch&&<span style={{position:"absolute",inset:0,background:panelColor(effects.footerTouch),...effectStyle(effects.footerTouch)}}/>}
             <span style={{ display: "flex", alignItems: "center", gap: 10 * k }}><SwitchFooterKey effect={effects.footerKey}><SwitchPromptGlyph symbol="+" size={28*k} ink={nxColor(effects.footerText?.white,ink)} symbolColor={dark?"#000":"#e8e8e8"}/></SwitchFooterKey><span style={effectStyle(effects["footer:T_00"])}>Options</span></span>
-            <span style={{ display: "flex", alignItems: "center", gap: 10 * k }}><SwitchFooterKey effect={effects.footerKey}><SwitchPromptGlyph symbol="A" size={28*k} ink={nxColor(effects.footerText?.white,ink)} symbolColor={dark?"#000":"#e8e8e8"}/></SwitchFooterKey><span style={effectStyle(effects["footer:T_01"])}>{view === "home" ? "Start" : "Open"}</span></span>
+            <span style={{ display: "flex", alignItems: "center", gap: 10 * k }}><SwitchFooterKey effect={effects.footerKey}><SwitchPromptGlyph symbol="A" size={28*k} ink={nxColor(effects.footerText?.white,ink)} symbolColor={dark?"#000":"#e8e8e8"}/></SwitchFooterKey><span style={effectStyle(effects["footer:T_01"])}>{view === "home" ? t("start") : "Open"}</span></span>
           </span>
         </div></>}
 
@@ -459,7 +461,7 @@ export function SwitchHome() {
           </div>
           {!conversion?.childLockBackingBehindGames&&childLockLayer}
           {effects.changeUser?.Visible!==false&&conversion&&effects.changeUser&&g?.overview?.running&&row==="tiles"&&<div className="dht-switch-change-user" style={{position:"absolute",left:tileX(cur)+T/2+(effects.changeUser.Position?.X??0)*k,top:tileTop(cur)+tileHeight/2-(effects.changeUser.Position?.Y??-159)*k,width:(effects.changeUser.Size?.X??384)*k,height:(effects.changeUser.Size?.Y??34)*k,transformOrigin:"0 0",background:"transparent",color:ink,border:0,...effectStyle({...effects.changeUser,Position:undefined})}}><SwitchServiceScene file="RdtBtnChangeUser" size={[effects.changeUser.Size?.X??384,effects.changeUser.Size?.Y??34]} effects={effects} animations={conversion.animations} modern={!!panes.L_BtnSplay} dark={dark} enabled={animationOn} label="User options" pressed={pressed||pointerPressed} onActivate={userOptions}/></div>}
-          {n === 0 && (conversion?<SwitchEmptyLibrary effects={effects} animations={conversion.animations} modern={!!panes.L_BtnSplay} dark={dark} enabled={animationOn} scale={k}/>:<div style={{position:"absolute",left:startX,top:H*.62,color:ink,opacity:.7,fontSize:18}}>No games found for the selected library view.</div>)}
+          {n === 0 && (conversion?<SwitchEmptyLibrary effects={effects} animations={conversion.animations} modern={!!panes.L_BtnSplay} dark={dark} enabled={animationOn} scale={k}/>:<div style={{position:"absolute",left:startX,top:H*.62,color:ink,opacity:.7,fontSize:18}}>{t("noGamesFound")}</div>)}
           </div>
           <div className="dht-switch-dock" style={{zIndex:order.N_System,position: "absolute", left: 0, right: 0, top: panes.N_System ? (panes.N_System.Size?H/2-(panes.N_System.Position?.Y??0)*k-(panes.N_System.Size.Y??80)*k/2:0) : dockY,...(panes.N_System?.Size?{left:(640+(panes.N_System.Position?.X??0)-(panes.N_System.Size.X??1160)/2)*k,right:undefined,width:(panes.N_System.Size.X??1160)*k,height:(panes.N_System.Size.Y??80)*k}:{}), display: "flex", justifyContent: "center", gap: 20 * k }}>
             {dock.map((d, i) => {

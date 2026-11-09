@@ -1,5 +1,6 @@
 import {BackgroundMedia} from "../WallpaperMedia";
 import { GameHero } from "../common";
+import { t } from "../i18n";
 import {ProfileAvatar} from "../ProfileAvatar";
 // PS5 home: Games / Media tabs, a compact row of rounded tiles at the top
 // with the focused title written beside it, full-bleed hero art, the game's
@@ -47,15 +48,15 @@ export function Ps5Home() {
 
   const [tab, setTab] = useRemembered<"games" | "media">("ps5-tab", st<string>("startTab") === "media" ? "media" : "games");
   const gamesTiles: Tile[] = [
-    { key: "store", label: "Steam Store", icon: "store", place: "store" },
+    { key: "store", label: t("destSteamStore"), icon: "store", place: "store" },
     ...api.lib.games.map((g) => ({ key: `g${g.appid}`, label: g.name, game: g })),
-    { key: "lib", label: "Game Library", icon: "library", place: "library" },
+    { key: "lib", label: t("destLibrary"), icon: "library", place: "library" },
   ];
   const mediaTiles: Tile[] = [
-    { key: "shots", label: "Media Gallery", icon: "photo", place: "media" },
-    { key: "web", label: "Web Browser", icon: "globe", place: "browser" },
-    { key: "dl", label: "Downloads", icon: "download", place: "downloads" },
-    { key: "friends", label: "Friends", icon: "friends", place: "friends" },
+    { key: "shots", label: t("allScreenshots"), icon: "photo", place: "media" },
+    { key: "web", label: t("destBrowser"), icon: "globe", place: "browser" },
+    { key: "dl", label: t("destDownloads"), icon: "download", place: "downloads" },
+    { key: "friends", label: t("destFriends"), icon: "friends", place: "friends" },
     ...api.lib.apps.map((g) => ({ key: `a${g.appid}`, label: g.name, game: g })),
   ];
   const tiles = tab === "games" ? gamesTiles : mediaTiles;
@@ -94,11 +95,11 @@ export function Ps5Home() {
 
   const options = () => {
     const extra: MenuItem[] = [
-      { label: "Presets", sub: () => themeMenu(s.theme, api.switchTheme, THEMES) },
-      { label: "Home Screen Settings", action: api.openSettings },
-      { label: "Home", action: api.showSteamHome },
+      { label: t("presets"), sub: () => themeMenu(s.theme, api.switchTheme, THEMES) },
+      { label: t("homeScreenSettings"), action: api.openSettings },
+      { label: t("destMainMenu"), action: api.showSteamHome },
     ];
-    menu.open(g ? [{ label: "Play", action: () => api.launch(g) }, { label: "Watch Trailer", action: () => api.playTrailer(g) }, { label: "Game Details", action: () => api.details(g) }, { label: "Game Options", action: () => api.nativeMenu(g) }, ...extra] : extra, g?.name);
+    menu.open(g ? [{ label: t("play"), action: () => api.launch(g) }, { label: t("watchTrailer"), action: () => api.playTrailer(g) }, { label: t("gameDetails"), action: () => api.details(g) }, { label: t("gameOptions"), action: () => api.nativeMenu(g) }, ...extra] : extra, g?.name);
   };
 
   const switchTab = (t: "games" | "media") => {
@@ -184,7 +185,7 @@ export function Ps5Home() {
   const scrolledDown = zone === "cards";
 
   return (
-    <ThemeRoot onInput={onInput} hints={{ a: g ? "Play" : "Select", y: "Options", menu: "Options" }} style={{ fontFamily: 'var(--dht-font, "SST", "Motiva Sans", "Segoe UI", sans-serif)', fontWeight: 400 }}>
+    <ThemeRoot onInput={onInput} hints={{ a: g ? t("play") : t("select"), y: t("options"), menu: t("options") }} style={{ fontFamily: 'var(--dht-font, "SST", "Motiva Sans", "Segoe UI", sans-serif)', fontWeight: 400 }}>
       <Stage background="#000">
         {/* background */}
         <div className="dht-ps5-bg" style={{ position: "absolute", inset: 0, background: `var(--dht-ps5-bg, ${wallCss})` }} />
@@ -202,9 +203,9 @@ export function Ps5Home() {
         <div style={{ position: "absolute", inset: 0, transform: scrolledDown ? "translateY(-24px)" : "none", transition: "transform 220ms ease-out" }}>
           {/* tabs */}
           <div style={{ position: "absolute", left: x0, top: 30, display: "flex", gap: 34, fontSize: 22, color: "#fff" }}>
-            {(["games", "media"] as const).map((t, i) => (
-              <span key={t} className="dht-ps5-tab" data-selected={tab === t} style={{ fontWeight: tab === t ? 600 : 300, opacity: tab === t ? 1 : 0.6, padding: "2px 10px", borderRadius: 16, boxShadow: zone === "tabs" && tsel === i ? "0 0 0 2px #fff" : "none" }}>
-                {t === "games" ? "Games" : "Media"}
+            {(["games", "media"] as const).map((tabKey, i) => (
+              <span key={tabKey} className="dht-ps5-tab" data-selected={tab === tabKey} style={{ fontWeight: tab === tabKey ? 600 : 300, opacity: tab === tabKey ? 1 : 0.6, padding: "2px 10px", borderRadius: 16, boxShadow: zone === "tabs" && tsel === i ? "0 0 0 2px #fff" : "none" }}>
+                {tabKey === "games" ? t("tabGames") : t("tabMedia")}
               </span>
             ))}
           </div>
@@ -253,7 +254,7 @@ export function Ps5Home() {
           {/* play row */}
           <div className="dht-ps5-play-panel" data-glass={surface.glass} style={{ position: "absolute", left: x0, top: playY, display: "flex", gap: 16, alignItems: "center", ...surface.glassStyle }}>
             <div onClick={()=>g?api.launch(g):activateTile(cur)} className="dht-ps5-play" data-selected={zone === "play" && psel === 0} style={{ height: 52, padding: "0 58px", borderRadius: 28, background: zone === "play" && psel === 0 ? "var(--dht-ps5-play, #fff)" : "rgba(255,255,255,0.88)", color: "#000", fontSize: 20, fontWeight: 500, display: "flex", alignItems: "center", boxShadow: zone === "play" && psel === 0 ? "0 0 0 4px rgba(255,255,255,0.4)" : "none", transform: zone === "play" && psel === 0 ? "scale(1.05)" : "none", transition: "transform 150ms" }}>
-              {g ? "Play" : "Open"}
+              {g ? t("play") : t("open")}
             </div>
             <div role="button" aria-label="Game options" onClick={() => g ? api.nativeMenu(g) : options()} style={{ cursor: "pointer", width: 52, height: 52, borderRadius: 28, background: zone === "play" && psel === 1 ? "#fff" : "rgba(60,60,60,0.8)", display: "flex", alignItems: "center", justifyContent: "center" }}>
               <Icon name="dots" size={26} color={zone === "play" && psel === 1 ? "#000" : "#fff"} />

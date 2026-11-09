@@ -1,3 +1,4 @@
+import {t} from "../i18n";
 import {useXboxArtwork} from "./xboxFallbackArtwork";
 import {BackgroundMedia} from "../WallpaperMedia";
 import {ProfileAvatar} from "../ProfileAvatar";
@@ -75,14 +76,14 @@ function X360MetroHome() {
   const ICO: Partial<Record<IconName, string>> = { game: "ico-games", store: "ico-marketplace", friends: "ico-addfriends", bell: "ico-messages", download: "ico-installedgame", library: "ico-controller", globe: "ico-internet", palette: "ico-changetheme", gear: "ico-settingspreferences", power: "ico-turnoff", apps: "ico-apps" };
 
   const play = (g: Game) => () => api.activate(g, () => api.launch(g));
-  const themes = () => menu.open(themeMenu(s.theme, api.switchTheme, THEMES), "presets", { page: true });
+  const themes = () => menu.open(themeMenu(s.theme, api.switchTheme, THEMES), t("presets"), { page: true });
 
   const pivots = useMemo(() => {
     const sys = (key: string, x: number, y: number, w: number, h: number, label: string, icon: IconName, run: () => void, color = GREEN): XTile => ({ key, x, y, w, h, label, icon, color, run });
     // home
     const home: XTile[] = [];
     if (games[0]) home.push({ key: "h0", x: 0, y: 0, w: 560, h: 315, label: games[0].name, game: games[0], art: "hero", run: play(games[0]) });
-    else home.push(sys("h0", 0, 0, 560, 315, "steam library", "library", () => openSteam("library")));
+    else home.push(sys("h0", 0, 0, 560, 315, t("steamLibrary").toLowerCase(), "library", () => openSteam("library")));
     [1, 2, 3, 4].forEach((n, k) => {
       const g = games[n];
       const x = 575 + (k % 2) * 285;
@@ -127,12 +128,12 @@ function X360MetroHome() {
     ];
     return [
       { name: "bing", tiles: [sys("search",0,0,840,155,"search","search",()=>openSteam("search"))] },
-      { name: "home", tiles: [sys("quickplay",0,0,170,155,"quickplay","game",()=>openSteam("library")),sys("disc",0,165,170,155,"play game","game",()=>{if(games[0])play(games[0])();else openSteam("library");}),...home.filter(t=>t.game).slice(0,3).map((t,i)=>({...t,x:i===0?180:610,y:i===2?165:0,w:i===0?420:230,h:i===0?320:155}))] },
-      { name: "social", tiles: social },
+      { id: "home", name: t("homeTab").toLowerCase(), tiles: [sys("quickplay",0,0,170,155,"quickplay","game",()=>openSteam("library")),sys("disc",0,165,170,155,"play game","game",()=>{if(games[0])play(games[0])();else openSteam("library");}),...home.filter(t=>t.game).slice(0,3).map((t,i)=>({...t,x:i===0?180:610,y:i===2?165:0,w:i===0?420:230,h:i===0?320:155}))] },
+      { id: "social", name: t("social").toLowerCase(), tiles: social },
       { name: "video", tiles: video },
-      { name: "games", tiles: gtiles },
-      { name: "apps", tiles: apps },
-      { name: "settings", tiles: settings },
+      { id: "games", name: t("tabGames").toLowerCase(), tiles: gtiles },
+      { id: "apps", name: t("apps").toLowerCase(), tiles: apps },
+      { id: "settings", name: t("destSettings").toLowerCase(), tiles: settings },
     ];
   }, [api.lib, api.user, s.theme]);
 
@@ -159,7 +160,7 @@ function X360MetroHome() {
       { label: "home settings", action: api.openSettings },
       { label: "home", action: api.showSteamHome },
     ];
-    menu.open(g ? [{ label: "play", action: () => api.launch(g) }, { label: "watch trailer", action: () => api.playTrailer(g) }, { label: "game details", action: () => api.details(g) }, { label: "game options", action: () => api.nativeMenu(g) }, ...extra] : extra, g ? g.name : "options");
+    menu.open(g ? [{ label: t("play"), action: () => api.launch(g) }, { label: t("watchTrailer"), action: () => api.playTrailer(g) }, { label: t("gameDetails"), action: () => api.details(g) }, { label: t("gameOptions"), action: () => api.nativeMenu(g) }, ...extra] : extra, g ? g.name : t("options"));
   };
 
   const onInput = (p: Press): boolean => {
@@ -222,10 +223,10 @@ function X360MetroHome() {
   const label: CSSProperties = { position: "absolute", left: 10, bottom: 8, right: 10, color: "#fff", fontSize: 17, whiteSpace: "nowrap", overflow: "hidden", textOverflow: "ellipsis", fontFamily: FONT };
 
   return (
-    <ThemeRoot onInput={onInput} hints={{ a: "Select", y: "Options", menu: "Options" }}>
+    <ThemeRoot onInput={onInput} hints={{ a: t("select"), y: t("options"), menu: t("options") }}>
       <Stage background="#d9d9d9">
       <div className="dht-x360-skin" data-dht-from-skin={look.bg || look.accent ? "x360" : undefined} style={{ display: "contents", ...look.vars } as CSSProperties}>
-        <div className="dht-x360-bg" style={{ position: "absolute", inset: 0, background: `var(--dht-x360-bg, ${look.bg || a.background ? `url("${look.bgFor(X360_SECTION[pv.name] ?? "home") ?? a.background}") center/cover` : "linear-gradient(180deg, #6e6e6e 0%, #9a9a9a 55%, #c4c4c4 100%)"})` }} />
+        <div className="dht-x360-bg" style={{ position: "absolute", inset: 0, background: `var(--dht-x360-bg, ${look.bg || a.background ? `url("${look.bgFor(X360_SECTION[pv.id??pv.name] ?? "home") ?? a.background}") center/cover` : "linear-gradient(180deg, #6e6e6e 0%, #9a9a9a 55%, #c4c4c4 100%)"})` }} />
         {wall && <BackgroundMedia src={wall} style={{ position: "absolute", inset: 0, width: W, height: H, objectFit: "cover" }} />}
         {!wall && a["bottom-vignette"] && <img src={a["bottom-vignette"]} aria-hidden="true" style={{ position: "absolute", left: 0, bottom: 0, width: W, height: H * 300 / 720, pointerEvents: "none" }} />}
 
