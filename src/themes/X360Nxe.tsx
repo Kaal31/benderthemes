@@ -1,4 +1,5 @@
 import {useNxeIcons,NxeOriginalIcon,NxeButtonHint,NxeWordmark} from './X360NxeIcons';
+import {useConvectionFont} from './convectionFont';
 import {nxeRect,nxeReference,nxeRowPitch,nxeFocusDuration} from './X360NxeReference';
 import {useNxeWindow} from './X360NxeWindow';
 import {NxeFocus} from './X360NxeFocus';
@@ -38,9 +39,10 @@ const TEXT_SHADOW = "0 1px 2px rgba(15,15,15,.5)";
 const SAFE_X = 96;
 const PANEL_W = 420;
 const PANEL_H = 320;
-const PANEL_TOP = 230;
+const PANEL_TOP = 250;
 
 export function NxeHome() {
+  const convectionFont=useConvectionFont();
   const api = useHome();
   const nxeIcons=useNxeIcons(),consoleArt=useAssets("x360-nxe-dash");
   const s = api.settings;
@@ -102,8 +104,9 @@ export function NxeHome() {
       { key: "me", label: api.user, sub: st.online ? "Online" : "Offline", tray: "slot-profile", icon: customProfilePicture() ?? pickedPic ?? nxeIcons.avatar, glyph: "user", run: () => setPage("friends") },
       ...([{ key: "avatar", label: "My Avatar", sub: "Change your avatar's look and clothes", tray: "slot-profile", icon: nxeIcons.avatar, glyph: "user" as const, run: () => setAvatarOpen(true) }]),
       { key: "lib2", label: "Game Library", sub: `${games.length} games`, tray: "slot-games", icon: nxeIcons.games, glyph: "library", run: () => setPage("library") },
-      { key: "pics", label: "Picture Library", sub: "Screenshots", tray: "slot-photos", icon: nxeIcons.pictures, glyph: "photo", run: () => setPage("pictures") },
       { key: "web", label: "Video Library", sub: "Local videos and Steam recordings", tray: "slot-videos", icon: nxeIcons.video, glyph: "photo", run: () => setPage("videos") },
+      { key: "music-library", label: "Music Library", sub: "Your music and media", icon: nxeIcons.music, glyph: "music", run: () => setPage("music") },
+      { key: "pics", label: "Picture Library", sub: "Screenshots", tray: "slot-photos", icon: nxeIcons.pictures, glyph: "photo", run: () => setPage("pictures") },
       { key: "settings", label: "System Settings", sub: "Steam settings", tray: "slot-tray", icon: nxeIcons.settings, glyph: "gear", run: () => setPage("settings") },
       { key: "home", label: "Home Screen", sub: "ThemeHub options", icon:nxeIcons["theme-hub"], tray: "slot-tray", glyph: "home", run:()=>setPage('home') },
       { key: "presets", label: "Dashboards", sub: "Switch presets", tray: "slot-tray", icon: nxeIcons.dashboards, glyph: "palette", run: presets },
@@ -126,7 +129,7 @@ export function NxeHome() {
     if(previous.channel.id!==chan.id&&s.animations)setOutgoing({channel:previous.channel,selection:previous.selection,direction:ci>=previous.index?1:-1});
     previousChannel.current={channel:chan,index:ci,selection:sel};
   },[chan.id,ci,sel,s.animations]);
-  useEffect(()=>{if(!outgoing)return;const timer=setTimeout(()=>setOutgoing(null),280);return()=>clearTimeout(timer);},[outgoing]);
+  useEffect(()=>{if(!outgoing)return;const timer=setTimeout(()=>setOutgoing(null),340);return()=>clearTimeout(timer);},[outgoing]);
 
   const [insideCard,setInsideCard]=useState(false),[profileRow,setProfileRow]=useState(0),[profileDialog,setProfileDialog]=useState(false);
   const profileActions=[
@@ -170,7 +173,7 @@ export function NxeHome() {
       return true;
     }
     if(page)return true;
-    // the queue above the current name holds the following channels, so ↓ brings the next one down
+    // the queue shows earlier channels above the current one; down advances to the next channel
     if (k === "up" || k === "down") {
       const n = clamp(ci + (k === "down" ? 1 : -1), 0, channels.length - 1);
       if (n !== ci) (setInsideCard(false),setCh(n), playSound("tab"));
@@ -200,9 +203,11 @@ export function NxeHome() {
   // panel d places after the current one recedes up and to the right, overlapped by the one in front
   const place = (d: number): CSSProperties => {
     if(d<0)return {left:0,top:0,opacity:0,transform:`translate3d(${SAFE_X-PANEL_W*.9}px,${PANEL_TOP+24}px,0) scale(.94)`,zIndex:31,pointerEvents:"none"};
-    const scale = Math.pow(0.8, d);
-    const left = SAFE_X + [0, 330, 548, 700, 812, 900, 970][Math.min(d, 6)];
-    const top = PANEL_TOP - [0, 18, 32, 42, 50, 56, 60][Math.min(d, 6)];
+    // Measured from the supplied clip at 00:22: the next card is 75% size,
+    // vertically centred on the first; each following card converges on that centre.
+    const scale = Math.pow(0.75, d);
+    const left = SAFE_X + 32 + [0, 420, 725, 910, 1030, 1116, 1180][Math.min(d, 6)];
+    const top = PANEL_TOP - PANEL_H * (1-scale) / 2;
     return {left:0,top:0,opacity:d>5?0:1,transform:`translate3d(${left}px,${top+PANEL_H*(1-scale)}px,0) scale(${scale})`,zIndex:30-d,filter:`brightness(${Math.max(.90,1-d*.018)})`,pointerEvents:d>5?"none":"auto"};
   };
   const panel = (e: Slot, i: number, selection=sel,exiting=false) => {
@@ -214,7 +219,7 @@ export function NxeHome() {
     const titleVisible=!e.game||showTitle(s,"x360",on);
     return (
       <div key={e.key} className="dht-x360n-card dht-tile" data-selected={on&&!exiting} data-name={e.label} role="button" tabIndex={on&&!exiting?0:-1} data-nxe-expanded={expanded||undefined} aria-label={e.label+' card'} onKeyDown={event=>{if(event.key==='Enter'||event.key===' '){event.preventDefault();event.stopPropagation();if(!on)setSels(m=>({...m,[chan.id]:i}));else onInput({btn:'a',repeat:event.repeat});}}} onClick={() => {if(!on){setInsideCard(false);setSels(m=>({...m,[chan.id]:i}));}else if(e.key==='me'){setInsideCard(true);setProfileRow(1);}else e.run();}}
-        style={{ position: "absolute", width: expanded?456:PANEL_W, height, transformOrigin: "0 0", transition: `transform ${anim}, opacity ${anim}, filter ${anim}, width ${anim}, height ${anim}`, willChange:s.animations?"transform":undefined, cursor: "pointer", WebkitBoxReflect: "below 2px linear-gradient(transparent 85%, rgba(255,255,255,.12))", ...place(d),...(expanded?{transform:'translate3d(96px,104px,0)'}:profileActive&&d>0?{transform:`translate3d(${552+(d-1)*340}px,${145+(d-1)*30}px,0) scale(${Math.pow(.835,d)})`}:{}),...(exiting?{pointerEvents:"none" as const}:{} ) } as CSSProperties}>
+        style={{ position: "absolute", width: expanded?456:PANEL_W, height, transformOrigin: "0 0", transition: `transform ${anim}, opacity ${anim}, filter ${anim}, width ${anim}, height ${anim}`, willChange:s.animations?"transform":undefined, cursor: "pointer", WebkitBoxReflect: "below 2px linear-gradient(transparent 85%, rgba(255,255,255,.07))", ...place(d),...(expanded?{transform:'translate3d(96px,104px,0)'}:profileActive&&d>0?{transform:`translate3d(${552+(d-1)*340}px,${145+(d-1)*30}px,0) scale(${Math.pow(.835,d)})`}:{}),...(exiting?{pointerEvents:"none" as const}:{} ) } as CSSProperties}>
         <div style={{ position: "absolute", inset: 0, overflow: "hidden", background:expanded?"linear-gradient(#3b515a,#253740)":"radial-gradient(ellipse at 50% 5%,#d2f75655,transparent 65%),linear-gradient(180deg,#92cd11 0%,#78b706 72%,#3d7102 100%)", borderRadius:2,boxShadow:on?"inset 0 0 0 1px #c1d0d34d,0 3px 10px #00000014":"inset 0 0 0 1px #9fb1b326,0 2px 8px #00000010" }}>
           {e.key==='me'?<div style={{position:'absolute',left:24,right:24,top:expanded?64:28}}>
             <div style={{display:'flex',gap:14,alignItems:'center'}}>{pickedPic?<img src={pickedPic} alt="" style={{width:64,height:64}}/>:<NxeOriginalIcon name="achievements-small" size={56}/>}<span style={{fontSize:20}}>{st.online?'Signed In':'Offline'}{expanded&&<><div style={{fontSize:18,marginTop:6}}>Games: {games.length}</div>{progress&&<div style={{fontSize:18}}>Achievements: {progress.unlocked} / {progress.total}</div>}</>}</span></div>
@@ -244,21 +249,26 @@ export function NxeHome() {
   return (
     <ThemeRoot onInput={onInput} hints={{ a: profileActive?"Select action":"Select", b:profileActive?"Back":undefined, y: "Options" }}>
       <div data-nxe-surface style={{position:'absolute',inset:0}}><style>{`[data-nxe-surface],[data-nxe-surface] *{scrollbar-width:none!important}[data-nxe-profile-row],[data-nxe-page] [role=option],[data-nxe-media] [role=option]{opacity:.7;transition:opacity ${nxeFocusDuration}ms linear}[data-nxe-profile-row][data-selected=true],[data-nxe-page] [aria-selected=true],[data-nxe-media] [aria-selected=true]{opacity:1}[data-nxe-surface]::-webkit-scrollbar,[data-nxe-surface] *::-webkit-scrollbar{display:none!important;width:0!important;height:0!important}`}</style>
+      <style>{convectionFont}</style>
       <Stage background="#9fb98c">
         {wall || look.bg || consoleArt.background ? <BackgroundMedia src={wall ?? look.bgFor(X360_SECTION[chan.id] ?? "home") ?? look.bg ?? consoleArt.background ?? ""} className="dht-x360n-bg" data-dht-from-skin={!wall && look.bg ? "x360" : undefined} style={{ position: "absolute", inset: 0, width: W, height: H, objectFit: "cover" }} /> : <div className="dht-x360n-bg" style={{ position: "absolute", inset: 0, background: "radial-gradient(ellipse at 24% 0%,#67a60099,transparent 55%),radial-gradient(ellipse at 95% 48%,#e6ed9d88,transparent 40%),linear-gradient(180deg,#364b2e 0%,#789a64 27%,#cfddda 47%,#ecf5f1 57%,#9da7a8 100%)" }} />}
-        {!wall && !look.bg && !consoleArt.background && <svg data-nxe-floor="true" aria-hidden="true" viewBox="0 0 1280 720" preserveAspectRatio="none" style={{position:"absolute",left:ox,top:oy,width:1280*k,height:720*k,pointerEvents:"none"}}><defs><filter id="nxe-horizon-soft"><feGaussianBlur stdDeviation="7"/></filter><radialGradient id="nxe-floor-light" cx="38%" cy="13%" r="95%"><stop offset="0" stopColor="#c3cfd0"/><stop offset=".43" stopColor="#7e8c90"/><stop offset="1" stopColor="#38464b"/></radialGradient><linearGradient id="nxe-horizon-light" x2="0" y2="1"><stop stopColor="#f3ffff" stopOpacity=".8"/><stop offset="1" stopColor="#f3ffff" stopOpacity="0"/></linearGradient></defs><path d="M0 414 Q640 346 1280 414 L1280 720 L0 720Z" fill="url(#nxe-floor-light)"/><path d="M0 414 Q640 346 1280 414 L1280 433 Q640 365 0 433Z" fill="url(#nxe-horizon-light)" filter="url(#nxe-horizon-soft)"/></svg>}
+        {!wall && !look.bg && <svg data-nxe-floor="true" aria-hidden="true" viewBox="0 0 1280 720" preserveAspectRatio="none" style={{position:"absolute",inset:0,width:W,height:H,pointerEvents:"none"}}><defs><filter id="nxe-horizon-soft"><feGaussianBlur stdDeviation="7"/></filter><filter id="nxe-floor-bloom"><feGaussianBlur stdDeviation="26"/></filter><radialGradient id="nxe-floor-light" cx="38%" cy="13%" r="95%"><stop offset="0" stopColor="#c1cbd3"/><stop offset=".43" stopColor="#59646c"/><stop offset="1" stopColor="#30363c"/></radialGradient><linearGradient id="nxe-horizon-light" x2="0" y2="1"><stop stopColor="#f3ffff" stopOpacity=".8"/><stop offset="1" stopColor="#f3ffff" stopOpacity="0"/></linearGradient></defs><path d="M0 418 Q640 354 1280 418 L1280 720 L0 720Z" fill="url(#nxe-floor-light)"/><path d="M0 418 Q640 354 1280 418 L1280 421 Q640 357 0 421Z" fill="url(#nxe-horizon-light)" filter="url(#nxe-horizon-soft)"/><ellipse cx="410" cy="535" rx="340" ry="45" fill="#d4e8fa" opacity=".32" filter="url(#nxe-floor-bloom)"/></svg>}
         <div data-nxe-dashboard ref={node=>{node?.toggleAttribute('inert',!!page);}} aria-hidden={!!page} style={{ position: "absolute", left: ox, top: oy, width: 1280, height: 720, transform: `scale(${k})`, transformOrigin: "0 0", opacity:page&&page!=='power'&&!pageClosing?0:1,transition:s.animations?"opacity 150ms ease-out":undefined,pointerEvents:page?"none":"auto", fontFamily: FONT, color: "#fff" }}>
+          <button data-nxe-profile-header aria-label={`Profile: ${api.user}`} onClick={()=>{setCh(channels.findIndex(c=>c.id==='myxbox'));setSels(m=>({...m,myxbox:0}));setInsideCard(true);}} style={{position:'absolute',right:96,top:48,display:'flex',alignItems:'flex-start',gap:8,border:0,padding:0,background:'transparent',color:'inherit',font:'inherit',textAlign:'right',cursor:'pointer',zIndex:66}}>
+            <span style={{fontSize:24,lineHeight:'28px',maxWidth:270,overflow:'hidden',textOverflow:'ellipsis',whiteSpace:'nowrap'}}>{api.user}<span style={{display:'block',fontSize:18}}>{st.online?'Online':'Offline'}</span></span>
+            <span style={{position:'relative',width:64,height:64,background:'#eaf0e4',display:'grid',placeItems:'center',color:'#608438',fontSize:32}}>{(pickedPic??st.avatar)?<img src={pickedPic??st.avatar} alt="Gamer picture" style={{width:'100%',height:'100%',objectFit:'cover'}}/>:api.user.charAt(0)}</span>
+          </button>
           {/* Horizon: the light band the panels stand on */}
 
 
           {/* channel queue: current lowest, the following channels above it, clipped to the 512×164 scene */}
-          <div style={{ position: "absolute", opacity:profileActive?0:1,pointerEvents:profileActive?"none":"auto",left: SAFE_X, top: 28, width: 800, height: 144, overflow: "hidden", zIndex:65 }}>
+          <div style={{ position: "absolute", opacity:profileActive?0:1,pointerEvents:profileActive?"none":"auto",left: SAFE_X, top: 102, width: 800, height: 128, overflow: "hidden", zIndex:65 }}>
             {channels.map((c, i) => {
-              const d = i - ci;
+              const d = ci - i;
               if (d < -1 || d > 4) return null;
               return (
                 <div key={c.id} className="dht-x360n-channel" data-selected={d === 0} onClick={() => (setInsideCard(false),setCh(i), playSound("tab"))}
-                  style={{ position: "absolute", left: 0, top: 80 - d * 32, height: 36, lineHeight: "36px", fontSize: d===0?34:27, whiteSpace: "nowrap", textShadow: "0 1px 3px rgba(0,0,0,.27)", opacity: d === 0 ? 1 : d < 0 ? 0 : Math.max(0.25, 0.7 - (d - 1) * 0.18), transition: `top ${anim}, opacity ${anim}`, cursor: "pointer" }}>
+                  style={{ position: "absolute", left: 0, top: 80 - d * 30, height: 36, lineHeight: "36px", fontSize: d===0?34:27, whiteSpace: "nowrap", textShadow: "0 1px 3px rgba(0,0,0,.27)", opacity: d === 0 ? 1 : d < 0 ? 0 : Math.max(0.25, 0.7 - (d - 1) * 0.18), transition: `top ${anim}, opacity ${anim}`, cursor: "pointer" }}>
                   {d===0&&<NxeOriginalIcon name="channel-small" size={17} style={{position:"absolute",left:0,top:9}}/>}<span style={{paddingLeft:d===0?22:0}}>{c.label}</span>
                 </div>
               );
@@ -273,7 +283,7 @@ export function NxeHome() {
             @keyframes dhtNxeOut {from{opacity:1;transform:translate3d(0,0,0)}to{opacity:0;transform:translate3d(0,var(--nxe-slide),0)}}
             @media(prefers-reduced-motion:reduce){.dht-x360n-card,.dht-nxe-channel-row,.dht-x360n-channel,.dht-nxe-page-panel,[data-nxe-focus]{animation:none!important;transition:none!important}}
           `}</style>
-          {outgoing&&s.animations&&<div data-nxe-outgoing aria-hidden="true" className="dht-nxe-channel-row" style={{position:'absolute',inset:0,pointerEvents:'none',animation:'dhtNxeOut 260ms ease-in both','--nxe-slide':`${-outgoing.direction*24}px`} as CSSProperties}>
+          {outgoing&&s.animations&&<div data-nxe-outgoing aria-hidden="true" className="dht-nxe-channel-row" style={{position:'absolute',inset:0,pointerEvents:'none',animation:'dhtNxeOut 320ms ease-in both','--nxe-slide':`${-outgoing.direction*24}px`} as CSSProperties}>
             {outgoing.channel.slots.map((entry,i)=>panel(entry,i,outgoing.selection,true))}
           </div>}
           <div key={chan.id} data-nxe-channel={chan.id} className="dht-nxe-channel-row" style={{position:'absolute',inset:0,animation:s.animations?'dhtNxeIn 320ms cubic-bezier(.18,.72,.24,1) both':undefined,'--nxe-slide':`${direction*32}px`} as CSSProperties}>
@@ -283,19 +293,19 @@ export function NxeHome() {
           </div>
 
           {/* Reference count line; titles and descriptions belong inside cards. */}
-          <div data-nxe-caption style={{ position: "absolute", left: SAFE_X, top: 570, width: 720, height: 26, fontSize: 18, color: "#ebebeb", textShadow: "0 1px 2px rgba(15,15,15,.8)", display:profileActive?"none":"flex", alignItems: "center", gap: 10, whiteSpace: "nowrap", overflow: "hidden" }}>
+          <div data-nxe-caption style={{ position: "absolute", left: SAFE_X, top: 582, width: 720, height: 26, fontSize: 18, color: "#ebebeb", textShadow: "0 1px 2px rgba(15,15,15,.8)", display:profileActive?"none":"flex", alignItems: "center", gap: 10, whiteSpace: "nowrap", overflow: "hidden" }}>
             <span style={{fontSize:14,opacity:.8,flexShrink:0}}>{sel+1} of {chan.slots.length}</span>
           </div>
 
           {/* button legend */}
-          <div style={{ position: "absolute", left: SAFE_X, top: 670, height: 32, display: "flex", gap: 34, alignItems: "center", fontSize: 18, color: "#ebebeb", textShadow: "0 1px 1px rgba(15,15,15,.5)" }}>
+          <div style={{ position: "absolute", left: SAFE_X, top: 634, height: 32, display: "flex", gap: 34, alignItems: "center", fontSize: 18, color: "#ebebeb", textShadow: "0 1px 1px rgba(15,15,15,.5)" }}>
             {legend("a","Select")}
             {profileActive?legend("b","Back"):legend("y","Options")}
           </div>
 
           <NxeWordmark/>
           {/* your avatar, standing on the floor in front of the far panels */}
-          {(chan.id==="myxbox"||chan.id==="friends")&&<div aria-hidden="true" style={{ position: "absolute", left: 842, top: 140, width: 310, height: 510, zIndex: 50, pointerEvents: "none" }}>
+          {((chan.id==="myxbox"&&cur?.key==="me")||chan.id==="friends")&&<div aria-hidden="true" style={{ position: "absolute", left: profileActive?842:330, top: profileActive?140:220, width: 310, height: 430, zIndex: 50, pointerEvents: "none" }}>
             {customProfilePicture()?<img src={customProfilePicture()} alt="Custom profile picture" style={{width:"100%",height:"100%",objectFit:"contain"}}/>:(!avatarOpen&&!legacyOpen&&<MetroAvatar revision={avatarRevision} fallback={fallbackAvatar} framing="nxe"/>)}
           </div>}
         </div>

@@ -1,4 +1,5 @@
 import {bladesSmallFallback} from "./xboxFallbackArtwork";
+import {useConvectionFont} from './convectionFont';
 import {BladesPages,BladesPage} from "./BladesPages";
 import {useBladesSweep} from "./useBladesSweep";
 import {openMarketplace} from "../marketplaceState";
@@ -46,6 +47,7 @@ const BLADES = [
 ];
 
 export function BladesHome() {
+  const convectionFont=useConvectionFont();
   const api = useHome();
   const s = api.settings;
   const { W, H } = useStage();
@@ -184,9 +186,9 @@ export function BladesHome() {
   return (
     <ThemeRoot onInput={onInput} hints={{a:"Select",y:"Options"}}>
       <Stage background="#c8c7ce">
-        <style>{`${BLADES_FONT_CSS}
+        <style>{`${BLADES_FONT_CSS}${convectionFont}
           @property --dht-blade-x{syntax:"<length>";inherits:true;initial-value:116px}
-          .dht-blades{font-family:"DHT Blades",Tahoma,sans-serif;color:#39362d}
+          .dht-blades{font-family:var(--dht-blades-font,"DHT Blades"),Tahoma,sans-serif;color:#39362d}
           .dht-blades[data-in-page=true]>.dht-x360b-tab,.dht-blades[data-in-page=true]>.dht-blades-active-edge{transform:translateX(-1500px);pointer-events:none!important}
           .dht-blades[data-in-page=true]>.dht-x360b-tab[data-right=true]{transform:translateX(1500px)}
           .dht-blades>.dht-x360b-tab,.dht-blades>.dht-blades-active-edge{transition:transform 240ms ease-in}

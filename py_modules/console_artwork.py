@@ -75,8 +75,13 @@ def install(theme):
    (staging/'ready.json').write_text(json.dumps({'sha256':pack['sha256']}),encoding='utf-8')
    if dest.exists():shutil.rmtree(dest)
    os.replace(staging,dest);staging=None
+  font_result=None
+  if theme=='x360':
+   import console_font
+   _progress.update(message='Downloading optional Convection font')
+   font_result=console_font.install()
   _progress={'busy':False,'percent':100,'message':'Original console artwork ready'}
-  return {'success':True,**status()}
+  return {'success':True,**status(),**({'font':font_result} if font_result is not None else {})}
  except Exception as e:
   _progress={'busy':False,'percent':0,'message':str(e)}
   return {'success':False,'error':str(e),**status()}

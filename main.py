@@ -2308,6 +2308,14 @@ class Plugin:
         return {"url": f"http://127.0.0.1:{_vi.port}/{_vi.token}/f/{ident}"}
 
     async def get_assets(self, name: str):
+        if name == "x360-convection-font":
+            import console_font
+            font = console_font.font_path()
+            if font and await _ensure_server():
+                ident = "convection-" + console_font.VERSION + ".ttf"
+                _vi.files[ident] = str(font)
+                return {"regular": f"http://127.0.0.1:{_vi.port}/{_vi.token}/f/{ident}"}
+            return {}
         import console_artwork
         optional = console_artwork.spec(name)
         optional_dir = console_artwork.resource_dir(name) if optional else None

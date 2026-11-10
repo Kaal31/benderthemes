@@ -3,13 +3,14 @@ from pathlib import Path
 from unittest.mock import patch
 sys.path.insert(0,str(Path(__file__).resolve().parents[1]/'py_modules'))
 import console_artwork as art
+import console_font
 class ConsoleArtworkTests(unittest.TestCase):
  def setUp(self):
   self.tmp=tempfile.TemporaryDirectory();self.root=Path(self.tmp.name)
   raw=io.BytesIO()
   with zipfile.ZipFile(raw,'w') as z:z.writestr('assets/x360-nxe-dash/icon-disc.png',b'image')
   self.payload=raw.getvalue();self.pack=dict(id='x360-nxe-dash',url='https://gitflic.ru/project/spon4ik67/themehubconsoleassets/release/test/pack/download',bytes=len(self.payload),sha256=hashlib.sha256(self.payload).hexdigest(),unpackedBytes=5,files=1)
-  self.patches=[patch.object(art,'root',return_value=self.root),patch.object(art,'manifest',return_value={'repository':'test','packs':[self.pack]})]
+  self.patches=[patch.object(art,'root',return_value=self.root),patch.object(art,'manifest',return_value={'repository':'test','packs':[self.pack]}),patch.object(console_font,'install',return_value={'success':True})]
   for p in self.patches:p.start()
  def tearDown(self):
   for p in self.patches:p.stop()
@@ -22,6 +23,11 @@ class ConsoleArtworkTests(unittest.TestCase):
  def test_corrupt_download_does_not_activate(self):
   with patch.object(art,'_fetch',return_value=io.BytesIO(self.payload[:-1])):
    self.assertFalse(art.install('x360')['success']);self.assertIsNone(art.resource_dir(self.pack['id']))
+ def test_font_failure_keeps_installed_artwork(self):
+  with patch.object(art,'_fetch',return_value=io.BytesIO(self.payload)),patch.object(console_font,'install',return_value={'success':False,'error':'Offline'}):
+   result=art.install('x360')
+   self.assertTrue(result['success']);self.assertFalse(result['font']['success'])
+   self.assertIsNotNone(art.resource_dir(self.pack['id']))
  def test_traversal_and_duplicates_rejected(self):
   for names in [('assets/x360-nxe-dash/../../../escape.png',),('assets/x360-nxe-dash/icon-disc.png','assets/x360-nxe-dash/ICON-DISC.png')]:
    archive=self.root/'bad.zip'
