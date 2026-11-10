@@ -102,7 +102,6 @@ export function NxeHome() {
     ]},
     { id: "myxbox", label: "My Xbox", slots: [
       { key: "me", label: api.user, sub: st.online ? "Online" : "Offline", tray: "slot-profile", icon: customProfilePicture() ?? pickedPic ?? nxeIcons.avatar, glyph: "user", run: () => setPage("friends") },
-      ...([{ key: "avatar", label: "My Avatar", sub: "Change your avatar's look and clothes", tray: "slot-profile", icon: nxeIcons.avatar, glyph: "user" as const, run: () => setAvatarOpen(true) }]),
       { key: "lib2", label: "Game Library", sub: `${games.length} games`, tray: "slot-games", icon: nxeIcons.games, glyph: "library", run: () => setPage("library") },
       { key: "web", label: "Video Library", sub: "Local videos and Steam recordings", tray: "slot-videos", icon: nxeIcons.video, glyph: "photo", run: () => setPage("videos") },
       { key: "music-library", label: "Music Library", sub: "Your music and media", icon: nxeIcons.music, glyph: "music", run: () => setPage("music") },
@@ -217,13 +216,14 @@ export function NxeHome() {
     const expanded=on&&!exiting&&profileActive&&e.key==='me';
     const height=expanded?492:PANEL_H;
     const titleVisible=!e.game||showTitle(s,"x360",on);
+    const nativeTray=!e.game&&!expanded?consoleArt[e.tray==='slot-profile'?'slot-blankgreen':e.tray??'slot-green']??consoleArt['slot-green']:undefined;
     return (
       <div key={e.key} className="dht-x360n-card dht-tile" data-selected={on&&!exiting} data-name={e.label} role="button" tabIndex={on&&!exiting?0:-1} data-nxe-expanded={expanded||undefined} aria-label={e.label+' card'} onKeyDown={event=>{if(event.key==='Enter'||event.key===' '){event.preventDefault();event.stopPropagation();if(!on)setSels(m=>({...m,[chan.id]:i}));else onInput({btn:'a',repeat:event.repeat});}}} onClick={() => {if(!on){setInsideCard(false);setSels(m=>({...m,[chan.id]:i}));}else if(e.key==='me'){setInsideCard(true);setProfileRow(1);}else e.run();}}
-        style={{ position: "absolute", width: expanded?456:PANEL_W, height, transformOrigin: "0 0", transition: `transform ${anim}, opacity ${anim}, filter ${anim}, width ${anim}, height ${anim}`, willChange:s.animations?"transform":undefined, cursor: "pointer", WebkitBoxReflect: "below 2px linear-gradient(transparent 85%, rgba(255,255,255,.07))", ...place(d),...(expanded?{transform:'translate3d(96px,104px,0)'}:profileActive&&d>0?{transform:`translate3d(${552+(d-1)*340}px,${145+(d-1)*30}px,0) scale(${Math.pow(.835,d)})`}:{}),...(exiting?{pointerEvents:"none" as const}:{} ) } as CSSProperties}>
-        <div style={{ position: "absolute", inset: 0, overflow: "hidden", background:expanded?"linear-gradient(#3b515a,#253740)":"radial-gradient(ellipse at 50% 5%,#d2f75655,transparent 65%),linear-gradient(180deg,#92cd11 0%,#78b706 72%,#3d7102 100%)", borderRadius:2,boxShadow:on?"inset 0 0 0 1px #c1d0d34d,0 3px 10px #00000014":"inset 0 0 0 1px #9fb1b326,0 2px 8px #00000010" }}>
+        style={{ position: "absolute", width: expanded?456:PANEL_W, height, transformOrigin: "0 0", transition: `transform ${anim}, opacity ${anim}, filter ${anim}, width ${anim}, height ${anim}`, willChange:s.animations?"transform":undefined, cursor: "pointer", WebkitBoxReflect: "below 2px linear-gradient(transparent 85%, rgba(255,255,255,.07))", ...place(d),...(expanded?{transform:'translate3d(96px,104px,0)'}:on&&e.key==='me'?{transform:`translate3d(${SAFE_X}px,${PANEL_TOP}px,0)`}:profileActive&&d>0?{transform:`translate3d(${552+(d-1)*340}px,${145+(d-1)*30}px,0) scale(${Math.pow(.835,d)})`}:{}),...(exiting?{pointerEvents:"none" as const}:{} ) } as CSSProperties}>
+        <div style={{ position: "absolute", inset: 0, overflow: "hidden", background:expanded?"linear-gradient(#3b515a,#253740)":nativeTray?`linear-gradient(180deg,transparent 55%,#18320099),url("${nativeTray}") center/100% 100%`:"radial-gradient(ellipse at 50% 5%,#d2f75655,transparent 65%),linear-gradient(180deg,#92cd11 0%,#78b706 72%,#3d7102 100%)", borderRadius:2,boxShadow:on?"inset 0 0 0 1px #c1d0d34d,0 3px 10px #00000014":"inset 0 0 0 1px #9fb1b326,0 2px 8px #00000010" }}>
           {e.key==='me'?<div style={{position:'absolute',left:24,right:24,top:expanded?64:28}}>
-            <div style={{display:'flex',gap:14,alignItems:'center'}}>{pickedPic?<img src={pickedPic} alt="" style={{width:64,height:64}}/>:<NxeOriginalIcon name="achievements-small" size={56}/>}<span style={{fontSize:20}}>{st.online?'Signed In':'Offline'}{expanded&&<><div style={{fontSize:18,marginTop:6}}>Games: {games.length}</div>{progress&&<div style={{fontSize:18}}>Achievements: {progress.unlocked} / {progress.total}</div>}</>}</span></div>
-            {expanded?<div data-nxe-profile-card-actions style={{position:'relative',marginTop:25}}><NxeFocus selected={profileDialog?1:profileRow} motion={!!s.animations}/>{cardActions.map((action,n)=><button key={action.name} aria-selected={!profileDialog&&profileRow===n} onFocus={()=>setProfileRow(n)} onMouseEnter={()=>{if(!profileDialog)setProfileRow(n);}} onClick={event=>{event.stopPropagation();action.run();}} style={{position:'relative',display:'block',height:45,width:'100%',border:0,borderBottom:'1px solid #82949b33',background:'transparent',color:'inherit',font:'inherit',fontSize:21,textAlign:'left',cursor:'pointer'}}>{action.name}</button>)}</div>:<><div style={{fontSize:15,opacity:.85,marginTop:22,marginBottom:8}}>Last Games</div>
+            {expanded?<div style={{display:'flex',gap:14,alignItems:'center'}}>{pickedPic?<img src={pickedPic} alt="" style={{width:64,height:64}}/>:<NxeOriginalIcon name="achievements-small" size={56}/>}<span style={{fontSize:20}}>{st.online?'Signed In':'Offline'}{expanded&&<><div style={{fontSize:18,marginTop:6}}>Games: {games.length}</div>{progress&&<div style={{fontSize:18}}>Achievements: {progress.unlocked} / {progress.total}</div>}</>}</span></div>:<div data-nxe-profile-summary style={{fontSize:26,lineHeight:'30px'}}>{api.user}<div style={{fontSize:19,lineHeight:'26px'}}>{st.online?'Online':'Offline'}</div></div>}
+            {expanded?<div data-nxe-profile-card-actions style={{position:'relative',marginTop:25}}><NxeFocus selected={profileDialog?1:profileRow} motion={!!s.animations}/>{cardActions.map((action,n)=><button key={action.name} aria-selected={!profileDialog&&profileRow===n} onFocus={()=>setProfileRow(n)} onMouseEnter={()=>{if(!profileDialog)setProfileRow(n);}} onClick={event=>{event.stopPropagation();action.run();}} style={{position:'relative',display:'block',height:45,width:'100%',border:0,borderBottom:'1px solid #82949b33',background:'transparent',color:'inherit',font:'inherit',fontSize:21,textAlign:'left',cursor:'pointer'}}>{action.name}</button>)}</div>:<><div style={{fontSize:17,opacity:.85,marginTop:58,marginBottom:8}}>Last Games</div>
             <div style={{display:'flex',gap:8}}>{games.slice(0,3).map(game=><GameArt key={game.appid} g={game} kind="portrait" style={{width:52,height:70,objectFit:'cover'}}/>)}</div></>}
           </div>:e.game ? (
             <GameArt g={e.game} kind="landscape" style={{ position: "absolute", left:0,top:0, width: "100%", height:titleVisible?235:320, objectFit: "cover" }} />
@@ -235,7 +235,7 @@ export function NxeHome() {
           <div aria-hidden="true" style={{position:'absolute',inset:0,pointerEvents:'none',background:'linear-gradient(115deg,#ffffff0b,transparent 35%),linear-gradient(180deg,#ffffff08,transparent 12%,#0000000c)',boxShadow:'inset 0 1px #ffffff33'}}/>
 
           {titleVisible && (
-            <div style={{ position: "absolute", left: 0, right: 0, ...(expanded?{top:0}:{bottom:0}), padding: expanded?"16px 20px":"16px 20px 18px", background: expanded?undefined:"linear-gradient(180deg,#5a970000,#37630266)", color: "#fff", fontSize: 23, textShadow: TEXT_SHADOW, whiteSpace: "nowrap", overflow: "hidden", textOverflow: "ellipsis" }}>{e.label}</div>
+            <div style={{ position: "absolute", left: 0, right: 0, ...(expanded?{top:0}:{bottom:0}), padding: expanded?"16px 20px":"16px 20px 18px", background: expanded?undefined:"linear-gradient(180deg,#5a970000,#37630266)", color: "#fff", fontSize: 23, textShadow: TEXT_SHADOW, whiteSpace: "nowrap", overflow: "hidden", textOverflow: "ellipsis" }}>{e.key==='me'&&!expanded?(st.online?'Connected':'Disconnected'):e.label}{e.key==='me'&&!expanded&&<span style={{display:'block',fontSize:18,lineHeight:'22px'}}>Steam</span>}</div>
           )}
         </div>
         {/* Soft contact shadow onto the next panel, without a hard rectangular strip. */}
@@ -262,14 +262,14 @@ export function NxeHome() {
 
 
           {/* channel queue: current lowest, the following channels above it, clipped to the 512×164 scene */}
-          <div style={{ position: "absolute", opacity:profileActive?0:1,pointerEvents:profileActive?"none":"auto",left: SAFE_X, top: 102, width: 800, height: 128, overflow: "hidden", zIndex:65 }}>
+          <div style={{ position: "absolute", opacity:profileActive?0:1,pointerEvents:profileActive?"none":"auto",left: SAFE_X-20, top: 102, width: 820, height: 128, overflow: "hidden", zIndex:65 }}>
             {channels.map((c, i) => {
               const d = ci - i;
               if (d < -1 || d > 4) return null;
               return (
                 <div key={c.id} className="dht-x360n-channel" data-selected={d === 0} onClick={() => (setInsideCard(false),setCh(i), playSound("tab"))}
-                  style={{ position: "absolute", left: 0, top: 80 - d * 30, height: 36, lineHeight: "36px", fontSize: d===0?34:27, whiteSpace: "nowrap", textShadow: "0 1px 3px rgba(0,0,0,.27)", opacity: d === 0 ? 1 : d < 0 ? 0 : Math.max(0.25, 0.7 - (d - 1) * 0.18), transition: `top ${anim}, opacity ${anim}`, cursor: "pointer" }}>
-                  {d===0&&<NxeOriginalIcon name="channel-small" size={17} style={{position:"absolute",left:0,top:9}}/>}<span style={{paddingLeft:d===0?22:0}}>{c.label}</span>
+                  style={{ position: "absolute", left: 20, top: 80 - d * 30, height: 36, lineHeight: "36px", fontSize: d===0?34:27, whiteSpace: "nowrap", textShadow: "0 1px 3px rgba(0,0,0,.27)", opacity: d === 0 ? 1 : d < 0 ? 0 : Math.max(0.25, 0.7 - (d - 1) * 0.18), transition: `top ${anim}, opacity ${anim}`, cursor: "pointer" }}>
+                  {d===0&&<NxeOriginalIcon name="channel-small" size={17} style={{position:"absolute",left:-20,top:9}}/>}<span>{c.label}</span>
                 </div>
               );
             })}
