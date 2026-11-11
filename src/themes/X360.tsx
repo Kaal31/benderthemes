@@ -1,3 +1,6 @@
+import {X360ImportedScene} from "./X360ImportedScene";
+import {AuroraCoverflow} from "./AuroraCoverflow";
+import {useX360Skin} from "../skins";
 import {useXboxArtwork} from "./xboxFallbackArtwork";
 import {BackgroundMedia} from "../WallpaperMedia";
 import {ProfileAvatar} from "../ProfileAvatar";
@@ -43,6 +46,10 @@ const FONT = `var(--dht-font, "Segoe UI Light", "Segoe UI", "Motiva Sans", "Helv
 /** Xbox 360: the dashboard era chosen in settings (Metro is this file). */
 export function X360Home() {
   const style = useHome().settings.x360?.style ?? "metro";
+  const imported = useX360Skin();
+  const importedLayout = useHome().settings.x360.importedLayout !== false;
+  if (importedLayout && imported?.entryScene && imported.sceneRoots?.[imported.entryScene]) return <X360ImportedScene skin={imported}/>;
+  if (importedLayout && imported?.coverflow?.modes?.length) return <AuroraCoverflow skin={imported as typeof imported & {coverflow: NonNullable<typeof imported.coverflow>}}/>;
   if (style === "blades") return <BladesHome />;
   if (style === "nxe") return <NxeHome />;
   if (style === "kinect") return <KinectHome />;
@@ -304,7 +311,7 @@ function X360MetroHome() {
             );
           })}
         </div>
-        {avatarOpen&&<MetroAvatarEditor fallback={fallbackAvatar} onClose={()=>{setAvatarOpen(false);setAvatarRevision(v=>v+1);}} onLegacy={()=>{setAvatarOpen(false);setAvatarRevision(v=>v+1);setLegacyOpen(true);}}/>}
+        {avatarOpen&&<MetroAvatarEditor name={api.user} fallback={fallbackAvatar} onClose={()=>{setAvatarOpen(false);setAvatarRevision(v=>v+1);}} onLegacy={()=>{setAvatarOpen(false);setAvatarRevision(v=>v+1);setLegacyOpen(true);}}/>}
         {legacyOpen&&<LegacyMetroAvatarEditor name={api.user} spec={oldSpec} motion={s.animations} onDone={spec=>{if(spec)saveAvatar(spec);setLegacyOpen(false);setAvatarRevision(v=>v+1);}}/>}
         <style>{`@keyframes dhtSlideIn { from { opacity: 0; transform: translateX(60px) } to { opacity: 1; transform: none } }`}</style>
 

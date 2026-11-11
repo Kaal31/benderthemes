@@ -1,3 +1,4 @@
+import {toaster} from '@decky/api';
 import {cabinetWallpapers} from "./x360Cabinet";
 import {consoleArtworkItems} from './consoleArtwork';
 import { saverOptions, updateSaver, addSaverMedia, previewSaver } from "./themeScreensavers";
@@ -242,7 +243,7 @@ function xmbItems(variant: "ps3" | "psp", part: "file" | "look"): MenuItem[] {
   ];
 }
 
-const X360_NOTE = "Put theme / gamer picture packages in the skins/x360 folder, then reopen this menu";
+const X360_NOTE = "Put theme / gamer picture packages or FSD/Aurora .xzp skins, ZIP collections, extracted skin folders and Aurora .cfljson layouts in skins/x360, then reopen this menu. XZP imports artwork; .cfljson imports coverflow transforms. Original console scene menus are not yet reproduced.";
 const x360Title = (n: string) => (lists.x360names[n] && lists.x360names[n] !== n ? `${lists.x360names[n]} (${n.length > 16 ? n.slice(0, 8) + "…" : n})` : n);
 /** Xbox 360 theme files (STFS packages in skins/x360) and gamer pictures. */
 function x360FileItems(): MenuItem[] {
@@ -254,8 +255,14 @@ function x360FileItems(): MenuItem[] {
   const none = (n: string) => [{ id: "", name: n }];
   return [
     choice("Cabinet wallpaper (Kinect)", [{id:"",name:"None"},...cabinetWallpapers.map(item=>({id:item.id,name:item.name}))],()=>x().cabinetWallpaper??"",v=>setX({cabinetWallpaper:v}),undefined,"Emphatic’s cabinet wallpapers. Downloaded on selection and fitted to the Kinect dashboard’s 16:9 canvas; cached locally for offline use."),
+    choice("Imported cover case", [{id:'XboxCase',name:'Xbox'},{id:'DVDCase',name:'DVD'},{id:'KinectCase',name:'Kinect'},{id:'ArcadeCase',name:'Arcade'},{id:'IndieCase',name:'Indie'},{id:'FavoriteCase',name:'Favorite'},{id:'GreenCase',name:'FSD green'},{id:'BlankGreenCase',name:'FSD blank green'},{id:'FullCase',name:'FSD full case'},{id:'OrangeCase',name:'FSD orange'},{id:'PurpleCase',name:'FSD purple'},{id:'SilverCase',name:'FSD silver'}],()=>x().caseTexture??'XboxCase',v=>setX({caseTexture:v}),undefined,"Uses the case texture supplied by the imported skin when available."),
+    {label:"Download / retry Xbox audio decoder (vgmstream)",action:()=>{void installMusicDecoder().then(result=>{if(!result.installed)throw new Error(result.error??'Decoder unavailable');resourcesChanged();toaster.toast({title:'Xbox audio decoder ready',body:'Imported skin audio will be decoded on the next load.'})}).catch(error=>toaster.toast({title:'Xbox audio decoder failed',body:String(error)}))}},
+    toggle("Imported Xbox theme music",()=>getSettings().music.x360!==false,v=>updateSettings(s=>({music:{...s.music,x360:v}}))),
+    choice("Aurora game view",[{id:'cases',name:'Cases'},{id:'discs',name:'Discs'}],()=>x().auroraGameView??'cases',v=>setX({auroraGameView:v as 'cases'|'discs'})),
+    choice("Aurora cover frame",[{id:'xbox360',name:'Xbox 360 (external artwork)'},{id:'steam',name:'Steam'}],()=>x().auroraCoverFrame??'xbox360',v=>setX({auroraCoverFrame:v as 'xbox360'|'steam'}),undefined,"The Xbox frame uses the separate template asset. Steam is also used while that artwork is unavailable."),
+    choice("Aurora coverflow layout", [...none("Built-in / skin default"), ...lists.x360.filter(n=>n.toLowerCase().endsWith('.cfljson')).map(n=>({id:n,name:x360Title(n)}))],()=>x().coverflow??"",v=>setX({coverflow:v}),undefined,"A .cfljson layout controls the cover positions, camera and layout modes independently of the skin."),
     choice("Xbox 360 theme file", [...none("None"), ...lists.x360.map((n) => ({ id: n, name: x360Title(n) }))], () => x().skin ?? "", (v) => setX({ skin: v }), undefined, X360_NOTE),
-    ...(x().skin ? [group("Theme file effects", () => [
+    ...(x().skin ? [toggle("Imported skin layout (experimental)",()=>x().importedLayout!==false,v=>setX({importedLayout:v})),toggle("Show avatar in Aurora",()=>x().auroraAvatar===true,v=>setX({auroraAvatar:v})),toggle("Imported skin weather (approximate IP location)",()=>x().weather===true,v=>setX({weather:v})),group("Theme file effects", () => [
       tg("Theme wallpaper (Metro, NXE, Kinect)", "background"),
       tg("Theme colour (Metro tiles)", "labels"),
     ])] : []),

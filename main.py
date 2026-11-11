@@ -1383,15 +1383,22 @@ def _read_psp_cached(path: str):
     return _pickle_cached("pspskin", text, lambda: console_themes.read_psp(path))
 
 
-def _read_x360_cached(path: str):
+def _read_x360_cached(path: str, member: str = ""):
     """x360_themes.read_x360, remembered on disk (pictures are decoded)."""
     import x360_themes
+    import x360_sources
+    import x360_audio
+    x360_audio.configure(shutil.which('ffmpeg'),_vgm_path() if _vgm_ready() else None,os.path.join(_cache_root(),'xma-audio'))
+    def read():
+        return x360_sources.read_source(path, member) if member or os.path.isdir(path) or path.lower().endswith(".zip") else x360_themes.read_x360(path)
+    if os.path.isdir(path):
+        return read()  # Nested file changes must not reuse the parent folder timestamp.
     try:
         st = os.stat(path)
-        text = f"{os.path.realpath(path)}|{st.st_size}|{st.st_mtime_ns}|{x360_themes.READER_VERSION}"
+        text = f"{os.path.realpath(path)}|{st.st_size}|{st.st_mtime_ns}|{x360_themes.READER_VERSION}|{member}|{x360_audio.decoder_key()}"
     except Exception:
-        return x360_themes.read_x360(path)
-    return _pickle_cached("x360skin", text, lambda: x360_themes.read_x360(path))
+        return read()
+    return _pickle_cached("x360skin", text, read)
 
 
 def _read_xbox_cached(path: str):
@@ -1894,6 +1901,16 @@ class Plugin:
             import x360_themes
             os.makedirs(os.path.join(base, "x360"), exist_ok=True)
             for n, p in _skin_entries("x360"):
+                if os.path.isdir(p) or n.lower().endswith(".zip"):
+                    try:
+                        import x360_sources
+                        for item in x360_sources.variants(p):
+                            key = n + x360_sources.SEPARATOR + item["id"]
+                            (x360pics if item.get("kind") == "gamerpic" else x360).append(key)
+                            x360names[key] = item["name"] + " — " + n
+                    except Exception as error:
+                        decky.logger.warning(f"x360 collection {n}: {error}")
+                    continue
                 k = x360_themes.peek(p) if os.path.isfile(p) else None
                 if k == "theme":
                     x360.append(n)
@@ -2057,11 +2074,28 @@ class Plugin:
 
     async def get_x360_skin(self, name: str):
         """Xbox 360 theme / gamer picture package from skins/x360/ (any file name), or None."""
-        p = _skin_path("x360", name)
-        if not name or not os.path.isfile(p):
+        import x360_sources
+        filename, separator, member = name.partition(x360_sources.SEPARATOR)
+        p = _skin_path("x360", filename)
+        if not filename or not (os.path.isfile(p) or os.path.isdir(p)):
             return None
         try:
-            return await asyncio.to_thread(_read_x360_cached, p)
+            result = await asyncio.to_thread(_read_x360_cached, p, member if separator else "")
+            if result and result.get('sceneAudio') and await _ensure_server():
+                import base64,hashlib
+                result = dict(result)
+                audio = {}
+                folder = os.path.join(_cache_root(),'xma-served');os.makedirs(folder,exist_ok=True)
+                for source,url in result['sceneAudio'].items():
+                    if not url.startswith('data:audio/'):continue
+                    header,body=url.split(',',1);raw=base64.b64decode(body)
+                    ext='.ogg' if 'audio/ogg' in header else '.mp3' if 'audio/mpeg' in header else '.wav'
+                    ident='xma-'+hashlib.sha256(raw).hexdigest()+ext;target=os.path.join(folder,ident)
+                    if not os.path.isfile(target):
+                        with open(target,'wb') as stream:stream.write(raw)
+                    _vi.files[ident]=target;audio[source]=_vi.url('f/'+ident)
+                result['sceneAudio']=audio
+            return result
         except Exception as e:
             decky.logger.error(f"x360 theme read failed: {e}")
             return None
@@ -2418,6 +2452,58 @@ class Plugin:
         return await asyncio.to_thread(x360_avatar.status, self._x360_avatar_dir())
 
     # ───── local media server (sounds, music, videos) ─────
+    async def x360_runtime_info(self):
+        """Local read-only telemetry for imported dashboard fields."""
+        import x360_telemetry
+        return await asyncio.to_thread(x360_telemetry.read_runtime)
+
+    async def _cover_wrap_reply(self, result):
+        path = result.pop("path", None)
+        if path and await _ensure_server():
+            key = "wrap-" + os.path.basename(path)
+            _vi.files[key] = path
+            result["url"] = _vi.url("f/" + key)
+        return result
+
+    async def cover_wrap_get(self, appid: str, name: str = "", discover: bool = False):
+        import cover_wraps
+        try:
+            result = await asyncio.to_thread(cover_wraps.resolve, _data_dir(), appid, name, bool(discover))
+            return await self._cover_wrap_reply(result)
+        except Exception as error:
+            return {"mode": "auto", "error": str(error)}
+
+    async def cover_wrap_search(self, query: str, provider: str = "all", refresh: bool = False):
+        import cover_wraps
+        try:
+            return await asyncio.to_thread(cover_wraps.search, _data_dir(), query, provider, bool(refresh))
+        except Exception as error:
+            return {"candidates": [], "errors": [str(error)]}
+
+    async def cover_wrap_select(self, appid: str, provider: str, platform: str, ident: str, name: str):
+        import cover_wraps
+        try:
+            result = await asyncio.to_thread(cover_wraps.select, _data_dir(), appid, provider, platform, ident, name)
+            return await self._cover_wrap_reply(result)
+        except Exception as error:
+            return {"error": str(error)}
+
+    async def cover_wrap_import(self, appid: str, path: str):
+        import cover_wraps
+        try:
+            result = await asyncio.to_thread(cover_wraps.import_file, _data_dir(), appid, path)
+            return await self._cover_wrap_reply(result)
+        except Exception as error:
+            return {"error": str(error)}
+
+    async def cover_wrap_mode(self, appid: str, mode: str):
+        import cover_wraps
+        try:
+            result = await asyncio.to_thread(cover_wraps.set_mode, _data_dir(), appid, mode)
+            return await self._cover_wrap_reply(result)
+        except Exception as error:
+            return {"error": str(error)}
+
     async def castle_weather(self):
         """Opt-in IP-based weather; HTTPS only, cached ten minutes, no location persisted."""
         cached = getattr(self, "_castle_weather_cache", None)

@@ -357,7 +357,7 @@ export interface Settings {
   xboxSkin?: string; // original Xbox skin: a folder or .zip name under skins/xbox ("" = none)
   switchTheme?: string; // Switch theme: a .nxtheme path under skins/switch ("file" or "folder/file") or ""
   originalConsoleArtwork?: boolean; // installed GitFlic UI pack; original/procedural UI is the fallback
-  x360: { style: X360Style; cabinetWallpaper?: string; guideSide?: "left" | "right"; skin?: string; gamerpic?: string; showThemeHubLogo?: boolean }; // skin / gamerpic: STFS package names in skins/x360 ("" = none); which Xbox 360 dashboard era
+  x360: { style: X360Style; importedLayout?: boolean; auroraAvatar?: boolean; auroraCoverFrame?: "xbox360" | "steam"; auroraGameView?: "cases" | "discs"; auroraDiscIndicator?: "theme" | "flat" | "3d"; weather?: boolean; coverflow?: string; caseTexture?: string; cabinetWallpaper?: string; guideSide?: "left" | "right"; skin?: string; gamerpic?: string; showThemeHubLogo?: boolean }; // skin / gamerpic: STFS package names in skins/x360 ("" = none); which Xbox 360 dashboard era
   dial: DialSettings;
   hubStyle: string; // Hub look: "auto" (the theme home it was opened on), "neutral", "preview" (the theme focused in Discover) or a console theme id (always that look when installed)
   themedStore: boolean; // Store entries open the store styled like the current theme
@@ -469,7 +469,7 @@ export const DEFAULTS: Settings = {
   profileName: "",
   sounds: true,
   packs: {},
-  music: {ps3:false,psp:false,x360:false},
+  music: {ps3:false,psp:false,x360:true},
   musicPacks: {},
   musicVolume: 40,
   musicShuffle: false,

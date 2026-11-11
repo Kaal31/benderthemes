@@ -1,3 +1,4 @@
+import type {XuiSceneSkin as importSceneSkin} from "./themes/x360SceneRuntime";
 import { BoundedCache } from "./boundedCache";
 // User-supplied console skins, read on the Deck by the backend:
 //  • PS3 .p3t theme files  → XMB background + category icons
@@ -7,7 +8,7 @@ import { BoundedCache } from "./boundedCache";
 // Nothing from these files is bundled with the plugin.
 import { callable } from "@decky/api";
 import type { PspSceneData } from "./themes/pspScene";
-import { useEffect, useState } from "react";
+import { useEffect, useState, useMemo } from "react";
 import { getSettings, pspFile, themeFx, useSettings } from "./settings";
 import { onResourcesChanged } from "./marketplaceState";
 
@@ -112,11 +113,17 @@ export function usePs4Skin(): Ps4Skin | null {
 export const listSkins = callable<[], { ps4?: string[]; p3t: string[]; vita: string[]; psp?: string[]; x360?: string[]; x360pics?: string[]; x360names?: Record<string, string>; xbox?: string[]; wii?: string[]; n3ds?: string[]; dir: string }>("list_skins");
 
 /** Xbox 360 theme or gamer picture package (STFS) from skins/x360/. */
-export interface X360Skin {
+export interface X360Skin extends importSceneSkin {
+  version?: string;
+  family?: "fsd" | "aurora";
+  coverflow?: import("./themes/AuroraCoverflow").AuroraLayout;
+  warnings?: string[];
+  compatibility?: { mode: "artwork-only" | "scene-subset"; layout: boolean; animation: boolean; scripts: boolean; shaders: boolean };
   kind: "theme" | "gamerpic";
   name: string;
   description?: string;
   publisher?: string;
+  backgroundDigest?: string;
   background?: string | null; // main wallpaper (data URL)
   backgrounds: string[]; // the wallpapers: Wallpaper1..4 in file order (real themes), else the large widescreen pictures
   sections?: { home?: string; games?: string; media?: string; system?: string }; // Wallpaper1..4 = Home, Game Library, Media Library, System Settings
@@ -173,7 +180,9 @@ export async function loadX360Skin(name: string): Promise<X360Skin | null> {
 /** The Xbox 360 theme package chosen in Theme options (null while loading / none). */
 export function useX360Skin(): X360Skin | null {
   const s = useSettings();
-  return useSkin(s.x360.skin ?? "", x360Cache, loadX360);
+  const primary=useSkin(s.x360.skin ?? "", x360Cache, loadX360);
+  const layout=useSkin(s.x360.coverflow ?? "", x360Cache, loadX360);
+  return useMemo(()=>layout?.coverflow?{...(primary??layout),coverflow:layout.coverflow}:primary,[primary,layout]);
 }
 /** What the active Xbox 360 theme file gives the dashboards, after the per-file switches
  *  (ThemeFx key `x360:<file>`: "Theme wallpaper" = background, "Theme colour" = labels).

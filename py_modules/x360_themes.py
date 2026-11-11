@@ -28,7 +28,7 @@ import base64
 import struct
 import zlib
 
-READER_VERSION = 2
+READER_VERSION = 22
 
 CT_GAMER_PICTURE = 0x00020000
 CT_THEME = 0x00030000   # STFS content type "Theme" (real Marketplace themes checked: 0x30000; 0x50000 is "Storage Download")
@@ -41,7 +41,7 @@ SECTIONS = ("home", "games", "media", "system")   # Wallpaper1..4
 _LAYER_WORDS = ("layer", "banner", "guidetile", "gameimage")
 
 
-# ───────────────────────── STFS container ─────────────────────────
+# STFS container
 class _Stfs:
     def __init__(self, f):
         self.f = f
@@ -221,7 +221,7 @@ def _utf16(b):
         return ""
 
 
-# ───────────────────────── pictures ─────────────────────────
+# pictures
 def _png(w, h, rgba):
     def chunk(t, d):
         c = struct.pack(">I", len(d)) + t + d
@@ -382,11 +382,19 @@ def _url(mime, data):
     return f"data:{mime};base64," + base64.b64encode(data).decode("ascii")
 
 
-# ───────────────────────── public ─────────────────────────
+# public
 def read_x360(path):
     """Read an Xbox 360 theme / gamer picture package. Returns a dict, or None if it is not one."""
     try:
+        if str(path).lower().endswith('.cfljson'):
+            from x360_sources import layout_theme
+            with open(path, 'rb') as layout:
+                return layout_theme(layout.read(512 * 1024 + 1), str(path))
         with open(path, "rb") as f:
+            if f.read(4) == b"XUIZ":
+                from x360_xzp import read_xzp
+                return read_xzp(path)
+            f.seek(0)
             try:
                 pk = _Stfs(f)
             except Exception:
@@ -486,8 +494,13 @@ def _parse_ini(d):
 def peek(path):
     """Cheap check for lists: "theme", "gamerpic" or None (reads 4 KB, no decoding)."""
     try:
+        if str(path).lower().endswith('.cfljson'):
+            return "theme" if read_x360(path) else None
         with open(path, "rb") as f:
             h = f.read(0x348)
+        if h[:4] == b"XUIZ":
+            from x360_xzp import peek as peek_xzp
+            return "theme" if peek_xzp(path) else None
         if len(h) < 0x348 or h[:4] not in _MAGICS:
             return None
         ct = struct.unpack(">I", h[0x344:0x348])[0]

@@ -1,0 +1,1420 @@
+{
+  "source": "https://github.com/SGCSam/XUIHelper/blob/master/XUIHelper.Core/Assets/Extensions/V5/XuiElements.xml",
+  "license": "GPL-3.0",
+  "description": "Format schema only; no artwork or executable code.",
+  "classes": {
+    "XuiElement": {
+      "base": "(null)",
+      "properties": [
+        {
+          "name": "Id",
+          "type": "string",
+          "indexed": false,
+          "default": ""
+        },
+        {
+          "name": "Width",
+          "type": "float",
+          "indexed": false,
+          "default": "60.000000"
+        },
+        {
+          "name": "Height",
+          "type": "float",
+          "indexed": false,
+          "default": "30.000000"
+        },
+        {
+          "name": "Position",
+          "type": "vector",
+          "indexed": false,
+          "default": "0.000000,0.000000,0.000000"
+        },
+        {
+          "name": "Scale",
+          "type": "vector",
+          "indexed": false,
+          "default": "1.000000,1.000000,1.000000"
+        },
+        {
+          "name": "Rotation",
+          "type": "quaternion",
+          "indexed": false,
+          "default": "0.000000,0.000000,0.000000,1.000000"
+        },
+        {
+          "name": "Opacity",
+          "type": "float",
+          "indexed": false,
+          "default": "false"
+        },
+        {
+          "name": "Anchor",
+          "type": "unsigned",
+          "indexed": false,
+          "default": "0"
+        },
+        {
+          "name": "Pivot",
+          "type": "vector",
+          "indexed": false,
+          "default": "0, 0, 0"
+        },
+        {
+          "name": "Show",
+          "type": "bool",
+          "indexed": false,
+          "default": "true"
+        },
+        {
+          "name": "BlendMode",
+          "type": "unsigned",
+          "indexed": false,
+          "default": "0"
+        },
+        {
+          "name": "DisableTimelineRecursion",
+          "type": "bool",
+          "indexed": false,
+          "default": null
+        },
+        {
+          "name": "DesignTime",
+          "type": "bool",
+          "indexed": false,
+          "default": null
+        },
+        {
+          "name": "ColorWriteFlags",
+          "type": "unsigned",
+          "indexed": false,
+          "default": "0"
+        },
+        {
+          "name": "ClipChildren",
+          "type": "bool",
+          "indexed": false,
+          "default": null
+        },
+        {
+          "name": "EnableEffects",
+          "type": "bool",
+          "indexed": false,
+          "default": null
+        },
+        {
+          "name": "DisableFocusRecursion",
+          "type": "bool",
+          "indexed": false,
+          "default": null
+        },
+        {
+          "name": "GripTarget",
+          "type": "bool",
+          "indexed": false,
+          "default": null
+        },
+        {
+          "name": "Hittable",
+          "type": "bool",
+          "indexed": false,
+          "default": null
+        },
+        {
+          "name": "LayoutLineBreak",
+          "type": "bool",
+          "indexed": false,
+          "default": null
+        },
+        {
+          "name": "LayoutFloat",
+          "type": "bool",
+          "indexed": false,
+          "default": "false"
+        },
+        {
+          "name": "Column",
+          "type": "unsigned",
+          "indexed": false,
+          "default": "0"
+        },
+        {
+          "name": "Row",
+          "type": "unsigned",
+          "indexed": false,
+          "default": "0"
+        },
+        {
+          "name": "ColumnSpan",
+          "type": "unsigned",
+          "indexed": false,
+          "default": "1"
+        },
+        {
+          "name": "RowSpan",
+          "type": "unsigned",
+          "indexed": false,
+          "default": "1"
+        },
+        {
+          "name": "ColorFactor",
+          "type": "color",
+          "indexed": false,
+          "default": "0xffffffff"
+        },
+        {
+          "name": "CenterPivot",
+          "type": "bool",
+          "indexed": false,
+          "default": null
+        }
+      ]
+    },
+    "XuiCanvas": {
+      "base": "XuiElement",
+      "properties": []
+    },
+    "XuiGroup": {
+      "base": "XuiElement",
+      "properties": []
+    },
+    "XuiVisual": {
+      "base": "XuiElement",
+      "properties": []
+    },
+    "XuiFigure": {
+      "base": "XuiElement",
+      "properties": [
+        {
+          "name": "Stroke",
+          "type": "object",
+          "indexed": false,
+          "default": null
+        },
+        {
+          "name": "Fill",
+          "type": "object",
+          "indexed": false,
+          "default": null
+        },
+        {
+          "name": "Closed",
+          "type": "bool",
+          "indexed": false,
+          "default": null
+        },
+        {
+          "name": "Points",
+          "type": "custom",
+          "indexed": false,
+          "default": null
+        }
+      ]
+    },
+    "XuiFigureFill": {
+      "base": "(null)",
+      "properties": [
+        {
+          "name": "FillType",
+          "type": "unsigned",
+          "indexed": false,
+          "default": ""
+        },
+        {
+          "name": "FillColor",
+          "type": "color",
+          "indexed": false,
+          "default": "0xFF0F0F80"
+        },
+        {
+          "name": "TextureFileName",
+          "type": "string",
+          "indexed": false,
+          "default": ""
+        },
+        {
+          "name": "Gradient",
+          "type": "object",
+          "indexed": false,
+          "default": ""
+        },
+        {
+          "name": "Translation",
+          "type": "vector",
+          "indexed": false,
+          "default": ""
+        },
+        {
+          "name": "Scale",
+          "type": "vector",
+          "indexed": false,
+          "default": "1.0,1.0,1.0"
+        },
+        {
+          "name": "Rotation",
+          "type": "float",
+          "indexed": false,
+          "default": ""
+        },
+        {
+          "name": "WrapX",
+          "type": "unsigned",
+          "indexed": false,
+          "default": ""
+        },
+        {
+          "name": "WrapY",
+          "type": "unsigned",
+          "indexed": false,
+          "default": ""
+        },
+        {
+          "name": "BrushFlags",
+          "type": "unsigned",
+          "indexed": false,
+          "default": ""
+        },
+        {
+          "name": "TransformVersion",
+          "type": "unsigned",
+          "indexed": false,
+          "default": ""
+        }
+      ]
+    },
+    "XuiFigureFillGradient": {
+      "base": "(null)",
+      "properties": [
+        {
+          "name": "Radial",
+          "type": "bool",
+          "indexed": false,
+          "default": "false"
+        },
+        {
+          "name": "NumStops",
+          "type": "integer",
+          "indexed": false,
+          "default": ""
+        },
+        {
+          "name": "StopColor",
+          "type": "color",
+          "indexed": true,
+          "default": ""
+        },
+        {
+          "name": "StopPos",
+          "type": "float",
+          "indexed": true,
+          "default": ""
+        }
+      ]
+    },
+    "XuiFigureStroke": {
+      "base": "(null)",
+      "properties": [
+        {
+          "name": "StrokeWidth",
+          "type": "float",
+          "indexed": false,
+          "default": ""
+        },
+        {
+          "name": "StrokeColor",
+          "type": "color",
+          "indexed": false,
+          "default": "0xFF0F0FEB"
+        }
+      ]
+    },
+    "XuiControl": {
+      "base": "XuiElement",
+      "properties": [
+        {
+          "name": "ClassOverride",
+          "type": "string",
+          "indexed": false,
+          "default": ""
+        },
+        {
+          "name": "Visual",
+          "type": "string",
+          "indexed": false,
+          "default": ""
+        },
+        {
+          "name": "Enabled",
+          "type": "bool",
+          "indexed": false,
+          "default": null
+        },
+        {
+          "name": "UnfocusedInput",
+          "type": "bool",
+          "indexed": false,
+          "default": null
+        },
+        {
+          "name": "NavLeft",
+          "type": "string",
+          "indexed": false,
+          "default": ""
+        },
+        {
+          "name": "NavRight",
+          "type": "string",
+          "indexed": false,
+          "default": ""
+        },
+        {
+          "name": "NavUp",
+          "type": "string",
+          "indexed": false,
+          "default": ""
+        },
+        {
+          "name": "NavDown",
+          "type": "string",
+          "indexed": false,
+          "default": ""
+        },
+        {
+          "name": "NavTabForward",
+          "type": "string",
+          "indexed": false,
+          "default": ""
+        },
+        {
+          "name": "NavTabBackward",
+          "type": "string",
+          "indexed": false,
+          "default": ""
+        },
+        {
+          "name": "Text",
+          "type": "string",
+          "indexed": false,
+          "default": ""
+        },
+        {
+          "name": "PointSize",
+          "type": "float",
+          "indexed": false,
+          "default": "-1.000000"
+        },
+        {
+          "name": "ImagePath",
+          "type": "string",
+          "indexed": false,
+          "default": ""
+        }
+      ]
+    },
+    "XuiScene": {
+      "base": "XuiControl",
+      "properties": [
+        {
+          "name": "DefaultFocus",
+          "type": "string",
+          "indexed": false,
+          "default": ""
+        },
+        {
+          "name": "TransFrom",
+          "type": "string",
+          "indexed": false,
+          "default": ""
+        },
+        {
+          "name": "TransTo",
+          "type": "string",
+          "indexed": false,
+          "default": ""
+        },
+        {
+          "name": "TransBackFrom",
+          "type": "string",
+          "indexed": false,
+          "default": ""
+        },
+        {
+          "name": "TransBackTo",
+          "type": "string",
+          "indexed": false,
+          "default": ""
+        },
+        {
+          "name": "InterruptTransitions",
+          "type": "unsigned",
+          "indexed": false,
+          "default": "0"
+        },
+        {
+          "name": "IgnorePresses",
+          "type": "bool",
+          "indexed": false,
+          "default": null
+        },
+        {
+          "name": "RecurseTransitions",
+          "type": "bool",
+          "indexed": false,
+          "default": null
+        }
+      ]
+    },
+    "XuiTabScene": {
+      "base": "XuiScene",
+      "properties": [
+        {
+          "name": "TabCount",
+          "type": "unsigned",
+          "indexed": false,
+          "default": "1"
+        },
+        {
+          "name": "Wrap",
+          "type": "bool",
+          "indexed": false,
+          "default": "false"
+        },
+        {
+          "name": "UserInterrupt",
+          "type": "bool",
+          "indexed": false,
+          "default": "false"
+        },
+        {
+          "name": "VerticalTabs",
+          "type": "bool",
+          "indexed": false,
+          "default": null
+        },
+        {
+          "name": "NoAutoHide",
+          "type": "bool",
+          "indexed": false,
+          "default": null
+        },
+        {
+          "name": "DefaultTab",
+          "type": "unsigned",
+          "indexed": false,
+          "default": "1"
+        }
+      ]
+    },
+    "XuiLabel": {
+      "base": "XuiControl",
+      "properties": [
+        {
+          "name": "MaxFlowLines",
+          "type": "unsigned",
+          "indexed": false,
+          "default": "0"
+        }
+      ]
+    },
+    "XuiEdit": {
+      "base": "XuiControl",
+      "properties": [
+        {
+          "name": "TextLimit",
+          "type": "integer",
+          "indexed": false,
+          "default": "65534"
+        },
+        {
+          "name": "AllowedChars",
+          "type": "string",
+          "indexed": false,
+          "default": ""
+        },
+        {
+          "name": "PasswordChar",
+          "type": "string",
+          "indexed": false,
+          "default": ""
+        },
+        {
+          "name": "ReadOnly",
+          "type": "bool",
+          "indexed": false,
+          "default": null
+        },
+        {
+          "name": "Multiline",
+          "type": "bool",
+          "indexed": false,
+          "default": null
+        },
+        {
+          "name": "SmoothScroll",
+          "type": "bool",
+          "indexed": false,
+          "default": null
+        }
+      ]
+    },
+    "XuiButton": {
+      "base": "XuiControl",
+      "properties": [
+        {
+          "name": "PressKey",
+          "type": "unsigned",
+          "indexed": false,
+          "default": "22592"
+        },
+        {
+          "name": "PressAnimObject",
+          "type": "string",
+          "indexed": false,
+          "default": ""
+        },
+        {
+          "name": "PressAnimStartFrame",
+          "type": "string",
+          "indexed": false,
+          "default": ""
+        },
+        {
+          "name": "PressAnimEndFrame",
+          "type": "string",
+          "indexed": false,
+          "default": ""
+        },
+        {
+          "name": "FocusAnimObject",
+          "type": "string",
+          "indexed": false,
+          "default": ""
+        },
+        {
+          "name": "FocusAnimStartFrame",
+          "type": "string",
+          "indexed": false,
+          "default": ""
+        },
+        {
+          "name": "FocusAnimEndFrame",
+          "type": "string",
+          "indexed": false,
+          "default": ""
+        }
+      ]
+    },
+    "XuiMessageBoxButton": {
+      "base": "XuiButton",
+      "properties": [
+        {
+          "name": "MessageBoxCenter",
+          "type": "bool",
+          "indexed": false,
+          "default": null
+        },
+        {
+          "name": "MessageBoxVisual",
+          "type": "string",
+          "indexed": false,
+          "default": null
+        },
+        {
+          "name": "MessageBoxTitle",
+          "type": "string",
+          "indexed": false,
+          "default": null
+        },
+        {
+          "name": "MessageBoxText",
+          "type": "string",
+          "indexed": false,
+          "default": null
+        },
+        {
+          "name": "MessageBoxButtons",
+          "type": "string",
+          "indexed": false,
+          "default": ""
+        }
+      ]
+    },
+    "XuiNavButton": {
+      "base": "XuiButton",
+      "properties": [
+        {
+          "name": "PressPath",
+          "type": "string",
+          "indexed": false,
+          "default": ""
+        },
+        {
+          "name": "StayVisible",
+          "type": "bool",
+          "indexed": false,
+          "default": null
+        },
+        {
+          "name": "SrcTransIndex",
+          "type": "unsigned",
+          "indexed": false,
+          "default": "0"
+        },
+        {
+          "name": "DestTransIndex",
+          "type": "unsigned",
+          "indexed": false,
+          "default": "0"
+        }
+      ]
+    },
+    "XuiBackButton": {
+      "base": "XuiButton",
+      "properties": []
+    },
+    "XuiCheckbox": {
+      "base": "XuiControl",
+      "properties": [
+        {
+          "name": "PressKey",
+          "type": "unsigned",
+          "indexed": false,
+          "default": "22592"
+        }
+      ]
+    },
+    "XuiRadioButton": {
+      "base": "XuiControl",
+      "properties": [
+        {
+          "name": "PressKey",
+          "type": "unsigned",
+          "indexed": false,
+          "default": "22592"
+        }
+      ]
+    },
+    "XuiProgressBar": {
+      "base": "XuiControl",
+      "properties": [
+        {
+          "name": "RangeMin",
+          "type": "integer",
+          "indexed": false,
+          "default": "0"
+        },
+        {
+          "name": "RangeMax",
+          "type": "integer",
+          "indexed": false,
+          "default": "100"
+        },
+        {
+          "name": "Value",
+          "type": "integer",
+          "indexed": false,
+          "default": "0"
+        }
+      ]
+    },
+    "XuiSlider": {
+      "base": "XuiControl",
+      "properties": [
+        {
+          "name": "RangeMin",
+          "type": "integer",
+          "indexed": false,
+          "default": "0"
+        },
+        {
+          "name": "RangeMax",
+          "type": "integer",
+          "indexed": false,
+          "default": "100"
+        },
+        {
+          "name": "Value",
+          "type": "integer",
+          "indexed": false,
+          "default": "0"
+        },
+        {
+          "name": "Step",
+          "type": "integer",
+          "indexed": false,
+          "default": "1"
+        },
+        {
+          "name": "Vertical",
+          "type": "bool",
+          "indexed": false,
+          "default": "false"
+        },
+        {
+          "name": "AccelInc",
+          "type": "integer",
+          "indexed": false,
+          "default": "0"
+        },
+        {
+          "name": "AccelTime",
+          "type": "unsigned",
+          "indexed": false,
+          "default": "0"
+        }
+      ]
+    },
+    "XuiList": {
+      "base": "XuiControl",
+      "properties": [
+        {
+          "name": "Wrap",
+          "type": "bool",
+          "indexed": false,
+          "default": "false"
+        }
+      ]
+    },
+    "XuiCommonList": {
+      "base": "XuiList",
+      "properties": [
+        {
+          "name": "ItemsText",
+          "type": "string",
+          "indexed": false,
+          "default": ""
+        },
+        {
+          "name": "ItemsImage",
+          "type": "string",
+          "indexed": false,
+          "default": ""
+        },
+        {
+          "name": "ItemsNavPath",
+          "type": "string",
+          "indexed": false,
+          "default": ""
+        }
+      ]
+    },
+    "XuiComboBox": {
+      "base": "XuiControl",
+      "properties": [
+        {
+          "name": "ComboBoxStyle",
+          "type": "unsigned",
+          "indexed": false,
+          "default": "0"
+        },
+        {
+          "name": "MaxVisibleVertItems",
+          "type": "integer",
+          "indexed": false,
+          "default": "0"
+        }
+      ]
+    },
+    "XuiImage": {
+      "base": "XuiElement",
+      "properties": [
+        {
+          "name": "SizeMode",
+          "type": "unsigned",
+          "indexed": false,
+          "default": "0"
+        },
+        {
+          "name": "ImagePath",
+          "type": "string",
+          "indexed": false,
+          "default": ""
+        },
+        {
+          "name": "BrushFlags",
+          "type": "unsigned",
+          "indexed": false,
+          "default": "0"
+        },
+        {
+          "name": "TextureSurfaceElement",
+          "type": "string",
+          "indexed": false,
+          "default": ""
+        },
+        {
+          "name": "LoadType",
+          "type": "unsigned",
+          "indexed": false,
+          "default": "0"
+        }
+      ]
+    },
+    "XuiImagePresenter": {
+      "base": "XuiElement",
+      "properties": [
+        {
+          "name": "SizeMode",
+          "type": "unsigned",
+          "indexed": false,
+          "default": "0"
+        },
+        {
+          "name": "DataAssociation",
+          "type": "unsigned",
+          "indexed": false,
+          "default": "0"
+        },
+        {
+          "name": "BrushFlags",
+          "type": "unsigned",
+          "indexed": false,
+          "default": "0"
+        },
+        {
+          "name": "LoadType",
+          "type": "unsigned",
+          "indexed": false,
+          "default": "0"
+        }
+      ]
+    },
+    "XuiText": {
+      "base": "XuiElement",
+      "properties": [
+        {
+          "name": "Text",
+          "type": "string",
+          "indexed": false,
+          "default": ""
+        },
+        {
+          "name": "TextColor",
+          "type": "color",
+          "indexed": false,
+          "default": "0xff000000"
+        },
+        {
+          "name": "DropShadowColor",
+          "type": "color",
+          "indexed": false,
+          "default": "0x80000000"
+        },
+        {
+          "name": "PointSize",
+          "type": "float",
+          "indexed": false,
+          "default": "14.000000"
+        },
+        {
+          "name": "Font",
+          "type": "string",
+          "indexed": false,
+          "default": ""
+        },
+        {
+          "name": "TextStyle",
+          "type": "unsigned",
+          "indexed": false,
+          "default": "16"
+        },
+        {
+          "name": "LineSpacingAdjust",
+          "type": "integer",
+          "indexed": false,
+          "default": "0"
+        },
+        {
+          "name": "TextScale",
+          "type": "float",
+          "indexed": false,
+          "default": "0.0"
+        }
+      ]
+    },
+    "XuiTextPresenter": {
+      "base": "XuiElement",
+      "properties": [
+        {
+          "name": "TextColor",
+          "type": "color",
+          "indexed": false,
+          "default": "0xff000000"
+        },
+        {
+          "name": "DropShadowColor",
+          "type": "color",
+          "indexed": false,
+          "default": "0x80000000"
+        },
+        {
+          "name": "PointSize",
+          "type": "float",
+          "indexed": false,
+          "default": "14.000000"
+        },
+        {
+          "name": "Font",
+          "type": "string",
+          "indexed": false,
+          "default": ""
+        },
+        {
+          "name": "TextStyle",
+          "type": "unsigned",
+          "indexed": false,
+          "default": "16"
+        },
+        {
+          "name": "LineSpacingAdjust",
+          "type": "integer",
+          "indexed": false,
+          "default": "0"
+        },
+        {
+          "name": "DataAssociation",
+          "type": "unsigned",
+          "indexed": false,
+          "default": "0"
+        },
+        {
+          "name": "TextScale",
+          "type": "float",
+          "indexed": false,
+          "default": "1.000000"
+        }
+      ]
+    },
+    "XuiNineGrid": {
+      "base": "XuiElement",
+      "properties": [
+        {
+          "name": "TextureFileName",
+          "type": "string",
+          "indexed": false,
+          "default": ""
+        },
+        {
+          "name": "LeftOffset",
+          "type": "unsigned",
+          "indexed": false,
+          "default": "0"
+        },
+        {
+          "name": "TopOffset",
+          "type": "unsigned",
+          "indexed": false,
+          "default": "0"
+        },
+        {
+          "name": "RightOffset",
+          "type": "unsigned",
+          "indexed": false,
+          "default": "0"
+        },
+        {
+          "name": "BottomOffset",
+          "type": "unsigned",
+          "indexed": false,
+          "default": "0"
+        },
+        {
+          "name": "NoCenter",
+          "type": "bool",
+          "indexed": false,
+          "default": null
+        }
+      ]
+    },
+    "XuiRadioGroup": {
+      "base": "XuiControl",
+      "properties": []
+    },
+    "XuiScrollEnd": {
+      "base": "XuiControl",
+      "properties": [
+        {
+          "name": "Direction",
+          "type": "unsigned",
+          "indexed": false,
+          "default": "0"
+        }
+      ]
+    },
+    "XuiScrollBar": {
+      "base": "XuiControl",
+      "properties": [
+        {
+          "name": "Direction",
+          "type": "unsigned",
+          "indexed": false,
+          "default": "0"
+        },
+        {
+          "name": "MinThumbSize",
+          "type": "unsigned",
+          "indexed": false,
+          "default": "0"
+        }
+      ]
+    },
+    "XuiVideo": {
+      "base": "XuiElement",
+      "properties": [
+        {
+          "name": "File",
+          "type": "string",
+          "indexed": false,
+          "default": ""
+        },
+        {
+          "name": "SizeMode",
+          "type": "unsigned",
+          "indexed": false,
+          "default": "0"
+        },
+        {
+          "name": "Pause",
+          "type": "bool",
+          "indexed": false,
+          "default": null
+        },
+        {
+          "name": "Loop",
+          "type": "bool",
+          "indexed": false,
+          "default": null
+        },
+        {
+          "name": "Volume",
+          "type": "float",
+          "indexed": false,
+          "default": "-12.000000"
+        }
+      ]
+    },
+    "XuiSound": {
+      "base": "XuiElement",
+      "properties": [
+        {
+          "name": "State",
+          "type": "unsigned",
+          "indexed": false,
+          "default": "2"
+        },
+        {
+          "name": "Loop",
+          "type": "bool",
+          "indexed": false,
+          "default": "false"
+        },
+        {
+          "name": "Finish",
+          "type": "bool",
+          "indexed": false,
+          "default": null
+        },
+        {
+          "name": "Volume",
+          "type": "float",
+          "indexed": false,
+          "default": "-12.000000"
+        }
+      ]
+    },
+    "XuiSoundXAudio": {
+      "base": "XuiSound",
+      "properties": [
+        {
+          "name": "File",
+          "type": "string",
+          "indexed": false,
+          "default": ""
+        }
+      ]
+    },
+    "XuiListItem": {
+      "base": "XuiCheckbox",
+      "properties": [
+        {
+          "name": "Layout",
+          "type": "unsigned",
+          "indexed": false,
+          "default": "0"
+        },
+        {
+          "name": "Checkable",
+          "type": "bool",
+          "indexed": false,
+          "default": null
+        },
+        {
+          "name": "SelectedSize",
+          "type": "vector",
+          "indexed": false,
+          "default": "0.000000,0.000000,0.000000"
+        },
+        {
+          "name": "KeepSizeUnfocused",
+          "type": "bool",
+          "indexed": false,
+          "default": null
+        },
+        {
+          "name": "InterItemSpacing",
+          "type": "vector",
+          "indexed": false,
+          "default": "0.000000,0.000000,0.000000"
+        },
+        {
+          "name": "SmoothScroll",
+          "type": "bool",
+          "indexed": false,
+          "default": null
+        },
+        {
+          "name": "SmoothScrollBaseSpeed",
+          "type": "float",
+          "indexed": false,
+          "default": "180.000000"
+        },
+        {
+          "name": "SmoothScrollMaxSpeed",
+          "type": "float",
+          "indexed": false,
+          "default": "1080.000000"
+        },
+        {
+          "name": "SmoothScrollAcceleration",
+          "type": "float",
+          "indexed": false,
+          "default": "3.000000"
+        }
+      ]
+    },
+    "XuiCaret": {
+      "base": "XuiControl",
+      "properties": []
+    },
+    "XuiHtmlElement": {
+      "base": "XuiElement",
+      "properties": [
+        {
+          "name": "Text",
+          "type": "string",
+          "indexed": false,
+          "default": null
+        },
+        {
+          "name": "TeletypeCount",
+          "type": "integer",
+          "indexed": false,
+          "default": "-1"
+        }
+      ]
+    },
+    "XuiHtmlPresenter": {
+      "base": "XuiElement",
+      "properties": [
+        {
+          "name": "DataAssociation",
+          "type": "integer",
+          "indexed": false,
+          "default": "0"
+        }
+      ]
+    },
+    "XuiHtmlControl": {
+      "base": "XuiControl",
+      "properties": [
+        {
+          "name": "TeletypeCount",
+          "type": "integer",
+          "indexed": false,
+          "default": "-1"
+        }
+      ]
+    },
+    "XuiAnimEvent": {
+      "base": "XuiElement",
+      "properties": [
+        {
+          "name": "EventId",
+          "type": "unsigned",
+          "indexed": false,
+          "default": "0"
+        }
+      ]
+    },
+    "XuiVideoPresenter": {
+      "base": "XuiElement",
+      "properties": [
+        {
+          "name": "File",
+          "type": "string",
+          "indexed": false,
+          "default": ""
+        },
+        {
+          "name": "Pause",
+          "type": "bool",
+          "indexed": false,
+          "default": "false"
+        },
+        {
+          "name": "Loop",
+          "type": "bool",
+          "indexed": false,
+          "default": "false"
+        },
+        {
+          "name": "Volume",
+          "type": "float",
+          "indexed": false,
+          "default": "-12.0"
+        },
+        {
+          "name": "Mute",
+          "type": "bool",
+          "indexed": false,
+          "default": "false"
+        }
+      ]
+    },
+    "XuiMarqueePresenter": {
+      "base": "XuiElement",
+      "properties": [
+        {
+          "name": "TextColor",
+          "type": "color",
+          "indexed": false,
+          "default": "0xff0f0f0f"
+        },
+        {
+          "name": "DropShadowColor",
+          "type": "color",
+          "indexed": false,
+          "default": "0x800f0f0f"
+        },
+        {
+          "name": "PointSize",
+          "type": "float",
+          "indexed": false,
+          "default": "14.000000"
+        },
+        {
+          "name": "Font",
+          "type": "string",
+          "indexed": false,
+          "default": ""
+        },
+        {
+          "name": "TextStyle",
+          "type": "unsigned",
+          "indexed": false,
+          "default": "16"
+        },
+        {
+          "name": "DataAssociation",
+          "type": "unsigned",
+          "indexed": false,
+          "default": "0"
+        },
+        {
+          "name": "EnableScrolling",
+          "type": "bool",
+          "indexed": false,
+          "default": "true"
+        },
+        {
+          "name": "ReverseDirection",
+          "type": "bool",
+          "indexed": false,
+          "default": "false"
+        },
+        {
+          "name": "ScrollDelay",
+          "type": "float",
+          "indexed": false,
+          "default": "0.5"
+        },
+        {
+          "name": "ScrollSpeed",
+          "type": "float",
+          "indexed": false,
+          "default": "50.0"
+        },
+        {
+          "name": "TextPadding",
+          "type": "float",
+          "indexed": false,
+          "default": "80.0"
+        }
+      ]
+    },
+    "XuiAvatarPresenter": {
+      "base": "XuiElement",
+      "properties": [
+        {
+          "name": "EnableRendering",
+          "type": "bool",
+          "indexed": false,
+          "default": "true"
+        },
+        {
+          "name": "PlayerNumber",
+          "type": "unsigned",
+          "indexed": false,
+          "default": "1"
+        },
+        {
+          "name": "ShowWaitingEffect",
+          "type": "bool",
+          "indexed": false,
+          "default": "true"
+        },
+        {
+          "name": "AvatarView",
+          "type": "unsigned",
+          "indexed": false,
+          "default": "0"
+        },
+        {
+          "name": "AvatarScale",
+          "type": "vector",
+          "indexed": false,
+          "default": "1.0, 1.0, 1.0"
+        },
+        {
+          "name": "AvatarTranslation",
+          "type": "vector",
+          "indexed": false,
+          "default": "0.0, 0.0, 0.0"
+        },
+        {
+          "name": "AvatarRotation",
+          "type": "vector",
+          "indexed": false,
+          "default": "0.0, 0.0, 0.0"
+        }
+      ]
+    },
+    "XuiEffect": {
+      "base": "XuiElement",
+      "properties": [
+        {
+          "name": "EffectReference",
+          "type": "string",
+          "indexed": false,
+          "default": ""
+        }
+      ]
+    },
+    "XuiHBlurEffect": {
+      "base": "XuiEffect",
+      "properties": []
+    }
+  },
+  "additionalSource": "https://phoenix.xboxunity.net/downloads/AuroraElements%20(XUI%20Extensions).rar",
+  "blurSchemaNote": "XuiEffect string slot and empty XuiHBlurEffect derived block validated by complete consumption of default FSD2.2 and Sonic menuconfig.xur; EffectReference preserves the serialized string without inferring an external resource."
+}
