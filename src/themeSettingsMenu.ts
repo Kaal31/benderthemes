@@ -190,7 +190,7 @@ function vitaItems(part: "file" | "look"): MenuItem[] {
     group("Bubbles", () => [
       toggle("System bubbles", () => v().systemBubbles, (x) => updateVita({ systemBubbles: x })),
       toggle("Collections as folders", () => v().collectionFolders, (x) => updateVita({ collectionFolders: x })),
-      choice("Bubble art", [{ id: "portrait", name: "Cover art" }, { id: "landscape", name: "Header art" }], () => v().art, (x) => updateVita({ art: x as any })),
+      choice("Bubble art", [{ id: "portrait", name: "Cover art" }, { id: "landscape", name: "Header art" }, { id: "icon", name: "Square game icons · cover fallback" }], () => v().art, (x) => updateVita({ art: x as any })),
       choice("Bubble style", BUBBLE_STYLES, () => v().bubbleStyle, (x) => updateVita({ bubbleStyle: x as any })),
       choice("Cover edge", ART_EDGES, () => v().artEdge, (x) => updateVita({ artEdge: x as any })),
       choice("System icons", [{ id: "image", name: "Vita bubble images" }, { id: "live", name: "Live glass" }], () => v().stockIcons, (x) => updateVita({ stockIcons: x as any })),

@@ -1,15 +1,17 @@
 // PS Vita bubble renderer with several selectable styles. The styles were
 // tuned by rendering them onto a real Vita home capture and comparing:
 //   lens    – glass sphere + slight lens bulge (closest overall)
+//   rounded – hemisphere shading, separate reflections and stable crop
 //   glass   – same glass shading, no bulge
 //   gloss   – brighter, earlier "glossy" look
 //   classic – strong top dome highlight
 //   flat    – plain circular icon (emulator-style)
 import { CSSProperties, ReactNode, useMemo } from "react";
 
-export type BubbleStyle = "lens" | "glass" | "gloss" | "classic" | "flat";
+export type BubbleStyle = "lens" | "rounded" | "glass" | "gloss" | "classic" | "flat";
 export const BUBBLE_STYLES: { id: BubbleStyle; name: string }[] = [
   { id: "lens", name: "Vita glass + lens (closest)" },
+  { id: "rounded", name: "Rounded glass" },
   { id: "glass", name: "Vita glass" },
   { id: "gloss", name: "Glossy" },
   { id: "classic", name: "Classic dome" },
@@ -27,9 +29,15 @@ interface Spec {
   specular?: number[]; // layer indexes that are light reflections (move against the drift)
 }
 
-// Shading measured against the real home screen: the top of the sphere is lit,
+// Independent shading: the top of the sphere is lit,
 // the lower part sits in its own shade, the rim darkens with curvature while the
 // glass shell catches light, and light pools along the lower inner edge.
+const ROUNDED_LAYERS = [
+  "background:radial-gradient(circle at 50% 50%,rgb(4,5,6) 0%,rgb(4,5,6) 74%,rgb(30,42,50) 90%,rgb(90,120,135) 98%,rgb(110,140,155) 100%);mix-blend-mode:screen",
+  "background:radial-gradient(circle at 50% 30%,rgba(0,0,0,0) 66%,rgba(150,215,240,.5) 71%,rgba(0,0,0,0) 74%),radial-gradient(ellipse 58% 20% at 50% 100%,rgba(140,205,230,.65),rgba(140,205,230,0) 100%);mix-blend-mode:screen",
+  "box-shadow:inset 0 1px 2px rgba(255,255,255,.12),inset 0 -2px 2px rgba(205,244,255,.58)",
+  "background:radial-gradient(ellipse 49% 48% at 50% 49%,transparent 86%,rgba(215,249,255,.18) 91%,rgba(235,253,255,.42) 96%,transparent 100%);mask-image:linear-gradient(transparent 68%,#000 90%);mix-blend-mode:screen",
+];
 const VITA_LAYERS = [
   "background:linear-gradient(180deg,#f8f8f8 0%,#f4f4f4 30%,#e2e2e2 46%,#d8d8d8 100%);mix-blend-mode:multiply",
   "background:radial-gradient(circle at 50% 46%,#fff 0%,#fff 66%,#ececec 76%,#b4b4b4 91%,#6e6e6e 99%,#5a5a5a 100%);mix-blend-mode:multiply",
@@ -41,8 +49,8 @@ const VITA_LAYERS = [
 // The outer few percent of the sphere is see-through glass: the wallpaper shows
 // through it, which is the faint coloured halo around real bubbles.
 const RIM_MASK = "radial-gradient(circle at 50% 50%,#000 0%,#000 88%,rgba(0,0,0,.7) 95%,rgba(0,0,0,.35) 100%)";
-const RIM_GLOW = "0 0 5px 1px rgba(200,240,255,.35)";
-const SHADOW = "drop-shadow(0 6px 7px rgba(0,20,50,.45))";
+const RIM_GLOW = "0 0 5px 1px rgba(200,240,255,.3)";
+const SHADOW = "drop-shadow(0 6px 7px rgba(0,20,50,.42))";
 // Cover art edge. The zoom puts the edge of the picture (often a printed title) right at the
 // rim, where slivers of it read as glitches.
 //   blend – the art fades into a blurred copy of itself: clean rim, same colours (default)
@@ -54,14 +62,14 @@ export const ART_EDGES: { id: ArtEdge; name: string }[] = [
   { id: "fade", name: "Fade (darker rim)" },
   { id: "off", name: "Off (art to the edge)" },
 ];
-export const ART_FADE = "radial-gradient(circle closest-side, #000 82%, rgba(0,0,0,.4) 92%, transparent 98%)";
+export const ART_FADE = "radial-gradient(circle closest-side, #000 91%, rgba(0,0,0,.65) 96%, transparent 100%)";
 /** Art clipped to a circle with a clean edge (folder minis use this too). */
 export function EdgeArt({ children, edge, zoom = 1 }: { children: ReactNode; edge: ArtEdge; zoom?: number }) {
   const z = zoom !== 1 ? `scale(${zoom})` : undefined;
   return (
     <>
       {edge === "blend" && (
-        <div className="dht-bubble-artblur" style={{ position: "absolute", inset: 0, filter: "blur(4px) saturate(1.1)", transform: `scale(${zoom * 1.12})` }}>
+        <div className="dht-bubble-artblur" style={{ position: "absolute", inset: 0, filter: "blur(3px)", transform: `scale(${zoom * 1.12})` }}>
           {children}
         </div>
       )}
@@ -74,6 +82,7 @@ export function EdgeArt({ children, edge, zoom = 1 }: { children: ReactNode; edg
 
 const SPECS: Record<BubbleStyle, Spec> = {
   lens: { zoom: 1.08, layers: VITA_LAYERS, specular: [5], mask: RIM_MASK, glow: RIM_GLOW, outline: "0 0 0 1px rgba(0,25,60,.35)", lens: 0.12, shadow: SHADOW },
+  rounded: { zoom: 1.035, layers: ROUNDED_LAYERS, specular: [3], mask: RIM_MASK, glow: RIM_GLOW, outline: "0 0 0 1px rgba(0,25,60,.35)", lens: 0.09, shadow: SHADOW },
   glass: { zoom: 1.12, layers: VITA_LAYERS, specular: [5], mask: RIM_MASK, glow: RIM_GLOW, outline: "0 0 0 1px rgba(0,25,60,.35)", shadow: SHADOW },
   gloss: {
     zoom: 1.12,
@@ -101,6 +110,57 @@ const SPECS: Record<BubbleStyle, Spec> = {
   },
   flat: { zoom: 1.0, layers: [], shadow: "drop-shadow(0 3px 4px rgba(0,20,50,.35))" },
 };
+
+// Hemisphere normals give the whole surface consistent volume. The reflection is
+// an environment window seen in a convex surface, rather than a white disc laid over the icon.
+interface SurfaceMaps { shade: string; reflection: string }
+const surfaceCache = new Map<number, SurfaceMaps>();
+function surfaceMaps(d: number): SurfaceMaps {
+  const size = Math.max(1, Math.round(d * 2));
+  const hit = surfaceCache.get(size);
+  if (hit) return hit;
+  const empty = { shade: "", reflection: "" };
+  try {
+    const canvas = document.createElement("canvas");
+    canvas.width = canvas.height = size;
+    const ctx = canvas.getContext("2d");
+    if (!ctx) return empty;
+    const shade = ctx.createImageData(size, size);
+    const reflection = ctx.createImageData(size, size);
+    for (let y = 0; y < size; y++) {
+      for (let x = 0; x < size; x++) {
+        const nx = (x + 0.5) / size * 2 - 1;
+        const ny = (y + 0.5) / size * 2 - 1;
+        const r2 = nx * nx + ny * ny;
+        if (r2 > 1) continue;
+        const nz = Math.sqrt(1 - r2);
+        const diffuse = Math.max(0, -0.38 * nx - 0.48 * ny + 0.79 * nz);
+        const rim = Math.max(0, (Math.sqrt(r2) - 0.82) / 0.18);
+        const light = Math.min(1, (0.72 + 0.28 * diffuse) * (1 - 0.13 * rim * rim));
+        const i = (y * size + x) * 4;
+        shade.data[i] = shade.data[i + 1] = shade.data[i + 2] = Math.round(light * 255);
+        shade.data[i + 3] = 255;
+        // Reflect the view direction around the hemisphere normal to sample a soft light box.
+        const rx = 2 * nz * nx, ry = 2 * nz * ny, rz = 2 * nz * nz - 1;
+        const window = Math.exp(-Math.pow((rx + 0.46) / 0.28, 4) - Math.pow((ry + 0.57) / 0.24, 4));
+        const softbox = Math.exp(-Math.pow((rx + 0.2) / 0.8, 2) - Math.pow((ry + 0.76) / 0.38, 2));
+        const shine = (window * 0.34 + softbox * 0.09) * Math.max(0, Math.min(1, rz * 4));
+        reflection.data[i] = 240;
+        reflection.data[i + 1] = 250;
+        reflection.data[i + 2] = 255;
+        reflection.data[i + 3] = Math.round(shine * 255);
+      }
+    }
+    ctx.putImageData(shade, 0, 0);
+    const shadeUrl = canvas.toDataURL();
+    ctx.putImageData(reflection, 0, 0);
+    const result = { shade: shadeUrl, reflection: canvas.toDataURL() };
+    surfaceCache.set(size, result);
+    return result;
+  } catch {
+    return empty;
+  }
+}
 
 // ───── lens bulge: an SVG displacement map, generated once per size ─────
 const lensCache = new Map<string, { url: string; scale: number }>();
@@ -173,6 +233,7 @@ const MOTION_CSS = `
 @keyframes dhtFloat { 0%,100% { transform: translateY(0); } 50% { transform: translateY(-3px); } }
 .dht-bubble-sway { transform: translate(calc(var(--dht-tilt-x, 0) * var(--dht-sway-k, 1) * 7px), calc(var(--dht-tilt-y, 0) * var(--dht-sway-k, 1) * 7px)); transition: transform 180ms ease-out; }
 .dht-bubble-tilt { transform: perspective(var(--dht-bubble-persp, 300px)) rotateY(calc(var(--dht-tilt-x, 0) * 26deg)) rotateX(calc(var(--dht-tilt-y, 0) * -26deg)) translate(calc(var(--dht-tilt-x, 0) * -8%), calc(var(--dht-tilt-y, 0) * -8%)); transition: transform 140ms linear; }
+.dht-bubble-style--rounded .dht-bubble-tilt { transform: perspective(var(--dht-bubble-persp, 300px)) rotateY(calc(var(--dht-tilt-x, 0) * 12deg)) rotateX(calc(var(--dht-tilt-y, 0) * -12deg)) translate(calc(var(--dht-tilt-x, 0) * -3%), calc(var(--dht-tilt-y, 0) * -3%)); }
 .dht-bubble-spec { transform: translate(calc(var(--dht-tilt-x, 0) * 7%), calc(var(--dht-tilt-y, 0) * 7%)); transition: transform 140ms linear; }
 .dht-bubble-env { opacity: calc(0.15 + (var(--dht-tilt-x, 0) * var(--dht-tilt-x, 0) + var(--dht-tilt-y, 0) * var(--dht-tilt-y, 0)) * 0.6); transform: translate(calc(var(--dht-tilt-x, 0) * 22%), calc(var(--dht-tilt-y, 0) * 22%)); transition: transform 140ms linear, opacity 140ms linear; }
 `;
@@ -224,10 +285,11 @@ export function VitaBubble({
 }) {
   const spec = SPECS[style];
   const lens = zoomArt && spec.lens ? `url(#dht-lens-${d})` : undefined;
-  // Extra zoom while 3D is on, so the turning icon never shows its edge.
-  const zoom = (zoomArt ? spec.zoom : 1) * (motion ? 1.22 : 1);
+  // Rounded glass keeps a stable crop; existing styles retain their original motion zoom.
+  const zoom = (zoomArt ? spec.zoom : 1) * (motion && style !== "rounded" ? 1.22 : 1);
   const swayK = 0.75 + ((phase * 7.3) % 1) * 0.5;
   const spec2 = spec.specular ?? [];
+  const surface = useMemo(() => style === "rounded" ? surfaceMaps(d) : null, [d, style]);
   return (
     <div className="dht-bubble-float" data-sway={sway} style={{width:d,height:d,animation:sway === "off" ? "none" : `dhtBubbleFloat ${sway === "gentle" ? 7.5 : 5.5}s ease-in-out ${-phase}s infinite`, ["--dht-float-distance" as any]: sway === "lively" ? "5px" : "2px", ["--dht-float-angle" as any]: sway === "lively" ? "1.3deg" : ".55deg"}}>
     <div className={`dht-bubble-sphere dht-bubble-style--${style}${motion ? " dht-bubble-sway" : ""}`} style={{ width: d, height: d, position: "relative", filter: `var(--dht-bubble-shadow, ${spec.shadow})`, ["--dht-sway-k" as any]: swayK, ["--dht-bubble-persp" as any]: `${Math.round(d * 1.6)}px` }}>
@@ -256,13 +318,15 @@ export function VitaBubble({
             </div>
           </div>
         </div>
+        {surface?.shade && <div className="dht-bubble-volume" style={{position:"absolute",inset:0,borderRadius:"50%",pointerEvents:"none",backgroundImage:`url(${surface.shade})`,backgroundSize:"100% 100%",mixBlendMode:"multiply"}}/>}
+        {surface?.reflection && <div className={`dht-bubble-surface-reflection${motion ? " dht-bubble-spec" : ""}`} style={{position:"absolute",inset:0,borderRadius:"50%",pointerEvents:"none",backgroundImage:`url(${surface.reflection})`,backgroundSize:"100% 100%",mixBlendMode:"screen"}}/>}
         {motion && (
           // a soft window reflection that slides across the glass as the sphere turns
           <div className="dht-bubble-env" style={{ position: "absolute", inset: 0, pointerEvents: "none" }}>
             <i style={{ position: "absolute", left: "8%", top: "4%", width: "60%", height: "40%", borderRadius: "50%", background: "radial-gradient(ellipse at 50% 40%, rgba(255,255,255,0.16), rgba(255,255,255,0) 70%)", transform: "rotate(-24deg)", display: "block" }} />
           </div>
         )}
-        {(style === "lens" || style === "glass" || style === "gloss") && <div className={`dht-bubble-clearcoat${motion ? " dht-bubble-spec" : ""}`} style={{position:"absolute",inset:0,borderRadius:"50%",pointerEvents:"none",mixBlendMode:"screen",background:"radial-gradient(ellipse 40% 7% at 48% 95%,rgba(240,253,255,.55),rgba(210,243,255,.12) 48%,transparent 100%),radial-gradient(ellipse 17% 4% at 33% 90%,rgba(255,255,255,.4),transparent 100%)",opacity:.65}}/>}
+        {(style === "rounded" || style === "lens" || style === "glass" || style === "gloss") && <div className={`dht-bubble-clearcoat${motion ? " dht-bubble-spec" : ""}`} style={{position:"absolute",inset:0,borderRadius:"50%",pointerEvents:"none",mixBlendMode:"screen",background:"radial-gradient(ellipse 40% 7% at 48% 95%,rgba(240,253,255,.55),rgba(210,243,255,.12) 48%,transparent 100%),radial-gradient(ellipse 17% 4% at 33% 90%,rgba(255,255,255,.4),transparent 100%)",opacity:.65}}/>}
         {spec.layers.map((l, i) =>
           spec2.includes(i) && motion ? (
             <div key={i} className="dht-bubble-spec" style={{ position: "absolute", inset: 0 }}>

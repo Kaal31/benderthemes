@@ -1,3 +1,4 @@
+import {DownloadBar} from "../downloadUi";
 import {BackgroundMedia} from "../WallpaperMedia";
 import { GameHero } from "../common";
 // PS Vita home: pages of bubbles scrolled vertically, user folders (and Steam
@@ -5,9 +6,9 @@ import { GameHero } from "../common";
 import { ConfirmModal, showModal, TextField } from "@decky/ui";
 import { CSSProperties, ReactElement, ReactNode, useEffect, useMemo, useRef, useState } from "react";
 import { AnimCanvas } from "../canvas";
-import { BatteryGlyph, GameArt, Icon, IconName, MenuItem, MenuView, themeMenu, useHome, useMenu, useRemembered } from "../common";
+import { BatteryGlyph, GameArt, Img, NameArt, Icon, IconName, MenuItem, MenuView, themeMenu, useHome, useMenu, useRemembered } from "../common";
 import { clamp, Press, spatial, Stage, ThemeRoot, useStage } from "../input";
-import { fmtLastPlayed, fmtPlaytime, Game, openSteam, SteamPlace } from "../library";
+import { fmtLastPlayed, fmtPlaytime, gameIconUrls, Game, openSteam, SteamPlace } from "../library";
 import { showTitle, themeFx, THEMES, updateVita, VitaFolder, VitaLook } from "../settings";
 import { fmtTime, playSound, useBattery, useClock, useWallpaper } from "../steam";
 import { useVitaSkin, VitaSkin } from "../skins";
@@ -165,11 +166,20 @@ function LiveStock({ item, bs, mp }: { item: { icon: IconName; color: string }; 
   );
 }
 
-function Bubble({ item, art, skin, bs, mp, stock, smooth, shadow }: { item: VItem; art: "portrait" | "landscape"; skin: VitaSkin | null; bs: BubbleStyle; mp: MotionProps; stock: "image" | "live"; smooth: number; shadow: number }) {
+type VitaArt = "portrait" | "landscape" | "icon";
+/** Vita icon0 is a square illustration. Prefer client/custom icons when requested,
+ * and keep the existing portrait/header fallback for games without one. */
+function VitaGameArt({game,art,style,position}:{game:Game;art:VitaArt;style:CSSProperties;position?:string}) {
+  const icons=useMemo(()=>art==="icon"?gameIconUrls(game):[],[game,art]);
+  const fallback=<GameArt flat g={game} kind={art==="icon"?"portrait":art} style={style} position={position}/>;
+  return art==="icon"?<><Img key={[...icons,...game.art.portrait,...game.art.landscape].join("|")} className="dht-vita-game-icon" srcs={[...icons,...game.art.portrait,...game.art.landscape]} fit="cover" style={style} position="center" fallback={<NameArt name={game.name} style={style}/>}/><DownloadBar appid={game.appid}/></>:fallback;
+}
+
+function Bubble({ item, art, skin, bs, mp, stock, smooth, shadow }: { item: VItem; art: VitaArt; skin: VitaSkin | null; bs: BubbleStyle; mp: MotionProps; stock: "image" | "live"; smooth: number; shadow: number }) {
   if (item.kind === "game")
     return (
       <Sphere style={bs} mp={mp}>
-        <GameArt g={item.game} kind={art} style={{ width: "100%", height: "100%" }} position={art === "portrait" ? "50% 30%" : "50% 50%"} />
+        <VitaGameArt game={item.game} art={art} style={{width:"100%",height:"100%"}} position={art === "portrait" ? "50% 36%" : "50% 50%"} />
       </Sphere>
     );
   if (item.kind === "sys") {
@@ -192,8 +202,8 @@ function Bubble({ item, art, skin, bs, mp, stock, smooth, shadow }: { item: VIte
       <div style={{ position: "absolute", left: "19%", top: "19%", right: "19%", bottom: "19%", display: "grid", gridTemplateColumns: "1fr 1fr", gap: 6 }}>
         {minis.map((g) => (
           <div key={g.appid} style={{ position: "relative", borderRadius: "50%", overflow: "hidden", aspectRatio: "1", boxShadow: "0 1px 3px rgba(0,0,0,0.35)" }}>
-            <EdgeArt edge={mp.edge} zoom={1.12}>
-              <GameArt g={g} kind={art} style={{ width: "100%", height: "100%" }} />
+            <EdgeArt edge={mp.edge} zoom={1.035}>
+              <VitaGameArt game={g} art={art} style={{ width: "100%", height: "100%" }} />
             </EdgeArt>
           </div>
         ))}
@@ -262,7 +272,7 @@ function PageDots({ page, pages, target }: { page: number; pages: number; target
 
 // ───────────── LiveArea ─────────────
 type LiveBtn = "start" | "page" | "menu";
-function LiveArea({ game, focus, closing, art, peel = 0, onTap }: { game: Game; focus: LiveBtn; closing: boolean; art: "portrait" | "landscape"; peel?: number; onTap?: (b: LiveBtn) => void }) {
+function LiveArea({ game, focus, closing, art, peel = 0, onTap }: { game: Game; focus: LiveBtn; closing: boolean; art: VitaArt; peel?: number; onTap?: (b: LiveBtn) => void }) {
   const { W, H } = useStage();
   const ring = (on: boolean): CSSProperties => (on ? { boxShadow: "0 0 0 4px #fff, 0 0 24px 6px rgba(80,190,255,0.9)" } : { boxShadow: "0 6px 18px rgba(0,0,0,0.4)" });
   return (
@@ -282,7 +292,7 @@ function LiveArea({ game, focus, closing, art, peel = 0, onTap }: { game: Game; 
       {/* header: bubble + title */}
       <div style={{ position: "absolute", left: 40, top: 62, display: "flex", alignItems: "center", gap: 18 }}>
         <div style={{ width: 84, height: 84, borderRadius: "50%", overflow: "hidden", boxShadow: "0 0 0 3px #fff, 0 4px 12px rgba(0,0,0,0.5)" }}>
-          <GameArt g={game} kind={art} style={{ width: "100%", height: "100%" }} />
+          <VitaGameArt game={game} art={art} style={{ width: "100%", height: "100%" }} />
         </div>
         <div style={{ color: "#fff", fontSize: 30, fontWeight: 600, textShadow: "0 2px 8px rgba(0,0,0,0.7)", maxWidth: 640 }}>{game.name}</div>
       </div>
@@ -389,7 +399,9 @@ const VITA_CSS = `
   50%  { clip-path: polygon(0 0, 0 0, 100% 100%, 100% 100%, 0 100%); }
   100% { clip-path: polygon(0 100%, 0 100%, 0 100%, 0 100%, 0 100%); }
 }
-@keyframes dhtGlow { 0%,100% { opacity: 0.55; transform: scale(0.96); } 50% { opacity: 0.95; transform: scale(1.04); } }
+@keyframes dhtGlow { 0%,100% { opacity: 0.48; transform: scale(0.98); } 50% { opacity: 0.68; transform: scale(1.02); } }
+.dht-vita-surface[data-motion=false] .dht-bubble-icon,.dht-vita-surface[data-motion=false] .dht-bubble-focus{animation:none!important;transition:none!important}
+@media(prefers-reduced-motion:reduce){.dht-vita-surface .dht-bubble-icon,.dht-vita-surface .dht-bubble-focus{animation:none!important;transition:none!important}}
 @keyframes dhtWobble { 0%,100% { transform: rotate(-3deg); } 50% { transform: rotate(3deg); } }
 @keyframes dhtHalo { 0%,100% { box-shadow: 0 0 0 3px var(--dht-vita-halo-ring, rgba(190,240,255,0.85)), 0 0 18px 6px var(--dht-vita-halo, rgba(80,200,255,0.55)); } 50% { box-shadow: 0 0 0 4px var(--dht-vita-halo-ring, rgba(220,248,255,1)), 0 0 30px 12px var(--dht-vita-halo, rgba(80,200,255,0.8)); } }
 @keyframes dhtLaunch { from { transform: scale(1); opacity: 1; } to { transform: scale(2.6); opacity: 0; } }
@@ -803,13 +815,13 @@ export function VitaHome() {
           <div style={{ animation: wobble ? `dhtWobble ${0.35 + (i % 3) * 0.05}s ease-in-out infinite` : "none" }}>
             {/* Vita-style focus: a soft light behind the selected bubble (no hard ring) */}
             {selected && v.focus === "vita" && !launching && (
-              <div className="dht-bubble-focus" style={{ position: "absolute", left: -D * 0.2, top: -D * 0.2, width: D * 1.4, height: D * 1.4, borderRadius: "50%", background: "radial-gradient(circle, var(--dht-vita-halo, rgba(150,225,255,0.85)) 0%, rgba(120,210,255,0.35) 48%, rgba(120,210,255,0) 70%)", animation: "dhtGlow 2.2s ease-in-out infinite", pointerEvents: "none" }} />
+              <div className="dht-bubble-focus" style={{ position: "absolute", left: -D * 0.15, top: -D * 0.15, width: D * 1.3, height: D * 1.3, borderRadius: "50%", background: "radial-gradient(circle, var(--dht-vita-halo, rgba(150,225,255,0.58)) 0%, rgba(120,210,255,0.22) 48%, rgba(120,210,255,0) 70%)", animation: "dhtGlow 3.2s ease-in-out infinite", pointerEvents: "none" }} />
             )}
             <div
               className="dht-bubble-icon"
               style={{
-                transform: selected ? (v.focus === "none" ? "scale(1.05)" : "scale(1.09)") : "scale(1)",
-                transition: "transform 180ms ease-out",
+                transform: selected ? (v.focus === "none" ? "scale(1.05)" : "scale(1.065)") : "scale(1)",
+                transition: "transform 200ms cubic-bezier(.2,.8,.2,1)",
                 borderRadius: "50%",
                 animation: selected && launching ? "dhtLaunch 600ms ease-in forwards" : selected && v.focus === "ring" ? "dhtHalo 1.8s ease-in-out infinite" : "none",
               }}
@@ -903,7 +915,8 @@ export function VitaHome() {
       <Stage>
        <div
         ref={setTiltEl}
-        className={v.look ? `dht-look-${v.look}` : undefined}
+        className={`dht-vita-surface${v.look ? ` dht-look-${v.look}` : ""}`}
+        data-motion={s.animations}
         style={{ position: "absolute", inset: 0, touchAction: "none", userSelect: "none", WebkitUserSelect: "none", ...LOOK_VARS[v.look] }}
         onPointerDown={(e) => e.pointerType === "touch" ? undefined : onPointerDown(e)}
         onPointerMove={(e) => e.pointerType === "touch" ? undefined : onPointerMove(e)}

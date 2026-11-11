@@ -315,10 +315,10 @@ export interface Settings {
     order: string[]; // item keys in the user's arrangement
     collectionFolders: boolean; // Steam collections appear as folders
     systemBubbles: boolean; // Library / Store / Friends / … bubbles
-    art: ArtPref;
+    art: ArtPref | "icon";
     skin: string; // custom Vita theme (folder/zip name) or ""
     look: VitaLook; // built-in colour look ("" = default); no CSS Loader needed
-    bubbleStyle: "lens" | "glass" | "gloss" | "classic" | "flat";
+    bubbleStyle: "lens" | "rounded" | "glass" | "gloss" | "classic" | "flat";
     stockIcons: "image" | "live";
     artEdge: "blend" | "fade" | "off"; // how cover art meets the bubble rim // system bubbles as finished images (console-like) or live glass + glyph
     motion: boolean; // 3D drifting bubbles
