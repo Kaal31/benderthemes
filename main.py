@@ -2544,6 +2544,55 @@ class Plugin:
             result["url"] = _vi.url("f/" + key)
         return result
 
+    async def square_artwork_list(self, theme: str):
+        import square_artwork
+        paths = await asyncio.to_thread(square_artwork.images, _data_dir(), theme)
+        if not await _ensure_server():
+            return {}
+        result = {}
+        for appid, path in paths.items():
+            key = "square-" + os.path.basename(path)
+            _vi.files[key] = path
+            result[appid] = _vi.url("f/" + key)
+        return result
+
+    async def square_artwork_save(self, theme: str, appid: str, image: str, automatic: bool = False):
+        import square_artwork
+        try:
+            await asyncio.to_thread(square_artwork.save, _data_dir(), theme, appid, image, bool(automatic))
+            return {"images": await self.square_artwork_list(theme)}
+        except Exception as error:
+            return {"error": str(error)}
+
+    async def square_artwork_remove(self, theme: str, appid: str):
+        import square_artwork
+        try:
+            await asyncio.to_thread(square_artwork.remove, _data_dir(), theme, appid)
+            return {"images": await self.square_artwork_list(theme)}
+        except Exception as error:
+            return {"error": str(error)}
+
+    async def square_artwork_provider(self, key: str = None):
+        import square_artwork
+        try:
+            return await asyncio.to_thread(square_artwork.configure, _data_dir(), key)
+        except Exception as error:
+            return {"error": str(error)}
+
+    async def square_artwork_search(self, appid: str, name: str, steam: bool, provider_game: str = ""):
+        import square_artwork
+        try:
+            return await asyncio.to_thread(square_artwork.search, _data_dir(), appid, name, steam, provider_game)
+        except Exception:
+            return {"images": [], "games": [], "error": "SteamGridDB is unavailable or the API key was rejected. Local artwork remains available."}
+
+    async def square_artwork_download(self, url: str):
+        import square_artwork
+        try:
+            return await asyncio.to_thread(square_artwork.download, url)
+        except Exception as error:
+            return {"error": str(error)}
+
     async def cover_wrap_get(self, appid: str, name: str = "", discover: bool = False):
         import cover_wraps
         try:
