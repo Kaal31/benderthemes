@@ -97,8 +97,10 @@ class Engine:
 
     def resource(self, tail):
         """Return an allowlisted static path or an API byte response, never arbitrary plugin files."""
-        if tail == 'client/engine.js':
-            return Path(__file__).parent / 'avatar_engine/client/engine.js'
+        if tail in {'client/engine.js', 'client/editor.js', 'client/editor.html', 'client/editor.css', 'client/editor-tokens.css'}:
+            return Path(__file__).parent / 'avatar_engine' / tail
+        if tail == 'metro/metro-screens.json':
+            return Path(__file__).parent / 'avatar_engine/source/editor/metro/metro-screens.json'
         if not self.ready(): raise ValueError('Avatar assets are not installed')
         if tail == 'reference.json': return self.root / 'viewer/public/reference.json'
         if tail.startswith('data/'):

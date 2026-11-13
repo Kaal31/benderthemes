@@ -6,7 +6,7 @@ ${D} .dht-page-frame{inset:3% 3.5%!important;border:3px solid #a6b3c5;border-rad
 ${D} .dht-page-header{min-height:66px;padding:7px 18px 7px 10px;border:2px solid #586c89;border-radius:9px;background:linear-gradient(#183e73,#0a224c 52%,#143465);box-shadow:inset 0 0 0 1px #8cb4e180;gap:20px!important;color:#e5f1ff!important}
 ${D} .dht-page-header:after{content:'GAMEAMP / MEDIA LIBRARY';margin-left:auto;letter-spacing:2px;font-size:12px;color:#a6c4e6}
 ${D} .dht-page-title{margin:0!important;font-size:28px!important;font-weight:700!important;letter-spacing:1px;text-shadow:0 2px #000}
-${D} .dht-page-back,${D} .dht-page-tabs button{color:#152940!important;border:1px solid #667c97!important;background:linear-gradient(#f5fbff,#a3b5ca 48%,#728aa5 51%,#dae6f3)!important;box-shadow:inset 0 0 0 1px #fff9,0 2px 3px #0006;border-radius:18px!important;font:700 14px Tahoma,sans-serif!important;min-height:34px!important;padding:7px 19px!important}
+${D} .dht-library-filter,${D} .dht-page-back,${D} .dht-page-tabs button{color:#152940!important;border:1px solid #667c97!important;background:linear-gradient(#f5fbff,#a3b5ca 48%,#728aa5 51%,#dae6f3)!important;box-shadow:inset 0 0 0 1px #fff9,0 2px 3px #0006;border-radius:18px!important;font:700 14px Tahoma,sans-serif!important;min-height:34px!important;padding:7px 19px!important}
 ${D} .dht-page-tabs{display:flex;gap:9px;padding:0 5px}
 ${D} .dht-page-tabs button[aria-current="page"]{background:linear-gradient(#2869ac,#12365d 50%,#0b2547)!important;color:#eef7ff!important;box-shadow:inset 0 0 0 1px #6bc8ff,0 0 6px #337fc6}
 ${D} .dht-page-subtitle{font:700 13px Tahoma,sans-serif!important;color:#1b3554!important;letter-spacing:1px;text-transform:uppercase;padding:0 8px}

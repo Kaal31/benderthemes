@@ -43,7 +43,7 @@ function KinectProfile({onClose,onAvatar,onPage}:{onClose:()=>void;onAvatar:()=>
  return <div role="dialog" aria-label="Profile" data-kinect-profile onKeyDown={key} style={{position:'absolute',left:(W-1280*scale)/2,top:(H-720*scale)/2,width:1280,height:720,transform:`scale(${scale})`,transformOrigin:'0 0',fontFamily:'var(--dht-font,"Segoe UI",Arial,sans-serif)'}}>
   <div ref={motion.ref} data-nxe-window-motion style={{position:'absolute',left:96,top:116,width:448,height:446,background:'linear-gradient(#f5f7f2,#dbe2d7)',boxShadow:'0 3px 12px #0004'}}>
    <div style={{padding:'14px 18px',background:'#ef931d',color:'white',fontSize:24}}>{api.user}</div>
-   <div style={{padding:'12px 18px',fontSize:17,borderBottom:'1px solid #9eae96'}}>Games <b style={{float:'right'}}>{api.lib.games.length}</b></div>
+   <div style={{padding:'12px 18px',fontSize:17,borderBottom:'1px solid #9eae96'}}>Games <b style={{float:'right'}}>{api.library.games.length}</b></div>
    <div role="listbox" aria-label="Profile actions">{rows.map((row,i)=><button key={row.name} role="option" aria-selected={i===selected} onFocus={()=>setSelected(i)} onMouseEnter={()=>setSelected(i)} onClick={row.run} style={{width:'100%',height:47,border:0,padding:'0 18px',font:'inherit',fontSize:21,textAlign:'left',background:'transparent',color:'inherit'}}>{row.name}</button>)}</div>
   </div>
   <button onClick={back} style={{position:'absolute',left:96,top:638,border:0,background:'transparent',color:'white',font:'inherit',fontSize:19}}>Ⓑ Back</button>

@@ -11,10 +11,16 @@ import subprocess
 import tempfile
 import threading
 import zipfile
-import xml.etree.ElementTree as ET
+try:
+    import xml.etree.ElementTree as ET
+except ImportError:  # Decky's trimmed Python can omit xml.etree.
+    from theme_xml import parse_xml, ThemeXmlError
+    class ET:
+        ParseError = ThemeXmlError
+        fromstring = staticmethod(parse_xml)
 from contextlib import contextmanager
 
-READER_VERSION = 2
+READER_VERSION = 3
 MAX_FRAMES = 120
 MAX_FRAME_PIXELS = 32 * 1024 * 1024
 MAX_FILES = 4096
@@ -401,6 +407,7 @@ def read_ps4_theme(path, frame_sink=None):
         home = background("homescreen")
         function = background("functionscreen")
         animation = []
+        scene = None
         if dynamic:
             try:
                 decoded = {}
@@ -414,10 +421,15 @@ def read_ps4_theme(path, frame_sink=None):
                     raise ValueError("Packed or complex RAF scenes are not supported yet")
             except (ValueError, ET.ParseError, struct.error) as error:
                 animation = []
-                errors.append(f"{error}; using a static background or preview")
+                try:
+                    from ps4_scene import read_scene
+                    scene = read_scene(_parse_xml(read("scene/background.raf/index.xml")), lambda target: image(target, frame=True))
+                    errors.extend(scene.get("warnings", []))
+                except (ValueError, TypeError, KeyError, ET.ParseError, struct.error) as scene_error:
+                    errors.append(f"{error}; {scene_error}; using a static background or preview")
         preview = image("texture/preview.png") or image("sce_sys/icon0.png")
         if not home and dynamic:
-            home = animation[0]["image"] if animation else preview
+            home = animation[0]["image"] if animation else scene["layers"][0]["image"] if scene else preview
         sounds = {}
         from console_themes import vag_to_wav
         for name in names:
@@ -431,4 +443,4 @@ def read_ps4_theme(path, frame_sink=None):
         music = read("sound/bgm_home.at9") if (root.findtext("homebgm-enable") or "true").strip().lower() != "false" else None
         return {"name": root.findtext("label") or os.path.splitext(os.path.basename(path))[0], "background": home,
                 "functionBackground": function, "icons": icons, "glows": glows, "colors": colors,
-                "preview": preview, "dynamic": dynamic, "animation": animation, "errors": errors, "_sounds": sounds, "_music": music}
+                "preview": preview, "dynamic": dynamic, "animation": animation, "scene": scene, "errors": errors, "_sounds": sounds, "_music": music}

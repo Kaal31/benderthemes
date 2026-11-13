@@ -48,10 +48,8 @@ def convert_layout(archive, target, warning_limit=80):
         except (ValueError,UnicodeError,AttributeError,TypeError):
             pass
     if target != "home":
-        if "layout.json" in archive:
-            warnings.add("Layout conversion currently supports Home Menu; this screen uses its artwork only.")
-        result["warnings"] = sorted(warnings)
-        return result
+        from switch_secondary import convert_secondary
+        return convert_secondary(archive, target, warning_limit)
     # The installer applies these texture-replacement bounds before v9+ layout
     # patches. They are implicit in the archive, not present in layout.json.
     try:

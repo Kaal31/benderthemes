@@ -1,3 +1,4 @@
+import {SwitchSecondary,SwitchSecondaryBackground} from "./SwitchSecondary";
 import {SwitchPromptGlyph} from './SwitchPromptGlyph';
 import {useSwitchReferenceHints} from "./useSwitchReferenceHints";
 import {SwitchLibrary} from "./SwitchLibrary";
@@ -45,7 +46,7 @@ import { CSSProperties, useEffect, useState, useRef, useMemo } from "react";
 import { GameArt, Icon, IconName, themeMenu, useHome, useMenu, useRemembered } from "../common";
 import { clamp, Press, Stage, ThemeRoot, useStage } from "../input";
 import { Game, openSteam, SteamPlace } from "../library";
-import { showTitle, THEMES } from "../settings";
+import { showTitle, THEMES, themeFx } from "../settings";
 import { playSound, useBattery, useClock, useWallpaper } from "../steam";
 import { themeSettingsItems } from "../themeSettingsMenu";
 import { switchParts, useSwitchSkin } from "../switchThemes";
@@ -153,6 +154,8 @@ export function SwitchHome() {
   const parts0 = switchParts(skin, view);
   const parts = wall ? { ...parts0, background: wall, brightness: undefined, own: false } : parts0;
   const conversion = themeStyle<boolean>(s,"switch","consoleConversion") ? skin?.screens.home?.conversion : undefined;
+  const secondary=themeStyle<boolean>(s,"switch","consoleConversion")&&themeFx(s,`switch:${s.switchTheme??""}`).visuals&&view!=="home"?skin?.screens[view]?.conversion:undefined;
+  const secondaryEnabled=s.animations&&themeFx(s,`switch:${s.switchTheme??""}`).sceneAnim;
   const referenceRoot=useSwitchReferenceHints(skin?.screens.home?.preview,conversion);
   const systemGraphics=themeStyle<string>(s,"switch","systemGraphics");
   const runtimeConversion=useMemo(()=>systemGraphics==='builtin'&&conversion?{...conversion,nativePictures:{},nativeTextures:{},nativeFonts:{}}:conversion,[conversion,systemGraphics]);
@@ -183,7 +186,7 @@ export function SwitchHome() {
   const colorMode=themeStyle<string>(s,"switch","firmwareColors");
   const standardSkin=themeStyle<string>(s,"switch","standardSkin");
   const dark = !skin ? standardSkin==="black" : colorMode==="dark" || (colorMode!=="light" && (conversion?true:parts.background ? (luma ?? 0.5) < 0.55 : false));
-  const effects=Object.fromEntries(Object.entries(rawEffects).map(([key,effect])=>[key,resolvePalette(effect,dark)!]));
+  const effects=useMemo(()=>Object.fromEntries(Object.entries(rawEffects).map(([key,effect])=>[key,resolvePalette(effect,dark)!])),[rawEffects,dark]);
   const ink = dark ? "#fff" : "#2d2d2d";
   const dock:Dock[]=[
     ...(panes.L_BtnLR?[{id:"online",label:"Nintendo Switch Online",icon:"game" as IconName,place:"community" as SteamPlace}]:[]),
@@ -196,7 +199,7 @@ export function SwitchHome() {
   const dockKeys:Record<string,string>={news:"L_BtnNoti",shop:"L_BtnShop",album:"L_BtnPvr",controller:"L_BtnCtrl",settings:"L_BtnSet",power:"L_BtnPow",online:"L_BtnLR",gameShare:"L_BtnSplay",virtualCards:"L_BtnVgc"};
   const visibleDock = dock.map((_,i)=>i).filter(i=>panes[dockKeys[dock[i].art??dock[i].id]]?.Visible!==false);
 
-  const games = api.lib.games;
+  const games = view === "apps" ? api.library.games : api.lib.games;
   const [sel, setSel] = useRemembered("switch-sel", 0);
   const [pressed,setPressed]=useState(false),[pointerPressed,setPointerPressed]=useState(false);
   const [row, setRow] = useState<"tiles" | "dock">("tiles");
@@ -364,12 +367,13 @@ export function SwitchHome() {
         {parts.background&&effects.backgroundContainer?.Visible===false&&<div className="dht-switch-wallpaper-backdrop" style={{position:"absolute",inset:0,backgroundImage:`url(${parts.background})`,backgroundSize:"cover",backgroundPosition:"center"}}/>}
         <div ref={bgRef} className="dht-switch-bg" data-raster-mode={bgRaster?'viewport':undefined} data-converted={!!conversion?.converted} data-dht-from-skin={parts.background ? "" : undefined} data-view={view} style={{ position: "absolute", inset: 0, ...bg,zIndex:bgOrder.exelixBG }} />
         <WallpaperVideo src={wall} style={{zIndex:bgOrder.exelixBG+.1}}/>{effects.backgroundPanel && (effects.backgroundPanel.Position||effects.backgroundPanel.Size) && effects.backgroundPanel.Visible!==false && <div className="dht-switch-background-panel" style={{position:"absolute",pointerEvents:"none",left:W/2+(effects.backgroundPanel.Position?.X??0)*k-(effects.backgroundPanel.Size?.X??1280)*k/2,top:H/2-(effects.backgroundPanel.Position?.Y??0)*k-(effects.backgroundPanel.Size?.Y??720)*k/2,width:(effects.backgroundPanel.Size?.X??1280)*k,height:(effects.backgroundPanel.Size?.Y??720)*k,background:panelColor(effects.backgroundPanel),zIndex:bgOrder.P_Bg_00,...paneStyle(effects.backgroundPanel)}}/>}
+        {view!=="home"&&secondary&&<SwitchSecondaryBackground conversion={secondary} image={!wall?parts.background:undefined} enabled={secondaryEnabled} scale={W/1280}/>}
         {view === "lock" && (
-          <div className="dht-switch-lock" style={{ position: "absolute", inset: 0, zIndex: 20, color: ink, textShadow: dark ? "0 1px 6px #000a" : "none", fontFamily: "inherit" }}>
-            <div style={{ position: "absolute", inset: 0, backgroundImage: `url(${parts.background})`, backgroundSize: "cover", backgroundPosition: "center" }} />
+          <SwitchSecondary conversion={secondary} pane="secondaryRoot" enabled={secondaryEnabled} scale={W/1280}><div className="dht-switch-lock" style={{ position: "absolute", inset: 0, zIndex: 20, color: ink, textShadow: dark ? "0 1px 6px #000a" : "none", fontFamily: "inherit" }}>
+            <SwitchSecondaryBackground conversion={secondary} image={parts.background} enabled={secondaryEnabled} scale={W/1280}/>
             <div style={{ position: "absolute", left: 0, right: 0, top: H * 0.38, textAlign: "center", fontSize: 96, fontWeight: 300 }}>{clock24h(now)}</div>
             <div style={{ position: "absolute", left: 0, right: 0, bottom: H * 0.08, textAlign: "center", fontSize: 20 }}>Press any button</div>
-          </div>
+          </div></SwitchSecondary>
         )}
         {effects.libraryLine&&<div className="dht-switch-library-line" style={{position:"absolute",left:30*k,right:30*k,bottom:72*k,height:k,background:panelColor(effects.libraryLine),...effectStyle(effects.libraryLine)}}/>}
         {effects.libraryBar&&<div className="dht-switch-library-bar" style={{position:"absolute",right:20*k,top:100*k,bottom:100*k,width:4*k,background:panelColor(effects.libraryBar),...effectStyle(effects.libraryBar)}}/>}
@@ -410,7 +414,7 @@ export function SwitchHome() {
         </div></>}
 
 
-        {view === "apps" ? (!conversion?<SwitchLibrary games={games} selected={asel} entering={libraryEntering} width={W} height={H} onActivate={index=>{setLibraryEntering(false);setAsel(index);activateGame(games[index]);}}/>:
+        {view === "apps" ? (secondary?<SwitchSecondary conversion={secondary} pane="secondaryRoot" enabled={secondaryEnabled} scale={k}><SwitchLibrary animate={secondaryEnabled} conversion={secondary} games={games} selected={asel} entering={libraryEntering} width={W} height={H} onActivate={index=>{setLibraryEntering(false);setAsel(index);activateGame(games[index]);}}/></SwitchSecondary>:!conversion?<SwitchLibrary games={games} selected={asel} entering={libraryEntering} width={W} height={H} onActivate={index=>{setLibraryEntering(false);setAsel(index);activateGame(games[index]);}}/>:
           <div className="dht-switch-apps" data-entering={libraryEntering} style={{ position: "absolute", left: 90, right: 90, top: H * 0.16, bottom: 40, display: "grid", gridTemplateColumns: `repeat(${COLS},1fr)`, gap: 18, alignContent: "start", overflowY: "hidden" }}>
             {games.slice(Math.floor(asel / COLS) * COLS, Math.floor(asel / COLS) * COLS + COLS * 4).map((gm, i) => {
               const idx = Math.floor(asel / COLS) * COLS + i, on = idx === asel;
@@ -489,7 +493,8 @@ export function SwitchHome() {
         {controllerNotice&&effects.controllerBalloon?.Visible!==false&&<div className="dht-switch-controller-notice" role="status" style={{position:"absolute",width:240*k,height:150*k,zIndex:25,left:(640+(effects.controllerBalloon?.Position?.X??-548))*k,top:H/2-(effects.controllerBalloon?.Position?.Y??-284)*k,color:ink,transform:`scale(${k})`,...effectStyle({...effects.controllerBalloon,Position:undefined})}}><SwitchControllerNotice effects={effects} animations={conversion?.animations??[]} modern={!!panes.L_BtnSplay} dark={dark} enabled={animationOn} text={controllerNotice}/></div>}
         </div>
         {conversion&&<SwitchAppletCapture frame={capturedFrame} onComplete={()=>setCapturedFrame(undefined)} scale={k} {...dialogShared} enabled={s.animations}/>}
-        <SwitchMenu effects={effects} animations={conversion?.animations??[]} modern={!!panes.L_BtnSplay} dark={dark} enabled={animationOn} game={g} menu={menu} variant="switch" appearance={{header:<div className="dht-switch-menu-header" style={{display:"flex",alignItems:"center",gap:12}}>{g&&<div style={{width:72,height:72,...effectStyle(effects.menuGameIcon)}}><SwitchMaterial effect={effects.menuGameArt}><GameArt g={g} kind="portrait" style={{width:"100%",height:"100%"}}/></SwitchMaterial></div>}<span style={effectStyle(effects.menuUserIcon)}><ProfileAvatar size={40}/></span></div>,selectedItem:!conversion?{color:ink,background:dark?"#ffffff12":"#00000008"}:effects.menuSelected?{background:panelColor(effects.menuSelected),...effectStyle(effects.menuSelected)}:undefined,touchItem:effects.menuTouch?{background:panelColor(effects.menuTouch),...effectStyle(effects.menuTouch)}:undefined,text:{...(!conversion?{color:ink}:{}),...effectStyle(effects.menuText)},optionBase:effects.menuOptionBase?{background:panelColor(effects.menuOptionBase),...effectStyle(effects.menuOptionBase)}:undefined,bottomShadow:effects.menuBottomShadow?{background:panelColor(effects.menuBottomShadow),...effectStyle(effects.menuBottomShadow)}:undefined,capture:effects.menuCapture?{background:panelColor(effects.menuCapture),...effectStyle(effects.menuCapture)}:undefined,mask:effects.menuMask?{background:panelColor(effects.menuMask),...effectStyle(effects.menuMask)}:undefined,bottom:effects.menuBottom?{background:panelColor(effects.menuBottom),...effectStyle(effects.menuBottom)}:undefined,bottomMask:effects.menuBottomMask?{background:panelColor(effects.menuBottomMask),...effectStyle(effects.menuBottomMask)}:undefined,decoration:effects.menuAccount&&<div className="dht-switch-menu-account" style={{position:"absolute",left:"50%",top:"50%",width:(effects.menuAccount.Size?.X??56)*k,height:(effects.menuAccount.Size?.Y??56)*k,...effectStyle(effects.menuAccount)}}><ProfileAvatar size={56*k}/></div>,backdrop:effects.menuBackdrop?{background:panelColor(effects.menuBackdrop),...effectStyle(effects.menuBackdrop)}:undefined,panel:!conversion?{color:ink}:effects.menuPanel?{background:panelColor(effects.menuPanel),...effectStyle(effects.menuPanel)}:undefined,item:!conversion?{color:ink}:effects.menuButton?{background:panelColor(effects.menuButton),...effectStyle(effects.menuButton),...(effects.menuLineBase?.Visible===false?{background:"transparent"}:{})}:effects.menuLineBase?.Visible===false?{background:"transparent"}:undefined}}/>
+        <SwitchSecondary conversion={view==="set"?secondary:undefined} pane="secondaryRoot" enabled={secondaryEnabled} scale={k} style={{pointerEvents:"none"}}><div style={{pointerEvents:"auto"}}><SwitchMenu effects={effects} animations={conversion?.animations??[]} modern={!!panes.L_BtnSplay} dark={dark} enabled={animationOn} game={g} menu={menu} variant="switch" appearance={{header:<div className="dht-switch-menu-header" style={{display:"flex",alignItems:"center",gap:12}}>{g&&<div style={{width:72,height:72,...effectStyle(effects.menuGameIcon)}}><SwitchMaterial effect={effects.menuGameArt}><GameArt g={g} kind="portrait" style={{width:"100%",height:"100%"}}/></SwitchMaterial></div>}<span style={effectStyle(effects.menuUserIcon)}><ProfileAvatar size={40}/></span></div>,selectedItem:!conversion?{color:ink,background:dark?"#ffffff12":"#00000008"}:effects.menuSelected?{background:panelColor(effects.menuSelected),...effectStyle(effects.menuSelected)}:undefined,touchItem:effects.menuTouch?{background:panelColor(effects.menuTouch),...effectStyle(effects.menuTouch)}:undefined,text:{...(!conversion?{color:ink}:{}),...effectStyle(effects.menuText)},optionBase:effects.menuOptionBase?{background:panelColor(effects.menuOptionBase),...effectStyle(effects.menuOptionBase)}:undefined,bottomShadow:effects.menuBottomShadow?{background:panelColor(effects.menuBottomShadow),...effectStyle(effects.menuBottomShadow)}:undefined,capture:effects.menuCapture?{background:panelColor(effects.menuCapture),...effectStyle(effects.menuCapture)}:undefined,mask:effects.menuMask?{background:panelColor(effects.menuMask),...effectStyle(effects.menuMask)}:undefined,bottom:effects.menuBottom?{background:panelColor(effects.menuBottom),...effectStyle(effects.menuBottom)}:undefined,bottomMask:effects.menuBottomMask?{background:panelColor(effects.menuBottomMask),...effectStyle(effects.menuBottomMask)}:undefined,decoration:effects.menuAccount&&<div className="dht-switch-menu-account" style={{position:"absolute",left:"50%",top:"50%",width:(effects.menuAccount.Size?.X??56)*k,height:(effects.menuAccount.Size?.Y??56)*k,...effectStyle(effects.menuAccount)}}><ProfileAvatar size={56*k}/></div>,backdrop:effects.menuBackdrop?{background:panelColor(effects.menuBackdrop),...effectStyle(effects.menuBackdrop)}:undefined,panel:!conversion?{color:ink}:effects.menuPanel?{background:panelColor(effects.menuPanel),...effectStyle(effects.menuPanel)}:undefined,item:!conversion?{color:ink}:effects.menuButton?{background:panelColor(effects.menuButton),...effectStyle(effects.menuButton),...(effects.menuLineBase?.Visible===false?{background:"transparent"}:{})}:effects.menuLineBase?.Visible===false?{background:"transparent"}:undefined}}/>
+        </div></SwitchSecondary>
       </Stage></SwitchNativeContext.Provider>
     </ThemeRoot>
   );

@@ -76,7 +76,7 @@ export function NxeHome() {
     ] },
     { id: "games", label: "Games", slots: [
       ...games.slice(0, 10).map(play),
-      { key: "lib", label: "Game Library", sub: `${games.length} games`, tray: "slot-games", icon: nxeIcons.games, glyph: "library", run: () => setPage("library") },
+      { key: "lib", label: "Game Library", sub: `${api.library.games.length} games`, tray: "slot-games", icon: nxeIcons.games, glyph: "library", run: () => setPage("library") },
       { key: "ach", label: "Achievements", sub: "Your progress", tray: "slot-green", icon: nxeIcons["achievements-small"], glyph: "trophy", run: () => setPage("achievements") },
     ] },
     { id: "market", label: "Game Marketplace", slots: [
@@ -102,7 +102,7 @@ export function NxeHome() {
     ]},
     { id: "myxbox", label: "My Xbox", slots: [
       { key: "me", label: api.user, sub: st.online ? "Online" : "Offline", tray: "slot-profile", icon: customProfilePicture() ?? pickedPic ?? nxeIcons.avatar, glyph: "user", run: () => setPage("friends") },
-      { key: "lib2", label: "Game Library", sub: `${games.length} games`, tray: "slot-games", icon: nxeIcons.games, glyph: "library", run: () => setPage("library") },
+      { key: "lib2", label: "Game Library", sub: `${api.library.games.length} games`, tray: "slot-games", icon: nxeIcons.games, glyph: "library", run: () => setPage("library") },
       { key: "web", label: "Video Library", sub: "Local videos and Steam recordings", tray: "slot-videos", icon: nxeIcons.video, glyph: "photo", run: () => setPage("videos") },
       { key: "music-library", label: "Music Library", sub: "Your music and media", icon: nxeIcons.music, glyph: "music", run: () => setPage("music") },
       { key: "pics", label: "Picture Library", sub: "Screenshots", tray: "slot-photos", icon: nxeIcons.pictures, glyph: "photo", run: () => setPage("pictures") },

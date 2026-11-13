@@ -1,4 +1,7 @@
-import {useXboxArtwork} from "./xboxFallbackArtwork";
+import {XboxImportedLayout} from "./XboxImportedLayout";
+import {gameChoice} from "../gameFilters";
+import {libraryGameViews} from "../libraryGameViews";
+import {xboxFallback,useXboxArtwork} from "./xboxFallbackArtwork";
 import {BackgroundMedia} from "../WallpaperMedia";
 import { openDestination } from "../destinations";
 // Original Xbox dashboard: the glowing green orb with its jelly shells and
@@ -6,7 +9,7 @@ import { openDestination } from "../destinations";
 // around it all, and "A SELECT" on a wire. Settings and Games use the
 // dashboard's big chamfered plate with a glass sphere on the left.
 // Everything is drawn here; sounds come from the theme's sound pack.
-import { CSSProperties, ReactNode, useMemo, useState } from "react";
+import { useEffect, CSSProperties, ReactNode, useMemo, useState } from "react";
 import { GameArt, MenuItem, MenuView, themeMenu, useHome, useMenu, useRemembered } from "../common";
 import { clamp, Press, Stage, ThemeRoot, useStage } from "../input";
 import { fmtLastPlayed, fmtPlaytime, Game, openAchievements, openSteam } from "../library";
@@ -100,14 +103,15 @@ function meshPath(W: number, H: number, cx: number, cy: number): string {
 function Backdrop({ W, H, cx, cy, animate, plain, tint }: { W: number; H: number; cx: number; cy: number; animate: boolean; plain?: boolean; tint?: string }) {
   const d = useMemo(() => meshPath(W, H, cx, cy), [W, H, cx, cy]);
   const assets = useXboxArtwork("xbox-original");
+  const authoredWall=assets.cellwall===xboxFallback.cellwall;
   return (
     <div className="dht-xbox-bg" style={{ position: "absolute", inset: 0, overflow: "hidden", filter: tint, background: `var(--dht-xbox-bg, radial-gradient(ellipse at ${(cx / W) * 100}% ${(cy / H) * 100}%, #000d00 0%, #001300 30%, #032603 62%, #073005 100%))` }}>
-      {!plain && assets.cellwall && <TheseusSurface src={assets.cellwall} W={W} H={H} animate={animate}/>}
+      {!plain && assets.cellwall && !authoredWall && <TheseusSurface src={assets.cellwall} W={W} H={H} animate={animate}/>}
       {!plain && <svg width={W} height={H} style={{ position: "absolute", inset: 0 }}> 
         <defs>
           <radialGradient id="dhtXbMeshFade" cx={cx / W} cy={cy / H} r="0.8">
-            <stop offset="0" stopColor="#000" />
-            <stop offset="0.4" stopColor="#050505" />
+            <stop offset="0" stopColor={authoredWall?"#353535":"#000"} />
+            <stop offset="0.4" stopColor={authoredWall?"#606060":"#050505"} />
             <stop offset=".9" stopColor="#fff" />
           </radialGradient>
           <mask id="dhtXbMeshMask">
@@ -115,7 +119,7 @@ function Backdrop({ W, H, cx, cy, animate, plain, tint }: { W: number; H: number
           </mask>
         </defs>
         <g mask="url(#dhtXbMeshMask)">
-          <path d={assets.cellwall?"":d} stroke="#21821a" strokeOpacity="0.38" strokeWidth="1.2" fill="none" />
+          <path d={authoredWall||!assets.cellwall?d:""} stroke="#4d9a27" strokeOpacity="0.5" strokeWidth="1" fill="none" />
           {/* a few long great-circle lines across the web */}
           <path d={`M ${-W * 0.1} ${H * 0.95} Q ${W * 0.35} ${H * 0.62} ${W * 1.1} ${H * 0.98}`} stroke="#5cc22a" strokeOpacity="0.5" strokeWidth="2" fill="none" />
           <path d={`M ${W * 0.62} ${-H * 0.1} Q ${W * 0.82} ${H * 0.45} ${W * 0.7} ${H * 1.1}`} stroke="#5cc22a" strokeOpacity="0.4" strokeWidth="2" fill="none" />
@@ -168,7 +172,7 @@ function Orb({ x, y, r, animate, burst, glow = "normal" }: { x: number; y: numbe
         {/* Native rotating shell geometry is rendered above the textured core. */}
 
 
-        {assets.orb && <image href={assets.orb} x={-r*1.5} y={-r*1.5} width={r*3} height={r*3} style={{filter:"brightness(1.3) saturate(1.5)"}}/>}
+        {assets.orb && <image href={assets.orb} x={-r*1.5} y={-r*1.5} width={r*3} height={r*3} style={{filter:assets.orb===xboxFallback.orb?"brightness(1.02) saturate(1.05)":"brightness(1.3) saturate(1.5)"}}/>}
         {/* jelly shells in front */}
 
 
@@ -382,8 +386,10 @@ export function XboxHome() {
   const T = WORDS[(st<string>("lang") in WORDS ? st<string>("lang") : "en") as Lang];
   const vis = Number(st("rows")) || 5;
 
-  const lists = [{ id: "all", name: "All Games", games: api.lib.games }, ...api.lib.collections.map((c) => ({ id: c.id, name: c.name, games: c.games }))];
-  const [lsel, setLsel] = useRemembered("xb-list", 0);
+  const lists = libraryGameViews(api.library,s);
+  const configuredView=gameChoice(s,"library");
+  const [lsel, setLsel] = useRemembered("xb-list", Math.max(0,lists.findIndex(v=>v.id===configuredView.source)));
+  useEffect(()=>setLsel(Math.max(0,lists.findIndex(v=>v.id===configuredView.source))),[configuredView.source,configuredView.ids]);
   const [gsel, setGsel] = useRemembered("xb-game", 0);
   const list = lists[clamp(lsel, 0, lists.length - 1)];
   const games = list?.games ?? [];
@@ -506,7 +512,9 @@ export function XboxHome() {
         {!wall && look.bgColor && <div className="dht-xbox-bg" data-dht-from-skin="xbox" style={{ position: "absolute", inset: 0, background: look.bgColor }} />}
         {wall ? <BackgroundMedia src={wall} className="dht-xbox-bg" data-dht-from-skin={userWall ? undefined : "xbox"} style={{ position: "absolute", inset: 0, width: W, height: H, objectFit: "cover" }} /> : look.bgColor ? null : <Backdrop W={W} H={H} cx={ox} cy={oy} animate={s.animations} plain={st("wall") === "plain"} tint={tint}/>}
 
-        {screen === "main" && (
+        {look.layout && <XboxImportedLayout key={screen} animate={s.animations} layout={look.layout} width={W} height={H} items={screen==="main"?MAIN:screen==="settings"?SETTINGS:games.map(game=>({label:game.name}))} selected={screen==="main"?mcur:screen==="settings"?ssel:gsel} user={api.user} time={fmtTime(now,s.clock24)} onPick={index=>{if(screen==="main"){setMsel(index);MAIN[index]?.run();}else if(screen==="settings"){setSsel(index);SETTINGS[index]?.run();}else{if(index===gsel&&games[index])gameMenu(games[index]);else setGsel(index);}}}/>}
+
+        {screen === "main" && !look.layout && (
           <div key="main" style={{ ...main, filter: tint }}>
             <Orb x={ox} y={oy} r={or} animate={s.animations} burst={burst} glow={st<string>("glow")}/>
             {MAIN.map((it, i) => {
@@ -526,7 +534,7 @@ export function XboxHome() {
           </div>
         )}
 
-        {screen === "settings" && (
+        {screen === "settings" && !look.layout && (
           <div key="settings" style={{ ...main, filter: tint }}>
             <div className="dht-xbox-category" style={{position:"absolute",left:W*.255-H*.245,top:H*.45-H*.245,width:H*.49,height:H*.49}}>
               <div style={{position:"absolute",inset:"6%",borderRadius:"50%",background:"radial-gradient(circle,#b4ff2310,transparent 70%)",boxShadow:"inset 0 0 20px #9aff1928"}}/>
@@ -543,7 +551,7 @@ export function XboxHome() {
           </div>
         )}
 
-        {screen === "games" && (
+        {screen === "games" && !look.layout && (
           <div key="games" style={main}>
             <GlassSphere W={W} H={H} tint={tint}>{cur ? <GameArt flat g={cur} kind="portrait" position="50% 20%" style={{ width: "100%", height: "100%" }} /> : <div style={{ width: "100%", height: "100%", background: "#0b2604" }} />}</GlassSphere>
             <div style={{ position: "absolute", inset: 0, filter: tint }}>

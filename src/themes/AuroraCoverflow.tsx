@@ -71,7 +71,7 @@ export function AuroraCoverflow({skin,embedded=false,viewport,inputRef,onSelecti
   let renderer:THREE.WebGLRenderer;try{renderer=new THREE.WebGLRenderer({alpha:true,antialias:true});}catch{setFailure('3D coverflow is unavailable on this device.');return;}
   setFailure('');renderer.setPixelRatio(Math.min(window.devicePixelRatio||1,2,Math.sqrt(1048576/Math.max(1,W*H))));renderer.setSize(W,H);renderer.outputColorSpace=THREE.SRGBColorSpace;mount.appendChild(renderer.domElement);
   const importedProjection=skin.family==='aurora'&&![AURORA_FALLBACK_LAYOUT,AURORA_GHOSTS_REFERENCE_LAYOUT,AURORA_STOCK_REFERENCE_LAYOUT].includes(skin.coverflow);
-  const scene=new THREE.Scene(),camera=new THREE.PerspectiveCamera(importedProjection?52:45,W/H,.05,500),ambient=new THREE.AmbientLight(0xffffff,1),light=new THREE.DirectionalLight(0xffffff,1);scene.add(ambient,light);
+  const scene=new THREE.Scene(),camera=new THREE.PerspectiveCamera(importedProjection&&!/^BladeDash_Flow_/i.test(skin.coverflow.info?.name??'')?52:45,W/H,.05,500),ambient=new THREE.AmbientLight(0xffffff,1),light=new THREE.DirectionalLight(0xffffff,1);scene.add(ambient,light);
   if(skin.coverResources?.mesh){ambient.intensity=.82;light.intensity=.38;}
   if(importedProjection&&/^Gallery Small (?:NS|YS)$/.test(skin.coverflow.info?.name??'')){
    // Match the shelf baseline in the Gallery Small author's gameplay screenshots.

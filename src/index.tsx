@@ -1,10 +1,10 @@
 import {startLaunchPortal} from './launchPortal';
+import { startGuidedSync } from "./guidedSync";
 import {startGameSessionReturn,onThemeGameExit} from './gameSessionReturn';
 import {chooseRandomTheme} from './randomTheme';
 import {getSettings} from './settings';
 import { startThemeScreensavers, useScreensaverStatus } from "./themeScreensavers";
 import { startAchievementPopups } from "./achievementPopups";
-import { startGuidedSync } from "./guidedSync";
 import {stopSilverPad} from "./themes/silverPad";
 import { ButtonItem, DropdownItem, Navigation, PanelSection, PanelSectionRow, SliderField, staticClasses, TextField, ToggleField } from "@decky/ui";
 import { definePlugin, openFilePicker, routerHook } from "@decky/api";

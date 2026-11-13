@@ -49,6 +49,20 @@ const themeSourcePage = (kind: string, source: string) => {
   return { items, total: 40, pages: 2 };
 };
 const backend: Record<string, (...a: any[]) => any> = {
+  x360_local_files: (path:string) => ({path:path||"/home/deck",parent:"/home/deck",entries:path&&path!=="/home/deck"?[]:[{name:"Documents",path:"/home/deck/Documents",directory:true},{name:"Downloads",path:"/home/deck/Downloads",directory:true},{name:"Pictures",path:"/home/deck/Pictures",directory:true}]}),
+  cover_wrap_get: (appid:string) => (window as any).__coverWraps?.[appid] ?? {mode:'auto'},
+  cover_wrap_search: () => (window as any).__coverWrapSearch ?? {candidates:[],errors:[]},
+  cover_wrap_select: (appid:string,provider:string,platform:string,id:string,name:string) => {
+    const w=window as any;w.__coverWraps??={};return w.__coverWraps[appid]=w.__coverWrapSelection??{mode:'selected',source:provider,platform,id,name};
+  },
+  cover_wrap_mode: (appid:string,mode:string) => {
+    const w=window as any;w.__coverWraps??={};return w.__coverWraps[appid]={mode};
+  },
+  square_artwork_list: (theme:string) => (window as any).__squareArt?.[theme]??{},
+  square_artwork_provider: (key?:string) => {if(key!==undefined)(window as any).__squareKeyConfigured=!!key;return {configured:!!(window as any).__squareKeyConfigured}},
+  square_artwork_search: () => (window as any).__squareSearch??{images:[],games:[],error:'Preview: supply your own image or configure SteamGridDB on the Deck.'},
+  square_artwork_download: () => (window as any).__squareDownload??{error:'No preview image supplied'},
+  x360_runtime_info: () => (window as any).__xuiRuntimeInfo ?? {},
   // Community UI fixtures: no real GitHub requests/downloads in the browser preview.
   community_update_status: (force: boolean) => {
     const w = window as any;
@@ -152,7 +166,7 @@ const backend: Record<string, (...a: any[]) => any> = {
     (w.__localMusicImports ??= []).push(path);
     if (w.__localMusicFailure) return { ok: false, error: "Invalid audio" };
     const folder = "ThemeHub-Local-Music-fixture";
-    w.__testPacks = [...(w.__testPacks ?? []).filter((p:any) => p.folder !== folder), { name: "Local music · song.mp3", folder, files: ["menu_music.mp3"], mappings: {}, ignore: [], music: true }];
+    w.__testPacks = [...(w.__testPacks ?? []).filter((p:any) => p.folder !== folder), { name: "Local music Â· song.mp3", folder, files: ["menu_music.mp3"], mappings: {}, ignore: [], music: true }];
     return { ok: true, folder };
   },
   list_sound_packs: () => (window as any).__testPacks ?? [],
@@ -175,7 +189,7 @@ const backend: Record<string, (...a: any[]) => any> = {
   cinematic_assets: (n: string) => (window as any).__cinematicAssets?.[n] ?? {video:`../bundle/cinematic/${n}.mp4`,poster:`../bundle/cinematic/${n}.jpg`},
   console_artwork_status: () => ({packs:[],busy:false,percent:0}),
   console_artwork_install: () => { (window as any).__consoleArtInstalled=true; return {success:true}; },
-  get_assets: (n: string) => new Set(['x360-convection-font','x360-blades-original','x360-kinect-dash','x360-metro-dash','x360-nxe-dash','xbox-original','xmb-ps3']).has(n)&&!(window as any).__consoleArtInstalled&&!new URLSearchParams(location.search).has('consoleArt')?{}:(window as any).__testAssets?.[n] ?? {},
+  get_assets: (n: string) => new Set(['x360-convection-font','x360-blades-original','x360-kinect-dash','x360-metro-dash','x360-nxe-dash','xbox-original','xmb-ps3','xmb-ps3-native','xmb-psp-native','wiiu-native-ui']).has(n)&&!(window as any).__consoleArtInstalled&&!new URLSearchParams(location.search).has('consoleArt')?{}:(window as any).__testAssets?.[n] ?? {},
   list_wallpapers: () => ({ dir: "~/homebrew/data/DeckHomeThemes/wallpapers", files: [] }),
   get_wallpaper: () => null,
   get_x360_cabinet_wallpaper: (id:string) => /^[a-z0-9_]+$/i.test(id)?{background:`../out/import-fixtures/x360-cabinet/${id}.jpg`}:{error:"Unknown wallpaper"},
@@ -199,12 +213,13 @@ const backend: Record<string, (...a: any[]) => any> = {
   x360_avatar_remove: () => { const w = window as any; if (w.__testAssets?.["my-avatar"]) w.__testAssets["my-avatar"] = {}; return { success: true }; },
   wiiu_decide: () => ({ success: true, theme: "Test.utheme" }),
   get_native_mii: () => new URLSearchParams(location.search).has("nativeMii")?{url:"../out/native-mii-preview/models.json"}:{},
+  get_wii_standard: (original:boolean) => original&&new URLSearchParams(location.search).has("consoleArt")?fetch("../out/console-native-preview/wii-menu.json").then(r=>r.ok?r.json():null):null,
   get_wii_skin: (n: string) => realSkin("wii", n, (window as any).__testWii ?? null),
   get_3ds_skin: (n: string) => realSkin("n3ds", n, (window as any).__test3ds ?? null),
   // 3DS home badges: window.__test3dsBadges = {sets:[{name, badges:[{id,name,w,h,url}]}]} (py_modules/n3ds_themes.py list_badges)
   list_3ds_badges: () => (window as any).__test3dsBadges ?? { sets: [], dir: "~/homebrew/data/DeckHomeThemes/skins/3ds-badges" },
   // Xbox 360 packages: window.__testX360 = {"File name": read_x360 result (see tools/x360_corpus.py / py_modules/x360_themes.py)}
-  get_x360_skin: (n: string) => realSkin("x360", n, (window as any).__testX360?.[n] ?? null),
+  get_x360_skin: (n: string) => /^archive-[0-9a-f]{12}$/.test(n) && !R() ? fetch(`/out/import-fixtures/x360-archive/${n}.json`).then(r => r.ok ? r.json() : null) : realSkin("x360", n, (window as any).__testX360?.[n] ?? null),
   get_xbox_skin: (n: string) => realSkin("xbox", n, (window as any).__testXbox ?? null),
   get_ps4_skin: (n: string) => realSkin("ps4", n, (window as any).__testPs4 ?? null),
   import_ps4_downloads: () => (window as any).__testPs4Import ?? { success: true, imported: [], existing: [], errors: [] },
@@ -238,9 +253,15 @@ export const callable =
       if(name==='animated_wallpapers_workshop')return {items:[]};
       return {ok:false,error:'Choose a fixture or connect the local wallpaper preview bridge.'};
     }
-    return name.startsWith('x360_engine_')
+    const coverBridge = new URLSearchParams(location.search).get('coverBridge');
+    if(name.startsWith('cover_wrap_')&&coverBridge&&/^http:\/\/127\.0\.0\.1:\d+$/.test(coverBridge)){
+      const response=await fetch(`${coverBridge}/${name}`,{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify(args)});
+      const result=await response.json();if(!response.ok)throw Error(result.error||'Cover provider request failed');return result;
+    }
+    return (
+    (name.startsWith('x360_engine_')||name==='x360_runtime_info')
       ? avatarPreviewCall(name,args)
-      : backend[name]?.(...args);
+      : backend[name]?.(...args));
   };
 export const definePlugin = (f: any) => f;
 export const routerHook = { addRoute() {}, removeRoute() {}, addPatch() { return {}; }, removePatch() {} };

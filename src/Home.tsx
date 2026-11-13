@@ -1,5 +1,6 @@
 import {SquareArtworkPanel} from './SquareArtworkPanel';
 import {launchPortalActive} from './launchPortal';
+import { gameChoice } from "./gameFilters";
 import {startupIntroEnabled} from "./startupPreferences";
 import {WiiFlowDownloadsWatcher} from "./wiiflowDownloads";
 import {ThemeLoadingScreen} from "./ThemeLoadingScreen";
@@ -44,7 +45,7 @@ import { cachedPspSkin, loadPspSkin } from "./skins";
 import { Navigation } from "@decky/ui";
 import { Component, CSSProperties, ReactNode, useEffect, useMemo, useRef, useState } from "react";
 import { createPortal } from "react-dom";
-import { anyMenuOpen, HomeApi, HomeCtx, MenuView, useMenu } from "./common";
+import { anyMenuOpen, collectionMenu, HomeApi, HomeCtx, MenuView, useMenu } from "./common";
 import { Game, launchGame, loadLibrary, openGamePage, setStoreOpener } from "./library";
 import { presentationVariables, PRESENTATION_CSS } from "./themePresentation";
 import { getSettings, pspFile, ThemeId, THEMES, updateSettings, useSettings, useSettingsLoaded } from "./settings";
@@ -301,9 +302,16 @@ function ThemedHomeContent({ standalone }: { standalone?: boolean }) {
     const owner = root.current?.ownerDocument; owner?.addEventListener("visibilitychange", refresh);
     return () => { clearInterval(iv); owner?.removeEventListener("visibilitychange", refresh); };
   }, []);
-  const collectionChoice = s.themeCollections?.[s.theme];
+  const collectionChoice = gameChoice(s,"home");
   const librarySource = collectionChoice?.source ?? s.source;
-  const lib = useMemo(() => loadLibrary(librarySource, s.sort, s.maxGames, collectionChoice?.ids), [librarySource, collectionChoice, s.sort, s.maxGames, rev]);
+  const lib = useMemo(() => loadLibrary(librarySource, s.sort, s.maxGames, collectionChoice?.ids), [librarySource, collectionChoice.ids, s.sort, s.maxGames, rev]);
+  const libraryChoice = gameChoice(s,"library");
+  const library = useMemo(() => {
+    const complete = loadLibrary("all", s.sort, Number.MAX_SAFE_INTEGER);
+    const selection = loadLibrary(libraryChoice.source, s.sort, Number.MAX_SAFE_INTEGER, libraryChoice.ids);
+    // Collection selectors retain access to every collection, regardless of the initial view.
+    return {...complete, games:selection.games};
+  }, [libraryChoice.source, libraryChoice.ids, s.sort, rev]);
   // Empty libraries are valid; a missing/changed Steam API is a compatibility failure.
   if (lib.error) throw new Error(lib.error);
 
@@ -384,6 +392,8 @@ function ThemedHomeContent({ standalone }: { standalone?: boolean }) {
   const api: HomeApi = useMemo(
     () => ({
       lib,
+      library,
+      openGameFilter: (page: "home" | "library") => themeMenu.open(collectionMenu(s.theme, page).sub!(), page === "home" ? "Home games" : "Library games", {page:true}),
       settings: s,
       activate: (g: Game, themeDefault: () => void) => {
         const a = getSettings().aAction;
@@ -420,7 +430,7 @@ function ThemedHomeContent({ standalone }: { standalone?: boolean }) {
       user: userName(),
       busy: overlay !== null || destination !== null || launching !== null || market.opened,
     }),
-    [lib, s, overlay !== null, destination !== null, launching !== null, market.opened],
+    [lib, library, s, overlay !== null, destination !== null, launching !== null, market.opened],
   );
 
   const themeActive = routeActive && !screensaver && visible && !market.opened && !launching && (!overlay || (s.theme === "minecraft" && overlay.kind === "store")) && (!destination || s.theme === "minecraft");
@@ -456,8 +466,8 @@ function ThemedHomeContent({ standalone }: { standalone?: boolean }) {
       {overlay?.kind === "video" && <div className="dht-themed-media"><VideoPlayer video={overlay.video} lib={lib.byId} onClose={() => setOverlay(overlay.back ? { kind: "shots", tab: "videos" } : null)} /></div>}
       {overlay?.kind === "music" && <div className="dht-themed-media"><MusicPlayerView onClose={() => setOverlay(null)} /></div>}
       {!overlay && !destination && !launching && s.theme !== "ps3" && s.theme !== "psp" && s.theme !== "reading" && <NowPlayingMini onOpen={() => { playSound("open"); setOverlay({ kind: "music" }); }} />}
-      {overlay?.kind === "store" && inBlockPanel(<HomeCtx.Provider value={api}><NativeLayout destination={{place:"store"}} onClose={()=>setOverlay(null)} fallback={<StoreView settings={pageSettings(s, "store")} lib={lib} onClose={() => transitionPage(s,()=>setOverlay(null),doc)} onLaunch={(g) => launchGame(g)} />}/></HomeCtx.Provider>)}
-      {destination && inBlockPanel(<HomeCtx.Provider value={api}><NativeLayout destination={destination} onClose={()=>setDestination(null)} fallback={<DestinationView destination={destination} settings={s} lib={lib} onClose={()=>transitionPage(s,()=>setDestination(null),doc)} onLaunch={launchGame} onMedia={()=>setOverlay({kind:"shots",appid:destination.game?.appid})} onTrailer={g=>setOverlay({kind:"trailer",game:g})}/>}/></HomeCtx.Provider>)}
+      {overlay?.kind === "store" && inBlockPanel(<HomeCtx.Provider value={{...api, lib: library}}><NativeLayout destination={{place:"store"}} onClose={()=>setOverlay(null)} fallback={<StoreView settings={pageSettings(s, "store")} lib={library} onClose={() => transitionPage(s,()=>setOverlay(null),doc)} onLaunch={(g) => launchGame(g)} />}/></HomeCtx.Provider>)}
+      {destination && inBlockPanel(<HomeCtx.Provider value={{...api, lib: library}}><NativeLayout destination={destination} onClose={()=>setDestination(null)} fallback={<DestinationView destination={destination} settings={s} lib={library} onClose={()=>transitionPage(s,()=>setDestination(null),doc)} onLaunch={launchGame} onMedia={()=>setOverlay({kind:"shots",appid:destination.game?.appid})} onTrailer={g=>setOverlay({kind:"trailer",game:g})}/>}/></HomeCtx.Provider>)}
       <style>{DOWNLOAD_CSS}</style>
       <DownloadStatus settings={s} hidden={!!overlay || !!destination || !!launching || market.opened} />
       <MenuView menu={themeMenu} variant={s.theme === "ps3" ? "xmb" : (s.theme === "frame" || s.theme === "native") ? "ps5" : s.theme} art={s.theme === "psp" ? { panel: cachedPspSkin(pspFile(s))?.visuals?.optionMenu, focus: cachedPspSkin(pspFile(s))?.visuals?.menuFocus } : undefined} />

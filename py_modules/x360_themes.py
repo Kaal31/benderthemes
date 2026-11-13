@@ -41,7 +41,7 @@ SECTIONS = ("home", "games", "media", "system")   # Wallpaper1..4
 _LAYER_WORDS = ("layer", "banner", "guidetile", "gameimage")
 
 
-# STFS container
+# â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€ STFS container â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
 class _Stfs:
     def __init__(self, f):
         self.f = f
@@ -221,7 +221,7 @@ def _utf16(b):
         return ""
 
 
-# pictures
+# â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€ pictures â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
 def _png(w, h, rgba):
     def chunk(t, d):
         c = struct.pack(">I", len(d)) + t + d
@@ -382,7 +382,7 @@ def _url(mime, data):
     return f"data:{mime};base64," + base64.b64encode(data).decode("ascii")
 
 
-# public
+# â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€ public â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
 def read_x360(path):
     """Read an Xbox 360 theme / gamer picture package. Returns a dict, or None if it is not one."""
     try:

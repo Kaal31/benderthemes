@@ -1,5 +1,6 @@
 import {artworkMode,artworkThemeKey,useSquareArtwork} from './squareArtwork';
 import {WiiuGameIcon} from './themes/WiiuGameIcon';
+import { gameChoice, gameChoiceLabel, gameFilterKey } from "./gameFilters";
 // Shared building blocks for the themes: images with fallbacks, a small
 // original icon set, an in-theme options menu, and the shared home context.
 import { DownloadBar } from "./downloadUi";
@@ -18,7 +19,10 @@ import { iconUrl } from "./engine/registry";
 
 // ───────────── home context ─────────────
 export interface HomeApi {
+  /** Home selection, including its source and size limit. */
   lib: Library;
+  /** Complete visible Steam game library, independent of Home selection. */
+  library: Library;
   settings: Settings;
   /** Ⓐ on a game, honouring the user's "Ⓐ does" setting. `themeDefault` is the theme's own behaviour. */
   activate: (g: Game, themeDefault: () => void) => void;
@@ -28,6 +32,7 @@ export interface HomeApi {
   switchTheme: (id: ThemeId) => void;
   showSteamHome: () => void;
   openSettings: () => void;
+  openGameFilter: (page: "home" | "library") => void;
   openMedia: (appid?: number, index?: number) => void; // screenshot gallery
   playTrailer: (g: Game) => void; // full-screen store trailer
   playVideo: (v: LocalVideo) => void; // a video stored on the Deck
@@ -39,6 +44,14 @@ export function useHome(): HomeApi {
   const h = useContext(HomeCtx);
   if (!h) throw new Error("useHome outside HomeCtx");
   return h;
+}
+
+/** A theme can place this beside its existing shelf heading without adding a toolbar. */
+export function GameFilterButton({page="home"}:{page?:"home"|"library"}) {
+  const api=useHome();
+  const choice=gameChoice(api.settings,page);
+  const name=choice.source.startsWith("col:") ? api.library.collections.find(c=>c.id===choice.source.slice(4))?.name : undefined;
+  return <button data-game-filter={page} aria-label={`${page === "home" ? "Home" : "Library"} game filter`} onClick={()=>api.openGameFilter(page)} style={{font:"inherit",fontSize:13,padding:"4px 10px",border:"1px solid currentColor",borderRadius:4,color:"inherit",background:"transparent",cursor:"pointer",whiteSpace:"nowrap"}}>{name??gameChoiceLabel(api.settings,page)} ▾</button>;
 }
 
 // ───────────── images ─────────────
@@ -332,12 +345,17 @@ export interface MenuLevel {
   sel: number;
 }
 
-export function collectionMenu(theme: ThemeId): MenuItem {
-    const choice = () => getSettings().themeCollections?.[theme] ?? { source: getSettings().source };
-    const choose = (source: string, ids?: string[]) => updateSettings(s => ({ themeCollections: { ...s.themeCollections, [theme]: { source, ids } } }));
+export function collectionMenu(theme: ThemeId, page: "home" | "library" = "home"): MenuItem {
+    const key = () => gameFilterKey(getSettings(),theme);
+    const choice = () => gameChoice(getSettings(),page,theme);
+    const choose = (source: string, ids?: string[]) => updateSettings(s => page === "library"
+      ? { libraryCollections: { ...s.libraryCollections, [key()]: { source, ids } } }
+      : { themeCollections: { ...s.themeCollections, [key()]: { source, ids } } });
     return { label: "Collections", sub: () => {
       const collections = listCollectionsForSettings();
       return [
+        ...(page === "library" ? [{label:"Same as Home (default)",checked:!getSettings().libraryCollections?.[key()],action:()=>updateSettings(s=>{const choices={...s.libraryCollections};delete choices[key()];return {libraryCollections:choices};})}] : []),
+        ...[{source:"steam",label:"Steam games"},{source:"non-steam",label:"Non-Steam games"},{source:"uninstalled",label:"Not installed"}].map(o=>({label:o.label,checked:choice().source===o.source,action:()=>choose(o.source)})),
         { label: "Installed games", checked: choice().source === "installed", action: () => choose("installed") },
         { label: "All games", checked: choice().source === "all", action: () => choose("all") },
         ...collections.map(c => ({ label: `${c.name} (${c.count})`, checked: choice().source === `col:${c.id}`, action: () => choose(`col:${c.id}`) })),
@@ -614,8 +632,13 @@ export function MenuView({
     item: (s, d) => ({ color: d ? "#ffffff66" : "#fff", fontSize: 19, padding: "7px 14px", textShadow: "0 1px 2px #0009", background: s ? (art?.focus ? `url("${art.focus}") center / 100% 100% no-repeat` : "linear-gradient(90deg,#ffffff38,#ffffff14)") : "none", borderRadius: art?.focus ? 0 : 4, boxShadow: s && !art?.focus ? "0 0 10px #ffffff40" : "none" }),
     title: { color: "#ffffffb0", fontSize: 15, padding: "0 14px 10px" },
   };
+  styles.gameamp = {
+    panel:{position:"absolute",left:"50%",top:"50%",transform:"translate(-50%,-50%)",minWidth:420,padding:14,border:"3px solid #c5d3e2",borderRadius:10,background:"linear-gradient(110deg,#d8e3ee,#879cb5)",boxShadow:"inset 0 0 0 2px #516882,0 15px 55px #000b",fontFamily:"Tahoma,Arial,sans-serif"},
+    item:(selected,disabled)=>({fontSize:18,padding:"11px 18px",marginBottom:5,border:"1px solid #7089a5",borderRadius:3,color:disabled?"#7990a9":"#e4f0ff",background:selected?"linear-gradient(#28639a,#163d6c)":"#112d51",boxShadow:selected?"inset 0 0 0 1px #8cd9ff":"none"}),
+    title:{fontSize:18,fontWeight:700,letterSpacing:1,color:"#173655",padding:"5px 12px 14px"},
+  };
   const cinematic = variant === "castle" || variant === "republic";
-  const st = cinematic ? {panel:{position:"absolute",left:"50%",top:"50%",transform:"translate(-50%,-50%)",minWidth:420,padding:18,background:variant==="castle"?"#eff8ffff":"#071019f5",border:"1px solid #e5c470",boxShadow:"0 15px 70px #0009"} as CSSProperties,item:(on:boolean)=>({fontSize:22,padding:"12px 22px",color:on?"#302400":variant==="castle"?"#30455c":"#e8d7af",background:on?"linear-gradient(100deg,#ffe579,#d4b157)":"transparent"}),title:{padding:12,fontSize:20,color:variant==="castle"?"#30455c":"#e8d7af"}} : styles[variant];
+  const st = cinematic ? {panel:{position:"absolute",left:"50%",top:"50%",transform:"translate(-50%,-50%)",minWidth:420,padding:18,background:variant==="castle"?"#eff8ffff":"#071019f5",border:"1px solid #e5c470",boxShadow:"0 15px 70px #0009"} as CSSProperties,item:(on:boolean)=>({fontSize:22,padding:"12px 22px",color:on?"#302400":variant==="castle"?"#30455c":"#e8d7af",background:on?"linear-gradient(100deg,#ffe579,#d4b157)":"transparent"}),title:{padding:12,fontSize:20,color:variant==="castle"?"#30455c":"#e8d7af"}} : (styles[variant] ?? styles.ps5);
   return (
     <div className="dht-menu-backdrop" aria-hidden={!menu.isOpen} onClick={(e) => e.target === e.currentTarget && menu.handle({ btn: "b", repeat: false })} style={{ position: "absolute", inset: 0, zIndex: 50, pointerEvents:menu.isOpen?"auto":"none", background: variant === "xmb" ? "transparent" : "rgba(0,0,0,0.25)",...appearance?.backdrop }}>
       {appearance?.capture&&<div className="dht-menu-capture" style={{position:"absolute",inset:0,pointerEvents:"none",...appearance.capture}}/>}

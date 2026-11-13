@@ -1,3 +1,4 @@
+import {gameChoiceLabel} from "../gameFilters";
 import {GameAmpHome} from "../themes/GameAmp";
 import {GlassHome} from "../themes/Glass";
 import { BundledThemeSurface, hasBundledRenderer, NativeThemePort } from "./BundledThemeSurface";
@@ -135,6 +136,11 @@ function LegacyFrameHome({previewAppid,onPreviewClose}:{previewAppid?:number;onP
       // the theme's slots after mix and match: files from data themes only
       slots: { wallpaper: slotUrl("wallpaper", s) ?? null, bootVideo: slotUrl("bootVideo", s) ?? null, launchVideo: slotUrl("launchVideo", s) ?? null, font: slotUrl("font", s) ?? null, icons: iconMap(s) },
       games: api.lib.games.map((g) => publicGame(g, abs)),
+      // Separate full catalog for in-theme Library views; Home keeps its selection.
+      libraryLabel: gameChoiceLabel(s,"library"),
+      libraryAllGames: api.library.all.map((g) => publicGame(g, abs)),
+      libraryGames: api.library.games.map((g) => publicGame(g, abs)),
+      libraryCollections: api.library.collections.map((c) => ({ id: c.id, name: c.name, appids: c.games.map((g) => g.appid) })),
       apps: api.lib.apps.map((g) => publicGame(g, abs)),
       collections: api.lib.collections.map((c) => ({ id: c.id, name: c.name, appids: c.games.map((g) => g.appid) })),
       saved: theme ? s.frameData[theme.id] ?? null : null,
@@ -144,7 +150,7 @@ function LegacyFrameHome({previewAppid,onPreviewClose}:{previewAppid?:number;onP
       active: !((nativePort.current?.ownerDocument??frame.current?.ownerDocument)?.hidden ?? false) && !api.busy,
       capabilities: { pages: 1, audio: 1, focus: 1, navigation: 1, lifecycle: 1, savePatch: 1 },
     };
-  }, [previewAppid, api.lib, api.settings, api.user, api.busy, status.avatar, theme?.id, ready, routes]);
+  }, [previewAppid, api.lib, api.library, api.settings, api.user, api.busy, status.avatar, theme?.id, ready, routes]);
 
   useEffect(() => {
     if (ready) post({ type: "state", ...state });

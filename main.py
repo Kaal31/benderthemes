@@ -731,26 +731,12 @@ def _argb_to_css(v: str):
 
 
 def _read_vita(path: str):
-    if os.path.isdir(path):
-        base = path
+    from vita_source import open_theme
+    with open_theme(path) as read:
+        return _read_vita_content(path, read)
 
-        def read(rel):
-            p = os.path.normpath(os.path.join(base, rel))
-            if not p.startswith(os.path.normpath(base)) or not os.path.isfile(p):
-                return None
-            with open(p, "rb") as f:
-                return f.read()
-    elif zipfile is not None and zipfile.is_zipfile(path):
-        z = zipfile.ZipFile(path)
-        names = {n.lower(): n for n in z.namelist()}
-        xml_name = next((n for n in z.namelist() if n.lower().endswith("theme.xml")), None)
-        prefix = xml_name[: -len("theme.xml")] if xml_name else ""
 
-        def read(rel):
-            n = names.get((prefix + rel).lower()) or names.get(rel.lower())
-            return z.read(n) if n else None
-    else:
-        return None
+def _read_vita_content(path, read):
     xml_raw = read("theme.xml")
     if not xml_raw:
         return None
@@ -1447,8 +1433,7 @@ def _read_3ds_cached(path: str):
     """n3ds_themes.read_3ds_theme, remembered on disk (the wallpapers are decoded to PNG)."""
     import n3ds_themes
     try:
-        st = os.stat(path)
-        text = f"{os.path.realpath(path)}|{st.st_size}|{st.st_mtime_ns}|{n3ds_themes.READER_VERSION}"
+        text = f"{os.path.realpath(path)}|{n3ds_themes.source_stamp(path)}|{n3ds_themes.READER_VERSION}"
     except Exception:
         return n3ds_themes.read_3ds_theme(path)
     return _pickle_cached("n3dsskin", text, lambda: n3ds_themes.read_3ds_theme(path))
@@ -1990,9 +1975,9 @@ class Plugin:
         os.makedirs(psp_dir, exist_ok=True)
         psp = sorted(n for n in set(os.listdir(psp_dir)) | set(_resource_names("skins/psp")) if n.lower().endswith((".ptf", ".ctf")))
         p3t = sorted(n for n in set(os.listdir(p3t_dir)) | set(_resource_names("skins/p3t")) if n.lower().endswith(".p3t"))
+        import vita_source
         vita = sorted(
-            n for n in set(os.listdir(vita_dir)) | set(_resource_names("skins/vita"))
-            if n.lower().endswith(".zip") or os.path.isfile(os.path.join(_user_resource(vita_dir, n, "skins/vita"), "theme.xml"))
+            n for n, path in _skin_entries("vita") if vita_source.peek(path)
         )
         x360, x360pics, x360names = [], [], {}
         try:
@@ -2117,8 +2102,19 @@ class Plugin:
             decky.logger.error(f"ps4 theme read failed: {e}")
             return {"error": str(e)}
 
-    async def get_wii_standard(self):
+    async def get_wii_standard(self, original: bool = False):
         import wii_standard
+        if original:
+            import console_artwork
+            folder = console_artwork.resource_dir("wii-native-menu")
+            if folder is None:
+                await asyncio.to_thread(console_artwork.install, "wii")
+                folder = console_artwork.resource_dir("wii-native-menu")
+            if folder:
+                try:
+                    return json.loads(await asyncio.to_thread((folder / "menu.json").read_text, encoding="utf-8"))
+                except (OSError, ValueError):
+                    pass
         return await asyncio.to_thread(wii_standard.standard_skin)
 
     async def get_wii_skin(self, name: str, member: str = "", base: str = ""):
@@ -2137,7 +2133,17 @@ class Plugin:
         if not name or not (os.path.isfile(p) or os.path.isdir(p)):
             return None
         try:
-            return await asyncio.to_thread(_read_3ds_cached, p)
+            result = await asyncio.to_thread(_read_3ds_cached, p)
+            if not result:
+                return None
+            result = dict(result)
+            bgm, cues = result.pop('_bgm', None), result.pop('_sfx', {})
+            try:
+                import n3ds_audio
+                result.update(await asyncio.to_thread(n3ds_audio.publish, result['name'], bgm, cues, _theme_sound_root()))
+            except Exception as error:
+                result['audioErrors'] = [str(error)]
+            return result
         except Exception as e:
             decky.logger.error(f"3ds theme read failed: {e}")
             return None
@@ -2467,8 +2473,8 @@ class Plugin:
         import console_artwork
         optional = console_artwork.spec(name)
         optional_dir = console_artwork.resource_dir(name) if optional else None
-        if name in {"wiiu-native-ui"} and optional_dir is None:
-            group = "wiiu"
+        if name in {"wiiu-native-ui", "xmb-ps3-native", "xmb-psp-native"} and optional_dir is None:
+            group = {"wiiu-native-ui": "wiiu", "xmb-ps3-native": "ps3", "xmb-psp-native": "psp"}[name]
             await asyncio.to_thread(console_artwork.install, group)
             optional_dir = console_artwork.resource_dir(name)
         relative = "assets/" + _safe_name(name)
@@ -2570,6 +2576,13 @@ class Plugin:
         return await asyncio.to_thread(x360_avatar.status, self._x360_avatar_dir())
 
     # ───── local media server (sounds, music, videos) ─────
+    async def x360_local_files(self, path: str = ""):
+        import x360_filebrowser
+        try:
+            return await asyncio.to_thread(x360_filebrowser.list_folder, decky.DECKY_USER_HOME, str(path))
+        except (OSError, ValueError) as error:
+            return {"entries": [], "error": str(error)}
+
     async def x360_runtime_info(self):
         """Local read-only telemetry for imported dashboard fields."""
         import x360_telemetry

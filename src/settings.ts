@@ -271,8 +271,10 @@ export interface Settings {
   randomThemeOnStartup?: boolean;
   randomThemeAfterGame?: boolean;
   randomThemePool?: string[];
-  source: string; // "installed" | "all" | "col:<collection id>"
+  source: string; // installed | all | steam | non-steam | uninstalled | col:<id> | collections
   themeCollections?: Partial<Record<ThemeId, { source: string; ids?: string[] }>>;
+  /** Missing Library choice follows Home; an explicit choice is independent. */
+  libraryCollections?: Partial<Record<ThemeId, { source: string; ids?: string[] }>>;
   iconSizes?: Partial<Record<ThemeId, number>>;
   themeFx: Record<string, ThemeFx>; // per imported theme file: "vita:<skin>", "psp:<file>", "p3t:<file>"
   sort: SortMode;
@@ -362,6 +364,7 @@ export interface Settings {
   ps4Skin?: string;
   xboxSkin?: string; // original Xbox skin: a folder or .zip name under skins/xbox ("" = none)
   switchTheme?: string; // Switch theme: a .nxtheme path under skins/switch ("file" or "folder/file") or ""
+  pspFallbackIconStyle?: "classic"|"flat"|"outline"|"legacy";
   originalConsoleArtwork?: boolean; // installed GitFlic UI pack; original/procedural UI is the fallback
   x360: { style: X360Style; importedLayout?: boolean; auroraAvatar?: boolean; auroraCoverFrame?: "xbox360" | "steam"; auroraGameView?: "cases" | "discs"; auroraDiscIndicator?: "theme" | "flat" | "3d"; weather?: boolean; coverflow?: string; caseTexture?: string; cabinetWallpaper?: string; guideSide?: "left" | "right"; skin?: string; gamerpic?: string; showThemeHubLogo?: boolean }; // skin / gamerpic: STFS package names in skins/x360 ("" = none); which Xbox 360 dashboard era
   dial: DialSettings;
@@ -440,6 +443,7 @@ export const FOOTER_MODES: { id: FooterMode; name: string }[] = [
 ];
 
 export const DEFAULTS: Settings = {
+  pspFallbackIconStyle: "classic",
   activeTheme: "",
   mix: {},
   frameData: {},
@@ -786,12 +790,13 @@ export function resetThemeSettings(theme: ThemeId) {
     const drop = <T,>(rec: Partial<Record<ThemeId, T>> | undefined) => {
       const r = { ...(rec || {}) };
       delete r[theme];
+      if((theme==="frame"||theme==="native")&&p.activeTheme) delete r[p.activeTheme as ThemeId];
       return r;
     };
     const out: Partial<Settings> = {
       iconSizes: drop(p.iconSizes), protondbThemes: Object.fromEntries(Object.entries(p.protondbThemes).filter(([key])=>key!==theme&&!key.startsWith(`${theme}:`)&&!(p.theme===theme&&key===p.activeTheme))), titles: drop(p.titles), coverStyles: drop(p.coverStyles), packs: drop(p.packs),
       music: drop(p.music), musicPacks: drop(p.musicPacks), wallpapers: drop(p.wallpapers), videoBackgrounds: drop(p.videoBackgrounds),
-      gameArtworkModes: Object.fromEntries(Object.entries(p.gameArtworkModes??{}).filter(([key])=>key!==theme&&!((theme==="frame"||theme==="native")&&key===p.activeTheme))), storeSections: drop(p.storeSections),
+      gameArtworkModes: Object.fromEntries(Object.entries(p.gameArtworkModes??{}).filter(([key])=>key!==theme&&!((theme==="frame"||theme==="native")&&key===p.activeTheme))), storeSections: drop(p.storeSections), themeCollections: drop(p.themeCollections), libraryCollections: drop(p.libraryCollections),
     };
     const fx = { ...p.themeFx };
     const keys: string[] = [];
@@ -848,7 +853,7 @@ export function resetThemeSettings(theme: ThemeId) {
 /** Every setting back to defaults (the current theme stays selected; deleted themes stay deleted). */
 export function resetAllSettings() {
   // the user's own presets stay; the kept states of built-in looks and theme files go back to their defaults
-  updateSettings((p) => ({ ...DEFAULTS, theme: p.theme, activeTheme: p.activeTheme, frameData: p.frameData, userPresets: p.userPresets.filter((u) => u.id.startsWith("my:")), enabled: p.enabled, hiddenThemes: p.hiddenThemes, iconSizes: {}, themeCollections: {}, minecraftSkin: "" }));
+  updateSettings((p) => ({ ...DEFAULTS, theme: p.theme, activeTheme: p.activeTheme, frameData: p.frameData, userPresets: p.userPresets.filter((u) => u.id.startsWith("my:")), enabled: p.enabled, hiddenThemes: p.hiddenThemes, iconSizes: {}, themeCollections: {}, libraryCollections: {}, minecraftSkin: "" }));
 }
 
 /** The PSP theme file in use ("" = none: the drawn wave). */

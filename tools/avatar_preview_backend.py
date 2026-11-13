@@ -29,6 +29,8 @@ loop=asyncio.new_event_loop()
 threading.Thread(target=loop.run_forever,daemon=True).start()
 plugin=main.Plugin()
 methods={'x360_engine_'+name for name in ['status','build','save','legacy','install']}
+methods.add('x360_runtime_info')
+methods.update({'cover_wrap_get','cover_wrap_search','cover_wrap_select','cover_wrap_import','cover_wrap_mode'})
 
 
 class Handler(http.server.BaseHTTPRequestHandler):
@@ -50,7 +52,7 @@ class Handler(http.server.BaseHTTPRequestHandler):
 
 
 server=http.server.ThreadingHTTPServer(('127.0.0.1',args.port),Handler)
-print(f'Avatar preview bridge: http://127.0.0.1:{server.server_port}',flush=True)
+print(f'Avatar preview bridge: http://127.0.0.1:{server.server_port} · {__file__} · methods: {sorted(methods)}',flush=True)
 try:server.serve_forever()
 finally:
     server.server_close();loop.call_soon_threadsafe(loop.stop);temporary.cleanup()

@@ -224,6 +224,9 @@ export function loadLibrary(src: string, sort: SortMode, max: number, collection
     if (src === "collections") chosen = [...new Map(visibleCollections.flatMap(c => c.games).map(g => [g.appid, g])).values()];
     else if (src.startsWith("col:")) chosen = collections.find((c) => c.id === src.slice(4))?.games ?? [];
     else if (src === "all") chosen = games;
+    else if (src === "steam") chosen = games.filter((g) => !g.shortcut);
+    else if (src === "non-steam") chosen = games.filter((g) => g.shortcut);
+    else if (src === "uninstalled") chosen = games.filter((g) => !g.installed);
     else chosen = games.filter((g) => g.installed);
     lib = {
       games: sortGames(chosen, sort).slice(0, max),

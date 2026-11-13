@@ -81,9 +81,9 @@ export function IisuHome() {
 
   // ───── what each tab holds ─────
   const collections = [
-    { id: "all", name: "All Games", games: api.lib.all.length ? api.lib.all : games },
-    { id: "installed", name: "Installed", games: games.filter((g) => g.installed) },
-    ...api.lib.collections,
+    { id: "all", name: "All Games", games: api.library.all },
+    { id: "installed", name: "Installed", games: api.library.all.filter((g) => g.installed) },
+    ...api.library.collections,
   ].filter((c) => c.games.length);
   const opened = openCol ? collections.find((c) => c.id === openCol) : undefined;
   const favs = api.lib.collections.find((c) => c.id === "favorite" && c.games.length);

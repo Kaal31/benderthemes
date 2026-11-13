@@ -24,6 +24,13 @@ class EngineFallbackTests(unittest.TestCase):
         self.assertEqual(self.engine.save(mode='legacy')['mode'],'legacy')
         self.assertFalse(self.engine.status()['installing'])
 
+    def test_editor_static_allowlist_does_not_expose_other_plugin_files(self):
+        for name in ('editor.js', 'editor.html', 'editor.css', 'editor-tokens.css'):
+            self.assertEqual(self.engine.resource('client/'+name).name, name)
+        self.assertEqual(self.engine.resource('metro/metro-screens.json').name, 'metro-screens.json')
+        for path in ('client/../assets-release.json', '../main.py', 'client/unknown.js'):
+            with self.assertRaises(ValueError): self.engine.resource(path)
+
     def test_explicit_fallback_is_preserved_after_assets_are_available(self):
         self.engine.save(mode='legacy')
         with patch.object(self.engine,'ready',return_value=True):

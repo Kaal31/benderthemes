@@ -1,3 +1,5 @@
+import {gameChoice} from "../gameFilters";
+import {libraryGameViews} from "../libraryGameViews";
 import type {NxeCardPage} from './X360NxeCardPages';
 import {NxeAchievements} from './X360NxeAchievements';
 import {NxeGamePreview} from './X360NxeGamePreview';
@@ -19,7 +21,7 @@ type Row={name:string;detail:string;value?:string;run:()=>void};
 /** NXE 2.0.8498.0 list/detail pages, backed by local library and Steam settings. */
 export function NxePages({page,initialGame,initialSection='',onClose,onExitStart,onLibrary,onAvatar}:{page:NxeNativePage;initialGame?:Game;initialSection?:string;onClose:()=>void;onExitStart:()=>void;onLibrary:()=>void;onAvatar:()=>void}){
  const api=useHome(),{W,H}=useStage(),s=api.settings;
- const [section,setSection]=useState(initialSection),[selected,setSelected]=useState(0),[filter,setFilter]=useState('all');
+ const [section,setSection]=useState(initialSection),[selected,setSelected]=useState(0),[filter,setFilter]=useState(()=>gameChoice(s,'library').source);
  const collectionNav=useRef<HTMLDivElement>(null);
  const [previewGame,setPreviewGame]=useState<Game|null>(initialGame??null);
  const [previewPanel,setPreviewPanel]=useState(0);
@@ -46,8 +48,8 @@ export function NxePages({page,initialGame,initialSection='',onClose,onExitStart
    system('Initial Setup','Open Steam system settings.',()=>openSteam('settings')),
   ];
   if(section==='memory'){title='Memory';rows=[
-   system('Games','Browse games known to Steam on this machine.',onLibrary,String(api.lib.games.length)),
-   system('Installed Games','Manage installed games and storage in Steam.',()=>openSteam('settings'),String(api.lib.games.filter(game=>game.installed).length)),
+   system('Games','Browse games known to Steam on this machine.',onLibrary,String(api.library.games.length)),
+   system('Installed Games','Manage installed games and storage in Steam.',()=>openSteam('settings'),String(api.library.games.filter(game=>game.installed).length)),
    system('Gamer Profile','Manage your current Steam profile.',()=>enter('profile'),api.user),
    system('Storage Devices','Open Steam storage management. Device sizes are reported by Steam.',()=>openSteam('settings')),
   ];}
@@ -83,14 +85,12 @@ export function NxePages({page,initialGame,initialSection='',onClose,onExitStart
    system('Choose Sound Pack','Select installed sound effects and music in theme options.',api.openSettings),
   ];}
  }
- const libraryViews=[
-  {id:'all',name:'All Games',games:api.lib.games},
-  {id:'installed',name:'Installed Games',games:api.lib.games.filter(game=>game.installed)},
-  ...api.lib.collections.filter(collection=>collection.games.length>0).map(collection=>({id:'col:'+collection.id,name:collection.name,games:collection.games})),
- ];
+ const libraryViews=libraryGameViews(api.library,s);
+ const configuredView=gameChoice(s,"library");
+ useEffect(()=>{setFilter(configuredView.source);setSelected(0);},[configuredView.source,configuredView.ids]);
  const activeView=libraryViews.find(view=>view.id===filter)??libraryViews[0];
  const chooseView=(id:string)=>{setFilter(id);setSelected(0);playSound('tab');};
- const games=page==='library'?activeView.games:api.lib.games;
+ const games=page==='library'?activeView.games:api.library.games;
  if(page==='achievements'){title='Achievements';rows=games.map(game=>system(game.name,'View achievements and progress for this game in Steam.',()=>showAchievements(game)));}
  if(page==='library'){
   title='Game Library';

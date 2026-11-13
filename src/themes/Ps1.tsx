@@ -40,7 +40,7 @@ export function Ps1Home() {
   const [mainSel, setMainSel] = useRemembered("ps1-main", 0);
 
   // ───── memory cards ─────
-  const games = api.lib.games;
+  const games = api.library.games;
   const perScreen = st<number>("cards") === 1 ? 1 : 2;
   const cardCount = Math.max(1, Math.ceil(games.length / BLOCKS));
   const pages = Math.max(1, Math.ceil(cardCount / perScreen));

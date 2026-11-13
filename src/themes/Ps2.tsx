@@ -261,13 +261,13 @@ export function Ps2Home() {
 
   const devices = useMemo(
     () => [
-      { label: "Memory Card (PS2) /1", sub: "Your games", color: "#2a2f3a", games: api.lib.games, kind: "card" as const },
-      { label: "Memory Card (PS2) /2", sub: "All games", color: "#5a6170", games: api.lib.all.slice(0, s.maxGames), kind: "card" as const },
+      { label: "Memory Card (PS2) /1", sub: "Your games", color: "#2a2f3a", games: api.library.games, kind: "card" as const },
+      { label: "Memory Card (PS2) /2", sub: "All games", color: "#5a6170", games: api.library.games, kind: "card" as const },
       { label: "Steam Library", sub: "Open the library", color: "", games: [] as Game[], kind: "disc" as const },
       { label: "Online Store", sub: "Steam Store", color: "", games: [] as Game[], kind: "disc" as const },
       { label: "Downloads", sub: "Steam download queue", color: "", games: [] as Game[], kind: "disc" as const },
     ],
-    [api.lib, s.maxGames],
+    [api.lib, api.library],
   );
   const dev = devices[clamp(dsel, 0, devices.length - 1)];
   const games = dev.games;
@@ -368,7 +368,7 @@ export function Ps2Home() {
   const towerKind = st<string>("towers");
   const towerSpeed = { still: 0, slow: 0.05, fast: 0.15 }[st<string>("towerMotion")] ?? 0.05;
   const fog = st<string>("fog");
-  const saves = api.lib.games.length;
+  const saves = api.library.games.length;
   const towerDraw = useMemo(
     () => makeTowerDraw(screen === "main" ? 1 : 0.55, { towers: towerSet(towerKind, saves), speed: towerSpeed, fog }),
     [screen, towerKind, saves, towerSpeed, fog],

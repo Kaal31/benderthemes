@@ -12,6 +12,7 @@ import { fmtLastPlayed, fmtPlaytime, Game, openSteam, SteamPlace } from "../libr
 import { showTitle, THEMES, themeFx, updateSettings } from "../settings";
 import { usePs4Skin } from "../skins";
 import { currentLook } from "../presets";
+import {Ps4Scene} from "./Ps4Scene";
 import { Ps4Animation } from "./Ps4Animation";
 import { playstationSurface } from "./playstationSurface";
 import { BatteryGlyph } from "../common";
@@ -107,7 +108,7 @@ export function Ps4Home() {
     const t = setTimeout(() => setBgGame(g), 350);
     return () => clearTimeout(t);
   }, [g?.appid, s.ps4GameBackgrounds]);
-  const showAnimation = !!skin?.animation?.length && fx.background && !wall && !mix?.wallpaper
+  const showAnimation = !!(skin?.animation?.length || skin?.scene) && fx.background && !wall && !mix?.wallpaper
     && !(row === "func" && skin.functionBackground) && !(s.ps4GameBackgrounds && bgGame);
 
   const infoBtns: { label: string; run: () => void }[] = g
@@ -233,7 +234,8 @@ export function Ps4Home() {
         <div className="dht-ps4-bg" style={{ position: "absolute", inset: 0, background: "var(--dht-ps4-bg, radial-gradient(ellipse at 70% 20%, #2f8be0 0%, transparent 55%), linear-gradient(170deg, #0a3a86 0%, #0b2a63 45%, #061637 100%))" }} />
         <div className="dht-ps4-artwork-surface" data-fade={surface.fade} style={surface.artwork}>
         {(wall || skinBackground) && <BackgroundMedia className="dht-ps4-theme-background" src={wall || skinBackground || ""} style={{ position: "absolute", inset: 0, width: W, height: H, objectFit: "cover" }} />}
-        {showAnimation && skin?.animation && <Ps4Animation frames={skin.animation} animate={s.animations && fx.sceneAnim} />}
+        {showAnimation && skin?.scene && <Ps4Scene scene={skin.scene} animate={s.animations && fx.sceneAnim}/>}
+        {showAnimation && !skin?.scene && skin?.animation && <Ps4Animation frames={skin.animation} animate={s.animations && fx.sceneAnim} />}
         {!wall && !skinBackground && <AnimCanvas width={W} height={H} animate={s.animations} draw={drawPs4Bg} fps={24} />}
         </div>
         {skin && <style>{`.dht-theme-ps4 .dht-ps4-text{color:${importedText || "#fff"}!important}`}</style>}

@@ -178,6 +178,8 @@ const PATTERN = (() => {
   return `url("data:image/svg+xml,${encodeURIComponent(svg)}")`;
 })();
 const CSS = `
+@keyframes dhtN3dsPattern {to{background-position:64px -64px}}
+@media(prefers-reduced-motion:reduce){.dht-n3ds-imported-pattern,.dht-n3ds-solid-overlay{animation:none!important}}
 @keyframes dhtN3dsBob{from{translate:0 0}to{translate:var(--bx) var(--by)}}
 @keyframes dhtN3dsBlink{0%,55%{opacity:1}56%,100%{opacity:.15}}
 @keyframes dhtN3dsWiggle{0%,100%{transform:rotate(0)}25%{transform:rotate(-4deg)}75%{transform:rotate(4deg)}}
@@ -723,11 +725,23 @@ export function N3dsHome() {
   const k = split ? H / stackHpx : topOn ? Math.min((H - 24) / stackHpx, (W - 24) / stackWpx) : Math.max(H / stackHpx, W / stackWpx); // hidden: fills the display edge to edge
   const stackW = stackWpx * k, left = (W - stackW) / 2, topY = (H - stackHpx * k) / 2; // hidden: 0
   const bgBlur: CSSProperties = topImg?.image ? { backgroundImage: `url(${topImg.image})`, backgroundSize: "cover", backgroundPosition: "center", filter: "blur(18px) brightness(.75)", transform: "scale(1.15)" } : {};
-  const wallOff = (img: { scroll?: boolean; wide?: string | null } | null, w: number) => (look.scroll && img?.scroll && img.wide ? -(maxScroll ? scroll / maxScroll : 0) * (1024 - w) : 0);
-  const wallStyle = (img: typeof topImg, w: number): CSSProperties => {
+  const wallStyle = (img: N3dsScreen | null, w: number): CSSProperties => {
     if (!img) return {};
-    if (look.scroll && img.scroll && img.wide) return { backgroundImage: `url(${img.wide})`, backgroundSize: "1024px 240px", backgroundPosition: `${wallOff(img, w)}px 0`, backgroundRepeat: "no-repeat", transition: "background-position 380ms" };
-    return { backgroundImage: `url(${img.image})`, backgroundSize: topOn ? "100% 100%" : "cover", backgroundPosition: "center" };
+    if (img.mode === "solid" || img.mode === "pattern") {
+      const strength = Math.max(0, Math.min(1, (img.gradient ?? 0) / 255));
+      return { background: `linear-gradient(rgba(255,255,255,${strength}),transparent),${img.color ?? "#eceef2"}` };
+    }
+    if (look.scroll && img.frames?.length) {
+      const cycle = img.frame === "bounce" ? [0, 1, 2, 1] : [0, 1, 2];
+      const frame = cycle[(Math.floor(curSlot / rows) + curSlot % rows) % cycle.length];
+      return { backgroundImage: `url(${img.frames[frame]})`, backgroundSize: "100% 100%" };
+    }
+    if (look.scroll && img.scroll && img.wide) {
+      const width = img.wideWidth ?? 1008;
+      const offset = -(maxScroll ? scroll / maxScroll : 0) * Math.max(0, width - w);
+      return { backgroundImage: `url(${img.wide})`, backgroundSize: `${width}px 240px`, backgroundPosition: `${offset}px 0`, backgroundRepeat: "no-repeat", transition: s.animations ? `background-position ${img.frame === "slow" ? 760 : 380}ms` : "none" };
+    }
+    return { backgroundImage: img.image ? `url(${img.image})` : undefined, backgroundSize: topOn ? "100% 100%" : "cover", backgroundPosition: "center" };
   };
   const nowSec = Math.floor(now.getTime() / 1000);
   const date = `${fmtDate(now)} (${DAYS[now.getDay()]})`;
@@ -744,17 +758,17 @@ export function N3dsHome() {
   // side arrows: half rings at the screen edges, centred on the panel (smaller with small icons)
   const ringD = rows >= 4 ? 38 : 54;
   const ring = (dir: "l" | "r", onClick: () => void) => (
-    <div key={dir} className="dht-n3ds-arrow" data-dir={dir === "l" ? "left" : "right"} onClick={onClick} style={{ position: "absolute", top: PANEL.top + PANEL.h / 2 - ringD / 2, [dir === "l" ? "left" : "right"]: dir === "r" && sideDrawer ? DRAWER_SIDE - ringD / 2 : -ringD / 2, width: ringD, height: ringD, borderRadius: "50%", background: "radial-gradient(#fffe,#f2f3f5d9)", boxShadow: "0 1px 4px #0003", display: "flex", alignItems: "center", justifyContent: dir === "l" ? "flex-end" : "flex-start", paddingInline: rows >= 4 ? 4 : 8, cursor: "pointer", zIndex: 4 }}>
-      <svg width={rows >= 4 ? 12 : 16} height={rows >= 4 ? 12 : 16} viewBox="0 0 16 16" style={{ transform: dir === "l" ? "scaleX(-1)" : "none" }}><path d="M2 8h10M8 3l5 5-5 5" fill="none" stroke={cur} strokeWidth="2.6" strokeLinecap="round" strokeLinejoin="round" /></svg>
+    <div key={dir} className="dht-n3ds-arrow" data-dir={dir === "l" ? "left" : "right"} onClick={onClick} style={{ position: "absolute", top: PANEL.top + PANEL.h / 2 - ringD / 2, [dir === "l" ? "left" : "right"]: dir === "r" && sideDrawer ? DRAWER_SIDE - ringD / 2 : -ringD / 2, width: ringD, height: ringD, borderRadius: "50%", background: look.controls.arrow_button ? `linear-gradient(${look.controls.arrow_button[0]},${look.controls.arrow_button[1]},${look.controls.arrow_button[2]})` : "radial-gradient(#fffe,#f2f3f5d9)", boxShadow: "0 1px 4px #0003", display: "flex", alignItems: "center", justifyContent: dir === "l" ? "flex-end" : "flex-start", paddingInline: rows >= 4 ? 4 : 8, cursor: "pointer", zIndex: 4 }}>
+      <svg width={rows >= 4 ? 12 : 16} height={rows >= 4 ? 12 : 16} viewBox="0 0 16 16" style={{ transform: dir === "l" ? "scaleX(-1)" : "none" }}><path d="M2 8h10M8 3l5 5-5 5" fill="none" stroke={look.controls.arrow?.[1] ?? cur} strokeWidth="2.6" strokeLinecap="round" strokeLinejoin="round" /></svg>
     </div>
   );
   // the scroll handle: a slim track along the panel's bottom edge; drag the thumb (or tap the track) to scroll
   const trackX = 22, trackW = gridW - 44, thumbW = Math.max(16, (trackW * visCols) / Math.max(visCols, scrollCols)), thumbX = maxScroll ? (scroll / maxScroll) * (trackW - thumbW) : 0;
   const handleAt = (cx: number) => { const l = local(cx, 0); if (!l) return; scrollTo(((l.x - trackX - thumbW / 2) / Math.max(1, trackW - thumbW)) * maxScroll); };
 
-  const bottomBg: CSSProperties = botImg ? wallStyle(botImg, bw) : look.bottom?.mode === "solid" ? { background: look.bottom.color ?? "#ccc" } : { background: "linear-gradient(#e7eaf1,#dfe3ec)" };
+  const bottomBg: CSSProperties = look.bottom ? wallStyle(look.bottom, bw) : { background: "linear-gradient(#e7eaf1,#dfe3ec)" };
   const noPanel = !!(botImg || look.bottom);
-  const panelBg = inFolder ? "#c3bfb8" : "#d9d6d0";
+  const panelBg = (inFolder ? look.controls.folder_bg?.[1] : look.controls.bottom_inner?.[1]) ?? (inFolder ? "#c3bfb8" : "#d9d6d0");
 
   /** One grid item (game, folder or badge) in a w x h box. */
   const renderItem = (e: Entry, w: number, h: number, ghost = false) => {
@@ -775,7 +789,7 @@ export function N3dsHome() {
     }
     const size = w, smallArt = rows >= 4;
     return (
-      <div className="dht-n3ds-icon" style={{ position: "absolute", inset: 0, borderRadius: size * (smallArt ? 0.16 : 0.2), background: look.fileArt?.large ? `url(${smallArt ? look.fileArt.small ?? look.fileArt.large : look.fileArt.large}) 0 0 / 100% 100%` : `var(--dht-n3ds-tile, linear-gradient(#fff,${fileColor ?? "#f1f2f5"}))`, boxShadow: smallArt ? "0 1px 3px #3b405566, inset 0 0 0 1px #fff" : "0 3px 5px #3b405566, inset 0 0 0 1px #fff", padding: size * (smallArt ? 0.08 : 0.115) }}>
+      <div className="dht-n3ds-icon" style={{ position: "absolute", inset: 0, borderRadius: size * (smallArt ? 0.16 : 0.2), background: look.fileArt?.large ? `url(${smallArt ? look.fileArt.small ?? look.fileArt.large : look.fileArt.large}) 0 0 / 100% 100%` : `var(--dht-n3ds-tile, linear-gradient(${look.file?.light??"#fff"},${fileColor ?? "#f1f2f5"},${look.file?.dark??fileColor??"#f1f2f5"}))`, boxShadow: smallArt ? "0 1px 3px #3b405566, inset 0 0 0 1px #fff" : "0 3px 5px #3b405566, inset 0 0 0 1px #fff", padding: size * (smallArt ? 0.08 : 0.115) }}>
         <div style={{ width: "100%", height: "100%", borderRadius: smallArt ? 2 : 4, overflow: "hidden", boxShadow: "0 0 0 1px #0002", filter: e.game.installed ? "none" : "grayscale(.7) opacity(.7)" }}>
           <GameArt g={e.game} kind="portrait" position="50% 18%" style={{ width: "100%", height: "100%" }} />
         </div>
@@ -857,7 +871,9 @@ export function N3dsHome() {
         <div className={`dht-n3ds-stack${s.animations ? "" : " dht-n3ds-still"}`} data-screen-layout={s.n3dsTop ?? "show"} data-rows={rows} data-arranging={arranging} style={{ position: "absolute", left, top: topY, width: stackWpx, height: stackHpx, transform: `scale(${k})`, transformOrigin: "0 0", fontFamily: FONT }}>
           {/* ───────── top screen ───────── */}
           {topOn && (
-          <div className="dht-n3ds-top" data-dht-from-skin={topImg || look.top ? "" : undefined} style={{ position: "absolute", left: 0, top: 0, width: split ? bw : SW.top, height: SH, overflow: "hidden", borderRadius: split ? 0 : 3, boxShadow: split ? "none" : "0 0 0 3px #202226, 0 0 0 4.5px #4a4d54, 0 8px 22px #0006", background: look.top?.mode === "solid" ? look.top.color ?? "#eceef2" : "#eceef2", ...(look.top ? wallStyle(topImg, SW.top) : {}) }}>{wall&&<BackgroundMedia src={wall}/>}
+          <div className="dht-n3ds-top" data-dht-from-skin={topImg || look.top ? "" : undefined} style={{ position: "absolute", left: 0, top: 0, width: split ? bw : SW.top, height: SH, overflow: "hidden", borderRadius: split ? 0 : 3, boxShadow: split ? "none" : "0 0 0 3px #202226, 0 0 0 4.5px #4a4d54, 0 8px 22px #0006", background: look.top?.mode === "solid" ? look.top.color ?? "#eceef2" : "#eceef2", ...(look.top ? wallStyle(look.top, SW.top) : {}) }}>{wall&&<BackgroundMedia src={wall}/>}
+            {look.top?.mode==="solid"&&!!look.top.opacity&&<div className="dht-n3ds-solid-overlay" style={{position:"absolute",inset:0,pointerEvents:"none",background:`${PATTERN} 0 0/100px 100px`,opacity:look.top.opacity/255,animation:s.animations&&look.scroll?"dhtN3dsPattern 16s linear infinite":"none"}}/>}
+            {look.top?.patterns?.map((layer,index)=><div key={index} className="dht-n3ds-imported-pattern" data-moving={layer.moving} style={{position:"absolute",inset:0,pointerEvents:"none",backgroundImage:`url(${layer.image})`,backgroundSize:"64px 64px",opacity:(look.top?.opacity??255)/255,animation:layer.moving&&s.animations&&look.scroll?"dhtN3dsPattern 12s linear infinite":"none"}}/>)}
             {!look.top && <div className="dht-n3ds-pattern" style={{ position: "absolute", inset: 0, background: `var(--dht-n3ds-top-bg, ${PATTERN} 8px 4px/100px 100px, linear-gradient(#eff0f3,#e1e3e8 60%,#e9ebef))` }} />}
             <div className="dht-n3ds-status" style={{ position: "absolute", left: 0, right: 0, top: 0, height: 26, background: darkTop ? "linear-gradient(#0008,#0000)" : "linear-gradient(#fffe 55%,#fff0)", color: ink, fontSize: 12.5, fontWeight: 600, textShadow: darkTop ? "0 1px 2px #0009" : "none" }}>
               <div style={{ position: "absolute", left: 4, top: 6 }}><Bars color="#28a9e8" /></div>
@@ -904,7 +920,7 @@ export function N3dsHome() {
           {/* ───────── bottom screen ───────── */}
           <div className={`dht-n3ds-bottom${arranging ? " dht-n3ds-arranging" : ""}`} data-dht-from-skin={noPanel ? "" : undefined} style={{ position: "absolute", left: botLeft, top: botTop, width: bw, height: SH, overflow: "clip", borderRadius: topOn && !split ? 3 : 0, boxShadow: !topOn || split ? "none" : "0 0 0 3px #202226, 0 0 0 4.5px #4a4d54, 0 8px 22px #0006", ...bottomBg }}>{wall&&s.n3dsTop==="hide"&&<BackgroundMedia src={wall}/>}
             {!noPanel && <div className="dht-n3ds-stripes" style={{ position: "absolute", left: 0, right: 0, bottom: 0, height: 40, background: STRIPES }} />}
-            {!noPanel && <div className="dht-n3ds-panel" style={{ position: "absolute", left: PANEL.left, top: PANEL.top, right: -20, height: PANEL.h, borderRadius: "10px 0 0 10px", background: `var(--dht-n3ds-panel, ${panelBg})`, boxShadow: "inset 0 2px 5px #0002, 0 1px 0 #fff9" }} />}
+            {(!noPanel || inFolder && !!look.controls.folder_bg) && <div className="dht-n3ds-panel" style={{ position: "absolute", left: PANEL.left, top: PANEL.top, right: -20, height: PANEL.h, borderRadius: "10px 0 0 10px", background: `var(--dht-n3ds-panel, ${panelBg})`, boxShadow: "inset 0 2px 5px #0002, 0 1px 0 #fff9" }} />}
             {/* the grid, clipped to the panel's width */}
             <div ref={gridRef} className="dht-n3ds-grid" data-rows={rows} data-scroll={scroll} data-cols={scrollCols} data-visible-cols={visCols} data-folder={openOwn?.name ?? openColl?.name ?? undefined}
               onPointerDown={onDown} onPointerMove={onMove} onPointerUp={onUp} onPointerCancel={() => { if (ptr.current) clearTimeout(ptr.current.timer); ptr.current = null; setDrag(null); }}
@@ -918,7 +934,7 @@ export function N3dsHome() {
                   const on = slot === curSlot && zone === "grid";
                   return (
                     <div key={`e${slot}`} className="dht-n3ds-slot" data-slot={slot} style={{ position: "absolute", left: bx.left, top: bx.top, width: bx.width, height: bx.height, pointerEvents: "none" }}>
-                      <i style={{ position: "absolute", left: (bx.width - m) / 2, top: (bx.height - m) / 2, width: m, height: m, borderRadius: m * 0.3, background: on ? "#e0e0de" : "#00000010", boxShadow: on ? "inset 0 1px 2px #0002, 0 0 0 1px #d3d3d1" : "inset 0 1px 1px #0000000f" }} />
+                      <i style={{ position: "absolute", left: (bx.width - m) / 2, top: (bx.height - m) / 2, width: m, height: m, borderRadius: m * 0.3, background: look.controls.bottom_inner?.[1] ?? (on ? "#e0e0de" : "#00000010"), boxShadow: on ? "inset 0 1px 2px #0002, 0 0 0 1px #d3d3d1" : "inset 0 1px 1px #0000000f" }} />
                     </div>
                   );
                 })}
@@ -934,7 +950,7 @@ export function N3dsHome() {
                   return (
                     <div key={`${e.key}@${slot}`} className="dht-n3ds-tile" data-slot={slot} data-selected={on} data-held={isHeld} data-name={itemName(e)} data-kind={e.t} data-own={e.t === "folder" ? e.own : undefined} data-cells={e.t === "badge" ? `${w}x${h}` : undefined}
                       style={{ position: "absolute", ...bx, cursor: "pointer", opacity: isHeld ? 0.3 : 1 }}>
-                      {rows === 1 && e.t !== "badge" && <div className="dht-n3ds-label" style={{ position: "absolute", left: -16, right: -16, bottom: "100%", marginBottom: 6, textAlign: "center", fontSize: 11, fontWeight: 700, color: look.text?.main ?? "#5a5f6b", whiteSpace: "nowrap", overflow: "hidden", textOverflow: "ellipsis" }}>{itemName(e)}</div>}
+                      {rows === 1 && e.t !== "badge" && <div className="dht-n3ds-label" style={{ position: "absolute", left: -16, right: -16, bottom: "100%", marginBottom: 6, textAlign: "center", fontSize: 11, fontWeight: 700, color: look.text?.main ?? "#5a5f6b", background: look.text?.background, whiteSpace: "nowrap", overflow: "hidden", textOverflow: "ellipsis" }}>{itemName(e)}</div>}
                       {renderItem(e, bx.width, bx.height)}
                       {dot && <i className="dht-n3ds-dot" data-state={dot} style={{ position: "absolute", right: rows >= 4 ? -3 : -2, bottom: rows >= 4 ? -3 : -2, width: rows >= 4 ? 7 : 11, height: rows >= 4 ? 7 : 11, borderRadius: "50%", background: dot === "recent" ? "#58d65a" : "#4cb4f2", boxShadow: `0 0 0 ${rows >= 4 ? 1 : 1.5}px #fffd, 0 1px 2px #0005`, pointerEvents: "none" }} />}
                       {showCursor && !simple && (
@@ -988,7 +1004,7 @@ export function N3dsHome() {
             {s.n3dsArrows !== "hide" && scroll > 0 && ring("l", () => scrollBy(-visCols))}
             {s.n3dsArrows !== "hide" && scroll < maxScroll && ring("r", () => scrollBy(visCols))}
             {/* tab strip: HOME Settings + shortcuts (a back button in a folder, Done while arranging), the two resize buttons */}
-            <div className="dht-n3ds-tabs" style={{ position: "absolute", left: 0, right: 0, top: 0, height: 31, background: "linear-gradient(#e8ebf2,#dde1ea)", boxShadow: "0 1px 0 #c2c8d4", display: "flex", alignItems: "flex-end", paddingLeft: 3, zIndex: 7 }}>
+            <div className="dht-n3ds-tabs" style={{ position: "absolute", left: 0, right: 0, top: 0, height: 31, background: look.controls.toolbar?.[1] ?? "linear-gradient(#e8ebf2,#dde1ea)", boxShadow: "0 1px 0 #c2c8d4", display: "flex", alignItems: "flex-end", paddingLeft: 3, zIndex: 7 }}>
               {tabs.filter((t) => t !== "big" && t !== "small").map((id) => {
                 const i = tabs.indexOf(id), on = zone === "tabs" && tabIdx === i, wide = id === "settings" || id === "back" || id === "done";
                 const label = id === "back" ? "Back" : id === "done" ? "Done" : undefined;
@@ -1001,13 +1017,13 @@ export function N3dsHome() {
               })}
               {(inFolder || arranging) && <span className="dht-n3ds-strip-title" style={{ alignSelf: "center", fontSize: 12, fontWeight: 800, color: "#6a7080", marginLeft: 4, maxWidth: bw - 190, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>{arranging ? (inFolder ? `Arrange · ${openOwn?.name ?? openColl?.name}` : "Arrange") : openOwn?.name ?? openColl?.name}</span>}
               <span style={{ flex: 1 }} />
-              <div style={{ display: "flex", alignItems: "flex-end", background: "linear-gradient(#fafbfc,#eef0f4)", borderRadius: "8px 0 0 0", paddingLeft: 3, height: 29 }}>
+              <div style={{ display: "flex", alignItems: "flex-end", background: look.controls.toolbar?.[1] ?? "linear-gradient(#fafbfc,#eef0f4)", borderRadius: "8px 0 0 0", paddingLeft: 3, height: 29 }}>
                 {(["big", "small"] as const).map((id) => {
                   const i = tabs.indexOf(id), on = zone === "tabs" && tabIdx === i, can = id === "big" ? rows > 1 : rows < 6;
                   return (
                     <div key={id} className="dht-n3ds-tab dht-n3ds-view" data-selected={on} data-enabled={can} data-name={id === "big" ? "Larger icons" : "Smaller icons"} onClick={() => { setTab(i); runTab(id); }}
-                      style={{ width: 25, height: 27, marginRight: 1, display: "flex", alignItems: "center", justifyContent: "center", borderRadius: "8px 8px 0 0", boxShadow: on ? `inset 0 0 0 2px ${cur}` : "none", cursor: "pointer", opacity: can ? 1 : 0.4, borderLeft: id === "small" ? "1px solid #d6dae2" : "none" }}>
-                      <svg width="14" height="14" viewBox="0 0 14 14">{id === "big" ? <rect x="1" y="1" width="12" height="12" rx="2.5" fill="#93a8c5" /> : [1.5, 7.5].flatMap((x) => [1.5, 7.5].map((y) => <rect key={`${x}${y}`} x={x} y={y} width="5" height="5" rx="1.2" fill="#93a8c5" />))}</svg>
+                      style={{ width: 25, height: 27, marginRight: 1, display: "flex", alignItems: "center", justifyContent: "center", borderRadius: "8px 8px 0 0", boxShadow: on ? `inset 0 0 0 2px ${cur}` : "none", cursor: "pointer", opacity: can ? 1 : 0.4, background:on?look.controls.toolbar?.[5]:undefined, borderLeft: id === "small" ? "1px solid #d6dae2" : "none" }}>
+                      <svg width="14" height="14" viewBox="0 0 14 14">{id === "big" ? <rect x="1" y="1" width="12" height="12" rx="2.5" fill={look.controls.toolbar?.[3] ?? "#93a8c5"} /> : [1.5, 7.5].flatMap((x) => [1.5, 7.5].map((y) => <rect key={`${x}${y}`} x={x} y={y} width="5" height="5" rx="1.2" fill={look.controls.toolbar?.[3] ?? "#93a8c5"} />))}</svg>
                     </div>
                   );
                 })}
@@ -1018,9 +1034,10 @@ export function N3dsHome() {
               <div className="dht-n3ds-bar" style={{ position: "absolute", left: 0, right: 0, bottom: 0, height: 25, display: "flex", gap: 2 }}>
                 {bars.map((bt, i) => {
                   const on = zone === "bar" && barIdx === i, first = bars.length > 1 && i === 0;
+                  const button = look.controls.open_button;
                   return (
                     <div key={bt.id} className={`dht-n3ds-${bt.id === "settings" ? "folder-settings" : bt.id === "create" ? "create" : "start"}`} data-selected={on} onClick={() => { setBar(i); runBar(bt.id); }}
-                      style={{ width: first ? 106 : undefined, flex: first ? "none" : 1, borderRadius: "10px 10px 0 0", background: "linear-gradient(#f2f0ec,#d9d5d0)", color: "#5d5a55", display: "flex", alignItems: "center", justifyContent: "center", fontSize: 15, fontWeight: 700, textShadow: "0 1px 0 #fff", cursor: "pointer", boxShadow: on ? `inset 0 0 0 2.5px ${cur}` : "inset 0 1px 0 #fff, 0 -1px 2px #0002" }}>
+                      style={{ width: first ? 106 : undefined, flex: first ? "none" : 1, borderRadius: "10px 10px 0 0", background: button ? on ? button.pressed : button.main : "linear-gradient(#f2f0ec,#d9d5d0)", color: button ? on ? button.textPressed : button.text : "#5d5a55", border:button?`1px solid ${button.border}`:undefined, display: "flex", alignItems: "center", justifyContent: "center", fontSize: 15, fontWeight: 700, textShadow: `0 1px 0 ${button?.textShadow??"#fff"}`, cursor: "pointer", boxShadow: on ? `inset 0 0 0 2.5px ${cur}` : "inset 0 1px 0 #fff, 0 -1px 2px #0002" }}>
                       {bt.label}
                     </div>
                   );

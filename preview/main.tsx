@@ -1,9 +1,15 @@
+import {openSquareArtwork} from '../src/squareArtwork';
+import {startLaunchPortal} from '../src/launchPortal';
+import {startGameSessionReturn,trackThemeGame} from '../src/gameSessionReturn';
+import {gameChoice} from "../src/gameFilters";
 import {previewPadButtons} from "./controllerInput";
 import { startAchievementPopups, previewAchievementPopup, achievementPopupStatus } from "../src/achievementPopups";
 import {SILVER_REFERENCE as PREVIEW_REFERENCE} from "../src/themes/silverReference";
 import {openThemeSettings} from "../src/themeSettingsMenu";
 import {ONYX_SOUND_PACK,ONYX_PREVIEW_CUES} from "./onyxSoundPack";
 import {REAL_GAME_ART} from "./realGameArt";
+import {REAL_GAME_LOGOS} from "./realGameLogos";
+import {EXTRA_REAL_GAME_ART} from "./extraRealGameArt";
 import { THEME_STYLES } from "../src/engine/themeStyles";
 import { beginLaunch, dismissLaunch, launchState } from "../src/launch";
 import { openMarketplace, useMarketplace } from "../src/marketplaceState";
@@ -40,8 +46,9 @@ function svg(w: number, h: number, body: string) {
 function art(name: string, i: number) {
   if (referenceArt?.[name] || REAL_GAME_ART[name]) {
     const a = referenceArt?.[name] ?? REAL_GAME_ART[name];
-    return {portrait:a.portrait,landscape:a.landscape ?? a.portrait,hero:a.hero ?? a.portrait,logo:a.logo ?? []};
+    return {portrait:a.portrait,landscape:a.landscape ?? a.portrait,hero:a.hero ?? a.portrait,logo:REAL_GAME_LOGOS[name]?[REAL_GAME_LOGOS[name]]:a.logo??[]};
   }
+  const extra=EXTRA_REAL_GAME_ART.find(game=>game.name===name);if(extra)return {portrait:[extra.portrait],landscape:[extra.portrait],hero:[extra.portrait],logo:REAL_GAME_LOGOS[name]?[REAL_GAME_LOGOS[name]]:[]};
   const a = hue(name);
   const b = (a + 50 + (i % 3) * 40) % 360;
   const grad = `<defs><linearGradient id="g" x1="0" y1="0" x2="1" y2="1"><stop offset="0" stop-color="hsl(${a},65%,45%)"/><stop offset="1" stop-color="hsl(${b},70%,18%)"/></linearGradient><radialGradient id="r" cx=".7" cy=".3" r=".6"><stop offset="0" stop-color="hsl(${(a + 180) % 360},90%,75%)" stop-opacity=".8"/><stop offset="1" stop-color="#000" stop-opacity="0"/></radialGradient></defs>`;
@@ -60,7 +67,11 @@ function art(name: string, i: number) {
   };
 }
 const now = Math.floor(Date.now() / 1000);
-const apps = (referenceTitles ?? TITLES).map((name, i) => ({
+// Optional stress-test library; never read from or written to Steam.
+const simulatedGameCount=Math.min(200,Math.max(0,Number(new URLSearchParams(location.search).get('demoGames'))||0));
+const basePreviewTitles=referenceTitles??TITLES;
+const previewTitles=simulatedGameCount?Array.from({length:simulatedGameCount},(_,i)=>basePreviewTitles[i]??EXTRA_REAL_GAME_ART[i-basePreviewTitles.length]?.name??`Preview Game ${i+1}`):basePreviewTitles;
+const apps = previewTitles.map((name, i) => ({
   appid: 1000 + i,
   app_type: 1,
   display_name: name,
@@ -187,6 +198,7 @@ const initialTheme = (params.get("theme") as ThemeId) || themedPreview || "vita"
 
 seedSettings({
   theme: initialTheme,
+  pspFallbackIconStyle: (["classic","flat","outline","legacy"].includes(params.get("fallbackStyle")??"")?params.get("fallbackStyle"):"classic") as any,
   ...(params.has("switchSkin") ? {styles:{switch:{standardSkin:params.get("switchSkin")==="black"?"black":"white"}}} : {}),
   ...(themedPreview === "ios6" && params.has("folders") ? {frameData:{ios6:{folders:[{id:"demo-games",name:"Games",items:["game:1000","game:1001","game:1002"]}],order:["system:settings","system:downloads","system:recent","folder:demo-games"]}}} : {}),
   onboardingDone: params.get("onboarding") !== "1",
@@ -198,7 +210,7 @@ seedSettings({
   wiiuView: params.get("plaza") ? "plaza" : "grid",
   xmb: { ps3Color: -1, pspColor: -1, collectionFolders: true, p3t: params.get("p3t") ?? "" },
     trailers: { preview: params.get("trailers") === "1", sound: false, video: params.get("tv") === "1" },
-  x360: { style: (params.get("xs") as any) ?? "metro", ...(params.get("cabinet")?{cabinetWallpaper:params.get("cabinet")!}:{}), ...(params.get("x360skin") ? { skin: params.get("x360skin")! } : {}), ...(params.get("x360pic") ? { gamerpic: params.get("x360pic")! } : {}) },
+  x360: { style: (params.get("xs") as any) ?? "metro", ...(params.get("cabinet")?{cabinetWallpaper:params.get("cabinet")!}:{}), ...(params.get("x360skin") ? { skin: params.get("x360skin")! } : {}), ...(params.get("x360flow") ? { coverflow: params.get("x360flow")! } : {}), ...(params.get("x360pic") ? { gamerpic: params.get("x360pic")! } : {}) },
   xboxSkin: params.get("xboxskin") ?? "",
   wiiSkin: params.get("wiiskin") ?? "",
   n3dsSkin: params.get("n3ds") ?? "",
@@ -211,7 +223,7 @@ seedSettings({
 });
 (globalThis as any).__previewSettings = null;
 
-Object.assign(window,{__openThemeSettings:openThemeSettings,__themeStyles:THEME_STYLES,__getThemeSettings:getSettings,__getThemeLibrary:()=>{const s=getSettings(),c=s.themeCollections?.[s.theme];return loadLibraryPreview(c?.source??s.source,s.sort,s.maxGames,c?.ids);},__beginNativeLaunch:beginLaunch,__dismissLaunch:dismissLaunch,__launchState:launchState,__autoPack:autoPack,__packFile:packFile,__refreshPacks:refreshPacks,__openPlace:openSteamPreview,__updateTheme:updateSettings,__openGame:(id:number)=>openGamePage((window as any).__libraryGame(id)),__openAchievements:()=>openAchievements(loadLibraryPreview("all","recent",400).games[0]),__launchGame:launchGame});
+Object.assign(window,{__openThemeSettings:openThemeSettings,__themeStyles:THEME_STYLES,__getThemeSettings:getSettings,__getThemeLibrary:()=>{const s=getSettings(),c=gameChoice(s,"home");return loadLibraryPreview(c.source,s.sort,s.maxGames,c.ids);},__beginNativeLaunch:beginLaunch,__dismissLaunch:dismissLaunch,__launchState:launchState,__autoPack:autoPack,__packFile:packFile,__refreshPacks:refreshPacks,__openPlace:openSteamPreview,__updateTheme:updateSettings,__openGame:(id:number)=>openGamePage((window as any).__libraryGame(id)),__openAchievements:()=>openAchievements(loadLibraryPreview("all","recent",400).games[0]),__launchGame:launchGame});
 const stopAchievementPreview = startAchievementPopups();
 Object.assign(window,{__previewAchievementPopup:previewAchievementPopup,__achievementPopupStatus:achievementPopupStatus,__stopAchievementPopups:stopAchievementPreview});
 (window as any).__libraryGame=(id:number)=>loadLibraryPreview("all","recent",400).byId.get(id);
@@ -379,3 +391,10 @@ createRoot(document.getElementById("root")!).render(<App />);
     { notificationID: "n3", title: "Download complete", body: "Stardew Valley is ready to play", appid: 413150, rtCreated: 3 },
   ] };
 }
+
+// Browser-only file pickers; never included in the plugin entry point.
+(globalThis as any).__isThemePreview = true;
+
+(window as any).__openSquareArtwork=(appid:number)=>{const game=loadLibraryPreview('all','recent',9999).byId.get(appid);if(game)openSquareArtwork(game)};
+(window as any).__startLaunchPortal=startLaunchPortal;
+(window as any).__startGameReturn=()=>startGameSessionReturn(()=>window.dispatchEvent(new Event('themehub-game-return')));

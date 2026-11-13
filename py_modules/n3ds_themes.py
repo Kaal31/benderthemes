@@ -21,7 +21,7 @@ import struct
 import zlib
 import zipfile
 
-READER_VERSION = 1
+READER_VERSION = 5
 
 MAX_BODY = 16 * 1024 * 1024      # biggest compressed or decompressed body accepted
 MAX_PIC = 3 * 1024 * 1024        # preview / icon pictures larger than this are skipped
@@ -29,7 +29,7 @@ MAX_ZIP_FILES = 2000
 
 TOP_W, TOP_H, BOT_W, BOT_H = 400, 240, 320, 240
 # art rectangle (w, h) inside each texture, measured from the template theme's guide pictures
-_ART = {"folder_closed": (74, 64), "folder_open": (82, 64), "file_large": (36, 72), "file_small": (25, 49)}
+_ART = {"folder_closed": (74, 64), "folder_open": (82, 64), "file_large": (36, 72), "file_small": (25, 50)}
 
 _DRAW = {0: "none", 1: "solid", 2: "pattern", 3: "texture"}
 _FRAME = {0: "fast", 1: "single", 2: "page", 3: "slow", 4: "bounce"}
@@ -183,6 +183,10 @@ class _Src:
         else:
             self.single = os.path.basename(path)
             self.names[self.single.lower()] = self.single
+            sidecars = {'bgm.bcstm', 'name.txt', 'info.smdh', 'preview.png', 'icon.png'}
+            for name in os.listdir(os.path.dirname(os.path.abspath(path))):
+                if name.lower() in sidecars and os.path.isfile(os.path.join(os.path.dirname(path), name)):
+                    self.names[name.lower()] = name
 
     def close(self):
         if self.zip:
@@ -199,7 +203,8 @@ class _Src:
 
     def read(self, rel, limit=MAX_BODY):
         if self.single is not None:
-            with open(self.base, "rb") as f:
+            target=self.base if rel==self.single else os.path.join(os.path.dirname(self.base),rel)
+            with open(target, "rb") as f:
                 return f.read(limit + 1)[:limit + 1]
         if self.zip:
             i = self.zip.getinfo(rel)
@@ -218,6 +223,18 @@ def _body_name(src):
         if low.endswith(".bin") and low.count("/") <= 2 and "bgm" not in low:
             return real
     return None
+
+
+def source_stamp(path):
+    """Include sidecars: changing only bgm.bcstm invalidates the skin cache."""
+    if zipfile.is_zipfile(path):
+        st=os.stat(path);return (st.st_size,st.st_mtime_ns)
+    src=_Src(path)
+    try:
+        base=path if os.path.isdir(path) else os.path.dirname(path)
+        return [(n,os.stat(os.path.join(base,n)).st_size,os.stat(os.path.join(base,n)).st_mtime_ns)
+                for n in sorted(src.names.values())]
+    finally:src.close()
 
 
 def peek(path):
@@ -292,7 +309,7 @@ def _named(vals, names):
 def parse_body(body):
     """Decode a body (LZ11 compressed or already decompressed). Returns the result dict; raises ValueError."""
     d = lz11(body) if body[:1] == b"\x11" else body
-    if len(d) < 0xD0 or _u32(d, 0) != 1:
+    if len(d) < 0xC4 or _u32(d, 0) != 1:
         raise ValueError("not a theme body")
     errors = []
     r = {"kind": "3ds", "errors": errors, "preferred_row": d[4], "bgm": bool(d[5]), "sfx": bool(_u32(d, 0xB8))}
@@ -309,18 +326,40 @@ def parse_body(body):
         frame = _FRAME.get(_u32(d, frame_off), "single")
         s = {"mode": draw, "frame": frame, "scroll": frame in ("fast", "slow"), "image": None, "wide": None, "color": None}
         if draw == "texture":
-            tw = 1024 if s["scroll"] else 512
+            flipbook = prefix == "bottom" and frame in ("page", "bounce")
+            tw = 1024 if s["scroll"] or flipbook else 512
             rgb = untile(d, _u32(d, tex_off), tw, 256, 2, "565")
             s["image"] = _url(_png(w, h, _crop(rgb, tw, w, h)))
             if s["scroll"]:
-                s["wide"] = _url(_png(tw, h, _crop(rgb, tw, tw, h)))
+                s["wideWidth"] = 1008
+                s["wide"] = _url(_png(1008, h, _crop(rgb, tw, 1008, h)))
+            if flipbook:
+                s["frames"] = [_url(_png(w, h, _crop(rgb, tw, w, h, ox=i * w))) for i in range(3)]
         if draw in ("solid", "pattern") and color_off:
             o = _u32(d, color_off)
             c = _hex(d, o, 1)
             if c:
                 s["color"] = c[0]
-                if o + 5 <= len(d):
+                if draw == "solid" and o + 5 <= len(d):
                     s["gradient"], s["opacity"] = d[o + 3], d[o + 4]
+        if prefix == "top" and draw == "pattern":
+            layers = []
+            for field, moving in ((0x18, True), (0x1C, False)):
+                offset = _u32(d, field)
+                if not offset:
+                    continue
+                if offset < 0xC4 or offset + 4096 > len(d):
+                    raise ValueError("pattern texture outside the body")
+                rgba = bytearray(64 * 64 * 4)
+                for tile in range(64):
+                    bx, by = tile % 8 * 8, tile // 8 * 8
+                    for pixel, (mx, my) in enumerate(_MORTON):
+                        x, y = bx + mx, by + my
+                        # HOME rotates its A8 pattern by 90 degrees.
+                        target = ((63 - x) * 64 + y) * 4
+                        rgba[target:target + 4] = bytes((255, 255, 255, d[offset + tile * 64 + pixel]))
+                layers.append({"image": _url(_png(64, 64, rgba, alpha=True)), "moving": moving})
+            s["patterns"] = layers
         return s
 
     r["top"] = part("top screen", lambda: screen("top", 0x0C, 0x10, 0x18, TOP_W, TOP_H, 0x14)) or {"mode": "none", "image": None}
@@ -329,14 +368,38 @@ def parse_body(body):
     r["cursor"] = part("cursor colours", lambda: _named(_block(d, 0x2C, 4), ("dark", "main", "light", "glow")))
     r["folder"] = part("folder colours", lambda: _named(_block(d, 0x34, 4), ("dark", "main", "light", "shadow")))
     r["file"] = part("file colours", lambda: _named(_block(d, 0x48, 4), ("dark", "main", "light", "shadow")))
-    r["text"] = part("text colours", lambda: _named(_block(d, 0x78, 2), ("main", "alt")))
+    def text_colors():
+        if not _u32(d, 0x78):
+            return None
+        offset = _u32(d, 0x7C)
+        background = _hex(d, offset, 1)
+        text = _hex(d, offset + 10, 1) if offset else None
+        if not background or not text:
+            raise ValueError("text colour block outside the body")
+        return {"main": text[0], "background": background[0]}
+    r["text"] = part("text colours", text_colors)
+    r["arrow_button"] = part("arrow button colours", lambda: _block(d, 0x5C, 3))
+    r["arrow"] = part("arrow colours", lambda: _block(d, 0x64, 3))
+    def action_colors(field):
+        if not _u32(d, 0x6C):
+            return None
+        offset = _u32(d, field)
+        if not offset:
+            return None
+        backgrounds, texts = _hex(d, offset + 4, 3), _hex(d, offset + 20, 3)
+        if not backgrounds or not texts:
+            raise ValueError("action colour block outside the body")
+        return dict(zip(("pressed", "main", "border", "textShadow", "text", "textPressed"), backgrounds + texts))
+    r["open_button"] = part("open button colours", lambda: action_colors(0x70))
+    r["close_button"] = part("close button colours", lambda: action_colors(0x74))
+    r["toolbar"] = part("toolbar colours", lambda: _block(d, 0xA0, 7))
     r["bottom_inner"] = part("bottom colours", lambda: _block(d, 0x80, 3))
     r["bottom_outer"] = part("bottom colours", lambda: _block(d, 0x88, 3))
     r["folder_bg"] = part("folder background", lambda: _block(d, 0x90, 3))
     if r["bottom"].get("mode") == "solid" and not r["bottom"].get("color"):
         c = r["bottom_inner"] or r["bottom_outer"]
         if c:
-            r["bottom"]["color"] = c[0]
+            r["bottom"]["color"] = c[1]
 
     def art(key, off_at, w, h):
         o = _u32(d, off_at)
@@ -354,6 +417,8 @@ def parse_body(body):
         fa = {"large": part("file picture", lambda: art("file_large", 0x54, 64, 128)),
               "small": part("small file picture", lambda: art("file_small", 0x58, 32, 64))}
         r["file_art"] = fa if any(fa.values()) else None
+    import n3ds_audio
+    r['_sfx'] = part('sound effects',lambda:n3ds_audio.theme_cues(d)) or {}
     return r
 
 
@@ -394,9 +459,10 @@ def _read(path):
                 return None
         res["errors"] = list(res.get("errors", [])) + errors
         res.setdefault("bgm_only", False)
-        if bgm_name:
-            res["bgm"] = True
+        if bgm_name and res["bgm"]:
             res["bgm_file"] = bgm_name
+            try:res['_bgm']=src.read(bgm_name)
+            except Exception as e:res['errors'].append(f'music: {e}')
         # name, author, description, picture
         name = author = desc = ""
         icon = None

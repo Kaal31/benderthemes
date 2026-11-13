@@ -2,9 +2,11 @@
  'use strict';
  const hub=window.ThemeHub,$=id=>document.getElementById(id);
  let showGameTitle=true,themeOptionsOpen=false,gamePlayOptionsOpen=false;
- let games=[],selected=0,page='home',filter='all',option=0,initialized=false,noticeTimer,transitionTimer,transitioning=false,clockOffset=0,calendarEditing=false,editField=0,editGroup=0,draft=null,faceEditing=false,soundMode='Stereo',screenPosition=0,saveMenu=false,saveAction=0,memoryTimer,dateAnimationTimer,faceEnteredAt=0;
+ let playFromLibrary=false;
+ let games=[],libraryGames=[],libraryAllGames=[],selected=0,page='home',filter='all',option=0,initialized=false,noticeTimer,transitionTimer,transitioning=false,clockOffset=0,calendarEditing=false,editField=0,editGroup=0,draft=null,faceEditing=false,soundMode='Stereo',screenPosition=0,saveMenu=false,saveAction=0,memoryTimer,dateAnimationTimer,faceEnteredAt=0;
  const resize=()=>document.documentElement.style.setProperty('--scale',Math.min(innerWidth/960,innerHeight/720));resize();addEventListener('resize',resize);
- const list=()=>games.filter(g=>filter!=='installed'||g.installed);
+ const sourceGames=()=>page==='library'||(page==='play'&&playFromLibrary)?(filter==='installed'?libraryAllGames:libraryGames):games;
+ const list=()=>sourceGames().filter(g=>filter!=='installed'||g.installed);
  const current=()=>list()[selected];
  function sound(name='move'){hub.sound(name);}
  function tell(text){$('notice').textContent=text;$('notice').hidden=false;clearTimeout(noticeTimer);noticeTimer=setTimeout(()=>$('notice').hidden=true,3500);}
@@ -39,7 +41,7 @@
 
  function updateOptionsFade(now){if(!optionsFade)return;const u=Math.max(0,Math.min(1,(now-optionsFade.start)/850)),ease=u*u*(3-2*u);document.querySelector('.face-left').style.setProperty('--options-opacity',String(optionsFade.enter?ease:1-ease));if(u===1)optionsFade=null;}
  function go(next){
-  if(transitioning)return;sound(next==='home'?'back':'open');
+  if(transitioning)return;if(next==='play')playFromLibrary=page==='library';sound(next==='home'?'back':'open');
   const animate=hub.state?.settings?.animations!==false&&!matchMedia('(prefers-reduced-motion: reduce)').matches;
   const from=page,turn=animate&&((from==='home'&&next!=='home')||(next==='home'&&['calendar','options','play','library'].includes(from)&&!faceEditing));
   if(turn){if(next==='play'||from==='play'){syncPlayArtwork();playFade={start:performance.now(),enter:next==='play'};$('screen').classList.add('play-continuous');}if(next==='options'||from==='options'){optionsFade={start:performance.now(),enter:next==='options'};$('screen').classList.add('options-continuous');if(next==='options')document.querySelector('.face-left').style.setProperty('--options-opacity','0');}if(next==='home'&&from!=='options'&&from!=='play')fadeFace(from);transitioning=true;$('screen').classList.add('turning');$('cube').dataset.destination=next;$('cube').style.transform=pose(next);if(next==='home')$('screen').classList.add('returning');
@@ -50,6 +52,7 @@
  function switchBank(bank,index=0){filter=bank;selected=Math.max(0,Math.min(index,list().length-1));if(current()){hub.save({lastAppid:current().appid});hub.send({type:'focus',appid:current().appid});}sound();render();}
  function launch(){if(!current()||transitioning)return;const appid=current().appid;sound('launch');if(hub.state?.settings?.animations===false||matchMedia('(prefers-reduced-motion: reduce)').matches){hub.launch(appid);return;}transitioning=true;$('screen').classList.add('launching');transitionTimer=setTimeout(()=>{hub.launch(appid);$('screen').classList.remove('launching');transitioning=false;},950);}
  function render(){
+  selected=Math.min(selected,Math.max(0,list().length-1));
   $('screen').dataset.page=page;
   const faceView=['calendar','options','play','library'].includes(page)&&!calendarEditing&&!faceEditing;
   $('screen').classList.toggle('state-face-view',faceView);$('screen').classList.toggle('calendar-view',page==='calendar'&&faceView);
@@ -61,8 +64,8 @@
   if(page==='library'){
    const banks=el('div','banks');
    ['all','installed'].forEach((bank,bankIndex)=>{
-    const bankGames=games.filter(g=>bank!=='installed'||g.installed),active=filter===bank,start=active?Math.floor(selected/16)*16:0,section=el('section','bank'+(active?' active':''));
-    const bar=button('','slot-bar'+(active?' active':''),()=>switchBank(bank));bar.setAttribute('aria-label',bank==='all'?'Slot A, all games':'Slot B, installed games');bar.append(el('strong','',bankIndex?'B':'A'),el('span','',bankIndex?'Installed':'All Games'),el('b','',bankGames.length));section.append(bar);
+    const bankGames=(bank==='installed'?libraryAllGames:libraryGames).filter(g=>bank!=='installed'||g.installed),active=filter===bank,start=active?Math.floor(selected/16)*16:0,section=el('section','bank'+(active?' active':''));
+    const bar=button('','slot-bar'+(active?' active':''),()=>switchBank(bank));bar.setAttribute('aria-label',bank==='all'?'Slot A, all games':'Slot B, installed games');bar.append(el('strong','',bankIndex?'B':'A'),el('span','',bankIndex?'Installed':(hub.state?.libraryLabel||'All Games')),el('b','',bankGames.length));section.append(bar);
     const grid=el('div','grid');
     for(let i=0;i<16;i++){const game=bankGames[start+i];const b=button('','block'+(game?(active&&start+i===selected?' selected':''):' empty'),()=>{if(!game)return;if(active&&selected===start+i)openSaveMenu();else{filter=bank;choose(start+i);}});if(game){b.setAttribute('aria-label',game.name);b.setAttribute('aria-pressed',String(active&&start+i===selected));const img=art(game,true),model=el('div','save-model'),front=el('div','save-front');front.append(img||el('span','initial',game.name.slice(0,1)));model.append(front);['back','left','right','top','bottom'].forEach(side=>model.append(el('div','save-'+side)));b.append(model);}else{b.disabled=true;b.setAttribute('aria-label','Empty block');const model=el('div','save-model');['front','back','left','right','top','bottom'].forEach(side=>model.append(el('div','save-'+side)));b.append(model);}b.style.setProperty('--slot',i);b.style.setProperty('--scatter-x',(((i*73+bankIndex*97)%290)-145)+'px');b.style.setProperty('--scatter-y',(((i*101+bankIndex*61)%320)-160)+'px');b.style.setProperty('--scatter-z',((i%5)*55-110)+'px');grid.append(b);}section.append(grid);banks.append(section);
    });root.append(banks);
@@ -126,7 +129,7 @@
   if(page==='play'){if(btn==='left'||btn==='l1')choose(selected-1);if(btn==='right'||btn==='r1')choose(selected+1);if(btn==='a'||btn==='x')launch();return;}
   if(page==='options'){if(btn==='up'||btn==='down'){option=1-option;sound();render();}if(['left','right','a'].includes(btn))adjustOption(btn==='left'?-1:1);}
  }
- hub.on('state',s=>{showGameTitle=s.saved?.showGameTitle!==false;$('screen').classList.toggle('hide-game-title',!showGameTitle);games=Array.isArray(s.games)?s.games:[];if(!initialized){clockOffset=Number(s.saved?.clockOffset)||0;soundMode=s.saved?.soundMode==='Mono'?'Mono':'Stereo';screenPosition=Number(s.saved?.screenPosition)||0;selected=Math.max(0,list().findIndex(g=>g.appid===s.saved?.lastAppid));initialized=true;}selected=Math.min(selected,Math.max(0,list().length-1));$('screen').classList.toggle('paused',s.settings?.animations===false);render();});
+ hub.on('state',s=>{showGameTitle=s.saved?.showGameTitle!==false;$('screen').classList.toggle('hide-game-title',!showGameTitle);games=Array.isArray(s.games)?s.games:[];libraryGames=Array.isArray(s.libraryGames)?s.libraryGames:games;libraryAllGames=Array.isArray(s.libraryAllGames)?s.libraryAllGames:libraryGames;if(!initialized){clockOffset=Number(s.saved?.clockOffset)||0;soundMode=s.saved?.soundMode==='Mono'?'Mono':'Stereo';screenPosition=Number(s.saved?.screenPosition)||0;selected=Math.max(0,list().findIndex(g=>g.appid===s.saved?.lastAppid));initialized=true;}selected=Math.min(selected,Math.max(0,list().length-1));$('screen').classList.toggle('paused',s.settings?.animations===false);render();});
  bitmap($('menu-caption'),'··· Menu Selection');
  document.querySelectorAll('[data-bitmap]').forEach(n=>bitmap(n,n.textContent));
  document.querySelectorAll('.mini-block-grid').forEach((grid,index)=>{for(let i=0;i<9;i++)grid.append(el('i'));grid.classList.toggle('populated',index===0);});

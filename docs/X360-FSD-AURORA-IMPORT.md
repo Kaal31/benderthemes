@@ -285,3 +285,46 @@ User-supplied Blade2025.xzp identifies itself as BladeDash, cgamedev, Aurora 0.7
 Recovered strictly valid XML roots followed by stale editor buffer bytes, including visual lists and CLayout. Interior malformed XML and entity declarations remain rejected. Reader version 22 invalidates cached imports. Corrected XUI figure cubic segments: each anchor owns both outgoing control points, followed by the next anchor. Nested tab scenes such as ApplicationLayer now participate in horizontal navigation.
 
 Validation: 14 XZP tests, TypeScript check, three-layout browser smoke check for loading/navigation/figure controls. This is not visual parity: BladeDash still exposes incomplete runtime panel activation, editor placeholders and native shader differences. FileBrowser.xur has an invalid section range in the supplied package.
+
+
+### BladeDash runtime follow-up (2026-11-12)
+
+The first import preview was visually broken despite its smoke checks. Further changes isolate the active TabCount page, initialize its declared transition state, preserve nested anchors during resize, assign unique gradient IDs, and stop filling unpainted XUI figures with blue. `figurePath` uses an anchor followed by the outgoing segment controls; earlier intermediate assumptions about incoming handles were discarded. Linear fill directions now use authored degrees. Exact blend-mode composition and brush transforms remain incomplete, so this is still a debugging preview rather than a parity claim.
+
+The tabbed dashboard routes LB/RB (Q/E in preview) between blades even when Gaming contains a coverflow. FileManagerList binds a bounded read-only local home-folder listing. Preview folders are explicitly fixtures; the Deck backend reads real directories, skips hidden files and symlinks, and prevents leaving the home directory. Clicking a file reports its name; it does not execute it. Native FilesOverlay no longer intercepts pointer clicks intended for the list. Runtime captions reach the authored text presenters, and extra file-metadata presenters no longer repeat the filename.
+
+The local comparison page is preview/blade2025-review.html. User packages and generated preview assets remain uncommitted. Current validation includes 64 Xbox reader tests and geometry/anchor runtime tests; interactive browser checks cover all supplied CFLs and folder entry/return.
+
+
+### Brush-coordinate correction (2026-11-12)
+
+The continuing visual corruption was not established as fixed by the earlier interaction checks. XUI brush transforms map geometry to brush coordinates; SVG gradientTransform maps in the opposite direction. The renderer now applies the inverse composed brush transform (center, inverse scale, inverse rotation, inverse translation, uncenter) to both radial and linear gradients. Actual screenshot inspection shows connected panel corners and continuous metal trim instead of detached hooks and seams. The native layout still differs from the package thumbnail and is not claimed to be a pixel-identical recreation. FileManagerList also stays within its native content container width.
+
+Current local review iframe: blade2025-visual-fix.html. All three supplied CFLs passed isolated blade navigation and folder open/parent return checks on this build.
+
+
+### BladeDash visual comparison pass (2026-11-13)
+
+Compared actual screenshots after each rendering change. The archive has two different references: preview.png shows an older FSD menu, while preview.dds is the Aurora BladeDash green backdrop. The review link now labels and opens the DDS backdrop. Added compositing for authored shade layers, and solid fills no longer render inactive serialized gradient data. These changes restore the green/blue/purple blade colors and translucent header/footer rather than opaque gray. BladeDash CFL projection uses 45 degrees: the selected cover now fits the authored left-hand frame; foreground metal trim masks neighboring covers. Planar UI no longer uses zero native Z scale as a singular CSS matrix. Secondary text associations do not repeat the primary caption.
+
+Settings tabs use their authored padded overlay captions, normalized for lookup, and route into their native TabCount scenes. The review iframe was tested through Personalization → Theme → Display. BackgroundPreview uses the supplied Aurora.Blade background resource; the animation checkbox binds to plugin animations. System label placeholders no longer fabricate temperatures/IP. No scripts, reboot or shutdown actions execute.
+
+Reviewed snapshots live locally in work/blade2025/tab-1.png through tab-5.png and the three gaming-archive-*.png captures. The active review build is preview/blade2025-final-review.html, opened by preview/blade2025-review.html. The stock backdrop matches in geometry/color; no actual Aurora gameplay video for this specific 2025 revision was supplied, so exact native motion parity is not established. User packages, imported artwork and preview fixtures remain uncommitted.
+
+### BladeDash focus and clock verification (2026-11-13)
+
+Active review build: `preview/blade2025-focus-motion.html`. Focus changes play the authored KillFocus outro on the old visual and start the new Focus state, including pointer hover. The animation clock remains monotonic across disabling/re-enabling animations so clips do not jump backward. Keyboard Back returns to the parent local directory when the file panel is active.
+
+Validation: TypeScript check, scene-runtime regression suite, all three supplied CFL navigation/folder checks, and dedicated browser checks for hover, animation-clock continuity and keyboard parent navigation passed. Fresh System hover and Control Panel/Gaming screenshots were inspected. File-manager white rows are explicitly authored in XuiButton_FileManager_List and were retained. Exact native motion parity remains unverified without a matching BladeDash 2025 runtime recording. No imported themes or preview code committed.
+
+### BladeDash clickable page navigation (2026-11-13)
+
+Page scenes no longer fall through to the unsupported-console-action notification on background activation. Visible authored blade captions now act as accessible page controls. Clicking a distant blade traverses adjacent pages using the package's existing transition clips, waiting for each authored stop frame; no nonexistent 5To3 clip is requested. Q/E and bumper navigation still use the same page state.
+
+Validated: TypeScript check; browser clicks System → Gaming → System, page-background click with no status toast, then Q to Control Panel. Fresh settled Gaming and Control Panel screenshots inspected after cover artwork loaded. Review points to `preview/blade2025-page-navigation.html`. No commit made.
+
+### BladeDash reference timing pass (2026-11-13)
+
+Rechecked the packaged Aurora DDS reference against fresh rendered screenshots. The renderer had forced every selected TabCount page to opacity 1, bypassing native page timing. For 5To4, the package keeps Tab4 transparent until frame 99 and reaches opacity 1 at frame 102. Selected pages now retain authored opacity, stay mounted while transparent, and respect reduced motion. This also starts loading incoming cover content before it becomes visible.
+
+Inspected fresh intermediate/settled screenshots (`authored-fade-mid.png`, `authored-fade-end.png`). Dedicated browser test verifies transparent incoming page, final opacity, and immediate destination with animations disabled. The test constrains RAF timestamp advancement to inspect intermediate frames under software rendering. Active review build: `preview/blade2025-authored-fades.html`. The DDS reference establishes backdrop geometry; it does not establish exact 2025 gameplay motion. No imported fixture or preview committed.

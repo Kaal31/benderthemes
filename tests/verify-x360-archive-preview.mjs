@@ -1,0 +1,5 @@
+import assert from 'node:assert/strict';
+import {readFileSync} from 'node:fs';
+import {chromium} from 'playwright';
+const catalog=JSON.parse(readFileSync('out/import-fixtures/x360-archive/catalog.json'));
+const b=await chromium.launch();try{const p=await b.newPage();const errors=[];p.on('pageerror',e=>errors.push(e.message));await p.goto('http://127.0.0.1:8911/preview/x360-kinect-cabinet.html?theme=x360&xs=kinect&x360skin='+catalog[0].id,{waitUntil:'domcontentloaded'});for(const t of catalog){await p.evaluate(id=>window.__updateSettings({x360:{...window.__getThemeSettings().x360,style:'kinect',cabinetWallpaper:'',skin:id}}),t.id);await p.waitForFunction(id=>document.querySelector('[data-dht-from-skin="x360"]')?.getAttribute('src')?.includes(id),t.id);await p.locator('[data-dht-from-skin="x360"]').evaluate(n=>n.decode());}assert.deepEqual(errors,[]);await p.goto('http://127.0.0.1:8911/preview/x360-import-theme-chooser.html');await p.waitForFunction(()=>document.querySelector('#theme')?.options.length===18);console.log('PASS 18 archive themes: live wallpaper switching and decoding; chooser lists all 18; no browser errors');}finally{await b.close()}

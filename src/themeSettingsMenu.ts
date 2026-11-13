@@ -283,6 +283,7 @@ function xboxFileItems(): MenuItem[] {
     choice("Xbox skin file", [{ id: "", name: "None (built-in look)" }, ...lists.xbox.map((n) => ({ id: n, name: n }))], file, (v) => updateSettings(() => ({ xboxSkin: v })), undefined, "Put UnleashX / XBMC skin folders or .zip files in the skins/xbox folder, then reopen this menu"),
     ...(file() ? [group("Skin file effects", () => [
       tg("Skin wallpaper", "background"),
+      tg("Imported skin layout", "icons"),
       tg("Skin text colour", "labels"),
     ])] : []),
   ];
@@ -317,6 +318,7 @@ function n3dsItems(part: "file" | "look"): MenuItem[] {
       tg("Scrolling wallpapers move with the page", "scroll"),
       tg("Theme cursor, folder and text colours", "labels"),
       tg("Theme folder and icon-frame pictures", "icons"),
+      tg("Theme sound effects", "sounds"),
     ]),
   ];
   return [
@@ -488,7 +490,8 @@ export function customizeItems(): MenuItem[] {
     ...(file.length ? [group("Theme file", () => themeFileItems(S().theme))] : []),
     ...(own.length ? [group("Look options", () => lookOptionItems(S().theme))] : []),
     group(own.some((i) => i.label === "Library") ? "Games shown" : "Library", () => [
-      { ...collectionMenu(th), label: "Show in this theme" },
+      { ...collectionMenu(th), label: "Home games" },
+      { ...collectionMenu(th, "library"), label: "Library games" },
       ...(activeTheme(S())?.id.startsWith("wiiflow-") ? [toggle("Extend coverflow with Fill",()=> (S().frameData[activeTheme(S())!.id] as {extendCoverflow?:boolean}|undefined)?.extendCoverflow!==false,
         value=>{const id=activeTheme(S())!.id;updateSettings(p=>({frameData:{...p.frameData,[id]:{...(p.frameData[id] as Record<string,unknown> ?? {}),extendCoverflow:value}}}));})] : []),
       ...(activeTheme(S())?.id.startsWith("wiiflow-") ? [toggle("Continue cover pattern with Fill",()=> (S().frameData[activeTheme(S())!.id] as {continueCoverPattern?:boolean}|undefined)?.continueCoverPattern===true,

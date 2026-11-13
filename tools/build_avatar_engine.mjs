@@ -8,3 +8,7 @@ const result=await build({absWorkingDir:root,entryPoints:['py_modules/avatar_eng
   outfile:'py_modules/avatar_engine/client/engine.js',bundle:true,format:'esm',target:'chrome110',minify:true,
   alias:{three:'avatar-three'},legalComments:'eof'});
 for(const file of result.outputFiles){mkdirSync(dirname(file.path),{recursive:true});writeFileSync(file.path,file.text.replace(/[ \t]+$/gm,''));}
+const editor=await build({absWorkingDir:root,entryPoints:['py_modules/avatar_engine/source/editor-entry.js'],write:false,
+  outfile:'py_modules/avatar_engine/client/editor.js',bundle:true,format:'esm',target:'chrome110',minify:true,
+  alias:{three:'avatar-three'},legalComments:'eof'});
+for(const file of editor.outputFiles){mkdirSync(dirname(file.path),{recursive:true});writeFileSync(file.path,file.text.replace(/[ \t]+$/gm,''));}

@@ -105,6 +105,20 @@ def gim_decode(b):
     blocks = _gim_blocks(b, E)
     if 4 not in blocks:
         return None
+    # PS3 RCOs also contain big-endian GIM containers with linear DXT images.
+    header = blocks[4]
+    fmt, order, w, h = struct.unpack_from(E + "HHHH", b, header + 4)
+    if fmt in (8, 9, 10):
+        if order != 0 or not (0 < w <= 4096 and 0 < h <= 4096):
+            return None
+        offset = header + struct.unpack_from(E + "I", b, header + 28)[0]
+        size = ((w + 3) // 4) * ((h + 3) // 4) * (8 if fmt == 8 else 16)
+        data = b[offset:offset + size]
+        if len(data) != size:
+            return None
+        rgb = _dxt_rgb(data, w, h, 0 if fmt == 8 else 8)
+        alpha = _dxt_alpha(data, w, h, {8: 1, 9: 3, 10: 5}[fmt])
+        return w, h, _rgba(rgb, alpha)
     plane = _gim_plane(b, E, blocks[4])
     if not plane:
         return None

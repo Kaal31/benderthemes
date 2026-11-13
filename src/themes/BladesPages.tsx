@@ -26,7 +26,7 @@ export function BladesPages({initial,assets,animate,handle,onExitStart,onClose}:
  const choose=(items:MenuItem[],title:string)=>menu.open(items,title,{page:true});
  const setting=(label:string,detail:string,action:()=>void,value?:string):Row=>({id:label,label,detail,run:action,value});
  const presets=()=>choose(themeMenu(s.theme,api.switchTheme,THEMES),'Themes');
- const collections=api.lib.collections.filter(c=>c.games.length>0);
+ const collections=api.library.collections.filter(c=>c.games.length>0);
  let rows:Row[]=[];
  if(current.id==='settings')rows=[
   setting('Display','Change display output and dashboard presentation.',()=>push('display','Display')),
@@ -50,8 +50,8 @@ export function BladesPages({initial,assets,animate,handle,onExitStart,onClose}:
   setting('Background Music','Enable or disable dashboard music.',()=>choose([{label:'On',checked:s.backgroundMusic,action:()=>updateSettings({backgroundMusic:true})},{label:'Off',checked:!s.backgroundMusic,action:()=>updateSettings({backgroundMusic:false})}],'Background Music'),s.backgroundMusic?'On':'Off'),
  ];
  else if(current.id==='library')rows=[
-  setting('My Games',`Browse ${api.lib.games.length} games in your current Steam library.`,()=>push('games','My Games'),String(api.lib.games.length)),
-  setting('Last Played Game','Open the most recently played game.',()=>{const g=[...api.lib.games].sort((a,b)=>b.lastPlayed-a.lastPlayed)[0];if(g)push('game',g.name,g);}),
+  setting('My Games',`Browse ${api.library.games.length} games in your current Steam library.`,()=>push('games','My Games'),String(api.library.games.length)),
+  setting('Last Played Game','Open the most recently played game.',()=>{const g=[...api.library.games].sort((a,b)=>b.lastPlayed-a.lastPlayed)[0];if(g)push('game',g.name,g);}),
   setting('Played Games','View games with recorded playtime or last-played history.',()=>push('played','Played Games')),
   ...collections.map(c=>setting(c.name,`${c.games.length} games in this detected Steam collection.`,()=>push('col:'+c.id,c.name),String(c.games.length))),
   setting('Game Store','Browse the Steam Store.',()=>openSteam('store')),
@@ -63,11 +63,11 @@ export function BladesPages({initial,assets,animate,handle,onExitStart,onClose}:
   setting('Watch Trailer','Play the store trailer.',()=>api.playTrailer(g)),setting('Game Options','Open Steam game options.',()=>api.nativeMenu(g)),
  ];}
  else{
-  const games=current.id.startsWith('col:')?collections.find(c=>'col:'+c.id===current.id)?.games??[]:current.id==='played'?[...api.lib.games].filter(g=>g.playtime>0||g.lastPlayed>0).sort((a,b)=>b.lastPlayed-a.lastPlayed):api.lib.games;
+  const games=current.id.startsWith('col:')?collections.find(c=>'col:'+c.id===current.id)?.games??[]:current.id==='played'?[...api.library.games].filter(g=>g.playtime>0||g.lastPlayed>0).sort((a,b)=>b.lastPlayed-a.lastPlayed):api.library.games;
   rows=games.map(g=>({id:String(g.appid),label:g.name,game:g,value:current.id==='achievements'?'':g.installed?'Installed':'',detail:fmtPlaytime(g.playtime,g.lastPlayed),run:()=>current.id==='achievements'?openAchievements(g):push('game',g.name,g)}));
   if(!rows.length)rows=[{id:'empty',label:'No games found',detail:'No games are available in this view.',disabled:true,run:()=>{}}];
  }
- if(current.id==='library'&&rows[1])rows[1].disabled=!api.lib.games.length;
+ if(current.id==='library'&&rows[1])rows[1].disabled=!api.library.games.length;
  const sel=Math.max(0,Math.min(current.sel,rows.length-1)),focus=rows[sel];
  const select=(n:number)=>setStack(st=>st.map((l,i)=>i===st.length-1?{...l,sel:n}:l));
  const activate=(n:number)=>{if(pressed!==null||phase==='closing'||rows[n]?.disabled)return;select(n);playSound('select');setPressed(n);const action=rows[n]?.run;timer.current=setTimeout(()=>{setPressed(null);action?.();},motion?(n===sel?80:260):0);};

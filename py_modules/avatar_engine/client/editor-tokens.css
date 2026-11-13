@@ -1,0 +1,271 @@
+/* Metro shell design tokens: the ONLY place visual constants live (PARITY-PLAN M10).
+ *
+ * Target: the green "Avatar 2.0" editor (Fall 2010) kept by the Metro dashboard.
+ * Sources, noted per value:
+ *   [F:<frame>] = measured from qa/console-reference/raw/<frame> (1920x1080 decoded video frames; compressed, so
+ *                 colours are approximate). Pixel values are 1080p pixels, converted to vh (/10.8) and vw (/19.2).
+ *                 Matched with viewer/public/metro/compare.html + qa/m10/shoot.py; per-screen notes in qa/m10/MATCH.md.
+ *   [S§n H/M/L] = qa/console-reference/SCREENS.md section + confidence
+ *   [guess]     = no evidence yet
+ * Frame short names: home=02-home_eYSj-t270_0, home3=02-home_3mLt-t0010_first-menu, homeY=02-home_Ydkm-t0692_style-focus,
+ *   feat=03-submenu_eYSj-t079_0, grp=04-features_eYSj-t212_0, grid=04-features_eYSj-t089_0, chin=04-features_eYSj-t214_0,
+ *   col=07-colour_eYSj-t097_0, colsub=03-submenu_3mLt-t0074_color, iway=07-colour_15Cw-t0218_item-colour,
+ *   body=04-features_eYSj-t260_0, style=03-submenu_eYSj-t302_5, save=10-save_eYSj-t392_5, intro=09-props_eYSj-t327_5_introducing-props-dialog,
+ *   xbl=10-dialog_eYSj-t385_0_xbl-only, kb=10-dialog_3mLt-t1034_outfit-name-keyboard, pick=01-entry_eYSj-t061,
+ *   detail=09-props_GVpM-t0906_item-detail, outfits=08-clothing_GVpM-t0738_my-outfits, store=15-store_3mLt-t1194_game-styles,
+ *   gpcam=13-gamerpic_3mLt-t1642_camera, load=05-loading-items_Ydkm-t0380.
+ * To retheme, edit values here only: metro.css reads them with var(), and metro-*.js reads the numeric ones
+ * (timings, camera, repeat, layout counts) via getComputedStyle at start-up (metro-tokens.js).
+ * JS-read tokens must stay plain unitless numbers.
+ */
+:root{
+  /* ---- type [S§13 M: Segoe family]; local Segoe UI if installed, then system fallbacks; no webfont shipped ---- */
+  --metro-font:'Segoe UI','Segoe WP','Segoe UI Web (West European)',system-ui,-apple-system,'Helvetica Neue',Arial,sans-serif;
+  --metro-size-title:3.75vh;      /* header "xXxKombatBoyxXx" / "Hairstyles" ~40px [F:home, grid] */
+  --metro-size-subtitle:3.2vh;    /* "A World of Keflings" / "Choose Pose" ~34px [F:store, 13-gamerpic_3mLt-t1626_choose-pose] */
+  --metro-weight-title:400;
+  --metro-size-tile-label:2.8vh;  /* menu tile label ~30px [F:home3] */
+  --metro-size-tile-label-focus:3.45vh; /* focused label ~37px [F:home3] */
+  --metro-size-pill:2.45vh;       /* item name pill "Spiky on Top" ~26px [F:grid] */
+  --metro-size-page:2.55vh;       /* "Page 5 of 12" ~27px [F:grid] */
+  --metro-size-item:2.8vh;        /* dialog rows [guess] */
+  --metro-size-text:2.95vh;       /* notice/intro body ~32px [F:intro, xbl] */
+  --metro-size-hint:2.6vh;        /* "Select" / "Back" ~28px [F:grid] */
+  --metro-size-blade:3.5vh;       /* blade prompt "Express yourself..." ~38px [F:pick] */
+  --metro-text-shadow:0 1px 3px rgba(0,0,0,.55);
+
+  /* ---- colours (eyeballed from compressed frames, sampled with PIL) ---- */
+  --metro-bg-top:#506201;         /* olive top #4f6201 [F:home] */
+  --metro-bg-mid:#62b02c;         /* bright green band #63b02c [F:home] */
+  --metro-bg-low:#8ab07a;         /* grey-green #89b07a [F:home] */
+  --metro-bg-bottom:#b4b8ae;      /* light grey bottom #afb4aa [F:home] */
+  --metro-bg-corner:rgba(60,70,10,.45);  /* darker olive corners (vignette) [F:home] */
+  --metro-halftone:rgba(20,60,0,.22);    /* dark halftone dots, strongest at the top, gone by mid-screen [F:home] */
+  --metro-halftone-size:1.35vh;   /* dot pitch ~14px [F:home] */
+  --metro-halftone-dot:.42vh;
+  /* Colour screens: a rainbow smear across the green [F:col, colsub, iway] */
+  --metro-rainbow:linear-gradient(90deg,transparent 4%,rgba(222,74,8,.9) 18%,rgba(232,196,12,.85) 30%,rgba(70,178,30,.75) 42%,rgba(18,150,140,.8) 54%,rgba(36,74,150,.8) 66%,rgba(58,48,104,.7) 76%,transparent 90%);
+  --metro-contact-shadow:rgba(40,50,30,.35);
+  --metro-floor-bar:rgba(70,80,64,.16);  /* faint floor reflections under the tile columns, y~940px [F:home, grid] */
+  --metro-text:#ffffff;
+  --metro-header:#ffffff;
+  --metro-text-dim:rgba(255,255,255,.75);
+  --metro-tile-art-bg:linear-gradient(#cfcdec,#8f8cc4);  /* lavender tile art #8284b2 mid [F:home] */
+  --metro-tile-art-bg-focus:radial-gradient(circle at 50% 35%,#b9ef14,#6aac00 75%); /* focused: green art #67a800 [F:home] */
+  --metro-tile-art:#6e6aa8;       /* placeholder line-art colour (until tile-art.js) */
+  --metro-tile-art-focus:#2f5a07;
+  --metro-strip:#4c4e6b;          /* label strip #4b4d6a [F:home] */
+  --metro-strip-focus:#383b3a;    /* focused strip #383b3a [F:home] */
+  --metro-strip-text:#ffffff;
+  --metro-tile-shadow:0 2px 5px rgba(0,0,0,.35);
+  --metro-item-bg:radial-gradient(circle at 50% 45%,#f2f2ef,#b9bbb4 85%);  /* item tile (empty/loading) [F:chin] */
+  --metro-item-bg-focus:radial-gradient(circle at 50% 40%,#c4f20c,#73b20f 80%); /* focused #72b11a edge [F:grid, chin] */
+  --metro-item-border:rgba(40,50,30,.6);  /* dark 2px frame #243a00 [F:grid] */
+  --metro-pill-bg:rgba(70,72,68,.62);     /* floating name pill [F:grid] */
+  --metro-badge-green:radial-gradient(circle at 40% 35%,#c9f24a,#7fbd12 70%,#5d9a08); /* check / hanger badges [F:chin] */
+  --metro-badge-award:linear-gradient(#c9ee3a,#86c214); /* award trophy badge, top-left [F:08-clothing_Ydkm-t0792_headwear] */
+  --metro-remove-bg:linear-gradient(#b6b4e6,#8d8bc6); /* remove tile behind the red X #767da8 [F:detail] */
+  --metro-remove-x:#fc420b;       /* red X [F:detail] */
+  --metro-swatch-frame:#9a96d6;   /* lavender swatch frame [F:col] */
+  --metro-swatch-frame-focus:#66a606; /* focused swatch frame [F:col] */
+  --metro-dim-opacity:.4;         /* neighbouring page columns [F:grid] */
+  --metro-ring-text:#2d2f2c;
+  --metro-saving-bg:rgba(36,72,22,.52);   /* "Saving" / "Loading items" box #4e783e over the green [F:save, load] */
+  --metro-dialog-scrim:rgba(4,8,0,.84);   /* intro dialog backdrop #162010 [F:intro] */
+  --metro-dialog-panel:#4f514e;   /* "Introducing ..." panel [F:intro] */
+  --metro-notice-bg:rgba(78,82,74,.72);   /* notice text box #5d7554 over green [F:xbl] */
+  --metro-detail-bg:rgba(70,74,66,.78);   /* item detail popup [F:detail] */
+  --metro-dialog-text:#ffffff;
+  --metro-dialog-focus:#007400;   /* blade focus green #007400 [F:pick] */
+  --metro-blade-bg:#050805;       /* behind blades [F:pick, kb] */
+  --metro-blade:linear-gradient(#e6eae7,#bec5c4);  /* white Metro blade [F:pick] */
+  --metro-blade-text:#1a1a1a;
+  --metro-kb-top:linear-gradient(#8a9094,#5b6267); /* keyboard prompt area [F:kb] */
+  --metro-kb-low:#cfd5d6;         /* keyboard key area [F:kb] */
+  --metro-kb-key:#d6dcdd;
+  --metro-kb-key-border:#b8bfc0;
+  --metro-kb-focus:#006a00;       /* focused key [F:kb] */
+  --metro-gp-panel:#4d5145;       /* gamer picture camera body [F:gpcam] */
+  --metro-gp-sub:#3a3d35;
+  --metro-gp-tab:#c9c5aa;
+  --metro-accent:#6fc70f;
+  --metro-glyph-a:#3e9c1c;        /* glyphs: coloured disc with a letter; ring + highlight [F:12-hints_crop-grid-A-select-B-back] */
+  --metro-glyph-b:#b4201a;
+  --metro-glyph-x:#1c5fc2;
+  --metro-glyph-y:#e8a60c;
+  --metro-glyph-bumper:#3a3a3a;
+  --metro-glyph-text:#ffffff;
+  --metro-unconfirmed:#ff00c8;    /* ?debug outline for L/? entries */
+
+  /* ---- layout: header + hints ---- */
+  --metro-safe-x:7.2vw;           /* hint bar glyph x=138px [F:grid] */
+  --metro-title-top:9.6vh;        /* header text centre y~104px [F:home3, feat, grid] */
+  --metro-hint-bottom:6.4vh;      /* glyph bottom y~1010px [F:grid] */
+  --metro-hint-gap:1.35vw;        /* "Select" -> B glyph 26px [F:grid] */
+  --metro-glyph-size:3.35vh;      /* glyph disc ~36px [F:grid] */
+
+  /* ---- layout: menus (avatar left, tiles right) [F:home, home3] ---- */
+  --metro-menu-left:34.64vw;      /* grid x=665px */
+  --metro-menu-top:18.15vh;       /* first row y=196px */
+  --metro-tile-w:19.55vh;         /* 211 x 316px */
+  --metro-tile-h:29.3vh;
+  --metro-tile-gap-x:1.85vh;      /* column pitch 231px */
+  --metro-tile-gap-y:2.05vh;      /* row pitch 338px */
+  --metro-tile-focus-scale:1.26;  /* focused 266 x 396px, scaled about the tile centre */
+  --metro-strip-h:9.75vh;         /* label strip 105px */
+  --metro-floor-y:86.6vh;         /* floor bars y~935px [F:home] */
+  --metro-avatar-offset-x:-0.245; /* menus: avatar centred at x~490-510px [F:home, home3, feat] */
+  --metro-menu-distance:1.47;     /* menu camera distance x FullBody 3.75 m: head y~240, feet y~870 [F:home3, feat] */
+  --metro-skin-distance:1.1;      /* (JS) Skin Color: full body, re-centred, a little closer than the menus [F:07-colour_3mLt-t0050_skin-color] */
+  --metro-grid-distance:1.1;      /* (JS) item grids: preset distance x1.1 (heads ~10% smaller than viewpresets) [F:grid] */
+  /* two-tile groups (Eyes and Eyebrows, Face, Mouth and Chin) [F:grp, 04-features_eYSj-t140_0] */
+  --metro-group-title-x:28.6vw;   /* title x=550px */
+  --metro-group-left:46.98vw;     /* first tile centre x=902px */
+  --metro-group-top:44.07vh;      /* tile centre y~476px */
+  --metro-group-gap:43.15vh;      /* centre pitch 466px */
+
+  /* ---- layout: item/colour pages (avatar centred, columns either side) [F:grid, col] ---- */
+  --metro-page-rows:4;            /* (JS) items: 4 rows; colours 3; outfits 2 */
+  --metro-page-cols:2;            /* (JS) one column each side of the avatar */
+  --metro-title-pages-x:24.9vw;   /* "Hairstyles" x=478px */
+  --metro-col-a-c:28.33vw;        /* column centres x=544 / 1376px, neighbours 205 / 1709px */
+  --metro-col-b-c:71.67vw;
+  --metro-col-prev-c:10.68vw;
+  --metro-col-next-c:89.0vw;
+  --metro-item-size:12.3vh;       /* 133px */
+  --metro-item-gap:2.4vh;         /* pitch 159px */
+  --metro-item-focus-scale:1.29;  /* 172px */
+  --metro-pages-top:20.37vh;      /* first row y=220px */
+  --metro-swatch-size:13.5vh;     /* colour swatch 146px, pitch 160px, first row y=292px [F:col] */
+  --metro-swatch-gap:1.3vh;
+  --metro-swatch-top:27.04vh;
+  --metro-swatch-focus-scale:1.49;/* 217px [F:col] */
+  --metro-swatch-border:1.45vh;   /* lavender frame ~16px [F:col] */
+  --metro-outfit-w:17.3vh;        /* outfit tiles 187 x 255px, rows y=272 / 575px [F:outfits] */
+  --metro-outfit-h:23.6vh;
+  --metro-outfit-gap:4.45vh;
+  --metro-outfit-top:25.2vh;
+  --metro-outfit-focus-scale:1.2;
+  --metro-outfit-a-c:29.0vw;      /* outfit column centres x=557 / 1352px [F:08-clothing_I2Fd-t4346_my-outfits-wear] */
+  --metro-outfit-b-c:70.4vw;
+  --metro-outfit-prev-c:15.95vw;
+  --metro-outfit-next-c:83.8vw;
+  --metro-pill-overlap:1.7vh;     /* pill overlaps the focused tile by ~30px, top +10px [F:grid, outfits] */
+  --metro-arrow-prev-x:13.2vw;    /* |◀ ▶| page arrows x~253 / 1650px centres, y~528px [F:grid] */
+  --metro-arrow-next-x:86.0vw;
+  --metro-arrow-y:48.9vh;
+  --metro-arrow-size:5.2vh;
+  --metro-page-label-top:81.8vh;  /* "Page N of M" centre y~883px, x=477px */
+  --metro-badge-size:4.6vh;       /* check badge ~50px (66px on the focused tile) [F:chin] */
+  --metro-award-size:3.6vh;       /* award badge ~39px [F:08-clothing_Ydkm-t0792_headwear] */
+
+  /* ---- turntable: LT/RT ring under the avatar (a CSS/SVG stand-in for the 3D ring) ---- */
+  --metro-ring-w:21.1vw;          /* item pages: 757-1162px, y~918px [F:grid] */
+  --metro-ring-y:85.0vh;          /* ring centre y */
+  --metro-ring-menu-w:17.0vw;     /* menus: 330-655px, y~912px [F:feat, colsub] */
+  --metro-ring-menu-y:84.4vh;
+
+  /* ---- Body Size [F:body] ---- */
+  --metro-body-check-x:25.5vw;    /* check tile 490-710 x 400-618px */
+  --metro-body-check-y:37.0vh;
+  --metro-body-check:20.3vh;
+  --metro-body-v-x:66.25vw;       /* height slider 1272-1367 x 325-682px */
+  --metro-body-v-y:30.1vh;
+  --metro-body-v-w:8.8vh;
+  --metro-body-v-h:33.0vh;
+  --metro-body-h-x:40.8vw;        /* weight slider 783-1137 x 853-950px */
+  --metro-body-h-y:79.0vh;
+  --metro-body-h-w:32.8vh;
+  --metro-body-h-h:9.0vh;
+  --metro-pad-step:0.1;           /* (JS) Body Size step per press [S§14 Q8 open] */
+
+  /* ---- boxes (Avatar Store games) [F:store] ---- */
+  --metro-box-left:24.3vw;        /* grid x=467px, y=233px, 4 x 2 boxes 188 x 260px */
+  --metro-box-top:21.6vh;
+  --metro-box-w:17.4vh;
+  --metro-box-h:24.1vh;
+  --metro-box-gap:.6vh;
+  --metro-box-focus-scale:1.17;
+
+  /* ---- panels ---- */
+  --metro-saving-w:22.4vw;        /* 722-1152 x 340-580px [F:save]; "Loading items" 720-1151 x 343-583px [F:load] */
+  --metro-saving-h:22.2vh;
+  --metro-saving-y:31.5vh;
+  --metro-dialog-w:54.7vw;        /* intro panel 435-1485 x 95-940px [F:intro] */
+  --metro-dialog-h:78.2vh;
+  --metro-dialog-top:8.8vh;
+  --metro-blade-x:16.2vw;         /* blade 311-1605 x 132-925px [F:pick, kb] */
+  --metro-blade-w:67.4vw;
+  --metro-blade-top:12.2vh;
+  --metro-blade-h:73.4vh;
+  --metro-detail-x:41.9vw;        /* item detail 805-1113 x 468-863px [F:detail] */
+  --metro-detail-y:43.3vh;
+  --metro-detail-w:16.05vw;
+  --metro-detail-h:36.6vh;
+  --metro-list-height:6vh;
+
+  /* ---- stage / camera (JS) ---- */
+  --metro-camera-move-ms:800;     /* menu -> grid camera: 0.8 s easeOutCubic (TIMINGS T9) */
+  --metro-camera-recentre-ms:400; /* colour pickers / Save: re-centre only (TIMINGS T9b, T9d) */
+  --metro-zoom-min:0.35;          /* mouse-wheel / gamer picture zoom: local addition [S§15] */
+  --metro-zoom-max:1.6;
+  --metro-turn-rate:2.6;          /* radians/s at full trigger [S§13 H for LT/RT; rate guess] */
+  --metro-turn-reset-ms:500;      /* [guess] */
+  --metro-drag-turn:0.012;        /* mouse drag on the stage (local) */
+  --metro-prop-autoplay-ms:1000;  /* equipping a prop plays its clip [S§9 M]; delay as app.js */
+  --metro-preview-delay-ms:220;   /* debounce before a focused style is built [S§13 H live preview] */
+  --metro-saving-ms:1800;         /* "Saving" 1.5-2.5 s offline (TIMINGS T13) */
+  --metro-celebrate-ms:3000;      /* post-save celebration ~3 s, then 0.5 s standing (TIMINGS T14) [F:10-save_eYSj-t395_0] */
+  --metro-fade-ms:1000;           /* linear fade to black (TIMINGS T15) [F:10-save_eYSj-t397_5] */
+  --metro-detail-delay-ms:900;    /* item detail popup after focus rests [guess] */
+  --metro-loading-items-ms:500;   /* "Loading items": only while loading, min ~0.5 s (TIMINGS T11) [F:05-loading-items_3mLt-t1186] */
+  /* gift box, ms from box-in: a fixed ~14.25 s sequence, same beats in both captured applies (TIMINGS T12) */
+  --metro-gift-pop-ms:200;        /* box pops up from the floor, small settle after */
+  --metro-gift-open-ms:1000;      /* avatar crouches, flaps open over 0.8 s */
+  --metro-gift-cloth-ms:2800;     /* red cloth pulled out and flung */
+  --metro-gift-apply-ms:12500;    /* new item on the avatar */
+  --metro-gift-end-ms:14050;      /* box starts to sink */
+  --metro-gift-sink-ms:200;
+  --metro-gift-cloth-out-ms:15000;/* discarded cloth fades */
+  --metro-gift-skip-ms:200;       /* A or B: sink at once */
+
+  /* ---- input repeat (JS) [guess] ---- */
+  --metro-repeat-delay-ms:420;
+  --metro-repeat-rate-ms:110;
+  --metro-repeat-fast-after-ms:1600;
+  --metro-repeat-fast-rate-ms:55;
+  --metro-stick-deadzone:0.35;
+  --metro-trigger-deadzone:0.12;
+
+  /* ---- transitions (CSS + JS) (TIMINGS.md) ---- */
+  --metro-transition-ms:130;      /* menu <-> submenu crossfade with a slight sideways drift (TIMINGS T6) */
+  --metro-drift-out:6.5vh;        /* old set drifts ~1/3 tile, new set comes from a little to the left [F:04-features-enter-fine-seq_eYSj-78-82-012..016] */
+  --metro-drift-in:2vh;
+  --metro-boot-fade-ms:130;       /* first menu fade-in, ease-in; the avatar is cut in on its last frame (TIMINGS T5) */
+  --metro-head-delay-ms:170;      /* new header after the crossfade starts (TIMINGS T6) */
+  --metro-focus-hold-ms:130;      /* new focus tile: enlarged and grey at the end of the crossfade ... */
+  --metro-turntable-delay-ms:240; /* ... turntable fade-in starts, done by +0.3 s (TIMINGS T6) */
+  --metro-turntable-fade-ms:70;
+  --metro-focus-grow-ms:70;       /* focus move: old tile snaps back in one frame, new tile grows 0.07 s ... (TIMINGS T7) */
+  --metro-focus-colour-ms:100;    /* ... then crossfades to lime 0.1 s */
+  --metro-focus-ms:170;           /* the whole focus move, for smaller elements */
+  --metro-page-flip-ms:160;       /* page flip, near-linear with a slight ease-out at the end (TIMINGS T8) */
+  --metro-hint-linger-ms:560;     /* hint bar of the screen just left stays on the main menu [F:02-home_Ydkm-t0692_style-focus] */
+  --metro-dialog-ms:200;
+  /* ---- Choose New Avatar lineup [F:16-choose-avatar_Zcxl-t0074_5_lineup-blue-beam, t0079_5_lineup-female-focus; 720p values x1.5] ---- */
+  --metro-lineup-title-y:15.3vh;  /* header centred, text centre y~165px */
+  --metro-lineup-page-y:90.5vh;   /* "Page 1 of 20" centred, y~978px */
+  --metro-lineup-title-size:4.65vh;  /* text 796 px wide */
+  --metro-lineup-title:#eef2e8;
+  --metro-lineup-page-size:2.95vh;
+  --metro-lineup-page-text:rgba(255,255,255,.72);
+  --metro-beam-w:7.8vw;           /* beam ~150px wide */
+  --metro-beam-male:rgba(96,178,255,.72);
+  --metro-beam-female:rgba(255,136,146,.72);
+  --metro-lineup-shadow:rgba(60,66,56,.42);
+  --metro-lineup-stagger-ms:230;  /* starters run in left to right [F:16-choose-avatar_Zcxl-t0072_lineup-walk-in] */
+  --metro-lineup-slide-ms:800;    /* A: the lineup slides away left while the menu fades in [F:16-choose-avatar_Zcxl-t0081_5_lineup-to-home; length estimated] */
+  --metro-lineup-flip-ms:320;     /* page change: not captured [guess] */
+  --metro-lineup-arrow-ms:500;    /* page arrows over the silhouettes after a focus move: seen in t0077 only [guess] */
+  --metro-ease:cubic-bezier(.1,.9,.2,1);
+}

@@ -21,7 +21,7 @@ import zipfile
 
 import xbox_textures as XT
 
-READER_VERSION = 3  # 3: skin XML also works without xml.etree in Decky's Python
+READER_VERSION = 4  # 3: skin XML also works without xml.etree in Decky's Python
 
 _PIC = (".png", ".jpg", ".jpeg", ".bmp", ".gif", ".tga")
 _MIME = {".png": "image/png", ".jpg": "image/jpeg", ".jpeg": "image/jpeg", ".gif": "image/gif"}
@@ -686,6 +686,15 @@ def read_xbox_skin(path):
         errors = res["errors"]
         try:
             (_read_unleashx if kind == "unleashx" else _read_xbmc)(src, res, errors)
+            try:
+                from xbox_layout import read_layout
+                res["layout"] = read_layout(src, kind, lambda name: _xml(src, name), lambda name: _data_url(src, name, errors))
+                if res["layout"]:
+                    errors.extend(res["layout"]["warnings"])
+                else:
+                    errors.append("Native skin menu could not be mapped; only supported artwork and colours are imported")
+            except Exception as layout_error:
+                errors.append("Skin layout: " + str(layout_error))
         except Exception as e:  # keep what was read
             errors.append(f"skin read stopped: {e}")
         res["images"] = {k: v for k, v in list(res["images"].items())[:MAX_PICS]}

@@ -83,7 +83,12 @@ export function motionTimes(animations:SwitchAnimation[]):number[]{
 }
 
 export function useSwitchPaneMotion(animations:SwitchAnimation[],pane:string,events:string[],enabled:boolean,base:SwitchPane={},unitX=1,unitY=1,relativePosition=false,playbackKey:string|number="",raster?:SwitchBackgroundRaster,alphaProperty='opacity'){
- const ref=useRef<HTMLDivElement>(null),binding=events.join('|'),geometry=JSON.stringify(base),rasterGeometry=JSON.stringify(raster);
+ const ref=useRef<HTMLDivElement>(null),geometry=JSON.stringify(base),rasterGeometry=JSON.stringify(raster);
+ // Callers compose fresh animation arrays during pointer/state updates. Bind
+ // this pane to the actual selected tracks, so unrelated renders and event
+ // channels cannot restart its reveal or reset a running focus animation.
+ const selected=animations.filter(a=>a.pane===pane&&events.includes(a.event));
+ const motionBinding=JSON.stringify(selected);
  // Pane and UV scales often cancel each other. Install the initial pose before
  // paint so the compressed atlas is never exposed during startup.
  useLayoutEffect(()=>{
@@ -96,7 +101,6 @@ export function useSwitchPaneMotion(animations:SwitchAnimation[],pane:string,eve
   for(const animation of animations)if(animation.pane===pane)for(const track of animation.tracks)if(track.property>=32&&track.property<48||track.property>=64&&track.property<72)registerMotionProperty('--dht-nx-color-'+track.property,'<number>','255');
   // composeSwitchAnimations puts authored tracks after firmware defaults.
   // Keep that precedence across concurrent active/focus event channels.
-  const selected=animations.filter(a=>a.pane===pane&&events.includes(a.event));
   if(!selected.length)return;
   const duration=Math.max(1,...selected.map(a=>a.frames));
   const discrete=selected.some(animation=>animation.tracks.some(isFrameSequence));
@@ -111,7 +115,7 @@ export function useSwitchPaneMotion(animations:SwitchAnimation[],pane:string,eve
   const stop=()=>{if(reduced?.matches){player.pause();player.currentTime=duration*1000/60;}};
   reduced?.addEventListener?.('change',stop);
   return()=>{player.cancel();reduced?.removeEventListener?.('change',stop);};
- },[animations,pane,binding,enabled,geometry,unitX,unitY,relativePosition,playbackKey,rasterGeometry,alphaProperty]);
+ },[motionBinding,pane,enabled,geometry,unitX,unitY,relativePosition,playbackKey,rasterGeometry,alphaProperty]);
  return ref;
 }
 

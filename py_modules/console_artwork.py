@@ -4,7 +4,7 @@ from pathlib import Path,PurePosixPath
 from urllib.request import Request
 from theme_network import urlopen
 MANIFEST=Path(__file__).with_name('console-assets.json')
-GROUPS={'x360':['x360-blades-original','x360-kinect-dash','x360-metro-dash','x360-nxe-dash'],'xbox':['xbox-original'],'ps3':['xmb-ps3'],'psp':['xmb-ps3'],'mii':['nintendo-mii-runtime'],'wiiu':['wiiu-native-ui','nintendo-mii-runtime']}
+GROUPS={'x360':['x360-blades-original','x360-kinect-dash','x360-metro-dash','x360-nxe-dash'],'xbox':['xbox-original'],'ps3':['xmb-ps3-native'],'psp':['xmb-psp-native'],'mii':['nintendo-mii-runtime'],'wii':['wii-native-menu','nintendo-mii-runtime'],'wiiu':['wiiu-native-ui','nintendo-mii-runtime']}
 GROUPS['wiiu-stock']=['wiiu-stock-menu']
 _lock=threading.Lock();_progress={'busy':False,'percent':0,'message':''}
 def manifest():return json.loads(MANIFEST.read_text(encoding='utf-8'))
@@ -46,7 +46,7 @@ def _extract(pack,archive,staging):
   if len(entries)!=pack['files']:raise ValueError('Unexpected artwork entry count')
   for entry in entries:
    p=PurePosixPath(entry.filename)
-   allowed=({'.pack','.bfsar','.bfstm','.szs','.xml','.txt','.json'} if pack['id']=='wiiu-stock-menu' else {'.json'} if pack['id']=='nintendo-mii-runtime' else {'.png','.jpg','.jpeg','.webp','.gif'})
+   allowed=({'.pack','.bfsar','.bfstm','.szs','.xml','.txt','.json'} if pack['id']=='wiiu-stock-menu' else {'.json'} if pack['id'] in {'nintendo-mii-runtime','wii-native-menu'} else {'.png','.jpg','.jpeg','.webp','.gif'})
    if p.is_absolute() or '..' in p.parts or '\\' in entry.filename or (p.parent!=prefix if pack['id']!='wiiu-stock-menu' else (p.parts[:len(prefix.parts)]!=prefix.parts or len(p.parts)<=len(prefix.parts))) or any(':' in part for part in p.parts) or '\x00' in entry.filename or p.suffix.lower() not in allowed or (pack['id']=='wiiu-stock-menu' and p.parent==prefix and p.name not in {'Men.pack','Men2.pack','cafe_barista_men.bfsar','resources.json'}) or stat.S_ISLNK(entry.external_attr>>16) or entry.filename.casefold() in seen:raise ValueError('Invalid artwork entry')
    seen.add(entry.filename.casefold());total+=entry.file_size
    if total>pack['unpackedBytes']:raise ValueError('Expanded artwork exceeds expected size')

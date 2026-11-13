@@ -1,4 +1,5 @@
 import type {XuiSceneSkin as importSceneSkin} from "./themes/x360SceneRuntime";
+import {useResourceRevision} from "./marketplaceState";
 import { BoundedCache } from "./boundedCache";
 // User-supplied console skins, read on the Deck by the backend:
 //  • PS3 .p3t theme files  → XMB background + category icons
@@ -88,6 +89,7 @@ export interface Ps4Skin {
   colors: Record<string, string>;
   preview?: string | null;
   dynamic: boolean;
+  scene?: import("./themes/Ps4Scene").Ps4SceneData | null;
   animation?: { image: string; durationMs: number }[];
   errors: string[];
   soundPack?: string;
@@ -209,6 +211,7 @@ export function useX360Gamerpic(): string | undefined {
 /** Original Xbox skin (UnleashX or XBMC folder / .zip) from skins/xbox/. */
 export interface XboxSkin {
   kind: "unleashx" | "xbmc";
+  layout?: import("./themes/XboxImportedLayout").XboxLayout | null;
   name: string;
   author?: string;
   version?: string;
@@ -236,7 +239,7 @@ export function useXboxSkin(): XboxSkin | null {
 }
 /** What the active skin gives the Xbox dashboard after the per-file switches (ThemeFx key `xbox:<file>`:
  *  "Theme wallpaper" = background, "Theme colour" = text and highlight). `css` sets --dht-xbox-skin-* on the home root. */
-export function useXboxLook(): { bg?: string; bgColor?: string; css: string } {
+export function useXboxLook(): { bg?: string; bgColor?: string; css: string; layout?: XboxSkin["layout"] } {
   const s = useSettings();
   const sk = useXboxSkin();
   const fx = themeFx(s, `xbox:${s.xboxSkin ?? ""}`);
@@ -245,7 +248,7 @@ export function useXboxLook(): { bg?: string; bgColor?: string; css: string } {
   const bgColor = fx.background && !bg ? sk.bgColor ?? undefined : undefined;
   const c = fx.labels ? sk.colors : {};
   const vars = [c.text && `--dht-xbox-skin-text:${c.text}`, c.highlight && `--dht-xbox-skin-highlight:${c.highlight}`].filter(Boolean).join(";");
-  return { bg, bgColor, css: vars ? `.dht-root{${vars}}` : "" };
+  return { bg, bgColor, layout:fx.icons?sk.layout:undefined, css: vars ? `.dht-root{${vars}}` : "" };
 }
 
 /** Imported Wii System Menu assets, scene data and compatibility diagnostics. */
@@ -277,9 +280,10 @@ export function useWiiSkin(): WiiSkin | null {
 }
 /** What the Wii theme gives the Wii menu after the per-file switches (ThemeFx key `wii:<file>`: "Theme wallpaper" =
  *  background, "Theme pointer hand" = icons). The home sets --dht-wii-skin-wallpaper from `wallpaper`. */
-const getWiiStandard=callable<[],WiiSkin>("get_wii_standard");
-let standardPromise:Promise<WiiSkin>|undefined;
-function useWiiStandard(enabled:boolean){const [skin,setSkin]=useState<WiiSkin>();useEffect(()=>{if(!enabled)return;let live=true;(standardPromise??=getWiiStandard()).then(s=>{if(live)setSkin(s);}).catch(()=>{standardPromise=undefined;});return()=>{live=false;};},[enabled]);return skin;}
+const getWiiStandard=callable<[original?:boolean],WiiSkin>("get_wii_standard");
+const standardPromises=new Map<boolean,Promise<WiiSkin>>();
+onResourcesChanged(()=>standardPromises.clear());
+function useWiiStandard(enabled:boolean){const original=useSettings().originalConsoleArtwork!==false;const rev=useResourceRevision();const [skin,setSkin]=useState<WiiSkin>();useEffect(()=>{if(!enabled)return;let live=true;let p=standardPromises.get(original);if(!p){p=getWiiStandard(original);standardPromises.set(original,p);}p.then(s=>{if(live)setSkin(s);}).catch(()=>{standardPromises.delete(original);});return()=>{live=false;};},[enabled,original,rev]);return skin;}
 export function useWiiLook(enabled=true): { wallpaper?: string; fit: "cover" | "stretch"; cursor?: string; cursors: { a?: string; b?: string; c?: string };scene?:WiiSkin["scene"];skin?:WiiSkin } {
   const s = useSettings();
   const imported = useWiiSkin(),standard=useWiiStandard(enabled),sk=imported??standard;
@@ -295,6 +299,11 @@ export interface N3dsScreen {
   image?: string | null; // 400 × 240 (top) / 320 × 240 (bottom) PNG data URL
   wide?: string | null; // 1024 × 240 picture of a scrolling wallpaper
   scroll?: boolean;
+  wideWidth?: number;
+  frames?: string[];
+  gradient?: number;
+  opacity?: number;
+  patterns?: {image: string; moving: boolean}[];
   frame?: string;
   color?: string | null;
 }
@@ -312,6 +321,12 @@ export interface N3dsSkin {
   folder?: N3dsColors; // dark, main, light, shadow
   file?: N3dsColors;
   text?: N3dsColors; // main, alt
+  arrow_button?: string[] | null;
+  arrow?: string[] | null;
+  open_button?: N3dsColors;
+  close_button?: N3dsColors;
+  toolbar?: string[] | null;
+  folder_bg?: string[] | null;
   bottom_inner?: string[] | null;
   bottom_outer?: string[] | null;
   folder_art?: { closed?: string | null; open?: string | null } | null; // 74 × 64 / 82 × 64
@@ -319,6 +334,9 @@ export interface N3dsSkin {
   preferred_row?: number;
   bgm?: boolean;
   bgm_only?: boolean;
+  soundPack?: string;
+  musicPack?: string;
+  audioErrors?: string[];
   errors: string[];
 }
 const getN3ds = callable<[name: string], N3dsSkin | null>("get_3ds_skin");
@@ -329,6 +347,9 @@ const loadN3ds = async (name: string): Promise<N3dsSkin | null> => (await getN3d
 export function useN3dsSkin(): N3dsSkin | null {
   const s = useSettings();
   const sk = useSkin(s.n3dsSkin ?? "", n3dsCache, loadN3ds);
+  const fx=themeFx(s,`n3ds:${s.n3dsSkin??""}`);
+  useSkinPack('n3ds',fx.sounds?sk:null);
+  useSkinPack('n3ds',sk?.musicPack?{soundPack:sk.musicPack}:null,'music');
   return sk && sk.name !== undefined ? sk : null;
 }
 export interface N3dsLook {
@@ -341,6 +362,7 @@ export interface N3dsLook {
   file: N3dsColors;
   text: N3dsColors;
   folderArt: { closed?: string | null; open?: string | null } | null;
+  controls: Pick<N3dsSkin, "arrow_button" | "arrow" | "open_button" | "close_button" | "toolbar" | "folder_bg" | "bottom_inner" | "bottom_outer">;
   fileArt: { large?: string | null; small?: string | null } | null;
 }
 /** What the active 3DS theme file gives the HOME look after the per-file switches (ThemeFx key `n3ds:<file>`:
@@ -351,10 +373,11 @@ export function useN3dsLook(): N3dsLook {
   const sk = useN3dsSkin();
   const fx = themeFx(s, `n3ds:${s.n3dsSkin ?? ""}`);
   const on = sk && !sk.bgm_only;
-  const screen = (x: N3dsScreen | undefined) => (on && fx.background && x && (x.mode === "texture" ? !!x.image : x.mode === "solid" && !!x.color) ? x : null);
+  const screen = (x: N3dsScreen | undefined) => (on && fx.background && x && (x.mode === "texture" ? !!x.image : (x.mode === "solid" || x.mode === "pattern") && !!x.color) ? x : null);
   const c = on && fx.labels;
   return {
     skin: sk,
+    controls: c ? sk ?? {} : {},
     top: screen(sk?.top),
     bottom: screen(sk?.bottom),
     scroll: fx.scroll !== false,
@@ -444,7 +467,7 @@ let compressListener: ((folder: string) => void) | null = null;
 /** steam.ts compresses decoded theme music (WAV → Ogg Opus) when the UI supports it. */
 export const onMusicCompress = (cb: (folder: string) => void) => { compressListener = cb; };
 export const skinSoundPack = (theme: string, kind: "sfx" | "music" = "sfx"): string => skinPacks[kind === "sfx" ? theme : `${theme}:music`] ?? "";
-export function useSkinPack(theme: "ps4" | "ps3" | "psp" | "vita" | "wiiu", skin: { soundPack?: string } | null, kind: "sfx" | "music" = "sfx") {
+export function useSkinPack(theme: "ps4" | "ps3" | "psp" | "vita" | "n3ds" | "wiiu", skin: { soundPack?: string } | null, kind: "sfx" | "music" = "sfx") {
   const key = kind === "sfx" ? theme : `${theme}:music`;
   const folder = skin?.soundPack ?? "";
   useEffect(() => {

@@ -1,4 +1,5 @@
 import {NxeButtonHint} from './X360NxeIcons';
+import {FullAvatarEditor} from './X360FullAvatarEditor';
 import {CSSProperties, ReactNode, useEffect, useRef, useState} from 'react';
 import {callable} from '@decky/api';
 import {pushModalInput, Press, useStage} from '../input';
@@ -60,8 +61,12 @@ const categories=[['Starting avatars',0],['Hair',4],['Tops',8],['Bottoms',16],['
 const nxeCategories=[['Tops',8],['Hats',64],['Glasses',256],['Bottoms',16],['Accessories',3712],['Outfits',0x800000],['Shoes',32],['Hair',4],['Starting avatars',0]] as const;
 const button:CSSProperties={background:'#347b18',border:'1px solid #c2d7b8',color:'#fff',padding:'10px 16px',font:'inherit',cursor:'pointer'};
 
-/** Native Metro controls around the shared engine; no iframe or external website. */
-export function MetroAvatarEditor({onClose,onLegacy,fallback,variant='metro',name='My Avatar'}:{onClose:()=>void;onLegacy:()=>void;fallback:ReactNode;variant?:'metro'|'nxe'|'kinect';name?:string}) {
+type EditorProps={onClose:()=>void;onLegacy:()=>void;fallback:ReactNode;variant?:'metro'|'nxe'|'kinect';name?:string};
+/** The full local Metro shell is shared by every dashboard using the avatar engine. */
+export function MetroAvatarEditor(props:EditorProps){
+  return <FullAvatarEditor onClose={props.onClose} name={props.name??'Player'} previous={<PreviousAvatarEditor {...props}/>}/>;
+}
+function PreviousAvatarEditor({onClose,onLegacy,fallback,variant='metro',name='My Avatar'}:EditorProps) {
   const {W,H}=useStage(),nxe=variant!=='metro',kinect=variant==='kinect';
   const editorCategories=nxe?nxeCategories:categories;
   const [avatarMenu,setAvatarMenu]=useState(nxe),[avatarMenuSelection,setAvatarMenuSelection]=useState(0);

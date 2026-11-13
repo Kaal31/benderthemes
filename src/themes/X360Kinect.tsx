@@ -74,7 +74,7 @@ export function KinectHome() {
     ] },
     { id: "games", label: "games", slots: [
       ...games.slice(0, 10).map(play),
-      { key: "lib", label: "Game Library", sub: `${games.length} games`, art: "slot-games", glyph: "library", run: () => openPage("library") },
+      { key: "lib", label: "Game Library", sub: `${api.library.games.length} games`, art: "slot-games", glyph: "library", run: () => openPage("library") },
       { key: "ach", label: "Achievements", sub: "Your progress", art: "slot-kinect", glyph: "trophy", run: () => openPage("achievements") },
     ] },
     { id: "video", label: "video", slots: [
@@ -261,7 +261,7 @@ export function KinectHome() {
           </div>
         </div>
         {page&&<KinectPages key={page} page={page} game={previewGame} onClose={()=>{setPage(null);setPreviewGame(undefined);}} onPage={next=>openPage(next)} onAvatar={()=>{setPage(null);setAvatarOpen(true);}}/>}
-        {avatarOpen&&<MetroAvatarEditor variant="kinect" fallback={fallbackAvatar} onClose={()=>{setAvatarOpen(false);setAvatarRevision(v=>v+1);}} onLegacy={()=>{setAvatarOpen(false);setAvatarRevision(v=>v+1);setLegacyOpen(true);}}/>}
+        {avatarOpen&&<MetroAvatarEditor variant="kinect" name={api.user} fallback={fallbackAvatar} onClose={()=>{setAvatarOpen(false);setAvatarRevision(v=>v+1);}} onLegacy={()=>{setAvatarOpen(false);setAvatarRevision(v=>v+1);setLegacyOpen(true);}}/>}
         {legacyOpen&&<LegacyKinectEditor name={api.user} spec={mine} motion={s.animations} onDone={spec=>{if(spec)saveAvatar(spec);setLegacyOpen(false);setAvatarRevision(v=>v+1);}}/>}
         <MenuView menu={menu} variant="x360" appearance={{backdrop:{background:'#0009'},panel:{position:'absolute',left:ox+368*k,top:oy+148*k,width:544*k,minHeight:360*k,right:'auto',bottom:'auto',transform:'none',borderRadius:0,background:'linear-gradient(#f5f7f3,#d8dfd6)',color:'#414a40',padding:20*k,boxShadow:'0 4px 18px #0005',animation:s.animations?'dhtKinectGuide 220ms ease-out':undefined},item:{fontSize:21*k,padding:12*k,borderRadius:0},selectedItem:{background:'#78b918',color:'#fff'},text:{color:'#414a40'}}}/>
       </Stage>

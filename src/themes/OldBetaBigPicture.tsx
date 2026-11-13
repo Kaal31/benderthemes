@@ -1,3 +1,5 @@
+import {gameChoice} from "../gameFilters";
+import {libraryGameViews} from "../libraryGameViews";
 import {themeActiveElement,nativeControlFocusCSS} from '../nativeThemeFocus';
 import {CSSProperties,useEffect,useLayoutEffect,useMemo,useRef,useState} from 'react';
 import {GameArt,Icon,useHome} from '../common';
@@ -42,13 +44,16 @@ export function OldBetaBigPictureHome(){
  const pageSwitch=useRef<{departure:HTMLElement;direction:number}|null>(null),pageSwitchCancel=useRef<(()=>void)|null>(null),switchingPage=useRef(false);
  const [mode,setMode]=useState<Mode>('sheet'),[category,setCategory]=useState(1),[selected,setSelected]=useState(0);
  const categoryRef=useRef(category);categoryRef.current=category;
- const [size,setSize]=useState({w:1280,h:800}),[filter,setFilter]=useState('all'),[query,setQuery]=useState('');
+ const [size,setSize]=useState({w:1280,h:800}),[filter,setFilter]=useState(()=>gameChoice(api.settings,'library').source),[query,setQuery]=useState('');
  const searchWasOpen=useRef(false),browserSession=useRef(createBetaBrowserSession());
  const [collectionOpen,setCollectionOpen]=useState(false),[collectionIndex,setCollectionIndex]=useState(0),[searchOpen,setSearchOpen]=useState(false);
- const collectionOptions=[{id:'all',name:'All Games',count:api.lib.games.length},{id:'installed',name:'Installed',count:api.lib.games.filter(g=>g.installed).length},...api.lib.collections.map(c=>({id:'col:'+c.id,name:c.name,count:c.games.length}))];
+ const views=libraryGameViews(api.library,api.settings);
+ const collectionOptions=views.map(v=>({...v,count:v.games.length}));
+ const configuredView=gameChoice(api.settings,"library");
+ useEffect(()=>{setFilter(configuredView.source);setSelected(0);},[configuredView.source,configuredView.ids]);
  const [destination,setDestination]=useState<Destination|null>(null),[game,setGame]=useState<Game|null>(null);
  useLayoutEffect(()=>{if(destination!=='store'||!root.current||!storePeel.current)return;const clone=storePeel.current;storePeel.current=null;storePeelCancel.current=unfoldStoreSheet(root.current,clone,()=>{opening.current=false;root.current?.removeAttribute('data-opening');root.current?.removeAttribute('data-store-open');});return()=>{storePeelCancel.current?.();storePeelCancel.current=null;};},[destination]);
- const games=useMemo(()=>[...(filter.startsWith('col:')?api.lib.collections.find(c=>c.id===filter.slice(4))?.games??[]:api.lib.games)].filter(g=>(filter!=='installed'||g.installed)&&g.name.toLowerCase().includes(query.toLowerCase())).sort((a,b)=>mode==='games'?a.name.localeCompare(b.name):b.lastPlayed-a.lastPlayed),[api.lib.games,api.lib.collections,filter,query,mode]);
+ const games=useMemo(()=>[...(mode==='sheet'?api.lib.games:views.find(v=>v.id===filter)?.games??api.library.games)].filter(g=>mode==='sheet'||g.name.toLowerCase().includes(query.toLowerCase())).sort((a,b)=>mode==='games'?a.name.localeCompare(b.name):b.lastPlayed-a.lastPlayed),[api.lib.games,api.library,filter,query,mode]);
  const friends=useFriends(!destination),friendSlots=communitySlots(friends,largeSheets?18:8),[storeCovers,setStoreCovers]=useState<StoreItem[]>([]),[storeSheetCovers,setStoreSheetCovers]=useState<StoreItem[]>([]);
  useEffect(()=>{let live=true;loadStoreLists().then(lists=>{if(live){setStoreCovers(lists.featured??[]);const ids=new Set<number>(),art=new Set<string>();setStoreSheetCovers([...(lists.featured??[]),...Object.values(lists).flat()].filter(item=>{const image=item.capsule||item.header;if(ids.has(item.id)||art.has(image))return false;ids.add(item.id);art.add(image);return true;}));}}).catch(()=>{});return()=>{live=false;};},[]);
  const chosen=games[Math.min(selected,Math.max(0,games.length-1))];
