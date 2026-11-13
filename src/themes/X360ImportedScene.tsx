@@ -87,7 +87,9 @@ export function X360ImportedScene({skin}:{skin:X360Skin&XuiSceneSkin}){
   const p={...mergeProperties(n.properties,override)},id=String(p.Id??''),className=n.class,depth=context.visualDepth??0;if(className==='XuiSoundXAudio')return <XuiSceneAudio key={path} source={skin.sceneAudio?.[resourceKey(p.File??'')]} loop={!!p.Loop} volume={p.Volume??0} state={p.State} trigger={clips[path]?.name}/>;// Aurora's home presenter is for its optional avatar/profile mode, not a standing dashboard character.
   // The full-page content shadow duplicates the blade glass contour and leaves a cut-off strip over the footer.
   if(tabbedDashboard&&id==='GameDiscOverlay')return null;
-  if(tabbedDashboard&&/^grc_whiteCorner/.test(id))return null;
+  if(tabbedDashboard&&p.UnfocusedInput&&/^metaScene_/i.test(String(p.Visual??''))&&!String(p.Text??'').trim())return null;
+  if(tabbedDashboard&&resourceKey(String(p.ImagePath??''))==='logo-shadow.png')return null;
+  if(tabbedDashboard&&/^grc_(?:whiteCorner|side|endCap|shadow|highlight)/.test(id))return null;
   if(tabbedDashboard&&id==='selectBtn'&&p.UnfocusedInput&&!String(p.Text??'').trim())return null;
   if(tabbedDashboard&&className==='XuiListItem'&&ancestors.includes('List_Radio')&&!context.text)return null;
   if(tabbedDashboard&&id==='DiscPanelOverlay'){p.Position=[195,516,0];p.Width=895;p.Height=68;}
