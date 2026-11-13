@@ -1,3 +1,5 @@
+import {artworkMode,artworkThemeKey,useSquareArtwork} from './squareArtwork';
+import {WiiuGameIcon} from './themes/WiiuGameIcon';
 // Shared building blocks for the themes: images with fallbacks, a small
 // original icon set, an in-theme options menu, and the shared home context.
 import { DownloadBar } from "./downloadUi";
@@ -103,7 +105,7 @@ export function NameArt({ name, style }: { name: string; style?: CSSProperties }
 }
 
 /** Game art of a kind, with a name placeholder when Steam has none. */
-export function GameArt({
+function BaseGameArt({
   g,
   kind,
   style,
@@ -113,6 +115,7 @@ export function GameArt({
   logoFallback = null,
 }: {
   logoFallback?: ReactNode;
+  raw?: boolean; // internal artwork composition: avoid applying a tile mode recursively
   flat?: boolean;
   g: Game;
   kind: keyof Game["art"];
@@ -126,6 +129,17 @@ export function GameArt({
   const image = <Img srcs={srcs} style={casing ? {width:"100%",height:"100%"} : style} position={position} fit={fit} fallback={kind === "logo" ? logoFallback : <NameArt name={g.name} style={casing ? {width:"100%",height:"100%"} : style} />} />;
   const bar = kind === "portrait" || kind === "landscape" ? <DownloadBar appid={g.appid} /> : null;
   return casing ? <CaseArt name={g.name} theme={home.settings.theme} style={style} motion={home.settings.animations}>{image}{bar}</CaseArt> : <>{image}{bar}</>;
+}
+
+/** Per-theme square artwork affects game tiles, never hero/logo requests. */
+export function GameArt(props:Parameters<typeof BaseGameArt>[0]){
+ const home=useContext(HomeCtx);
+ return !props.raw&&home&&(props.kind==='portrait'||props.kind==='landscape')?<ConfiguredGameArt {...props} settings={home.settings}/>:<BaseGameArt {...props}/>;
+}
+function ConfiguredGameArt({settings,...props}:Parameters<typeof BaseGameArt>[0]&{settings:Settings}){
+ const mode=artworkMode(settings),custom=useSquareArtwork(artworkThemeKey(settings),props.g.appid);
+ if(mode==='auto'&&!custom||mode==='covers')return <BaseGameArt {...props}/>;
+ return <div data-theme-game-artwork={mode} style={{position:'relative',width:'100%',height:'100%',...props.style}}><WiiuGameIcon game={props.g}/><DownloadBar appid={props.g.appid}/></div>;
 }
 
 // ───────────── icons (original, monochrome, 24×24 grid) ─────────────

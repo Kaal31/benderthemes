@@ -39,6 +39,7 @@ export interface Collection {
 }
 
 const APP_TYPE_GAME = 1;
+const APP_TYPE_DEMO = 8;
 const APP_TYPE_APPLICATION = 2;
 const APP_TYPE_SHORTCUT = 1073741824;
 const CDN = "https://cdn.cloudflare.steamstatic.com/steam/apps";
@@ -91,7 +92,7 @@ export function gameIconUrls(game:Game):string[]{
 function toGame(a: any): Game | null {
   if (!a) return null;
   const t = a.app_type;
-  const isGame = t === APP_TYPE_GAME || t === APP_TYPE_SHORTCUT;
+  const isGame = t === APP_TYPE_GAME || t === APP_TYPE_DEMO || t === APP_TYPE_SHORTCUT;
   const isApp = t === APP_TYPE_APPLICATION;
   if (!isGame && !isApp) return null;
   const shortcut = t === APP_TYPE_SHORTCUT;
@@ -138,11 +139,11 @@ const steamSource: LibrarySource = {
     let apps: any[] = [];
     try {
       const all = collectionStore?.allAppsCollection?.allApps ?? [];
-      apps = all.filter((a: any) => a?.app_type === APP_TYPE_APPLICATION); // tools/runtimes (Proton…) are left out
+      apps = all.filter((a: any) => a?.app_type === APP_TYPE_APPLICATION || a?.app_type === APP_TYPE_DEMO); // tools/runtimes (Proton…) are left out
     } catch {
       /* ignore */
     }
-    return [...games, ...apps];
+    return [...new Map([...games, ...apps].map((a:any)=>[a.appid,a])).values()];
   },
   hiddenIds() {
     const out = new Set<number>();

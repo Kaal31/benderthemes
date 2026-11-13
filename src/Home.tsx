@@ -1,3 +1,5 @@
+import {SquareArtworkPanel} from './SquareArtworkPanel';
+import {launchPortalActive} from './launchPortal';
 import {startupIntroEnabled} from "./startupPreferences";
 import {WiiFlowDownloadsWatcher} from "./wiiflowDownloads";
 import {ThemeLoadingScreen} from "./ThemeLoadingScreen";
@@ -311,6 +313,7 @@ function ThemedHomeContent({ standalone }: { standalone?: boolean }) {
   useEffect(() => () => { restoreHeader(doc); restoreFooter(doc); }, [doc]);
   const [overlay, setOverlay] = useState<Overlay>(null);
   const [destination,setDestination] = useState<Destination|null>(null);
+  useEffect(()=>{const returned=()=>{setDestination(null);setOverlay(null);dismissLaunch();setRenderAttempt(n=>n+1)};window.addEventListener('themehub-game-return',returned);return()=>window.removeEventListener('themehub-game-return',returned)},[]);
   const [blockPanel,setBlockPanel] = useState<HTMLElement|null>(null);
   useEffect(()=>{setBlockPanel(s.theme==="minecraft" ? root.current?.querySelector<HTMLElement>(".mc-content-slot")??null : null);},[s.theme]);
   useEffect(()=>{if(!blockPanel)return;blockPanel.parentElement?.toggleAttribute("data-panel-open",!!destination||overlay?.kind==="store");return()=>blockPanel.parentElement?.removeAttribute("data-panel-open");},[blockPanel,destination,overlay]);
@@ -459,7 +462,7 @@ function ThemedHomeContent({ standalone }: { standalone?: boolean }) {
       <DownloadStatus settings={s} hidden={!!overlay || !!destination || !!launching || market.opened} />
       <MenuView menu={themeMenu} variant={s.theme === "ps3" ? "xmb" : (s.theme === "frame" || s.theme === "native") ? "ps5" : s.theme} art={s.theme === "psp" ? { panel: cachedPspSkin(pspFile(s))?.visuals?.optionMenu, focus: cachedPspSkin(pspFile(s))?.visuals?.menuFocus } : undefined} />
       {s.theme==="reading"&&<><ReadingVideoPlayer/><ReadingWindowDrag settings={s}/></>}
-      {launching && <LaunchView value={launching} settings={s}/>}
+      {launching && !launchPortalActive() && <LaunchView value={launching} settings={s}/>}
       <BootIntro file={s.bootIntro} automatic={startupIntroEnabled(s)} />
       <ThemeIntro autoTheme={startupIntroEnabled(s) && s.onboardingDone && !market.opened && !api.busy && !slotUrl("bootVideo", s) && (!["old-big-picture","old-beta-big-picture"].includes(s.theme)||introResourcesReady) ? s.theme : undefined} />
       <VideoIntro url={startupIntroEnabled(s)?slotUrl("bootVideo", s):null} />
@@ -467,6 +470,7 @@ function ThemedHomeContent({ standalone }: { standalone?: boolean }) {
       <FirmwareNotice paused={market.opened || !!overlay || !!destination || !!launching} />
       <WiiFlowDownloadsWatcher active={true}/>
       <WiiuImportPrompt paused={market.opened || !!overlay || !!destination || !!launching} />
+      <SquareArtworkPanel/>
       <ThemeSwitcher available={() => !overlay && !destination && !launching && !market.opened && !themeMenu.isOpen && !anyMenuOpen()} />
       {banner && (
         <div

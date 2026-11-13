@@ -173,7 +173,7 @@ export const storeSectionOn = (s: Pick<Settings, "storeSections">, theme: ThemeI
  *  Everything else (clock, volume, library sorting, Ⓐ…) is the user's own. */
 export const LOOK_KEYS = [
   "theme", "activeTheme", "pages", "mix", "iconPicks", "themeOptions", "styles", "vita", "xmb", "x360", "dial", "wallpapers", "wallpaperDim", "packs", "musicPacks", "music",
-  "coverStyles", "titles", "iconSizes", "protondbThemes", "videoBackgrounds", "ps4GameBackgrounds", "ps4Skin", "castleWeather", "castleWindows",
+  "gameArtworkModes", "coverStyles", "titles", "iconSizes", "protondbThemes", "videoBackgrounds", "ps4GameBackgrounds", "ps4Skin", "castleWeather", "castleWindows",
   "minecraftFollowFocus", "minecraftWaitForSwipe", "minecraftSlim", "themeFx", "wiiuView", "wiiuTheme", "xboxSkin", "wiiSkin", "wiiSkinMember", "wiiSkinBase", "switchTheme", "wiiuPlazaPositions", "wiiuPlazaTips", "n3dsSkin", "n3dsCursor", "n3dsTop", "n3dsLayout", "hubStyle", "storeSections",
 ] as const;
 export type LookKey = (typeof LOOK_KEYS)[number];
@@ -266,6 +266,11 @@ export interface Settings {
   tvMode: boolean; // safe margins and larger couch-distance text
   enabled: boolean; // replace Steam's home with the themed home
   theme: ThemeId;
+  gameArtworkModes?: Record<string,"auto"|"square"|"logos"|"covers"|"icons">;
+  returnToThemeAfterGame?: boolean;
+  randomThemeOnStartup?: boolean;
+  randomThemeAfterGame?: boolean;
+  randomThemePool?: string[];
   source: string; // "installed" | "all" | "col:<collection id>"
   themeCollections?: Partial<Record<ThemeId, { source: string; ids?: string[] }>>;
   iconSizes?: Partial<Record<ThemeId, number>>;
@@ -450,6 +455,11 @@ export const DEFAULTS: Settings = {
   videoBackgrounds: {},
   tvMode: false,
   enabled: true,
+  returnToThemeAfterGame: true,
+  randomThemeOnStartup: false,
+  randomThemeAfterGame: false,
+  randomThemePool: [],
+  gameArtworkModes: {},
   theme: "psp",
   source: "installed",
   sort: "recent",
@@ -525,6 +535,11 @@ function merge(saved: any): Settings {
   if(s.theme === "frame" && s.activeTheme === "old-big-picture") s.theme = "old-big-picture";
   s.protondbThemes = Object.fromEntries(Object.entries(s.protondbThemes && typeof s.protondbThemes === "object" ? s.protondbThemes : {}).filter(([key,value])=>key.length>0&&key.length<=64&&typeof value==="boolean").slice(0,500));
   if (s.theme === "frame" && s.activeTheme === "gameamp") s.theme = "gameamp";
+  s.returnToThemeAfterGame = saved?.returnToThemeAfterGame !== false;
+  s.randomThemeOnStartup = saved?.randomThemeOnStartup === true;
+  s.randomThemeAfterGame = saved?.randomThemeAfterGame === true;
+  s.randomThemePool = Array.isArray(saved?.randomThemePool) ? [...new Set(saved.randomThemePool.filter((id:unknown)=>typeof id==='string'&&id.length<=160))].slice(0,300) : [];
+  s.gameArtworkModes = Object.fromEntries(Object.entries(saved?.gameArtworkModes&&typeof saved.gameArtworkModes==='object'?saved.gameArtworkModes:{}).filter(([key,mode])=>key.length>0&&key.length<=160&&['auto','square','logos','covers','icons'].includes(String(mode))).slice(0,500));
   s.themeDeckFocusMusic = s.themeDeckFocusMusic !== false;
   s.profilePictures=Object.fromEntries(Object.entries(s.profilePictures&&typeof s.profilePictures==="object"?s.profilePictures:{}).filter(([k,v])=>k.length<128&&typeof v==="string"&&v.length<500000&&/^data:image\/png;base64,/.test(v)));
   if (typeof s.minecraftSkin !== "string" || s.minecraftSkin.length > 60000 || !s.minecraftSkin.startsWith("data:image/png;base64,")) s.minecraftSkin = "";
@@ -776,7 +791,7 @@ export function resetThemeSettings(theme: ThemeId) {
     const out: Partial<Settings> = {
       iconSizes: drop(p.iconSizes), protondbThemes: Object.fromEntries(Object.entries(p.protondbThemes).filter(([key])=>key!==theme&&!key.startsWith(`${theme}:`)&&!(p.theme===theme&&key===p.activeTheme))), titles: drop(p.titles), coverStyles: drop(p.coverStyles), packs: drop(p.packs),
       music: drop(p.music), musicPacks: drop(p.musicPacks), wallpapers: drop(p.wallpapers), videoBackgrounds: drop(p.videoBackgrounds),
-      storeSections: drop(p.storeSections),
+      gameArtworkModes: Object.fromEntries(Object.entries(p.gameArtworkModes??{}).filter(([key])=>key!==theme&&!((theme==="frame"||theme==="native")&&key===p.activeTheme))), storeSections: drop(p.storeSections),
     };
     const fx = { ...p.themeFx };
     const keys: string[] = [];

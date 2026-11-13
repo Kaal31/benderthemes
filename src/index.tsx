@@ -1,3 +1,7 @@
+import {startLaunchPortal} from './launchPortal';
+import {startGameSessionReturn,onThemeGameExit} from './gameSessionReturn';
+import {chooseRandomTheme} from './randomTheme';
+import {getSettings} from './settings';
 import { startThemeScreensavers, useScreensaverStatus } from "./themeScreensavers";
 import { startAchievementPopups } from "./achievementPopups";
 import { startGuidedSync } from "./guidedSync";
@@ -323,7 +327,12 @@ function ScreensaverStatus(){const status=useScreensaverStatus();return <div sty
 
 export default definePlugin(() => {
   logInfo(`frontend loaded v${PLUGIN_VERSION}`);
-  initSettings();
+  const settingsReady=initSettings();
+  let disposed=false;
+  const stopLaunchPortal=startLaunchPortal();
+  const stopGameReturn=startGameSessionReturn(showThemedHomeAgain);
+  const stopRandomExit=onThemeGameExit(()=>{void chooseRandomTheme(()=>!disposed).catch(error=>reportError('random theme',error))});
+  void Promise.resolve(settingsReady).then(()=>{if(!disposed&&getSettings().randomThemeOnStartup)return chooseRandomTheme(()=>!disposed);return undefined;}).catch(error=>reportError('startup theme',error));
   const stopScreensavers = startThemeScreensavers();
   const stopDiagnostics = startExperimentalDiagnostics();
   const stopAchievementPopups = startAchievementPopups();
@@ -370,6 +379,7 @@ export default definePlugin(() => {
     ),
     icon: <HomeIcon />,
     onDismount() {
+      disposed=true;stopGameReturn();stopRandomExit();stopLaunchPortal();
       stopScreensavers();
       stopDiagnostics();
       stopAchievementPopups();

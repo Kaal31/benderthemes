@@ -1,3 +1,4 @@
+import {trackThemeGame,forgetThemeGame} from './gameSessionReturn';
 import { useEffect, useState } from "react";
 import { Navigation } from "@decky/ui";
 import type { Game } from "./library";
@@ -59,7 +60,7 @@ function startGame(game: Game, preview?: (g: Game)=>void) {
   const regs: any[]=[];
   const timers: ReturnType<typeof setTimeout>[]=[];
   teardown=()=>{dead=true;regs.forEach(r=>{try{r?.unregister?.();}catch{}});timers.forEach(clearTimeout);};
-  const update=(message:string,failed=false,waitingUI=false)=>{if(!dead) emit({game,message,failed,waitingUI});};
+  const update=(message:string,failed=false,waitingUI=false)=>{if(failed)forgetThemeGame(game.appid);if(!dead) emit({game,message,failed,waitingUI});};
   if (preview) {
     preview(game);
     if(game.shortcut){dismissLaunch();return;}
@@ -67,6 +68,7 @@ function startGame(game: Game, preview?: (g: Game)=>void) {
     return;
   }
   const client=(globalThis as any).SteamClient;
+  trackThemeGame(game.appid,game.gameid);
   if(game.shortcut){
     // Shell/browser launchers may create windows under another ID (or report 0).
     // Only Steam games wait for task/window events; shortcuts yield on acceptance.

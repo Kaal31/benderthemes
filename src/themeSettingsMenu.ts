@@ -1,3 +1,6 @@
+import {ARTWORK_MODES,artworkMode,setArtworkMode,openSquareArtwork} from './squareArtwork';
+import {loadLibrary} from './library';
+import {switchPresets} from './presets';
 import {toaster} from '@decky/api';
 import {cabinetWallpapers} from "./x360Cabinet";
 import {consoleArtworkItems} from './consoleArtwork';
@@ -516,6 +519,8 @@ export function customizeItems(): MenuItem[] {
         updateSettings((p) => ({ frameData: { ...p.frameData, [id]: { ...(p.frameData[id] as Record<string, unknown> ?? {}), hideCoverTitle: !visible } } }));
       })] : []),
       toggle("ProtonDB badges (this theme)", () => protonDbEnabled(S()), (v) => updateSettings((p) => ({ protondbThemes: { ...p.protondbThemes, [protonDbThemeKey(S())]: v } }))),
+      choice("Game artwork · this theme",ARTWORK_MODES,()=>artworkMode(),setArtworkMode),
+      group("Per-game square artwork · this theme",()=>loadLibrary('all','alpha',9999).games.map(game=>({label:game.name,action:()=>openSquareArtwork(game)}))),
       choice("Icon size", [75, 85, 100, 110].map((v) => ({ id: v, name: `${v}%${v === 100 ? " · default" : ""}` })), () => S().iconSizes?.[th] ?? 100, (v) => updateSettings((p) => ({ iconSizes: { ...p.iconSizes, [th]: v } }))),
       ...(USES.titles.includes(th) ? [choice("Game titles", TITLE_MODES, () => S().titles[th] ?? "show", (v) => updateSettings((p) => ({ titles: { ...p.titles, [th]: v } })))] : []),
       ...(th === "frame" && activeTheme(S())?.id === "gamecube" ? [choice("Game titles", [{ id: "show", name: "Show" }, { id: "hide", name: "Hide" }], () => gameCubeSaved(S()).showGameTitle === false ? "hide" : "show", (value) => updateSettings((p) => ({ frameData: { ...p.frameData, gamecube: { ...gameCubeSaved(p), showGameTitle: value !== "hide" } } })))] : []),
@@ -728,6 +733,15 @@ export function resetGroup(): MenuItem {
 /** Settings that are not the theme's own: behind "Global settings" in every theme's options. */
 export function globalSettingsItems(): MenuItem[] {
   return [
+    group("Game launch and theme rotation",()=>[
+      toggle("Return to themed Home after games",()=>S().returnToThemeAfterGame!==false,value=>updateSettings({returnToThemeAfterGame:value})),
+      toggle("Random theme at Big Picture startup",()=>S().randomThemeOnStartup===true,value=>updateSettings({randomThemeOnStartup:value})),
+      toggle("Random theme after leaving a game",()=>S().randomThemeAfterGame===true,value=>updateSettings({randomThemeAfterGame:value})),
+      group("Random theme pool",()=>[
+        {label:"All installed themes",checked:!S().randomThemePool?.length,action:()=>updateSettings({randomThemePool:[]})},
+        ...switchPresets().map(p=>({label:p.label,checked:S().randomThemePool?.includes(p.id)??false,action:()=>updateSettings(s=>({randomThemePool:s.randomThemePool?.includes(p.id)?s.randomThemePool.filter(id=>id!==p.id):[...(s.randomThemePool??[]),p.id]}))}))
+      ])
+    ]),
     group("Library · all themes", () => [
       choice("Sort", [{ id: "recent", name: "Recently played" }, { id: "alpha", name: "A–Z" }, { id: "playtime", name: "Most played" }], () => getRawSettings().sort, (v) => updateSettings({ sort: v as any })),
       choice("Ⓐ on a game", [{ id: "theme", name: "Like the console" }, { id: "launch", name: "Launch right away" }, { id: "details", name: "Steam's game page" }], () => getRawSettings().aAction, (v) => updateSettings({ aAction: v as any })),

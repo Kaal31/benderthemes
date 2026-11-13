@@ -1,3 +1,6 @@
+import {artworkMode,artworkThemeKey,useSquareArtwork} from '../squareArtwork';
+import {WiiuGameIcon} from './WiiuGameIcon';
+import {useSettings as useArtworkSettings} from '../settings';
 import {DownloadBar} from "../downloadUi";
 import {BackgroundMedia} from "../WallpaperMedia";
 import { GameHero } from "../common";
@@ -170,8 +173,10 @@ type VitaArt = "portrait" | "landscape" | "icon";
 /** Vita icon0 is a square illustration. Prefer client/custom icons when requested,
  * and keep the existing portrait/header fallback for games without one. */
 function VitaGameArt({game,art,style,position}:{game:Game;art:VitaArt;style:CSSProperties;position?:string}) {
+  const settings=useArtworkSettings(),mode=artworkMode(settings),custom=useSquareArtwork(artworkThemeKey(settings),game.appid);
   const icons=useMemo(()=>art==="icon"?gameIconUrls(game):[],[game,art]);
   const fallback=<GameArt flat g={game} kind={art==="icon"?"portrait":art} style={style} position={position}/>;
+  if(mode!=='auto'&&mode!=='covers'||custom&&mode==='auto')return <div style={{position:'relative',...style}}><WiiuGameIcon game={game}/></div>;
   return art==="icon"?<><Img key={[...icons,...game.art.portrait,...game.art.landscape].join("|")} className="dht-vita-game-icon" srcs={[...icons,...game.art.portrait,...game.art.landscape]} fit="cover" style={style} position="center" fallback={<NameArt name={game.name} style={style}/>}/><DownloadBar appid={game.appid}/></>:fallback;
 }
 
