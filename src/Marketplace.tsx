@@ -1,3 +1,4 @@
+import { AnimatedWallpapers } from "./AnimatedWallpapers";
 import { PluginSpotlight } from "./PluginSpotlight";
 import { ThemeFiles } from "./ThemeFiles";
 import { CommunityThemes } from "./CommunityThemes";
@@ -48,11 +49,12 @@ const withBuiltIns = (themes: ThemePack[], art: ThemeArt = {}): ThemePack[] => [
 /** A built-in theme whose optional extras are not downloaded yet. */
 const extrasMissing = (p: ThemePack) => !!p.builtIn && !p.installedVersion;
 
-type Tab = "discover" | "yours" | "community" | "files" | "spotlight";
-const TABS: { id: Tab; name: string }[] = [{ id: "discover", name: "Discover" }, { id: "yours", name: "Your themes" }, { id: "community", name: "Community" }, { id: "files", name: "Theme files" }, { id: "spotlight", name: "Plugin Spotlight" }];
+type Tab = "wallpapers" | "discover" | "yours" | "community" | "files" | "spotlight";
+const TABS: { id: Tab; name: string }[] = [{ id: "discover", name: "Discover" }, { id: "yours", name: "Your themes" }, { id: "community", name: "Community" }, { id: "files", name: "Theme files" }, { id: "wallpapers", name: "Animated backgrounds" }, { id: "spotlight", name: "Plugin Spotlight" }];
 const upToDate = (p: ThemePack) => p.community ? !p.community.updateAvailable : p.installedVersion === "legacy" || p.installedVersion === p.version;
 
 export function Marketplace({ requested, from, initialTab }: { requested?: ThemeId; from?: ThemeId; initialTab?: "community" }) {
+  const hubRoot=useRef<HTMLDivElement>(null);
   const communityUpdates = useCommunityUpdates();
   const [tab, setTab] = useState<Tab>(initialTab ?? "discover");
   const [updatesOpen, setUpdatesOpen] = useState(false);
@@ -187,6 +189,7 @@ export function Marketplace({ requested, from, initialTab }: { requested?: Theme
     return n < 0 ? cells.length : n;
   };
   const goTab = (t: Tab) => { setUpdatesOpen(false); setTab(t); setSelected(0); };
+  useEffect(()=>{hubRoot.current?.querySelector(`[role="tab"][aria-selected="true"]`)?.scrollIntoView({block:"nearest",inline:"nearest"});},[tab]);
   const actions = useRef({ cycleStyle, activate, busy, filtered, selected, tab, columns, updatesOpen });
   actions.current = { cycleStyle, activate, busy, filtered, selected, tab, columns, updatesOpen };
   useEffect(() => pushModalInput(p => {
@@ -202,7 +205,7 @@ export function Marketplace({ requested, from, initialTab }: { requested?: Theme
         next?.focus(); next?.scrollIntoView({block:"nearest"}); return true;
       }
     }
-    const routed = a.tab === "spotlight" || a.tab === "files" || a.tab === "community";
+    const routed = a.tab === "spotlight" || a.tab === "files" || a.tab === "community" || a.tab === "wallpapers";
     if (p.btn === "b" && routed && tabInput.current?.(p)) { playSound("back"); return true; } // close a confirmation / search box first
     if (p.btn === "b") { playSound("back"); closeMarketplace(); return true; }
     if (a.busy) return true;
@@ -223,15 +226,15 @@ export function Marketplace({ requested, from, initialTab }: { requested?: Theme
     return true;
   }), []);
   const installed = packs.filter(p => p.installedVersion && p.theme).length;
-  const count: Record<Tab, number | undefined> = { discover: packs.filter(p => p.theme && !p.community).length, yours: installed, community: communityUpdates.updateCount || undefined, files: undefined, spotlight: undefined };
+  const count: Record<Tab, number | undefined> = { discover: packs.filter(p => p.theme && !p.community).length, yours: installed, community: communityUpdates.updateCount || undefined, files: undefined, wallpapers: undefined, spotlight: undefined };
   const styleName = styleOptions.find(o => o.id === styleChoice)?.name ?? "Auto";
-  return <div className="dht-market dht-hub" data-hub-theme={hubThemeKey(styled?.theme, styled?.x360)} data-hub-styled={styled ? "true" : "false"} data-hub-source={source} data-hub-tab={tab} data-motion={s.animations} role="dialog" aria-modal="true" aria-label="Hub">
+  return <div ref={hubRoot} className="dht-market dht-hub" data-hub-theme={hubThemeKey(styled?.theme, styled?.x360)} data-hub-styled={styled ? "true" : "false"} data-hub-source={source} data-hub-tab={tab} data-motion={s.animations} role="dialog" aria-modal="true" aria-label="Hub">
     <style>{hubVarsCss()}{HUB_DECO_CSS}{MARKET_CSS}</style><div className="dht-hub-deco" data-deco={styled ? hs.deco : "none"} aria-hidden="true"/>
     <header className="dht-hub-header">
       <div className="dht-hub-brand"><span className="market-eyebrow">DECK HOME THEMES</span><h1><HubLogo />Hub</h1><p className="dht-hub-tagline">{styled ? hs.tagline : "Pick a theme and make it yours."}</p></div>
       <nav className="market-toolbar dht-hub-tabs" aria-label="Hub sections">
         <kbd className="dht-hub-glyph" aria-hidden="true">LB</kbd>
-        <div role="tablist">{TABS.map(t => <button key={t.id} role="tab" aria-selected={tab === t.id} data-active={tab === t.id} onClick={() => goTab(t.id)}>{t.name}{count[t.id] !== undefined && <small>{count[t.id]}</small>}</button>)}</div>
+        <div role="tablist">{TABS.map(t => <button key={t.id} role="tab" aria-selected={tab === t.id} data-active={tab === t.id} onClick={() => goTab(t.id)} onFocus={e=>e.currentTarget.scrollIntoView({block:"nearest",inline:"nearest"})}>{t.name}{count[t.id] !== undefined && <small>{count[t.id]}</small>}</button>)}</div>
         <kbd className="dht-hub-glyph" aria-hidden="true">RB</kbd>
       </nav>
       <div className="dht-hub-headright">
@@ -242,7 +245,7 @@ export function Marketplace({ requested, from, initialTab }: { requested?: Theme
       </div>
     </header>
     {error && (tab === "discover" || tab === "yours") && <div className="market-notice">{error} · Showing saved catalog. Installed themes still work offline.</div>}
-    {updatesOpen ? <section ref={updatesRoot} className="dht-hub-updates" aria-label="Hub updates"><h2>Updates</h2><Updates onManageThemes={() => goTab("yours")}/></section> : tab === "community" ? <CommunityThemes inputRef={tabInput}/> : tab === "spotlight" ? <PluginSpotlight inputRef={tabInput}/> : tab === "files" ? <ThemeFiles inputRef={tabInput}/> : <main className="dht-hub-body"><div className="market-grid dht-hub-grid" ref={listRef}>
+    {updatesOpen ? <section ref={updatesRoot} className="dht-hub-updates" aria-label="Hub updates"><h2>Updates</h2><Updates onManageThemes={() => goTab("yours")}/></section> : tab === "community" ? <CommunityThemes inputRef={tabInput}/> : tab === "spotlight" ? <PluginSpotlight inputRef={tabInput}/> : tab === "files" ? <ThemeFiles inputRef={tabInput}/> : tab === "wallpapers" ? <AnimatedWallpapers inputRef={tabInput}/> : <main className="dht-hub-body"><div className="market-grid dht-hub-grid" ref={listRef}>
       {!filtered.length && <p className="dht-hub-empty">{loading ? "Loading your next home…" : installedOnly ? "Your collection starts here. Browse Discover to download a theme." : "No themes are available yet. Try Refresh."}</p>}
       {filtered.map((pack, i) => {
         const state = pack.community?.updateAvailable ? "Update" : isActive(pack) ? "Active" : pack.installedVersion ? (upToDate(pack) || pack.installedVersion === "built-in" ? "Installed" : "Update") : extrasMissing(pack) ? "Built in" : "";
@@ -286,7 +289,7 @@ const MARKET_CSS = `.dht-hub-updates{flex:1;min-height:0;overflow:auto;padding:1
 .dht-hub-brand{display:grid;grid-template-columns:auto;min-width:0}.market-eyebrow{font-size:9px;letter-spacing:2px;color:var(--dht-hub-sub);font-weight:700}
 .dht-market h1{font-size:28px;line-height:1;letter-spacing:var(--dht-hub-track);margin:4px 0 2px;display:flex;align-items:center;gap:.3em}
 .dht-hub-logo{width:1.1em;height:1.1em;flex:none;filter:drop-shadow(0 1px 2px #0003)}.dht-hub-tagline{margin:0;color:var(--dht-hub-sub);font-size:11px;text-transform:none;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;max-width:220px}
-.market-toolbar{display:flex;align-items:center;justify-content:center;gap:8px;min-width:0}.market-toolbar>div{display:flex;gap:2px;padding:4px;border-radius:calc(var(--dht-hub-pill) + 4px);background:color-mix(in srgb,var(--dht-hub-panel) 80%,transparent);min-width:0;overflow:hidden}
+.market-toolbar{display:flex;align-items:center;justify-content:center;gap:8px;min-width:0}.market-toolbar>div{display:flex;gap:2px;padding:4px;border-radius:calc(var(--dht-hub-pill) + 4px);background:color-mix(in srgb,var(--dht-hub-panel) 80%,transparent);min-width:0;overflow-x:auto;scrollbar-width:none}
 .market-toolbar button{background:transparent;padding:8px 14px;color:var(--dht-hub-sub);border-radius:var(--dht-hub-pill);white-space:nowrap;font-size:14px;font-weight:600}.market-toolbar button[data-active=true]{background:var(--dht-hub-tab);color:var(--dht-hub-tab-text)}.market-toolbar small{margin-left:7px;opacity:.65;font-size:11px}
 .dht-hub-glyph{opacity:.75}
 .dht-hub-headright{display:flex;align-items:center;gap:8px;justify-content:flex-end}

@@ -65,6 +65,11 @@ export const LAYOUT_SLOTS: Record<ThemeId, LayoutCaps> = {
   ios6:  caps(true, true, true, ["--dht-accent"], { gameArt: false, tint: false, brightness: false }),
   frame: caps(true, true, true, ["--dht-accent"], { gameArt: false, tint: false, brightness: false }),
 };
+// These layouts already render the shared wallpaper through BackgroundMedia/WallpaperVideo.
+for (const id of ["wii","wiiu","switch","n3ds","vita","ps3","psp","ps4","ps5","xbox","x360","aero","aero2","dial","iisu"] as ThemeId[]) {
+  LAYOUT_SLOTS[id].videoBackground = true;
+}
+
 export const slotOffered = (layout: ThemeId, slot: AssetSlot): boolean => {
   const c = LAYOUT_SLOTS[layout];
   if (!c) return false;

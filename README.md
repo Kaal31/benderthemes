@@ -36,6 +36,7 @@ Wii, Wii U, Switch, 3DS, PS1 and iiSU style come with the plugin. The other them
 
 - **Hub:** browse every theme with animated previews, download, activate or delete it. The Hub can wear the look of the theme you came from (Auto), the theme focused in Discover (Preview), a fixed theme, or stay Neutral.
 - **Theme files:** search and download real console theme files (PS3 `.p3t`, PSP `.ptf`/`.ctf`, Vita, Switch `.nxtheme`, Wii, Xbox and more) from public sources, or add your own.
+- **Animated backgrounds:** one browser for local GIF/video imports, Wallpaper Engine video projects, Wallspace wallpapers and supported Rainmeter layouts. Preview, apply and remove downloaded media; inspect Rainmeter compatibility and optionally map its controls to Steam actions. See [supported formats and limitations](docs/ANIMATED-WALLPAPERS.md).
 - **Plugin Spotlight:** a hand-picked list of Decky plugins plus a search over every public Decky plugin, with installs handed to Decky for confirmation.
 - **Presets and switching:** every look, imported theme file and saved preset is a preset. Hold L1 and use the D-pad to switch console or preset; L2 / R2 step through all presets; Quick Access lists the downloaded looks.
 - **Themed extras:** a store, library and search pages styled like each console, themed loading screens, sound packs and background music, Steam keyboard skins, and update notices in each console's own style.

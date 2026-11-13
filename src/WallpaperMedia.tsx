@@ -2,7 +2,7 @@ import { CSSProperties, useEffect, useRef, useState } from "react";
 import { backgroundMediaKind, BackgroundMediaKind } from "./backgroundMedia";
 
 /** Decorative video stays muted and pauses off-screen; GIFs remain animated images. */
-export function BackgroundMedia({src,poster,paused=false,className,style,onError,mediaKind,...attributes}:{"data-dht-from-skin"?:string;src:string;poster?:string;mediaKind?:BackgroundMediaKind;paused?:boolean;className?:string;style?:CSSProperties;onError?:()=>void}) {
+export function BackgroundMedia({src,poster,paused=false,className,style,onError,onReady,mediaKind,...attributes}:{"data-dht-from-skin"?:string;src:string;poster?:string;mediaKind?:BackgroundMediaKind;paused?:boolean;className?:string;style?:CSSProperties;onError?:()=>void;onReady?:(element:HTMLVideoElement|HTMLImageElement)=>void}) {
   const video=useRef<HTMLVideoElement>(null);
   const [loadedSource,setLoadedSource]=useState("");
   const kind=mediaKind??backgroundMediaKind(src);
@@ -21,8 +21,8 @@ export function BackgroundMedia({src,poster,paused=false,className,style,onError
     return()=>{observer.disconnect();doc.removeEventListener("visibilitychange",sync);el.removeEventListener("loadeddata",sync);el.removeEventListener("canplay",sync);el.pause();};
   },[kind,src,paused]);
   const surface:CSSProperties={position:"absolute",inset:0,width:"100%",height:"100%",objectFit:"cover",pointerEvents:"none",...style};
-  if(kind!=="video")return <img {...attributes} src={src} className={className} alt="" aria-hidden draggable={false} style={surface} onError={onError}/>;
-  return <><video {...attributes} autoPlay={!paused} ref={video} src={src} poster={poster} className={className} muted loop playsInline preload="auto" aria-hidden style={surface} onLoadedData={()=>setLoadedSource(src)} onError={onError}/>{poster&&loadedSource!==src&&<img src={poster} alt="" aria-hidden style={surface}/>}</>;
+  if(kind!=="video")return <img {...attributes} crossOrigin={onReady?"anonymous":undefined} src={src} className={className} alt="" aria-hidden draggable={false} style={surface} onLoad={e=>onReady?.(e.currentTarget)} onError={onError}/>;
+  return <><video {...attributes} crossOrigin={onReady?"anonymous":undefined} autoPlay={!paused} ref={video} src={src} poster={poster} className={className} muted loop playsInline preload="auto" aria-hidden style={surface} onLoadedData={e=>{setLoadedSource(src);onReady?.(e.currentTarget);}} onError={onError}/>{poster&&loadedSource!==src&&<img src={poster} alt="" aria-hidden style={surface}/>}</>;
 }
 
 export function WallpaperVideo({src,style}:{src:string|null|undefined;style?:CSSProperties}){return src&&backgroundMediaKind(src)==="video"?<BackgroundMedia src={src} style={style}/>:null;}

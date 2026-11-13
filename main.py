@@ -45,7 +45,7 @@ except Exception:  # pragma: no cover
 import decky
 
 IMAGE_EXT = (".png", ".jpg", ".jpeg", ".webp", ".gif")
-WALLPAPER_VIDEO_EXT = (".mp4", ".webm")
+WALLPAPER_VIDEO_EXT = (".mp4", ".webm", ".m4v")
 
 
 def _settings_path() -> str:
@@ -118,8 +118,10 @@ def _steamui_dir() -> str:
 
 def _mime(name: str) -> str:
     n = name.lower()
-    if n.endswith(".mp4"):
+    if n.endswith((".mp4", ".m4v")):
         return "video/mp4"
+    if n.endswith(".webm"):
+        return "video/webm"
     if n.endswith(".png"):
         return "image/png"
     if n.endswith(".webp"):
@@ -1855,6 +1857,83 @@ class Plugin:
                 decky.logger.warning(f"bad pack {entry}: {e}")
         return out
 
+    # Animated wallpapers share the persistent wallpapers folder and data-theme registry.
+    async def animated_wallpapers_list(self):
+        import animated_wallpapers as aw
+        items = await asyncio.to_thread(aw.list_items, _data_dir())
+        serving = await _ensure_server()
+        for item in items:
+            poster = item.pop('_posterPath', None)
+            if poster and serving:
+                ident = 'animated-poster-' + item['id'] + '.png'
+                _vi.files[ident] = poster
+                item['poster'] = f"http://127.0.0.1:{_vi.port}/{_vi.token}/f/{ident}"
+            path = item.pop('_mediaPath', None)
+            if path and serving:
+                ident = 'animated-' + item['id'] + os.path.splitext(path)[1]
+                _vi.files[ident] = path
+                item['url'] = f"http://127.0.0.1:{_vi.port}/{_vi.token}/f/{ident}"
+        return {'items': items}
+
+    async def animated_wallpapers_poster(self, ident, data_url):
+        import animated_wallpapers as aw
+        try: return await asyncio.to_thread(aw.save_poster, _data_dir(), ident, data_url)
+        except Exception as e: return {'ok': False, 'error': str(e)[:200]}
+
+    async def animated_wallpapers_inspect(self, path):
+        import animated_wallpapers as aw
+        try: return {'ok': True, **await asyncio.to_thread(aw.inspect_source, path)}
+        except Exception as e: return {'ok': False, 'error': str(e)[:300]}
+
+    async def animated_wallpapers_import(self, path, configs=None, bindings=None, source='local'):
+        import animated_wallpapers as aw
+        try:
+            item = await asyncio.to_thread(aw.import_source, _data_dir(), path, configs, bindings, source)
+            import data_themes
+            data_themes._cache.clear()
+            return {'ok': True, 'item': item}
+        except Exception as e: return {'ok': False, 'error': str(e)[:300]}
+
+    async def animated_wallpapers_remove(self, ident):
+        import animated_wallpapers as aw
+        try:
+            result = await asyncio.to_thread(aw.remove, _data_dir(), ident)
+            import data_themes
+            data_themes._cache.clear()
+            return result
+        except Exception as e: return {'ok': False, 'error': str(e)[:300]}
+
+    async def animated_wallpapers_browse(self, query='', page=1, source='all'):
+        import animated_wallpapers as aw
+        return await asyncio.to_thread(aw.browse, _data_dir(), query, page, source)
+
+    async def animated_wallpapers_preview(self, ident):
+        import animated_wallpapers as aw
+        try: return await asyncio.to_thread(aw.wallspace_preview, ident)
+        except Exception: return {'error': 'Preview unavailable. Open the source page or try again.'}
+
+    async def animated_wallpapers_download(self, ident, username='', qr=False):
+        import wallpaper_workshop
+        try: return wallpaper_workshop.start(_data_dir(), ident, username, qr)
+        except Exception as e: return {'ok': False, 'error': str(e)[:250]}
+
+    async def animated_wallpapers_download_wallspace(self, ident):
+        import wallpaper_workshop
+        try: return wallpaper_workshop.start_wallspace(_data_dir(), ident)
+        except Exception as e: return {'ok': False, 'error': str(e)[:250]}
+
+    async def animated_wallpapers_progress(self):
+        import wallpaper_workshop
+        return wallpaper_workshop.status()
+
+    async def animated_wallpapers_cancel(self):
+        import wallpaper_workshop
+        return wallpaper_workshop.cancel()
+
+    async def animated_wallpapers_workshop(self):
+        import animated_wallpapers as aw
+        return {'items': await asyncio.to_thread(aw.discover_workshop)}
+
     # ───── wallpapers ─────
     async def list_wallpapers(self):
         d = _wall_dir()
@@ -2720,6 +2799,8 @@ class Plugin:
             decky.logger.warning(f"could not link sounds: {e}")
 
     async def _unload(self):
+        import wallpaper_workshop
+        wallpaper_workshop.cancel()
         task = getattr(self, "_community_updates", None)
         if task is not None:
             task.cancel()

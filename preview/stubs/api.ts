@@ -223,10 +223,25 @@ async function avatarPreviewCall(name:string,args:any[]) {
 }
 export const callable =
   (name: string) =>
-  async (...args: any[]) =>
-    name.startsWith('x360_engine_')
+  async (...args: any[]) => {
+    const animatedBridge = new URLSearchParams(location.search).get('animatedBridge');
+    if((name.startsWith('animated_wallpapers_')||name==='list_data_themes')&&animatedBridge&&/^http:\/\/127\.0\.0\.1:\d+$/.test(animatedBridge)){
+      const response=await fetch(`${animatedBridge}/${name}`,{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify(args)});
+      const result=await response.json();if(!response.ok)throw Error(result.error||'Wallpaper request failed');return result;
+    }
+    if(name.startsWith('animated_wallpapers_')){
+      const fixture=(window as any).__animatedWallpapers;
+      if(fixture?.[name])return fixture[name](...args);
+      if(name==='animated_wallpapers_list')return {items:[]};
+      if(name==='animated_wallpapers_browse')return {items:[],hasMore:false,errors:[]};
+      if(name==='animated_wallpapers_progress')return {};
+      if(name==='animated_wallpapers_workshop')return {items:[]};
+      return {ok:false,error:'Choose a fixture or connect the local wallpaper preview bridge.'};
+    }
+    return name.startsWith('x360_engine_')
       ? avatarPreviewCall(name,args)
       : backend[name]?.(...args);
+  };
 export const definePlugin = (f: any) => f;
 export const routerHook = { addRoute() {}, removeRoute() {}, addPatch() { return {}; }, removePatch() {} };
 export const fetchNoCors = (u: string, init?: any) => fetch(u, init);
