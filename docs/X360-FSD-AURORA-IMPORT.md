@@ -328,3 +328,46 @@ Validated: TypeScript check; browser clicks System → Gaming → System, page-b
 Rechecked the packaged Aurora DDS reference against fresh rendered screenshots. The renderer had forced every selected TabCount page to opacity 1, bypassing native page timing. For 5To4, the package keeps Tab4 transparent until frame 99 and reaches opacity 1 at frame 102. Selected pages now retain authored opacity, stay mounted while transparent, and respect reduced motion. This also starts loading incoming cover content before it becomes visible.
 
 Inspected fresh intermediate/settled screenshots (`authored-fade-mid.png`, `authored-fade-end.png`). Dedicated browser test verifies transparent incoming page, final opacity, and immediate destination with animations disabled. The test constrains RAF timestamp advancement to inspect intermediate frames under software rendering. Active review build: `preview/blade2025-authored-fades.html`. The DDS reference establishes backdrop geometry; it does not establish exact 2025 gameplay motion. No imported fixture or preview committed.
+
+### BladeDash footer and scroll audit (2026-11-13)
+
+Checked footer controls against the supplied Aurora_Main XUI data. Gaming intentionally uses two rows: Y at (264.68,602.56), A at (1020.34,642.30), with visible unused X/B artwork at their authored positions. Geometry was retained. `unusedBtn_*` nodes no longer register as actionable/focusable controls or produce unsupported-action notifications. Y retains its actual Details action.
+
+Ordinary left/right selection no longer invokes the CFL TiltLeft/TiltRight event poses for 260 ms. Those poses replace the full camera and case arrangement, causing the observed layout lurch; scrolling now interpolates the authored Normal positions, rotations and scales. Tilt poses remain available through the explicit cover-inspection event rather than being discarded from import data.
+
+Fresh rendered captures: `work/blade2025/footer-scroll-archive-*.png`. Active review build: `preview/blade2025-footer-scroll.html`. TypeScript and runtime regression checks pass. Footer/scroll browser checks verify native Y position, details panel, Normal pose during selection, and both selection directions for each supplied layout. Native timing parity with a recording of this specific BladeDash revision remains unproven; footer geometry is verified against its own package, not a different stock Blades dashboard.
+
+### System footer alignment correction (2026-11-13)
+
+User screenshot showed real misalignment despite earlier source-coordinate checks. Source coordinates themselves staggered Y/X and B/A. System footer now aligns Y with X and B with A; standalone captions use white, vertically centered text and consistent icon spacing. Caption suppression now also checks horizontal proximity, so the distant Developer Information label cannot suppress Y's Details caption. Legend visuals retain their native caption width when the icon control is only 32px wide. Fixed Developer Information spelling.
+
+Browser bounding-box assertions verify each column agrees within 1px. Fresh `footer-aligned-system.png` and `footer-aligned-control.png` visually inspected; Control Panel retained its layout. Active build: `preview/blade2025-footer-aligned.html`. No commit made.
+Further System footer refinement: all four labels now render at the same effective 18px size with 32px centered rows. A/X row coordinates match exactly; right-hand caption edges and icon gaps match. Fresh screenshot inspected; browser bounds confirm equal columns and row coordinates. Active preview: blade2025-footer-type.html.
+Footer contour correction: user clarified that the defect was the clipped border, not typography. Live geometry inspection identified the straight Panel_shadow1 strip at y596, spanning x296–1160, crossing the native curved glass_bottom layer. Tabbed BladeDash no longer renders content_panel Panel_shadow/Panel_shadow1 duplicates; the authored blade glass contours remain. Fresh System and Control Panel screenshots inspected; browser confirms duplicate layer absent and button positions retained. Active preview: blade2025-footer-contour.html.
+
+### Five-page footer and containment audit (2026-11-13)
+
+Audited fresh System, Control Panel, Gaming, Security and Personalization screenshots. Footer hints now align from rendered glass bounds rather than assuming imported local coordinates are screen coordinates. This accommodates each blade width and the nested file-manager transforms. X/Y share the left inset; A/B share the right inset; captions remain beside their corresponding icons. Unused hints retain no fake Details captions. Browser assertions verify paired column positions within 1px across all five pages. Captures: `work/blade2025/audit-tab-1.png` through `audit-tab-5.png`.
+
+Gaming profile background `profileBoarder` was incorrectly aspect-contained in its authored rectangle, while stars/picture/text used the full card layout. It now fills the declared rectangle, placing those elements inside the visible frame. Username retains bounded text overflow. FileManagerList viewport now respects the content frame's 16px right inset. The extraneous GameDiscOverlay rectangle was removed while the original btn_tray circle/bar artwork remains. Native background shadow duplicates stay suppressed.
+
+Active review build: `preview/blade2025-layout-audit.html`. All-five-page footer assertions and fresh visual inspection passed. These corrections target the supplied BladeDash Aurora revision; stock 2005 footage is a style reference, not evidence of identical 2025 panel content. No commit made.
+
+### Gaming tray alignment and game activation (2026-11-13)
+
+The tray still began roughly 135px to the right of the selected cover. DiscPanelOverlay now begins at the cover panel's left edge and spans the content width. Its reusable visual resizes the long bars and right cap while retaining the circle's size, rather than stretching the full artwork. Fresh `tray-contour-gaming.png` inspected.
+
+3D ray clicks previously only set coverflow selection. Clicking the already selected cover now calls the shared game activation API with game preview as the theme default; clicking another cover selects it first. Coverflow A uses the same preview default. Explicit Launch remains available, and shared aAction preferences still apply. Browser test clicked the selected 3D case and verified the preview's Play and Achievements actions (`cover-click-preview.png`). Steam Deck uses the same openGamePage destination route; actual Steam launching is not tested in the Windows preview.
+
+Active review build: `preview/blade2025-tray-preview.html`. No commit made.
+
+### Same-area tray screenshot verification (2026-11-13)
+
+User correctly reported that shifting/resizing the old tray had not fixed its visible seams. The previous segmented visual still left straight cuts at the circle/bar and bar/end-cap joins. For this tabbed BladeDash tray, replaced the fragmented mask composition with an independently drawn single SVG contour: circular left end, continuous rounded bar, soft recessed shading, and no square overlay. Other imported skins retain native visuals. Removed the now-unused tray stretch workaround.
+
+Verified the exact Gaming area with fresh full and close-up captures: `work/blade2025/tray-continuous-full.png` and `tray-continuous-detail.png` (native screenshot clip x180,y500,w930,h100 at 1280x720). Inspected the crop after rendering; hard cutoff/gap seams from the previous capture are absent. Selected-cover click still reaches preview Play and Achievements actions. Active review: `preview/blade2025-continuous-tray.html`. This is a visual replacement for the problematic tray composition, not a claim that every native shader has been reproduced. No commit made.
+Final continuation check: all three supplied CFL layouts captured at the same Gaming tray crop (x180,y500,930x100) and visually inspected. Continuous joins remain intact across A/B/C. Each selected-cover click opened the preview with Play/Achievements; Back returned to Gaming and restored the tray. Test: work/verify-blade-tray-all-layouts.mjs. Captures: tray-detail-archive-*.png. No additional implementation changes in this verification pass.
+
+### Pre-commit inset border cleanup (2026-11-13)
+
+User identified the same fragmented inset border on Assets and Personalization. In tabbed BladeDash, grc_inset now uses a single recessed rounded contour at the actual field dimensions, removing disconnected strip/corner joins on Update Assets, Marketplace Locale and Personalization columns. The unexplained circle was an empty XuiListItem embedded in List_Radio's reusable visual; empty template rows are no longer painted as populated options. No locale choices are fabricated. Removed blank selectBtn overlay art and the orphan grc_whiteCorner caps that appeared as translucent squares over Assets/Filter & Sort. Fresh five-page screenshots captured and Assets/Personalization inspected before commit. Imported packs, screenshots and preview fixtures remain local.
