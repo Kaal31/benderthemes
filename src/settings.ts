@@ -305,6 +305,7 @@ export interface Settings {
   wallpaperDim: number; // 0–80 %
   maxGames: number; // cap for very large libraries
   animations: boolean; // background animations (waves, particles, towers)
+  guidedSync: "off" | "preset" | "appearance";
   badges: { protondb: boolean; deck: boolean }; // compatibility badges on game details
   protondbThemes: Record<string, boolean | undefined>; // per-look Options menu; requires detected ProtonDB plugin
   coverStyles: Partial<Record<ThemeId,"flat"|"case3d">>;
@@ -480,6 +481,7 @@ export const DEFAULTS: Settings = {
   wallpaperDim: 25,
   maxGames: 400,
   animations: true,
+  guidedSync: "appearance",
   badges: { protondb: false, deck: false },
   protondbThemes: {},
   coverStyles: {},
@@ -517,6 +519,7 @@ export function onSettingsChange(l: () => void): () => void {
 export const cleanSettings = (saved: any): Settings => merge(saved);
 function merge(saved: any): Settings {
   const s: any = { ...DEFAULTS, ...(saved && typeof saved === "object" ? saved : {}) };
+  if (!["off", "preset", "appearance"].includes(s.guidedSync)) s.guidedSync = "appearance";
   if (s.theme === "frame" && s.activeTheme === "ios6") s.theme = "ios6";
   if(s.theme === "frame" && s.activeTheme === "santa-express") s.theme = "santa-express";
   if(s.theme === "frame" && s.activeTheme === "old-big-picture") s.theme = "old-big-picture";

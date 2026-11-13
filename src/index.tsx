@@ -1,5 +1,6 @@
 import { startThemeScreensavers, useScreensaverStatus } from "./themeScreensavers";
 import { startAchievementPopups } from "./achievementPopups";
+import { startGuidedSync } from "./guidedSync";
 import {stopSilverPad} from "./themes/silverPad";
 import { ButtonItem, DropdownItem, Navigation, PanelSection, PanelSectionRow, SliderField, staticClasses, TextField, ToggleField } from "@decky/ui";
 import { definePlugin, openFilePicker, routerHook } from "@decky/api";
@@ -120,6 +121,9 @@ function Panel() {
         <AddThemeRow />
         <PanelSectionRow>
           <ToggleField label="Themed home screen" description="Replace Steam's home with the console theme" checked={s.enabled} onChange={(v) => updateSettings({ enabled: v })} />
+        </PanelSectionRow>
+        <PanelSectionRow>
+          <ToggleField label="Sync Guided style" description="Requires Guided. Match its console preset, animations and supported appearance to the active theme. Off leaves the last Guided style in place." checked={s.guidedSync !== "off"} onChange={(enabled) => updateSettings({ guidedSync: enabled ? "appearance" : "off" })} />
         </PanelSectionRow>
         <PanelSectionRow>
           <ButtonItem
@@ -323,6 +327,7 @@ export default definePlugin(() => {
   const stopScreensavers = startThemeScreensavers();
   const stopDiagnostics = startExperimentalDiagnostics();
   const stopAchievementPopups = startAchievementPopups();
+  const stopGuidedSync = startGuidedSync();
   refreshPacks();
   refreshPresets();
   let stopKeyboardSkins: (() => void) | null = null;
@@ -368,6 +373,7 @@ export default definePlugin(() => {
       stopScreensavers();
       stopDiagnostics();
       stopAchievementPopups();
+      stopGuidedSync();
       stopSilverPad();
       routerHook.removeRoute(ROUTE);
       if (patch) routerHook.removePatch(HOME_ROUTE, patch);
