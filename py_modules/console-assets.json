@@ -73,6 +73,31 @@
       "sourceVersion": "Wii v514 / local Wii U Menu extraction",
       "note": "Native body and head/hair geometry. Independent motion, facial features and materials. No complete FFL face renderer.",
       "url": "https://gitflic.ru/project/spon4ik67/themehubconsoleassets/release/ccf560b7-82bf-4e89-bf1a-af86764c41ad/4cdabf5f-1bca-45d6-b2a1-699e7e9151c5/download"
+    },
+    {
+      "id": "wiiu-stock-menu",
+      "file": "required resources.zip",
+      "files": 30,
+      "unpackedBytes": 82543661,
+      "bytes": 65705681,
+      "sha256": "8c35d91b0a13644102537eac4011f00e7be97b8ef8f60164d0c1ffecc8589a5b",
+      "sourceVersion": "Wii U Menu 5.5.5 EU",
+      "stockChecksums": {
+        "Men.pack": "b9a4343a",
+        "Men2.pack": "946cd8a2",
+        "cafe_barista_men.bfsar": "c9c16521"
+      },
+      "note": "Complete supplied EU Menu content resources and checksum inventory. Original US/JP bases are not included; text/layout patches still require importer support.",
+      "url": "https://gitflic.ru/project/spon4ik67/themehubconsoleassets/release/aadd7bf0-6a5f-4e88-9118-eb79b1161de6/5d303c88-bd22-4864-8814-35c67d0acd7f/download"
+    },
+    {
+      "id": "wiiu-native-ui",
+      "file": "wiiu-native-ui-v1.zip",
+      "files": 17,
+      "unpackedBytes": 580159,
+      "bytes": 572174,
+      "sha256": "d4e13914ea888e4c573993e446128d51805a35299c86e15b0925146c982a12b4",
+      "url": "https://gitflic.ru/project/spon4ik67/themehubconsoleassets/release/300dbc00-bb81-4c62-a7f9-64d64d78c583/7205e8f9-0455-424b-864f-10258c431cb8/download"
     }
   ]
 }

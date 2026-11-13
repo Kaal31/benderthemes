@@ -124,6 +124,7 @@ export const DOCK_CSS=`
 .nt-wiiu .nt-selected-name{top:calc(var(--wy) + 716px)}
 /* the theme file's swap body (BtnSwap_00, 226 px, the screen corner cut off) where the drawn circle is */
 .nt-swap-body{display:none}
-.nt-home.nt-wiiu[data-plaza=false][data-theme-swap=true] .nt-screen-swap{background:none;border-color:transparent;box-shadow:none}
-.nt-wiiu[data-plaza=false] .nt-swap-body{display:block;position:absolute;left:-6px;top:-6px;width:226px;height:226px;max-width:none;pointer-events:none;z-index:-1}
+.nt-home.nt-wiiu[data-plaza=false][data-theme-swap=true] .nt-screen-swap{background:none;border:0;box-shadow:none;padding:0}
+.nt-home.nt-wiiu[data-plaza=false][data-theme-swap=true] .nt-screen-swap .nt-swap-icon{position:absolute!important;left:50%;top:50%;width:63px!important;transform:translate(-50%,-50%)}
+.nt-wiiu[data-plaza=false] .nt-swap-body{display:block;position:absolute;left:0;top:0;width:100%;height:100%;object-fit:contain;max-width:none;pointer-events:none;z-index:-1}
 `;

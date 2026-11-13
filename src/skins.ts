@@ -444,7 +444,7 @@ let compressListener: ((folder: string) => void) | null = null;
 /** steam.ts compresses decoded theme music (WAV → Ogg Opus) when the UI supports it. */
 export const onMusicCompress = (cb: (folder: string) => void) => { compressListener = cb; };
 export const skinSoundPack = (theme: string, kind: "sfx" | "music" = "sfx"): string => skinPacks[kind === "sfx" ? theme : `${theme}:music`] ?? "";
-function useSkinPack(theme: "ps4" | "ps3" | "psp" | "vita", skin: { soundPack?: string } | null, kind: "sfx" | "music" = "sfx") {
+export function useSkinPack(theme: "ps4" | "ps3" | "psp" | "vita" | "wiiu", skin: { soundPack?: string } | null, kind: "sfx" | "music" = "sfx") {
   const key = kind === "sfx" ? theme : `${theme}:music`;
   const folder = skin?.soundPack ?? "";
   useEffect(() => {

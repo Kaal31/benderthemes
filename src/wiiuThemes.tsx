@@ -5,6 +5,8 @@ import { callable,toaster,openFilePicker } from "@decky/api";
 import { useEffect, useRef, useState } from "react";
 import { pushModalInput } from "./input";
 import { updateSettings, useSettings } from "./settings";
+import {useSkinPack} from "./skins";
+import {themeFx} from "./settings";
 import { onResourcesChanged } from "./marketplaceState";
 
 export interface WiiuSkin {
@@ -18,6 +20,10 @@ export interface WiiuSkin {
   previewPlaza?: string;
   previewCollage?: string;
   splash?: string; // the theme's boot splash picture, when it has one
+  soundPack?: string;
+  musicPack?: string;
+  audioErrors?: string[];
+  audioInventory?: {name:string;mapping:string|null}[];
   changed: string[];
   errors?: string[]; // parts that could not be read (the rest still shows)
   ignored?: string[]; // patches we do not use (sound, text)
@@ -53,7 +59,8 @@ onResourcesChanged(changed);
 
 /** The selected .utheme for the Wii U home (null when none, or while it loads). */
 export function useWiiuSkin(): WiiuSkin | null {
-  const name = useSettings().wiiuTheme ?? "";
+  const settings=useSettings();
+  const name = settings.wiiuTheme ?? "";
   const [skin, setSkin] = useState<WiiuSkin | null>(name ? cache.get(name) ?? null : null);
   const [rev, setRev] = useState(0);
   useEffect(() => { const fn = () => setRev((r) => r + 1); listeners.add(fn); return () => { listeners.delete(fn); }; }, []);
@@ -66,6 +73,10 @@ export function useWiiuSkin(): WiiuSkin | null {
     getWiiu(name).then((r) => { if (gen === generation) cache.set(name, r ?? null); if (alive && gen === generation) setSkin(r ?? null); }).catch(() => alive && setSkin(null));
     return () => { alive = false; };
   }, [name, rev]);
+  const fx=themeFx(settings,wiiuFxKey(name));
+  const active=settings.theme==="wiiu"?skin:null;
+  useSkinPack("wiiu",fx.sounds?active:null);
+  useSkinPack("wiiu",active?.musicPack?{soundPack:active.musicPack}:null,"music");
   return skin;
 }
 
@@ -86,6 +97,7 @@ export function wiiuProblem(skin: WiiuSkin | null): string {
   if (skin.needsStock) return "This theme needs your Wii U menu files. Put a Wii U menu dump (zip or folder) in Downloads.";
   if (skin.stockMismatch?.length) return `This theme was made for different Wii U menu files${skin.stockVersion ? ` than yours (${skin.stockVersion})` : ""}.`;
   if (skin.errors?.length && !Object.keys(skin.art).length) return "Parts of this theme could not be read.";
+  if(skin.audioErrors?.length)return "Theme audio: "+skin.audioErrors[0];
   return "";
 }
 

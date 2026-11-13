@@ -267,14 +267,15 @@ function ControllerTest() {
 }
 
 function App() {
+  const edgeToEdge = themedPreview === "ios6" || params.get("embed") === "1";
   const s = useSettings();
   const presets = usePresets();
   const marketplace = useMarketplace();
   const [size, setSize] = useState({ w: 1280, h: 800 });
   useEffect(() => {
     const fit = () => {
-      const availW = window.innerWidth - (themedPreview === "ios6" ? 0 : 24);
-      const availH = window.innerHeight - (themedPreview === "ios6" ? 0 : 70);
+      const availW = window.innerWidth - (edgeToEdge ? 0 : 24);
+      const availH = window.innerHeight - (edgeToEdge ? 0 : 70);
       const ah = Number(new URLSearchParams(location.search).get("h")) || (themedPreview === "ios6" ? 720 : 800); // ?h=960 previews a 4:3 screen
       const k = Math.min(availW / 1280, availH / ah, 1.5);
       setSize(themedPreview === "ios6" ? { w: window.innerWidth, h: window.innerHeight } : { w: Math.round(1280 * k), h: Math.round(ah * k) });
@@ -293,7 +294,7 @@ function App() {
   },[]);
   return (
     <div style={{ font: "14px system-ui", color: "#ddd" }}>
-      <div id="bar" style={{ display: themedPreview === "ios6" ? "none" : "flex", gap: 6, alignItems: "center", padding: "10px 12px", flexWrap: "wrap" }}>
+      <div id="bar" style={{ display: edgeToEdge ? "none" : "flex", gap: 6, alignItems: "center", padding: "10px 12px", flexWrap: "wrap" }}>
         <b style={{ marginRight: 8 }}>Deck Home Themes preview</b>
         <button onClick={() => openMarketplace()}>Hub</button>
         {s.theme === "silver" && <button onClick={() => window.dispatchEvent(new Event("preview-steam-button"))}>Steam button</button>}
@@ -317,7 +318,7 @@ function App() {
         <span style={{ opacity: 0.65, marginLeft: 10 }}>Arrows = D-pad · Enter = Ⓐ · Esc = Ⓑ · X · Y = △/Options · M = ≡ · Q/E = L1/R1 · Z/C = L2/R2 (presets). Old Big Picture: LB = Web · RB = Chat · Select Library to enter.</span>
       </div>
       {(s.theme==='old-big-picture'||s.theme==='old-beta-big-picture')&&<ControllerTest/>}
-      <div style={{ position: "relative", width: size.w, height: size.h, margin: themedPreview === "ios6" ? "0" : "0 12px", transform: "translateZ(0)", overflow: "hidden", borderRadius: themedPreview === "ios6" ? 0 : 10, boxShadow: "0 10px 40px #000" }}>
+      <div style={{ position: "relative", width: size.w, height: size.h, margin: edgeToEdge ? "0" : "0 12px", transform: "translateZ(0)", overflow: "hidden", borderRadius: edgeToEdge ? 0 : 10, boxShadow: "0 10px 40px #000" }}>
         {s.enabled || marketplace.opened ? <ThemedHome standalone /> : <div style={{ padding: 70, background: "#162331", height: "100%", boxSizing: "border-box" }}><h1>Steam Home restored</h1><p>The deleted theme is hidden. Open Hub to download it again.</p><button onClick={() => openMarketplace()}>Open Hub</button></div>}
       </div>
       <Toast />

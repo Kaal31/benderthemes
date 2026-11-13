@@ -825,6 +825,24 @@ def _wiiu_stock_dir() -> str:
     user = _wiiu_stock_user_dir()
     try:
         import wiiu_themes
+        import console_artwork
+        cached = console_artwork.resource_dir('wiiu-stock-menu')
+        if cached:
+            # Reuse the verified downloaded base for every custom theme. Keep
+            # explicitly imported files (including a separate audio dump).
+            for name in wiiu_themes.STOCK:
+                target = os.path.join(user, name)
+                source = cached / name
+                if not os.path.exists(target) and source.is_file():
+                    os.makedirs(user, exist_ok=True)
+                    import tempfile
+                    fd, temporary = tempfile.mkstemp(dir=user, prefix='.stock-')
+                    os.close(fd)
+                    try:
+                        shutil.copyfile(source, temporary)
+                        os.replace(temporary, target)
+                    finally:
+                        if os.path.exists(temporary): os.remove(temporary)
         if wiiu_themes.stock_status(user):
             return user
     except Exception:
@@ -1850,6 +1868,7 @@ class Plugin:
                         "mappings": meta.get("mappings") or {},
                         "ignore": meta.get("ignore") or [],
                         "music": bool(meta.get("music")),
+                        "musicLoop": meta.get("musicLoop"),
                         "author": meta.get("author") or "",
                     }
                 )
@@ -2321,7 +2340,23 @@ class Plugin:
         if not name or not p.lower().endswith(".utheme") or not os.path.isfile(p):
             return None
         try:
-            return await asyncio.to_thread(_read_wiiu_cached, p)
+            import wiiu_themes, console_artwork
+            stock = await asyncio.to_thread(wiiu_themes.stock_status, _wiiu_stock_dir())
+            info = await asyncio.to_thread(wiiu_themes.utheme_info, p)
+            required = {base + ('.bfsar' if base == wiiu_themes.AUDIO else '.pack') for base in (info or {}).get('needs', {})}
+            if any(name not in stock for name in required) or (bool((info or {}).get('other')) and console_artwork.resource_dir('wiiu-stock-menu') is None):
+                # A selected custom theme uses the same persistent base cache
+                # as a stock-theme install; patch results have their own cache.
+                await asyncio.to_thread(console_artwork.install, 'wiiu-stock', True)
+            result = dict(await asyncio.to_thread(_read_wiiu_cached, p))
+            audio = result.pop("_audio", None)
+            if audio:
+                try:
+                    import wiiu_audio
+                    result.update(await asyncio.to_thread(wiiu_audio.publish, result["name"], audio, _theme_sound_root()))
+                except Exception as error:
+                    result["audioErrors"] = [str(error)]
+            return result
         except Exception as e:
             decky.logger.error(f"wii u theme read failed: {e}")
             return None
@@ -2432,6 +2467,10 @@ class Plugin:
         import console_artwork
         optional = console_artwork.spec(name)
         optional_dir = console_artwork.resource_dir(name) if optional else None
+        if name in {"wiiu-native-ui"} and optional_dir is None:
+            group = "wiiu"
+            await asyncio.to_thread(console_artwork.install, group)
+            optional_dir = console_artwork.resource_dir(name)
         relative = "assets/" + _safe_name(name)
         folder = os.path.join(_data_dir(), relative)
         out = {}

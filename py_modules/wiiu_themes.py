@@ -540,9 +540,10 @@ def layout_textures(pack: dict, archive: str) -> dict:
 
 
 # ───────────── stock menu files (the user's own, supplied once) ─────────────
-READER_VERSION = 4  # 4: swap-button, swap-icon slots
+READER_VERSION = 6  # native selection frames
 STOCK = ("Men.pack", "Men2.pack", "cafe_barista_men.bfsar")
-USED = ("Men", "Men2")  # the packs whose pictures we read; the sound archive and text patches are never needed
+USED = ("Men", "Men2")
+AUDIO = "cafe_barista_men"
 # Checksums of the menu files the Theme Café docs list for patching (every Themezer theme checked targets these).
 # The docs give one set for all regions, so no region is named.
 KNOWN_STOCK = {0xB9A4343A: "5.5.x", 0x946CD8A2: "5.5.x", 0xC9C16521: "5.5.x"}
@@ -576,7 +577,7 @@ def _stock_member(names):
                 # prefer the real menu path (…/Common/Package/Men.pack) over loose copies
                 if f not in found or "/common/" in low:
                     found[f] = n
-    return found if "Men.pack" in found and "Men2.pack" in found else {}
+    return found if ("Men.pack" in found and "Men2.pack" in found) or "cafe_barista_men.bfsar" in found else {}
 
 
 def stock_status(stock_dir):
@@ -609,6 +610,13 @@ def import_stock(source, stock_dir):
         if f.endswith(".pack") and not _looks_like_pack(tmp):
             os.remove(tmp)  # not a real menu file: leave what we already have alone
             return
+        if f.endswith(".bfsar"):
+            with open(tmp, "rb") as stream:
+                header = stream.read(64)
+            endian = ">" if header[4:6] == b"\xfe\xff" else "<" if header[4:6] == b"\xff\xfe" else None
+            if len(header) < 32 or header[:4] != b"FSAR" or not endian or struct.unpack_from(endian + "I", header, 12)[0] != os.path.getsize(tmp):
+                os.remove(tmp)
+                return
         os.replace(tmp, os.path.join(stock_dir, f))
         got.append(f)
     if os.path.isdir(source):
@@ -630,7 +638,7 @@ def import_stock(source, stock_dir):
                 with z.open(m) as src, open(tmp, "wb") as dst:
                     shutil.copyfileobj(src, dst)
                 keep(f, tmp)
-    if "Men.pack" not in got or "Men2.pack" not in got:
+    if not (("Men.pack" in got and "Men2.pack" in got) or "cafe_barista_men.bfsar" in got):
         raise ValueError("no Wii U menu files found there")
     return stock_status(stock_dir)
 
@@ -638,6 +646,8 @@ def import_stock(source, stock_dir):
 # ───────────── .utheme → pictures the Wii U screen uses ─────────────
 # slot → (pack, layout archive, texture). Slots match the file names in bundle/assets/wiiu.
 SLOTS = {
+    "active-frame": ("Men2", "Common/Layout/LauncherIcon.szs", "ActiveFrame_01"),
+    "active-frame-alt": ("Men2", "Common/Layout/LauncherIcon.szs", "ActiveFrame_04"),
     "tile-glass": ("Men2", "Common/Layout/LauncherIcon.szs", "LauncherBtnSpecGlass"),
     "empty-slot": ("Men2", "Common/Layout/LauncherIcon.szs", "EmptyAppIcon_00"),
     "downloads": ("Men2", "Common/Layout/OverlayAppBase.szs", "HBMIconL_006"),
@@ -744,7 +754,7 @@ def utheme_info(path):
         md = meta.get("Metadata") if isinstance(meta.get("Metadata"), dict) else {}
         needs, other = {}, []
         for stem, n in patches.items():
-            if stem not in USED:
+            if stem not in (*USED, AUDIO):
                 other.append(stem)  # sound archive, text, fonts: nothing we show
                 continue
             needs[stem] = "%08x" % bps_crcs(_read_member(z, infos[n], MEMBER_MAX["bps"]))[0]
@@ -774,7 +784,7 @@ def read_utheme(path, stock_dir, data_url):
            "region": info["region"], "art": {}, "changed": [], "errors": [], "ignored": info["other"]}
     stock = stock_status(stock_dir)
     have = {f.rsplit(".", 1)[0]: v["crc"] for f, v in stock.items()}
-    missing = [b for b, crc in info["needs"].items() if have.get(b) != crc]
+    missing = [b for b, crc in info["needs"].items() if b in USED and have.get(b) != crc]
     if missing:
         res["needsStock"] = not any(b in have for b in USED)
         res["stockMismatch"] = [] if res["needsStock"] else sorted(missing)
@@ -789,6 +799,17 @@ def read_utheme(path, stock_dir, data_url):
                     res[key] = data_url(raw, _mime(raw))
                 except Exception:
                     res["errors"].append(key)
+        if AUDIO in info["needs"]:
+            if have.get(AUDIO) != info["needs"][AUDIO]:
+                res["audioErrors"] = ["Matching cafe_barista_men.bfsar is required for this theme's audio"]
+            else:
+                try:
+                    with open(os.path.join(stock_dir, AUDIO + ".bfsar"), "rb") as source:
+                        original = source.read(STOCK_MAX + 1)
+                    patch = _read_member(z, infos[info["patches"][AUDIO]], MEMBER_MAX["bps"])
+                    res["_audio"] = bps_apply(original, patch)
+                except Exception as error:
+                    res["audioErrors"] = ["Sound patch: " + str(error)]
         if missing:
             return res
         for base in USED:

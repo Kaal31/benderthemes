@@ -372,8 +372,8 @@ function themeFileItems(th: ThemeId): MenuItem[] {
     choice("Wii U theme file", [{ id: "", name: "None (built-in look)" }, ...lists.wiiu.map((n) => ({ id: n, name: n.replace(/\.utheme$/i, "") }))], () => S().wiiuTheme ?? "", (v) => updateSettings({ wiiuTheme: v }), undefined, "Put .utheme files (Themezer / Theme Café) in the skins/wiiu folder, or in Downloads, then reopen this menu"),
     ...(S().wiiuTheme ? [group("Theme file effects", () => {
       const key = `wiiu:${S().wiiuTheme ?? ""}`;
-      const tg = (label: string, k: "background" | "icons") => toggle(label, () => !!themeFx(S(), key)[k], (v) => updateThemeFx(key, { [k]: v }));
-      return [tg("Theme backgrounds and boot picture", "background"), tg("Theme icons and buttons", "icons")];
+      const tg = (label: string, k: "background" | "icons" | "sounds") => toggle(label, () => !!themeFx(S(), key)[k], (v) => updateThemeFx(key, { [k]: v }));
+      return [tg("Theme backgrounds and boot picture", "background"), tg("Theme icons and buttons", "icons"), tg("Theme sound effects", "sounds")];
     })] : []),
   ];
   return [];
