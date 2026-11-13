@@ -12,25 +12,67 @@ ThemeHub was previously called **Deck Home Themes** (and, as a repository, Bende
 
 ## Gallery
 
-Browser previews with a sample library (not recorded on a Deck).
+Fresh browser recordings of the experimental branch, using a sample game library at the Steam Deck’s 16:10 aspect ratio. These are animated UI previews, not footage recorded on a Deck. Each loop includes live animation and navigation; the Wii U Plaza loop shows its ambient scene.
+
+All **33 named themes** are shown below, including separate previews for all four Xbox 360 dashboard styles and Wii U’s Wara Wara Plaza. Importable console skins and community layouts can change these themes further.
+
+### PlayStation
 
 | | | |
 | :---: | :---: | :---: |
-| <img src="docs/gallery/ps3.gif" width="260" alt="PS3 XMB"><br>PS3 XMB | <img src="docs/gallery/psp.gif" width="260" alt="PSP XMB"><br>PSP XMB | <img src="docs/gallery/vita.gif" width="260" alt="PS Vita"><br>PS Vita |
-| <img src="docs/gallery/ps2.gif" width="260" alt="PS2"><br>PS2 | <img src="docs/gallery/ps5.gif" width="260" alt="PS5"><br>PS5 | <img src="docs/gallery/x360.gif" width="260" alt="Xbox 360"><br>Xbox 360 |
-| <img src="docs/gallery/wii.gif" width="260" alt="Wii"><br>Wii | <img src="docs/gallery/wiiu.gif" width="260" alt="Wii U"><br>Wii U | <img src="docs/gallery/iisu.gif" width="260" alt="iiSU style"><br>iiSU style |
-| <img src="docs/gallery/aero2.gif" width="260" alt="Aero v.2"><br>Aero v.2 | <img src="docs/gallery/dial.gif" width="260" alt="Alien Dial"><br>Alien Dial | <img src="docs/gallery/minecraft.gif" width="260" alt="Block Worlds"><br>Block Worlds |
+| <img src="docs/gallery/ps1.gif" width="260" alt="PS1 animated home preview"><br>**PS1** | <img src="docs/gallery/ps2.gif" width="260" alt="PS2 animated home preview"><br>**PS2** | <img src="docs/gallery/ps3.gif" width="260" alt="PS3 XMB animated home preview"><br>**PS3 XMB** |
+| <img src="docs/gallery/psp.gif" width="260" alt="PSP XMB animated home preview"><br>**PSP XMB** | <img src="docs/gallery/ps4.gif" width="260" alt="PS4 animated home preview"><br>**PS4** | <img src="docs/gallery/ps5.gif" width="260" alt="PS5 animated home preview"><br>**PS5** |
+| <img src="docs/gallery/vita.gif" width="260" alt="PS Vita animated home preview"><br>**PS Vita** |  |  |
+
+### Nintendo
+
+| | | |
+| :---: | :---: | :---: |
+| <img src="docs/gallery/wii.gif" width="260" alt="Wii animated home preview"><br>**Wii** | <img src="docs/gallery/wiiu.gif" width="260" alt="Wii U animated home preview"><br>**Wii U** | <img src="docs/gallery/switch.gif" width="260" alt="Switch animated home preview"><br>**Switch** |
+| <img src="docs/gallery/n3ds.gif" width="260" alt="Nintendo 3DS animated home preview"><br>**Nintendo 3DS** | <img src="docs/gallery/gamecube.gif" width="260" alt="GameCube animated home preview"><br>**GameCube** | <img src="docs/gallery/wiiflow-default.gif" width="260" alt="WiiFlow Default animated home preview"><br>**WiiFlow Default** |
+
+### Xbox
+
+| | | |
+| :---: | :---: | :---: |
+| <img src="docs/gallery/xbox.gif" width="260" alt="Original Xbox animated home preview"><br>**Original Xbox** | <img src="docs/gallery/x360-blades.gif" width="260" alt="Xbox 360 · Blades animated home preview"><br>**Xbox 360 · Blades** | <img src="docs/gallery/x360-nxe.gif" width="260" alt="Xbox 360 · NXE animated home preview"><br>**Xbox 360 · NXE** |
+| <img src="docs/gallery/x360-kinect.gif" width="260" alt="Xbox 360 · Kinect animated home preview"><br>**Xbox 360 · Kinect** | <img src="docs/gallery/x360.gif" width="260" alt="Xbox 360 · Metro animated home preview"><br>**Xbox 360 · Metro** |  |
+
+### Desktop, media players and wheels
+
+| | | |
+| :---: | :---: | :---: |
+| <img src="docs/gallery/ios6.gif" width="260" alt="iOS 6 Classic animated home preview"><br>**iOS 6 Classic** | <img src="docs/gallery/old-big-picture.gif" width="260" alt="Old Big Picture animated home preview"><br>**Old Big Picture** | <img src="docs/gallery/old-beta-big-picture.gif" width="260" alt="Old Beta Big Picture animated home preview"><br>**Old Beta Big Picture** |
+| <img src="docs/gallery/gameamp.gif" width="260" alt="GameAmp animated home preview"><br>**GameAmp** | <img src="docs/gallery/blue-glass.gif" width="260" alt="Blue Glass animated home preview"><br>**Blue Glass** | <img src="docs/gallery/aero.gif" width="260" alt="Aero animated home preview"><br>**Aero** |
+| <img src="docs/gallery/aero2.gif" width="260" alt="Aero V2 animated home preview"><br>**Aero V2** | <img src="docs/gallery/onyx.gif" width="260" alt="Onyx Wheel animated home preview"><br>**Onyx Wheel** | <img src="docs/gallery/silver.gif" width="260" alt="Silver Wheel animated home preview"><br>**Silver Wheel** |
+
+### Atmospheric and bonus themes
+
+| | | |
+| :---: | :---: | :---: |
+| <img src="docs/gallery/reading.gif" width="260" alt="Reading Room animated home preview"><br>**Reading Room** | <img src="docs/gallery/dial.gif" width="260" alt="Alien Dial animated home preview"><br>**Alien Dial** | <img src="docs/gallery/castle.gif" width="260" alt="Floating Castle animated home preview"><br>**Floating Castle** |
+| <img src="docs/gallery/republic.gif" width="260" alt="Republic Office animated home preview"><br>**Republic Office** | <img src="docs/gallery/minecraft.gif" width="260" alt="Block Worlds animated home preview"><br>**Block Worlds** | <img src="docs/gallery/pain.gif" width="260" alt="Six Paths animated home preview"><br>**Six Paths** |
+| <img src="docs/gallery/nazarick.gif" width="260" alt="Nazarick animated home preview"><br>**Nazarick** | <img src="docs/gallery/iisu.gif" width="260" alt="iiSU animated home preview"><br>**iiSU** | <img src="docs/gallery/santa-express.gif" width="260" alt="Santa Express animated home preview"><br>**Santa Express** |
+
+### Additional views
+
+| | | |
+| :---: | :---: | :---: |
+| <img src="docs/gallery/wiiu-plaza.gif" width="260" alt="Wii U · Wara Wara Plaza animated home preview"><br>**Wii U · Wara Wara Plaza** |  |  |
 
 ## Themes
 
-| Collection | Looks |
+| Collection | Available themes |
 | --- | --- |
-| PlayStation | PS1, PS2 browser, PS3 XMB, PSP XMB, PS4, PS5, PS Vita bubbles and LiveArea |
-| Nintendo | Wii channels, Wii U (grid and Wara Wara Plaza), Switch, Nintendo 3DS |
-| Xbox | Original Xbox, Xbox 360 Blades, NXE, Kinect and Metro dashboards |
-| Bonus | Aero, Aero v.2, Alien Dial, Floating Castle, Republic Office, Block Worlds, Six Paths, Nazarick, iiSU style |
+| PlayStation · 7 | PS1, PS2, PS3 XMB, PSP XMB, PS4, PS5, PS Vita (bubbles and LiveArea) |
+| Nintendo · 6 | Wii, Wii U (Home Menu and Wara Wara Plaza), Switch, Nintendo 3DS, GameCube, WiiFlow Default |
+| Xbox · 2 | Original Xbox; Xbox 360 with Blades, NXE, Kinect and Metro dashboard styles |
+| Desktop, media and wheels · 9 | iOS 6 Classic, Old Big Picture, Old Beta Big Picture, GameAmp, Blue Glass, Aero, Aero V2, Onyx Wheel, Silver Wheel |
+| Atmospheric and bonus · 9 | Reading Room, Alien Dial, Floating Castle, Republic Office, Block Worlds, Six Paths, Nazarick, iiSU, Santa Express |
 
-Wii, Wii U, Switch, 3DS, PS1 and iiSU style come with the plugin. The other themes are downloaded one by one from the Hub, so you only keep what you use.
+On a fresh install, **PSP is the default downloaded theme**. Use the Hub to download and activate the other themes individually, so you keep only the themes you use. Imported console skins and community layouts are additional options, rather than extra built-in themes.
+
+The Xbox 360 theme includes four dashboard styles. PS Vita also offers selectable bubble styles, including optional **Rounded glass**, and square game icons with cover-art fallback.
 
 ## What's inside
 
@@ -64,7 +106,7 @@ Put theme files in the plugin's skins folder (the path is shown in Quick Access)
 | `skins/wiiu` | Wii U `.utheme` |
 | `skins/3ds` | Nintendo 3DS themes (`.zip`, folder or `body_LZ.bin`) |
 | `skins/xbox` | Original Xbox skins |
-| `skins/x360` | Xbox 360 theme packages |
+| `skins/x360` | Xbox 360 theme packages; FSD/Aurora `.xzp` skins, ZIP collections, extracted skin folders and `.cfljson` coverflows |
 
 Vita theme music is ATRAC9. Playing it needs the free [vgmstream](https://github.com/vgmstream/vgmstream) decoder, which is not bundled; Quick Access offers to download its official Linux build once. The Vita lock screen is visual only: Steam's own PIN still protects the Deck.
 
