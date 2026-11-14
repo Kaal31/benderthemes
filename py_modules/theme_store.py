@@ -359,7 +359,7 @@ def gallery():
                 content = Path(temp) / "content"
                 content.mkdir()
                 with zipfile.ZipFile(archive) as z:
-                    if sum(i.file_size for i in z.infolist()) > 32 * 1024 * 1024 or len(z.infolist()) > 64:
+                    if sum(i.file_size for i in z.infolist()) > 32 * 1024 * 1024 or len(z.infolist()) > 96:
                         raise ValueError("Preview gallery is too large")
                     for info in z.infolist():
                         if not re.fullmatch(r"[a-z][a-z0-9-]{0,47}\.(gif|jpg)", info.filename):

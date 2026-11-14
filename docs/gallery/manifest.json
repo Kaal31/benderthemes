@@ -1,6 +1,6 @@
 {
   "sourceBranch": "experimental",
-  "sourceCommit": "f44c20e3398968ce5a23db8575806a34fd965764",
+  "sourceCommit": "cf1173983d37f19a73d9039b9cf1b98e920ec5b7",
   "themeCount": 33,
   "recordingCount": 37,
   "sampleData": true,
@@ -13,10 +13,10 @@
       "file": "ps1.gif",
       "width": 640,
       "height": 400,
-      "frames": 48,
-      "durationMs": 6010,
-      "bytes": 1372723,
-      "sha256": "a86703f4746bb4edba597a64701bc50f68ecbb14019ee3fe195621bf19170bff"
+      "frames": 16,
+      "durationMs": 2080,
+      "bytes": 608219,
+      "sha256": "e3facc25bea9f221d358837f8802c2c2686970f79d5064c132a1e9da2cef9406"
     },
     {
       "id": "ps2",
@@ -26,10 +26,10 @@
       "file": "ps2.gif",
       "width": 640,
       "height": 400,
-      "frames": 48,
-      "durationMs": 6010,
-      "bytes": 1095274,
-      "sha256": "17a591430faed9e702315d33143bd8eda2ab7bb9cb6ade795934fac24e63aef6"
+      "frames": 16,
+      "durationMs": 2080,
+      "bytes": 344988,
+      "sha256": "b93199bd786b2ebc3cd76e58e4462679d8fb35a0ef26d948795754d9e814e6e9"
     },
     {
       "id": "ps3",
@@ -39,10 +39,10 @@
       "file": "ps3.gif",
       "width": 640,
       "height": 400,
-      "frames": 48,
-      "durationMs": 6010,
-      "bytes": 1384939,
-      "sha256": "336d72070df74c928adadb2b0efb43762364fedea83429abe2934c773ca17988"
+      "frames": 16,
+      "durationMs": 2080,
+      "bytes": 767125,
+      "sha256": "5ca66712a1afffa7e3a460f4c4797571895c3df2de08c796cf99c5d4dbf33999"
     },
     {
       "id": "psp",
@@ -52,10 +52,10 @@
       "file": "psp.gif",
       "width": 640,
       "height": 400,
-      "frames": 48,
-      "durationMs": 6010,
-      "bytes": 1027429,
-      "sha256": "e79682a220a6c22deb1d92ffb78479d94f89eec142f5c99c0cc0147e741bd7ed"
+      "frames": 16,
+      "durationMs": 2080,
+      "bytes": 315477,
+      "sha256": "9157e7aac26da2f92a5ecb4f5f7275c177959867ef05a0c543de84db1fca4e76"
     },
     {
       "id": "ps4",
@@ -65,10 +65,10 @@
       "file": "ps4.gif",
       "width": 640,
       "height": 400,
-      "frames": 48,
-      "durationMs": 6010,
-      "bytes": 1686178,
-      "sha256": "20832ed58cb732f379c6b213b5831f36babc114e611ca6afd8a48f70354c38d2"
+      "frames": 7,
+      "durationMs": 2080,
+      "bytes": 694600,
+      "sha256": "10e182f342f9be3d0697a7ed20991aaf0ec9ccfff581fe99326d11dbcce8730b"
     },
     {
       "id": "ps5",
@@ -78,10 +78,10 @@
       "file": "ps5.gif",
       "width": 640,
       "height": 400,
-      "frames": 48,
-      "durationMs": 6010,
-      "bytes": 1813448,
-      "sha256": "c6a4467bab0952a0575fbfa195ff35de03dc2beb9fefd631326ce321119e26a5"
+      "frames": 8,
+      "durationMs": 2080,
+      "bytes": 763120,
+      "sha256": "fa03bf11ead6f7c897f8ba6be14e3aed012500ce8c58fcaf89140c1c9654962e"
     },
     {
       "id": "vita",
@@ -91,10 +91,10 @@
       "file": "vita.gif",
       "width": 640,
       "height": 400,
-      "frames": 48,
-      "durationMs": 6010,
-      "bytes": 1276435,
-      "sha256": "948c39515135de83b7387b7cdbacac4bb4f710273c7df8e28592600ae7337ac4"
+      "frames": 16,
+      "durationMs": 2080,
+      "bytes": 782299,
+      "sha256": "180612ecbf87cff084e0cbdf39718efd19a52d72288fa49184cdaff35123e63a"
     },
     {
       "id": "wii",
@@ -104,10 +104,10 @@
       "file": "wii.gif",
       "width": 640,
       "height": 400,
-      "frames": 48,
-      "durationMs": 6010,
-      "bytes": 1221824,
-      "sha256": "63c53e6803a7a5c0c4b3a4bb891264ccc9c3c3bb52d2cfc0e31a46e6ed160778"
+      "frames": 16,
+      "durationMs": 2080,
+      "bytes": 644640,
+      "sha256": "1d016675a1cf73e4de029402d77ff662158e44437609427eef6134e7988ad5b5"
     },
     {
       "id": "wiiu",
@@ -117,10 +117,10 @@
       "file": "wiiu.gif",
       "width": 640,
       "height": 400,
-      "frames": 48,
-      "durationMs": 6010,
-      "bytes": 763443,
-      "sha256": "9e3b100f014693d420f978b4b1074239bef7b77517661cd149605800255ce839"
+      "frames": 6,
+      "durationMs": 2080,
+      "bytes": 490376,
+      "sha256": "dd9f7f1d33543f88fd2e59ba0afb1f6044ad36bb09e204aa6aee094212da5923"
     },
     {
       "id": "switch",
@@ -130,10 +130,10 @@
       "file": "switch.gif",
       "width": 640,
       "height": 400,
-      "frames": 48,
-      "durationMs": 6010,
-      "bytes": 469888,
-      "sha256": "1f6b3d3cf037e334f1682eefd5cc253467c100f8ebb2d22b4942b527fa79b0e0"
+      "frames": 16,
+      "durationMs": 2080,
+      "bytes": 379432,
+      "sha256": "6f8e515dbccdbf7a823b1f62a481fbd20b1a8e3145097a67fc914341981d00fa"
     },
     {
       "id": "n3ds",
@@ -143,10 +143,10 @@
       "file": "n3ds.gif",
       "width": 640,
       "height": 400,
-      "frames": 48,
-      "durationMs": 6010,
-      "bytes": 583657,
-      "sha256": "798f1e9bd2a86cf9ff9387076f24d3f46d2233b7f2baed6a3817bfffb27fc7b9"
+      "frames": 16,
+      "durationMs": 2080,
+      "bytes": 269226,
+      "sha256": "7236e7001798bafb62f0c55890ce200044dfeca47b7f765b878f60e307313ccc"
     },
     {
       "id": "gamecube",
@@ -156,10 +156,10 @@
       "file": "gamecube.gif",
       "width": 640,
       "height": 400,
-      "frames": 48,
-      "durationMs": 6010,
-      "bytes": 1678721,
-      "sha256": "3841a3798ed8e9913db03483cb3b09b8b19fafa5b2df41e8f75836b2152a9c3a"
+      "frames": 16,
+      "durationMs": 2080,
+      "bytes": 527967,
+      "sha256": "8648655978016396fda41b0a72244059ae3e58319637fbd70642a30454cdc0c0"
     },
     {
       "id": "wiiflow-default",
@@ -169,10 +169,10 @@
       "file": "wiiflow-default.gif",
       "width": 640,
       "height": 400,
-      "frames": 48,
-      "durationMs": 6010,
-      "bytes": 2454184,
-      "sha256": "f1ff59347f3b962d4160a5ac82434d2b034d590dc94bebeaa99826a116ea1039"
+      "frames": 12,
+      "durationMs": 2080,
+      "bytes": 1040616,
+      "sha256": "531507922abd86da7eb87722d0facc9bcd5e957a5ee8b223fdfb31a740703f0e"
     },
     {
       "id": "xbox",
@@ -182,10 +182,10 @@
       "file": "xbox.gif",
       "width": 640,
       "height": 400,
-      "frames": 48,
-      "durationMs": 6010,
-      "bytes": 1062145,
-      "sha256": "2370dc1d0f516cf39dc703c883c9edfc12f2aa5604ddf4acaedcc0ac189cfda3"
+      "frames": 16,
+      "durationMs": 2080,
+      "bytes": 257480,
+      "sha256": "3d2a7ff239b08c9e38a861be8f52ad578a239c0c702a73e3224921994a370a88"
     },
     {
       "id": "x360-blades",
@@ -196,10 +196,10 @@
       "file": "x360-blades.gif",
       "width": 640,
       "height": 400,
-      "frames": 48,
-      "durationMs": 6010,
-      "bytes": 631007,
-      "sha256": "bb298f0bcbc805738233ca70ee393520f33840f059c22217ae88af7f7f8f693d"
+      "frames": 5,
+      "durationMs": 2080,
+      "bytes": 348775,
+      "sha256": "58ea56915f9f4dd4c70dbb683c975c176252ba508afb9aed7d53763e3f061c8c"
     },
     {
       "id": "x360-nxe",
@@ -210,10 +210,10 @@
       "file": "x360-nxe.gif",
       "width": 640,
       "height": 400,
-      "frames": 48,
-      "durationMs": 6010,
-      "bytes": 926526,
-      "sha256": "fd82e2b2baf85fbb8b80ff379d032cb35d0b5870eb2c2801902cb07d1f552c77"
+      "frames": 16,
+      "durationMs": 2080,
+      "bytes": 380350,
+      "sha256": "e81f00195d3c48df05c810f2bf4a7015a34ec6bc83d5c6a03300f966b344c13a"
     },
     {
       "id": "x360-kinect",
@@ -224,10 +224,10 @@
       "file": "x360-kinect.gif",
       "width": 640,
       "height": 400,
-      "frames": 48,
-      "durationMs": 6010,
-      "bytes": 708117,
-      "sha256": "424739bc20cda1f265a2d62a9fa19c839f016d655eb247cce19a75cb5437b60d"
+      "frames": 16,
+      "durationMs": 2080,
+      "bytes": 304527,
+      "sha256": "13e157c01f251575520cb0a3b4178fd49cb52456ea9e113ae46cac6dc207323f"
     },
     {
       "id": "x360",
@@ -238,10 +238,10 @@
       "file": "x360.gif",
       "width": 640,
       "height": 400,
-      "frames": 48,
-      "durationMs": 6010,
-      "bytes": 579860,
-      "sha256": "9df1c3ef09bf06454d51664f10c47857e24d98563aa76010f7856c3685bf9f2d"
+      "frames": 5,
+      "durationMs": 2080,
+      "bytes": 240398,
+      "sha256": "32466cf93911abbc0bcfb1dd522c8f2e0745138317d3ebdbf393d6d60615e1a9"
     },
     {
       "id": "ios6",
@@ -251,10 +251,10 @@
       "file": "ios6.gif",
       "width": 640,
       "height": 400,
-      "frames": 48,
-      "durationMs": 6010,
-      "bytes": 694875,
-      "sha256": "028f535a690e995528f8516ed386291f68a79e62ce7b2325bd0ce05d849f5aee"
+      "frames": 4,
+      "durationMs": 3120,
+      "bytes": 215143,
+      "sha256": "8181821d954b7a450637bdc9a23474c84e04644cbb31559b307635aaf28bc5ca"
     },
     {
       "id": "old-big-picture",
@@ -264,10 +264,10 @@
       "file": "old-big-picture.gif",
       "width": 640,
       "height": 400,
-      "frames": 48,
-      "durationMs": 6010,
-      "bytes": 430360,
-      "sha256": "3139b1b6805aca7b0d562e9eea567234ddd4b9b79d15b818c1dbee9943e60495"
+      "frames": 5,
+      "durationMs": 2080,
+      "bytes": 175607,
+      "sha256": "fa920b783cc759d65abb3e40f5f9dd0527d886dbb72cf89242a921ec1d06d981"
     },
     {
       "id": "old-beta-big-picture",
@@ -277,10 +277,10 @@
       "file": "old-beta-big-picture.gif",
       "width": 640,
       "height": 400,
-      "frames": 48,
-      "durationMs": 6010,
-      "bytes": 1030160,
-      "sha256": "6af47463a9970a93639bdbe9022e06c7ac6800e64359c27d02326a46e3f0fe43"
+      "frames": 16,
+      "durationMs": 2080,
+      "bytes": 866228,
+      "sha256": "c94233d52bcbe3a31b831e7884f7112d3693271597113d15a4c0fd0efc3c5645"
     },
     {
       "id": "gameamp",
@@ -290,10 +290,10 @@
       "file": "gameamp.gif",
       "width": 640,
       "height": 400,
-      "frames": 48,
-      "durationMs": 6010,
-      "bytes": 931249,
-      "sha256": "8bd21c2dd6f5f6529431b0241d6f2efc08dfe4101eeac8630d318e79c607f214"
+      "frames": 16,
+      "durationMs": 2080,
+      "bytes": 344270,
+      "sha256": "0f6581395b489f63dbfa7146ebb12aa104dce80887fea50f10dd642b83a33dc0"
     },
     {
       "id": "blue-glass",
@@ -303,10 +303,10 @@
       "file": "blue-glass.gif",
       "width": 640,
       "height": 400,
-      "frames": 48,
-      "durationMs": 6010,
-      "bytes": 683630,
-      "sha256": "a32c4e0dd30537ba1a675068bbcb01c143a7efb9a7856291641b8601bfdf779c"
+      "frames": 5,
+      "durationMs": 2080,
+      "bytes": 215240,
+      "sha256": "e7b43cf1933aa07a122ca9e6541ecd9ee74658ed8bc8d025324500087361bdb9"
     },
     {
       "id": "aero",
@@ -316,10 +316,10 @@
       "file": "aero.gif",
       "width": 640,
       "height": 400,
-      "frames": 48,
-      "durationMs": 6010,
-      "bytes": 533813,
-      "sha256": "97fcf08afd6f2ee8b7e2e62caf3187282f4c8c2baa520b5b5a17485931398f9a"
+      "frames": 3,
+      "durationMs": 2080,
+      "bytes": 221322,
+      "sha256": "64bc7636b3fc9fd8768c232bddd5e78dd0f7bf168f3addd3d84e8e3b32ef1a1c"
     },
     {
       "id": "aero2",
@@ -329,10 +329,10 @@
       "file": "aero2.gif",
       "width": 640,
       "height": 400,
-      "frames": 48,
-      "durationMs": 6010,
-      "bytes": 470432,
-      "sha256": "3ccdc0648e12eb7f7b0f6c557a023e9e20ae8d8153cd25e5a72c8e5284416080"
+      "frames": 3,
+      "durationMs": 2080,
+      "bytes": 270356,
+      "sha256": "beebce8766cd75ce3a1c4c4089124c39a7bccafe7114b10d1fb7347b10e81fab"
     },
     {
       "id": "onyx",
@@ -342,10 +342,10 @@
       "file": "onyx.gif",
       "width": 640,
       "height": 400,
-      "frames": 48,
-      "durationMs": 6010,
-      "bytes": 949144,
-      "sha256": "549ea38a651267acc5188752634e12e94cdd0568582fa4913c238096d192c5e7"
+      "frames": 6,
+      "durationMs": 2080,
+      "bytes": 267652,
+      "sha256": "04d5eacbd49c4e7328a790d2448feaa2ca93d38f26a820359434b70f0eb1758b"
     },
     {
       "id": "silver",
@@ -355,10 +355,10 @@
       "file": "silver.gif",
       "width": 640,
       "height": 400,
-      "frames": 48,
-      "durationMs": 6010,
-      "bytes": 1476512,
-      "sha256": "722efeb17c2e95e7b2ef7b1d80ae1fe3e7d3e88873bf2cc234f777585fa2c020"
+      "frames": 5,
+      "durationMs": 2080,
+      "bytes": 570484,
+      "sha256": "a4da8bc69ddbfc6e0c616f80ea5880b15f03bee38be570dbe375fb3667c3ec29"
     },
     {
       "id": "reading",
@@ -368,10 +368,10 @@
       "file": "reading.gif",
       "width": 640,
       "height": 400,
-      "frames": 48,
-      "durationMs": 6010,
-      "bytes": 1659477,
-      "sha256": "2ba6283a922a16280c981fb14dc6136c3db53b5ad43e45ea57198881d79ec7ef"
+      "frames": 16,
+      "durationMs": 2080,
+      "bytes": 1560589,
+      "sha256": "1bc139a5bcb8b7ca1138b480b61edfd01f7b3df1d43b46c22a6d5f3d5febdea3"
     },
     {
       "id": "dial",
@@ -381,10 +381,10 @@
       "file": "dial.gif",
       "width": 640,
       "height": 400,
-      "frames": 48,
-      "durationMs": 6010,
-      "bytes": 1526625,
-      "sha256": "173a118508ea5a20039094b61b1ff40a595e00f035be0ecb3eea26fac4d71f0e"
+      "frames": 12,
+      "durationMs": 2080,
+      "bytes": 657557,
+      "sha256": "19683b167325231031e0a382d2c4d22a50a3c36a00c57c33852a9db455d54cf3"
     },
     {
       "id": "castle",
@@ -394,10 +394,10 @@
       "file": "castle.gif",
       "width": 640,
       "height": 400,
-      "frames": 48,
-      "durationMs": 6010,
-      "bytes": 2766310,
-      "sha256": "af7f2c1cfd3e136d71d80f1efd0edcb997e831cbc4ba06502c22157fa0d221f0"
+      "frames": 16,
+      "durationMs": 2080,
+      "bytes": 1675172,
+      "sha256": "14c10a957c2ffa06751c2dc1c26769103e6b8c459be1bcba2928cc573520dbdf"
     },
     {
       "id": "republic",
@@ -407,10 +407,10 @@
       "file": "republic.gif",
       "width": 640,
       "height": 400,
-      "frames": 48,
-      "durationMs": 6010,
-      "bytes": 2216840,
-      "sha256": "2c4279b7bd46d9ade4e9dc95618049f934006b34e070cb8f1a86c787baac74b0"
+      "frames": 16,
+      "durationMs": 2080,
+      "bytes": 2109136,
+      "sha256": "a61850ed3f86a887a05beb0db7bbd4dc28e737889d6f07a97d0ae78bebeebdce"
     },
     {
       "id": "minecraft",
@@ -420,10 +420,10 @@
       "file": "minecraft.gif",
       "width": 640,
       "height": 400,
-      "frames": 48,
-      "durationMs": 6010,
-      "bytes": 828780,
-      "sha256": "be00cd0ac208e493eccdd18d972927dbbb94651fd04120cf2b50ccada5c40fe8"
+      "frames": 16,
+      "durationMs": 2080,
+      "bytes": 301203,
+      "sha256": "9f424d9bb2210132bd95139e12acd7b796eaa208ba231974ab192024c461dce1"
     },
     {
       "id": "pain",
@@ -433,10 +433,10 @@
       "file": "pain.gif",
       "width": 640,
       "height": 400,
-      "frames": 48,
-      "durationMs": 6010,
-      "bytes": 1190118,
-      "sha256": "ea7f6b9ed81b293d0572673461e3f4707a25f8e724a555df890404ff6baefa47"
+      "frames": 16,
+      "durationMs": 2080,
+      "bytes": 1132625,
+      "sha256": "bd8c76a949fa6f17e1081efd7a4535499003417b67591a3ae19847ce1f90326c"
     },
     {
       "id": "nazarick",
@@ -446,10 +446,10 @@
       "file": "nazarick.gif",
       "width": 640,
       "height": 400,
-      "frames": 48,
-      "durationMs": 6010,
-      "bytes": 2113564,
-      "sha256": "effd91f88190ed05d25eaf1ce5bd585bb48692acb3f2e1e41903f3d18adf2737"
+      "frames": 16,
+      "durationMs": 2080,
+      "bytes": 1633660,
+      "sha256": "42176f7d2e0e1a1cca7f15fb0c8f8efcfa1869c608fef3aab88bb3f99f888743"
     },
     {
       "id": "iisu",
@@ -459,10 +459,10 @@
       "file": "iisu.gif",
       "width": 640,
       "height": 400,
-      "frames": 48,
-      "durationMs": 6010,
-      "bytes": 1077541,
-      "sha256": "6a3cf4449ace38c0bb50f25e7cd80c9e5d2f830f4b4fcd417e613e0be4329910"
+      "frames": 16,
+      "durationMs": 2080,
+      "bytes": 1061908,
+      "sha256": "4f2c1523b1cdc3c82e02f24ca2758cf7fd8f0b23ffb3ccbcac48696e2cd866f8"
     },
     {
       "id": "santa-express",
@@ -472,10 +472,10 @@
       "file": "santa-express.gif",
       "width": 640,
       "height": 400,
-      "frames": 48,
-      "durationMs": 6010,
-      "bytes": 2469375,
-      "sha256": "47d8a14badfccefaf842bea5f6ee71ea95a5d189dbe72986e288b196b1ce3db1"
+      "frames": 16,
+      "durationMs": 2080,
+      "bytes": 1651082,
+      "sha256": "aa09f9aa05a94f70d5cbaddb6612219f6236d7e0e984eba0e54aae6fecb1a138"
     },
     {
       "id": "wiiu-plaza",
@@ -486,10 +486,12 @@
       "file": "wiiu-plaza.gif",
       "width": 640,
       "height": 400,
-      "frames": 48,
-      "durationMs": 6010,
-      "bytes": 2613553,
-      "sha256": "90f5daa722ff2d2eb302158f715def3c4cf7737964ef07d509d4228bf972b94b"
+      "frames": 16,
+      "durationMs": 2080,
+      "bytes": 1116590,
+      "sha256": "9619013aaef2d2979694e64ea2546d0dce747fdb07631fe79a5e266d9960780a"
     }
-  ]
+  ],
+  "sourceWorkingTree": true,
+  "recordedOn": "2026-11-14"
 }

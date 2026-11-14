@@ -12,7 +12,7 @@ ThemeHub was previously called **Deck Home Themes** (and, as a repository, Bende
 
 ## Gallery
 
-Fresh browser recordings of the experimental branch, using a sample game library at the Steam Deck’s 16:10 aspect ratio. These are animated UI previews, not footage recorded on a Deck. Each loop includes live animation and navigation; the Wii U Plaza loop shows its ambient scene.
+Dashboard recordings refreshed on **14 November 2026** from the local experimental branch, using a sample game library at the Steam Deck’s 16:10 aspect ratio. These are animated UI previews, not footage recorded on a Deck. Startup screens and intros are excluded. Reading Room includes its playing video background; the Wii U Plaza loop shows its ambient scene.
 
 All **33 named themes** are shown below, including separate previews for all four Xbox 360 dashboard styles and Wii U’s Wara Wara Plaza. Importable console skins and community layouts can change these themes further.
 
