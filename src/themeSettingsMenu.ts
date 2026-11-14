@@ -194,8 +194,8 @@ function vitaItems(part: "file" | "look"): MenuItem[] {
     categorized("games", "native:bubbles", group("Bubbles", () => [
       categorized("screen", "native:system-bubbles", toggle("System bubbles", () => v().systemBubbles, (x) => updateVita({ systemBubbles: x }))),
       categorized("games", "native:collections-as-folders", toggle("Collections as folders", () => v().collectionFolders, (x) => updateVita({ collectionFolders: x }))),
-      categorized("screen", "native:bubble-art", choice("Bubble art", [{ id: "portrait", name: "Cover art" }, { id: "landscape", name: "Header art" }], () => v().art, (x) => updateVita({ art: x as any }))),
-      categorized("screen", "native:bubble-style", choice("Bubble style", BUBBLE_STYLES, () => v().bubbleStyle, (x) => updateVita({ bubbleStyle: x as any }))),
+      categorized("screen", "native:bubble-art", choice("Bubble art", [{ id: "portrait", name: "Cover art" }, { id: "landscape", name: "Header art" }, {id:"icon",name:t("vitaSquareGameIcons")}], () => v().art, (x) => updateVita({ art: x as any }))),
+      categorized("screen", "native:bubble-style", choice("Bubble style", BUBBLE_STYLES.map(style => ({ ...style, name: style.id === "rounded" ? t("vitaRoundedGlass") : style.name })), () => v().bubbleStyle, (x) => updateVita({ bubbleStyle: x as any }))),
       categorized("screen", "native:cover-edge", choice("Cover edge", ART_EDGES, () => v().artEdge, (x) => updateVita({ artEdge: x as any }))),
       categorized("screen", "native:system-icons", choice("System icons", [{ id: "image", name: "Vita bubble images" }, { id: "live", name: "Live glass" }], () => v().stockIcons, (x) => updateVita({ stockIcons: x as any }))),
       categorized("screen", "native:focus-highlight", choice("Focus highlight", [{ id: "vita", name: "Vita glow (soft)" }, { id: "ring", name: "Ring" }, { id: "none", name: "None (grow only)" }], () => v().focus, (x) => updateVita({ focus: x as any }))),

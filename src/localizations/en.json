@@ -1348,5 +1348,7 @@
   "wiiflowFrameless": "Frameless artwork",
   "wiiflowPaperLine": "Thin white paper line",
   "themeStartupIntro": "Startup intro",
-  "hubStartupAnimation": "ThemeHub startup animation"
+  "hubStartupAnimation": "ThemeHub startup animation",
+  "vitaSquareGameIcons": "Square game icons · cover fallback",
+  "vitaRoundedGlass": "Rounded glass"
 }
