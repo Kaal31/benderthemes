@@ -319,6 +319,7 @@ export interface Settings {
   titles: Partial<Record<ThemeId, TitleMode>>; // game name text under icons
   trailers: { preview: boolean; sound: boolean; video: boolean }; // PSP/PS3 icon videos, trailer sound, store trailers in the Video category
   vita: {
+    folderPositions?: Record<string, Record<string, {x:number; y:number}>>;
     folders: VitaFolder[];
     order: string[]; // item keys in the user's arrangement
     collectionFolders: boolean; // Steam collections appear as folders
