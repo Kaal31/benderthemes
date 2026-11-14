@@ -1,4 +1,5 @@
 import {installNativeThemeFocus} from "./nativeThemeFocus";
+import { guidedOwnsInput } from "./guidedSync";
 import {themeHomeOwnsRoute} from "./otherPlugins";
 // One focusable root per theme. Steam's gamepad events are turned into a
 // simple button stream; the theme decides what each press does and whether
@@ -102,6 +103,7 @@ export function ThemeRoot({
   latest.current = onInput;
   const gate=useRef(activationGate);gate.current=activationGate;
   const fire = (btn: Btn, e: any, direct = false): boolean => {
+    if (guidedOwnsInput()) { hold.used = true; stopHold(); return false; }
     if(!themeHomeOwnsRoute()){hold.used=true;stopHold();return false;}
     if (document.querySelector("[data-dht-screensaver=true]")) { stopHold(); return false; }
     const press = { btn, repeat: !!e?.detail?.is_repeat };

@@ -1,0 +1,6 @@
+{
+  "api": "https://api.wallspace.app/functions/v1",
+  "publicAnonKey": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImR2aXZjaWJobmNyZWZtbmp0amVxIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NjQyNDc3MTcsImV4cCI6MjA3OTgyMzcxN30.IL4IwiHcu53oYdxh59sVMTCoa-p1EMl94Yo3RY_Qr6I",
+  "project": "dvivcibhncrefmnjtjeq",
+  "source": "Wallspace macOS public anonymous client identity (provided DMG); no user sessions or licence data"
+}

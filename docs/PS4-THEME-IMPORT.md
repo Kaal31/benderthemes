@@ -78,3 +78,12 @@ in place with path, entry-count and decompressed-size limits; no theme code runs
 
 The actor-visibility sequence format was checked against
 [PS4DynamicThemeSample](https://github.com/speedrod55/PS4DynamicThemeSample).
+
+## Layered planar scenes
+
+The importer also accepts a bounded declarative subset of extracted RAF actors with
+multiple textures, colour/opacity transitions, position, scale and Z rotation. The
+compatibility canvas represents model resources as texture planes and reports that
+mesh/camera fidelity is not certified. Hidden documents pause playback. Unsupported
+shaders, camera types, scripts, overlapping transitions and easing remain explicit
+static fallbacks. See THEME-IMPORTER-AUDIT.md for validation and limits.

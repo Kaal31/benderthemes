@@ -1,0 +1,24 @@
+import {build} from 'esbuild';
+import assert from 'node:assert/strict';
+import {writeFileSync,mkdirSync} from 'node:fs';
+import {pathToFileURL} from 'node:url';
+import {resolve} from 'node:path';
+const dir='out/library-home-separation';mkdirSync(dir,{recursive:true});
+const built=await build({stdin:{contents:'export {setLibrarySource,loadLibrary} from "./src/library";',resolveDir:process.cwd()},bundle:true,write:false,platform:'node',format:'esm',alias:{'@decky/api':'./preview/stubs/api.ts','@decky/ui':'./preview/stubs/ui.tsx'}});
+const file=resolve(dir,'library-fixture.mjs');writeFileSync(file,built.outputFiles[0].text);globalThis.window=new EventTarget();
+const {setLibrarySource,loadLibrary}=await import(pathToFileURL(file));
+const apps=Array.from({length:1105},(_,i)=>({appid:1000+i,app_type:i===1000?1073741824:1,display_name:`Game ${i}`,installed:i%2===0}));
+setLibrarySource({allApps:()=>apps,hiddenIds:()=>new Set([1001]),collections:()=>[{id:'favorite',name:'Favorites',apps:apps.slice(0,5)},{id:'other',name:'Other collection',apps:apps.slice(500,510)}]});
+const home=loadLibrary('col:favorite','alpha',2),library=loadLibrary('all','alpha',Number.MAX_SAFE_INTEGER);
+assert.equal(home.games.length,2);assert.equal(home.collections.length,1);
+assert.equal(library.games.length,1104,'Library must not inherit the Home cap, even above 400 games');
+assert.equal(library.collections.length,2,'Home collection does not hide other Library collections');
+assert(!library.byId.has(1001),'Hidden games remain excluded');
+assert(library.games.some(g=>g.shortcut),'Non-Steam shortcuts remain in the full Library');
+assert.equal(library.collections.find(c=>c.id==='other').games.length,10,'Explicit collection membership is preserved');
+assert.equal(home.games.length,2,'Loading Library does not mutate Home');
+const steam=loadLibrary('steam','alpha',Number.MAX_SAFE_INTEGER),shortcuts=loadLibrary('non-steam','alpha',Number.MAX_SAFE_INTEGER);
+assert.equal(steam.games.length+shortcuts.games.length,library.games.length);
+assert(steam.games.every(g=>!g.shortcut));assert(shortcuts.games.every(g=>g.shortcut));
+
+console.log('PASS full Library above 1,100 games, independent Home cap/collection, other collections, hidden exclusions and non-Steam games');

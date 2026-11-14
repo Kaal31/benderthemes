@@ -1,10 +1,12 @@
+import {artworkMode,artworkThemeKey,useSquareArtwork,useAutomaticSquare} from '../squareArtwork';
+import {useSettings} from '../settings';
 import {useEffect,useState} from "react";
 import {GameArt} from "../common";
 import {Game,gameIconUrls} from "../library";
 const icons=new Map<string,string|null>(),logos=new Map<string,string|null>(),darkLogos=new Set<string>();
 /** Keep square artwork sharp; tiny client icons are not blown up into full-size tiles. */
-function useArtwork(urls:string[],kind:"icon"|"logo"){
- const key=urls.join("|"),cache=kind==="icon"?icons:logos;
+function useArtwork(urls:string[],kind:"icon"|"logo",minimum=96){
+ const key=minimum+":"+urls.join("|"),cache=kind==="icon"?icons:logos;
  const [state,setState]=useState<{key:string;url:string|null}>({key,url:cache.get(key)??null});
  useEffect(()=>{
   if(cache.has(key)){setState({key,url:cache.get(key)!});return;}
@@ -13,7 +15,7 @@ function useArtwork(urls:string[],kind:"icon"|"logo"){
    const url=urls[index++];if(!url){cache.set(key,null);if(alive)setState({key,url:null});return;}
    image=new Image();image.crossOrigin="anonymous";
    image.onload=()=>{if(!alive||!image)return;const w=image.naturalWidth,h=image.naturalHeight;
-    if(kind==="icon"&&(Math.min(w,h)<96||w/h<.8||w/h>1.25)){next();return;}
+    if(kind==="icon"&&(Math.min(w,h)<minimum||w/h<.8||w/h>1.25)){next();return;}
     let result=url;
     if(kind==="logo")try{
      const ratio=Math.min(1,512/Math.max(w,h)),cw=Math.max(1,Math.round(w*ratio)),ch=Math.max(1,Math.round(h*ratio));const canvas=document.createElement("canvas");canvas.width=cw;canvas.height=ch;const ctx=canvas.getContext("2d")!;ctx.drawImage(image,0,0,cw,ch);const data=ctx.getImageData(0,0,cw,ch).data;let x0=cw,y0=ch,x1=-1,y1=-1,light=0,weight=0;
@@ -23,15 +25,19 @@ function useArtwork(urls:string[],kind:"icon"|"logo"){
     cache.set(key,result);setState({key,url:result});
    };image.onerror=()=>{if(alive)next();};image.src=url;
   };next();return()=>{alive=false;if(image){image.onload=null;image.onerror=null;}};
- },[key,kind]);
+ },[key,kind,minimum]);
  return state.key===key?state.url:null;
 }
 export function WiiuGameIcon({game,clean=false}:{game:Game;clean?:boolean}){
- const icon=useArtwork(gameIconUrls(game),"icon"),logo=useArtwork(game.art.logo,"logo");
+ const settings=useSettings(),mode=artworkMode(settings),custom=useSquareArtwork(artworkThemeKey(settings),game.appid);
+ const nativeIcon=useArtwork(gameIconUrls(game),"icon",mode==='icons'?1:96),logo=useArtwork(game.art.logo,"logo");
+ useAutomaticSquare(artworkThemeKey(settings),game,(mode==='auto'||mode==='square')&&!custom&&!nativeIcon);
+ const icon=mode==='logos'||mode==='covers'?null:custom??nativeIcon;
+ if(mode==='covers')return <div className="nt-game-icon" data-artwork="cover" style={{position:'absolute',inset:0,overflow:'hidden'}}><GameArt raw g={game} kind="portrait" flat fit="cover" style={{width:'100%',height:'100%'}}/></div>;
  return <div className="nt-game-icon" data-artwork={icon?"square-icon":logo?"fitted-logo":"square-crop"} style={{position:"absolute",inset:0,overflow:"hidden",background:clean?(logo&&darkLogos.has(logo)?"linear-gradient(145deg,#fff,#e1e9ed)":"linear-gradient(145deg,#456075,#182f41)"):"#263945"}}>
   {icon?<img src={icon} alt="" draggable={false} style={{position:"absolute",inset:0,width:"100%",height:"100%",objectFit:"contain"}}/>:<>
-   {!clean&&<GameArt g={game} kind="hero" flat style={{position:"absolute",inset:0,width:"100%",height:"100%",objectFit:"cover",filter:"brightness(.7) saturate(.85)"}}/>}
-   {logo?<img src={logo} alt="" draggable={false} style={{position:"absolute",left:"7%",top:"10%",width:"86%",height:"80%",objectFit:"contain",filter:"drop-shadow(0 1px 3px #0009)"}}/>:<GameArt g={game} kind="portrait" flat fit="cover" style={{position:"absolute",inset:0,width:"100%",height:"100%"}}/>}
+   {!clean&&<GameArt raw g={game} kind="hero" flat style={{position:"absolute",inset:0,width:"100%",height:"100%",objectFit:"cover",filter:"brightness(.7) saturate(.85)"}}/>}
+   {logo?<img src={logo} alt="" draggable={false} style={{position:"absolute",left:"7%",top:"10%",width:"86%",height:"80%",objectFit:"contain",filter:"drop-shadow(0 1px 3px #0009)"}}/>:<GameArt raw g={game} kind="portrait" flat fit="cover" style={{position:"absolute",inset:0,width:"100%",height:"100%"}}/>}
   </>}
  </div>;
 }

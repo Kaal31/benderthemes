@@ -1,0 +1,16 @@
+const logoBounds=new WeakMap<HTMLImageElement,{x:number;y:number;width:number;height:number}>();
+function printedLogoBounds(image:HTMLImageElement){const cached=logoBounds.get(image);if(cached)return cached;let bounds={x:0,y:0,width:image.naturalWidth,height:image.naturalHeight};try{const c=document.createElement('canvas');c.width=image.naturalWidth;c.height=image.naturalHeight;const g=c.getContext('2d')!;g.drawImage(image,0,0);const data=g.getImageData(0,0,c.width,c.height).data;let left=c.width,top=c.height,right=0,bottom=0;for(let y=0;y<c.height;y++)for(let x=0;x<c.width;x++)if(data[(y*c.width+x)*4+3]>8){left=Math.min(left,x);top=Math.min(top,y);right=Math.max(right,x+1);bottom=Math.max(bottom,y+1)}if(right>left&&bottom>top)bounds={x:left,y:top,width:right-left,height:bottom-top}}catch{}logoBounds.set(image,bounds);return bounds;}
+export function discPalette(image:HTMLImageElement):string[]{
+ const c=document.createElement('canvas');c.width=c.height=24;const g=c.getContext('2d')!;g.drawImage(image,0,0,24,24);const pixels=g.getImageData(0,0,24,24).data,bins=new Map<string,{sum:number[];n:number}>();
+ for(let i=0;i<pixels.length;i+=4){const rgb=[pixels[i],pixels[i+1],pixels[i+2]],brightness=(rgb[0]+rgb[1]+rgb[2])/3;if(brightness<18||brightness>238)continue;const key=rgb.map(v=>v>>5).join(','),bin=bins.get(key)??{sum:[0,0,0],n:0};bin.n++;rgb.forEach((v,a)=>bin.sum[a]+=v);bins.set(key,bin)}
+ const candidates=[...bins.values()],vivid=candidates.filter(b=>{const rgb=b.sum.map(v=>v/b.n),high=Math.max(...rgb),low=Math.min(...rgb);return b.n>=3&&high>=130&&high-low>=40});const ranked=(vivid.length?vivid:candidates).sort((a,b)=>{const score=(v:typeof a)=>{const rgb=v.sum.map(x=>x/v.n);return v.n*Math.max(...rgb)*(1+(Math.max(...rgb)-Math.min(...rgb))/255)};return score(b)-score(a)});const colors=ranked.slice(0,3).map(b=>'rgb('+b.sum.map(v=>Math.round(v/b.n)).join(',')+')');return colors.length?colors:['#263747','#101820'];
+}
+export function discLabel(cover:HTMLImageElement|undefined,logo:HTMLImageElement|undefined,name:string):HTMLCanvasElement{
+ const c=document.createElement('canvas');c.width=c.height=1024;const g=c.getContext('2d')!;let colors=['#263747','#101820'];if(cover)try{colors=discPalette(cover)}catch{}
+ // Printed labels keep the sampled cover color: no fake lighting, shadow or vignette.
+ g.fillStyle=colors[0];g.fillRect(0,0,1024,1024);
+ if(logo){const crop=printedLogoBounds(logo),scale=Math.min(740/crop.width,280/crop.height),w=crop.width*scale,h=crop.height*scale;g.drawImage(logo,crop.x,crop.y,crop.width,crop.height,(1024-w)/2,300-h/2,w,h);}else{g.fillStyle='#fff';g.font='600 60px Segoe UI,Arial';g.textAlign='center';g.textBaseline='middle';g.fillText(name,512,300,720)}
+ g.strokeStyle='rgba(255,255,255,.23)';g.lineWidth=2;for(const radius of [467,474]){g.beginPath();g.arc(512,512,radius,0,Math.PI*2);g.stroke()}
+ g.fillStyle='#acb5bf';g.beginPath();g.arc(512,512,108,0,Math.PI*2);g.fill();g.strokeStyle='#687580';g.lineWidth=4;g.beginPath();g.arc(512,512,88,0,Math.PI*2);g.stroke();return c;
+}
+export async function discImage(urls:string[]):Promise<HTMLImageElement|undefined>{for(const url of urls){try{const image=new Image();image.crossOrigin='anonymous';image.src=url;await image.decode();return image}catch{}}return undefined}

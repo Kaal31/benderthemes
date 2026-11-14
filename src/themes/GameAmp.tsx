@@ -37,6 +37,8 @@ export function GameAmpHome(){
    case 'save':updateSettings(p=>({frameData:{...p.frameData,gameamp:m.data}}));break;
    case 'open':if(m.place==='options')a.openSettings();else if(m.place==='steamHome')a.showSteamHome();else openSteam(m.place);break;
   }};
+  const shelfTitle=root.querySelector('.library h2,.library .section-title,.library>header');
+  if(shelfTitle){const filter=doc.createElement('button');filter.textContent='Filter ▾';filter.setAttribute('aria-label','Home game filter');filter.style.cssText='margin-left:18px;font:700 12px Tahoma;color:#dceeff;background:#14365e;border:1px solid #a7bed6;border-radius:3px;padding:2px 10px;cursor:pointer';filter.onclick=()=>live.current.api.openGameFilter('home');shelfTitle.append(filter);}
   const timers={setTimeout:(fn:any,ms:number)=>{const id=W.setTimeout(()=>{timeouts.delete(id);if(!disposed)fn();},ms);timeouts.add(id);return id;},clearTimeout:(id:number)=>{W.clearTimeout(id);timeouts.delete(id);},setInterval:(fn:any,ms:number)=>{const id=W.setInterval(()=>{if(!disposed)fn();},ms);intervals.add(id);return id;},clearInterval:(id:number)=>{W.clearInterval(id);intervals.delete(id);}};
   const pages=createGameAmpPages(scoped,services,W.location,timers);
   runtime.current=mountGameAmp(scoped,view,pages,services,emit,size,timers);

@@ -31,11 +31,13 @@ for (const root of ["assets", "bundle/assets", "defaults/assets"]) {
     assets[set] = assets[set] ?? {};
     // PREVIEW_JPG_ASSETS=1: also .jpg / .gif, as the plugin's get_assets reads them (main.py IMAGE_EXT); off by default because
     // the preview serves them as plain URLs, and the 3D dashboards (Xbox 360 NXE / Kinect) then can't use them as WebGL textures
-    // from a file:// page (verify-launch-audio). Presets v2's mixing sheets were shot with it on (Hub .jpg backgrounds).
-    const ext = (process.env.PREVIEW_JPG_ASSETS || set === "x360-nxe-dash") ? /\.(png|webp|jpe?g|gif|mp4)$/i : /\.(png|webp|mp4)$/i;
+    // from a file:// page (verify-launch-audio). Native console comparison packs always include all image formats. Presets v2's mixing sheets were shot with it on (Hub .jpg backgrounds).
+    const consolePack = new Set(['xbox-original','x360-blades-original','x360-kinect-dash','x360-metro-dash','x360-nxe-dash','wiiu-native-ui','xmb-ps3-native','xmb-psp-native']).has(set);
+    const ext = (process.env.PREVIEW_JPG_ASSETS || consolePack) ? /\.(png|webp|jpe?g|gif|mp4)$/i : /\.(png|webp|mp4)$/i;
     for (const f of readdirSync(`${root}/${set}`)) if (ext.test(f)) assets[set][f.replace(ext, "")] = `../${root}/${set}/${f}`;
   }
 }
+if(existsSync('out/console-native-preview/x360-cover-frame/template.png'))assets['x360-cover-frame']={template:'../out/console-native-preview/x360-cover-frame/template.png'};
 const dialAssets = {};
 if (existsSync("bundle/dial")) for (const file of readdirSync("bundle/dial")) {
   if (!/\.wav$/.test(file)) continue;

@@ -2,6 +2,11 @@ import {importPs4Downloads} from "./ps4Imports";
 import {consoleArtworkItems} from "./consoleArtwork";
 import { categorized, categoryOf, styleCategory, type SettingsCategory } from "./settingsCategories";
 import { t, lang } from "./i18n";
+import {ARTWORK_MODES,artworkMode,setArtworkMode,openSquareArtwork} from './squareArtwork';
+import {loadLibrary} from './library';
+import {switchPresets} from './presets';
+import {toaster} from '@decky/api';
+import {cabinetWallpapers} from "./x360Cabinet";
 import { saverOptions, updateSaver, addSaverMedia, previewSaver } from "./themeScreensavers";
 import { achievementPopupStatus, achievementPopupsBlocked, previewAchievementPopup } from "./achievementPopups";
 import {customProfilePicture,setProfilePicture,uploadProfilePicture} from "./profilePicture";
@@ -246,7 +251,7 @@ function xmbItems(variant: "ps3" | "psp", part: "file" | "look"): MenuItem[] {
   ];
 }
 
-const X360_NOTE = "Put theme / gamer picture packages in the skins/x360 folder, then reopen this menu";
+const X360_NOTE = "Put theme / gamer picture packages or FSD/Aurora .xzp skins, ZIP collections, extracted skin folders and Aurora .cfljson layouts in skins/x360, then reopen this menu. XZP imports artwork; .cfljson imports coverflow transforms. Original console scene menus are not yet reproduced.";
 const x360Title = (n: string) => (lists.x360names[n] && lists.x360names[n] !== n ? `${lists.x360names[n]} (${n.length > 16 ? n.slice(0, 8) + "…" : n})` : n);
 /** Xbox 360 theme files (STFS packages in skins/x360) and gamer pictures. */
 function x360FileItems(): MenuItem[] {
@@ -257,8 +262,15 @@ function x360FileItems(): MenuItem[] {
   const tg = (label: string, k: keyof ThemeFx) => toggle(label, () => !!fx()[k], (v) => updateThemeFx(key(), { [k]: v } as any));
   const none = (n: string) => [{ id: "", name: n }];
   return [
+    categorized("screen", "native:cabinet-wallpaper", choice("Cabinet wallpaper (Kinect)", [{id:"",name:"None"},...cabinetWallpapers.map(item=>({id:item.id,name:item.name}))],()=>x().cabinetWallpaper??"",v=>setX({cabinetWallpaper:v}),undefined,"Emphatic’s cabinet wallpapers. Downloaded on selection and fitted to the Kinect dashboard’s 16:9 canvas; cached locally for offline use.")),
+    categorized("games", "native:imported-cover-case", choice("Imported cover case", [{id:'XboxCase',name:'Xbox'},{id:'DVDCase',name:'DVD'},{id:'KinectCase',name:'Kinect'},{id:'ArcadeCase',name:'Arcade'},{id:'IndieCase',name:'Indie'},{id:'FavoriteCase',name:'Favorite'},{id:'GreenCase',name:'FSD green'},{id:'BlankGreenCase',name:'FSD blank green'},{id:'FullCase',name:'FSD full case'},{id:'OrangeCase',name:'FSD orange'},{id:'PurpleCase',name:'FSD purple'},{id:'SilverCase',name:'FSD silver'}],()=>x().caseTexture??'XboxCase',v=>setX({caseTexture:v}),undefined,"Uses the case texture supplied by the imported skin when available.")),
+    categorized("manage", "native:xbox-audio-decoder", {label:"Download / retry Xbox audio decoder (vgmstream)",action:()=>{void installMusicDecoder().then(result=>{if(!result.installed)throw new Error(result.error??'Decoder unavailable');resourcesChanged();toaster.toast({title:'Xbox audio decoder ready',body:'Imported skin audio will be decoded on the next load.'})}).catch(error=>toaster.toast({title:'Xbox audio decoder failed',body:String(error)}))}}),
+    categorized("audio", "native:imported-theme-music", toggle("Imported Xbox theme music",()=>getSettings().music.x360!==false,v=>updateSettings(s=>({music:{...s.music,x360:v}})))),
+    categorized("games", "native:aurora-game-view", choice("Aurora game view",[{id:'cases',name:'Cases'},{id:'discs',name:'Discs'}],()=>x().auroraGameView??'cases',v=>setX({auroraGameView:v as 'cases'|'discs'}))),
+    categorized("games", "native:aurora-cover-frame", choice("Aurora cover frame",[{id:'xbox360',name:'Xbox 360 (external artwork)'},{id:'steam',name:'Steam'}],()=>x().auroraCoverFrame??'xbox360',v=>setX({auroraCoverFrame:v as 'xbox360'|'steam'}),undefined,"The Xbox frame uses the separate template asset. Steam is also used while that artwork is unavailable.")),
+    categorized("games", "native:aurora-coverflow", choice("Aurora coverflow layout", [...none("Built-in / skin default"), ...lists.x360.filter(n=>n.toLowerCase().endsWith('.cfljson')).map(n=>({id:n,name:x360Title(n)}))],()=>x().coverflow??"",v=>setX({coverflow:v}),undefined,"A .cfljson layout controls the cover positions, camera and layout modes independently of the skin.")),
     choice("Xbox 360 theme file", [...none("None"), ...lists.x360.map((n) => ({ id: n, name: x360Title(n) }))], () => x().skin ?? "", (v) => setX({ skin: v }), undefined, X360_NOTE),
-    ...(x().skin ? [group("Theme file effects", () => [
+    ...(x().skin ? [toggle("Imported skin layout (experimental)",()=>x().importedLayout!==false,v=>setX({importedLayout:v})),toggle("Show avatar in Aurora",()=>x().auroraAvatar===true,v=>setX({auroraAvatar:v})),toggle("Imported skin weather (approximate IP location)",()=>x().weather===true,v=>setX({weather:v})),group("Theme file effects", () => [
       tg("Theme wallpaper (Metro, NXE, Kinect)", "background"),
       tg("Theme colour (Metro tiles)", "labels"),
     ])] : []),
@@ -276,6 +288,7 @@ function xboxFileItems(): MenuItem[] {
     choice("Xbox skin file", [{ id: "", name: "None (built-in look)" }, ...lists.xbox.map((n) => ({ id: n, name: n }))], file, (v) => updateSettings(() => ({ xboxSkin: v })), undefined, "Put UnleashX / XBMC skin folders or .zip files in the skins/xbox folder, then reopen this menu"),
     ...(file() ? [group("Skin file effects", () => [
       tg("Skin wallpaper", "background"),
+      tg("Imported skin layout", "icons"),
       tg("Skin text colour", "labels"),
     ])] : []),
   ];
@@ -310,6 +323,7 @@ function n3dsItems(part: "file" | "look"): MenuItem[] {
       tg("Scrolling wallpapers move with the page", "scroll"),
       tg("Theme cursor, folder and text colours", "labels"),
       tg("Theme folder and icon-frame pictures", "icons"),
+      tg("Theme sound effects", "sounds"),
     ])),
   ];
   return [
@@ -366,8 +380,8 @@ function themeFileItems(th: ThemeId): MenuItem[] {
     choice("Wii U theme file", [{ id: "", name: "None (built-in look)" }, ...lists.wiiu.map((n) => ({ id: n, name: n.replace(/\.utheme$/i, "") }))], () => S().wiiuTheme ?? "", (v) => updateSettings({ wiiuTheme: v }), undefined, "Put .utheme files (Themezer / Theme Café) in the skins/wiiu folder, or in Downloads, then reopen this menu"),
     ...(S().wiiuTheme ? [group("Theme file effects", () => {
       const key = `wiiu:${S().wiiuTheme ?? ""}`;
-      const tg = (label: string, k: "background" | "icons") => toggle(label, () => !!themeFx(S(), key)[k], (v) => updateThemeFx(key, { [k]: v }));
-      return [tg("Theme backgrounds and boot picture", "background"), tg("Theme icons and buttons", "icons")];
+      const tg = (label: string, k: "background" | "icons" | "sounds") => toggle(label, () => !!themeFx(S(), key)[k], (v) => updateThemeFx(key, { [k]: v }));
+      return [tg("Theme backgrounds and boot picture", "background"), tg("Theme icons and buttons", "icons"), tg("Theme sound effects", "sounds")];
     })] : []),
   ];
   return [];
@@ -379,6 +393,7 @@ function lookOptionItems(th: ThemeId): MenuItem[] {
   items.push(categorized("screen","native:startup-intro",toggle(t("themeStartupIntro"),()=>S().themeStartupIntros?.[S().activeTheme||th]!==false,v=>updateSettings(p=>({themeStartupIntros:{...p.themeStartupIntros,[S().activeTheme||th]:v}})))));
   if (th === "vita") items.push(...vitaItems("look"));
   if (th === "ps3" || th === "psp") items.push(...xmbItems(th, "look"));
+  if (th === "x360") items.push(...x360FileItems().filter(item=>item.settingsCategory && categoryOf(item)!=="manage"));
   if (th === "x360") items.push(
     // each dashboard era is a look of its own: picking one shows that look's preset
     categorized("presets", "native:dashboard", choice("Dashboard", X360_STYLES, () => S().x360.style, (v) => showLook(`x360:${v}`))),
@@ -495,9 +510,12 @@ function customizeSectionItems(section: SettingsCategory): MenuItem[] {
       categorized("games","native:plaza-reset",{label:t("resetPlazaLayout"),action:()=>updateSettings({wiiuPlazaPositions:{}})}),
     ] : []),
     ...(section === "games" ? [
-      { ...collectionMenu(th), label: t("showInThisTheme") },
+      { ...collectionMenu(th), label: "Home games" },
+      { ...collectionMenu(th,"library"), label: "Library games" },
       ...wiiFlowGameItems(),
       toggle(t("protonDbBadgesThisTheme"), () => protonDbEnabled(S()), (v) => updateSettings((p) => ({ protondbThemes: { ...p.protondbThemes, [protonDbThemeKey(S())]: v } }))),
+      categorized("games", "game-artwork", choice("Game artwork · this theme",ARTWORK_MODES,()=>artworkMode(),setArtworkMode)),
+      categorized("games", "square-game-artwork", group("Per-game square artwork · this theme",()=>loadLibrary('all','alpha',9999).games.map(game=>({label:game.name,action:()=>openSquareArtwork(game)})))),
       ...(th !== "ios6" ? [choice(t("iconSize"), [75, 85, 100, 110].map((v) => ({ id: v, name: `${v}%${v === 100 ? ` · ${t("default")}` : ""}` })), () => S().iconSizes?.[th] ?? 100, (v) => updateSettings((p) => ({ iconSizes: { ...p.iconSizes, [th]: v } })))] : []),
       ...(USES.titles.includes(th) ? [choice(t("gameTitles"), TITLE_MODES, () => S().titles[th] ?? "show", (v) => updateSettings((p) => ({ titles: { ...p.titles, [th]: v } })))] : []),
       ...(th === "frame" && activeTheme(S())?.id === "gamecube" ? [choice(t("gameTitles"), [{ id: "show", name: t("show") || "Show" }, { id: "hide", name: t("hide") || "Hide" }], () => gameCubeSaved(S()).showGameTitle === false ? "hide" : "show", (value) => updateSettings((p) => ({ frameData: { ...p.frameData, gamecube: { ...gameCubeSaved(p), showGameTitle: value !== "hide" } } })))] : []),
@@ -560,7 +578,7 @@ function mergeBubbleItems(items: MenuItem[]): MenuItem[] {
 export function manageThemeItems(): MenuItem[] {
   const th = S().theme;
   return [
-    ...themeFileItems(th),
+    ...themeFileItems(th).filter(item=>!item.settingsCategory || categoryOf(item)==="manage"),
     ...lookOptionItems(th).filter(item => categoryOf(item) === "manage"),
     ...(nativeExtras.get(th) ?? []).filter(item => categoryOf(item) === "manage"),
     {label:t("qamRescan"), action:() => {refreshThemeLists(); void refreshPresets();}},
@@ -714,6 +732,15 @@ export function resetGroup(): MenuItem {
 /** Settings that are not the theme's own: behind "Global settings" in every theme's options. */
 function legacyGlobalItems(): MenuItem[] {
   return [
+    group("Game launch and theme rotation",()=>[
+      toggle("Return to themed Home after games",()=>S().returnToThemeAfterGame!==false,value=>updateSettings({returnToThemeAfterGame:value})),
+      toggle("Random theme at Big Picture startup",()=>S().randomThemeOnStartup===true,value=>updateSettings({randomThemeOnStartup:value})),
+      toggle("Random theme after leaving a game",()=>S().randomThemeAfterGame===true,value=>updateSettings({randomThemeAfterGame:value})),
+      group("Random theme pool",()=>[
+        {label:"All installed themes",checked:!S().randomThemePool?.length,action:()=>updateSettings({randomThemePool:[]})},
+        ...switchPresets().map(p=>({label:p.label,checked:S().randomThemePool?.includes(p.id)??false,action:()=>updateSettings(s=>({randomThemePool:s.randomThemePool?.includes(p.id)?s.randomThemePool.filter(id=>id!==p.id):[...(s.randomThemePool??[]),p.id]}))}))
+      ])
+    ]),
     group(t("libraryAllThemes"), () => [
       choice(t("sort"), [{ id: "recent", name: t("sortRecent") }, { id: "alpha", name: t("sortAlpha") }, { id: "playtime", name: t("sortPlaytime") }], () => getRawSettings().sort, (v) => updateSettings({ sort: v as any })),
       choice(t("aOnAGame"), [{ id: "theme", name: t("likeTheConsole") }, { id: "launch", name: t("launchRightAway") }, { id: "details", name: t("steamGamePageOption") }], () => getRawSettings().aAction, (v) => updateSettings({ aAction: v as any })),
@@ -751,7 +778,7 @@ function legacyGlobalItems(): MenuItem[] {
 }
 
 export function globalSettingsItems(): MenuItem[] {
-  const [library, look, sound, ...destinations] = legacyGlobalItems();
+  const [rotation, library, look, sound, ...destinations] = legacyGlobalItems();
   const fields = look.sub!();
   const profile = fields.shift()!;
   return [
@@ -760,7 +787,7 @@ export function globalSettingsItems(): MenuItem[] {
         {label:t("editProfileName"), action:() => { const value=window.prompt(t("profileName"), S().profileName || ""); if(value!==null) updateSettings({profileName:value}); }},
       ]}, ...profile.sub!(),
     ]),
-    group(t("settingsDefaults"), () => [...library.sub!(), ...fields.filter(item => item.settingsCategory !== "global"), ...sound.sub!(), group(t("musicPlayback"), musicPlaybackItems)]),
+    group(t("settingsDefaults"), () => [...rotation.sub!(), ...library.sub!(), ...fields.filter(item => item.settingsCategory !== "global"), ...sound.sub!(), group(t("musicPlayback"), musicPlaybackItems)]),
     group(t("settingsIntegration"), () => [
       toggle(t("themedHomeScreen"), () => S().enabled, enabled => updateSettings({enabled})),
       ...fields.filter(item => item.settingsCategory === "global"),

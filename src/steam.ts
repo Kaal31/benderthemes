@@ -1,4 +1,5 @@
 import {customProfilePicture} from "./profilePicture";
+import {applyImportedMusicLoop,ImportedMusicLoop} from './importedMusicLoop';
 import {FIXED_BACKGROUND_PAGES,pageBackgroundRef} from "./pageBackgrounds";
 import { connectThemeAudio, monitorThemeAudioElement } from './themeAudio';
 import { useActiveInterval } from "./performance";
@@ -32,6 +33,7 @@ export interface SoundPack {
   mappings: Record<string, string[]>;
   ignore: string[];
   music: boolean;
+  musicLoop?:ImportedMusicLoop|null;
   author: string;
   /** Packs that belong to a data theme are served from the theme's folder. */
   base?: string;
@@ -58,6 +60,7 @@ const backendWallpaper = callable<[name: string], string | null>("get_wallpaper"
 
 let packs: SoundPack[] = [];
 let packsLoaded = false;
+const packListeners=new Set<()=>void>();
 export async function refreshPacks(): Promise<SoundPack[]> {
   try {
     packs = (await backendPacks()) ?? [];
@@ -65,6 +68,7 @@ export async function refreshPacks(): Promise<SoundPack[]> {
     packs = [];
   }
   packsLoaded = true;
+  for(const listener of packListeners)listener();
   return packs;
 }
 export const getPacks = () => packs;
@@ -268,7 +272,7 @@ export function sfxCoverage(p: SoundPack): number {
 }
 export function autoPack(theme: ThemeId, kind: PackKind = "sfx"): SoundPack | null {
   for (const re of (PACK_MATCH[matchKey(theme)] ?? PACK_MATCH[theme])?.re ?? []) {
-    const hits = packs.filter((p) => (re.test(p.name) || re.test(p.folder)) && !(theme==="wiiu" && kind==="music" && /download|friends|settings/i.test(p.name+" "+p.folder)));
+    const hits = packs.filter((p) => !p.folder.startsWith('3DS - ') && !p.folder.startsWith('WiiU - ') && (re.test(p.name) || re.test(p.folder)) && !(theme==="wiiu" && kind==="music" && /download|friends|settings/i.test(p.name+" "+p.folder)));
     if (kind === "music") {
       const m = hits.find((p) => !!musicFile(p));
       if (m) return m;
@@ -540,7 +544,10 @@ export function playSound(kind: SoundKind, variation = 0) {
   const alternatives = pack?.mappings[file];
   const f = pack && kind === "tab" && Array.isArray(alternatives) && alternatives.length > 1 ? alternatives[Math.abs(variation) % alternatives.length] : pack ? packFile(pack, file) : null;
   if (!pack) return steamSound(file);
-  if (!f) return; // Missing cues stay silent instead of switching console identities.
+  if (!f) {
+    if (s.theme==='n3ds' && pack.folder.startsWith('3DS - ') || s.theme==='wiiu' && pack.folder.startsWith('WiiU - ')) steamSound(file);
+    return;
+  }
   const vol = Math.max(0, Math.min(1, (s.sfxVolume ?? 80) / 100));
   packUrl(pack, f)
     .then((url) => (url ? loadBuffer(url) : null))
@@ -570,6 +577,8 @@ function useDucked() {
 
 /** The theme's music (the pack's menu music), looping while the home is shown. */
 export function useHomeMusic(theme: ThemeId, active: boolean, page?: string) {
+  const [,packRevision]=useState(0);
+  useEffect(()=>{const changed=()=>packRevision(v=>v+1);packListeners.add(changed);return()=>{packListeners.delete(changed);};},[]);
   const s = getSettings();
   const on = s.backgroundMusic !== false && s.music[theme] !== false && active;
   const context=theme==="wiiu"&&!s.musicPacks?.wiiu ? ({downloads:"Wii U Download Management",friends:"Wii U Friends theme",settings:"Wii U Settings",qam:"Wii U Settings"} as Record<string,string>)[page??""] : undefined;
@@ -590,6 +599,7 @@ export function useHomeMusic(theme: ThemeId, active: boolean, page?: string) {
     let dead = false;
     let a: HTMLAudioElement | null = null;
     let unmeter: (() => void) | null = null;
+    let removeLoop: (()=>void) | null = null;
     let fade: any = null;
     let release: (() => void) | null = null;
     (async () => {
@@ -600,10 +610,10 @@ export function useHomeMusic(theme: ThemeId, active: boolean, page?: string) {
         a.crossOrigin = "anonymous";
         unmeter = monitorThemeAudioElement(a);
         a.src = url;
-        a.loop = true;
+        removeLoop=applyImportedMusicLoop(a,pack.musicLoop);
         a.volume = 0;
         await a.play();
-        if (dead) { a.pause(); unmeter?.(); return; }
+        if (dead) { a.pause(); unmeter?.(); removeLoop?.(); return; }
         // AudioLoader's / ThemeDeck's menu music would play underneath ours.
         release = holdOtherMusic();
         // One envelope follows current volume/ducking, including changes while
@@ -617,7 +627,7 @@ export function useHomeMusic(theme: ThemeId, active: boolean, page?: string) {
         };
         wakeFade.current = step; step();
       } catch {
-        unmeter?.();
+        unmeter?.();removeLoop?.();
         /* blocked or missing */
       }
     })();
@@ -627,6 +637,7 @@ export function useHomeMusic(theme: ThemeId, active: boolean, page?: string) {
       clearTimeout(fade);
       const el = a;
       if (!el) return;
+      removeLoop?.();
       const done = release;
       release = null;
       // short fade out

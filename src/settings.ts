@@ -173,7 +173,7 @@ export const storeSectionOn = (s: Pick<Settings, "storeSections">, theme: ThemeI
  *  Everything else (clock, volume, library sorting, Ⓐ…) is the user's own. */
 export const LOOK_KEYS = [
   "theme", "activeTheme", "pages", "mix", "iconPicks", "themeOptions", "styles", "vita", "xmb", "x360", "dial", "wallpapers", "wallpaperDim", "packs", "musicPacks", "music",
-  "coverStyles", "titles", "iconSizes", "protondbThemes", "videoBackgrounds", "ps4GameBackgrounds", "ps4Skin", "castleWeather", "castleWindows",
+  "gameArtworkModes", "coverStyles", "titles", "iconSizes", "protondbThemes", "videoBackgrounds", "ps4GameBackgrounds", "ps4Skin", "castleWeather", "castleWindows",
   "minecraftFollowFocus", "minecraftWaitForSwipe", "minecraftSlim", "themeFx", "wiiuView", "wiiuTheme", "xboxSkin", "wiiSkin", "wiiSkinMember", "wiiSkinBase", "switchTheme", "wiiuPlazaPositions", "wiiuPlazaTips", "n3dsSkin", "n3dsCursor", "n3dsTop", "n3dsLayout", "hubStyle", "storeSections",
 ] as const;
 export type LookKey = (typeof LOOK_KEYS)[number];
@@ -266,8 +266,15 @@ export interface Settings {
   tvMode: boolean; // safe margins and larger couch-distance text
   enabled: boolean; // replace Steam's home with the themed home
   theme: ThemeId;
-  source: string; // "installed" | "all" | "col:<collection id>"
+  gameArtworkModes?: Record<string,"auto"|"square"|"logos"|"covers"|"icons">;
+  returnToThemeAfterGame?: boolean;
+  randomThemeOnStartup?: boolean;
+  randomThemeAfterGame?: boolean;
+  randomThemePool?: string[];
+  source: string; // installed | all | steam | non-steam | uninstalled | col:<id> | collections
   themeCollections?: Partial<Record<ThemeId, { source: string; ids?: string[] }>>;
+  /** Missing Library choice follows Home; an explicit choice is independent. */
+  libraryCollections?: Partial<Record<ThemeId, { source: string; ids?: string[] }>>;
   iconSizes?: Partial<Record<ThemeId, number>>;
   themeFx: Record<string, ThemeFx>; // per imported theme file: "vita:<skin>", "psp:<file>", "p3t:<file>"
   sort: SortMode;
@@ -302,15 +309,18 @@ export interface Settings {
   musicRepeat: "off" | "all" | "one";
   musicCrossfade: number; // seconds, 0 = off, 1–12
   wallpapers: Partial<Record<ThemeId, string>>; // file name in the wallpapers folder
+  gameBackgrounds?: Partial<Record<ThemeId,Record<string,string>>>;
   wallpaperDim: number; // 0–80 %
   maxGames: number; // cap for very large libraries
   animations: boolean; // background animations (waves, particles, towers)
+  guidedSync: "off" | "preset" | "appearance";
   badges: { protondb: boolean; deck: boolean }; // compatibility badges on game details
   protondbThemes: Record<string, boolean | undefined>; // per-look Options menu; requires detected ProtonDB plugin
   coverStyles: Partial<Record<ThemeId,"flat"|"case3d">>;
   titles: Partial<Record<ThemeId, TitleMode>>; // game name text under icons
   trailers: { preview: boolean; sound: boolean; video: boolean }; // PSP/PS3 icon videos, trailer sound, store trailers in the Video category
   vita: {
+    folderPositions?: Record<string, Record<string, {x:number; y:number}>>;
     folders: VitaFolder[];
     order: string[]; // item keys in the user's arrangement
     collectionFolders: boolean; // Steam collections appear as folders
@@ -356,8 +366,9 @@ export interface Settings {
   ps4Skin?: string;
   xboxSkin?: string; // original Xbox skin: a folder or .zip name under skins/xbox ("" = none)
   switchTheme?: string; // Switch theme: a .nxtheme path under skins/switch ("file" or "folder/file") or ""
+  pspFallbackIconStyle?: "classic"|"flat"|"outline"|"legacy";
   originalConsoleArtwork?: boolean; // installed GitFlic UI pack; original/procedural UI is the fallback
-  x360: { style: X360Style; cabinetWallpaper?: string; guideSide?: "left" | "right"; skin?: string; gamerpic?: string; showThemeHubLogo?: boolean }; // skin / gamerpic: STFS package names in skins/x360 ("" = none); which Xbox 360 dashboard era
+  x360: { style: X360Style; importedLayout?: boolean; auroraAvatar?: boolean; auroraCoverFrame?: "xbox360" | "steam"; auroraGameView?: "cases" | "discs"; auroraDiscIndicator?: "theme" | "flat" | "3d"; weather?: boolean; coverflow?: string; caseTexture?: string; cabinetWallpaper?: string; guideSide?: "left" | "right"; skin?: string; gamerpic?: string; showThemeHubLogo?: boolean }; // skin / gamerpic: STFS package names in skins/x360 ("" = none); which Xbox 360 dashboard era
   dial: DialSettings;
   hubStyle: string; // Hub look: "auto" (the theme home it was opened on), "neutral", "preview" (the theme focused in Discover) or a console theme id (always that look when installed)
   themedStore: boolean; // Store entries open the store styled like the current theme
@@ -434,6 +445,7 @@ export const FOOTER_MODES: { id: FooterMode; name: string }[] = [
 ];
 
 export const DEFAULTS: Settings = {
+  pspFallbackIconStyle: "classic",
   activeTheme: "",
   mix: {},
   frameData: {},
@@ -449,6 +461,11 @@ export const DEFAULTS: Settings = {
   videoBackgrounds: {},
   tvMode: false,
   enabled: true,
+  returnToThemeAfterGame: true,
+  randomThemeOnStartup: false,
+  randomThemeAfterGame: false,
+  randomThemePool: [],
+  gameArtworkModes: {},
   theme: "psp",
   source: "installed",
   sort: "recent",
@@ -469,7 +486,7 @@ export const DEFAULTS: Settings = {
   profileName: "",
   sounds: true,
   packs: {},
-  music: {ps3:false,psp:false,x360:false},
+  music: {ps3:false,psp:false,x360:true},
   musicPacks: {},
   musicVolume: 40,
   musicShuffle: false,
@@ -480,6 +497,7 @@ export const DEFAULTS: Settings = {
   wallpaperDim: 25,
   maxGames: 400,
   animations: true,
+  guidedSync: "appearance",
   badges: { protondb: false, deck: false },
   protondbThemes: {},
   coverStyles: {},
@@ -517,11 +535,17 @@ export function onSettingsChange(l: () => void): () => void {
 export const cleanSettings = (saved: any): Settings => merge(saved);
 function merge(saved: any): Settings {
   const s: any = { ...DEFAULTS, ...(saved && typeof saved === "object" ? saved : {}) };
+  if (!["off", "preset", "appearance"].includes(s.guidedSync)) s.guidedSync = "appearance";
   if (s.theme === "frame" && s.activeTheme === "ios6") s.theme = "ios6";
   if(s.theme === "frame" && s.activeTheme === "santa-express") s.theme = "santa-express";
   if(s.theme === "frame" && s.activeTheme === "old-big-picture") s.theme = "old-big-picture";
   s.protondbThemes = Object.fromEntries(Object.entries(s.protondbThemes && typeof s.protondbThemes === "object" ? s.protondbThemes : {}).filter(([key,value])=>key.length>0&&key.length<=64&&typeof value==="boolean").slice(0,500));
   if (s.theme === "frame" && s.activeTheme === "gameamp") s.theme = "gameamp";
+  s.returnToThemeAfterGame = saved?.returnToThemeAfterGame !== false;
+  s.randomThemeOnStartup = saved?.randomThemeOnStartup === true;
+  s.randomThemeAfterGame = saved?.randomThemeAfterGame === true;
+  s.randomThemePool = Array.isArray(saved?.randomThemePool) ? [...new Set(saved.randomThemePool.filter((id:unknown)=>typeof id==='string'&&id.length<=160))].slice(0,300) : [];
+  s.gameArtworkModes = Object.fromEntries(Object.entries(saved?.gameArtworkModes&&typeof saved.gameArtworkModes==='object'?saved.gameArtworkModes:{}).filter(([key,mode])=>key.length>0&&key.length<=160&&['auto','square','logos','covers','icons'].includes(String(mode))).slice(0,500));
   s.themeDeckFocusMusic = s.themeDeckFocusMusic !== false;
   s.profilePictures=Object.fromEntries(Object.entries(s.profilePictures&&typeof s.profilePictures==="object"?s.profilePictures:{}).filter(([k,v])=>k.length<128&&typeof v==="string"&&v.length<500000&&/^data:image\/png;base64,/.test(v)));
   if (typeof s.minecraftSkin !== "string" || s.minecraftSkin.length > 60000 || !s.minecraftSkin.startsWith("data:image/png;base64,")) s.minecraftSkin = "";
@@ -768,12 +792,13 @@ export function resetThemeSettings(theme: ThemeId) {
     const drop = <T,>(rec: Partial<Record<ThemeId, T>> | undefined) => {
       const r = { ...(rec || {}) };
       delete r[theme];
+      if((theme==="frame"||theme==="native")&&p.activeTheme) delete r[p.activeTheme as ThemeId];
       return r;
     };
     const out: Partial<Settings> = {
       iconSizes: drop(p.iconSizes), protondbThemes: Object.fromEntries(Object.entries(p.protondbThemes).filter(([key])=>key!==theme&&!key.startsWith(`${theme}:`)&&!(p.theme===theme&&key===p.activeTheme))), titles: drop(p.titles), coverStyles: drop(p.coverStyles), packs: drop(p.packs),
       music: drop(p.music), musicPacks: drop(p.musicPacks), wallpapers: drop(p.wallpapers), videoBackgrounds: drop(p.videoBackgrounds),
-      storeSections: drop(p.storeSections),
+      gameArtworkModes: Object.fromEntries(Object.entries(p.gameArtworkModes??{}).filter(([key])=>key!==theme&&!((theme==="frame"||theme==="native")&&key===p.activeTheme))), storeSections: drop(p.storeSections), themeCollections: drop(p.themeCollections), libraryCollections: drop(p.libraryCollections),
     };
     const fx = { ...p.themeFx };
     const keys: string[] = [];
@@ -830,7 +855,7 @@ export function resetThemeSettings(theme: ThemeId) {
 /** Every setting back to defaults (the current theme stays selected; deleted themes stay deleted). */
 export function resetAllSettings() {
   // the user's own presets stay; the kept states of built-in looks and theme files go back to their defaults
-  updateSettings((p) => ({ ...DEFAULTS, theme: p.theme, activeTheme: p.activeTheme, frameData: p.frameData, userPresets: p.userPresets.filter((u) => u.id.startsWith("my:")), enabled: p.enabled, hiddenThemes: p.hiddenThemes, iconSizes: {}, themeCollections: {}, minecraftSkin: "" }));
+  updateSettings((p) => ({ ...DEFAULTS, theme: p.theme, activeTheme: p.activeTheme, frameData: p.frameData, userPresets: p.userPresets.filter((u) => u.id.startsWith("my:")), enabled: p.enabled, hiddenThemes: p.hiddenThemes, iconSizes: {}, themeCollections: {}, libraryCollections: {}, minecraftSkin: "" }));
 }
 
 /** The PSP theme file in use ("" = none: the drawn wave). */

@@ -1,5 +1,10 @@
 import {openDestination} from "./destinations";
 import type { MenuItem } from "./common";
+import {startLaunchPortal} from './launchPortal';
+import { startGuidedSync } from "./guidedSync";
+import {startGameSessionReturn,onThemeGameExit} from './gameSessionReturn';
+import {chooseRandomTheme} from './randomTheme';
+import {getSettings} from './settings';
 import { startThemeScreensavers } from "./themeScreensavers";
 import { startAchievementPopups } from "./achievementPopups";
 import {stopSilverPad} from "./themes/silverPad";
@@ -145,10 +150,16 @@ function Diagnostics() {
 
 export default definePlugin(() => {
   logInfo(`frontend loaded v${PLUGIN_VERSION}`);
-  initSettings();
+  const settingsReady=initSettings();
+  let disposed=false;
+  const stopLaunchPortal=startLaunchPortal();
+  const stopGameReturn=startGameSessionReturn(showThemedHomeAgain);
+  const stopRandomExit=onThemeGameExit(()=>{void chooseRandomTheme(()=>!disposed).catch(error=>reportError('random theme',error))});
+  void Promise.resolve(settingsReady).then(()=>{if(!disposed&&getSettings().randomThemeOnStartup)return chooseRandomTheme(()=>!disposed);return undefined;}).catch(error=>reportError('startup theme',error));
   const stopScreensavers = startThemeScreensavers();
   const stopDiagnostics = startExperimentalDiagnostics();
   const stopAchievementPopups = startAchievementPopups();
+  const stopGuidedSync = startGuidedSync();
   refreshPacks();
   refreshPresets();
   let stopKeyboardSkins: (() => void) | null = null;
@@ -191,9 +202,11 @@ export default definePlugin(() => {
     ),
     icon: <HomeIcon />,
     onDismount() {
+      disposed=true;stopGameReturn();stopRandomExit();stopLaunchPortal();
       stopScreensavers();
       stopDiagnostics();
       stopAchievementPopups();
+      stopGuidedSync();
       stopSilverPad();
       routerHook.removeRoute(ROUTE);
       if (patch) routerHook.removePatch(HOME_ROUTE, patch);

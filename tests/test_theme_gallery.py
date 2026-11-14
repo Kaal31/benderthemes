@@ -28,6 +28,16 @@ class GalleryTests(unittest.TestCase):
         data=self.payload()
         with patch.object(store,'urlopen',return_value=io.BytesIO(data[:-1]+b'!')):
             self.assertIsNone(store.gallery())
+    def test_complete_gallery_accepts_more_than_32_themes(self):
+        stream=io.BytesIO()
+        with zipfile.ZipFile(stream,'w') as z:
+            for index in range(33):
+                for extension in ('gif','jpg'):z.writestr(f'theme-{index}.{extension}',b'preview')
+        data=stream.getvalue();digest=hashlib.sha256(data).hexdigest()
+        store._catalog={'gallery':{'sha256':digest,'size':len(data),'url':f'https://github.com/{store.ASSET_REPO}/releases/download/gallery-{digest[:16]}/HubPreviews.zip'}}
+        with patch.object(store,'urlopen',return_value=io.BytesIO(data)):
+            folder=store.gallery();self.assertIsNotNone(folder)
+            self.assertEqual(len(list(folder.glob('*.gif'))),33)
     def test_path_escape_rejected(self):
         data=self.payload('../outside.gif')
         with patch.object(store,'urlopen',return_value=io.BytesIO(data)):

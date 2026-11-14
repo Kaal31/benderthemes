@@ -25,22 +25,29 @@ const PLUGIN_CATALOG_FIXTURE = {
   ],
 };
 const THEME_SOURCE_INFO: Record<string, any> = {
+  all: {name:"All sources",url:"",credit:"Choose a download source in the details."},
+  ps3themes: {name:"PS3-Themes.com",url:"http://www.ps3-themes.com/",credit:"Themes by their credited creators."},
+  wiithemer:{name:"WiiThemer",url:"https://www.wiithemer.org/",credit:"Wii themes by their original creators."},
   gbatemp:{name:"GBAtemp",url:"https://gbatemp.net/threads/wiiflow-themes.180497/",credit:"WiiFlow themes by their original creators."},
   themezer: { name: "Themezer", url: "https://themezer.net", credit: "Themes and previews from Themezer (themezer.net) by their creators." },
   pspunk: { name: "PSPunk", url: "https://www.pspunk.com/psp-themes/", credit: "Themes and screenshots from PSPunk (pspunk.com), collected from their creators." },
   ps3pro: { name: "PS3-Pro Themes (GitHub)", url: "https://github.com/PS3-Pro/Themes", credit: "Themes from the PS3-Pro/Themes repository on GitHub, made by their creators." },
   shenron0: { name: "Shenron0 PSP-Themes (GitHub)", url: "https://github.com/Shenron0/PSP-Themes", credit: "PSP and CFW themes from the Shenron0/PSP-Themes repository on GitHub, made by their creators." },
+  psvt: {name:"PSVita Custom Themes",url:"https://psvt.ovh/",credit:"Themes by their credited creators; hosted by Red Squirrel."},
+  superpsx: {name:"SuperPSX",url:"https://www.superpsx.com/ps4-themes/",credit:"Themes and previews from SuperPSX and their original creators. External PKG downloads require extraction."},
+  auroracollection: {name:"Aurora collection (GitHub)",url:"https://github.com/StonedModder/Aurora-Coverflow-Layouts",credit:"Aurora skins and layouts by their creators; collection by StonedModder."},
   archive: { name: "Internet Archive", url: "https://archive.org", credit: "Uploads on the Internet Archive (archive.org) by its users. Not checked by Deck Home Themes." },
 };
 const THEME_SOURCES_KINDS: any = {
-  kinds: [["wiiflow","WiiFlow","wiiflow",[".zip",".rar",".7z"],["gbatemp"]],["psp", "PSP", "psp", [".ptf", ".ctf"], ["pspunk", "shenron0", "archive"]], ["p3t", "PS3", "p3t", [".p3t"], ["themezer", "ps3pro", "archive"]], ["vita", "PS Vita", "vita", [".zip"], ["archive"]],
+  kinds: [["ps4","PS4","ps4",[".zip",".rar"],["superpsx"]],["x360","Xbox 360","x360",[".xzp",".cfljson"],["auroracollection"]],["wiiflow","WiiFlow","wiiflow",[".zip",".rar",".7z"],["gbatemp"]],["psp", "PSP", "psp", [".ptf", ".ctf"], ["all", "pspunk", "shenron0", "archive"]], ["p3t", "PS3", "p3t", [".p3t"], ["all", "themezer", "ps3themes", "ps3pro", "archive"]], ["vita", "PS Vita", "vita", [".zip"], ["all", "psvt", "archive"]],
     ["switch", "Switch", "switch", [".nxtheme"], ["themezer"]], ["wiiu", "Wii U", "wiiu", [".utheme"], ["themezer"]], ["3ds", "3DS", "3ds", [".zip"], ["themezer"]],
-    ["wii", "Wii", "wii", [".mym", ".csm"], ["archive"]], ["xbox", "Xbox", "xbox", [".zip"], ["archive"]]].map(([id, label, dir, exts, sources]) => ({ id, label, dir: `skins/${dir}`, exts, sources })),
+    ["wii", "Wii", "wii", [".mym", ".csm", ".zip"], ["all", "wiithemer", "archive"]], ["xbox", "Xbox", "xbox", [".zip"], ["archive"]]].map(([id, label, dir, exts, sources]) => ({ id, label, dir: `skins/${dir}`, exts, sources })),
   sources: THEME_SOURCE_INFO,
   notBuilt: [{ name: "ThemePlaza", url: "https://themeplaza.art", kinds: ["3ds"], why: "Cloudflare browser check." }],
 };
 // invented entries (no third-party data): names and authors are made up, pictures are empty
 const themeSourcePage = (kind: string, source: string) => {
+  if(source==="superpsx")return (window as any).__superpsxCatalog ?? {items:[],total:0,pages:1};
   const items = Array.from({ length: 14 }, (_, i) => ({ id: source === "themezer" ? `1A${i}` : source === "pspunk" ? `ctf/sample_${i}.ctf` : source === "shenron0" ? `Sample ${i}.${i % 2 ? "ptf" : "ctf"}` : source === "ps3pro" ? `files/Sample_${i}.p3t` : `sample-item-${i}`,
     name: ["Aurora Night", "Paper Planes", "Retro Grid", "Ocean Glass", "Neon Garden", "Quiet Snow", "Copper Sky", "Midnight Rail", "Pixel Meadow", "Soft Static", "Lantern Walk", "Blue Hour", "Ember", "Long Name Theme With Many Words To Check Ellipsis"][i],
     author: ["pspunk", "ps3pro", "shenron0"].includes(source) ? "" : `maker${i}`, image: "", page: `https://example.invalid/${kind}/${i}`, downloads: 1000 - i * 37,
@@ -49,6 +56,20 @@ const themeSourcePage = (kind: string, source: string) => {
   return { items, total: 40, pages: 2 };
 };
 const backend: Record<string, (...a: any[]) => any> = {
+  x360_local_files: (path:string) => ({path:path||"/home/deck",parent:"/home/deck",entries:path&&path!=="/home/deck"?[]:[{name:"Documents",path:"/home/deck/Documents",directory:true},{name:"Downloads",path:"/home/deck/Downloads",directory:true},{name:"Pictures",path:"/home/deck/Pictures",directory:true}]}),
+  cover_wrap_get: (appid:string) => (window as any).__coverWraps?.[appid] ?? {mode:'auto'},
+  cover_wrap_search: () => (window as any).__coverWrapSearch ?? {candidates:[],errors:[]},
+  cover_wrap_select: (appid:string,provider:string,platform:string,id:string,name:string) => {
+    const w=window as any;w.__coverWraps??={};return w.__coverWraps[appid]=w.__coverWrapSelection??{mode:'selected',source:provider,platform,id,name};
+  },
+  cover_wrap_mode: (appid:string,mode:string) => {
+    const w=window as any;w.__coverWraps??={};return w.__coverWraps[appid]={mode};
+  },
+  square_artwork_list: (theme:string) => (window as any).__squareArt?.[theme]??{},
+  square_artwork_provider: (key?:string) => {if(key!==undefined)(window as any).__squareKeyConfigured=!!key;return {configured:!!(window as any).__squareKeyConfigured}},
+  square_artwork_search: () => (window as any).__squareSearch??{images:[],games:[],error:'Preview: supply your own image or configure SteamGridDB on the Deck.'},
+  square_artwork_download: () => (window as any).__squareDownload??{error:'No preview image supplied'},
+  x360_runtime_info: () => (window as any).__xuiRuntimeInfo ?? {},
   // Community UI fixtures: no real GitHub requests/downloads in the browser preview.
   community_update_status: (force: boolean) => {
     const w = window as any;
@@ -152,7 +173,7 @@ const backend: Record<string, (...a: any[]) => any> = {
     (w.__localMusicImports ??= []).push(path);
     if (w.__localMusicFailure) return { ok: false, error: "Invalid audio" };
     const folder = "ThemeHub-Local-Music-fixture";
-    w.__testPacks = [...(w.__testPacks ?? []).filter((p:any) => p.folder !== folder), { name: "Local music · song.mp3", folder, files: ["menu_music.mp3"], mappings: {}, ignore: [], music: true }];
+    w.__testPacks = [...(w.__testPacks ?? []).filter((p:any) => p.folder !== folder), { name: "Local music Â· song.mp3", folder, files: ["menu_music.mp3"], mappings: {}, ignore: [], music: true }];
     return { ok: true, folder };
   },
   list_sound_packs: () => (window as any).__testPacks ?? [],
@@ -175,9 +196,9 @@ const backend: Record<string, (...a: any[]) => any> = {
   cinematic_assets: (n: string) => (window as any).__cinematicAssets?.[n] ?? {video:`../bundle/cinematic/${n}.mp4`,poster:`../bundle/cinematic/${n}.jpg`},
   console_artwork_status: () => ({packs:[],busy:false,percent:0}),
   console_artwork_install: () => { (window as any).__consoleArtInstalled=true; return {success:true}; },
-  get_assets: (n: string) => new Set(['x360-blades-original','x360-kinect-dash','x360-metro-dash','x360-nxe-dash','xbox-original','xmb-ps3']).has(n)&&!(window as any).__consoleArtInstalled&&!new URLSearchParams(location.search).has('consoleArt')?{}:(window as any).__testAssets?.[n] ?? {},
-  list_wallpapers: () => ({ dir: "~/homebrew/data/DeckHomeThemes/wallpapers", files: [] }),
-  get_wallpaper: () => null,
+  get_assets: (n: string) => new Set(['x360-convection-font','x360-blades-original','x360-kinect-dash','x360-metro-dash','x360-nxe-dash','xbox-original','xmb-ps3','xmb-ps3-native','xmb-psp-native','wiiu-native-ui']).has(n)&&!(window as any).__consoleArtInstalled&&!new URLSearchParams(location.search).has('consoleArt')?{}:(window as any).__testAssets?.[n] ?? {},
+  list_wallpapers: () => ({ dir: "~/homebrew/data/DeckHomeThemes/wallpapers", files: Object.keys((window as any).__testWalls??{}) }),
+  get_wallpaper: (name:string) => (window as any).__testWalls?.[name]??null,
   get_x360_cabinet_wallpaper: (id:string) => /^[a-z0-9_]+$/i.test(id)?{background:`../out/import-fixtures/x360-cabinet/${id}.jpg`}:{error:"Unknown wallpaper"},
   // window.__testSwitchList = [{id,name,author,screens}] lists several .nxtheme files
   list_switch_themes: () => R() ? { themes: R().lists.switch ?? [], dir: "" } : ({ themes: (window as any).__testSwitchList ?? ((window as any).__testSwitch ? [{ id: "Test.nxtheme", name: (window as any).__testSwitch.name || "Test", author: (window as any).__testSwitch.author || "", screens: Object.keys((window as any).__testSwitch.screens || {}) }] : []), dir: "" }),
@@ -199,12 +220,13 @@ const backend: Record<string, (...a: any[]) => any> = {
   x360_avatar_remove: () => { const w = window as any; if (w.__testAssets?.["my-avatar"]) w.__testAssets["my-avatar"] = {}; return { success: true }; },
   wiiu_decide: () => ({ success: true, theme: "Test.utheme" }),
   get_native_mii: () => new URLSearchParams(location.search).has("nativeMii")?{url:"../out/native-mii-preview/models.json"}:{},
+  get_wii_standard: (original:boolean) => original&&new URLSearchParams(location.search).has("consoleArt")?fetch("../out/console-native-preview/wii-menu.json").then(r=>r.ok?r.json():null):null,
   get_wii_skin: (n: string) => realSkin("wii", n, (window as any).__testWii ?? null),
   get_3ds_skin: (n: string) => realSkin("n3ds", n, (window as any).__test3ds ?? null),
   // 3DS home badges: window.__test3dsBadges = {sets:[{name, badges:[{id,name,w,h,url}]}]} (py_modules/n3ds_themes.py list_badges)
   list_3ds_badges: () => (window as any).__test3dsBadges ?? { sets: [], dir: "~/homebrew/data/DeckHomeThemes/skins/3ds-badges" },
   // Xbox 360 packages: window.__testX360 = {"File name": read_x360 result (see tools/x360_corpus.py / py_modules/x360_themes.py)}
-  get_x360_skin: (n: string) => realSkin("x360", n, (window as any).__testX360?.[n] ?? null),
+  get_x360_skin: (n: string) => /^archive-[0-9a-f]{12}$/.test(n) && !R() ? fetch(`/out/import-fixtures/x360-archive/${n}.json`).then(r => r.ok ? r.json() : null) : realSkin("x360", n, (window as any).__testX360?.[n] ?? null),
   get_xbox_skin: (n: string) => realSkin("xbox", n, (window as any).__testXbox ?? null),
   get_ps4_skin: (n: string) => realSkin("ps4", n, (window as any).__testPs4 ?? null),
   import_ps4_downloads: () => (window as any).__testPs4Import ?? { success: true, imported: [], existing: [], errors: [] },
@@ -223,10 +245,31 @@ async function avatarPreviewCall(name:string,args:any[]) {
 }
 export const callable =
   (name: string) =>
-  async (...args: any[]) =>
-    name.startsWith('x360_engine_')
+  async (...args: any[]) => {
+    const animatedBridge = new URLSearchParams(location.search).get('animatedBridge');
+    if((name.startsWith('animated_wallpapers_')||name==='list_data_themes')&&animatedBridge&&/^http:\/\/127\.0\.0\.1:\d+$/.test(animatedBridge)){
+      const response=await fetch(`${animatedBridge}/${name}`,{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify(args)});
+      const result=await response.json();if(!response.ok)throw Error(result.error||'Wallpaper request failed');return result;
+    }
+    if(name.startsWith('animated_wallpapers_')){
+      const fixture=(window as any).__animatedWallpapers;
+      if(fixture?.[name])return fixture[name](...args);
+      if(name==='animated_wallpapers_list')return {items:[]};
+      if(name==='animated_wallpapers_browse')return {items:[],hasMore:false,errors:[]};
+      if(name==='animated_wallpapers_progress')return {};
+      if(name==='animated_wallpapers_workshop')return {items:[]};
+      return {ok:false,error:'Choose a fixture or connect the local wallpaper preview bridge.'};
+    }
+    const coverBridge = new URLSearchParams(location.search).get('coverBridge');
+    if(name.startsWith('cover_wrap_')&&coverBridge&&/^http:\/\/127\.0\.0\.1:\d+$/.test(coverBridge)){
+      const response=await fetch(`${coverBridge}/${name}`,{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify(args)});
+      const result=await response.json();if(!response.ok)throw Error(result.error||'Cover provider request failed');return result;
+    }
+    return (
+    (name.startsWith('x360_engine_')||name==='x360_runtime_info')
       ? avatarPreviewCall(name,args)
-      : backend[name]?.(...args);
+      : backend[name]?.(...args));
+  };
 export const definePlugin = (f: any) => f;
 export const routerHook = { addRoute() {}, removeRoute() {}, addPatch() { return {}; }, removePatch() {} };
 export const fetchNoCors = (u: string, init?: any) => fetch(u, init);

@@ -1,5 +1,6 @@
 import {t} from "../i18n";
 import {bladesSmallFallback} from "./xboxFallbackArtwork";
+import {useConvectionFont} from './convectionFont';
 import {BladesPages,BladesPage} from "./BladesPages";
 import {useBladesSweep} from "./useBladesSweep";
 import {openMarketplace} from "../marketplaceState";
@@ -48,6 +49,7 @@ const getBlades = () => [
 
 export function BladesHome() {
   const BLADES = getBlades();
+  const convectionFont=useConvectionFont();
   const api = useHome();
   const s = api.settings;
   const { W, H } = useStage();
@@ -89,7 +91,7 @@ export function BladesHome() {
       { key: "community", label: t("destCommunity"), sub: t("communityDesc"), img: a.live, icon: "globe", run: () => openSteam("community") },
     ],
     games: [
-      { key: "lib", label: "Games Library", sub: `${api.lib.games.length} games`, img: a.controller, icon: "library" as IconName, run: () => openPage("library") },
+      { key: "lib", label: "Games Library", sub: `${api.library.games.length} games`, img: a.controller, icon: "library" as IconName, run: () => openPage("library") },
       { key: "ach", label: t("destAchievements"), sub: t("achievementsProgress"), img: a.trophy, icon: "trophy" as IconName, run: () => openPage("achievements") },
       { key: "played", label: "Played Games", sub: "Your play history", icon: "gamepad" as IconName, run:()=>openPage("played") },
     ],
@@ -186,9 +188,9 @@ export function BladesHome() {
   return (
     <ThemeRoot onInput={onInput} hints={{a:t("select"),y:t("options")}}>
       <Stage background="#c8c7ce">
-        <style>{`${BLADES_FONT_CSS}
+        <style>{`${BLADES_FONT_CSS}${convectionFont}
           @property --dht-blade-x{syntax:"<length>";inherits:true;initial-value:116px}
-          .dht-blades{font-family:"DHT Blades",Tahoma,sans-serif;color:#39362d}
+          .dht-blades{font-family:var(--dht-blades-font,"DHT Blades"),Tahoma,sans-serif;color:#39362d}
           .dht-blades[data-in-page=true]>.dht-x360b-tab,.dht-blades[data-in-page=true]>.dht-blades-active-edge{transform:translateX(-1500px);pointer-events:none!important}
           .dht-blades[data-in-page=true]>.dht-x360b-tab[data-right=true]{transform:translateX(1500px)}
           .dht-blades>.dht-x360b-tab,.dht-blades>.dht-blades-active-edge{transition:transform 240ms ease-in}
@@ -234,7 +236,7 @@ export function BladesHome() {
               <div style={{fontSize:24,fontWeight:600,overflow:"hidden",whiteSpace:"nowrap",textOverflow:"ellipsis"}}>{api.user}</div>
               <div style={{display:"flex",alignItems:"center",gap:14,marginTop:6}}>
                 {customProfilePicture()||pickedPic||a.avatar?<img src={customProfilePicture()??pickedPic??a.avatar} alt="" style={{width:58,height:58,objectFit:"contain",border:"2px solid #a58555",background:"#726f60"}}/>:<Icon name="user" size={52} color="#776648"/>}
-                <div style={{flex:1,minWidth:0,fontSize:19,lineHeight:1.16}}><div style={{display:"flex",justifyContent:"space-between"}}><span>{t("games")}</span><span>{api.lib.games.length}</span></div><div style={{display:"flex",justifyContent:"space-between"}}><span>{t("friendsOnline")}</span><span>{st.friendsOnline??"—"}</span></div><div style={{display:"flex",justifyContent:"space-between"}}><span>{t("notifications")}</span><span>{st.notifications??"—"}</span></div></div>
+                <div style={{flex:1,minWidth:0,fontSize:19,lineHeight:1.16}}><div style={{display:"flex",justifyContent:"space-between"}}><span>{t("games")}</span><span>{api.library.games.length}</span></div><div style={{display:"flex",justifyContent:"space-between"}}><span>{t("friendsOnline")}</span><span>{st.friendsOnline??"—"}</span></div><div style={{display:"flex",justifyContent:"space-between"}}><span>{t("notifications")}</span><span>{st.notifications??"—"}</span></div></div>
               </div>
             </div>
             {list.slice(firstRow,firstRow+visibleRows).map((e,k)=>{

@@ -65,6 +65,14 @@ try {
     check(window.__settingsRoot()[0].sub().some(item=>item.settingsId==='native:colour-look'),'Vita look stays in Presets');
     seed({theme:'x360'});
     check(window.__settingsRoot()[0].sub().some(item=>item.settingsId==='native:dashboard'),'Xbox dashboard stays in Presets');
+    check(section('Games').some(item=>item.settingsId==='native:aurora-game-view'),'New Aurora case/disc control belongs in Games');
+    check(section('Audio').some(item=>item.settingsId==='native:imported-theme-music'),'Imported Xbox music belongs in Audio');
+    check(section('Screen').some(item=>item.settingsId==='native:cabinet-wallpaper'),'Kinect cabinet wallpaper belongs in Screen');
+    check(window.__settingsManage().some(item=>item.settingsId==='native:xbox-audio-decoder'),'Xbox decoder belongs in theme management');
+    check(!window.__settingsManage().some(item=>item.settingsId==='native:aurora-game-view'),'Aurora display control is not duplicated in theme management');
+    const auroraView=section('Games').find(item=>item.settingsId==='native:aurora-game-view');
+    auroraView.sub().find(item=>item.label==='Discs').action();
+    check(window.__getThemeSettings().x360.auroraGameView==='discs','New controls retain experimental storage fields');
     seed({theme:'gameamp'});
     check(section('Audio').some(item=>item.settingsId==='style:gameamp:visualizerMode'),'GameAmp visualizer in Audio');
     seed({theme:'switch'});
@@ -92,6 +100,7 @@ try {
     check(find(global,'Notifications').sub().some(item=>item.label.includes('all themes')),'Global popup scope visible');
     seed({theme:'ps5',sounds:true,themeOptions:{ps5:{sounds:false}}});
     const defaults = find(window.__settingsGlobal(),'Defaults').sub();
+    check(find(defaults,'Random theme after leaving a game')!==undefined,'New launch/rotation controls retained in Global defaults');
     check(find(defaults,'Navigation sounds').checked === true,'Global sound reads raw default despite a theme override');
     return {failures,count:ids.length};
   });

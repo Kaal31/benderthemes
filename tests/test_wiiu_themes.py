@@ -340,7 +340,7 @@ def test_theme_end_to_end():
             zz.writestr("cafe_barista_men.bps", bps_make(b"s" * 100, b"s" * 90 + b"t" * 20))
             zz.writestr("metadata.json", json.dumps({"Metadata": {"themeName": "Sound only"}}))
         r = W.read_utheme(sound, stock, du)
-        assert r["name"] == "Sound only" and r["art"] == {} and not r.get("needsStock") and r["ignored"] == ["cafe_barista_men"], r
+        assert r["name"] == "Sound only" and r["art"] == {} and not r.get("needsStock") and r["ignored"] == [] and r.get("audioErrors"), r
         # a broken Men2 patch loses only that part
         bad = os.path.join(t, "Bad.utheme")
         make_utheme(bad, men, men2)

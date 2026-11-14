@@ -79,7 +79,7 @@ const LAYOUT_OWN: Partial<Record<ThemeId, Path[]>> = {
   n3ds: [["n3dsSkin"], ["n3dsCursor"], ["n3dsTop"], ["n3dsArrows"], ["n3dsHandle"], ["n3dsLayout"]],
 };
 /** Records keyed by layout: a preset holds its layout's entry. */
-const PER_LAYOUT = ["iconPicks", "styles", "themeOptions", "wallpapers", "packs", "music", "musicPacks", "iconSizes", "titles", "coverStyles", "videoBackgrounds", "storeSections"];
+const PER_LAYOUT = ["gameArtworkModes","iconPicks", "styles", "themeOptions", "wallpapers", "packs", "music", "musicPacks", "iconSizes", "titles", "coverStyles", "videoBackgrounds", "storeSections"];
 /** Look settings that are not tied to a layout: a preset holds them too, but a preset that was never stored starts
  *  them from the factory defaults (not from whatever another preset left). */
 export const GLOBAL_PATHS: Path[] = [["pages"], ["hubStyle"]];

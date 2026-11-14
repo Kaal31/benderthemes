@@ -1,4 +1,4 @@
-"""Run the Xbox 360 reader over every STFS package (magic CON / LIVE / PIRS) under a folder.
+"""Run the Xbox 360 reader over every STFS package (magic CON / LIVE / PIRS / XUIZ) under a folder.
 Usage: python3 -I tools/x360_corpus.py <folder>
 Prints counts, errors and timings; never executes the files."""
 import os, sys, time
@@ -17,7 +17,7 @@ def main(root):
                     magic = h.read(4)
             except OSError:
                 continue
-            if magic not in (b"CON ", b"LIVE", b"PIRS"):
+            if magic not in (b"CON ", b"LIVE", b"PIRS", b"XUIZ"):
                 continue
             seen += 1
             t = time.time()

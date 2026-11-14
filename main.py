@@ -45,7 +45,7 @@ except Exception:  # pragma: no cover
 import decky
 
 IMAGE_EXT = (".png", ".jpg", ".jpeg", ".webp", ".gif")
-WALLPAPER_VIDEO_EXT = (".mp4", ".webm")
+WALLPAPER_VIDEO_EXT = (".mp4", ".webm", ".m4v")
 
 
 def _settings_path() -> str:
@@ -118,8 +118,10 @@ def _steamui_dir() -> str:
 
 def _mime(name: str) -> str:
     n = name.lower()
-    if n.endswith(".mp4"):
+    if n.endswith((".mp4", ".m4v")):
         return "video/mp4"
+    if n.endswith(".webm"):
+        return "video/webm"
     if n.endswith(".png"):
         return "image/png"
     if n.endswith(".webp"):
@@ -729,26 +731,12 @@ def _argb_to_css(v: str):
 
 
 def _read_vita(path: str):
-    if os.path.isdir(path):
-        base = path
+    from vita_source import open_theme
+    with open_theme(path) as read:
+        return _read_vita_content(path, read)
 
-        def read(rel):
-            p = os.path.normpath(os.path.join(base, rel))
-            if not p.startswith(os.path.normpath(base)) or not os.path.isfile(p):
-                return None
-            with open(p, "rb") as f:
-                return f.read()
-    elif zipfile is not None and zipfile.is_zipfile(path):
-        z = zipfile.ZipFile(path)
-        names = {n.lower(): n for n in z.namelist()}
-        xml_name = next((n for n in z.namelist() if n.lower().endswith("theme.xml")), None)
-        prefix = xml_name[: -len("theme.xml")] if xml_name else ""
 
-        def read(rel):
-            n = names.get((prefix + rel).lower()) or names.get(rel.lower())
-            return z.read(n) if n else None
-    else:
-        return None
+def _read_vita_content(path, read):
     xml_raw = read("theme.xml")
     if not xml_raw:
         return None
@@ -823,6 +811,24 @@ def _wiiu_stock_dir() -> str:
     user = _wiiu_stock_user_dir()
     try:
         import wiiu_themes
+        import console_artwork
+        cached = console_artwork.resource_dir('wiiu-stock-menu')
+        if cached:
+            # Reuse the verified downloaded base for every custom theme. Keep
+            # explicitly imported files (including a separate audio dump).
+            for name in wiiu_themes.STOCK:
+                target = os.path.join(user, name)
+                source = cached / name
+                if not os.path.exists(target) and source.is_file():
+                    os.makedirs(user, exist_ok=True)
+                    import tempfile
+                    fd, temporary = tempfile.mkstemp(dir=user, prefix='.stock-')
+                    os.close(fd)
+                    try:
+                        shutil.copyfile(source, temporary)
+                        os.replace(temporary, target)
+                    finally:
+                        if os.path.exists(temporary): os.remove(temporary)
         if wiiu_themes.stock_status(user):
             return user
     except Exception:
@@ -1383,15 +1389,22 @@ def _read_psp_cached(path: str):
     return _pickle_cached("pspskin", text, lambda: console_themes.read_psp(path))
 
 
-def _read_x360_cached(path: str):
+def _read_x360_cached(path: str, member: str = ""):
     """x360_themes.read_x360, remembered on disk (pictures are decoded)."""
     import x360_themes
+    import x360_sources
+    import x360_audio
+    x360_audio.configure(shutil.which('ffmpeg'),_vgm_path() if _vgm_ready() else None,os.path.join(_cache_root(),'xma-audio'))
+    def read():
+        return x360_sources.read_source(path, member) if member or os.path.isdir(path) or path.lower().endswith(".zip") else x360_themes.read_x360(path)
+    if os.path.isdir(path):
+        return read()  # Nested file changes must not reuse the parent folder timestamp.
     try:
         st = os.stat(path)
-        text = f"{os.path.realpath(path)}|{st.st_size}|{st.st_mtime_ns}|{x360_themes.READER_VERSION}"
+        text = f"{os.path.realpath(path)}|{st.st_size}|{st.st_mtime_ns}|{x360_themes.READER_VERSION}|{member}|{x360_audio.decoder_key()}"
     except Exception:
-        return x360_themes.read_x360(path)
-    return _pickle_cached("x360skin", text, lambda: x360_themes.read_x360(path))
+        return read()
+    return _pickle_cached("x360skin", text, read)
 
 
 def _read_xbox_cached(path: str):
@@ -1420,8 +1433,7 @@ def _read_3ds_cached(path: str):
     """n3ds_themes.read_3ds_theme, remembered on disk (the wallpapers are decoded to PNG)."""
     import n3ds_themes
     try:
-        st = os.stat(path)
-        text = f"{os.path.realpath(path)}|{st.st_size}|{st.st_mtime_ns}|{n3ds_themes.READER_VERSION}"
+        text = f"{os.path.realpath(path)}|{n3ds_themes.source_stamp(path)}|{n3ds_themes.READER_VERSION}"
     except Exception:
         return n3ds_themes.read_3ds_theme(path)
     return _pickle_cached("n3dsskin", text, lambda: n3ds_themes.read_3ds_theme(path))
@@ -1841,12 +1853,95 @@ class Plugin:
                         "mappings": meta.get("mappings") or {},
                         "ignore": meta.get("ignore") or [],
                         "music": bool(meta.get("music")),
+                        "musicLoop": meta.get("musicLoop"),
                         "author": meta.get("author") or "",
                     }
                 )
             except Exception as e:
                 decky.logger.warning(f"bad pack {entry}: {e}")
         return out
+
+    # Animated wallpapers share the persistent wallpapers folder and data-theme registry.
+    async def animated_wallpapers_list(self):
+        import animated_wallpapers as aw
+        items = await asyncio.to_thread(aw.list_items, _data_dir())
+        serving = await _ensure_server()
+        for item in items:
+            poster = item.pop('_posterPath', None)
+            if poster and serving:
+                ident = 'animated-poster-' + item['id'] + '.png'
+                _vi.files[ident] = poster
+                item['poster'] = f"http://127.0.0.1:{_vi.port}/{_vi.token}/f/{ident}"
+            path = item.pop('_mediaPath', None)
+            if path and serving:
+                ident = 'animated-' + item['id'] + os.path.splitext(path)[1]
+                _vi.files[ident] = path
+                item['url'] = f"http://127.0.0.1:{_vi.port}/{_vi.token}/f/{ident}"
+        return {'items': items}
+
+    async def animated_wallpapers_poster(self, ident, data_url):
+        import animated_wallpapers as aw
+        try: return await asyncio.to_thread(aw.save_poster, _data_dir(), ident, data_url)
+        except Exception as e: return {'ok': False, 'error': str(e)[:200]}
+
+    async def animated_wallpapers_inspect(self, path):
+        import animated_wallpapers as aw
+        try: return {'ok': True, **await asyncio.to_thread(aw.inspect_source, path)}
+        except Exception as e: return {'ok': False, 'error': str(e)[:300]}
+
+    async def animated_wallpapers_import(self, path, configs=None, bindings=None, source='local'):
+        import animated_wallpapers as aw
+        try:
+            item = await asyncio.to_thread(aw.import_source, _data_dir(), path, configs, bindings, source)
+            import data_themes
+            data_themes._cache.clear()
+            return {'ok': True, 'item': item}
+        except Exception as e: return {'ok': False, 'error': str(e)[:300]}
+
+    async def animated_wallpapers_remove(self, ident):
+        import animated_wallpapers as aw
+        try:
+            result = await asyncio.to_thread(aw.remove, _data_dir(), ident)
+            import data_themes
+            data_themes._cache.clear()
+            return result
+        except Exception as e: return {'ok': False, 'error': str(e)[:300]}
+
+    async def animated_wallpapers_browse(self, query='', page=1, source='all'):
+        import animated_wallpapers as aw
+        return await asyncio.to_thread(aw.browse, _data_dir(), query, page, source)
+
+    async def animated_wallpapers_preview(self, ident):
+        import animated_wallpapers as aw
+        try: return await asyncio.to_thread(aw.wallspace_preview, ident)
+        except Exception: return {'error': 'Preview unavailable. Open the source page or try again.'}
+
+    async def animated_wallpapers_download(self, ident, username='', qr=False):
+        import wallpaper_workshop
+        try: return wallpaper_workshop.start(_data_dir(), ident, username, qr)
+        except Exception as e: return {'ok': False, 'error': str(e)[:250]}
+
+    async def animated_wallpapers_download_wallspace(self, ident):
+        import wallpaper_workshop
+        try: return wallpaper_workshop.start_wallspace(_data_dir(), ident)
+        except Exception as e: return {'ok': False, 'error': str(e)[:250]}
+
+    async def animated_wallpapers_download_liveshell(self, ident):
+        import wallpaper_workshop
+        try: return wallpaper_workshop.start_wallspace(_data_dir(), ident, "liveshell")
+        except Exception as e: return {"ok": False, "error": str(e)[:250]}
+
+    async def animated_wallpapers_progress(self):
+        import wallpaper_workshop
+        return wallpaper_workshop.status()
+
+    async def animated_wallpapers_cancel(self):
+        import wallpaper_workshop
+        return wallpaper_workshop.cancel()
+
+    async def animated_wallpapers_workshop(self):
+        import animated_wallpapers as aw
+        return {'items': await asyncio.to_thread(aw.discover_workshop)}
 
     # ───── wallpapers ─────
     async def list_wallpapers(self):
@@ -1885,15 +1980,25 @@ class Plugin:
         os.makedirs(psp_dir, exist_ok=True)
         psp = sorted(n for n in set(os.listdir(psp_dir)) | set(_resource_names("skins/psp")) if n.lower().endswith((".ptf", ".ctf")))
         p3t = sorted(n for n in set(os.listdir(p3t_dir)) | set(_resource_names("skins/p3t")) if n.lower().endswith(".p3t"))
+        import vita_source
         vita = sorted(
-            n for n in set(os.listdir(vita_dir)) | set(_resource_names("skins/vita"))
-            if n.lower().endswith(".zip") or os.path.isfile(os.path.join(_user_resource(vita_dir, n, "skins/vita"), "theme.xml"))
+            n for n, path in _skin_entries("vita") if vita_source.peek(path)
         )
         x360, x360pics, x360names = [], [], {}
         try:
             import x360_themes
             os.makedirs(os.path.join(base, "x360"), exist_ok=True)
             for n, p in _skin_entries("x360"):
+                if os.path.isdir(p) or n.lower().endswith(".zip"):
+                    try:
+                        import x360_sources
+                        for item in x360_sources.variants(p):
+                            key = n + x360_sources.SEPARATOR + item["id"]
+                            (x360pics if item.get("kind") == "gamerpic" else x360).append(key)
+                            x360names[key] = item["name"] + " — " + n
+                    except Exception as error:
+                        decky.logger.warning(f"x360 collection {n}: {error}")
+                    continue
                 k = x360_themes.peek(p) if os.path.isfile(p) else None
                 if k == "theme":
                     x360.append(n)
@@ -2002,8 +2107,19 @@ class Plugin:
             decky.logger.error(f"ps4 theme read failed: {e}")
             return {"error": str(e)}
 
-    async def get_wii_standard(self):
+    async def get_wii_standard(self, original: bool = False):
         import wii_standard
+        if original:
+            import console_artwork
+            folder = console_artwork.resource_dir("wii-native-menu")
+            if folder is None:
+                await asyncio.to_thread(console_artwork.install, "wii")
+                folder = console_artwork.resource_dir("wii-native-menu")
+            if folder:
+                try:
+                    return json.loads(await asyncio.to_thread((folder / "menu.json").read_text, encoding="utf-8"))
+                except (OSError, ValueError):
+                    pass
         return await asyncio.to_thread(wii_standard.standard_skin)
 
     async def get_wii_skin(self, name: str, member: str = "", base: str = ""):
@@ -2022,7 +2138,17 @@ class Plugin:
         if not name or not (os.path.isfile(p) or os.path.isdir(p)):
             return None
         try:
-            return await asyncio.to_thread(_read_3ds_cached, p)
+            result = await asyncio.to_thread(_read_3ds_cached, p)
+            if not result:
+                return None
+            result = dict(result)
+            bgm, cues = result.pop('_bgm', None), result.pop('_sfx', {})
+            try:
+                import n3ds_audio
+                result.update(await asyncio.to_thread(n3ds_audio.publish, result['name'], bgm, cues, _theme_sound_root()))
+            except Exception as error:
+                result['audioErrors'] = [str(error)]
+            return result
         except Exception as e:
             decky.logger.error(f"3ds theme read failed: {e}")
             return None
@@ -2057,11 +2183,28 @@ class Plugin:
 
     async def get_x360_skin(self, name: str):
         """Xbox 360 theme / gamer picture package from skins/x360/ (any file name), or None."""
-        p = _skin_path("x360", name)
-        if not name or not os.path.isfile(p):
+        import x360_sources
+        filename, separator, member = name.partition(x360_sources.SEPARATOR)
+        p = _skin_path("x360", filename)
+        if not filename or not (os.path.isfile(p) or os.path.isdir(p)):
             return None
         try:
-            return await asyncio.to_thread(_read_x360_cached, p)
+            result = await asyncio.to_thread(_read_x360_cached, p, member if separator else "")
+            if result and result.get('sceneAudio') and await _ensure_server():
+                import base64,hashlib
+                result = dict(result)
+                audio = {}
+                folder = os.path.join(_cache_root(),'xma-served');os.makedirs(folder,exist_ok=True)
+                for source,url in result['sceneAudio'].items():
+                    if not url.startswith('data:audio/'):continue
+                    header,body=url.split(',',1);raw=base64.b64decode(body)
+                    ext='.ogg' if 'audio/ogg' in header else '.mp3' if 'audio/mpeg' in header else '.wav'
+                    ident='xma-'+hashlib.sha256(raw).hexdigest()+ext;target=os.path.join(folder,ident)
+                    if not os.path.isfile(target):
+                        with open(target,'wb') as stream:stream.write(raw)
+                    _vi.files[ident]=target;audio[source]=_vi.url('f/'+ident)
+                result['sceneAudio']=audio
+            return result
         except Exception as e:
             decky.logger.error(f"x360 theme read failed: {e}")
             return None
@@ -2208,7 +2351,23 @@ class Plugin:
         if not name or not p.lower().endswith(".utheme") or not os.path.isfile(p):
             return None
         try:
-            return await asyncio.to_thread(_read_wiiu_cached, p)
+            import wiiu_themes, console_artwork
+            stock = await asyncio.to_thread(wiiu_themes.stock_status, _wiiu_stock_dir())
+            info = await asyncio.to_thread(wiiu_themes.utheme_info, p)
+            required = {base + ('.bfsar' if base == wiiu_themes.AUDIO else '.pack') for base in (info or {}).get('needs', {})}
+            if any(name not in stock for name in required) or (bool((info or {}).get('other')) and console_artwork.resource_dir('wiiu-stock-menu') is None):
+                # A selected custom theme uses the same persistent base cache
+                # as a stock-theme install; patch results have their own cache.
+                await asyncio.to_thread(console_artwork.install, 'wiiu-stock', True)
+            result = dict(await asyncio.to_thread(_read_wiiu_cached, p))
+            audio = result.pop("_audio", None)
+            if audio:
+                try:
+                    import wiiu_audio
+                    result.update(await asyncio.to_thread(wiiu_audio.publish, result["name"], audio, _theme_sound_root()))
+                except Exception as error:
+                    result["audioErrors"] = [str(error)]
+            return result
         except Exception as e:
             decky.logger.error(f"wii u theme read failed: {e}")
             return None
@@ -2308,9 +2467,21 @@ class Plugin:
         return {"url": f"http://127.0.0.1:{_vi.port}/{_vi.token}/f/{ident}"}
 
     async def get_assets(self, name: str):
+        if name == "x360-convection-font":
+            import console_font
+            font = console_font.font_path()
+            if font and await _ensure_server():
+                ident = "convection-" + console_font.VERSION + ".ttf"
+                _vi.files[ident] = str(font)
+                return {"regular": f"http://127.0.0.1:{_vi.port}/{_vi.token}/f/{ident}"}
+            return {}
         import console_artwork
         optional = console_artwork.spec(name)
         optional_dir = console_artwork.resource_dir(name) if optional else None
+        if name in {"wiiu-native-ui", "xmb-ps3-native", "xmb-psp-native"} and optional_dir is None:
+            group = {"wiiu-native-ui": "wiiu", "xmb-ps3-native": "ps3", "xmb-psp-native": "psp"}[name]
+            await asyncio.to_thread(console_artwork.install, group)
+            optional_dir = console_artwork.resource_dir(name)
         relative = "assets/" + _safe_name(name)
         folder = os.path.join(_data_dir(), relative)
         out = {}
@@ -2410,6 +2581,114 @@ class Plugin:
         return await asyncio.to_thread(x360_avatar.status, self._x360_avatar_dir())
 
     # ───── local media server (sounds, music, videos) ─────
+    async def x360_local_files(self, path: str = ""):
+        import x360_filebrowser
+        try:
+            return await asyncio.to_thread(x360_filebrowser.list_folder, decky.DECKY_USER_HOME, str(path))
+        except (OSError, ValueError) as error:
+            return {"entries": [], "error": str(error)}
+
+    async def x360_runtime_info(self):
+        """Local read-only telemetry for imported dashboard fields."""
+        import x360_telemetry
+        return await asyncio.to_thread(x360_telemetry.read_runtime)
+
+    async def _cover_wrap_reply(self, result):
+        path = result.pop("path", None)
+        if path and await _ensure_server():
+            key = "wrap-" + os.path.basename(path)
+            _vi.files[key] = path
+            result["url"] = _vi.url("f/" + key)
+        return result
+
+    async def square_artwork_list(self, theme: str):
+        import square_artwork
+        paths = await asyncio.to_thread(square_artwork.images, _data_dir(), theme)
+        if not await _ensure_server():
+            return {}
+        result = {}
+        for appid, path in paths.items():
+            key = "square-" + os.path.basename(path)
+            _vi.files[key] = path
+            result[appid] = _vi.url("f/" + key)
+        return result
+
+    async def square_artwork_save(self, theme: str, appid: str, image: str, automatic: bool = False):
+        import square_artwork
+        try:
+            await asyncio.to_thread(square_artwork.save, _data_dir(), theme, appid, image, bool(automatic))
+            return {"images": await self.square_artwork_list(theme)}
+        except Exception as error:
+            return {"error": str(error)}
+
+    async def square_artwork_remove(self, theme: str, appid: str):
+        import square_artwork
+        try:
+            await asyncio.to_thread(square_artwork.remove, _data_dir(), theme, appid)
+            return {"images": await self.square_artwork_list(theme)}
+        except Exception as error:
+            return {"error": str(error)}
+
+    async def square_artwork_provider(self, key: str = None):
+        import square_artwork
+        try:
+            return await asyncio.to_thread(square_artwork.configure, _data_dir(), key)
+        except Exception as error:
+            return {"error": str(error)}
+
+    async def square_artwork_search(self, appid: str, name: str, steam: bool, provider_game: str = ""):
+        import square_artwork
+        try:
+            return await asyncio.to_thread(square_artwork.search, _data_dir(), appid, name, steam, provider_game)
+        except Exception:
+            return {"images": [], "games": [], "error": "SteamGridDB is unavailable or the API key was rejected. Local artwork remains available."}
+
+    async def square_artwork_download(self, url: str):
+        import square_artwork
+        try:
+            return await asyncio.to_thread(square_artwork.download, url)
+        except Exception as error:
+            return {"error": str(error)}
+
+    async def cover_wrap_get(self, appid: str, name: str = "", discover: bool = False):
+        import cover_wraps
+        try:
+            result = await asyncio.to_thread(cover_wraps.resolve, _data_dir(), appid, name, bool(discover))
+            return await self._cover_wrap_reply(result)
+        except Exception as error:
+            return {"mode": "auto", "error": str(error)}
+
+    async def cover_wrap_search(self, query: str, provider: str = "all", refresh: bool = False):
+        import cover_wraps
+        try:
+            return await asyncio.to_thread(cover_wraps.search, _data_dir(), query, provider, bool(refresh))
+        except Exception as error:
+            return {"candidates": [], "errors": [str(error)]}
+
+    async def cover_wrap_select(self, appid: str, provider: str, platform: str, ident: str, name: str):
+        import cover_wraps
+        try:
+            result = await asyncio.to_thread(cover_wraps.select, _data_dir(), appid, provider, platform, ident, name)
+            return await self._cover_wrap_reply(result)
+        except Exception as error:
+            return {"error": str(error)}
+
+    async def cover_wrap_import(self, appid: str, path: str):
+        import cover_wraps
+        try:
+            result = await asyncio.to_thread(cover_wraps.import_file, _data_dir(), appid, path)
+            return await self._cover_wrap_reply(result)
+        except Exception as error:
+            return {"error": str(error)}
+
+    async def cover_wrap_mode(self, appid: str, mode: str):
+        import cover_wraps
+        try:
+            result = await asyncio.to_thread(cover_wraps.set_mode, _data_dir(), appid, mode)
+            return await self._cover_wrap_reply(result)
+        except Exception as error:
+            return {"error": str(error)}
+
     async def castle_weather(self):
         """Opt-in IP-based weather; HTTPS only, cached ten minutes, no location persisted."""
         cached = getattr(self, "_castle_weather_cache", None)
@@ -2626,6 +2905,8 @@ class Plugin:
             decky.logger.warning(f"could not link sounds: {e}")
 
     async def _unload(self):
+        import wallpaper_workshop
+        wallpaper_workshop.cancel()
         task = getattr(self, "_community_updates", None)
         if task is not None:
             task.cancel()

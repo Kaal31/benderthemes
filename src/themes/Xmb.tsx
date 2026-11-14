@@ -1,3 +1,7 @@
+import {useGameBackgroundPicker,useGameBackground,GameBackgroundLayer} from "../gameBackgrounds";
+import {pspFallbackIcon} from "./pspFallbackIcons";
+import {PS3_ICONS} from "./xmbOriginalIcons";
+import {useAssets} from "../assets";
 import {backgroundMediaKind} from "../backgroundMedia";
 import { styleOf } from "../engine/themeStyles";
 import {BackgroundMedia} from "../WallpaperMedia";
@@ -26,7 +30,6 @@ import { useCssVar } from "../cssvars";
 const cssFraction = (v: string) => { const n = parseFloat(v); return Number.isFinite(n) ? clamp(n > 1 ? n / 100 : n, 0, 1) : 0; };
 import { fmtDuration, fmtSize, LocalVideo, LocalVideoView, TrailerVideo, useScreenshots, useVideos } from "../media";
 import { applyPreset, currentPresetId, presetGroups } from "../presets";
-import { PS3_ICONS } from "./xmbOriginalIcons";
 import { downloadLine, pauseDownload, removeDownload, resumeDownload, useDownloads } from "../downloads";
 import { fmtClock, MusicAlbum, musicPlaybackItems, musicPlayer, useMusic, usePlayer } from "../musicPlayer";
 import { HudArt, Ps3Notice, XmbBar, XmbBusy, XmbInfoBar, XmbMusicScreen } from "./XmbHud";
@@ -77,11 +80,17 @@ const glowSize = (pct: number) => 0.7 + 0.3 * (pct / 100);
 type Variant = "ps3" | "psp";
 
 function StockXmbIcon({name,size,variant,skinFallback=false}:{name:string;size:number;variant:Variant;skinFallback?:boolean}) {
+  const fallbackStyle=useSettings().pspFallbackIconStyle??"classic";
+  const original=useAssets(variant==="psp"?"xmb-psp-native":"xmb-ps3-native");
+  const alias:Record<string,string>={settings:"gear",globe:"network",psn:"network",trophies:"trophy",games:"game",images:"photo",mail:"chat"};
+  const native=variant==="psp"&&(name==="globe"||name==="network")?original.browser??original[name]:original[name]??original[alias[name]];
   const style:CSSProperties={width:size,height:size,display:"block",objectFit:"contain",filter:!["psn","store"].includes(name)?"brightness(0) invert(1) drop-shadow(0 2px 1px #0003)":variant==="psp"||skinFallback?"grayscale(1) drop-shadow(0 2px 1px #0007)":undefined};
+  if(native)return <img className="dht-xmb-icon" data-icon-source="gitflic-native" data-native-role={name} src={native} style={{...style,filter:"drop-shadow(0 2px 1px #0003)"}}/>;
+  if(variant==="psp"&&fallbackStyle!=="legacy")return <img className="dht-xmb-icon" data-icon-source="independent-fallback" data-fallback-style={fallbackStyle} src={pspFallbackIcon(name,fallbackStyle)} style={{...style,filter:"drop-shadow(0 2px 1px #0004)"}}/>;
   if(variant==="psp" && name==="music") return <svg viewBox="0 0 64 64" style={style} aria-hidden="true"><defs><linearGradient id="pspNote" x2="0" y2="1"><stop stopColor="#fff"/><stop offset="1" stopColor="#bfc0c1"/></linearGradient></defs><path d="M28 5 L52 10 V45 C52 57 32 62 32 51 C32 45 40 41 47 42 V17 L33 13 V48 C33 60 12 65 12 54 C12 47 21 43 28 45 Z" fill="url(#pspNote)" stroke="#efefef" strokeWidth="1"/></svg>;
-  if(variant==="psp" && (name==="globe"||name==="network")) return <svg viewBox="0 0 64 64" style={style} aria-hidden="true"><g fill="#eee">{Array.from({length:12},(_,i)=><circle key={i} cx={32+26*Math.cos(i*Math.PI/6)} cy={32+26*Math.sin(i*Math.PI/6)} r="1.7"/>)}</g><text x="32" y="38" textAnchor="middle" fontFamily="Arial,sans-serif" fontSize="16" fontWeight="bold" textLength="42" lengthAdjust="spacingAndGlyphs" fill="#eee">WWW</text></svg>;
-  const src=PS3_ICONS[name];
-  return src?<img className="dht-xmb-icon" data-icon-source="esseti" src={src} style={style}/>:<Icon name={name as IconName} size={size} color="#fff"/>;
+  if(variant==="psp" && (name==="globe"||name==="network")) return <svg data-icon-source="authored-fallback" viewBox="0 0 64 64" style={style} aria-hidden="true"><g fill="none" stroke="#eee" strokeWidth="3"><circle cx="32" cy="32" r="25"/><ellipse cx="32" cy="32" rx="11" ry="25"/><path d="M7 32h50M12 18h40M12 46h40"/></g></svg>;
+  const recreated=PS3_ICONS[name];
+  return recreated?<img className="dht-xmb-icon" data-icon-source="recreated-fallback" src={recreated} style={style}/>:<Icon name={name as IconName} size={size} color="#fff"/>;
 }
 
 /** Some themes draw their categories as words, not pictures: a wide strip (e.g. 512 × 32) with the
@@ -722,8 +731,8 @@ export function XmbHome({ variant }: { variant: Variant }) {
   const menu = useMenu();
   const p3tSkin = useP3t();
   const shots = useScreenshots();
-  // Icons when no .p3t skin supplies one: a PS3 icon set if the build has one
-  // (xmb-ps3), else the RetroArch "monochrome" set (CC BY 4.0), else drawn.
+  // Verified external stock icons take priority when no imported skin supplies one.
+  // Existing vector recreations and drawn glyphs remain the fallback.
   const vids = useVideos();
   const downloads = useDownloads();
   const music = useMusic();
@@ -962,6 +971,10 @@ export function XmbHome({ variant }: { variant: Variant }) {
   const selRaw = inFolder ? stack[stack.length - 1].sel : sels[cat.key] ?? cat.start ?? 0;
   const sel = clamp(selRaw, 0, Math.max(0, items.length - 1));
   const cur = items[sel];
+  const gameBackgroundPicker=useGameBackgroundPicker(s,variant);
+  const assignedBackground=useGameBackground(s,variant,cur?.game);
+  const [failedBackground,setFailedBackground]=useState("");
+  const customBackground=assignedBackground && failedBackground!==assignedBackground.url ? assignedBackground : null;
   useReportFocus(cur?.game);
 
   // Rest on a game for a moment → its trailer plays inside the icon and its art becomes the backdrop.
@@ -970,7 +983,7 @@ export function XmbHome({ variant }: { variant: Variant }) {
   useEffect(() => {
     setPreviewKey("");
     setBackdrop(null);
-    if (!s.trailers.preview || !cur || api.busy) return;
+    if (!s.trailers.preview || !cur || api.busy || customBackground || gameBackgroundPicker.isOpen) return;
     const g = cur.game ?? (cur.video?.appid ? api.lib.byId.get(cur.video.appid) : undefined);
     if (!cur.game && !cur.video) return;
     const backdropDelay = variant === "psp" ? 2500 : 900;
@@ -981,7 +994,7 @@ export function XmbHome({ variant }: { variant: Variant }) {
       clearTimeout(t1);
       clearTimeout(t2);
     };
-  }, [variant, cur?.key, s.trailers.preview, api.busy]);
+  }, [variant, cur?.key, s.trailers.preview, api.busy,customBackground?.url,gameBackgroundPicker.isOpen]);
 
   // PSP: the info bar drops down when a download starts or finishes
   const [infoMsg, setInfoMsg] = useState("");
@@ -1044,11 +1057,12 @@ export function XmbHome({ variant }: { variant: Variant }) {
     }
     if (cur?.game) {
       const g = cur.game;
-      menu.open([{ label: t("start"), action: () => api.launch(g) }, { label: t("watchTrailer"), action: () => api.playTrailer(g) }, { label: t("information"), action: () => api.details(g) }, { label: t("gameOptions"), action: () => api.nativeMenu(g) }, ...extra], g.name);
+      menu.open([{ label: t("start"), action: () => api.launch(g) }, { label: t("watchTrailer"), action: () => api.playTrailer(g) }, gameBackgroundPicker.item(g), { label: t("information"), action: () => api.details(g) }, { label: t("gameOptions"), action: () => api.nativeMenu(g) }, ...extra], g.name);
     } else menu.open(extra);
   };
 
   const onInput = (p: Press): boolean => {
+    if(gameBackgroundPicker.handle(p))return true;
     if (menu.handle(p)) return true;
     const n = items.length;
     switch (p.btn) {
@@ -1101,7 +1115,7 @@ export function XmbHome({ variant }: { variant: Variant }) {
         options();
         return true;
       case "menu":
-        if (cur?.game) api.nativeMenu(cur.game);
+        if (cur?.game) options();
         return true;
     }
     return false;
@@ -1260,6 +1274,7 @@ export function XmbHome({ variant }: { variant: Variant }) {
             <div style={{ position: "absolute", inset: 0, background: "linear-gradient(90deg, rgba(0,0,0,0.55), rgba(0,0,0,0.25) 60%, rgba(0,0,0,0.15))" }} />
           </div>
         )}
+        <GameBackgroundLayer media={customBackground} paused={api.busy||gameBackgroundPicker.isOpen} onFailure={()=>setFailedBackground(assignedBackground?.url??"")}/>
         <style>{"@keyframes dhtPic1 { from { opacity: 0 } to { opacity: 1 } } @keyframes dhtFocusIn { from { opacity: 0; transform: translate(-50%,-50%) scale(.7) } to { opacity: calc(.6 * var(--dht-glow, 1)); transform: translate(-50%,-50%) scale(1) } } @keyframes dhtFocusPulse { 0%,100% { opacity: calc(.45 * var(--dht-glow, 1)); transform: translate(-50%,-50%) scale(.97) } 50% { opacity: calc(.7 * var(--dht-glow, 1)); transform: translate(-50%,-50%) scale(1.03) } } .dht-xmb-focus { animation: dhtFocusIn 280ms cubic-bezier(.2,.8,.2,1) both, dhtFocusPulse 2.6s ease-in-out 280ms infinite; } @keyframes dhtFocusInCat { from { opacity: 0; transform: translate(-50%,-50%) scale(.7) } to { opacity: calc(1 * var(--dht-glow, 1)); transform: translate(-50%,-50%) scale(1) } } @keyframes dhtFocusPulseCat { 0%,100% { opacity: calc(.78 * var(--dht-glow, 1)); transform: translate(-50%,-50%) scale(.97) } 50% { opacity: calc(1 * var(--dht-glow, 1)); transform: translate(-50%,-50%) scale(1.04) } } .dht-xmb-focus { filter: brightness(max(1, var(--dht-glow, 1))); } .dht-xmb-focus--cat { animation: dhtFocusInCat 280ms cubic-bezier(.2,.8,.2,1) both, dhtFocusPulseCat 2.6s ease-in-out 280ms infinite; } .dht-xmb-focus.dht-xmb-nopulse { animation: dhtFocusIn 280ms cubic-bezier(.2,.8,.2,1) both; } .dht-xmb-focus--cat.dht-xmb-nopulse { animation: dhtFocusInCat 280ms cubic-bezier(.2,.8,.2,1) both; }"}</style>
         {fx.labels && skin?.text && <style>{themeTextCss(skin.text)}</style>}
         <style>{".dht-xmb-shadowed > div > div{box-shadow:none!important}"}</style>
@@ -1428,6 +1443,7 @@ export function XmbHome({ variant }: { variant: Variant }) {
         {downloads.running && <XmbBusy W={W} H={H} art={art} />}
         {variant === "psp" && <XmbMusicScreen W={W} H={H} art={art} />}
         <MenuView menu={menu} variant={variant === "psp" ? "psp" : "xmb"} art={variant === "psp" && fx.visuals ? { panel: rawSkin?.visuals?.optionMenu, focus: rawSkin?.visuals?.menuFocus } : undefined} />
+        {gameBackgroundPicker.view}
       </Stage>
     </ThemeRoot>
   );

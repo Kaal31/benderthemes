@@ -1,0 +1,44 @@
+<!doctype html>
+<html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<!-- Resolve every relative URL against the site root: the shared modules (avatar-*.js) fetch data/... relative to the document. -->
+<base href="../">
+<title>Avatar Editor</title>
+<link rel="stylesheet" href="client/editor-tokens.css">
+<link rel="stylesheet" href="client/editor.css">
+
+</head><body>
+<div id="backdrop" aria-hidden="true"></div>
+<!-- Per-screen layer drawn BEHIND the avatar (mirror, gamer picture backdrop, lineup floor shadows). -->
+<div id="underlay" aria-hidden="true"></div>
+<!-- LT/RT turntable ring under the avatar [F:04-features_eYSj-t089_0]; an SVG stand-in for the 3D ring. -->
+<div id="turntable" aria-hidden="true" hidden>
+  <svg viewBox="0 0 410 100" preserveAspectRatio="none">
+    <defs>
+      <linearGradient id="tt-ring" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#fbfbf9"/><stop offset=".45" stop-color="#b9bcb6"/><stop offset="1" stop-color="#6e726c"/></linearGradient>
+      <linearGradient id="tt-tab" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#f4f2e6"/><stop offset="1" stop-color="#b5b19a"/></linearGradient>
+      <linearGradient id="tt-arrow" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#8a8d88"/><stop offset="1" stop-color="#4d504c"/></linearGradient>
+    </defs>
+    <ellipse cx="205" cy="52" rx="200" ry="24" fill="none" stroke="#5e625c" stroke-width="13" opacity=".55"/>
+    <ellipse cx="205" cy="50" rx="200" ry="24" fill="none" stroke="url(#tt-ring)" stroke-width="10"/>
+    <path d="M70 18 h95 v-10 l26 18 -26 18 v-10 h-95z" fill="url(#tt-arrow)"/>
+    <path d="M340 18 h-95 v-10 l-26 18 26 18 v-10 h95z" fill="url(#tt-arrow)"/>
+    <path d="M50 18 h42 v40 q0 12 -21 22 q-21 -10 -21 -22z" fill="url(#tt-tab)" stroke="#7c7966" stroke-width="2"/>
+    <path d="M318 18 h42 v40 q0 12 -21 22 q-21 -10 -21 -22z" fill="url(#tt-tab)" stroke="#7c7966" stroke-width="2"/>
+    <text x="71" y="52" text-anchor="middle" class="tt-text">LT</text><text x="339" y="52" text-anchor="middle" class="tt-text">RT</text>
+  </svg>
+</div>
+<div id="stage" aria-label="Avatar preview"></div>
+<main id="ui">
+  <div id="screens"></div>
+  <div id="detail" hidden></div>
+  <div id="dialog" role="dialog" aria-modal="true" hidden></div>
+  <nav id="hints" aria-label="Controls"></nav>
+  <div id="busy" hidden aria-label="Updating"><span></span><span></span><span></span><span></span><span></span></div>
+  <div id="toast" role="status" hidden></div>
+  <div id="saving" class="panel-box" role="status" hidden><span id="saving-text">Saving</span><i class="spinner"></i></div>
+</main>
+<div id="fade" aria-hidden="true"></div>
+<!-- Editor start: green backdrop with a lone spinner [F:01-entry_eYSj-t075]; "Loading items / Please wait" box text kept for errors. -->
+<div id="loading" role="status"><i class="spinner"></i><div class="loading-box" hidden><div id="loading-text"></div><div id="loading-sub"></div></div></div>
+<script type="module" src="client/editor.js"></script>
+</body></html>

@@ -1,5 +1,8 @@
 import {DownloadBar} from "../downloadUi";
 import {t} from "../i18n";
+import {artworkMode,artworkThemeKey,useSquareArtwork} from '../squareArtwork';
+import {WiiuGameIcon} from './WiiuGameIcon';
+import {useSettings as useArtworkSettings} from '../settings';
 import {BackgroundMedia} from "../WallpaperMedia";
 import { GameHero } from "../common";
 // PS Vita home: pages of bubbles scrolled vertically, user folders (and Steam
@@ -59,8 +62,9 @@ const VITA_SLOTS: [number, number][] = [
   [163, 285], [371, 285], [590, 285], [828, 285],
   [258, 437], [480, 437], [712, 437],
 ];
-function slotPos(i: number, W: number, H: number) {
+function slotPos(i: number, W: number, H: number, folder = false) {
   const [vx, vy] = VITA_SLOTS[i];
+  if (folder) return {x:vx*W/960,y:H*(i<3?.32:i<7?.57:.82)};
   const sx = W / 960;
   const sy = Math.min(1.42, (H - BAR) / 512);
   const off = (H - BAR - 512 * sy) / 2;
@@ -139,13 +143,19 @@ function ImageBubble({ url, mp, kind, shadow = 100 }: { url: string; mp: MotionP
       style={{ width: D, height: D, animation: mp.sway === "off" ? "none" : `dhtBubbleFloat ${mp.sway === "gentle" ? 7.5 : 5.5}s ease-in-out ${-mp.phase}s infinite`, ["--dht-float-distance" as any]: mp.sway === "lively" ? "5px" : "2px", ["--dht-float-angle" as any]: mp.sway === "lively" ? "1.3deg" : ".55deg" }}
     >
       <div className={`dht-bubble-icon--${kind}${mp.motion ? " dht-bubble-sway" : ""}`} style={{ width: D, height: D, position: "relative", ["--dht-sway-k" as any]: swayK }}>
-        <img src={url} alt="" draggable={false} data-dht-from-skin={kind === "theme" ? "" : undefined} style={{ width: "100%", height: "100%", objectFit: "contain", display: "block", filter: k > 0 ? `drop-shadow(0 ${(5 * Math.min(k, 1.5)).toFixed(1)}px ${(6 * k).toFixed(1)}px rgba(0,20,50,${Math.min(0.85, 0.4 * k).toFixed(2)}))` : undefined }} />
+        <img src={url} alt="" draggable={false} data-dht-from-skin={kind === "theme" ? "" : undefined} style={{ width: "100%", height: "100%", objectFit: "contain", display: "block", borderRadius: "50%", clipPath: "circle(50% at 50% 50%)", filter: k > 0 ? `drop-shadow(0 ${(5 * Math.min(k, 1.5)).toFixed(1)}px ${(6 * k).toFixed(1)}px rgba(0,20,50,${Math.min(0.85, 0.4 * k).toFixed(2)}))` : undefined }} />
       </div>
     </div>
   );
 }
 function ThemeBubbleIcon({ src, mp, smooth, shadow }: { src: string; mp: MotionProps; smooth: number; shadow: number }) {
-  return <ImageBubble url={useSmoothIcon(src, smooth) ?? src} mp={mp} kind="theme" shadow={shadow} />;
+  const url = useSmoothIcon(src, smooth) ?? src;
+  return <div className="dht-vita-imported-bubble" style={{width:D,height:D,["--dht-bubble-shadow" as any]:shadow>0?`drop-shadow(0 ${5*shadow/100}px ${6*shadow/100}px rgba(0,20,50,.4))`:"none"}}>
+    <Sphere style="rounded" art={false} mp={mp}>
+      <img src={url} alt="" draggable={false} data-dht-from-skin="" style={{width:"100%",height:"100%",objectFit:"contain",display:"block",borderRadius:"50%"}}/>
+      <div className="dht-vita-theme-highlight" style={{position:"absolute",left:"17%",top:"5%",width:"66%",height:"27%",borderRadius:"50%",pointerEvents:"none",background:"linear-gradient(180deg,rgba(255,255,255,.83),rgba(255,255,255,.32) 48%,rgba(255,255,255,0) 100%)",transform:"rotate(-8deg)"}}/>
+    </Sphere>
+  </div>;
 }
 function StockBubbleIcon({ item, bs, mp }: { item: { icon: IconName; color: string }; bs: BubbleStyle; mp: MotionProps }) {
   const { url, probe } = useStockBubble(item.icon, item.color);
@@ -171,8 +181,10 @@ type VitaArt = "portrait" | "landscape" | "icon";
 /** Vita icon0 is a square illustration. Prefer client/custom icons when requested,
  * and keep the existing portrait/header fallback for games without one. */
 function VitaGameArt({game,art,style,position}:{game:Game;art:VitaArt;style:CSSProperties;position?:string}) {
+  const settings=useArtworkSettings(),mode=artworkMode(settings),custom=useSquareArtwork(artworkThemeKey(settings),game.appid);
   const icons=useMemo(()=>art==="icon"?gameIconUrls(game):[],[game,art]);
   const fallback=<GameArt flat g={game} kind={art==="icon"?"portrait":art} style={style} position={position}/>;
+  if(mode!=='auto'&&mode!=='covers'||custom&&mode==='auto')return <div style={{position:'relative',...style}}><WiiuGameIcon game={game}/></div>;
   return art==="icon"?<><Img key={[...icons,...game.art.portrait,...game.art.landscape].join("|")} className="dht-vita-game-icon" srcs={[...icons,...game.art.portrait,...game.art.landscape]} fit="cover" style={style} position="center" fallback={<NameArt name={game.name} style={style}/>}/><DownloadBar appid={game.appid}/></>:fallback;
 }
 
@@ -185,8 +197,8 @@ function Bubble({ item, art, skin, bs, mp, stock, smooth, shadow }: { item: VIte
     );
   if (item.kind === "sys") {
     const custom = skin?.icons[item.sys.skinKey] ?? (item.sys.altKey ? skin?.icons[item.sys.altKey] : undefined);
-    // Vita theme icons are complete bubbles (glass, rim and glyph drawn by the theme), so they are shown
-    // as they are: wrapping them in our own glass and zooming would crop the rim and blow up the glyph.
+    // Theme textures provide the artwork; the Vita supplies the rounded glass
+    // surface, reflection and rim, as it does for its system bubbles.
     if (custom)
       return (
         <ThemeBubbleIcon src={custom} mp={mp} smooth={smooth} shadow={shadow} />
@@ -195,21 +207,26 @@ function Bubble({ item, art, skin, bs, mp, stock, smooth, shadow }: { item: VIte
     // console's own icons; "live" keeps the selectable glass style with a coloured glyph.
     return stock === "image" ? <StockBubbleIcon item={item.sys} bs={bs} mp={mp} /> : <LiveStock item={item.sys} bs={bs} mp={mp} />;
   }
-  // Folder / collection: a tinted sphere holding up to four mini bubbles.
-  const tint = item.kind === "folder" ? item.folder.color : "#d9a441";
-  const minis = item.games.slice(0, 4);
+  // Clear folder shell: the wallpaper remains visible between its miniature bubbles.
+  const minis = item.games.slice(0, 10);
+  // Centre short folders; larger folders form balanced rows within the sphere.
+  const rowsByCount: number[][] = [[], [1], [2], [3], [2,2], [2,3], [3,3], [2,3,2], [3,2,3], [3,3,3], [3,4,3]];
+  const rows = rowsByCount[minis.length];
+  const miniSlots = rows.flatMap((count, row) => {
+    const y = 50 + (row - (rows.length - 1) / 2) * 29;
+    return Array.from({length:count}, (_, col) => [50 + (col - (count - 1) / 2) * 28, y]);
+  });
   return (
-    <Sphere style={bs} mp={mp} art={false} bg={`radial-gradient(circle at 50% 35%, #ffffff, ${tint} 85%)`}>
-      <div style={{ position: "absolute", left: "19%", top: "19%", right: "19%", bottom: "19%", display: "grid", gridTemplateColumns: "1fr 1fr", gap: 6 }}>
-        {minis.map((g) => (
-          <div key={g.appid} style={{ position: "relative", borderRadius: "50%", overflow: "hidden", aspectRatio: "1", boxShadow: "0 1px 3px rgba(0,0,0,0.35)" }}>
+    <div className="dht-vita-folder-icon" style={{position:"relative",width:D,height:D,borderRadius:"50%",overflow:"hidden",border:"1px solid rgba(187,223,255,.3)",background:"radial-gradient(ellipse at 48% 7%,rgba(231,246,255,.17),transparent 30%),radial-gradient(circle at 48% 38%,rgba(15,31,75,.03) 40%,rgba(15,28,81,.12) 76%,rgba(42,70,135,.3) 94%,rgba(163,206,255,.35) 99%)",boxShadow:"inset 2px 1px 4px rgba(231,247,255,.28),inset -3px -5px 8px rgba(13,30,90,.3)"}}>
+        {minis.map((g,i) => (
+          <div key={g.appid} style={{ position: "absolute",left:`${miniSlots[i][0]}%`,top:`${miniSlots[i][1]}%`,width:"25%",height:"25%",transform:"translate(-50%,-50%)", borderRadius: "50%", overflow: "hidden", boxShadow: "inset 0 0 3px #ffffff77" }}>
             <EdgeArt edge={mp.edge} zoom={1.035}>
               <VitaGameArt game={g} art={art} style={{ width: "100%", height: "100%" }} />
             </EdgeArt>
+            <div style={{position:"absolute",inset:0,borderRadius:"50%",pointerEvents:"none",background:"radial-gradient(ellipse at 38% 8%,#ffffff66,transparent 48%,#00112844 90%)",boxShadow:"inset 0 0 2px #e4f5ff99"}} />
           </div>
         ))}
-      </div>
-    </Sphere>
+    </div>
   );
 }
 
@@ -227,7 +244,7 @@ function VitaStatus({ h24, color, title, count }: { h24: boolean; color?: string
       </svg>
       <div style={{ flex: 1, minWidth: 0, display: "flex", justifyContent: "center", alignItems: "center", gap: 10 }}>
         <Icon name="home" size={26} color="#fff" />
-        {/* an open folder's name sits in the information bar, never over the bubbles */}
+        {/* Folder titles are drawn inside the expanded folder, below this bar. */}
         {title != null && (
           <span className="dht-folder-title" style={{ minWidth: 0, maxWidth: "45%", overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap", fontSize: 21, fontWeight: 500, textShadow: "0 1px 2px rgba(0,0,0,0.6)" }}>
             {title} {count != null && <span style={{ opacity: 0.7, fontSize: 16 }}>({count})</span>}
@@ -394,7 +411,17 @@ function SakuraPetals({ H }: { H: number }) {
 }
 
 const VITA_CSS = `
-@keyframes dhtLiveIn { from { opacity: 0; transform: scale(0.82); } to { opacity: 1; transform: scale(1); } }
+@keyframes dhtLiveIn { from { opacity: 0; } to { opacity: 1; } }
+@keyframes dhtBubbleOpen {
+  0% {transform:translate3d(var(--vita-open-x),var(--vita-open-y),0) rotateY(0deg) scale(1);opacity:1}
+  32% {transform:translate3d(0,0,100px) rotateY(78deg) scale(1.4);opacity:1}
+  62% {transform:translate3d(0,0,150px) rotateY(360deg) scale(1.6);opacity:1}
+  100% {transform:translate3d(0,0,220px) rotateY(360deg) scale(2.15);opacity:0}
+}
+@keyframes dhtFolderIn {from {opacity:0;transform:scale(.22)} 35% {opacity:1} to {opacity:1;transform:scale(1)}}
+@keyframes dhtFolderOut {from {opacity:1;transform:scale(1)} to {opacity:0;transform:scale(.22)}}
+@keyframes dhtHomeToLive {to {transform:translateX(-38%);opacity:0}}
+@media(prefers-reduced-motion:reduce){.dht-vita-folder{animation:none!important}}
 @keyframes dhtPeel {
   0%   { clip-path: polygon(0 0, 100% 0, 100% 0, 100% 100%, 0 100%); }
   50%  { clip-path: polygon(0 0, 0 0, 100% 100%, 100% 100%, 0 100%); }
@@ -464,8 +491,36 @@ export function VitaHome() {
   const [sel, setSel] = useRemembered("vita-sel", 0);
   const [openFolder, setOpenFolder] = useState<string | null>(null);
   const [fsel, setFsel] = useState(0);
+  const [arrangingFolder, setArrangingFolder] = useState(false);
+  const [folderDraft, setFolderDraft] = useState<Record<string,{x:number;y:number}> | null>(null);
+  const folderDrag = useRef<{appid:number; dx:number;dy:number} | null>(null);
+  const folderPosition = (i:number) => {
+    const base=slotPos(i%PER_PAGE,W,H,true);
+    const g=folderList[i];
+    const saved=g?.kind==="game" ? (folderDraft??v.folderPositions?.[openFolder??""])?.[g.game.appid] : undefined;
+    return saved && Number.isFinite(saved.x) && Number.isFinite(saved.y)
+      ? {x:clamp(saved.x*W,D/2,W-D/2),y:clamp(saved.y*H,BAR+D/2+50,H-D/2-45)} : base;
+  };
+  const saveFolderPosition = (positions:Record<string,{x:number;y:number}>) => {
+    if(openFolder) updateVita(p=>({folderPositions:{...p.folderPositions,[openFolder]:positions}}));
+  };
   const [live, setLive] = useState<{ game: Game; focus: LiveBtn } | null>(null);
   const [closing, setClosing] = useState(false);
+  const [openingBubble, setOpeningBubble] = useState<{game: Game; x: number; y: number} | null>(null);
+  const [folderClosing, setFolderClosing] = useState(false);
+  const [folderOrigin, setFolderOrigin] = useState({x:W/2,y:H/2});
+  const folderMotion = s.animations && !window.matchMedia("(prefers-reduced-motion: reduce)").matches;
+  useEffect(() => {
+    if (!openingBubble) return;
+    const timer = setTimeout(() => setOpeningBubble(null), 720);
+    return () => clearTimeout(timer);
+  }, [openingBubble]);
+  useEffect(() => {
+    if (!folderClosing) return;
+    const timer = setTimeout(() => { setOpenFolder(null); setFolderClosing(false); }, folderMotion ? 320 : 0);
+    return () => clearTimeout(timer);
+  }, [folderClosing, folderMotion]);
+  const closeFolder = () => { setArrangingFolder(false);setFolderDraft(null);setFolderClosing(true); playSound("back"); };
   const [moving, setMoving] = useState<VItem[] | null>(null); // working order while rearranging
   const [launching, setLaunching] = useState(false);
 
@@ -492,9 +547,9 @@ export function VitaHome() {
 
   // Global positions for spatial navigation: each page is one screen lower.
   const points = useMemo(() => view.map((_, i) => {
-    const p = slotPos(i % PER_PAGE, W, H);
+    const p = openFolder ? folderPosition(i) : slotPos(i % PER_PAGE, W, H);
     return { x: p.x, y: p.y + Math.floor(i / PER_PAGE) * H };
-  }), [view.length, W, H]);
+  }), [view.length, W, H, openFolder, v.folderPositions, folderDraft]);
 
   const saveOrder = (arr: VItem[]) => updateVita({ order: arr.map((i) => i.key) });
 
@@ -523,6 +578,10 @@ export function VitaHome() {
   const openOptions = () => {
     const it = curItem;
     const items: MenuItem[] = [];
+    if(openFolder){
+      items.push({label:"Rearrange",action:()=>setArrangingFolder(true)});
+      items.push({label:"Reset folder positions",action:()=>{saveFolderPosition({});setFolderDraft(null);}});
+    }
     if (it?.kind === "game") {
       const g = it.game;
       items.push({ label: t("openLiveArea"), action: () => openLive(g) });
@@ -547,6 +606,10 @@ export function VitaHome() {
   };
 
   const openLive = (g: Game) => {
+    const index = view.findIndex(it => it.kind === "game" && it.game.appid === g.appid);
+    const origin = openFolder ? folderPosition(Math.max(0,index)) : slotPos(Math.max(0, index) % PER_PAGE, W, H);
+    if (s.animations && !window.matchMedia("(prefers-reduced-motion: reduce)").matches)
+      setOpeningBubble({game: g, x: origin.x, y: origin.y});
     setLive({ game: g, focus: "start" });
     setClosing(false);
     playSound("open");
@@ -567,7 +630,10 @@ export function VitaHome() {
   };
   const enter = (it: VItem) => {
     if (it.kind !== "folder" && it.kind !== "col") return;
+    const index=list.findIndex(item=>item.key===it.key);
+    setFolderOrigin(slotPos(Math.max(0,index)%PER_PAGE,W,H));
     setOpenFolder(it.key);
+    setFolderClosing(false);
     setFsel(0);
     playSound("open");
   };
@@ -583,8 +649,21 @@ export function VitaHome() {
   };
 
   const onInput = (p: Press): boolean => {
+    if (openingBubble || folderClosing) return true;
     if (lock.locked) return pressLock(), true;
     if (menu.handle(p)) return true;
+    if(arrangingFolder && openFolder){
+      if(p.btn==="a"||p.btn==="b"){setArrangingFolder(false);return true;}
+      if(p.btn==="l1"||p.btn==="r1"){setFsel(clamp(cur+(p.btn==="l1"?-1:1),0,folderList.length-1));return true;}
+      if(["left","right","up","down"].includes(p.btn)){
+        const it=folderList[cur];
+        if(it?.kind==="game"){
+          const pos=folderPosition(cur),x=clamp(pos.x+(p.btn==="left"?-12:p.btn==="right"?12:0),D/2,W-D/2),y=clamp(pos.y+(p.btn==="up"?-12:p.btn==="down"?12:0),BAR+D/2+50,H-D/2-45);
+          saveFolderPosition({...v.folderPositions?.[openFolder],[it.game.appid]:{x:x/W,y:y/H}});
+        }
+      }
+      return true;
+    }
     // LiveArea
     if (live) {
       const f = live.focus;
@@ -659,8 +738,7 @@ export function VitaHome() {
         return true;
       case "b":
         if (openFolder) {
-          setOpenFolder(null);
-          playSound("back");
+          closeFolder();
           return true;
         }
         return false;
@@ -690,7 +768,7 @@ export function VitaHome() {
   const hitBubble = (x: number, y: number) => {
     const base = page * PER_PAGE;
     for (let k = 0; k < PER_PAGE && base + k < view.length; k++) {
-      const p = slotPos(k, W, H);
+      const p = openFolder ? folderPosition(base+k) : slotPos(k, W, H);
       if (Math.hypot(x - p.x, y - p.y) < D * 0.56) return base + k;
     }
     return -1;
@@ -714,18 +792,21 @@ export function VitaHome() {
     return true;
   };
   const onPointerDown = (e: any) => {
+    if (arrangingFolder) return;
+    if (openingBubble || folderClosing) return;
     if (!v.touch || menu.isOpen) return;
     const p = toLocal(e);
     lastPos.current = p;
     const t = { ...p, moved: false, corner: !!live && p.x > W - 180 && p.y < 180, lp: null as any, long: false };
     touch.current = t;
-    if (!live && !moving && !openFolder) {
+    if (!live && !moving) {
       const hit = hitBubble(p.x, p.y);
       if (hit >= 0)
         t.lp = setTimeout(() => {
           t.long = true;
           setCurRaw(hit);
-          setMoving(list);
+          if (openFolder) setArrangingFolder(true);
+          else setMoving(list);
           playSound("select");
         }, 600);
     }
@@ -787,8 +868,7 @@ export function VitaHome() {
       setCurRaw(hit);
       activate(view[hit]);
     } else if (openFolder) {
-      setOpenFolder(null);
-      playSound("back");
+      closeFolder();
     }
   };
 
@@ -802,7 +882,7 @@ export function VitaHome() {
     const out: ReactElement[] = [];
     for (let i = Math.max(0, (pg - 1) * PER_PAGE); i < Math.min(arr.length, (pg + 2) * PER_PAGE); i++) {
       const it = arr[i];
-      const pos = slotPos(i % PER_PAGE, W, H);
+      const pos = openFolder ? folderPosition(i) : slotPos(i % PER_PAGE, W, H);
       const y = pos.y + (Math.floor(i / PER_PAGE) - pg) * H;
       const selected = i === selIdx;
       out.push(
@@ -811,9 +891,25 @@ export function VitaHome() {
           className={`dht-bubble dht-bubble--${it.kind}`}
           data-selected={selected}
           data-name={it.label}
-          style={{ position: "absolute", left: pos.x - D / 2, top: y - D / 2, width: D, height: D, transition: "top 320ms cubic-bezier(.2,.8,.2,1), left 200ms", zIndex: selected ? 5 : 1 }}
+          onPointerDown={e=>{
+            if(!arrangingFolder||!openFolder||it.kind!=="game")return;
+            e.stopPropagation();e.currentTarget.setPointerCapture(e.pointerId);
+            const p=toLocal(e);folderDrag.current={appid:it.game.appid,dx:p.x-pos.x,dy:p.y-y};setFsel(i);
+          }}
+          onPointerMove={e=>{
+            if(!arrangingFolder||!folderDrag.current)return;
+            e.stopPropagation();const p=toLocal(e),d=folderDrag.current;
+            const x=clamp(p.x-d.dx,D/2,W-D/2),py=clamp(p.y-d.dy,BAR+D/2+50,H-D/2-45);
+            setFolderDraft(prev=>({...prev??v.folderPositions?.[openFolder??""],[d.appid]:{x:x/W,y:py/H}}));
+          }}
+          onPointerUp={e=>{
+            if(!arrangingFolder||!folderDrag.current)return;
+            e.stopPropagation();if(folderDraft)saveFolderPosition(folderDraft);setFolderDraft(null);folderDrag.current=null;
+          }}
+          onPointerCancel={()=>{setFolderDraft(null);folderDrag.current=null;}}
+          style={{ position: "absolute", left: pos.x - D / 2, top: y - D / 2, width: D, height: D, touchAction:arrangingFolder?"none":undefined,cursor:arrangingFolder?"grab":undefined, transition: arrangingFolder?"none":"top 320ms cubic-bezier(.2,.8,.2,1), left 200ms", zIndex: selected ? 5 : 1 }}
         >
-          <div style={{ animation: wobble ? `dhtWobble ${0.35 + (i % 3) * 0.05}s ease-in-out infinite` : "none" }}>
+          <div style={{ animation: (wobble || (!!openFolder && arrangingFolder)) ? `dhtWobble ${0.35 + (i % 3) * 0.05}s ease-in-out infinite` : "none" }}>
             {/* Vita-style focus: a soft light behind the selected bubble (no hard ring) */}
             {selected && v.focus === "vita" && !launching && (
               <div className="dht-bubble-focus" style={{ position: "absolute", left: -D * 0.15, top: -D * 0.15, width: D * 1.3, height: D * 1.3, borderRadius: "50%", background: "radial-gradient(circle, var(--dht-vita-halo, rgba(150,225,255,0.58)) 0%, rgba(120,210,255,0.22) 48%, rgba(120,210,255,0) 70%)", animation: "dhtGlow 3.2s ease-in-out infinite", pointerEvents: "none" }} />
@@ -905,7 +1001,7 @@ export function VitaHome() {
     };
   }, [tiltEl]);
   gesture.current.wheel = (d: number) => {
-    if (!live && !moving && !menu.isOpen) goPage(page + d);
+    if (!live && !moving && !menu.isOpen && !arrangingFolder) goPage(page + d);
   };
   const swipeTarget = drag && Math.abs(drag) > 60 ? clamp(page + (drag < 0 ? 1 : -1), 0, pages - 1) : null;
 
@@ -938,19 +1034,24 @@ export function VitaHome() {
         <BubbleDefs d={D} style={v.bubbleStyle} />
         <VitaBackground page={openFolder ? 0 : page} skin={skin} animate={s.animations} />
         {v.look === "sakura" && <SakuraPetals H={H} />}
-        <div style={{ position: "absolute", inset: 0, opacity: openFolder ? 0 : 1, transition: "opacity 200ms, transform 260ms ease-out", transform: !openFolder && drag ? `translateY(${drag * 0.55}px)` : undefined }}>
+        <div className="dht-vita-home-bubbles" style={{ position: "absolute", inset: 0, pointerEvents:openFolder?"none":undefined, transformOrigin:`${folderOrigin.x}px ${folderOrigin.y}px`, opacity: openFolder && !folderClosing ? 0 : 1, animation:openingBubble ? "dhtHomeToLive 280ms ease-in both" : undefined, transition: folderMotion ? "opacity 280ms ease, transform 360ms cubic-bezier(.2,.7,.2,1)" : "none", transform:openFolder && !folderClosing ? "scale(1.5)" : !openFolder && drag ? `translateY(${drag * 0.55}px)` : "scale(1)" }}>
           {renderPages(list, openFolder ? clamp(sel, 0, list.length - 1) : cur, !!moving)}
         </div>
         {!openFolder && <PageDots page={page} pages={pages} target={swipeTarget} />}
         {openFolder && folderItem && (
-          <div style={{ position: "absolute", inset: 0 }}>
+          <div className="dht-vita-folder" data-closing={folderClosing} style={{ position: "absolute", inset: 0, transformOrigin:`${folderOrigin.x}px ${folderOrigin.y}px`, animation: folderMotion ? `${folderClosing ? 'dhtFolderOut' : 'dhtFolderIn'} ${folderClosing ? 320 : 360}ms cubic-bezier(.2,.7,.2,1) both` : "none" }}>
+            <div className="dht-vita-folder-shell" style={{position:"absolute",width:W*.88,height:W*.88,left:W*.06,top:(H-W*.88)/2+30,borderRadius:"50%",border:"2px solid rgba(190,239,255,.22)",background:"radial-gradient(circle at 48% 40%,rgba(116,214,248,.06) 42%,rgba(146,232,255,.16) 76%,rgba(209,250,255,.3) 100%)",boxShadow:"inset 0 0 44px rgba(160,232,255,.16)",pointerEvents:"none"}} />
+            <div className="dht-folder-title" style={{position:"absolute",top:BAR+20,left:80,right:80,textAlign:"center",fontSize:30,color:"white",textShadow:"0 1px 3px #234"}}>{folderItem.label}</div>
+            {arrangingFolder&&<div style={{position:"absolute",left:120,right:120,bottom:12,textAlign:"center",color:"white",zIndex:12,pointerEvents:"none"}}>Drag bubbles freely · D-pad moves · L/R selects · A/B finishes</div>}
             <div style={{ position: "absolute", inset: 0, transition: "transform 260ms ease-out", transform: drag ? `translateY(${drag * 0.55}px)` : undefined }}>{renderPages(folderList, cur, false)}</div>
+            <button className="dht-vita-folder-back" aria-label="Close folder" onPointerDown={e=>{e.preventDefault();e.stopPropagation();}} onPointerUp={e=>e.stopPropagation()} onClick={e=>{e.stopPropagation();closeFolder();}} style={{position:"absolute",left:-46,bottom:-44,width:138,height:138,borderRadius:"50%",border:"2px solid rgba(184,231,255,.55)",background:"linear-gradient(150deg,rgba(133,192,223,.9),rgba(18,66,103,.95))",boxShadow:"inset 0 2px 5px #d6f5ff66",color:"white",padding:"0 0 26px 28px",cursor:"pointer",zIndex:10}}><svg width="45" height="40" viewBox="0 0 45 40"><path d="M18 7 5 19l13 11v-8h10c10 0 12 8 4 13 17-5 14-22-3-22H18Z" fill="currentColor" stroke="#d5eafa" strokeWidth="1"/></svg></button>
             <PageDots page={page} pages={pages} target={swipeTarget} />
             {folderList.length === 0 && <div style={{ position: "absolute", left: 0, right: 0, top: H / 2, textAlign: "center", color: "#fff", opacity: 0.8, fontSize: 20 }}>{t("folderEmptyHint")}</div>}
           </div>
         )}
         {moving && <div style={{ position: "absolute", left: 0, right: 0, bottom: 60, textAlign: "center", color: "#fff", fontSize: 18, textShadow: "0 1px 4px #000" }}>{t("moveBubbleHint")}</div>}
         {live && (
+          <div style={{position:"absolute",inset:0,zIndex:30,opacity:openingBubble ? 0 : 1,transition:"opacity 180ms ease-out"}}>
           <LiveArea
             game={live.game}
             focus={live.focus}
@@ -964,8 +1065,10 @@ export function VitaHome() {
               else api.nativeMenu(live.game);
             }}
           />
+          </div>
         )}
-        <VitaStatus h24={s.clock24} color={skin?.barColor} title={openFolder && folderItem ? folderItem.label : undefined} count={openFolder && folderItem ? folderList.length : undefined} />
+        {openingBubble && <div className="dht-vita-opening" style={{position:"absolute",inset:0,zIndex:35,perspective:1100,pointerEvents:"none",background:"radial-gradient(ellipse at center,rgba(219,244,255,.78),rgba(172,216,241,.45))"}}><div style={{position:"absolute",left:W/2-D/2,top:H/2-D/2,width:D,height:D,"--vita-open-x":`${openingBubble.x-W/2}px`,"--vita-open-y":`${openingBubble.y-H/2}px`,animation:"dhtBubbleOpen 720ms cubic-bezier(.22,.65,.3,1) both"} as CSSProperties}><div style={{width:"100%",height:"100%",borderRadius:"50%",overflow:"hidden",boxShadow:"inset -12px 0 20px #16365088,0 0 22px #e9fbff99"}}><VitaGameArt game={openingBubble.game} art={v.art} style={{width:"100%",height:"100%"}} /></div></div></div>}
+        <VitaStatus h24={s.clock24} color={skin?.barColor} />
         <MenuView menu={menu} variant="vita" />
         {lock.locked && <VitaLockScreen skin={skin} h24={s.clock24} W={W} H={H} animate={s.animations} onUnlock={lock.unlock} />}
        </div>

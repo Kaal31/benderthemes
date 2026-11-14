@@ -3,6 +3,28 @@ import type { StyleOption } from "../../engine/themeStyles";
 
 export const OPTIONS: StyleOption[] = [
   {
+    key: "coverFinish",
+    label: "Cover glass design",
+    group: "Software grid",
+    choices: [
+      { id: "auto", name: "Theme default" },
+      { id: "previous", name: "Previous design" },
+      { id: "refined", name: "Refined glass" },
+    ],
+    def: "auto",
+  },
+  {
+    key: "startFocus",
+    label: "Selected game frame",
+    group: "Software grid",
+    choices: [
+      { id: "auto", name: "Theme default" },
+      { id: "start", name: "Cyan frame with Start" },
+      { id: "frame", name: "Selection ring only" },
+    ],
+    def: "auto",
+  },
+  {
     key: "grid",
     label: "Icons per page",
     group: "Software grid",
@@ -14,7 +36,7 @@ export const OPTIONS: StyleOption[] = [
   },
   {
     key: "titleBubbles",
-    label: "Game title bubbles",
+    label: "Grid game title bubbles",
     group: "Software grid",
     choices: [
       { id: "on", name: "Show" },

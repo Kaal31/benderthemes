@@ -6,7 +6,7 @@ import {WallpaperVideo} from "../WallpaperMedia";
 // Playing row, activity rail and its own footer. Drawn on a 1280×960 canvas
 // (the size of the reference) and scaled to the screen.
 import { CSSProperties, ReactNode, useEffect, useState } from "react";
-import { GameArt, Icon, IconName, MenuItem, MenuView, themeMenu, useHome, useMenu, useRemembered } from "../common";
+import { GameFilterButton, GameArt, Icon, IconName, MenuItem, MenuView, themeMenu, useHome, useMenu, useRemembered } from "../common";
 import { clamp, Press, Stage, ThemeRoot, useStage } from "../input";
 import { achievements, fmtLastPlayed, Game, openAchievements, openSteam, SteamPlace } from "../library";
 import { showTitle, THEMES } from "../settings";
@@ -175,8 +175,8 @@ export function AeroHome() {
   const st = useSteamStatus();
   const wall = useWallpaper("aero");
   const menu = useMenu();
-  const games = api.lib.games;
   const [view, setView] = useRemembered<View>("aero-view", "home");
+  const games = view === "all" ? api.library.games : api.lib.games;
   const [zone, setZone] = useRemembered<Zone>("aero-zone", "row");
   const [sel, setSel] = useRemembered("aero-sel", 0);
   const [gsel, setGsel] = useRemembered("aero-gsel", 0);
@@ -540,7 +540,7 @@ export function AeroHome() {
             <section className="aero-library dht-aero-all">
               <div className="aero-section-title">
                 {glyph("db", 32)}
-                <h2>{t("allGames")}</h2>
+                <h2>{t("allGames")}</h2><GameFilterButton page="library"/>
                 <span>{t("gamesCount", { count: games.length })}</span>
               </div>
               <div className="aero-grid">{games.slice(gridStart, gridStart + 12).map((g, j) => tile(g, gridStart + j, true))}</div>

@@ -40,6 +40,7 @@ export interface Collection {
 }
 
 const APP_TYPE_GAME = 1;
+const APP_TYPE_DEMO = 8;
 const APP_TYPE_APPLICATION = 2;
 const APP_TYPE_SHORTCUT = 1073741824;
 const CDN = "https://cdn.cloudflare.steamstatic.com/steam/apps";
@@ -92,7 +93,7 @@ export function gameIconUrls(game:Game):string[]{
 function toGame(a: any): Game | null {
   if (!a) return null;
   const t = a.app_type;
-  const isGame = t === APP_TYPE_GAME || t === APP_TYPE_SHORTCUT;
+  const isGame = t === APP_TYPE_GAME || t === APP_TYPE_DEMO || t === APP_TYPE_SHORTCUT;
   const isApp = t === APP_TYPE_APPLICATION;
   if (!isGame && !isApp) return null;
   const shortcut = t === APP_TYPE_SHORTCUT;
@@ -139,11 +140,11 @@ const steamSource: LibrarySource = {
     let apps: any[] = [];
     try {
       const all = collectionStore?.allAppsCollection?.allApps ?? [];
-      apps = all.filter((a: any) => a?.app_type === APP_TYPE_APPLICATION); // tools/runtimes (Proton…) are left out
+      apps = all.filter((a: any) => a?.app_type === APP_TYPE_APPLICATION || a?.app_type === APP_TYPE_DEMO); // tools/runtimes (Proton…) are left out
     } catch {
       /* ignore */
     }
-    return [...games, ...apps];
+    return [...new Map([...games, ...apps].map((a:any)=>[a.appid,a])).values()];
   },
   hiddenIds() {
     const out = new Set<number>();
@@ -224,6 +225,9 @@ export function loadLibrary(src: string, sort: SortMode, max: number, collection
     if (src === "collections") chosen = [...new Map(visibleCollections.flatMap(c => c.games).map(g => [g.appid, g])).values()];
     else if (src.startsWith("col:")) chosen = collections.find((c) => c.id === src.slice(4))?.games ?? [];
     else if (src === "all") chosen = games;
+    else if (src === "steam") chosen = games.filter((g) => !g.shortcut);
+    else if (src === "non-steam") chosen = games.filter((g) => g.shortcut);
+    else if (src === "uninstalled") chosen = games.filter((g) => !g.installed);
     else chosen = games.filter((g) => g.installed);
     lib = {
       games: sortGames(chosen, sort).slice(0, max),

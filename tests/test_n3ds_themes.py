@@ -80,7 +80,7 @@ def build_body(top_scroll=False, with_art=True):
     big = tile(64, 128, 3, lambda x, y: bytes((0, 255, 0)))
     small = tile(32, 64, 3, lambda x, y: bytes((0, 255, 0)))
     colours = {"cursor": bytes.fromhex("0a2e14" "48b448" "c8f8a8" "78e868"), "folder": bytes.fromhex("050d08" "122c16" "40803b" "020604"),
-               "text": bytes.fromhex("ffffff" "102030")}
+               "text": bytes.fromhex("102030") + bytes(7) + bytes.fromhex("ffffff")}
     head = bytearray(0xD0)
     struct.pack_into("<I", head, 0, 1)
     head[4], head[5] = 0, 1
@@ -161,17 +161,38 @@ assert (w, h) == (400, 240) and px(rows, 5, 5)[0] > 240 and px(rows, 300, 100)[2
 w, h, rows = decode_png(r["bottom"]["image"])
 assert (w, h) == (320, 240)
 assert r["cursor"] == {"dark": "#0a2e14", "main": "#48b448", "light": "#c8f8a8", "glow": "#78e868"}, r["cursor"]
-assert r["folder"]["main"] == "#122c16" and r["text"] == {"main": "#ffffff", "alt": "#102030"}
+assert r["folder"]["main"] == "#122c16" and r["text"] == {"main": "#ffffff", "background": "#102030"}
 assert r["file"] is None and r["bottom_inner"] is None  # blocks the theme does not have stay None
 fw, fh, rows = decode_png(r["folder_art"]["closed"])
 assert (fw, fh) == (74, 64) and px(rows, 3, 3) == (255, 0, 0)
 fw, fh, rows = decode_png(r["folder_art"]["open"])
 assert (fw, fh) == (82, 64) and px(rows, 3, 3) == (0, 0, 255)
-assert decode_png(r["file_art"]["large"])[:2] == (36, 72) and decode_png(r["file_art"]["small"])[:2] == (25, 49)
+assert decode_png(r["file_art"]["large"])[:2] == (36, 72) and decode_png(r["file_art"]["small"])[:2] == (25, 50)
 
 s = N.parse_body(lz11_compress(build_body(top_scroll=True, with_art=False)))
 assert s["top"]["scroll"] and s["top"]["frame"] == "fast" and decode_png(s["top"]["image"])[:2] == (400, 240)
-assert decode_png(s["top"]["wide"])[:2] == (1024, 240) and "folder_art" not in s
+assert decode_png(s["top"]["wide"])[:2] == (1008, 240) and "folder_art" not in s
+
+# Bottom flipbook frames use one 1024-wide texture, not a 512-wide crop.
+for frame_type, frame_name in ((2, "page"), (4, "bounce")):
+    flip = bytearray(0xD0)
+    struct.pack_into("<I", flip, 0, 1)
+    struct.pack_into("<III", flip, 0x20, 3, frame_type, len(flip))
+    colors = ((248, 0, 0), (0, 248, 0), (0, 0, 248))
+    flip.extend(tile(1024, 256, 2, lambda x, y: rgb565(*colors[min(2, x // 320)])))
+    parsed = N.parse_body(bytes(flip))
+    assert parsed["errors"] == [] and parsed["bottom"]["frame"] == frame_name
+    for i, image in enumerate(parsed["bottom"]["frames"]):
+        w, h, pixels = decode_png(image)
+        assert (w, h) == (320, 240) and px(pixels, 10, 10)[i] > 240
+
+# Solid bottom uses the main colour, not the slot-shadow colour.
+solid = bytearray(0xD0)
+struct.pack_into("<I", solid, 0, 1)
+struct.pack_into("<I", solid, 0x20, 1)
+struct.pack_into("<II", solid, 0x80, 1, len(solid))
+solid.extend(bytes.fromhex("010203 aabbcc 112233") + bytes(4))
+assert N.parse_body(solid)["bottom"]["color"] == "#aabbcc"
 
 # a truncated texture only loses that part
 cut = raw[:0xD0 + 512 * 256 * 2 + 100]

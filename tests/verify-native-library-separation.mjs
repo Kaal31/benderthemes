@@ -1,0 +1,30 @@
+import {launch} from './browser.mjs';import {startPreviewServer} from '../preview/server.mjs';import {readFileSync,writeFileSync} from 'node:fs';import assert from 'node:assert/strict';
+const out=process.env.CAPTURE_OUTPUT??'out/library-home-separation';const {server,url}=await startPreviewServer(0),browser=await launch();const results=[];
+const cases=[{id:'old-big-picture'},{id:'old-beta-big-picture'},{id:'switch'},{id:'aero'},{id:'aero2'},{id:'xbox'},{id:'iisu'},{id:'gamecube'},{id:'ps1'},{id:'ps2'},...['blades','nxe','kinect'].map(xs=>({id:'x360',xs,key:'x360-'+xs}))];
+try{for(const t of cases.filter(t=>!process.env.ONLY_THEMES||process.env.ONLY_THEMES.split(",").includes(t.key??t.id))){const page=await browser.newPage({viewport:{width:1304,height:940}});page.setDefaultTimeout(15000);try{
+ await page.goto(url+`?theme=${t.id}&xs=${t.xs??'metro'}&still=1`,{waitUntil:'domcontentloaded'});await page.waitForFunction(()=>!!window.__updateTheme);
+ await page.evaluate(({id,xs})=>{const s=window.__getThemeSettings();window.__updateTheme({theme:id==='gamecube'?'frame':id,activeTheme:id,source:'col:favorite',maxGames:2,themeCollections:{},libraryCollections:{[id==='gamecube'?'gamecube':id]:{source:'all'}},sounds:false,themeStartupIntros:{[id]:false},x360:{...s.x360,style:xs??'metro'}});},t);
+ await page.locator('[data-dht-root]').first().waitFor();await page.waitForTimeout(900);
+ if(t.id==='aero'){await page.waitForTimeout(1200);const b=await page.locator('[data-dht-root]').first().boundingBox();await page.screenshot({path:`${out}/aero-home.png`,clip:{x:b.x,y:b.y,width:Math.min(1280,b.width),height:Math.min(800,b.height)}});}
+ const click=async(sel)=>{const el=page.locator(sel).first();await el.waitFor({state:'attached'});await el.evaluate(e=>e.click());await page.waitForTimeout(150);};
+ if(t.id==='old-big-picture'){await click('.home-tile.library');await page.locator('.library-body').waitFor();await page.locator('select[aria-label=Collection]').selectOption('all');assert.equal(await page.locator('.library-body .game[data-appid]').count(),16);await page.locator('select[aria-label=Collection]').selectOption('rpg');assert.equal(await page.locator('.library-body .game[data-appid]').count(),3);await page.locator('select[aria-label=Collection]').selectOption('all');}
+ if(t.id==='old-beta-big-picture'){await click('.beta-categories button[data-category="1"]');await click('.beta-view-all');await page.locator('.dht-oldbeta[data-mode=games]').waitFor();assert.equal(await page.locator('.beta-cover').count(),16);}
+ if(t.id==='switch'){await click('.dht-switch-tile[data-name="All Software"]');await click('.dht-switch-tile[data-name="All Software"]');await page.locator('.dht-switch-library-track').waitFor();assert.equal(await page.locator('.dht-switch-apps .dht-switch-tile').count(),16);}
+ if(t.id==='aero'||t.id==='aero2'){await click('.aero-tabs button:nth-child(2)');await page.waitForTimeout(250);assert(await page.getByRole('button',{name:'Cyberpunk 2077',exact:true}).count()>0,'Full library includes game absent from Home');}
+ if(t.id==='xbox'){await click('.dht-xbox-button[data-name="MEMORY"]');await page.waitForTimeout(200);assert(await page.locator('.dht-xbox-row[data-name="Cyberpunk 2077"]').count()>0);}
+ if(t.id==='iisu'){await click('.dht-iisu-dock[data-tab=collections]');if(!(await page.locator('.dht-iisu-crumb').count()))await click('.dht-iisu-platform[data-name="All Games"]');if(!(await page.locator('.dht-iisu-crumb').count()))await click('.dht-iisu-platform[data-name="All Games"]');await page.waitForTimeout(200);assert(await page.locator('.dht-iisu-crumb').count()>0);assert(await page.locator('.dht-iisu-tile[data-name="Cyberpunk 2077"]').count()>0);}
+ if(t.id==='ps1'){await click('.dht-ps1-button');await page.locator('.dht-ps1-card').first().waitFor();assert.equal(await page.locator('.dht-ps1-block[data-name]').count(),16);}
+ if(t.id==='ps2'){await page.evaluate(()=>window.dispatchEvent(new CustomEvent('preview-controller-input',{detail:1})));await page.locator('.dht-ps2-device').first().waitFor();await page.evaluate(()=>window.dispatchEvent(new CustomEvent('preview-controller-input',{detail:1})));await page.locator('.dht-ps2-save').first().waitFor();assert.equal(await page.locator('.dht-ps2-save').count(),16);}
+ if(t.id==='gamecube'){await click('.cube-label[data-page=library]');await click('#calendar-confirm');await page.locator('.bank.active').waitFor();assert.equal(await page.locator('.bank.active .block:not(.empty)').count(),16);}
+ if(t.id==='x360'){
+  if(t.xs==='blades')await click('.dht-x360b-tab[aria-label=Games]');
+  const sel=t.xs==='nxe'?'.dht-x360n-card[data-name="Game Library"]':t.xs==='kinect'?'[data-name="Game Library"]':'[data-name="Games Library"]';
+  await click(sel);if(!(await page.locator('[role=dialog][aria-label="Game Library"],[data-blades-pages]').count()))await click(sel);
+  if(t.xs==='blades'){await page.getByText('My Games',{exact:true}).first().evaluate(e=>e.click());await page.waitForTimeout(200);assert((await page.locator('body').innerText()).includes('Cyberpunk 2077'));}
+  else{const nav=page.getByRole('navigation',{name:'Library collections'});await nav.waitFor();assert.equal(await page.getByRole('option').count(),16);await nav.getByRole('button',{name:'RPGs',exact:true}).click();assert.equal(await page.getByRole('option').count(),3);await nav.getByRole('button',{name:'All Games',exact:true}).click();}
+ }
+ const root=page.locator('[data-dht-root]').first(),b=await root.boundingBox();await page.waitForTimeout(300);await page.screenshot({path:`${out}/${t.key??t.id}-library.png`,clip:{x:b.x,y:b.y,width:Math.min(1280,b.width),height:Math.min(800,b.height)}});
+ console.log('PASS',t.key??t.id);results.push({...t,passed:true});
+ }catch(e){console.log('FAIL',t.key??t.id,e.message.slice(0,400));results.push({...t,error:e.message});}await page.close();writeFileSync(`${out}/native-results.json`,JSON.stringify(results,null,2));}}finally{await browser.close();server.closeAllConnections();await new Promise(r=>server.close(r));}
+
+if(results.some(r=>!r.passed))process.exitCode=1;

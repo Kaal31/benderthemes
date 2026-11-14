@@ -22,6 +22,23 @@ with tempfile.TemporaryDirectory() as t:
     open(os.path.join(bundled, "Men.pack"), "wb").write(b"x"); open(os.path.join(bundled, "Men2.pack"), "wb").write(b"y")
     assert main._wiiu_stock_dir() == bundled  # test build: bundled copy is read
     assert main._wiiu_stock_user_dir() == user  # imports still go to the user's folder
+    # Downloaded bases are copied into persistent user storage once, and an
+    # explicit user import is never overwritten by the downloaded version.
+    from unittest.mock import patch
+    from pathlib import Path
+    import console_artwork
+    cached = Path(t) / 'downloaded'
+    cached.mkdir()
+    (cached / 'Men.pack').write_bytes(b'SARC-downloaded-one')
+    (cached / 'Men2.pack').write_bytes(b'SARC-downloaded-two')
+    (cached / 'cafe_barista_men.bfsar').write_bytes(b'FSAR-downloaded-audio')
+    with patch.object(console_artwork, 'resource_dir', return_value=cached):
+        assert main._wiiu_stock_dir() == user
+        assert Path(user, 'Men.pack').read_bytes() == b'SARC-downloaded-one'
+        assert Path(user, 'cafe_barista_men.bfsar').read_bytes() == b'FSAR-downloaded-audio'
+        Path(user, 'Men.pack').write_bytes(b'SARC-user-import')
+        assert main._wiiu_stock_dir() == user
+        assert Path(user, 'Men.pack').read_bytes() == b'SARC-user-import'
 for _n in [n for n in sys.modules if n not in _saved_modules]:
     del sys.modules[_n]
 sys.modules.update(_saved_modules)

@@ -1,4 +1,5 @@
 import { t } from "./i18n";
+import {CreatorCredit} from "./CreatorCredit";
 import { callable } from "@decky/api";
 import { Navigation } from "@decky/ui";
 import { MutableRefObject, useEffect, useRef, useState } from "react";
@@ -119,7 +120,7 @@ export function CommunityThemes({ inputRef }: { inputRef: MutableRefObject<Input
         {!source.featured && <button disabled={busy || source.themes.some(t => !!t.installedVersion)} title={t("uninstallThemesFirst")} onClick={() => void manageSource(source.repo, "remove")}>{t("removeRepository")}</button>}
       </div></header>
       {source.error && <p role="status">{source.error}</p>}
-      {source.themes.map(theme => <div key={theme.id} className="community-theme"><div>{theme.preview && <img src={theme.preview} alt={`${theme.name} preview`} loading="lazy" referrerPolicy="no-referrer" style={{ width: "100%", maxWidth: 260, maxHeight: 150, objectFit: "contain", borderRadius: 6 }}/>}<h4>{theme.name} {theme.uiOverhaul && <span className="community-overhaul-badge">UI overhaul</span>}</h4><small>By {theme.author} · {theme.version}{theme.size ? ` · ${(theme.size / 1048576).toFixed(1)} MB` : ""}{theme.installedVersion ? ` · Installed ${theme.installedVersion}` : ""}</small><p>{theme.description}</p>{theme.updateAvailable && theme.installedVersion === theme.version && <p>{t("assetsPackageUpdateAvailable")}</p>}{!theme.compatible && <p>{t("requiresNewerThemeHub")}</p>}</div><div className="community-actions">
+      {source.themes.map(theme => <div key={theme.id} className="community-theme"><div>{theme.preview && <img src={theme.preview} alt={`${theme.name} preview`} loading="lazy" referrerPolicy="no-referrer" style={{ width: "100%", maxWidth: 260, maxHeight: 150, objectFit: "contain", borderRadius: 6 }}/>}<h4>{theme.name} {theme.uiOverhaul && <span className="community-overhaul-badge">UI overhaul</span>}</h4><CreatorCredit author={theme.author}/><small>{theme.version}{theme.size ? ` · ${(theme.size / 1048576).toFixed(1)} MB` : ""}{theme.installedVersion ? ` · Installed ${theme.installedVersion}` : ""}</small><p>{theme.description}</p>{theme.updateAvailable && theme.installedVersion === theme.version && <p>{t("assetsPackageUpdateAvailable")}</p>}{!theme.compatible && <p>{t("requiresNewerThemeHub")}</p>}</div><div className="community-actions">
         {(!theme.installedVersion || theme.updateAvailable) && <button disabled={busy || !theme.compatible} onClick={() => void manageTheme(source, theme, "install")}>{theme.installedVersion ? t("update") : t("install")}</button>}
         {theme.installedVersion && <><button disabled={busy} onClick={() => activate(theme)}>{t("useTheme")}</button><button disabled={busy} onClick={() => void manageTheme(source, theme, "remove")}>{t("uninstall")}</button></>}
         {theme.canRollback && <button disabled={busy} onClick={() => void manageTheme(source, theme, "rollback")}>{t("restorePreviousVersion")}</button>}
