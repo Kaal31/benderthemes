@@ -23,6 +23,9 @@ to the source's own hosts, sizes are capped per kind, and the file is checked (m
 `peek`) before it is moved into place.
 """
 import io
+import hashlib
+import html
+import unicodedata
 import json
 import os
 import re
@@ -43,6 +46,8 @@ MAX_JSON = 8 * 1024 * 1024
 UA = "DeckHomeThemes/theme-files (+https://github.com/Kaal31)"
 
 SOURCES = {
+    "all": {"name": "All sources", "url": "", "credit": "Matching titles and credited creators share a card. Choose a download source in the details."},
+    "ps3themes": {"name": "PS3-Themes.com", "url": "http://www.ps3-themes.com/", "credit": "Themes and screenshots from PS3-Themes.com, credited to their theme creators."},
     "psvt": {"name": "PSVita Custom Themes", "url": "https://psvt.ovh/", "credit": "Custom themes by their credited creators, hosted by Red Squirrel’s PSVita Custom Themes repository."},
     "superpsx": {"name": "SuperPSX", "url": "https://www.superpsx.com/ps4-themes/", "credit": "Theme listings and previews from SuperPSX; artwork belongs to its original creators. External PKG downloads require extraction before use."},
     "auroracollection": {"name": "Aurora collection (GitHub)", "url": "https://github.com/StonedModder/Aurora-Coverflow-Layouts", "credit": "Aurora skins and coverflow layouts by their original creators, collected by StonedModder from RealModScene."},
@@ -64,7 +69,7 @@ KINDS = {
     "x360": {"label": "Xbox 360", "dir": "x360", "exts": (".xzp", ".cfljson"), "max": 256 << 20, "sources": ("auroracollection",)},
     "wiiflow": {"label": "WiiFlow", "dir": "wiiflow", "exts": (".zip", ".rar", ".7z"), "max": 256 << 20, "sources": ("gbatemp",)},
     "psp": {"label": "PSP", "dir": "psp", "exts": (".ptf", ".ctf"), "max": 24 << 20, "sources": ("pspunk", "shenron0", "archive")},
-    "p3t": {"label": "PS3", "dir": "p3t", "exts": (".p3t",), "max": 160 << 20, "sources": ("themezer", "ps3pro", "archive")},
+    "p3t": {"label": "PS3", "dir": "p3t", "exts": (".p3t",), "max": 160 << 20, "sources": ("themezer", "ps3themes", "ps3pro", "archive")},
     "ps4": {"label": "PS4", "dir": "ps4", "exts": (".zip", ".rar"), "max": 256 << 20, "sources": ("superpsx",)},
     "vita": {"label": "PS Vita", "dir": "vita", "exts": (".zip",), "max": 96 << 20, "sources": ("psvt", "archive")},
     "switch": {"label": "Switch", "dir": "switch", "exts": (".nxtheme",), "max": 24 << 20, "sources": ("themezer",)},
@@ -344,6 +349,8 @@ def _https(url, host=None):
 
 def _allowed_host(source, host):
     host = (host or "").lower()
+    if source == "ps3themes":
+        return host in ("www.ps3-themes.com", "ps3-themes.com", "download.ps3-themes.com")
     if source == "psvt":
         return host == "psvt.ovh"
     if source == "superpsx":
@@ -370,7 +377,7 @@ class _Redirects(urllib.request.HTTPRedirectHandler):
 
     def redirect_request(self, req, fp, code, msg, headers, newurl):
         u = urllib.parse.urlsplit(newurl)
-        if u.scheme != "https" or not _allowed_host(self.source, u.hostname):
+        if not _source_url_ok(self.source, newurl):
             raise ValueError(f"redirect to an unexpected host ({u.hostname})")
         return super().redirect_request(req, fp, code, msg, headers, newurl)
 
@@ -406,6 +413,46 @@ def _fetch_json(source, url, data=None):
     return json.loads(_fetch(source, url, data).decode("utf-8", "replace"))
 
 
+def _source_url_ok(source, url):
+    u = urllib.parse.urlsplit(url)
+    return _allowed_host(source, u.hostname) and (u.scheme == "https" or source == "ps3themes" and u.scheme == "http")
+
+
+def _ps3themes_items(posts):
+    out = []
+    for post in posts if isinstance(posts, list) else []:
+        content = (post.get("content") or {}).get("rendered", "")
+        links = re.findall(r'href=["\']([^"\']+)', content, re.I)
+        downloads = [urllib.parse.unquote(u) for u in links if _source_url_ok("ps3themes", u) and urllib.parse.urlsplit(u).path.lower().endswith(".p3t") and urllib.parse.urlsplit(u).hostname == "download.ps3-themes.com"]
+        author = re.search(r'Theme by\s+([^<\r\n]+)', content, re.I)
+        images = [u for u in re.findall(r'<img[^>]+src=["\']([^"\']+)', content, re.I) if _source_url_ok("ps3themes", u)]
+        for url in downloads:
+            ident = urllib.parse.urlsplit(url).path.lstrip("/")
+            try: download_url("p3t", "ps3themes", ident)
+            except ValueError: continue
+            out.append({"id": ident, "name": _text(html.unescape((post.get("title") or {}).get("rendered", "")), 120), "author": _text(html.unescape(author.group(1)), 60) if author else "", "image": images[0] if images else "", "images": images, "page": post.get("link", "") if _source_url_ok("ps3themes", post.get("link", "")) else SOURCES["ps3themes"]["url"], "file": {"name": ident.rsplit("/", 1)[-1], "size": 0}})
+    return out
+
+
+def group_items(items, kind):
+    groups = {}
+    for item in items:
+        normalize = lambda value: " ".join(unicodedata.normalize("NFKC", value or "").casefold().split())
+        author = normalize(item.get("author"))
+        files = item.get("files")
+        names = [f.get("name", "") for f in files] if files else [(item.get("file") or {}).get("name", "") or item["id"]]
+        formats = tuple(sorted({os.path.splitext(n)[1].lower() for n in names if os.path.splitext(n)[1]}))
+        if not formats and len(KINDS[kind]["exts"]) == 1: formats = KINDS[kind]["exts"]
+        # Collections and uncredited uploads cannot be confidently matched by title.
+        key = (normalize(item["name"]), author, formats) if author not in ("", "unknown", "anonymous") and not files and formats else (item["sourceId"], item["id"])
+        if key not in groups:
+            group_id = hashlib.sha256(repr((kind, key)).encode()).hexdigest()[:24]
+            groups[key] = {**item, "id": group_id, "alternatives": []}
+        variants = groups[key]["alternatives"]
+        if not any(v["sourceId"] == item["sourceId"] and v["id"] == item["id"] for v in variants): variants.append(item)
+    return list(groups.values())
+
+
 # --- listing ---------------------------------------------------------------------------------------------------
 _cache = {}
 _cache_lock = threading.Lock()
@@ -426,7 +473,7 @@ def _cached(key, fn, now, refresh=False):
 
 def kinds():
     """What the Hub needs to draw the tab: kinds with their sources, the sources, and what is not built."""
-    return {"kinds": [{"id": k, "label": v["label"], "dir": "skins/" + v["dir"], "exts": list(v["exts"]), "sources": list(v["sources"])} for k, v in KINDS.items()],
+    return {"kinds": [{"id": k, "label": v["label"], "dir": "skins/" + v["dir"], "exts": list(v["exts"]), "sources": (["all"] if len(v["sources"]) > 1 else []) + list(v["sources"])} for k, v in KINDS.items()],
             "sources": {k: dict(v) for k, v in SOURCES.items()}, "notBuilt": NOT_BUILT}
 
 
@@ -441,10 +488,23 @@ def browse(kind, source, query="", page=1, refresh=False, fetch_json=None, fetch
     except Exception:
         page = 1
     base = {"kind": kind, "page": page, "pages": 1, "total": 0, "items": [], "source": dict(SOURCES.get(source) or {}, id=source)}
+    if source == "all" and kind in KINDS:
+        from concurrent.futures import ThreadPoolExecutor
+        sources = KINDS[kind]["sources"]
+        with ThreadPoolExecutor(max_workers=4) as pool:
+            results = list(pool.map(lambda src: browse(kind, src, query, page, refresh, fetch_json, fetch_text, now), sources))
+        rows = [{**item, "sourceId": src} for src, result in zip(sources, results) for item in result["items"]]
+        failures = [SOURCES[src]["name"] for src, result in zip(sources, results) if result.get("error")]
+        return {**base, "items": group_items(rows, kind), "total": sum(r["total"] for r in results), "pages": max(r["pages"] for r in results), "warning": ("Unavailable sources: " + ", ".join(failures)) if failures else ""}
     if kind not in KINDS or source not in KINDS[kind]["sources"]:
         return {**base, "error": "This source has no themes of that kind."}
     try:
-        if source == "gbatemp":
+        if source == "ps3themes":
+            url = "http://www.ps3-themes.com/wp-json/wp/v2/posts?" + urllib.parse.urlencode({"per_page": PAGE_SIZE + 1, "offset": (page - 1) * PAGE_SIZE, "search": query})
+            posts = _cached((source, query, page), lambda: fetch_json(source, url), now, refresh)
+            more = len(posts) > PAGE_SIZE
+            res = {"items": _ps3themes_items(posts[:PAGE_SIZE]), "pages": page + int(more), "total": (page - 1) * PAGE_SIZE + len(posts)}
+        elif source == "gbatemp":
             def load():
                 from pathlib import Path
                 snapshot = json.loads(Path(__file__).with_name("gbatemp_wiiflow_index.json").read_text(encoding="utf-8"))
@@ -576,6 +636,10 @@ def download_url(kind, source, ident, file=""):
     """The one URL a (kind, source, id, file) may download, or raise ValueError."""
     if kind not in KINDS or source not in KINDS[kind]["sources"]:
         raise ValueError("unknown kind or source")
+    if source == "ps3themes":
+        if not re.fullmatch(r"downloads[0-9]*/[^/\\\x00-\x1f?#]+\.p3t", str(ident or ""), re.I) or ".." in ident:
+            raise ValueError("Invalid PS3-Themes file")
+        return "http://download.ps3-themes.com/" + urllib.parse.quote(ident)
     if source == "psvt":
         if not _PSVT_ID.fullmatch(str(ident or "")):
             raise ValueError("Invalid PSVita theme id")
@@ -729,12 +793,12 @@ def download(skins_dir, kind, source, ident, file="", name="", opener=None):
         req = urllib.request.Request(url, headers={"User-Agent": UA})
         with (opener or _opener(source)).open(req, timeout=TIMEOUT) as r:
             final = r.geturl()
-            if not final.startswith("https://") or not _allowed_host(source, urllib.parse.urlsplit(final).hostname):
+            if not _source_url_ok(source, final):
                 raise ValueError("unexpected download host")
             total = _int(r.headers.get("Content-Length"))
             if total > spec["max"]:
                 raise ValueError(f"the file is too large ({total >> 20} MB)")
-            given = _disposition_name(final, r.headers) or (file if source == "archive" else os.path.basename(ident) if source in ("wiithemer", "pspunk", *GITHUB) else "")
+            given = _disposition_name(final, r.headers) or (file if source == "archive" else os.path.basename(ident) if source in ("ps3themes", "wiithemer", "pspunk", *GITHUB) else "")
             ext = os.path.splitext(given)[1].lower()
             if ext not in spec["exts"]:
                 ext = spec["exts"][0]
@@ -757,13 +821,21 @@ def download(skins_dir, kind, source, ident, file="", name="", opener=None):
             raise ValueError("the download was cut off")
         if not check_file(kind, tmp):
             raise ValueError(f"this is not a {spec['label']} theme file the Hub can read")
-        target = os.path.join(folder, out_name)
-        if os.path.exists(target):
-            if os.path.isfile(target) and os.path.getsize(target) == done:
+        def digest(path):
+            h = hashlib.sha256()
+            with open(path, "rb") as existing:
+                for chunk in iter(lambda: existing.read(262144), b""): h.update(chunk)
+            return h.digest()
+        downloaded_hash = digest(tmp)
+        for entry in list(os.scandir(folder)):
+            if entry.path == tmp or entry.is_symlink() or not entry.is_file() or os.path.splitext(entry.name)[1].lower() not in spec["exts"]: continue
+            if entry.stat().st_size == done and digest(entry.path) == downloaded_hash:
                 os.remove(tmp)
                 tmp = None
-                _remember_download(skins_dir, kind, source, ident, file, out_name)
-                return {"success": True, "name": out_name, "already": True}
+                _remember_download(skins_dir, kind, source, ident, file, entry.name)
+                return {"success": True, "name": entry.name, "already": True}
+        target = os.path.join(folder, out_name)
+        if os.path.exists(target):
             stem, ext2 = os.path.splitext(out_name)
             n = 2
             while os.path.exists(os.path.join(folder, f"{stem} ({n}){ext2}")):

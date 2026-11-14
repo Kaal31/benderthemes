@@ -21,7 +21,7 @@ type Source = { id?: string; name: string; url: string; credit: string };
 type Kind = { id: string; label: string; dir: string; exts: string[]; sources: string[] };
 type Kinds = { kinds: Kind[]; sources: Record<string, Source>; notBuilt: { name: string; url: string; kinds: string[]; why: string }[] };
 type FileRef = { name: string; size: number };
-export type SourceItem = { id: string; name: string; author: string; image: string; page: string; description?: string; fallbackImage?: string; images?: string[]; externalLinks?: string[]; externalOnly?: boolean; downloads?: number; tag?: string; file?: FileRef; files?: FileRef[] | null };
+export type SourceItem = { sourceId?: string; alternatives?: SourceItem[]; id: string; name: string; author: string; image: string; page: string; description?: string; fallbackImage?: string; images?: string[]; externalLinks?: string[]; externalOnly?: boolean; downloads?: number; tag?: string; file?: FileRef; files?: FileRef[] | null };
 type Page = { kind: string; page: number; pages: number; total: number; items: SourceItem[]; source: Source; error?: string; warning?: string; skipped?: number };
 type Progress = { busy: boolean; percent: number; message: string };
 
@@ -32,7 +32,7 @@ const download = callable<[kind: string, source: string, ident: string, file: st
 const savedDownloads=callable<[kind:string],Record<string,string>>("theme_sources_saved");
 const downloadProgress = callable<[], Progress>("theme_sources_progress");
 
-const openUrl = (url?: string) => { if (url && /^https:\/\//.test(url)) Navigation.NavigateToSteamWeb(url); };
+const openUrl = (url?: string) => { if (url && (/^https:\/\//.test(url) || /^http:\/\/(?:www\.)?ps3-themes\.com\//.test(url))) Navigation.NavigateToSteamWeb(url); };
 const mb = (n: number) => n >= 1048576 ? `${(n / 1048576).toFixed(1)} MB` : n ? `${Math.max(1, Math.round(n / 1024))} KB` : "";
 const KIND_HINT: Record<string, string> = { psp: "PSP", p3t: "PS3", ps4: "PS4", vita: "PS Vita", switch: "Switch", wiiu: "Wii U", "3ds": "3DS", wii: "Wii", xbox: "Xbox", x360: "Xbox 360" };
 const hintFor = (kind: string) => kind === "x360" ? "Choose skins or coverflow layouts in Xbox 360 Theme options." : `Choose it in the ${KIND_HINT[kind] ?? ""} theme's Theme options${kind === "wiiu" ? " (Wii U themes also need your own menu files)" : ""}.`;
@@ -56,6 +56,7 @@ export function ThemeFiles({ inputRef, initialKind = "psp", authoredContent, onK
   const [info, setInfo] = useState<Page | null>(null);
   const [loading, setLoading] = useState(false);
   const [selected, setSelected] = useState(0);
+  const [mirror, setMirror] = useState(0);
   const [zone, setZone] = useState<"kinds" | "grid" | "detail" | "search">("kinds");
   const [action, setAction] = useState(0); // the highlighted button of the detail panel
   const [confirm, setConfirm] = useState<FileRef | null>(null);
@@ -63,7 +64,7 @@ export function ThemeFiles({ inputRef, initialKind = "psp", authoredContent, onK
   const [busy, setBusy] = useState(false);
   const [progress, setProgress] = useState<Progress | null>(null);
   const [savedFiles,setSavedFiles]=useState<Record<string,string>>({});
-  const savedKey=(file:FileRef)=>`${kind}:${src}:${current?.id}:${src==="archive"?file.name:""}`;
+  const savedKey=(file:FileRef)=>`${kind}:${downloadSource}:${current?.id}:${downloadSource==="archive"?file.name:""}`;
   useEffect(()=>{let live=true;savedDownloads(kind).then(rows=>{if(live&&rows)setSavedFiles(previous=>({...previous,...rows}));}).catch(()=>{});return()=>{live=false;};},[kind]);
   const [message, setMessage] = useState<{ text: string; ok?: boolean } | null>(null);
   const gridRef = useRef<HTMLDivElement>(null);
@@ -87,14 +88,24 @@ export function ThemeFiles({ inputRef, initialKind = "psp", authoredContent, onK
     const currentRequest = () => alive.current && latestBrowseKey.current === key && browseRequest.current === request;
     browse(kind, src, query, page, refresh).then(r => {
       if (!currentRequest()) return;
-      setInfo(r); setItems(prev => page > 1 ? [...prev, ...r.items.filter(i => !prev.some(p => p.id === i.id))] : r.items);
+      setInfo(r); setItems(prev => {
+        if(page === 1) return r.items;
+        const merged = [...prev];
+        for(const item of r.items){const index=merged.findIndex(p=>p.id===item.id);if(index<0)merged.push(item);else if(item.alternatives){const old=merged[index];const variants=[...(old.alternatives??[])];for(const v of item.alternatives)if(!variants.some(p=>p.sourceId===v.sourceId&&p.id===v.id))variants.push(v);merged[index]={...old,alternatives:variants};}}
+        return merged;
+      });
     }).catch(e => { if (currentRequest()) setInfo({ kind, page, pages: 1, total: 0, items: [], source: srcInfo as Source, error: String(e) }); })
       .finally(() => { if (currentRequest()) setLoading(false); });
   };
   useEffect(() => { setItems([]); setInfo(null); setSelected(0); setConfirm(null); setMessage(null); load(1); }, [kind, src, query, !!kinds, installed]);
   const more = !!info && info.page < info.pages;
   const count = items.length + (more ? 1 : 0); // the "Show more" card is the last cell
-  const current: SourceItem | undefined = items[Math.min(selected, items.length - 1)];
+  const group = items[Math.min(selected, items.length - 1)];
+  const alternatives = group?.alternatives ?? [];
+  const current: SourceItem | undefined = alternatives.length ? alternatives[Math.min(mirror, alternatives.length-1)] : group;
+  const downloadSource = current?.sourceId || src;
+  const downloadSourceInfo = kinds?.sources[downloadSource] ?? srcInfo;
+  useEffect(()=>{setMirror(0)},[selected,kind,src]);
   // archive.org items list their files; the others are one file each
   const fileList: FileRef[] | null = !current ? null : current.files !== undefined
     ? (current.files ?? (Array.isArray(files[current.id]) ? files[current.id] as FileRef[] : null)) : [current.file || { name: "", size: 0 }];
@@ -103,7 +114,7 @@ export function ThemeFiles({ inputRef, initialKind = "psp", authoredContent, onK
     let live = true;
     itemFiles(kind, current.id).then(r => { if (live) setFiles(f => ({ ...f, [current.id]: r.error ? { error: r.error } : r.files })); }).catch(() => {});
     return () => { live = false; };
-  }, [current?.id]);
+  }, [current?.id,downloadSource]);
   useEffect(() => {
     setConfirm(null); setAction(0); detailRef.current?.scrollTo?.({ top: 0 });
     gridRef.current?.querySelector<HTMLElement>('[data-current="true"]')?.scrollIntoView?.({ block: "nearest" });
@@ -136,7 +147,7 @@ export function ThemeFiles({ inputRef, initialKind = "psp", authoredContent, onK
     if(installedOnly){applyInstalled();return;}
     setBusy(true); setMessage(null); setProgress({ busy: true, percent: 0, message: "Connecting…" });
     try {
-      const r = await download(kind, src, current.id, src === "archive" ? file.name : "", current.name);
+      const r = await download(kind, downloadSource, current.id, downloadSource === "archive" ? file.name : "", current.name);
       if (!alive.current) return;
       if (!r.success) setMessage({ text: r.error || "Download failed." });
       else {
@@ -193,7 +204,7 @@ export function ThemeFiles({ inputRef, initialKind = "psp", authoredContent, onK
     if ((p.btn === "l2" || p.btn === "r2") && !p.repeat) { playSound("tab"); switchKind(p.btn === "r2" ? 1 : -1); return true; }
     if (zone === "search") { if (p.btn === "down") leaveSearch(true); return true; }
     if (p.btn === "menu" && !p.repeat) { openSearch(); return true; }
-    if (p.btn === "x" && !p.repeat) { if (zone === "kinds") cycleSource(); else openUrl(current?.page); return true; }
+    if (p.btn === "x" && !p.repeat) { if (zone === "kinds") cycleSource(); else if(alternatives.length>1&&!busy){setMirror((mirror+1)%alternatives.length);setConfirm(null);setAction(0);}else openUrl(current?.page); return true; }
     if (zone === "kinds") {
       if (p.btn === "left" || p.btn === "right") { playSound("move"); switchKind(p.btn === "right" ? 1 : -1); }
       if ((p.btn === "down" || p.btn === "a") && count) { playSound("move"); setZone("grid"); }
@@ -248,7 +259,7 @@ export function ThemeFiles({ inputRef, initialKind = "psp", authoredContent, onK
           onClick={() => { setSelected(i); setZone("detail"); setAction(0); }} onFocus={() => setSelected(i)}>
           <span className="dht-files-art">{it.image ? <img src={it.image} alt="" loading="lazy" referrerPolicy="no-referrer" onError={e => { if(it.fallbackImage && !e.currentTarget.dataset.fallback){e.currentTarget.dataset.fallback="true";e.currentTarget.src=it.fallbackImage;}else e.currentTarget.style.display = "none"; }} /> : null}<b>{it.name.slice(0, 1)}</b></span>
           <strong>{it.name}</strong>
-          <small>{it.tag || srcInfo?.name}{it.downloads ? ` · ↓ ${it.downloads.toLocaleString()}` : ""}</small>
+          <small>{it.alternatives && it.alternatives.length>1 ? `${it.alternatives.length} download sources` : it.tag || kinds?.sources[it.sourceId??it.alternatives?.[0]?.sourceId??src]?.name || srcInfo?.name}{it.downloads ? ` · ↓ ${it.downloads.toLocaleString()}` : ""}</small>
         </button>)}
         {more && <button className="dht-files-card dht-files-more" data-current={moreCard} data-selected={zone === "grid" && moreCard} onClick={() => choose(items.length)} onFocus={()=>{setSelected(items.length);setZone("grid")}} disabled={loading}>
           <strong>{loading ? "Loading…" : "Show more"}</strong><small>{items.length} of {info?.total}</small></button>}
@@ -257,7 +268,9 @@ export function ThemeFiles({ inputRef, initialKind = "psp", authoredContent, onK
         {current ? <>
           <div className="dht-files-preview">{current.image ? <img key={current.id} src={current.image} alt={`${current.name} preview`} referrerPolicy="no-referrer" onError={e => { if(current.fallbackImage && !e.currentTarget.dataset.fallback){e.currentTarget.dataset.fallback="true";e.currentTarget.src=current.fallbackImage;}else e.currentTarget.style.display = "none"; }} /> : <span>No preview</span>}</div>
           <h3>{current.name}</h3>
-          <CreatorCredit author={current.author}/><small className="dht-files-by">{srcInfo?.name}{current.tag ? ` · ${current.tag}` : ""}</small>
+          <CreatorCredit author={current.author}/>
+          {alternatives.length>1&&<div className="dht-files-sources" aria-label="Download sources"><span>Download from · X switches</span>{alternatives.map((v,i)=><button key={`${v.sourceId}:${v.id}`} data-active={mirror===i} disabled={busy} onClick={()=>{setMirror(i);setConfirm(null);setAction(0)}}>{kinds?.sources[v.sourceId??""]?.name??v.sourceId}</button>)}</div>}
+          <small className="dht-files-by">{downloadSourceInfo?.name}{current.tag ? ` · ${current.tag}` : ""}</small>
           {current.fallbackImage && <small className="dht-files-by">If the original image fails, a screenshot of our converted theme is shown.</small>}
           {current.description && <p className="dht-files-note">{current.description}</p>}
           {(current.images?.length ?? 0) > 1 && <div style={{display:"flex",gap:6,overflowX:"auto"}}>{current.images!.slice(1).map(url=><img key={url} src={url} alt={`${current.name} screenshot`} loading="lazy" referrerPolicy="no-referrer" style={{width:120,height:90,objectFit:"contain"}} onError={e=>{e.currentTarget.style.display="none"}} />)}</div>}
@@ -266,24 +279,25 @@ export function ThemeFiles({ inputRef, initialKind = "psp", authoredContent, onK
             {current.externalLinks?.map((url,i)=><button key={url} data-active={zone === "detail" && action === i} onClick={()=>openUrl(url)}>{kind==="ps4"?"Download host":"Author download page"} {i+1} ↗</button>)}
             {fileList.map((f, i) => {
               const asking = confirm?.name === f.name;
+              const buttonIndex = i + (current.externalLinks?.length ?? 0);
               return <div key={f.name || i} className="dht-files-action" data-confirm={asking}>
-                <button className="dht-files-dl" data-active={zone === "detail" && action === i} disabled={busy||!installedOnly&&!!savedFiles[savedKey(f)]} onClick={() => { setZone("detail"); setAction(i); pressAction(i); }}>
-                  {installedOnly?"Use theme":savedFiles[savedKey(f)]?"✓ Saved · available in Theme options":busy && asking ? `${progress?.percent ?? 0}% · ${progress?.message || "Downloading…"}` : asking ? `Confirm download · A` : `↓ ${fileList.length > 1 || src === "archive" ? f.name.split("/").pop() : "Download"}${f.size ? ` · ${mb(f.size)}` : ""}`}
+                <button className="dht-files-dl" data-active={zone === "detail" && action === buttonIndex} disabled={busy||!installedOnly&&!!savedFiles[savedKey(f)]} onClick={() => { setZone("detail"); setAction(buttonIndex); pressAction(buttonIndex); }}>
+                  {installedOnly?"Use theme":savedFiles[savedKey(f)]?"✓ Saved · available in Theme options":busy && asking ? `${progress?.percent ?? 0}% · ${progress?.message || "Downloading…"}` : asking ? `Confirm download · A` : `↓ ${fileList.length > 1 || downloadSource === "archive" ? f.name.split("/").pop() : "Download"}${f.size ? ` · ${mb(f.size)}` : ""}`}
                 </button>
-                {asking && !busy && <p className="dht-files-confirm" role="alertdialog">Download {src === "archive" ? `“${f.name.split("/").pop()}”` : "this theme"} from {srcInfo?.name} into <b>{kindInfo?.dir}/</b>? {src === "archive" ? "It was uploaded by an archive.org user and is not checked by ThemeHub. " : src === "ps3pro" || src === "shenron0" ? "It comes from a public GitHub collection and is not checked by ThemeHub. " : ""}A confirms · B cancels.</p>}
+                {asking && !busy && <p className="dht-files-confirm" role="alertdialog">Download {downloadSource === "archive" ? `“${f.name.split("/").pop()}”` : "this theme"} from {downloadSourceInfo?.name} into <b>{kindInfo?.dir}/</b>? {downloadSource === "archive" ? "It was uploaded by an archive.org user and is not checked by ThemeHub. " : downloadSource === "ps3pro" || downloadSource === "shenron0" ? "It comes from a public GitHub collection and is not checked by ThemeHub. " : ""}A confirms · B cancels.</p>}
               </div>;
             })}
             {!fileList.length && !current.externalOnly && <p className="dht-files-note">No {kindInfo?.exts.join(" / ")} files in this item.</p>}
-            {!installedOnly&&<button className="dht-files-page" data-active={zone === "detail" && action === fileList.length + (current.externalLinks?.length ?? 0)} onClick={() => openUrl(current.page)}>Source page · X ↗</button>}
+            {!installedOnly&&<button className="dht-files-page" data-active={zone === "detail" && action === fileList.length + (current.externalLinks?.length ?? 0)} onClick={() => openUrl(current.page)}>Source page ↗</button>}
           </div>}
           {message && <p className="dht-files-message" data-ok={!!message.ok} role="status">{message.text}</p>}
-          <p className="dht-files-credit">{srcInfo?.credit}</p>
+          <p className="dht-files-credit">{downloadSourceInfo?.credit}</p>
         </> : <div className="dht-files-note">{loading ? "Loading…" : "Choose a theme to see it here."}</div>}
       </aside>
     </div>
     <div className="dht-files-foot">
       <span className="dht-files-attribution">{installedOnly?"Stored locally":"Theme data:"} <button type="button" disabled={installedOnly} onClick={() => openUrl(srcInfo?.url)}>{srcInfo?.name ?? "…"} ↗</button>{notBuilt.length > 0 && <em> · Not available: {notBuilt.map(n => n.name).join(", ")}</em>}</span>
-      <span className="dht-files-hints">{installedOnly?"L2/R2 Category · A Use theme · B Back":zone === "search" ? "Type · ↓ Results · B Done" : zone === "detail" ? "↑↓ Choose · A Download (asks first) · X Source page · B Back" : "L2/R2 Category · ☰ Search · X " + (zone === "kinds" ? "Source" : "Source page") + " · A Open"}</span>
+      <span className="dht-files-hints">{installedOnly?"L2/R2 Category · A Use theme · B Back":zone === "search" ? "Type · ↓ Results · B Done" : zone === "detail" ? `↑↓ Choose · A Download (asks first) · X ${alternatives.length>1?"Download source":"Source page"} · B Back` : "L2/R2 Category · ☰ Search · X " + (zone === "kinds" ? "Source" : "Source page") + " · A Open"}</span>
     </div>
     </>}
   </section>;

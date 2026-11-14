@@ -159,7 +159,7 @@ class GitHubSourceTests(unittest.TestCase):
         self.assertIn("github.com/PS3-Pro/Themes", k["sources"]["ps3pro"]["url"])
         self.assertIn("Shenron0", k["sources"]["shenron0"]["credit"])
         vita = [x for x in k["kinds"] if x["id"] == "vita"][0]
-        self.assertEqual(vita["sources"], ["psvt", "archive"], "VitaShell skins are not Vita home themes")
+        self.assertEqual(vita["sources"], ["all", "psvt", "archive"], "VitaShell skins are not Vita home themes")
         self.assertTrue(any("VitaShell" in n["name"] for n in k["notBuilt"]))
 
 
@@ -376,3 +376,48 @@ class VitaRepositoryTests(unittest.TestCase):
         self.assertEqual(result['items'][0]['name'],'Ocean & Sky')
         self.assertEqual(ts.download_url('vita','psvt',key),'https://psvt.ovh/download.php?id='+key)
         with self.assertRaises(ValueError): ts.download_url('vita','psvt','../bad')
+
+
+class MirrorTests(unittest.TestCase):
+    def test_grouping_is_conservative(self):
+        def item(source, ident, title="Same theme", author="Artist", ext=".p3t"):
+            return dict(sourceId=source,id=ident,name=title,author=author,file={"name":"theme"+ext,"size":0})
+        rows=[item("themezer","AAA"),item("ps3themes","downloads/theme.p3t"),item("ps3pro","different",author="Other"),item("archive","unknown",author=""),item("archive","unknown2",author=""),item("themezer","BBB",title="Same theme v2"),item("themezer","CCC",ext=".zip")]
+        grouped=ts.group_items(rows,"p3t")
+        self.assertEqual(len(grouped),6)
+        self.assertEqual([v["sourceId"] for v in grouped[0]["alternatives"]],["themezer","ps3themes"])
+        self.assertEqual(grouped[0]["id"],ts.group_items(rows[:1],"p3t")[0]["id"])
+
+    def test_all_sources_keeps_partial_success(self):
+        from unittest.mock import patch
+        def result(kind, source, *args):
+            return dict(items=[dict(id="x",name="Theme",author="Maker",file={"name":"a.p3t"})] if source!="archive" else [],total=1,pages=2,**({"error":"offline"} if source=="archive" else {}))
+        original=ts.browse
+        with patch.object(ts,"browse",side_effect=result):
+            output=original("p3t","all")
+        self.assertEqual(len(output["items"]),1)
+        self.assertEqual(len(output["items"][0]["alternatives"]),3)
+        self.assertIn("Internet Archive",output["warning"])
+
+    def test_ps3themes_creator_and_trusted_downloads(self):
+        post={"title":{"rendered":"Test &amp; Art"},"content":{"rendered":'<p>Theme by Artist<br><img src="http://www.ps3-themes.com/a.jpg"><a href="http://download.ps3-themes.com/downloads4/test.p3t">Download</a><a href="http://evil.example/a.p3t">Bad</a></p>'},"link":"http://www.ps3-themes.com/gaming/test.html","author":99}
+        ts._cache.clear()
+        result=ts.browse("p3t","ps3themes",fetch_json=lambda *args:[post])
+        self.assertEqual(result["items"][0]["author"],"Artist")
+        self.assertEqual(len(result["items"]),1)
+        self.assertEqual(ts.download_url("p3t","ps3themes","downloads4/test.p3t"),"http://download.ps3-themes.com/downloads4/test.p3t")
+        for ident in ["../a.p3t","downloads/../a.p3t","https://evil/a.p3t","downloads/a.p3t?evil"]:
+            with self.assertRaises(ValueError):ts.download_url("p3t","ps3themes",ident)
+        self.assertFalse(ts._source_url_ok("ps3themes","http://evil.example/a.p3t"))
+        self.assertFalse(ts._source_url_ok("themezer","http://api.themezer.net/a"))
+
+    def test_equal_size_is_not_equal_content_and_mirrors_reuse_existing(self):
+        with tempfile.TemporaryDirectory() as folder:
+            first=b"P3TF"+b"a"*32
+            second=b"P3TF"+b"b"*32
+            a=ts.download(folder,"p3t","themezer","AAA",name="Same",opener=FakeOpener(first))
+            b=ts.download(folder,"p3t","themezer","AAA",name="Same",opener=FakeOpener(second))
+            self.assertNotEqual(a["name"],b["name"])
+            c=ts.download(folder,"p3t","ps3themes","downloads/other.p3t",opener=FakeOpener(first))
+            self.assertTrue(c["already"])
+            self.assertEqual(c["name"],a["name"])

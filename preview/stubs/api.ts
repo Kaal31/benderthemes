@@ -25,6 +25,9 @@ const PLUGIN_CATALOG_FIXTURE = {
   ],
 };
 const THEME_SOURCE_INFO: Record<string, any> = {
+  all: {name:"All sources",url:"",credit:"Choose a download source in the details."},
+  ps3themes: {name:"PS3-Themes.com",url:"http://www.ps3-themes.com/",credit:"Themes by their credited creators."},
+  wiithemer:{name:"WiiThemer",url:"https://www.wiithemer.org/",credit:"Wii themes by their original creators."},
   gbatemp:{name:"GBAtemp",url:"https://gbatemp.net/threads/wiiflow-themes.180497/",credit:"WiiFlow themes by their original creators."},
   themezer: { name: "Themezer", url: "https://themezer.net", credit: "Themes and previews from Themezer (themezer.net) by their creators." },
   pspunk: { name: "PSPunk", url: "https://www.pspunk.com/psp-themes/", credit: "Themes and screenshots from PSPunk (pspunk.com), collected from their creators." },
@@ -36,9 +39,9 @@ const THEME_SOURCE_INFO: Record<string, any> = {
   archive: { name: "Internet Archive", url: "https://archive.org", credit: "Uploads on the Internet Archive (archive.org) by its users. Not checked by Deck Home Themes." },
 };
 const THEME_SOURCES_KINDS: any = {
-  kinds: [["ps4","PS4","ps4",[".zip",".rar"],["superpsx"]],["x360","Xbox 360","x360",[".xzp",".cfljson"],["auroracollection"]],["wiiflow","WiiFlow","wiiflow",[".zip",".rar",".7z"],["gbatemp"]],["psp", "PSP", "psp", [".ptf", ".ctf"], ["pspunk", "shenron0", "archive"]], ["p3t", "PS3", "p3t", [".p3t"], ["themezer", "ps3pro", "archive"]], ["vita", "PS Vita", "vita", [".zip"], ["psvt", "archive"]],
+  kinds: [["ps4","PS4","ps4",[".zip",".rar"],["superpsx"]],["x360","Xbox 360","x360",[".xzp",".cfljson"],["auroracollection"]],["wiiflow","WiiFlow","wiiflow",[".zip",".rar",".7z"],["gbatemp"]],["psp", "PSP", "psp", [".ptf", ".ctf"], ["all", "pspunk", "shenron0", "archive"]], ["p3t", "PS3", "p3t", [".p3t"], ["all", "themezer", "ps3themes", "ps3pro", "archive"]], ["vita", "PS Vita", "vita", [".zip"], ["all", "psvt", "archive"]],
     ["switch", "Switch", "switch", [".nxtheme"], ["themezer"]], ["wiiu", "Wii U", "wiiu", [".utheme"], ["themezer"]], ["3ds", "3DS", "3ds", [".zip"], ["themezer"]],
-    ["wii", "Wii", "wii", [".mym", ".csm"], ["archive"]], ["xbox", "Xbox", "xbox", [".zip"], ["archive"]]].map(([id, label, dir, exts, sources]) => ({ id, label, dir: `skins/${dir}`, exts, sources })),
+    ["wii", "Wii", "wii", [".mym", ".csm", ".zip"], ["all", "wiithemer", "archive"]], ["xbox", "Xbox", "xbox", [".zip"], ["archive"]]].map(([id, label, dir, exts, sources]) => ({ id, label, dir: `skins/${dir}`, exts, sources })),
   sources: THEME_SOURCE_INFO,
   notBuilt: [{ name: "ThemePlaza", url: "https://themeplaza.art", kinds: ["3ds"], why: "Cloudflare browser check." }],
 };
