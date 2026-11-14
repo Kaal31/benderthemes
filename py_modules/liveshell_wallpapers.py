@@ -43,7 +43,7 @@ def entries(data):
             if not urlparse(url).path.lower().endswith('.mp4'):continue
             ident=hashlib.sha256((item['o']+':'+item['u']).encode()).hexdigest()[:24]
             poster=asset_url(source.get('j',source['u']),item['j']) if item.get('j') else ''
-            result.append({'id':'liveshell:'+ident,'providerId':ident,'name':str(item['t'])[:160],'source':'liveshell','kind':'video','format':'MP4','poster':poster,'sourcePage':PAGE,'downloadable':True,'size':item.get('s',0),'category':str(item.get('c','')),'resolution':str(item.get('q','')),'note':'LiveShell community catalogue · '+str(item.get('q','')),'_url':url})
+            result.append({'id':'liveshell:'+ident,'providerId':ident,'name':str(item['t'])[:160],'source':'liveshell','kind':'video','format':'MP4','poster':poster,'sourcePage':PAGE,'downloadable':True,'size':item.get('s',0),'category':str(item.get('c','')),'resolution':str(item.get('q','')),'note':('Resolution: '+str(item['q'])) if item.get('q') else '','_url':url})
         except (KeyError,ValueError,TypeError):continue
     return result
 

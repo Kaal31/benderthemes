@@ -43,6 +43,9 @@ MAX_JSON = 8 * 1024 * 1024
 UA = "DeckHomeThemes/theme-files (+https://github.com/Kaal31)"
 
 SOURCES = {
+    "psvt": {"name": "PSVita Custom Themes", "url": "https://psvt.ovh/", "credit": "Custom themes by their credited creators, hosted by Red Squirrel’s PSVita Custom Themes repository."},
+    "superpsx": {"name": "SuperPSX", "url": "https://www.superpsx.com/ps4-themes/", "credit": "Theme listings and previews from SuperPSX; artwork belongs to its original creators. External PKG downloads require extraction before use."},
+    "auroracollection": {"name": "Aurora collection (GitHub)", "url": "https://github.com/StonedModder/Aurora-Coverflow-Layouts", "credit": "Aurora skins and coverflow layouts by their original creators, collected by StonedModder from RealModScene."},
     "wiithemer": {"name":"WiiThemer", "url":"https://www.wiithemer.org/", "credit":"Wii themes and previews from WiiThemer. Themes belong to their original creators; creator names are not supplied by this catalog. MYM patches use the plugin’s standard Wii menu."},
     "gbatemp": {"name": "GBAtemp", "url": "https://gbatemp.net/threads/wiiflow-themes.180497/", "credit": "WiiFlow themes, descriptions and screenshots from public GBAtemp posts. Credits belong to the original creators; older image and download links may be unavailable."},
     "themezer": {"name": "Themezer", "url": "https://themezer.net",
@@ -58,10 +61,12 @@ SOURCES = {
 }
 # kind -> label, folder under <data>/skins, accepted extensions, size cap, sources (first = default)
 KINDS = {
+    "x360": {"label": "Xbox 360", "dir": "x360", "exts": (".xzp", ".cfljson"), "max": 256 << 20, "sources": ("auroracollection",)},
     "wiiflow": {"label": "WiiFlow", "dir": "wiiflow", "exts": (".zip", ".rar", ".7z"), "max": 256 << 20, "sources": ("gbatemp",)},
     "psp": {"label": "PSP", "dir": "psp", "exts": (".ptf", ".ctf"), "max": 24 << 20, "sources": ("pspunk", "shenron0", "archive")},
     "p3t": {"label": "PS3", "dir": "p3t", "exts": (".p3t",), "max": 160 << 20, "sources": ("themezer", "ps3pro", "archive")},
-    "vita": {"label": "PS Vita", "dir": "vita", "exts": (".zip",), "max": 96 << 20, "sources": ("archive",)},
+    "ps4": {"label": "PS4", "dir": "ps4", "exts": (".zip", ".rar"), "max": 256 << 20, "sources": ("superpsx",)},
+    "vita": {"label": "PS Vita", "dir": "vita", "exts": (".zip",), "max": 96 << 20, "sources": ("psvt", "archive")},
     "switch": {"label": "Switch", "dir": "switch", "exts": (".nxtheme",), "max": 24 << 20, "sources": ("themezer",)},
     "wiiu": {"label": "Wii U", "dir": "wiiu", "exts": (".utheme",), "max": 64 << 20, "sources": ("themezer",)},
     "3ds": {"label": "3DS", "dir": "3ds", "exts": (".zip",), "max": 24 << 20, "sources": ("themezer",)},
@@ -70,7 +75,6 @@ KINDS = {
 }
 NOT_BUILT = [
     {"name": "ThemePlaza", "url": "https://themeplaza.art", "kinds": ["3ds"], "why": "Cloudflare browser check, no public API (its 3DS themes are mostly on Themezer too)."},
-    {"name": "Xbox 360 themes", "url": "https://archive.org", "kinds": ["x360"], "why": "Only archives of Xbox Live Marketplace packages; not listed."},
     {"name": "VitaShell themes (Acemad/VitaShell-Themes)", "url": "https://github.com/Acemad/VitaShell-Themes", "kinds": ["vita"],
      "why": "Skins of the VitaShell file manager (colors.txt and PNG folders), not LiveArea / home themes (theme.xml) like the Vita importer reads."},
 ]
@@ -117,6 +121,53 @@ def _themezer_items(kind, data):
     return out, _int(info.get("itemCount")), _int(info.get("pageCount"))
 
 
+# --- PSVita Custom Themes --------------------------------------------------------------------------------------
+_PSVT_ID = re.compile(r"[0-9a-f]{40}")
+
+
+def _psvt_items(html):
+    items = []
+    for card in re.split(r'<div class="card h-100', html)[1:]:
+        name = re.search(r'class="card-header[^>]*title="([^"]+)"', card)
+        page = re.search(r'href="theme.php\?id=(\d+)"', card)
+        ident = re.search(r'psvt.ovh/themes/([0-9a-f]{40})\.png', card)
+        author = re.search(r'Created by</span>\s*<a[^>]*>(.*?)</a>', card, re.S)
+        if not (name and page and ident):
+            continue
+        key = ident[1]
+        items.append({"id": key, "name": _unescape(name[1]), "author": _unescape(author[1]) if author else "",
+                      "image": "https://psvt.ovh/themes/" + key + ".png", "page": "https://psvt.ovh/theme.php?id=" + page[1],
+                      "file": {"name": _unescape(name[1]) + ".zip", "size": 0}})
+    pages = re.search(r'title="Press Enter to go"[^>]*max="(\d+)"', html)
+    total = re.search(r'Currently there are\s*<strong>([\d,]+)</strong>', html)
+    return {"items": items, "pages": int(pages[1]) if pages else 1, "total": int(total[1].replace(",", "")) if total else len(items)}
+
+
+# --- SuperPSX public catalog (external downloads, not importer-ready PKGs) ----------------------------------------
+SUPERPSX_CATALOG = "https://www.superpsx.com/ps4_themes.json"
+
+
+def _superpsx_items(data):
+    out, seen = [], set()
+    for row in data if isinstance(data, list) else []:
+        if not isinstance(row, dict):
+            continue
+        name = _text(row.get("Theme_Name"), 120)
+        if not name or name in seen:
+            continue
+        seen.add(name)
+        links = []
+        for key, host in (("VikingFile_Link", "vikingfile.com"), ("OneFile_Link", "1fichier.com")):
+            url = _https(row.get(key))
+            if url and urllib.parse.urlsplit(url).hostname == host:
+                links.append(url)
+        out.append({"id": name, "name": name, "author": "", "image": _https(row.get("Preview_Link")),
+                    "page": SOURCES["superpsx"]["url"], "tag": "PS4 PKG · external download",
+                    "externalOnly": True, "externalLinks": links, "files": [],
+                    "description": "PKG packages cannot be applied directly. The PS4 importer accepts extracted theme folders or ZIP/RAR archives containing theme.xml."})
+    return out
+
+
 # --- PSPunk ----------------------------------------------------------------------------------------------------
 PSPUNK_PAGES = ("psp-themes", "psp-ctf-themes")  # PTF (official firmware) and CTF (custom firmware) pages
 _PSPUNK_FILE = re.compile(r"https?://(?:www\.)?pspunk\.com/files/theme/((?:ptf|ctf)/[^\"'<>?#]{1,160}\.(?:ptf|ctf))", re.I)
@@ -143,6 +194,7 @@ def _pspunk_parse(html):
 # --- GitHub collections ----------------------------------------------------------------------------------------
 # source id -> repository, branch, the one folder the files live in ("" = the root), kind and picture folder.
 GITHUB = {
+    "auroracollection": {"owner": "StonedModder", "repo": "Aurora-Coverflow-Layouts", "branch": "main", "dir": "", "dirs": ("Aurora/Media/Layouts/", "Aurora/Skins/"), "kind": "x360", "preview": "", "preview_ext": ""},
     "ps3pro": {"owner": "PS3-Pro", "repo": "Themes", "branch": "main", "dir": "files/", "kind": "p3t", "preview": "icons/", "preview_ext": ".png"},
     "shenron0": {"owner": "Shenron0", "repo": "PSP-Themes", "branch": "master", "dir": "", "kind": "psp", "preview": "", "preview_ext": ""},
 }
@@ -154,8 +206,12 @@ def _gh_file_ok(source, path):
     g = GITHUB[source]
     if not isinstance(path, str) or not path.startswith(g["dir"]):
         return False
-    name = path[len(g["dir"]):]
-    return bool(_GH_PATH.fullmatch(name)) and not name.startswith(".") and ".." not in name and name.lower().endswith(KINDS[g["kind"]]["exts"])
+    root = next((root for root in g.get("dirs", (g["dir"],)) if path.startswith(root)), None)
+    if root is None:
+        return False
+    name = path[len(root):]
+    allowed = bool(re.fullmatch(r"[^/\\\x00-\x1f]{1,160}", name)) if source == "auroracollection" else bool(_GH_PATH.fullmatch(name))
+    return allowed and not name.startswith(".") and ".." not in name and name.lower().endswith(KINDS[g["kind"]]["exts"])
 
 
 def _gh_tree_url(source):
@@ -181,13 +237,13 @@ def _gh_items(source, data):
         size = _int(t.get("size"))
         if not _gh_file_ok(source, path) or size > cap:
             continue
-        name = path[len(g["dir"]):]
+        name = os.path.basename(path) if g.get("dirs") else path[len(g["dir"]):]
         stem = os.path.splitext(name)[0]
         pic = f"{g['preview']}{stem}{g['preview_ext']}" if g["preview"] else ""
         image = _gh_raw_url(source, pic) if pic and pic in have and _gh_file_pic_ok(pic) else ""
         ext = os.path.splitext(name)[1].lower()
         out.append({"id": path, "name": _text(stem.replace("_", " "), 120) or stem, "author": "", "image": image, "page": page,
-                    "tag": "CTF (custom firmware)" if ext == ".ctf" else "PTF" if ext == ".ptf" else "",
+                    "tag": ("Aurora coverflow layout" if ext == ".cfljson" else "Aurora skin") if source == "auroracollection" else "CTF (custom firmware)" if ext == ".ctf" else "PTF" if ext == ".ptf" else "",
                     "file": {"name": name, "size": size}})
     out.sort(key=lambda i: i["name"].lower())
     return out
@@ -288,6 +344,10 @@ def _https(url, host=None):
 
 def _allowed_host(source, host):
     host = (host or "").lower()
+    if source == "psvt":
+        return host == "psvt.ovh"
+    if source == "superpsx":
+        return host in ("superpsx.com", "www.superpsx.com")
     if source == "wiithemer":
         return host in ("wiithemer.org", "www.wiithemer.org")
     if source == "gbatemp":
@@ -328,6 +388,8 @@ def _opener(source):
 def _fetch(source, url, data=None, limit=MAX_JSON):
     """GET (or POST JSON) -> bytes, refusing more than `limit` bytes and redirects off the source's hosts."""
     headers = {"User-Agent": "DeckHomeThemes/theme-files" if source == "gbatemp" else UA, "Accept": "application/json, text/html;q=0.8, */*;q=0.5"}
+    if source == "superpsx":
+        headers.update({"User-Agent": "Mozilla/5.0", "Referer": SOURCES[source]["url"]})
     if source == "gbatemp":
         headers.pop("Accept", None)
     if data is not None:
@@ -412,6 +474,14 @@ def browse(kind, source, query="", page=1, refresh=False, fetch_json=None, fetch
             words = query.lower().split()
             hits = [i for i in every if all(w in (i["name"]+" "+i["description"]+" "+i["author"]).lower() for w in words)]
             res = {"items": hits[(page-1)*PAGE_SIZE:page*PAGE_SIZE], "total": len(hits), "pages": max(1, -(-len(hits)//PAGE_SIZE)), "skipped": len(failures), "warning": "Showing the saved public GBAtemp index from 2026-10-23. Refresh tries live pages; older links may have expired." if not live_gbatemp else "Some GBAtemp pages are unavailable. Showing available entries or the saved index from 2026-10-23; older links may have expired." if failures else ""}
+        elif source == "psvt":
+            url = "https://psvt.ovh/index.php?" + urllib.parse.urlencode({"p": page, "s": query})
+            res = _cached((source, query, page), lambda: _psvt_items(fetch_text(source, url)), now, refresh)
+        elif source == "superpsx":
+            every = _cached((source,), lambda: _superpsx_items(fetch_json(source, SUPERPSX_CATALOG + "?t=" + str(int(now() // LIST_TTL)))), now, refresh)
+            words = query.lower().split()
+            hits = [item for item in every if all(word in item["name"].lower() for word in words)]
+            res = {"items": hits[(page-1)*PAGE_SIZE:page*PAGE_SIZE], "total": len(hits), "pages": max(1, -(-len(hits)//PAGE_SIZE))}
         elif source == "wiithemer":
             from wiithemer_catalog import parse, ROOT
             def load():return parse(fetch_text('wiithemer',ROOT+'index.js'))
@@ -506,6 +576,12 @@ def download_url(kind, source, ident, file=""):
     """The one URL a (kind, source, id, file) may download, or raise ValueError."""
     if kind not in KINDS or source not in KINDS[kind]["sources"]:
         raise ValueError("unknown kind or source")
+    if source == "psvt":
+        if not _PSVT_ID.fullmatch(str(ident or "")):
+            raise ValueError("Invalid PSVita theme id")
+        return "https://psvt.ovh/download.php?id=" + ident
+    if source == "superpsx":
+        raise ValueError("SuperPSX provides external PKG download pages, not direct importer-ready themes")
     if source == "gbatemp":
         raise ValueError("Open the original author download page; WiiFlow archives require separate import.")
     if source == "wiithemer":
@@ -573,6 +649,9 @@ def check_file(kind, path):
     if kind == "wii":
         import wii_themes
         return bool(wii_themes.peek(path))
+    if kind == "x360":
+        import x360_themes
+        return bool(x360_themes.peek(path))
     if kind == "xbox":
         import xbox_skins
         return bool(xbox_skins.peek(path))

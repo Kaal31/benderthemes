@@ -30,10 +30,13 @@ const THEME_SOURCE_INFO: Record<string, any> = {
   pspunk: { name: "PSPunk", url: "https://www.pspunk.com/psp-themes/", credit: "Themes and screenshots from PSPunk (pspunk.com), collected from their creators." },
   ps3pro: { name: "PS3-Pro Themes (GitHub)", url: "https://github.com/PS3-Pro/Themes", credit: "Themes from the PS3-Pro/Themes repository on GitHub, made by their creators." },
   shenron0: { name: "Shenron0 PSP-Themes (GitHub)", url: "https://github.com/Shenron0/PSP-Themes", credit: "PSP and CFW themes from the Shenron0/PSP-Themes repository on GitHub, made by their creators." },
+  psvt: {name:"PSVita Custom Themes",url:"https://psvt.ovh/",credit:"Themes by their credited creators; hosted by Red Squirrel."},
+  superpsx: {name:"SuperPSX",url:"https://www.superpsx.com/ps4-themes/",credit:"Themes and previews from SuperPSX and their original creators. External PKG downloads require extraction."},
+  auroracollection: {name:"Aurora collection (GitHub)",url:"https://github.com/StonedModder/Aurora-Coverflow-Layouts",credit:"Aurora skins and layouts by their creators; collection by StonedModder."},
   archive: { name: "Internet Archive", url: "https://archive.org", credit: "Uploads on the Internet Archive (archive.org) by its users. Not checked by Deck Home Themes." },
 };
 const THEME_SOURCES_KINDS: any = {
-  kinds: [["wiiflow","WiiFlow","wiiflow",[".zip",".rar",".7z"],["gbatemp"]],["psp", "PSP", "psp", [".ptf", ".ctf"], ["pspunk", "shenron0", "archive"]], ["p3t", "PS3", "p3t", [".p3t"], ["themezer", "ps3pro", "archive"]], ["vita", "PS Vita", "vita", [".zip"], ["archive"]],
+  kinds: [["ps4","PS4","ps4",[".zip",".rar"],["superpsx"]],["x360","Xbox 360","x360",[".xzp",".cfljson"],["auroracollection"]],["wiiflow","WiiFlow","wiiflow",[".zip",".rar",".7z"],["gbatemp"]],["psp", "PSP", "psp", [".ptf", ".ctf"], ["pspunk", "shenron0", "archive"]], ["p3t", "PS3", "p3t", [".p3t"], ["themezer", "ps3pro", "archive"]], ["vita", "PS Vita", "vita", [".zip"], ["psvt", "archive"]],
     ["switch", "Switch", "switch", [".nxtheme"], ["themezer"]], ["wiiu", "Wii U", "wiiu", [".utheme"], ["themezer"]], ["3ds", "3DS", "3ds", [".zip"], ["themezer"]],
     ["wii", "Wii", "wii", [".mym", ".csm"], ["archive"]], ["xbox", "Xbox", "xbox", [".zip"], ["archive"]]].map(([id, label, dir, exts, sources]) => ({ id, label, dir: `skins/${dir}`, exts, sources })),
   sources: THEME_SOURCE_INFO,
@@ -41,6 +44,7 @@ const THEME_SOURCES_KINDS: any = {
 };
 // invented entries (no third-party data): names and authors are made up, pictures are empty
 const themeSourcePage = (kind: string, source: string) => {
+  if(source==="superpsx")return (window as any).__superpsxCatalog ?? {items:[],total:0,pages:1};
   const items = Array.from({ length: 14 }, (_, i) => ({ id: source === "themezer" ? `1A${i}` : source === "pspunk" ? `ctf/sample_${i}.ctf` : source === "shenron0" ? `Sample ${i}.${i % 2 ? "ptf" : "ctf"}` : source === "ps3pro" ? `files/Sample_${i}.p3t` : `sample-item-${i}`,
     name: ["Aurora Night", "Paper Planes", "Retro Grid", "Ocean Glass", "Neon Garden", "Quiet Snow", "Copper Sky", "Midnight Rail", "Pixel Meadow", "Soft Static", "Lantern Walk", "Blue Hour", "Ember", "Long Name Theme With Many Words To Check Ellipsis"][i],
     author: ["pspunk", "ps3pro", "shenron0"].includes(source) ? "" : `maker${i}`, image: "", page: `https://example.invalid/${kind}/${i}`, downloads: 1000 - i * 37,

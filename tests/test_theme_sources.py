@@ -159,8 +159,32 @@ class GitHubSourceTests(unittest.TestCase):
         self.assertIn("github.com/PS3-Pro/Themes", k["sources"]["ps3pro"]["url"])
         self.assertIn("Shenron0", k["sources"]["shenron0"]["credit"])
         vita = [x for x in k["kinds"] if x["id"] == "vita"][0]
-        self.assertEqual(vita["sources"], ["archive"], "VitaShell skins are not Vita home themes")
+        self.assertEqual(vita["sources"], ["psvt", "archive"], "VitaShell skins are not Vita home themes")
         self.assertTrue(any("VitaShell" in n["name"] for n in k["notBuilt"]))
+
+
+class AuroraSourceTests(unittest.TestCase):
+    def test_allowed_roots_and_extensions(self):
+        for path in ["Aurora/Media/Layouts/Stack (Center).cfljson", "Aurora/Media/Layouts/Galé.cfljson", "Aurora/Skins/Blade2025.xzp"]:
+            self.assertTrue(ts._gh_file_ok("auroracollection", path), path)
+            self.assertIn("raw.githubusercontent.com/StonedModder/Aurora-Coverflow-Layouts/main/", ts.download_url("x360", "auroracollection", path))
+        for path in ["Aurora/Media/Layouts/../Bad.cfljson", "Aurora/Skins/nested/Bad.xzp", "Aurora/Skins/Bad.exe", "elsewhere/Bad.xzp", "Aurora/Skins/Bad\x00.xzp"]:
+            self.assertFalse(ts._gh_file_ok("auroracollection", path), path)
+
+    def test_catalog_separates_layouts_and_skins(self):
+        data={"tree":[{"type":"blob","path":path,"size":100} for path in ["Aurora/Media/Layouts/Stack.cfljson", "Aurora/Skins/Blade.xzp", "Aurora/User/Backgrounds/Test.jpg"]]}
+        items=ts._gh_items("auroracollection",data)
+        self.assertEqual(len(items),2)
+        self.assertEqual({i["tag"] for i in items},{"Aurora skin","Aurora coverflow layout"})
+        self.assertEqual(ts.KINDS["x360"]["dir"],"x360")
+
+    def test_layout_download_uses_existing_reader(self):
+        with tempfile.TemporaryDirectory() as folder:
+            path=Path(folder)/"Layout.cfljson"
+            path.write_text(json.dumps({"info":{"name":"Test"},"modes":[{"name":"Normal","covers":{}}]}))
+            self.assertTrue(ts.check_file("x360",str(path)))
+            path.write_text("{bad}")
+            self.assertFalse(ts.check_file("x360",str(path)))
 
 
 class ParseTests(unittest.TestCase):
@@ -233,7 +257,7 @@ class ParseTests(unittest.TestCase):
 
     def test_kinds_listing(self):
         k = ts.kinds()
-        self.assertEqual({x["id"] for x in k["kinds"]}, {"wiiflow", "psp", "p3t", "vita", "switch", "wiiu", "3ds", "wii", "xbox"})
+        self.assertEqual({x["id"] for x in k["kinds"]}, {"ps4", "wiiflow", "psp", "p3t", "vita", "switch", "wiiu", "3ds", "wii", "xbox", "x360"})
         for x in k["kinds"]:
             self.assertTrue(all(s in k["sources"] for s in x["sources"]))
 
@@ -328,3 +352,27 @@ class GbatempOfflineIndexTests(unittest.TestCase):
 
 if __name__ == "__main__":
     unittest.main()
+
+class SuperPSXTests(unittest.TestCase):
+    def test_catalog_and_filter(self):
+        data = [{"Theme_Name": "Ocean Theme", "Preview_Link": "https://i.imgur.com/test.jpg", "VikingFile_Link": "https://vikingfile.com/f/test", "OneFile_Link": "https://evil.example/x"}] * 2
+        ts._cache.clear()
+        result = ts.browse("ps4", "superpsx", "ocean", fetch_json=lambda *a: data)
+        self.assertEqual(result["total"], 1)
+        item = result["items"][0]
+        self.assertEqual(item["externalLinks"], ["https://vikingfile.com/f/test"])
+        self.assertEqual(item["files"], [])
+        self.assertTrue(item["externalOnly"])
+        with self.assertRaises(ValueError): ts.download_url("ps4", "superpsx", item["id"])
+
+
+class VitaRepositoryTests(unittest.TestCase):
+    def test_listing_download_and_validation(self):
+        key = 'a' * 40
+        html = '<div class="card h-100"><div class="card-header" title="Ocean &amp; Sky">x</div><a href="theme.php?id=123"><img src="//wsrv.nl/?url=psvt.ovh/themes/' + key + '.png"></a><span>Created by</span><a>Artist</a><input title="Press Enter to go" max="4">Currently there are <strong>80</strong>'
+        result = ts.browse('vita','psvt',fetch_text=lambda *a:html,refresh=True)
+        self.assertEqual(result['total'],80)
+        self.assertEqual(result['pages'],4)
+        self.assertEqual(result['items'][0]['name'],'Ocean & Sky')
+        self.assertEqual(ts.download_url('vita','psvt',key),'https://psvt.ovh/download.php?id='+key)
+        with self.assertRaises(ValueError): ts.download_url('vita','psvt','../bad')

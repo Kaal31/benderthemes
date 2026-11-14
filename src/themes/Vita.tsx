@@ -142,13 +142,19 @@ function ImageBubble({ url, mp, kind, shadow = 100 }: { url: string; mp: MotionP
       style={{ width: D, height: D, animation: mp.sway === "off" ? "none" : `dhtBubbleFloat ${mp.sway === "gentle" ? 7.5 : 5.5}s ease-in-out ${-mp.phase}s infinite`, ["--dht-float-distance" as any]: mp.sway === "lively" ? "5px" : "2px", ["--dht-float-angle" as any]: mp.sway === "lively" ? "1.3deg" : ".55deg" }}
     >
       <div className={`dht-bubble-icon--${kind}${mp.motion ? " dht-bubble-sway" : ""}`} style={{ width: D, height: D, position: "relative", ["--dht-sway-k" as any]: swayK }}>
-        <img src={url} alt="" draggable={false} data-dht-from-skin={kind === "theme" ? "" : undefined} style={{ width: "100%", height: "100%", objectFit: "contain", display: "block", filter: k > 0 ? `drop-shadow(0 ${(5 * Math.min(k, 1.5)).toFixed(1)}px ${(6 * k).toFixed(1)}px rgba(0,20,50,${Math.min(0.85, 0.4 * k).toFixed(2)}))` : undefined }} />
+        <img src={url} alt="" draggable={false} data-dht-from-skin={kind === "theme" ? "" : undefined} style={{ width: "100%", height: "100%", objectFit: "contain", display: "block", borderRadius: "50%", clipPath: "circle(50% at 50% 50%)", filter: k > 0 ? `drop-shadow(0 ${(5 * Math.min(k, 1.5)).toFixed(1)}px ${(6 * k).toFixed(1)}px rgba(0,20,50,${Math.min(0.85, 0.4 * k).toFixed(2)}))` : undefined }} />
       </div>
     </div>
   );
 }
 function ThemeBubbleIcon({ src, mp, smooth, shadow }: { src: string; mp: MotionProps; smooth: number; shadow: number }) {
-  return <ImageBubble url={useSmoothIcon(src, smooth) ?? src} mp={mp} kind="theme" shadow={shadow} />;
+  const url = useSmoothIcon(src, smooth) ?? src;
+  return <div className="dht-vita-imported-bubble" style={{width:D,height:D,["--dht-bubble-shadow" as any]:shadow>0?`drop-shadow(0 ${5*shadow/100}px ${6*shadow/100}px rgba(0,20,50,.4))`:"none"}}>
+    <Sphere style="rounded" art={false} mp={mp}>
+      <img src={url} alt="" draggable={false} data-dht-from-skin="" style={{width:"100%",height:"100%",objectFit:"contain",display:"block",borderRadius:"50%"}}/>
+      <div className="dht-vita-theme-highlight" style={{position:"absolute",left:"17%",top:"5%",width:"66%",height:"27%",borderRadius:"50%",pointerEvents:"none",background:"linear-gradient(180deg,rgba(255,255,255,.83),rgba(255,255,255,.32) 48%,rgba(255,255,255,0) 100%)",transform:"rotate(-8deg)"}}/>
+    </Sphere>
+  </div>;
 }
 function StockBubbleIcon({ item, bs, mp }: { item: { icon: IconName; color: string }; bs: BubbleStyle; mp: MotionProps }) {
   const { url, probe } = useStockBubble(item.icon, item.color);
@@ -190,8 +196,8 @@ function Bubble({ item, art, skin, bs, mp, stock, smooth, shadow }: { item: VIte
     );
   if (item.kind === "sys") {
     const custom = skin?.icons[item.sys.skinKey] ?? (item.sys.altKey ? skin?.icons[item.sys.altKey] : undefined);
-    // Vita theme icons are complete bubbles (glass, rim and glyph drawn by the theme), so they are shown
-    // as they are: wrapping them in our own glass and zooming would crop the rim and blow up the glyph.
+    // Theme textures provide the artwork; the Vita supplies the rounded glass
+    // surface, reflection and rim, as it does for its system bubbles.
     if (custom)
       return (
         <ThemeBubbleIcon src={custom} mp={mp} smooth={smooth} shadow={shadow} />
@@ -411,8 +417,8 @@ const VITA_CSS = `
   62% {transform:translate3d(0,0,150px) rotateY(360deg) scale(1.6);opacity:1}
   100% {transform:translate3d(0,0,220px) rotateY(360deg) scale(2.15);opacity:0}
 }
-@keyframes dhtFolderIn {from {opacity:0;transform:scale(.75)} to {opacity:1;transform:scale(1)}}
-@keyframes dhtFolderOut {to {opacity:0;transform:scale(.75)}}
+@keyframes dhtFolderIn {from {opacity:0;transform:scale(.22)} 35% {opacity:1} to {opacity:1;transform:scale(1)}}
+@keyframes dhtFolderOut {from {opacity:1;transform:scale(1)} to {opacity:0;transform:scale(.22)}}
 @keyframes dhtHomeToLive {to {transform:translateX(-38%);opacity:0}}
 @media(prefers-reduced-motion:reduce){.dht-vita-folder{animation:none!important}}
 @keyframes dhtPeel {
@@ -501,6 +507,8 @@ export function VitaHome() {
   const [closing, setClosing] = useState(false);
   const [openingBubble, setOpeningBubble] = useState<{game: Game; x: number; y: number} | null>(null);
   const [folderClosing, setFolderClosing] = useState(false);
+  const [folderOrigin, setFolderOrigin] = useState({x:W/2,y:H/2});
+  const folderMotion = s.animations && !window.matchMedia("(prefers-reduced-motion: reduce)").matches;
   useEffect(() => {
     if (!openingBubble) return;
     const timer = setTimeout(() => setOpeningBubble(null), 720);
@@ -508,9 +516,9 @@ export function VitaHome() {
   }, [openingBubble]);
   useEffect(() => {
     if (!folderClosing) return;
-    const timer = setTimeout(() => { setOpenFolder(null); setFolderClosing(false); }, 240);
+    const timer = setTimeout(() => { setOpenFolder(null); setFolderClosing(false); }, folderMotion ? 320 : 0);
     return () => clearTimeout(timer);
-  }, [folderClosing]);
+  }, [folderClosing, folderMotion]);
   const closeFolder = () => { setArrangingFolder(false);setFolderDraft(null);setFolderClosing(true); playSound("back"); };
   const [moving, setMoving] = useState<VItem[] | null>(null); // working order while rearranging
   const [launching, setLaunching] = useState(false);
@@ -621,6 +629,8 @@ export function VitaHome() {
   };
   const enter = (it: VItem) => {
     if (it.kind !== "folder" && it.kind !== "col") return;
+    const index=list.findIndex(item=>item.key===it.key);
+    setFolderOrigin(slotPos(Math.max(0,index)%PER_PAGE,W,H));
     setOpenFolder(it.key);
     setFolderClosing(false);
     setFsel(0);
@@ -1023,12 +1033,12 @@ export function VitaHome() {
         <BubbleDefs d={D} style={v.bubbleStyle} />
         <VitaBackground page={openFolder ? 0 : page} skin={skin} animate={s.animations} />
         {v.look === "sakura" && <SakuraPetals H={H} />}
-        <div style={{ position: "absolute", inset: 0, opacity: openFolder ? 0 : 1, animation:openingBubble ? "dhtHomeToLive 280ms ease-in both" : undefined, transition: "opacity 200ms, transform 260ms ease-out", transform: !openFolder && drag ? `translateY(${drag * 0.55}px)` : undefined }}>
+        <div className="dht-vita-home-bubbles" style={{ position: "absolute", inset: 0, pointerEvents:openFolder?"none":undefined, transformOrigin:`${folderOrigin.x}px ${folderOrigin.y}px`, opacity: openFolder && !folderClosing ? 0 : 1, animation:openingBubble ? "dhtHomeToLive 280ms ease-in both" : undefined, transition: folderMotion ? "opacity 280ms ease, transform 360ms cubic-bezier(.2,.7,.2,1)" : "none", transform:openFolder && !folderClosing ? "scale(1.5)" : !openFolder && drag ? `translateY(${drag * 0.55}px)` : "scale(1)" }}>
           {renderPages(list, openFolder ? clamp(sel, 0, list.length - 1) : cur, !!moving)}
         </div>
         {!openFolder && <PageDots page={page} pages={pages} target={swipeTarget} />}
         {openFolder && folderItem && (
-          <div className="dht-vita-folder" data-closing={folderClosing} style={{ position: "absolute", inset: 0, animation: s.animations ? `${folderClosing ? 'dhtFolderOut' : 'dhtFolderIn'} ${folderClosing ? 240 : 360}ms cubic-bezier(.2,.7,.2,1) both` : "none" }}>
+          <div className="dht-vita-folder" data-closing={folderClosing} style={{ position: "absolute", inset: 0, transformOrigin:`${folderOrigin.x}px ${folderOrigin.y}px`, animation: folderMotion ? `${folderClosing ? 'dhtFolderOut' : 'dhtFolderIn'} ${folderClosing ? 320 : 360}ms cubic-bezier(.2,.7,.2,1) both` : "none" }}>
             <div className="dht-vita-folder-shell" style={{position:"absolute",width:W*.88,height:W*.88,left:W*.06,top:(H-W*.88)/2+30,borderRadius:"50%",border:"2px solid rgba(190,239,255,.22)",background:"radial-gradient(circle at 48% 40%,rgba(116,214,248,.06) 42%,rgba(146,232,255,.16) 76%,rgba(209,250,255,.3) 100%)",boxShadow:"inset 0 0 44px rgba(160,232,255,.16)",pointerEvents:"none"}} />
             <div className="dht-folder-title" style={{position:"absolute",top:BAR+20,left:80,right:80,textAlign:"center",fontSize:30,color:"white",textShadow:"0 1px 3px #234"}}>{folderItem.label}</div>
             {arrangingFolder&&<div style={{position:"absolute",left:120,right:120,bottom:12,textAlign:"center",color:"white",zIndex:12,pointerEvents:"none"}}>Drag bubbles freely · D-pad moves · L/R selects · A/B finishes</div>}

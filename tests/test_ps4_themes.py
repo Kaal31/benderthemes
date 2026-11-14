@@ -81,7 +81,7 @@ class Ps4ThemesTest(unittest.TestCase):
             with patch.object(ps4_themes, "MAX_FILE", 8):
                 self.assertFalse(ps4_themes.peek(source))
 
-    def test_rar_missing_reader_and_pkg_only_are_reported(self):
+    def test_rar_missing_reader_and_invalid_nested_pkg_are_reported(self):
         with tempfile.TemporaryDirectory() as folder:
             source = self.rar_archive(folder, {"theme.xml": XML})
             with patch.object(ps4_themes.shutil, "which", return_value=None):
@@ -92,7 +92,7 @@ class Ps4ThemesTest(unittest.TestCase):
             self.rar_archive(folder, {"theme.pkg": b"not extracted"})
             result = ps4_themes.import_downloads(folder, Path(folder, "installed"))
             self.assertEqual(result["imported"], [])
-            self.assertTrue(any("theme.xml" in error for error in result["errors"]))
+            self.assertTrue(any("Invalid PS4 PKG header" in error for error in result["errors"]))
 
     def test_rar4_archive_is_supported(self):
         self.require_rar_reader()
@@ -356,3 +356,34 @@ class Ps4ThemesTest(unittest.TestCase):
 
 if __name__ == "__main__":
     unittest.main()
+
+class PkgBridgeTest(unittest.TestCase):
+    def test_pkg_normalizes_and_reimports(self):
+        import subprocess
+        with tempfile.TemporaryDirectory() as folder:
+            folder = Path(folder)
+            downloads = folder / 'downloads'; downloads.mkdir()
+            pkg = downloads / 'Theme.pkg'; pkg.write_bytes(b'\x7fCNT' + b'\0' * 100)
+            def run(command, **kwargs):
+                if 'list' in command:
+                    return subprocess.CompletedProcess(command, 0, b'F 157 Image0/theme.xml\nF 70 Image0/texture/background/homescreen.png\n', b'')
+                dest = Path(command[-1]) / 'Image0'; dest.mkdir(parents=True)
+                (dest/'theme.xml').write_bytes(XML)
+                image = dest/'texture/background/homescreen.png'; image.parent.mkdir(parents=True);image.write_bytes(PNG)
+                return subprocess.CompletedProcess(command, 0, b'', b'')
+            with patch.object(ps4_themes, '_pkg_tool', return_value=['helper']), patch.object(ps4_themes.subprocess, 'run', side_effect=run):
+                self.assertEqual(ps4_themes.read_ps4_theme(pkg)['name'], 'Demo')
+                result = ps4_themes.import_downloads(str(downloads), str(folder/'skins'))
+                self.assertEqual(len(result['imported']), 1, result)
+                self.assertEqual(ps4_themes.read_ps4_theme(folder/'skins'/result['imported'][0])['name'], 'Demo')
+                self.assertEqual(len(ps4_themes.import_downloads(str(downloads),str(folder/'skins'))['existing']),1)
+
+    def test_metadata_only_and_unsafe_pkg_never_extract(self):
+        import subprocess
+        with tempfile.TemporaryDirectory() as folder:
+            pkg=Path(folder)/'theme.pkg';pkg.write_bytes(b'\x7fCNT')
+            for listing in (b'F 10 Sc0/icon0.png\n', b'F 10 ../theme.xml\n', b'F 999999999 Image0/theme.xml\n'):
+                with patch.object(ps4_themes,'_pkg_tool',return_value=['helper']), patch.object(ps4_themes.subprocess,'run',return_value=subprocess.CompletedProcess([],0,listing,b'')) as run:
+                    with self.assertRaises(ValueError):
+                        with ps4_themes._source(pkg): pass
+                    self.assertEqual(run.call_count,1)

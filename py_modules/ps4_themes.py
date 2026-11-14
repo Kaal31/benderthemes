@@ -20,7 +20,7 @@ except ImportError:  # Decky's trimmed Python can omit xml.etree.
         fromstring = staticmethod(parse_xml)
 from contextlib import contextmanager
 
-READER_VERSION = 3
+READER_VERSION = 4
 MAX_FRAMES = 120
 MAX_FRAME_PIXELS = 32 * 1024 * 1024
 MAX_FILES = 4096
@@ -84,8 +84,70 @@ def _rar_zip(path):
             process.stdout.close()
 
 
+def _pkg_tool():
+    """Optional OrbisPkgTool CLI, installed independently of theme assets."""
+    helper = os.environ.get("DHT_PS4_PKG_TOOL") or os.path.join(os.path.dirname(os.path.dirname(__file__)), "tools", "ps4-pkg-helper", "OrbisPkgTool.dll")
+    if not os.path.isfile(helper):
+        raise ValueError("PKG import needs the optional OrbisPkgTool helper; run tools/setup_ps4_pkg_helper.py")
+    if helper.lower().endswith(".dll"):
+        runtime = shutil.which("dotnet")
+        if not runtime:
+            raise ValueError("PKG helper requires the .NET 8 runtime")
+        return [runtime, os.path.abspath(helper)]
+    return [os.path.abspath(helper)]
+
+
+def _extract_pkg(path, destination):
+    with open(path, "rb") as stream:
+        if stream.read(4) != b"\x7fCNT":
+            raise ValueError("Invalid PS4 PKG header")
+    if os.path.getsize(path) > MAX_TOTAL:
+        raise ValueError("PS4 PKG exceeds import limits")
+    command = _pkg_tool()
+    # Preflight the filesystem listing before allowing the helper to write files.
+    result = subprocess.run(command + ["list", os.path.abspath(path)], capture_output=True, timeout=60)
+    if result.returncode or len(result.stdout) > 2 << 20:
+        raise ValueError("Could not list PS4 PKG filesystem")
+    count, total = 0, 0
+    theme = False
+    for line in result.stdout.decode("utf-8", "replace").splitlines():
+        row = re.fullmatch(r"([FD]) (\d+) (.+)", line)
+        if not row:
+            if line.strip():
+                raise ValueError("Unrecognized PKG filesystem listing")
+            continue
+        relative = _safe_path(row[3])
+        if row[1] == "F":
+            count += 1
+            size = int(row[2])
+            total += size
+            if size > MAX_FILE or count > MAX_FILES or total > MAX_TOTAL:
+                raise ValueError("PS4 PKG filesystem exceeds import limits")
+            theme |= relative.lower().endswith("/theme.xml") or relative.lower() == "theme.xml"
+    if not theme:
+        raise ValueError("PKG has no readable theme.xml; it may contain metadata only or an encrypted theme filesystem")
+    result = subprocess.run(command + ["extract", os.path.abspath(path), destination], stdout=subprocess.DEVNULL, stderr=subprocess.PIPE, timeout=60)
+    if result.returncode:
+        raise ValueError("PS4 PKG extraction failed")
+
+
+@contextmanager
+def _pkg_source(path):
+    with tempfile.TemporaryDirectory(prefix="dht-ps4-pkg-") as directory:
+        try:
+            _extract_pkg(path, directory)
+            with _source(directory) as source:
+                yield source
+        except subprocess.TimeoutExpired as error:
+            raise ValueError("PS4 PKG extraction timed out") from error
+
+
 @contextmanager
 def _source(path):
+    if not os.path.isdir(path) and str(path).lower().endswith(".pkg"):
+        with _pkg_source(path) as source:
+            yield source
+        return
     if not os.path.isdir(path) and str(path).lower().endswith(".rar"):
         with _rar_zip(path) as converted, _source(converted) as source:
             yield source
@@ -148,6 +210,37 @@ def _source(path):
                 return archive.read(member)
 
         roots = [name for name in entries if name == "theme.xml" or name.endswith("/theme.xml")]
+        if not roots:
+            packages = [(name, entry) for name, entry in entries.items() if name.endswith(".pkg")]
+            if packages:
+                if len(packages) > 8:
+                    raise ValueError("Too many nested PS4 packages")
+                with tempfile.TemporaryDirectory(prefix="dht-ps4-packages-") as directory:
+                    valid, failures = [], []
+                    for index, (name, entry) in enumerate(packages):
+                        package = os.path.join(directory, str(index) + ".pkg")
+                        # Package size has its own cap; resources are checked after extraction.
+                        if entry[1] > MAX_TOTAL:
+                            raise ValueError("Nested PS4 PKG exceeds import limits")
+                        if archive:
+                            with archive.open(entry[0]) as src, open(package, "wb") as dst:
+                                shutil.copyfileobj(src, dst, 65536)
+                        else:
+                            shutil.copyfile(entry[0], package)
+                        target = os.path.join(directory, "extracted-" + str(index))
+                        os.mkdir(target)
+                        try:
+                            _extract_pkg(package, target)
+                            with _source(target) as (read_theme, names_theme):
+                                _xml(read_theme("theme.xml"))
+                            valid.append(target)
+                        except (ValueError, subprocess.TimeoutExpired) as error:
+                            failures.append(os.path.basename(name) + ": " + str(error))
+                    if len(valid) != 1:
+                        raise ValueError("Expected one readable theme payload in PKG archive. " + "; ".join(failures) if not valid else "Multiple readable themes in archive; import their PKGs separately")
+                    with _source(valid[0]) as source:
+                        yield source
+                return
         if len(roots) != 1:
             raise ValueError("Expected exactly one PS4 theme.xml")
         prefix = roots[0][:-len("theme.xml")]
@@ -267,12 +360,12 @@ def import_downloads(downloads, destination):
         os.makedirs(destination, exist_ok=True)
         with os.scandir(downloads) as entries:
             candidates = sorted((entry.name for entry in entries if not entry.name.startswith(".") and not entry.is_symlink()
-                                 and (entry.is_dir() or entry.name.lower().endswith((".zip", ".rar")))), key=str.casefold)[:128]
+                                 and (entry.is_dir() or entry.name.lower().endswith((".zip", ".rar", ".pkg")))), key=str.casefold)[:128]
         processed = 0
         copied_bytes = 0
         for name in candidates:
             source = os.path.join(downloads, name)
-            if name.lower().endswith(".rar"):
+            if name.lower().endswith((".rar", ".pkg")):
                 try:
                     with _source(source) as (read, names):
                         _xml(read("theme.xml"))
@@ -310,24 +403,13 @@ def import_downloads(downloads, destination):
                 processed += 1
                 with tempfile.NamedTemporaryFile(dir=destination, prefix=".ps4-import-", suffix=".zip", delete=False) as stream:
                     temporary = stream.name
-                if os.path.isfile(source) and not name.lower().endswith(".rar"):
-                    with open(source, "rb") as source_stream, open(temporary, "wb") as output:
-                        while True:
-                            chunk = source_stream.read(262144)
-                            if not chunk:
-                                break
-                            copied_bytes += len(chunk)
-                            if copied_bytes > 512 << 20 or output.tell() + len(chunk) > MAX_TOTAL:
-                                raise ValueError("PS4 import size limit reached")
-                            output.write(chunk)
-                else:
-                    with _source(source) as (read, names), zipfile.ZipFile(temporary, "w", zipfile.ZIP_DEFLATED) as archive:
-                        for relative in names:
-                            raw = read(relative)
-                            copied_bytes += len(raw)
-                            if copied_bytes > 512 << 20:
-                                raise ValueError("PS4 import size limit reached")
-                            archive.writestr(relative, raw)
+                with _source(source) as (read, names), zipfile.ZipFile(temporary, "w", zipfile.ZIP_DEFLATED) as archive:
+                    for relative in names:
+                        raw = read(relative)
+                        copied_bytes += len(raw)
+                        if copied_bytes > 512 << 20:
+                            raise ValueError("PS4 import size limit reached")
+                        archive.writestr(relative, raw)
                 if not peek(temporary) or fingerprint(temporary) != digest:
                     raise ValueError("Theme changed while importing; try again")
                 os.link(temporary, target)

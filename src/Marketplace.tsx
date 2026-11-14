@@ -1,4 +1,4 @@
-import { AnimatedWallpapers } from "./AnimatedWallpapers";
+import {CreatorCredit} from "./CreatorCredit";
 import { PluginSpotlight } from "./PluginSpotlight";
 import { ThemeFiles } from "./ThemeFiles";
 import { CommunityThemes } from "./CommunityThemes";
@@ -27,8 +27,8 @@ function BonusFeatureBadges({id}:{id:string}) {
   return <div className="dht-hub-feature-badges" aria-label="Bonus theme features">{features.map(feature=><span key={feature} className="dht-hub-feature-badge" data-feature={feature} title={BONUS_FEATURE_LABELS[feature].description}>{BONUS_FEATURE_LABELS[feature].label}</span>)}</div>;
 }
 
-export type ThemePack = { id: string; name: string; theme: ThemeId | null; description: string; size: number; version: string; installedVersion?: string; compatible: boolean; preview?: string; poster?: string; builtIn?: boolean; localThemeId?: string; frameTheme?:string; uiOverhaul?: boolean; community?: { repo: string; id: string; themeId?: string; updateAvailable: boolean } };
-type CommunitySource = { repo: string; themes: { id: string; themeId?: string; name: string; description: string; size?: number; version: string; installedVersion?: string; compatible: boolean; preview?: string; uiOverhaul?: boolean; updateAvailable: boolean; layout?: ThemeId }[] };
+export type ThemePack = { author?:string; id: string; name: string; theme: ThemeId | null; description: string; size: number; version: string; installedVersion?: string; compatible: boolean; preview?: string; poster?: string; builtIn?: boolean; localThemeId?: string; frameTheme?:string; uiOverhaul?: boolean; community?: { repo: string; id: string; themeId?: string; updateAvailable: boolean } };
+type CommunitySource = { repo: string; themes: { author?:string; id: string; themeId?: string; name: string; description: string; size?: number; version: string; installedVersion?: string; compatible: boolean; preview?: string; uiOverhaul?: boolean; updateAvailable: boolean; layout?: ThemeId }[] };
 const communityList = callable<[], { sources: CommunitySource[] }>("community_themes");
 const communityPackage = callable<[repo: string, id: string, action: string], { ok: boolean; error?: string; themeId?: string }>("community_package");
 const communityProgress = callable<[], PackProgress>("community_progress");
@@ -49,14 +49,15 @@ const withBuiltIns = (themes: ThemePack[], art: ThemeArt = {}): ThemePack[] => [
 /** A built-in theme whose optional extras are not downloaded yet. */
 const extrasMissing = (p: ThemePack) => !!p.builtIn && !p.installedVersion;
 
-type Tab = "wallpapers" | "discover" | "yours" | "community" | "files" | "spotlight";
-const TABS: { id: Tab; name: string }[] = [{ id: "discover", name: "Discover" }, { id: "yours", name: "Your themes" }, { id: "community", name: "Community" }, { id: "files", name: "Theme files" }, { id: "wallpapers", name: "Animated backgrounds" }, { id: "spotlight", name: "Plugin Spotlight" }];
+type Tab = "discover" | "yours" | "community" | "spotlight";
+const TABS: { id: Tab; name: string }[] = [{ id: "discover", name: "Discover" }, { id: "yours", name: "Your themes" }, { id: "community", name: "Community" }, { id: "spotlight", name: "Plugin Spotlight" }];
 const upToDate = (p: ThemePack) => p.community ? !p.community.updateAvailable : p.installedVersion === "legacy" || p.installedVersion === p.version;
 
 export function Marketplace({ requested, from, initialTab }: { requested?: ThemeId; from?: ThemeId; initialTab?: "community" }) {
   const hubRoot=useRef<HTMLDivElement>(null);
   const communityUpdates = useCommunityUpdates();
   const [tab, setTab] = useState<Tab>(initialTab ?? "discover");
+  const [discoverKind,setDiscoverKind]=useState("authored");
   const [updatesOpen, setUpdatesOpen] = useState(false);
   const updatesRoot = useRef<HTMLElement>(null);
   const tabInput = useRef<InputHandler | null>(null); // Theme files and Plugin Spotlight take the D-pad, A, X, ☰ and (when open) B
@@ -103,12 +104,12 @@ export function Marketplace({ requested, from, initialTab }: { requested?: Theme
       const [result, community] = await Promise.all([catalog(refresh), communityList().catch(() => ({ sources: [] as CommunitySource[] }))]);
       if (!alive.current) return;
       const installed = community.sources.flatMap(source => source.themes.filter(t => !!t.installedVersion).map(t => ({
-        id: `community:${source.repo}:${t.id}`, name: t.name, theme: t.layout ?? (t.uiOverhaul ? "native" : "frame"), description: t.description,
+        id: `community:${source.repo}:${t.id}`, name: t.name, author:t.author, theme: t.layout ?? (t.uiOverhaul ? "native" : "frame"), description: t.description,
         size: t.size ?? 0, version: t.version, installedVersion: t.installedVersion, compatible: t.compatible, preview: t.preview, poster: t.preview, uiOverhaul: t.uiOverhaul,
         community: { repo: source.repo, id: t.id, themeId: t.themeId, updateAvailable: t.updateAvailable }
       } satisfies ThemePack)));
       const localThemes: ThemePack[] = allThemes().filter(t => t.source === "bundled" && !/test/i.test(t.name)).map(t => ({
-        id: `local:${t.id}`, name: t.name, description: t.description ?? "Bundled community theme",
+        id: `local:${t.id}`, name: t.name, author:t.author, description: t.description ?? "Bundled community theme",
         size: 0, version: "bundled", compatible: true, ...result.art?.[t.id],
         ...result.themes.find(p=>p.frameTheme===t.id), localThemeId:t.id, theme:t.layout,
         installedVersion:result.themes.some(p=>p.frameTheme===t.id)?result.themes.find(p=>p.frameTheme===t.id)?.installedVersion:"bundled"
@@ -188,10 +189,10 @@ export function Marketplace({ requested, from, initialTab }: { requested?: Theme
     const n = cells.findIndex(c => c.offsetTop !== cells[0].offsetTop);
     return n < 0 ? cells.length : n;
   };
-  const goTab = (t: Tab) => { setUpdatesOpen(false); setTab(t); setSelected(0); };
+  const goTab = (t: Tab) => {setUpdatesOpen(false);setTab(t);setSelected(0);};
   useEffect(()=>{hubRoot.current?.querySelector(`[role="tab"][aria-selected="true"]`)?.scrollIntoView({block:"nearest",inline:"nearest"});},[tab]);
-  const actions = useRef({ cycleStyle, activate, busy, filtered, selected, tab, columns, updatesOpen });
-  actions.current = { cycleStyle, activate, busy, filtered, selected, tab, columns, updatesOpen };
+  const actions = useRef({ discoverKind, cycleStyle, activate, busy, filtered, selected, tab, columns, updatesOpen });
+  actions.current = { discoverKind, cycleStyle, activate, busy, filtered, selected, tab, columns, updatesOpen };
   useEffect(() => pushModalInput(p => {
     const a = actions.current;
     if (a.updatesOpen) {
@@ -205,7 +206,8 @@ export function Marketplace({ requested, from, initialTab }: { requested?: Theme
         next?.focus(); next?.scrollIntoView({block:"nearest"}); return true;
       }
     }
-    const routed = a.tab === "spotlight" || a.tab === "files" || a.tab === "community" || a.tab === "wallpapers";
+    if((a.tab==="discover"||a.tab==="yours")&&a.discoverKind==="authored"&&tabInput.current?.(p))return true;
+    const routed = a.tab === "spotlight" || a.tab === "community" || (a.tab==="discover"||a.tab==="yours")&&a.discoverKind!=="authored";
     if (p.btn === "b" && routed && tabInput.current?.(p)) { playSound("back"); return true; } // close a confirmation / search box first
     if (p.btn === "b") { playSound("back"); closeMarketplace(); return true; }
     if (a.busy) return true;
@@ -226,26 +228,10 @@ export function Marketplace({ requested, from, initialTab }: { requested?: Theme
     return true;
   }), []);
   const installed = packs.filter(p => p.installedVersion && p.theme).length;
-  const count: Record<Tab, number | undefined> = { discover: packs.filter(p => p.theme && !p.community).length, yours: installed, community: communityUpdates.updateCount || undefined, files: undefined, wallpapers: undefined, spotlight: undefined };
+  const count: Record<Tab, number | undefined> = { discover: undefined, yours: installed, community: communityUpdates.updateCount || undefined, spotlight: undefined };
+  const showRefresh=tab === "discover"&&discoverKind==="authored" || tab === "yours";
   const styleName = styleOptions.find(o => o.id === styleChoice)?.name ?? "Auto";
-  return <div ref={hubRoot} className="dht-market dht-hub" data-hub-theme={hubThemeKey(styled?.theme, styled?.x360)} data-hub-styled={styled ? "true" : "false"} data-hub-source={source} data-hub-tab={tab} data-motion={s.animations} role="dialog" aria-modal="true" aria-label="Hub">
-    <style>{hubVarsCss()}{HUB_DECO_CSS}{MARKET_CSS}</style><div className="dht-hub-deco" data-deco={styled ? hs.deco : "none"} aria-hidden="true"/>
-    <header className="dht-hub-header">
-      <div className="dht-hub-brand"><span className="market-eyebrow">DECK HOME THEMES</span><h1><HubLogo />Hub</h1><p className="dht-hub-tagline">{styled ? hs.tagline : "Pick a theme and make it yours."}</p></div>
-      <nav className="market-toolbar dht-hub-tabs" aria-label="Hub sections">
-        <kbd className="dht-hub-glyph" aria-hidden="true">LB</kbd>
-        <div role="tablist">{TABS.map(t => <button key={t.id} role="tab" aria-selected={tab === t.id} data-active={tab === t.id} onClick={() => goTab(t.id)} onFocus={e=>e.currentTarget.scrollIntoView({block:"nearest",inline:"nearest"})}>{t.name}{count[t.id] !== undefined && <small>{count[t.id]}</small>}</button>)}</div>
-        <kbd className="dht-hub-glyph" aria-hidden="true">RB</kbd>
-      </nav>
-      <div className="dht-hub-headright">
-        <button className="market-style" aria-pressed={updatesOpen} onClick={() => setUpdatesOpen(v => !v)}>Updates{communityUpdates.updateCount ? ` · ${communityUpdates.updateCount}` : ""}</button>
-        <button className="market-style" onClick={cycleStyle} aria-label={`Hub style: ${styleName}`}><kbd>Y</kbd> Style <strong>{styleName}</strong></button>
-        {(tab === "discover" || tab === "yours") && <button className="market-refresh" disabled={busy || loading} onClick={() => void load(true)} aria-label="Refresh">{loading ? "…" : "↻"}</button>}
-        <button className="market-close" onClick={() => updatesOpen ? setUpdatesOpen(false) : closeMarketplace()} aria-label="Back"><kbd>B</kbd> Back</button>
-      </div>
-    </header>
-    {error && (tab === "discover" || tab === "yours") && <div className="market-notice">{error} · Showing saved catalog. Installed themes still work offline.</div>}
-    {updatesOpen ? <section ref={updatesRoot} className="dht-hub-updates" aria-label="Hub updates"><h2>Updates</h2><Updates onManageThemes={() => goTab("yours")}/></section> : tab === "community" ? <CommunityThemes inputRef={tabInput}/> : tab === "spotlight" ? <PluginSpotlight inputRef={tabInput}/> : tab === "files" ? <ThemeFiles inputRef={tabInput}/> : tab === "wallpapers" ? <AnimatedWallpapers inputRef={tabInput}/> : <main className="dht-hub-body"><div className="market-grid dht-hub-grid" ref={listRef}>
+  const authoredCatalog=<main className="dht-hub-body"><div className="market-grid dht-hub-grid" ref={listRef}>
       {!filtered.length && <p className="dht-hub-empty">{loading ? "Loading your next home…" : installedOnly ? "Your collection starts here. Browse Discover to download a theme." : "No themes are available yet. Try Refresh."}</p>}
       {filtered.map((pack, i) => {
         const state = pack.community?.updateAvailable ? "Update" : isActive(pack) ? "Active" : pack.installedVersion ? (upToDate(pack) || pack.installedVersion === "built-in" ? "Installed" : "Update") : extrasMissing(pack) ? "Built in" : "";
@@ -259,7 +245,7 @@ export function Marketplace({ requested, from, initialTab }: { requested?: Theme
     </div><aside className="dht-hub-detail">{current && <>
       <div className="dht-hub-detail-scroll">
         <div className="market-detail-art" data-theme={current.id}>{current.preview || current.poster ? <img key={current.id} src={current.preview || current.poster} alt={`${current.name} animated preview`} /> : <span>Preview coming soon</span>}</div>
-        <h2>{current.name}</h2><p>{current.description}</p>
+        <h2>{current.name}</h2><CreatorCredit author={current.author}/><p>{current.description}</p>
         <BonusFeatureBadges id={current.id}/>{current.uiOverhaul && <small className="dht-hub-overhaul">UI overhaul</small>}
         <dl><div><dt>Download</dt><dd>{current.size ? `${(current.size / 1048576).toFixed(1)} MB` : "Built in"}</dd></div><div><dt>Version</dt><dd>{current.version}</dd></div><div><dt>Available offline</dt><dd>{current.installedVersion ? "Ready to play" : "After download"}</dd></div></dl>
       </div>
@@ -269,9 +255,29 @@ export function Marketplace({ requested, from, initialTab }: { requested?: Theme
         {(current.installedVersion || current.builtIn) && <button className="market-remove dht-hub-remove" disabled={busy || isActive(current)} onClick={() => void deletePack()}>Delete theme</button>}
         <small>Updates activate immediately. Your settings are kept.</small>
       </div>
-    </>}</aside></main>}
+    </>}</aside></main>;
+  return <div ref={hubRoot} className="dht-market dht-hub" data-hub-theme={hubThemeKey(styled?.theme, styled?.x360)} data-hub-styled={styled ? "true" : "false"} data-hub-source={source} data-hub-tab={tab} data-motion={s.animations} role="dialog" aria-modal="true" aria-label="Hub">
+    <style>{hubVarsCss()}{HUB_DECO_CSS}{MARKET_CSS}</style><div className="dht-hub-deco" data-deco={styled ? hs.deco : "none"} aria-hidden="true"/>
+    <header className="dht-hub-header">
+      <div className="dht-hub-brand"><span className="market-eyebrow">DECK HOME THEMES</span><h1><HubLogo />Hub</h1><p className="dht-hub-tagline">{styled ? hs.tagline : "Pick a theme and make it yours."}</p></div>
+      <nav className="market-toolbar dht-hub-tabs" aria-label="Hub sections">
+        <kbd className="dht-hub-glyph" aria-hidden="true">LB</kbd>
+        <div role="tablist">{TABS.map(t => <button key={t.id} role="tab" aria-selected={tab === t.id} data-active={tab === t.id} onClick={() => goTab(t.id)} onFocus={e=>e.currentTarget.scrollIntoView({block:"nearest",inline:"nearest"})}>{t.name}{count[t.id] !== undefined && <small>{count[t.id]}</small>}</button>)}</div>
+        <kbd className="dht-hub-glyph" aria-hidden="true">RB</kbd>
+      </nav>
+      <div className="dht-hub-headright">
+        <button className="market-style" aria-pressed={updatesOpen} onClick={() => setUpdatesOpen(v => !v)}>Updates{communityUpdates.updateCount ? ` · ${communityUpdates.updateCount}` : ""}</button>
+        <button className="market-style" onClick={cycleStyle} aria-label={`Hub style: ${styleName}`}><kbd>Y</kbd> Style <strong>{styleName}</strong></button>
+        <button style={{visibility:showRefresh?"visible":"hidden"}} aria-hidden={!showRefresh} tabIndex={showRefresh?0:-1} className="market-refresh" disabled={busy || loading} onClick={() => void load(true)} aria-label="Refresh">{loading ? "…" : "↻"}</button>
+        <button className="market-close" onClick={() => updatesOpen ? setUpdatesOpen(false) : closeMarketplace()} aria-label="Back"><kbd>B</kbd> Back</button>
+      </div>
+    </header>
+    {error && (tab === "discover" || tab === "yours") && <div className="market-notice">{error} · Showing saved catalog. Installed themes still work offline.</div>}
+    <div key={tab} className="dht-hub-content" >
+    {updatesOpen ? <section ref={updatesRoot} className="dht-hub-updates" aria-label="Hub updates"><h2>Updates</h2><Updates onManageThemes={() => goTab("yours")}/></section> : tab === "community" ? <CommunityThemes inputRef={tabInput}/> : tab === "spotlight" ? <PluginSpotlight inputRef={tabInput}/> : <ThemeFiles key={tab} inputRef={tabInput} initialKind="authored" installedOnly={tab==="yours"} authoredContent={authoredCatalog} onKindChange={kind=>{setDiscoverKind(kind);setSelected(0)}}/>}
+    </div>
     {message && <div className="market-notice" role="status">{message}</div>}
-    <footer className="dht-hub-footer"><span>✦ A home for every mood</span><span className="dht-hub-hints"><kbd>LB</kbd><kbd>RB</kbd> Sections <kbd>Y</kbd> Hub style {tab === "discover" || tab === "yours" ? <><kbd>✛</kbd> Choose <kbd>A</kbd> Select </> : null}<kbd>B</kbd> Back</span></footer>
+    <footer className="dht-hub-footer"><span>✦ A home for every mood</span><span className="dht-hub-hints"><kbd>LB</kbd><kbd>RB</kbd> Sections <kbd>Y</kbd> Hub style {tab === "discover"&&discoverKind==="authored" || tab === "yours" ? <><kbd>✛</kbd> Choose <kbd>A</kbd> Select </> : null}<kbd>B</kbd> Back</span></footer>
   </div>;
 }
 
@@ -280,7 +286,9 @@ export function Marketplace({ requested, from, initialTab }: { requested?: Theme
 // TV-sized Big Picture (>= 1600 px) zooms the whole page. Posters and previews are 16:10 and are never cropped
 // (16:10 boxes + object-fit: contain). The boxes take their height from a ::before spacer (padding-top: 62.5% of the
 // width), not aspect-ratio: in a flex <button> the Deck's Steam browser collapsed aspect-ratio boxes to a thin strip. The selected card's ring stays inside the grid's padding.
-const MARKET_CSS = `.dht-hub-updates{flex:1;min-height:0;overflow:auto;padding:12px 0 24px}.dht-hub-updates>h2{margin:0 0 16px}.dht-hub-updates>div{max-width:700px;margin:0 auto}.dht-hub-updates button:focus-visible{outline:3px solid #b7d9ff;outline-offset:2px}.dht-hub-updates .dht-tu-action{margin:8px 0}.dht-hub-headright{flex-wrap:wrap}.dht-hub-overhaul{display:inline-block;margin:6px 10px;padding:3px 8px;border-radius:12px;background:#7460bd33;color:#d9d1ff;font-size:11px}
+const MARKET_CSS = `
+.dht-hub-content{display:flex;flex:1;min-height:0;flex-direction:column}
+.dht-hub-updates{flex:1;min-height:0;overflow:auto;padding:12px 0 24px}.dht-hub-updates>h2{margin:0 0 16px}.dht-hub-updates>div{max-width:700px;margin:0 auto}.dht-hub-updates button:focus-visible{outline:3px solid #b7d9ff;outline-offset:2px}.dht-hub-updates .dht-tu-action{margin:8px 0}.dht-hub-headright{flex-wrap:wrap}.dht-hub-overhaul{display:inline-block;margin:6px 10px;padding:3px 8px;border-radius:12px;background:#7460bd33;color:#d9d1ff;font-size:11px}
 .dht-market{position:absolute;inset:0;z-index:400;background:var(--dht-hub-bg);color:var(--dht-hub-text);display:flex;flex-direction:column;padding:20px 0 12px;box-sizing:border-box;font:15px var(--dht-hub-font);letter-spacing:0;color-scheme:var(--dht-hub-scheme);overflow:hidden;text-transform:var(--dht-hub-case);container:dht-hub / size;transition:background-color .3s,color .3s}
 .dht-market>*:not(.dht-hub-deco){position:relative;z-index:1;margin-inline:32px}
 .dht-market *{box-sizing:border-box}.dht-market button{font:inherit;color:inherit;cursor:pointer;border:0;text-transform:inherit}.dht-market button:disabled{opacity:.45;cursor:default}.dht-market button:focus-visible{outline:3px solid var(--dht-hub-accent);outline-offset:3px}

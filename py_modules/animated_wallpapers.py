@@ -222,7 +222,7 @@ def wallspace_page(query='',page=1):
         key=str(m.get('key',''));slug=str(m.get('slug',''))
         if not re.fullmatch(r'[0-9]{5,20}',key):continue
         if not re.fullmatch(r'[a-z0-9-]{1,160}',slug):slug=key
-        items.append({'id':'wallspace:'+key,'providerId':key,'name':str(m.get('title','Wallspace wallpaper'))[:160],'source':'wallspace','kind':'video','format':'MP4','author':str(m.get('creator',''))[:100], 'poster':'https://s4.wallspace.app/wallpaper/'+key+'/thumbnail.webp','sourcePage':'https://wallspace.app/wallpaper/'+slug,'size':m.get('file_size',0),'downloadable':not m.get('is_pro',False),'note':'Available from Wallspace' if not m.get('is_pro') else 'Marked Pro by Wallspace. Open the source page or import your downloaded file.'})
+        items.append({'id':'wallspace:'+key,'providerId':key,'name':str(m.get('title','Wallspace wallpaper'))[:160],'source':'wallspace','kind':'video','format':'MP4','author':str(m.get('creator',''))[:100], 'poster':'https://s4.wallspace.app/wallpaper/'+key+'/thumbnail.webp','sourcePage':'https://wallspace.app/wallpaper/'+slug,'size':m.get('file_size',0),'downloadable':not m.get('is_pro',False),'note':'' if not m.get('is_pro') else 'Pro download. Open the source page or import your downloaded file.'})
     paging=data.get('pagination',{}) if isinstance(data,dict) else {}
     return {'items':items,'hasMore':bool(paging.get('has_more',len(raw)==24))}
 
