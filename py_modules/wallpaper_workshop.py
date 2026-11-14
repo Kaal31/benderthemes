@@ -153,30 +153,31 @@ def _run(data,item,username,qr):
         with _lock:_worker_running=False
 
 
-def start_wallspace(data,ident):
+def start_wallspace(data,ident,provider="wallspace"):
     global _worker_running
     with _lock:
         if _worker_running or _jobs.get('busy') or (_process is not None and _process.poll() is None):return {'ok':False,'error':'A wallpaper download is already running'}
-        if not re.fullmatch(r'[0-9]{5,20}',str(ident)):raise ValueError('Invalid Wallspace item')
+        if not re.fullmatch(r'[a-f0-9]{24}' if provider=='liveshell' else r'[0-9]{5,20}',str(ident)):raise ValueError('Invalid wallpaper item')
         _worker_running=True
-        _jobs.clear();_jobs.update(busy=True,id=str(ident),percent=0,message='Connecting to Wallspace…',phase='preparing')
+        _jobs.clear();_jobs.update(busy=True,id=str(ident),percent=0,message='Connecting to '+('LiveShell' if provider=='liveshell' else 'Wallspace')+'…',phase='preparing')
         _cancel.clear()
-    threading.Thread(target=_run_wallspace,args=(str(data),str(ident)),daemon=True).start()
+    threading.Thread(target=_run_wallspace,args=(str(data),str(ident),provider),daemon=True).start()
     return {'ok':True}
 
-def _run_wallspace(data,ident):
+def _run_wallspace(data,ident,provider="wallspace"):
     global _worker_running
     stage=None
     try:
         import animated_wallpapers as aw
-        item=aw.wallspace_media(ident)
+        import liveshell_wallpapers as ls
+        item=ls.media(data,ident) if provider=='liveshell' else aw.wallspace_media(ident)
         staging_root=aw.root(data);stage=Path(tempfile.mkdtemp(prefix='.wallspace-',dir=staging_root))
         target=stage/'wallpaper.mp4'
         # The public media host rejects HEAD but serves normal browser-style GETs.
         req=Request(item['url'],headers={'User-Agent':'Mozilla/5.0 ThemeHub','Referer':'https://wallspace.app/'})
-        _update(phase='downloading',message='Downloading Wallspace video…')
-        with urlopen(req,timeout=30) as response,target.open('wb') as out:
-            if response.geturl().split('/')[2]!='s4.wallspace.app':raise ValueError('Unexpected Wallspace media redirect')
+        _update(phase='downloading',message='Downloading '+('LiveShell' if provider=='liveshell' else 'Wallspace')+' video…')
+        with (ls.open_media(item['url']) if provider=='liveshell' else urlopen(req,timeout=30)) as response,target.open('wb') as out:
+            if provider=='wallspace' and response.geturl().split('/')[2]!='s4.wallspace.app':raise ValueError('Unexpected Wallspace media redirect')
             length=int(response.headers.get('Content-Length',0));copied=0
             if length>aw.MAX_MEDIA:raise ValueError('Wallpaper exceeds 512 MB')
             while chunk:=response.read(256*1024):
@@ -187,7 +188,7 @@ def _run_wallspace(data,ident):
             if length and copied!=length:raise ValueError('Wallpaper download was interrupted')
         if _cancel.is_set():raise ValueError('Cancelled')
         _update(phase='validating',message='Checking downloaded video…',percent=95)
-        result=aw.import_source(data,target,source='wallspace');result.update(name=item['name'],providerId=ident,sourcePage='https://wallspace.app/wallpaper?key='+ident)
+        result=aw.import_source(data,target,source=provider);result.update(name=item['name'],providerId=ident,sourcePage=ls.PAGE if provider=='liveshell' else 'https://wallspace.app/wallpaper?key='+ident)
         folder=aw.root(data)/result['id'];tmp=folder/'item.tmp';tmp.write_text(json.dumps(result,ensure_ascii=False),encoding='utf-8');os.replace(tmp,folder/'item.json')
         _update(busy=False,phase='installed',percent=100,message='Wallpaper imported',item=result,error=None)
     except Exception as e:

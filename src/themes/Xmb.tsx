@@ -1,3 +1,4 @@
+import {useGameBackgroundPicker,useGameBackground,GameBackgroundLayer} from "../gameBackgrounds";
 import {pspFallbackIcon} from "./pspFallbackIcons";
 import {PS3_ICONS} from "./xmbOriginalIcons";
 import {useAssets} from "../assets";
@@ -969,6 +970,10 @@ export function XmbHome({ variant }: { variant: Variant }) {
   const selRaw = inFolder ? stack[stack.length - 1].sel : sels[cat.key] ?? cat.start ?? 0;
   const sel = clamp(selRaw, 0, Math.max(0, items.length - 1));
   const cur = items[sel];
+  const gameBackgroundPicker=useGameBackgroundPicker(s,variant);
+  const assignedBackground=useGameBackground(s,variant,cur?.game);
+  const [failedBackground,setFailedBackground]=useState("");
+  const customBackground=assignedBackground && failedBackground!==assignedBackground.url ? assignedBackground : null;
   useReportFocus(cur?.game);
 
   // Rest on a game for a moment → its trailer plays inside the icon and its art becomes the backdrop.
@@ -977,7 +982,7 @@ export function XmbHome({ variant }: { variant: Variant }) {
   useEffect(() => {
     setPreviewKey("");
     setBackdrop(null);
-    if (!s.trailers.preview || !cur || api.busy) return;
+    if (!s.trailers.preview || !cur || api.busy || customBackground || gameBackgroundPicker.isOpen) return;
     const g = cur.game ?? (cur.video?.appid ? api.lib.byId.get(cur.video.appid) : undefined);
     if (!cur.game && !cur.video) return;
     const backdropDelay = variant === "psp" ? 2500 : 900;
@@ -988,7 +993,7 @@ export function XmbHome({ variant }: { variant: Variant }) {
       clearTimeout(t1);
       clearTimeout(t2);
     };
-  }, [variant, cur?.key, s.trailers.preview, api.busy]);
+  }, [variant, cur?.key, s.trailers.preview, api.busy,customBackground?.url,gameBackgroundPicker.isOpen]);
 
   // PSP: the info bar drops down when a download starts or finishes
   const [infoMsg, setInfoMsg] = useState("");
@@ -1051,11 +1056,12 @@ export function XmbHome({ variant }: { variant: Variant }) {
     }
     if (cur?.game) {
       const g = cur.game;
-      menu.open([{ label: "Start", action: () => api.launch(g) }, { label: "Watch Trailer", action: () => api.playTrailer(g) }, { label: "Information", action: () => api.details(g) }, { label: "Game Options", action: () => api.nativeMenu(g) }, ...extra], g.name);
+      menu.open([{ label: "Start", action: () => api.launch(g) }, { label: "Watch Trailer", action: () => api.playTrailer(g) }, gameBackgroundPicker.item(g), { label: "Information", action: () => api.details(g) }, { label: "Game Options", action: () => api.nativeMenu(g) }, ...extra], g.name);
     } else menu.open(extra);
   };
 
   const onInput = (p: Press): boolean => {
+    if(gameBackgroundPicker.handle(p))return true;
     if (menu.handle(p)) return true;
     const n = items.length;
     switch (p.btn) {
@@ -1108,7 +1114,7 @@ export function XmbHome({ variant }: { variant: Variant }) {
         options();
         return true;
       case "menu":
-        if (cur?.game) api.nativeMenu(cur.game);
+        if (cur?.game) options();
         return true;
     }
     return false;
@@ -1267,6 +1273,7 @@ export function XmbHome({ variant }: { variant: Variant }) {
             <div style={{ position: "absolute", inset: 0, background: "linear-gradient(90deg, rgba(0,0,0,0.55), rgba(0,0,0,0.25) 60%, rgba(0,0,0,0.15))" }} />
           </div>
         )}
+        <GameBackgroundLayer media={customBackground} paused={api.busy||gameBackgroundPicker.isOpen} onFailure={()=>setFailedBackground(assignedBackground?.url??"")}/>
         <style>{"@keyframes dhtPic1 { from { opacity: 0 } to { opacity: 1 } } @keyframes dhtFocusIn { from { opacity: 0; transform: translate(-50%,-50%) scale(.7) } to { opacity: calc(.6 * var(--dht-glow, 1)); transform: translate(-50%,-50%) scale(1) } } @keyframes dhtFocusPulse { 0%,100% { opacity: calc(.45 * var(--dht-glow, 1)); transform: translate(-50%,-50%) scale(.97) } 50% { opacity: calc(.7 * var(--dht-glow, 1)); transform: translate(-50%,-50%) scale(1.03) } } .dht-xmb-focus { animation: dhtFocusIn 280ms cubic-bezier(.2,.8,.2,1) both, dhtFocusPulse 2.6s ease-in-out 280ms infinite; } @keyframes dhtFocusInCat { from { opacity: 0; transform: translate(-50%,-50%) scale(.7) } to { opacity: calc(1 * var(--dht-glow, 1)); transform: translate(-50%,-50%) scale(1) } } @keyframes dhtFocusPulseCat { 0%,100% { opacity: calc(.78 * var(--dht-glow, 1)); transform: translate(-50%,-50%) scale(.97) } 50% { opacity: calc(1 * var(--dht-glow, 1)); transform: translate(-50%,-50%) scale(1.04) } } .dht-xmb-focus { filter: brightness(max(1, var(--dht-glow, 1))); } .dht-xmb-focus--cat { animation: dhtFocusInCat 280ms cubic-bezier(.2,.8,.2,1) both, dhtFocusPulseCat 2.6s ease-in-out 280ms infinite; } .dht-xmb-focus.dht-xmb-nopulse { animation: dhtFocusIn 280ms cubic-bezier(.2,.8,.2,1) both; } .dht-xmb-focus--cat.dht-xmb-nopulse { animation: dhtFocusInCat 280ms cubic-bezier(.2,.8,.2,1) both; }"}</style>
         {fx.labels && skin?.text && <style>{themeTextCss(skin.text)}</style>}
         <style>{".dht-xmb-shadowed > div > div{box-shadow:none!important}"}</style>
@@ -1435,6 +1442,7 @@ export function XmbHome({ variant }: { variant: Variant }) {
         {downloads.running && <XmbBusy W={W} H={H} art={art} />}
         {variant === "psp" && <XmbMusicScreen W={W} H={H} art={art} />}
         <MenuView menu={menu} variant={variant === "psp" ? "psp" : "xmb"} art={variant === "psp" && fx.visuals ? { panel: rawSkin?.visuals?.optionMenu, focus: rawSkin?.visuals?.menuFocus } : undefined} />
+        {gameBackgroundPicker.view}
       </Stage>
     </ThemeRoot>
   );

@@ -309,6 +309,7 @@ export interface Settings {
   musicRepeat: "off" | "all" | "one";
   musicCrossfade: number; // seconds, 0 = off, 1–12
   wallpapers: Partial<Record<ThemeId, string>>; // file name in the wallpapers folder
+  gameBackgrounds?: Partial<Record<ThemeId,Record<string,string>>>;
   wallpaperDim: number; // 0–80 %
   maxGames: number; // cap for very large libraries
   animations: boolean; // background animations (waves, particles, towers)

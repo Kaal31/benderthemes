@@ -139,7 +139,7 @@ def import_source(data,path,configs=None,bindings=None,source='local'):
         else:
             media,title=project_media(p) if inspection['source']=='wallpaper-engine' else (p,p.stem)
             provider=inspection['source'] if inspection['source']=='wallpaper-engine' else source
-            if provider not in ('local','wallspace','wallpaper-engine'):provider='local'
+            if provider not in ('local','wallspace','wallpaper-engine','liveshell'):provider='local'
             info=media_info(media);h=hashlib.sha256((provider+':').encode())
             walls=Path(data)/'wallpapers';walls.mkdir(parents=True,exist_ok=True)
             fd,tmp=tempfile.mkstemp(prefix='.animated-',dir=walls)
@@ -155,7 +155,7 @@ def import_source(data,path,configs=None,bindings=None,source='local'):
             finally:
                 if os.path.exists(tmp):os.unlink(tmp)
             provider=inspection['source'] if inspection['source']=='wallpaper-engine' else source
-            if provider not in ('local','wallspace','wallpaper-engine'):provider='local'
+            if provider not in ('local','wallspace','wallpaper-engine','liveshell'):provider='local'
             item={'id':ident,'name':title[:160],'source':provider,'file':filename,**info}
         folder=root(data)/ident;folder.mkdir(exist_ok=True)
         temporary=folder/'item.tmp';temporary.write_text(json.dumps(item,ensure_ascii=False),encoding='utf-8');os.replace(temporary,folder/'item.json')
@@ -263,7 +263,8 @@ def workshop_page(query='',page=1):
 
 def browse(data,query='',page=1,source='all'):
     items=[];errors=[];cursors={}
-    providers=[('wallspace',wallspace_page),('wallpaper-engine',workshop_page)]
+    from liveshell_wallpapers import browse as liveshell_browse
+    providers=[('wallspace',wallspace_page),('wallpaper-engine',workshop_page),('liveshell',lambda q,p:liveshell_browse(data,q,p))]
     current=page if isinstance(page,dict) else {name:int(page) for name,_ in providers}
     pages=[]
     from concurrent.futures import ThreadPoolExecutor

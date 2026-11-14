@@ -190,8 +190,8 @@ const backend: Record<string, (...a: any[]) => any> = {
   console_artwork_status: () => ({packs:[],busy:false,percent:0}),
   console_artwork_install: () => { (window as any).__consoleArtInstalled=true; return {success:true}; },
   get_assets: (n: string) => new Set(['x360-convection-font','x360-blades-original','x360-kinect-dash','x360-metro-dash','x360-nxe-dash','xbox-original','xmb-ps3','xmb-ps3-native','xmb-psp-native','wiiu-native-ui']).has(n)&&!(window as any).__consoleArtInstalled&&!new URLSearchParams(location.search).has('consoleArt')?{}:(window as any).__testAssets?.[n] ?? {},
-  list_wallpapers: () => ({ dir: "~/homebrew/data/DeckHomeThemes/wallpapers", files: [] }),
-  get_wallpaper: () => null,
+  list_wallpapers: () => ({ dir: "~/homebrew/data/DeckHomeThemes/wallpapers", files: Object.keys((window as any).__testWalls??{}) }),
+  get_wallpaper: (name:string) => (window as any).__testWalls?.[name]??null,
   get_x360_cabinet_wallpaper: (id:string) => /^[a-z0-9_]+$/i.test(id)?{background:`../out/import-fixtures/x360-cabinet/${id}.jpg`}:{error:"Unknown wallpaper"},
   // window.__testSwitchList = [{id,name,author,screens}] lists several .nxtheme files
   list_switch_themes: () => R() ? { themes: R().lists.switch ?? [], dir: "" } : ({ themes: (window as any).__testSwitchList ?? ((window as any).__testSwitch ? [{ id: "Test.nxtheme", name: (window as any).__testSwitch.name || "Test", author: (window as any).__testSwitch.author || "", screens: Object.keys((window as any).__testSwitch.screens || {}) }] : []), dir: "" }),

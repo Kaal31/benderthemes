@@ -68,7 +68,7 @@ class AnimatedWallpapersTests(unittest.TestCase):
    with self.assertRaises(ValueError):aw.remove(folder,'../keep')
    self.assertTrue(outside.exists())
  def test_partial_provider_failure_keeps_other_source(self):
-  with tempfile.TemporaryDirectory() as folder,patch.object(aw,'wallspace_page',return_value={'items':[{'id':'wallspace:1'}],'hasMore':False}),patch.object(aw,'workshop_page',side_effect=ValueError('offline')):
+  with tempfile.TemporaryDirectory() as folder,patch.object(aw,'wallspace_page',return_value={'items':[{'id':'wallspace:1'}],'hasMore':False}),patch.object(aw,'workshop_page',side_effect=ValueError('offline')),patch('liveshell_wallpapers.browse',return_value={'items':[],'hasMore':False}):
    r=aw.browse(folder);self.assertEqual(len(r['items']),1);self.assertEqual(r['errors'][0]['source'],'wallpaper-engine')
  def test_download_command_is_argument_array(self):
   args=ww.command('DepotDownloader','123456','target folder','user',True)
@@ -88,9 +88,9 @@ class AnimatedWallpapersTests(unittest.TestCase):
    p=Path(folder)/'fake.mp4';p.write_bytes(b'\x00\x00\x00\x18ftypisom'+b'\0'*12)
    with self.assertRaises(ValueError):aw.media_info(p)
  def test_provider_cursors_are_independent(self):
-  with tempfile.TemporaryDirectory() as folder,patch.object(aw,'wallspace_page',return_value={'items':[{'id':'w'}],'hasMore':False}) as w,patch.object(aw,'workshop_page',return_value={'items':[{'id':'s'}],'hasMore':True}) as s:
+  with tempfile.TemporaryDirectory() as folder,patch.object(aw,'wallspace_page',return_value={'items':[{'id':'w'}],'hasMore':False}) as w,patch.object(aw,'workshop_page',return_value={'items':[{'id':'s'}],'hasMore':True}) as s,patch('liveshell_wallpapers.browse',return_value={'items':[],'hasMore':False}):
    r=aw.browse(folder,page={'wallspace':1,'wallpaper-engine':3})
-   self.assertEqual(r['cursors'],{'wallspace':None,'wallpaper-engine':4})
+   self.assertEqual(r['cursors'],{'wallspace':None,'wallpaper-engine':4,'liveshell':None})
    aw.browse(folder,page=r['cursors']);self.assertEqual(w.call_count,1);self.assertEqual(s.call_args.args[1],4)
  def test_wallspace_metadata_validated_before_download(self):
   with patch.object(aw,'wallspace_api',return_value={'wallpapers':[{'key':123456,'is_pro':True}]}):

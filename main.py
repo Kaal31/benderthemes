@@ -1926,6 +1926,11 @@ class Plugin:
         try: return wallpaper_workshop.start_wallspace(_data_dir(), ident)
         except Exception as e: return {'ok': False, 'error': str(e)[:250]}
 
+    async def animated_wallpapers_download_liveshell(self, ident):
+        import wallpaper_workshop
+        try: return wallpaper_workshop.start_wallspace(_data_dir(), ident, "liveshell")
+        except Exception as e: return {"ok": False, "error": str(e)[:250]}
+
     async def animated_wallpapers_progress(self):
         import wallpaper_workshop
         return wallpaper_workshop.status()

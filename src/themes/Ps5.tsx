@@ -1,3 +1,4 @@
+import {useGameBackgroundPicker,useGameBackground,GameBackgroundLayer} from "../gameBackgrounds";
 import {BackgroundMedia} from "../WallpaperMedia";
 import { GameHero } from "../common";
 import {ProfileAvatar} from "../ProfileAvatar";
@@ -69,6 +70,8 @@ export function Ps5Home() {
   const [tsel, setTsel] = useState(0);
   const cur = tiles[sel];
   const g = cur?.game;
+  const gameBackgroundPicker=useGameBackgroundPicker(s,"ps5");
+  const assignedBackground=useGameBackground(s,"ps5",g);
   useReportFocus(g);
 
   const [bg, setBg] = useState<Game | undefined>(g);
@@ -98,7 +101,7 @@ export function Ps5Home() {
       { label: "Home Screen Settings", action: api.openSettings },
       { label: "Home", action: api.showSteamHome },
     ];
-    menu.open(g ? [{ label: "Play", action: () => api.launch(g) }, { label: "Watch Trailer", action: () => api.playTrailer(g) }, { label: "Game Details", action: () => api.details(g) }, { label: "Game Options", action: () => api.nativeMenu(g) }, ...extra] : extra, g?.name);
+    menu.open(g ? [{ label: "Play", action: () => api.launch(g) }, { label: "Watch Trailer", action: () => api.playTrailer(g) }, gameBackgroundPicker.item(g), { label: "Game Details", action: () => api.details(g) }, { label: "Game Options", action: () => api.nativeMenu(g) }, ...extra] : extra, g?.name);
   };
 
   const switchTab = (t: "games" | "media") => {
@@ -109,10 +112,11 @@ export function Ps5Home() {
   };
 
   const onInput = (p: Press): boolean => {
+    if(gameBackgroundPicker.handle(p))return true;
     if (menu.handle(p)) return true;
     const b = p.btn;
     if (b === "y" || b === "menu") {
-      if (b === "menu" && g) api.nativeMenu(g);
+      if (b === "menu" && g) options();
       else options();
       return true;
     }
@@ -153,7 +157,7 @@ export function Ps5Home() {
         else if (b === "down" && cards.length) (setZone("cards"), setCsel(0), playSound("move"));
         else if (b === "a") {
           if (psel === 0) (g ? api.launch(g) : activateTile(cur));
-          else if (g) api.nativeMenu(g);
+          else if (g) options();
           else options();
         }
         return true;
@@ -196,6 +200,7 @@ export function Ps5Home() {
           </div>
         )}
         </div>
+        <GameBackgroundLayer media={assignedBackground} paused={api.busy||gameBackgroundPicker.isOpen}/>
         <div className="dht-ps5-readability-overlay" style={{ position: "absolute", inset: 0, opacity: surface.overlayOpacity, background: "linear-gradient(90deg, rgba(0,0,0,0.75) 0%, rgba(0,0,0,0.25) 55%, rgba(0,0,0,0.1) 100%), linear-gradient(180deg, rgba(0,0,0,0.55) 0%, rgba(0,0,0,0) 30%, rgba(0,0,0,0.0) 60%, rgba(0,0,0,0.8) 100%)" }} />
         <style>{`@keyframes dhtFade5 { from { opacity: 0; transform: scale(1.04) } to { opacity: 1; transform: scale(1) } } @keyframes dhtFadeOnly5 { from { opacity: 0 } to { opacity: 1 } }`}</style>
 
@@ -255,7 +260,7 @@ export function Ps5Home() {
             <div onClick={()=>g?api.launch(g):activateTile(cur)} className="dht-ps5-play" data-selected={zone === "play" && psel === 0} style={{ height: 52, padding: "0 58px", borderRadius: 28, background: zone === "play" && psel === 0 ? "var(--dht-ps5-play, #fff)" : "rgba(255,255,255,0.88)", color: "#000", fontSize: 20, fontWeight: 500, display: "flex", alignItems: "center", boxShadow: zone === "play" && psel === 0 ? "0 0 0 4px rgba(255,255,255,0.4)" : "none", transform: zone === "play" && psel === 0 ? "scale(1.05)" : "none", transition: "transform 150ms" }}>
               {g ? "Play" : "Open"}
             </div>
-            <div role="button" aria-label="Game options" onClick={() => g ? api.nativeMenu(g) : options()} style={{ cursor: "pointer", width: 52, height: 52, borderRadius: 28, background: zone === "play" && psel === 1 ? "#fff" : "rgba(60,60,60,0.8)", display: "flex", alignItems: "center", justifyContent: "center" }}>
+            <div role="button" aria-label="Game options" onClick={options} style={{ cursor: "pointer", width: 52, height: 52, borderRadius: 28, background: zone === "play" && psel === 1 ? "#fff" : "rgba(60,60,60,0.8)", display: "flex", alignItems: "center", justifyContent: "center" }}>
               <Icon name="dots" size={26} color={zone === "play" && psel === 1 ? "#000" : "#fff"} />
             </div>
             <Badges g={g} size={15} />
@@ -274,6 +279,7 @@ export function Ps5Home() {
           </div>
         </div>
         <MenuView menu={menu} variant="ps5" />
+        {gameBackgroundPicker.view}
       </Stage>
     </ThemeRoot>
   );
