@@ -36,6 +36,11 @@ class UpdateTests(unittest.TestCase):
         (self.root / "package.json").write_text('{"version":"1.9.9"}')
         (self.root / "release-channel.json").write_text('{"tag":"v1.9.9","channel":"stable"}')
 
+    def test_final_channel_is_distinct_from_experimental(self):
+        tag = "experimental-final-version-v1.10.9-1-1"
+        self.assertEqual(updates.release_identity(tag)["channel"], "experimental-final-version")
+        self.assertNotEqual(updates.release_identity(tag)["channel"], updates.release_identity("experimental-v1.10.9-1-1")["channel"])
+
     def test_numeric_sort_and_only_real_numbered_packages(self):
         raw = [release("1.9.9"), release("1.10.0"), release("1.9.10"),
                release("2.0.0", draft=True), release("3.0.0", prerelease=True),

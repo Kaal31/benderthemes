@@ -130,7 +130,7 @@ export function Updates({ onManageThemes, showCommunityUpdates = true }: { onMan
     };
   }, []);
   const channelReleases=status?.releases.filter(r=>channelOf(r)===channel)??[];
-  const channels=["stable","beta","experimental","optimization-testing"].filter(c=>status?.releases.some(r=>channelOf(r)===c));
+  const channels=["stable","beta","experimental","experimental-final-version","optimization-testing"].filter(c=>status?.releases.some(r=>channelOf(r)===c));
   useEffect(()=>{setTag(previous=>channelReleases.some(r=>r.tag===previous)?previous:channelReleases[0]?.tag??"");},[channel,status]);
   const selected = channelReleases.find(r => r.tag === tag);
   const switching=!!selected&&channelOf(selected)!==(status?.currentChannel??"stable");
@@ -188,7 +188,7 @@ export function Updates({ onManageThemes, showCommunityUpdates = true }: { onMan
     </PanelSectionRow>}
     {!!status?.releases.length && <>
       <PanelSectionRow><DropdownItem label={lang("releaseChannel")} description={lang("releaseChannelDesc")}
-        rgOptions={channels.map(c=>({data:c,label:c==="stable"?"Stable":c==="beta"?"Beta":c==="experimental"?"Experimental":"Optimization testing"}))}
+        rgOptions={channels.map(c=>({data:c,label:c==="stable"?"Stable":c==="beta"?"Beta":c==="experimental"?"Experimental":c==="experimental-final-version"?"Experimental final":"Optimization testing"}))}
         selectedOption={channel} onChange={o=>setChannel(String(o.data))} disabled={busy||checking}/></PanelSectionRow>
       <PanelSectionRow><DropdownItem label={lang("installVersion")} description={lang("installVersionDesc")}
         rgOptions={channelReleases.map(r => ({ data: r.tag, label: releaseLabel(r) }))} selectedOption={tag}

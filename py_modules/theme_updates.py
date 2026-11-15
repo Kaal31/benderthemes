@@ -10,7 +10,7 @@ import decky
 
 REPO = "Kaal31/benderthemes"
 TAG = re.compile(r"^v(0|[1-9]\d*)\.(0|[1-9]\d*)\.(0|[1-9]\d*)$")
-CHANNEL_TAG = re.compile(r"^(beta|experimental|optimization-testing)-v((?:0|[1-9]\d*)\.(?:0|[1-9]\d*)\.(?:0|[1-9]\d*))-([1-9]\d*)(?:-([1-9]\d*))?$")
+CHANNEL_TAG = re.compile(r"^(beta|experimental|experimental-final-version|optimization-testing)-v((?:0|[1-9]\d*)\.(?:0|[1-9]\d*)\.(?:0|[1-9]\d*))-([1-9]\d*)(?:-([1-9]\d*))?$")
 MARKER_TTL = 300
 
 
@@ -143,7 +143,7 @@ def status():
         result.update(error=f"Could not check GitHub: {exc}", stale=True,
                       releases=normalise(cached.get("raw", [])), checkedAt=cached.get("checkedAt"))
     releases = [r for r in result["releases"] if r["channel"] == installed["channel"]]
-    result["channels"] = [c for c in ("stable", "beta", "experimental", "optimization-testing") if any(r["channel"] == c for r in result["releases"])]
+    result["channels"] = [c for c in ("stable", "beta", "experimental", "experimental-final-version", "optimization-testing") if any(r["channel"] == c for r in result["releases"])]
     if releases:
         result["latest"] = releases[0]
         try:

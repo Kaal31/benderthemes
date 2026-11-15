@@ -34,6 +34,17 @@ class ChannelBuildTests(unittest.TestCase):
         self.assertNotEqual(self.data["tag"], identity("1.10.9", "experimental", 12, 1, "a" * 40)["tag"])
         self.assertNotIn("latest", self.data["assetUrl"])
 
+    def test_final_build_has_separate_identity_and_trigger(self):
+        data = identity("1.10.9", "experimental-final-version", 1, 1, "a" * 40)
+        self.assertEqual(data["tag"], "experimental-final-version-v1.10.9-1-1")
+        self.assertNotEqual(data["tag"], identity("1.10.9", "experimental", 1, 1, "a" * 40)["tag"])
+        self.data = data
+        self.package()
+        self.assertEqual(manifest(self.root)["channel"], "experimental-final-version")
+        workflow = (ROOT / ".github/workflows/experimental-final.yml").read_text()
+        for expected in ("branches: [experimental-final-version]", "refs/heads/experimental-final-version", "RELEASE_CHANNEL: experimental-final-version", "group: experimental-final-release", "--prerelease --latest=false"):
+            self.assertIn(expected, workflow)
+
     def test_reject_invalid_identity(self):
         for values in [("1.10.9-beta", "experimental", 1, 1, "a" * 40), ("1.10.9", "../beta", 1, 1, "a" * 40), ("1.10.9", "experimental", 0, 1, "a" * 40), ("1.10.9", "experimental", 1, 1, "bad")]:
             with self.assertRaises(ValueError):
