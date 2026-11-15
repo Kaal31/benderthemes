@@ -16,12 +16,12 @@ try {
     await page.locator(`[data-dht-root][data-dht-theme="${theme}"]`).waitFor();
     await page.evaluate(()=>window.__openPlace('settings'));
     await page.locator('.dht-destination[data-place=settings]').waitFor();
-    await page.locator('.dht-destination-row').filter({hasText:/^Collections$/}).click();
+    await page.locator('.dht-destination-row').filter({hasText:/^Home games$/}).click();
     await page.locator('.dht-menu-item').filter({hasText:/^Favorites \(/}).click();
     assert.equal(await page.evaluate(theme=>window.__getThemeSettings().themeCollections[theme].source,theme),'col:favorite');
     const ids=await page.evaluate(()=>window.__getThemeLibrary().games.map(g=>g.appid));
     assert.ok(ids.length>0);
-    await page.locator('.dht-destination-row').filter({hasText:/^Collections$/}).click();
+    await page.locator('.dht-destination-row').filter({hasText:/^Home games$/}).click();
     await page.getByText('Choose multiple collections',{exact:true}).click();
     await page.locator('.dht-menu-item').filter({hasText:/^RPGs/}).click();
     await page.getByText('Done',{exact:true}).click();

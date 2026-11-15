@@ -32,7 +32,8 @@ try {
   await page.locator('.dht-market.dht-hub[data-hub-styled=true][data-hub-theme=vita]').waitFor();
   assert.equal(await page.locator('.dht-market .dht-hub-deco').count(), 1);
   assert.ok((await page.locator('.dht-market').evaluate(el => getComputedStyle(el).getPropertyValue('--dht-hub-accent'))).trim());
-  assert.ok(await page.locator('.market-card').first().evaluate(el => el.getBoundingClientRect().height >= 200));
+  const previewShape=await page.locator('.market-art').first().evaluate(el=>{const r=el.getBoundingClientRect();return {width:r.width,height:r.height}});
+  assert.ok(previewShape.width>100&&Math.abs(previewShape.height/previewShape.width-.625)<.03,'Theme preview retains its 16:10 artwork area');
   await page.locator('.market-card').filter({hasText:'Minecraft'}).click();
   await page.locator('.market-primary').click();
   await page.locator('.dht-market').waitFor({state:'detached'});
@@ -62,7 +63,8 @@ try {
   await page.keyboard.press('Escape');
   await page.locator('.dht-firmware').waitFor({state:'detached'});
   await page.getByRole('button',{name:'Hub',exact:true}).first().click();
-  await page.locator('.market-card img').first().waitFor();
+  await page.locator('.market-card').first().waitFor();
+  await page.locator('.market-card').first().click();
   const nextCard=await page.locator('.market-card').nth(1).textContent();
   await page.keyboard.press('ArrowRight');
   assert.equal(await page.locator('.market-card[data-selected=true]').textContent(),nextCard);

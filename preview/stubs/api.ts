@@ -1,5 +1,6 @@
 import { createRoot } from "react-dom/client";
-// Browser stand-ins for @decky/api.
+// Browser/Node stand-ins for @decky/api; never bundled into the plugin.
+const previewLocation = () => typeof location === "undefined" ? { search: "", origin: "" } : location;
 const R = (): any => (window as any).__real;
 const realSkin = (kind: string, n: string, fallback: any) => (R() ? R().skins?.[kind]?.[n] ?? null : fallback);
 const explorerRow = (repo: string, name: string, author: string, more: Record<string, any> = {}) => ({
@@ -102,7 +103,7 @@ const backend: Record<string, (...a: any[]) => any> = {
     if (action === "remove") { delete theme.installedVersion; delete theme.themeId; theme.canRollback = false; }
     else if (action === "rollback") { const before = theme.installedVersion; theme.installedVersion = theme.previousVersion; theme.previousVersion = before; theme.updateAvailable = theme.installedVersion !== theme.version; }
     else { theme.previousVersion = theme.installedVersion; theme.canRollback = !!theme.previousVersion; theme.installedVersion = theme.version; theme.themeId = "community-preview"; theme.updateAvailable = false; theme.assetUpdate = false; }
-    w.__dataThemes ??= { base: location.origin + "/themes", themes: [] };
+    w.__dataThemes ??= { base: previewLocation().origin + "/themes", themes: [] };
     w.__dataThemes.themes = w.__dataThemes.themes.filter((t: any) => t.id !== "community-preview");
     if (action !== "remove") w.__dataThemes.themes.push({ schema: 1, id: "community-preview", name: theme.name, layout: "ps4", source: "user", packs: {} });
     return { ok: true, themeId: theme.themeId };
@@ -196,7 +197,7 @@ const backend: Record<string, (...a: any[]) => any> = {
   cinematic_assets: (n: string) => (window as any).__cinematicAssets?.[n] ?? {video:`../bundle/cinematic/${n}.mp4`,poster:`../bundle/cinematic/${n}.jpg`},
   console_artwork_status: () => ({packs:[],busy:false,percent:0}),
   console_artwork_install: () => { (window as any).__consoleArtInstalled=true; return {success:true}; },
-  get_assets: (n: string) => new Set(['x360-convection-font','x360-blades-original','x360-kinect-dash','x360-metro-dash','x360-nxe-dash','xbox-original','xmb-ps3','xmb-ps3-native','xmb-psp-native','wiiu-native-ui']).has(n)&&!(window as any).__consoleArtInstalled&&!new URLSearchParams(location.search).has('consoleArt')?{}:(window as any).__testAssets?.[n] ?? {},
+  get_assets: (n: string) => new Set(['x360-convection-font','x360-blades-original','x360-kinect-dash','x360-metro-dash','x360-nxe-dash','xbox-original','xmb-ps3','xmb-ps3-native','xmb-psp-native','wiiu-native-ui']).has(n)&&!(window as any).__consoleArtInstalled&&!new URLSearchParams(previewLocation().search).has('consoleArt')?{}:(window as any).__testAssets?.[n] ?? {},
   list_wallpapers: () => ({ dir: "~/homebrew/data/DeckHomeThemes/wallpapers", files: Object.keys((window as any).__testWalls??{}) }),
   get_wallpaper: (name:string) => (window as any).__testWalls?.[name]??null,
   get_x360_cabinet_wallpaper: (id:string) => /^[a-z0-9_]+$/i.test(id)?{background:`../out/import-fixtures/x360-cabinet/${id}.jpg`}:{error:"Unknown wallpaper"},
@@ -219,8 +220,8 @@ const backend: Record<string, (...a: any[]) => any> = {
   x360_avatar_import: (path: string) => { const w = window as any; if (!w.__testAvatarGlb || !/\.glb$/i.test(path)) return { success: false, error: "Not a glTF 2.0 binary (.glb) with a model in it" }; w.__testAssets = { ...(w.__testAssets ?? {}), "my-avatar": { ...(w.__testAssets?.["my-avatar"] ?? {}), avatar: w.__testAvatarGlb } }; return { success: true, kind: "model" }; },
   x360_avatar_remove: () => { const w = window as any; if (w.__testAssets?.["my-avatar"]) w.__testAssets["my-avatar"] = {}; return { success: true }; },
   wiiu_decide: () => ({ success: true, theme: "Test.utheme" }),
-  get_native_mii: () => new URLSearchParams(location.search).has("nativeMii")?{url:"../out/native-mii-preview/models.json"}:{},
-  get_wii_standard: (original:boolean) => original&&new URLSearchParams(location.search).has("consoleArt")?fetch("../out/console-native-preview/wii-menu.json").then(r=>r.ok?r.json():null):null,
+  get_native_mii: () => new URLSearchParams(previewLocation().search).has("nativeMii")?{url:"../out/native-mii-preview/models.json"}:{},
+  get_wii_standard: (original:boolean) => original&&new URLSearchParams(previewLocation().search).has("consoleArt")?fetch("../out/console-native-preview/wii-menu.json").then(r=>r.ok?r.json():null):null,
   get_wii_skin: (n: string) => realSkin("wii", n, (window as any).__testWii ?? null),
   get_3ds_skin: (n: string) => realSkin("n3ds", n, (window as any).__test3ds ?? null),
   // 3DS home badges: window.__test3dsBadges = {sets:[{name, badges:[{id,name,w,h,url}]}]} (py_modules/n3ds_themes.py list_badges)
@@ -238,7 +239,7 @@ const backend: Record<string, (...a: any[]) => any> = {
 };
 async function avatarPreviewCall(name:string,args:any[]) {
   if((window as any).__avatarEngineCall)return (window as any).__avatarEngineCall(name,args);
-  const address=new URLSearchParams(location.search).get('avatarBridge');
+  const address=new URLSearchParams(previewLocation().search).get('avatarBridge');
   if(!address||!/^http:\/\/127\.0\.0\.1:\d+$/.test(address))return backend[name]?.(...args);
   const response=await fetch(`${address}/${name}`,{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify(args)});
   const value=await response.json();if(!response.ok)throw Error(value.error||'Avatar preview request failed');return value;
@@ -246,7 +247,7 @@ async function avatarPreviewCall(name:string,args:any[]) {
 export const callable =
   (name: string) =>
   async (...args: any[]) => {
-    const animatedBridge = new URLSearchParams(location.search).get('animatedBridge');
+    const animatedBridge = new URLSearchParams(previewLocation().search).get('animatedBridge');
     if((name.startsWith('animated_wallpapers_')||name==='list_data_themes')&&animatedBridge&&/^http:\/\/127\.0\.0\.1:\d+$/.test(animatedBridge)){
       const response=await fetch(`${animatedBridge}/${name}`,{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify(args)});
       const result=await response.json();if(!response.ok)throw Error(result.error||'Wallpaper request failed');return result;
@@ -260,7 +261,7 @@ export const callable =
       if(name==='animated_wallpapers_workshop')return {items:[]};
       return {ok:false,error:'Choose a fixture or connect the local wallpaper preview bridge.'};
     }
-    const coverBridge = new URLSearchParams(location.search).get('coverBridge');
+    const coverBridge = new URLSearchParams(previewLocation().search).get('coverBridge');
     if(name.startsWith('cover_wrap_')&&coverBridge&&/^http:\/\/127\.0\.0\.1:\d+$/.test(coverBridge)){
       const response=await fetch(`${coverBridge}/${name}`,{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify(args)});
       const result=await response.json();if(!response.ok)throw Error(result.error||'Cover provider request failed');return result;

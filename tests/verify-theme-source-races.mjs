@@ -17,7 +17,7 @@ try {
  await page.getByRole('button',{name:'Hub (from this home)',exact:true}).click();
  await page.locator('[data-hub-tab]').waitFor();
  // The top-level section label is shared with the real Hub.
- await page.getByRole('tab',{name:'Theme files',exact:true}).click();
+ await page.getByRole('tab',{name:'Discover',exact:true}).click();
  const tab=name=>page.getByRole('tab',{name,exact:true});
  await tab('Wii U').click();await page.waitForFunction(()=>pendingSourceRequests.some(r=>r.kind==='wiiu'));
  await tab('Switch').click();await page.waitForFunction(()=>pendingSourceRequests.some(r=>r.kind==='switch'));
