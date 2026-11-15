@@ -32,20 +32,23 @@ try {
   await page.locator('.dht-market.dht-hub[data-hub-styled=true][data-hub-theme=vita]').waitFor();
   assert.equal(await page.locator('.dht-market .dht-hub-deco').count(), 1);
   assert.ok((await page.locator('.dht-market').evaluate(el => getComputedStyle(el).getPropertyValue('--dht-hub-accent'))).trim());
-  assert.ok(await page.locator('.market-card').first().evaluate(el => el.getBoundingClientRect().height >= 200));
+  const previewShape=await page.locator('.market-art').first().evaluate(el=>{const r=el.getBoundingClientRect();return {width:r.width,height:r.height}});
+  assert.ok(previewShape.width>100&&Math.abs(previewShape.height/previewShape.width-.625)<.03,'Theme preview retains its 16:10 artwork area');
   await page.locator('.market-card').filter({hasText:'Minecraft'}).click();
   await page.locator('.market-primary').click();
   await page.locator('.dht-market').waitFor({state:'detached'});
   assert.equal(await page.locator('[data-dht-root]').getAttribute('data-dht-theme'), 'minecraft');
   await page.evaluate(() => window.__updateTheme({ minecraftWaitForSwipe: true }));
   await page.waitForTimeout(500); // Allow the newly activated home to register its menu input.
-  await page.keyboard.press('m');
+  await page.evaluate(()=>window.__openThemeSettings());
   await page.locator('.dht-menu').getByText('Global settings', {exact:true}).click(); // the Hub entry lives there now
+  await page.locator('.dht-menu').getByText('Recovery', {exact:true}).click();
   await page.locator('.dht-menu').getByText('Hub', {exact:true}).waitFor();
   await page.keyboard.press('Escape');
   await page.keyboard.press('Escape');
-  await page.keyboard.press('m');
-  await page.locator('.dht-menu').getByText('Advanced', {exact:true}).click(); // presets v2: reset / delete live under Advanced
+  await page.keyboard.press('Escape');
+  await page.evaluate(()=>window.__openThemeSettings());
+  await page.locator('.dht-menu').getByText('Theme', {exact:true}).click(); // Final keeps reset/delete inside Theme
   await page.locator('.dht-menu').getByText('Reset or delete', {exact:true}).click(); // grouped since the options-menu cleanup
   await page.locator('.dht-menu').getByText(/^Delete Block/).click();
   await page.getByText('Delete its resources and return to Steam Home', {exact:true}).click();
@@ -62,7 +65,8 @@ try {
   await page.keyboard.press('Escape');
   await page.locator('.dht-firmware').waitFor({state:'detached'});
   await page.getByRole('button',{name:'Hub',exact:true}).first().click();
-  await page.locator('.market-card img').first().waitFor();
+  await page.locator('.market-card').first().waitFor();
+  await page.locator('.market-card').first().click();
   const nextCard=await page.locator('.market-card').nth(1).textContent();
   await page.keyboard.press('ArrowRight');
   assert.equal(await page.locator('.market-card[data-selected=true]').textContent(),nextCard);

@@ -50,7 +50,9 @@ jobs:
       - run: node tests/verify-keyboard-diagnostics.mjs
       - run: node tests/verify-keyboard-lifecycle.mjs
       - run: node tests/verify-idle-diagnostics.mjs
+      - run: node tests/verify-preview-api-node.mjs
       - run: node tests/verify-required-theme-packs.mjs
+        timeout-minutes: 2
       - run: node tests/verify-footer-keyboard.mjs
       - run: node tests/verify-quick-access-keyboard.mjs
       - run: python tests/verify-deckthemes-audio.py

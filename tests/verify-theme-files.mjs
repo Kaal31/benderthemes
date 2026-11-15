@@ -20,8 +20,9 @@ try {
     await page.locator('[data-dht-root]').waitFor();
     await page.getByRole('button', { name: 'Hub', exact: true }).click();
     await page.locator('.dht-market').waitFor();
-    await key(page, 'e'); await key(page, 'e'); await key(page, 'e', 600); // Discover -> Your themes -> Community -> Theme files
-    assert.equal(await page.locator('.dht-market').getAttribute('data-hub-tab'), 'files');
+    await page.getByRole('tab',{name:'PSP',exact:true}).click();
+    await page.locator('.dht-files-sources').getByRole('button',{name:'PSPunk',exact:true}).click();
+    assert.equal(await page.locator('.dht-market').getAttribute('data-hub-tab'), 'discover');
     await page.locator('.dht-files-card').first().waitFor();
     assert.match(await page.locator('.dht-files-kinds [data-active=true]').textContent(), /PSP/);
     assert.match(await page.locator('.dht-files-attribution').textContent(), /PSPunk/);

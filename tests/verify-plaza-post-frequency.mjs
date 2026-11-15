@@ -16,7 +16,8 @@ try{
  await p.locator('.nt-plaza[data-ready=true]').waitFor();await p.locator('.nt-plaza[data-opening=false]').waitFor({timeout:30000});
  await p.waitForFunction(()=>[...window.__plazaTimers.values()].some(t=>t.ms===60000));
  await p.waitForTimeout(5500);assert.equal(await p.locator('.nt-plaza-post').count(),0,'Startup and selection cannot bypass Calm cadence');
- await p.evaluate(()=>[...window.__plazaTimers.values()].find(t=>t.ms===60000).fn());
+ // Scene readiness precedes the crowd's final landing; tick until an eligible speaker is available.
+ await p.waitForFunction(()=>{[...window.__plazaTimers.values()].find(t=>t.ms===60000).fn();return !!document.querySelector('.nt-plaza-post');});
  await p.locator('.nt-plaza-post').first().waitFor();
  let first=await p.locator('.nt-plaza-post p').first().innerText();assert.ok(first.length>0);
  // Find a written conversation without waiting through real minute-long intervals.
