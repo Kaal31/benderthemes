@@ -14,6 +14,7 @@ try {
  async function open(kind){
   await page.evaluate(()=>window.__openThemeSettings());
   await items().filter({hasText:/^Customize/}).click();
+  await items().filter({hasText:/^Audio/}).click();
   await items().filter({hasText:new RegExp('^'+kind+':')}).click();
   await items().filter({hasText:/^DeckThemes · for this theme/}).click();
  }

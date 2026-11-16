@@ -9,7 +9,7 @@ try {
  await page.route('https://www.minecraft.net/**',r=>r.fulfill({body:'<h1>Browser content</h1>',contentType:'text/html'}));
  await page.goto(url);await page.evaluate(()=>window.__updateTheme({theme:'minecraft',animations:false}));
  const nav=page.locator('.mc-nav');
- for(const label of ['Browser','Friends','Marketplace','Settings']){
+ for(const label of ['Internet Browser','Friends','Marketplace','Settings']){
   await nav.getByRole('button',{name:label,exact:true}).click();
   await page.locator('.mc-worlds[data-panel-open]').waitFor();
   await page.locator('.mc-content-slot').locator(label==='Marketplace'?'.dht-store':'.dht-destination').waitFor();

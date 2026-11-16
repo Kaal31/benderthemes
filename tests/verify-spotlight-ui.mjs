@@ -5,7 +5,7 @@ const {server,url}=await startPreviewServer();const b=await launch();
 try{
  const p=await b.newPage({viewport:{width:1304,height:930}});await p.goto(url);
  await p.getByRole('button',{name:'Hub',exact:true}).first().click();
- await p.getByRole('tab',{name:'Plugin Spotlight',exact:true}).click();
+ await p.getByRole('tab',{name:'Spotlight',exact:true}).click();
  await p.locator('.spotlight-card').first().waitFor();assert.equal(await p.locator('.spotlight-card').count(),40);
  assert.equal(await p.locator('.market-grid').count(),0);
  await p.locator('.spotlight-detail .market-primary').click();

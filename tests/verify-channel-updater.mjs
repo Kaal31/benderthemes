@@ -34,8 +34,8 @@ try{
 
  const channel=page.getByLabel('Release channel');await channel.waitFor();
  assert.equal(await page.getByRole('heading',{name:/up to date|updates available/}).count(),0,'QAM community badge removed');
- await page.getByRole('button',{name:'Check theme updates',exact:true}).waitFor();
- await page.getByRole('button',{name:'Theme Hub',exact:true}).click();
+ await page.getByRole('button',{name:'Check community theme updates',exact:true}).waitFor();
+ await page.getByRole('button',{name:'Hub',exact:true}).click();
  assert.equal(await page.evaluate(()=>window.managedThemes),true,'community section opens Hub theme management');
 
  assert.equal(await channel.inputValue(),'beta','installed channel selected instead of globally newest stable');
