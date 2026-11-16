@@ -1,8 +1,10 @@
 import {chromium} from 'playwright';import assert from 'node:assert/strict';
+import {startPreviewServer} from '../preview/server.mjs';
+const {server,url}=await startPreviewServer();
 const browser=await chromium.launch();
 try{
  const page=await browser.newPage({viewport:{width:1280,height:800}}),errors=[];page.on('pageerror',e=>errors.push(e.message));
- await page.goto('http://127.0.0.1:8911/preview/library-artwork-fixes.html?theme=wiiu&still=1');await page.locator('.nt-game-icon').first().waitFor();
+ await page.goto(url+'?theme=wiiu&still=1');await page.locator('.nt-game-icon').first().waitFor();
  await page.evaluate(()=>{
   window.__events={life:[],focus:[],task:[],error:[]};
   const register=kind=>fn=>{window.__events[kind].push(fn);return{unregister(){window.__events[kind]=window.__events[kind].filter(x=>x!==fn)}}};
@@ -26,4 +28,4 @@ try{
  await page.evaluate(()=>{window.__stopReturn();window.__stopPortal()});
  assert.equal(await page.locator('[data-theme-launch-portal]').count(),0);assert.deepEqual(errors,[]);
  console.log('PASS one persistent launch surface, native-route survival, Steam prompt handoff, independent exit observer and cleanup');
-}finally{await browser.close()}
+}finally{await browser.close();server.closeAllConnections();server.close();}
