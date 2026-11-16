@@ -1,9 +1,10 @@
 """Persistent animated wallpaper library and explicit local Rainmeter conversion."""
 from __future__ import annotations
-import hashlib, json, os, re, shutil, struct, tempfile, threading
+import hashlib, json, os, re, shutil, struct, tempfile, threading, logging
 from pathlib import Path
 from urllib.parse import urlencode, urlparse
-from urllib.request import Request, urlopen
+from urllib.request import Request
+from theme_network import urlopen
 
 MAX_MEDIA = 512 * 1024 * 1024
 EXTENSIONS = {'.mp4': 'MP4', '.m4v': 'M4V', '.webm': 'WebM', '.gif': 'GIF'}
@@ -273,7 +274,8 @@ def browse(data,query='',page=1,source='all'):
         for name,job in jobs:
             try:
                 r=job.result();pages.append(r['items']);cursors[name]=int(current.get(name,1))+1 if r.get('hasMore') else None
-            except Exception:
+            except Exception as error:
+                logging.getLogger(__name__).warning('Wallpaper source %s failed: %s: %s',name,type(error).__name__,error)
                 cursors[name]=current.get(name,1)
                 errors.append({'source':name,'message':'This source is unavailable right now. Your installed wallpapers still work.'})
     for i in range(max([len(p) for p in pages] or [0])):

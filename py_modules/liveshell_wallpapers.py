@@ -2,7 +2,8 @@
 import hashlib,json,os,time
 from pathlib import Path
 from urllib.parse import urlparse,unquote,quote
-from urllib.request import Request,urlopen,HTTPRedirectHandler,build_opener
+from urllib.request import Request,HTTPRedirectHandler,HTTPSHandler,build_opener
+from theme_network import urlopen,ssl_context
 
 CATALOGS=('https://raw.githubusercontent.com/Kanfium/Library/main/library/store.json','https://cdn.jsdelivr.net/gh/Kanfium/Library@main/library/store.json')
 PAGE='https://github.com/Kanfium/Library'
@@ -68,4 +69,4 @@ class Redirect(HTTPRedirectHandler):
 
 def open_media(url):
     if not allowed_download(url):raise ValueError('Unexpected media host')
-    return build_opener(Redirect()).open(Request(url,headers={'User-Agent':'ThemeHub'}),timeout=30)
+    return build_opener(HTTPSHandler(context=ssl_context()),Redirect()).open(Request(url,headers={'User-Agent':'ThemeHub'}),timeout=30)

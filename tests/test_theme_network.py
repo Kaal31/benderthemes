@@ -43,3 +43,16 @@ class NetworkTests(unittest.TestCase):
             options = request.call_args.kwargs
             self.assertTrue(options['context'].check_hostname)
             self.assertEqual(options['context'].verify_mode, ssl.CERT_REQUIRED)
+
+    def test_wallpaper_catalogues_and_downloads_use_system_ca(self):
+        import animated_wallpapers as wallpapers
+        import liveshell_wallpapers as liveshell
+        import wallpaper_workshop as workshop
+        for module in (wallpapers, liveshell, workshop):
+            self.assertIs(module.urlopen, network.urlopen)
+        with patch.object(liveshell, 'build_opener') as opener:
+            liveshell.open_media('https://huggingface.co/datasets/ZiZc3/liveshell-community/resolve/main/media/test.mp4')
+            https = opener.call_args.args[0]
+            self.assertTrue(https._context.check_hostname)
+            self.assertEqual(https._context.verify_mode, ssl.CERT_REQUIRED)
+            self.assertIsInstance(opener.call_args.args[1], liveshell.Redirect)

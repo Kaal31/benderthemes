@@ -8,7 +8,7 @@ const framesOnly=['blue-glass','gamecube','wiiflow-default'];
 const allThemes=[...new Set([...native,...framesOnly,'x360-blades','x360-nxe','x360-kinect','wiiu-plaza'])];
 const requested=process.env.PREVIEW_THEMES?.split(',');
 const themes=allThemes.filter(id=>!requested||requested.includes(id));
-const frameCount=Number(process.env.PREVIEW_FRAME_COUNT)||16;
+const frameCount=Number(process.env.PREVIEW_FRAME_COUNT)||24;
 const out='out/theme-previews';mkdirSync(out,{recursive:true});
 const browser=process.platform==='win32'?await chromium.launch({channel:'chromium'}):await launch();const {server,url}=await startPreviewServer();
 let report=[];
@@ -16,10 +16,10 @@ if(requested){try{report=JSON.parse(readFileSync(`${out}/capture-report.json`,'u
 const overlays='.dht-console-startup,.dht-console-video,.dht-intro,.nt-boot,.dht-firmware,.dht-psp-dialog';
 try{
  for(const theme of themes){
-  const page=await browser.newPage({viewport:{width:640,height:400},reducedMotion:'no-preference'});page.setDefaultTimeout(30000);
+  const page=await browser.newPage({viewport:{width:1280,height:800},reducedMotion:'no-preference'});page.setDefaultTimeout(30000);
   const errors=[];page.on('pageerror',e=>errors.push(String(e)));
   try{
-   await page.goto(new URL('/preview/gallery-capture-runtime.html?theme=ps5&embed=1',url).href,{waitUntil:'load'});
+   await page.goto(new URL('/preview/gallery-capture-runtime.html?theme=ps5&embed=1&consoleArt=1',url).href,{waitUntil:'load'});
    await page.waitForFunction(()=>!!window.__updateTheme);
    await page.evaluate(({theme,framesOnly,allThemes})=>window.__updateTheme(s=>({theme:framesOnly.includes(theme)?'frame':theme.startsWith('x360-')?'x360':theme==='wiiu-plaza'?'wiiu':theme,x360:{...s.x360,style:theme.startsWith('x360-')?theme.slice(5):'metro'},wiiuView:theme==='wiiu-plaza'?'plaza':'grid',activeTheme:framesOnly.includes(theme)?theme:'',onboardingDone:true,hubStartupSeen:true,hubStartupAnimation:false,bootIntro:false,themeStartupIntros:Object.fromEntries(allThemes.map(t=>[t,false])),animations:true,gameBackgrounds:{},sounds:false,music:{},screensaversDisabled:true,styles:{...s.styles,wiiu:{...s.styles?.wiiu,boot:'off'}},frameData:theme==='wiiflow-default'?{...s.frameData,[theme]:{...s.frameData?.[theme],backgroundFit:'fill',extendCoverflow:true,extendInterface:true}}:s.frameData})),{theme,framesOnly,allThemes});
    await page.waitForTimeout(1800);
@@ -39,7 +39,7 @@ try{
    const root=page.locator('[data-dht-root]');const bounds=await root.boundingBox();
    if(!bounds||Math.abs(bounds.width/bounds.height-1.6)>.01)throw Error('Not a full 16:10 dashboard');
    const cdp=await page.context().newCDPSession(page);
-   const capture=async path=>{const shot=await cdp.send('Page.captureScreenshot',{format:'png',clip:{...bounds,scale:1},captureBeyondViewport:false});writeFileSync(path,Buffer.from(shot.data,'base64'));};
+   const capture=async path=>{const shot=await cdp.send('Page.captureScreenshot',{format:'png',clip:{...bounds,scale:.5},captureBeyondViewport:false});writeFileSync(path,Buffer.from(shot.data,'base64'));};
    await capture(`${out}/${theme}.png`);
    const folder=`${out}/frames/${theme}`;mkdirSync(folder,{recursive:true});
    for(const name of readdirSync(folder))if(/^\d+\.png$/.test(name))unlinkSync(`${folder}/${name}`);

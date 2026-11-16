@@ -69,9 +69,20 @@ class Engine:
         except FileNotFoundError: return {'mode': 'auto', 'description': None}
         except (OSError, ValueError, TypeError, AttributeError): return {'mode': 'legacy', 'description': None}
 
+    def storage_status(self):
+        required = 7 * 1024**3
+        if self.ready(): return {'canInstall': True, 'requiredFreeBytes': required}
+        parent = self.root
+        while not parent.exists() and parent != parent.parent: parent = parent.parent
+        try:
+            free = shutil.disk_usage(parent).free
+            return {'canInstall': not self.external and free >= required, 'freeBytes': free, 'requiredFreeBytes': required}
+        except OSError:
+            return {'canInstall': None, 'requiredFreeBytes': required}
+
     def status(self):
         with self.lock: progress = dict(self.progress)
-        return {**progress, **self.state(), 'ready': self.ready(), 'version': 'assets-v1', 'downloadBytes': 3272136918}
+        return {**progress, **self.state(), **self.storage_status(), 'ready': self.ready(), 'version': 'assets-v1', 'downloadBytes': 3272136918}
 
     def save(self, desc=None, mode='engine'):
         if mode == 'engine':
@@ -132,7 +143,7 @@ class Engine:
         return self.status()
 
     def status_unlocked(self):
-        return {**self.progress, **self.state(), 'ready': self.ready(), 'version': 'assets-v1', 'downloadBytes': 3272136918}
+        return {**self.progress, **self.state(), **self.storage_status(), 'ready': self.ready(), 'version': 'assets-v1', 'downloadBytes': 3272136918}
 
     def _install(self):
         try:

@@ -1,6 +1,6 @@
 {
   "sourceBranch": "experimental",
-  "sourceCommit": "cf1173983d37f19a73d9039b9cf1b98e920ec5b7",
+  "sourceCommit": "852aa5a8a1eb9e8e30ecd96fa11fece6c0817295",
   "themeCount": 33,
   "recordingCount": 37,
   "sampleData": true,
@@ -13,10 +13,10 @@
       "file": "ps1.gif",
       "width": 640,
       "height": 400,
-      "frames": 16,
-      "durationMs": 2080,
-      "bytes": 608219,
-      "sha256": "e3facc25bea9f221d358837f8802c2c2686970f79d5064c132a1e9da2cef9406"
+      "frames": 24,
+      "durationMs": 3120,
+      "bytes": 545686,
+      "sha256": "0162037dbb3a32be778461d9a4faa9680870ca6c8667a40e3d4a0d47a7237a0b"
     },
     {
       "id": "ps2",
@@ -26,10 +26,10 @@
       "file": "ps2.gif",
       "width": 640,
       "height": 400,
-      "frames": 16,
-      "durationMs": 2080,
-      "bytes": 344988,
-      "sha256": "b93199bd786b2ebc3cd76e58e4462679d8fb35a0ef26d948795754d9e814e6e9"
+      "frames": 24,
+      "durationMs": 3120,
+      "bytes": 226783,
+      "sha256": "e9bbb9f0e775d358e5ea99c67d0b62c0a5241a0e566e400d825e30b25fd2a9bc"
     },
     {
       "id": "ps3",
@@ -39,10 +39,10 @@
       "file": "ps3.gif",
       "width": 640,
       "height": 400,
-      "frames": 16,
-      "durationMs": 2080,
-      "bytes": 767125,
-      "sha256": "5ca66712a1afffa7e3a460f4c4797571895c3df2de08c796cf99c5d4dbf33999"
+      "frames": 24,
+      "durationMs": 3120,
+      "bytes": 358541,
+      "sha256": "f4c1ebf5b57715aa39c9f965a60c00631a1485335ac160918bba5f5af2f93975"
     },
     {
       "id": "psp",
@@ -52,10 +52,10 @@
       "file": "psp.gif",
       "width": 640,
       "height": 400,
-      "frames": 16,
-      "durationMs": 2080,
-      "bytes": 315477,
-      "sha256": "9157e7aac26da2f92a5ecb4f5f7275c177959867ef05a0c543de84db1fca4e76"
+      "frames": 24,
+      "durationMs": 3120,
+      "bytes": 180395,
+      "sha256": "f06a8e895336c12f69f4d8298176f5cb45fc41ff3db0e95059e7262e6f9efa49"
     },
     {
       "id": "ps4",
@@ -65,10 +65,10 @@
       "file": "ps4.gif",
       "width": 640,
       "height": 400,
-      "frames": 7,
-      "durationMs": 2080,
-      "bytes": 694600,
-      "sha256": "10e182f342f9be3d0697a7ed20991aaf0ec9ccfff581fe99326d11dbcce8730b"
+      "frames": 13,
+      "durationMs": 3120,
+      "bytes": 470652,
+      "sha256": "7430620ed18f541669b5abe01549d921854fba63bdd59b0ec28a2e0a0959a298"
     },
     {
       "id": "ps5",
@@ -78,10 +78,10 @@
       "file": "ps5.gif",
       "width": 640,
       "height": 400,
-      "frames": 8,
-      "durationMs": 2080,
-      "bytes": 763120,
-      "sha256": "fa03bf11ead6f7c897f8ba6be14e3aed012500ce8c58fcaf89140c1c9654962e"
+      "frames": 9,
+      "durationMs": 3120,
+      "bytes": 548708,
+      "sha256": "3bed31fb71d56daaf9074d8834695767624960f39a19124de8bbdcc77df246c7"
     },
     {
       "id": "vita",
@@ -91,10 +91,10 @@
       "file": "vita.gif",
       "width": 640,
       "height": 400,
-      "frames": 16,
-      "durationMs": 2080,
-      "bytes": 782299,
-      "sha256": "180612ecbf87cff084e0cbdf39718efd19a52d72288fa49184cdaff35123e63a"
+      "frames": 24,
+      "durationMs": 3120,
+      "bytes": 228561,
+      "sha256": "172d15b3ff2c5b060d9ae9ede587ec738e86384b9b9d7867841b903f3560e02e"
     },
     {
       "id": "wii",
@@ -104,10 +104,10 @@
       "file": "wii.gif",
       "width": 640,
       "height": 400,
-      "frames": 16,
-      "durationMs": 2080,
-      "bytes": 644640,
-      "sha256": "1d016675a1cf73e4de029402d77ff662158e44437609427eef6134e7988ad5b5"
+      "frames": 24,
+      "durationMs": 3120,
+      "bytes": 291067,
+      "sha256": "077c4fbb79393c9d403ac834e4bcc581763d9861213760676a2310a235ba1c09"
     },
     {
       "id": "wiiu",
@@ -117,10 +117,10 @@
       "file": "wiiu.gif",
       "width": 640,
       "height": 400,
-      "frames": 6,
-      "durationMs": 2080,
-      "bytes": 490376,
-      "sha256": "dd9f7f1d33543f88fd2e59ba0afb1f6044ad36bb09e204aa6aee094212da5923"
+      "frames": 8,
+      "durationMs": 3120,
+      "bytes": 287845,
+      "sha256": "f6d5ab3be0b72bf153bea38f0582c33acce735d57622a20890dc9581a9b17ec1"
     },
     {
       "id": "switch",
@@ -130,10 +130,10 @@
       "file": "switch.gif",
       "width": 640,
       "height": 400,
-      "frames": 16,
-      "durationMs": 2080,
-      "bytes": 379432,
-      "sha256": "6f8e515dbccdbf7a823b1f62a481fbd20b1a8e3145097a67fc914341981d00fa"
+      "frames": 24,
+      "durationMs": 3120,
+      "bytes": 111635,
+      "sha256": "f1d570987ef7f3c78b4231a075046a4bb531ee3898ca60fc23bebffcd703c2c2"
     },
     {
       "id": "n3ds",
@@ -143,10 +143,10 @@
       "file": "n3ds.gif",
       "width": 640,
       "height": 400,
-      "frames": 16,
-      "durationMs": 2080,
-      "bytes": 269226,
-      "sha256": "7236e7001798bafb62f0c55890ce200044dfeca47b7f765b878f60e307313ccc"
+      "frames": 24,
+      "durationMs": 3120,
+      "bytes": 86965,
+      "sha256": "bc87ee91505b6a7e8739a9bb4e5f621604021aa0e8b7eab89b0e7de393e4448c"
     },
     {
       "id": "gamecube",
@@ -156,10 +156,10 @@
       "file": "gamecube.gif",
       "width": 640,
       "height": 400,
-      "frames": 16,
-      "durationMs": 2080,
-      "bytes": 527967,
-      "sha256": "8648655978016396fda41b0a72244059ae3e58319637fbd70642a30454cdc0c0"
+      "frames": 24,
+      "durationMs": 3120,
+      "bytes": 578783,
+      "sha256": "147df774529bfa783460f6a2f287a89ff301813b8f3815aef6a44e291e3211bc"
     },
     {
       "id": "wiiflow-default",
@@ -169,10 +169,10 @@
       "file": "wiiflow-default.gif",
       "width": 640,
       "height": 400,
-      "frames": 12,
-      "durationMs": 2080,
-      "bytes": 1040616,
-      "sha256": "531507922abd86da7eb87722d0facc9bcd5e957a5ee8b223fdfb31a740703f0e"
+      "frames": 13,
+      "durationMs": 3120,
+      "bytes": 840369,
+      "sha256": "a09f1c219bf4aa847144e545a6636a8e2e958dd0b6dd0b4c0e0a0edff260017b"
     },
     {
       "id": "xbox",
@@ -182,10 +182,10 @@
       "file": "xbox.gif",
       "width": 640,
       "height": 400,
-      "frames": 16,
-      "durationMs": 2080,
-      "bytes": 257480,
-      "sha256": "3d2a7ff239b08c9e38a861be8f52ad578a239c0c702a73e3224921994a370a88"
+      "frames": 24,
+      "durationMs": 3120,
+      "bytes": 1318572,
+      "sha256": "998911dd2f68bfb8c2ba567c763d49b679414a0ffc756d4430296be97737d7d9"
     },
     {
       "id": "x360-blades",
@@ -196,10 +196,10 @@
       "file": "x360-blades.gif",
       "width": 640,
       "height": 400,
-      "frames": 5,
-      "durationMs": 2080,
-      "bytes": 348775,
-      "sha256": "58ea56915f9f4dd4c70dbb683c975c176252ba508afb9aed7d53763e3f061c8c"
+      "frames": 24,
+      "durationMs": 3120,
+      "bytes": 544428,
+      "sha256": "dfea48d5ee798600bde7e8e1f48fde6df36017e3f02f17829ec43a8473c83ef8"
     },
     {
       "id": "x360-nxe",
@@ -210,10 +210,10 @@
       "file": "x360-nxe.gif",
       "width": 640,
       "height": 400,
-      "frames": 16,
-      "durationMs": 2080,
-      "bytes": 380350,
-      "sha256": "e81f00195d3c48df05c810f2bf4a7015a34ec6bc83d5c6a03300f966b344c13a"
+      "frames": 24,
+      "durationMs": 3120,
+      "bytes": 206375,
+      "sha256": "aad56481be8480189987f67dd91f79157abac94e1beb8e3b2d69326183aabffa"
     },
     {
       "id": "x360-kinect",
@@ -224,10 +224,10 @@
       "file": "x360-kinect.gif",
       "width": 640,
       "height": 400,
-      "frames": 16,
-      "durationMs": 2080,
-      "bytes": 304527,
-      "sha256": "13e157c01f251575520cb0a3b4178fd49cb52456ea9e113ae46cac6dc207323f"
+      "frames": 24,
+      "durationMs": 3120,
+      "bytes": 136698,
+      "sha256": "75d1edf5319f83ea7ee7cbfa978b1865a2d932965728dce2250fabc731f63654"
     },
     {
       "id": "x360",
@@ -238,10 +238,10 @@
       "file": "x360.gif",
       "width": 640,
       "height": 400,
-      "frames": 5,
-      "durationMs": 2080,
-      "bytes": 240398,
-      "sha256": "32466cf93911abbc0bcfb1dd522c8f2e0745138317d3ebdbf393d6d60615e1a9"
+      "frames": 3,
+      "durationMs": 3120,
+      "bytes": 100018,
+      "sha256": "aa56cadfcf94a670126f75d13c5f952a779d42da05e5f487e5b0e16c368d42cb"
     },
     {
       "id": "ios6",
@@ -251,10 +251,10 @@
       "file": "ios6.gif",
       "width": 640,
       "height": 400,
-      "frames": 4,
+      "frames": 3,
       "durationMs": 3120,
-      "bytes": 215143,
-      "sha256": "8181821d954b7a450637bdc9a23474c84e04644cbb31559b307635aaf28bc5ca"
+      "bytes": 94935,
+      "sha256": "58e0abc10ff201756d32a35120e449cf34b6ca32aadd731e92f5eee97f531b38"
     },
     {
       "id": "old-big-picture",
@@ -265,9 +265,9 @@
       "width": 640,
       "height": 400,
       "frames": 5,
-      "durationMs": 2080,
-      "bytes": 175607,
-      "sha256": "fa920b783cc759d65abb3e40f5f9dd0527d886dbb72cf89242a921ec1d06d981"
+      "durationMs": 3120,
+      "bytes": 57517,
+      "sha256": "885abc4342914c58652eca4c5818a196c8882c61798e647fd92823f47c98df20"
     },
     {
       "id": "old-beta-big-picture",
@@ -277,10 +277,10 @@
       "file": "old-beta-big-picture.gif",
       "width": 640,
       "height": 400,
-      "frames": 16,
-      "durationMs": 2080,
-      "bytes": 866228,
-      "sha256": "c94233d52bcbe3a31b831e7884f7112d3693271597113d15a4c0fd0efc3c5645"
+      "frames": 24,
+      "durationMs": 3120,
+      "bytes": 254084,
+      "sha256": "6f05b2a86523bfce2bc99b32137a638ea3e650de843ca2e33fdf2f979554d810"
     },
     {
       "id": "gameamp",
@@ -290,10 +290,10 @@
       "file": "gameamp.gif",
       "width": 640,
       "height": 400,
-      "frames": 16,
-      "durationMs": 2080,
-      "bytes": 344270,
-      "sha256": "0f6581395b489f63dbfa7146ebb12aa104dce80887fea50f10dd642b83a33dc0"
+      "frames": 24,
+      "durationMs": 3120,
+      "bytes": 121234,
+      "sha256": "548c564b7002818180e8796267a8256c9a56c207b92b6ff6a2f8845888a2147c"
     },
     {
       "id": "blue-glass",
@@ -304,9 +304,9 @@
       "width": 640,
       "height": 400,
       "frames": 5,
-      "durationMs": 2080,
-      "bytes": 215240,
-      "sha256": "e7b43cf1933aa07a122ca9e6541ecd9ee74658ed8bc8d025324500087361bdb9"
+      "durationMs": 3120,
+      "bytes": 106688,
+      "sha256": "68aca893747acd033c6918f3175863dc3f59183e829cae6c63c9aa0276b84b94"
     },
     {
       "id": "aero",
@@ -317,9 +317,9 @@
       "width": 640,
       "height": 400,
       "frames": 3,
-      "durationMs": 2080,
-      "bytes": 221322,
-      "sha256": "64bc7636b3fc9fd8768c232bddd5e78dd0f7bf168f3addd3d84e8e3b32ef1a1c"
+      "durationMs": 3120,
+      "bytes": 131708,
+      "sha256": "f364a9ba8276a322413606420dcc77956a5f2fb24bbb8586b97a47b76bffbfe9"
     },
     {
       "id": "aero2",
@@ -330,9 +330,9 @@
       "width": 640,
       "height": 400,
       "frames": 3,
-      "durationMs": 2080,
-      "bytes": 270356,
-      "sha256": "beebce8766cd75ce3a1c4c4089124c39a7bccafe7114b10d1fb7347b10e81fab"
+      "durationMs": 3120,
+      "bytes": 133899,
+      "sha256": "9ed8785956a905c9c7b3e53ea5ab691d4a0c2783b76076c8e67a56a2c29b5bec"
     },
     {
       "id": "onyx",
@@ -342,10 +342,10 @@
       "file": "onyx.gif",
       "width": 640,
       "height": 400,
-      "frames": 6,
-      "durationMs": 2080,
-      "bytes": 267652,
-      "sha256": "04d5eacbd49c4e7328a790d2448feaa2ca93d38f26a820359434b70f0eb1758b"
+      "frames": 16,
+      "durationMs": 3120,
+      "bytes": 245142,
+      "sha256": "44127698bb872088f23919e180262a8e720918dbe13be82ee78ec7033178ddcc"
     },
     {
       "id": "silver",
@@ -355,10 +355,10 @@
       "file": "silver.gif",
       "width": 640,
       "height": 400,
-      "frames": 5,
-      "durationMs": 2080,
-      "bytes": 570484,
-      "sha256": "a4da8bc69ddbfc6e0c616f80ea5880b15f03bee38be570dbe375fb3667c3ec29"
+      "frames": 22,
+      "durationMs": 3120,
+      "bytes": 269524,
+      "sha256": "d894a135b8e0a5f08ccaf1ac2f77ae597bba22046e65d98b70176cfa06e225bd"
     },
     {
       "id": "reading",
@@ -368,10 +368,10 @@
       "file": "reading.gif",
       "width": 640,
       "height": 400,
-      "frames": 16,
-      "durationMs": 2080,
-      "bytes": 1560589,
-      "sha256": "1bc139a5bcb8b7ca1138b480b61edfd01f7b3df1d43b46c22a6d5f3d5febdea3"
+      "frames": 24,
+      "durationMs": 3120,
+      "bytes": 876601,
+      "sha256": "688c4a9e6772b044397e703d5f1b540c3b112f2f53bec8365ab357f693f4ba10"
     },
     {
       "id": "dial",
@@ -381,10 +381,10 @@
       "file": "dial.gif",
       "width": 640,
       "height": 400,
-      "frames": 12,
-      "durationMs": 2080,
-      "bytes": 657557,
-      "sha256": "19683b167325231031e0a382d2c4d22a50a3c36a00c57c33852a9db455d54cf3"
+      "frames": 20,
+      "durationMs": 3120,
+      "bytes": 451855,
+      "sha256": "8c2814e0290056a232ae30c852c7804e8174cd70795f39de4b6a20b3de2544f3"
     },
     {
       "id": "castle",
@@ -394,10 +394,10 @@
       "file": "castle.gif",
       "width": 640,
       "height": 400,
-      "frames": 16,
-      "durationMs": 2080,
-      "bytes": 1675172,
-      "sha256": "14c10a957c2ffa06751c2dc1c26769103e6b8c459be1bcba2928cc573520dbdf"
+      "frames": 24,
+      "durationMs": 3120,
+      "bytes": 1547849,
+      "sha256": "b5ce8d52c02c070ed391d5abb24e878ae1cd647bdc7d219c5e72d660c6dc9de4"
     },
     {
       "id": "republic",
@@ -407,10 +407,10 @@
       "file": "republic.gif",
       "width": 640,
       "height": 400,
-      "frames": 16,
-      "durationMs": 2080,
-      "bytes": 2109136,
-      "sha256": "a61850ed3f86a887a05beb0db7bbd4dc28e737889d6f07a97d0ae78bebeebdce"
+      "frames": 24,
+      "durationMs": 3120,
+      "bytes": 1295172,
+      "sha256": "de2835c9b0b67c753e269ce7a4652d1185e079449dcd216304caf95a912a776c"
     },
     {
       "id": "minecraft",
@@ -420,10 +420,10 @@
       "file": "minecraft.gif",
       "width": 640,
       "height": 400,
-      "frames": 16,
-      "durationMs": 2080,
-      "bytes": 301203,
-      "sha256": "9f424d9bb2210132bd95139e12acd7b796eaa208ba231974ab192024c461dce1"
+      "frames": 24,
+      "durationMs": 3120,
+      "bytes": 105151,
+      "sha256": "7b8877c8ab76e6274df9aa72400b8f0c51e69bd4983cb21834635a8de345f719"
     },
     {
       "id": "pain",
@@ -433,10 +433,10 @@
       "file": "pain.gif",
       "width": 640,
       "height": 400,
-      "frames": 16,
-      "durationMs": 2080,
-      "bytes": 1132625,
-      "sha256": "bd8c76a949fa6f17e1081efd7a4535499003417b67591a3ae19847ce1f90326c"
+      "frames": 24,
+      "durationMs": 3120,
+      "bytes": 224078,
+      "sha256": "57c15ac38482a98d010dda05d9e201ed0555184b70de83271f957f82467c0d6d"
     },
     {
       "id": "nazarick",
@@ -446,10 +446,10 @@
       "file": "nazarick.gif",
       "width": 640,
       "height": 400,
-      "frames": 16,
-      "durationMs": 2080,
-      "bytes": 1633660,
-      "sha256": "42176f7d2e0e1a1cca7f15fb0c8f8efcfa1869c608fef3aab88bb3f99f888743"
+      "frames": 24,
+      "durationMs": 3120,
+      "bytes": 1106599,
+      "sha256": "08903a25906e569e6fee297210e0ea1450bb8fadcf40212566e953dc5630fdeb"
     },
     {
       "id": "iisu",
@@ -459,10 +459,10 @@
       "file": "iisu.gif",
       "width": 640,
       "height": 400,
-      "frames": 16,
-      "durationMs": 2080,
-      "bytes": 1061908,
-      "sha256": "4f2c1523b1cdc3c82e02f24ca2758cf7fd8f0b23ffb3ccbcac48696e2cd866f8"
+      "frames": 24,
+      "durationMs": 3120,
+      "bytes": 351590,
+      "sha256": "1dbb60d5087d86555493db995208400905614937a0bceee3befe630cb607d640"
     },
     {
       "id": "santa-express",
@@ -472,10 +472,10 @@
       "file": "santa-express.gif",
       "width": 640,
       "height": 400,
-      "frames": 16,
-      "durationMs": 2080,
-      "bytes": 1651082,
-      "sha256": "aa09f9aa05a94f70d5cbaddb6612219f6236d7e0e984eba0e54aae6fecb1a138"
+      "frames": 24,
+      "durationMs": 3120,
+      "bytes": 549612,
+      "sha256": "48f3ff4d8cde3ce9af49f9f92cb88bd60246fd744c99ff5d4ed4200fbad0fba4"
     },
     {
       "id": "wiiu-plaza",
@@ -486,12 +486,12 @@
       "file": "wiiu-plaza.gif",
       "width": 640,
       "height": 400,
-      "frames": 16,
-      "durationMs": 2080,
-      "bytes": 1116590,
-      "sha256": "9619013aaef2d2979694e64ea2546d0dce747fdb07631fe79a5e266d9960780a"
+      "frames": 24,
+      "durationMs": 3120,
+      "bytes": 973864,
+      "sha256": "4a18feb06a11b11bf959c0a440a9efb3f0e6a4fc0f295116c6481f8271ec668d"
     }
   ],
   "sourceWorkingTree": true,
-  "recordedOn": "2026-11-14"
+  "recordedOn": "2026-11-16"
 }

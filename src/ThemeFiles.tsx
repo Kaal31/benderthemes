@@ -17,6 +17,8 @@ import type { InputHandler } from "./input";
 import { refreshThemeLists } from "./themeSettingsMenu";
 import { resourcesChangedOnClose, useResourceRevision } from "./marketplaceState";
 import { playSound } from "./steam";
+import { ensurePackInstalled,themeCatalog,themeDownloadProgress } from "./themePacks";
+import { refreshPresets } from "./presets";
 
 type Source = { id?: string; name: string; url: string; credit: string };
 type Kind = { id: string; label: string; dir: string; exts: string[]; sources: string[] };
@@ -63,6 +65,7 @@ export function ThemeFiles({ inputRef, initialKind = "psp", authoredContent, onK
   const [confirm, setConfirm] = useState<FileRef | null>(null);
   const [files, setFiles] = useState<Record<string, FileRef[] | { error: string }>>({});
   const [busy, setBusy] = useState(false);
+  const preparingBase=useRef(false);
   const [progress, setProgress] = useState<Progress | null>(null);
   const [savedFiles,setSavedFiles]=useState<Record<string,string>>({});
   const savedKey=(file:FileRef)=>`${kind}:${downloadSource}:${current?.id}:${downloadSource==="archive"?file.name:""}`;
@@ -122,7 +125,7 @@ export function ThemeFiles({ inputRef, initialKind = "psp", authoredContent, onK
   }, [selected, items.length === 0]);
   useEffect(() => {
     if (!busy) return;
-    const t = setInterval(() => { downloadProgress().then(p => { if (alive.current) setProgress(p); }).catch(() => {}); }, 500);
+    const t = setInterval(() => { (preparingBase.current?themeDownloadProgress():downloadProgress()).then(p => { if (alive.current) setProgress(p); }).catch(() => {}); }, 500);
     return () => clearInterval(t);
   }, [busy]);
   useEffect(() => { detailRef.current?.querySelector<HTMLElement>('[data-active="true"]')?.scrollIntoView?.({ block: "nearest" }); }, [action, confirm, zone]);
@@ -148,17 +151,27 @@ export function ThemeFiles({ inputRef, initialKind = "psp", authoredContent, onK
     if(installedOnly){applyInstalled();return;}
     setBusy(true); setMessage(null); setProgress({ busy: true, percent: 0, message: "Connecting…" });
     try {
+      if(kind==='xbox'||kind==='x360'){
+        const catalog=await themeCatalog(false);
+        const pack=catalog.themes.find(p=>(p.frameTheme??p.theme)===kind);
+        if(!pack)throw Error('The required '+KIND_HINT[kind]+' base theme is unavailable. Retry before downloading this skin.');
+        preparingBase.current=true;
+        setProgress({busy:true,percent:0,message:'Preparing '+KIND_HINT[kind]+' base theme...'});
+        await ensurePackInstalled(pack);
+        preparingBase.current=false;
+      }
       const r = await download(kind, downloadSource, current.id, downloadSource === "archive" ? file.name : "", current.name);
       if (!alive.current) return;
       if (!r.success) setMessage({ text: r.error || "Download failed." });
       else {
         setMessage({ ok: true, text: `${r.already ? "Already saved" : "Saved"} to ${kindInfo?.dir}/ as “${r.name}”. ${hintFor(kind)}` });
         setSavedFiles(previous=>({...previous,[savedKey(file)]:r.name||file.name}));
+        await refreshPresets();
         refreshThemeLists();
         resourcesChangedOnClose();
       }
     } catch (e) { if (alive.current) setMessage({ text: String(e) }); }
-    finally { if (alive.current) { setBusy(false); setConfirm(null); } }
+    finally { preparingBase.current=false; if (alive.current) { setBusy(false); setConfirm(null); } }
   };
   // detail buttons: one per file (or one Download), then "Source page"
   const actions = installedOnly?1:(current?.externalLinks?.length ?? 0) + (fileList ?? []).length + 1;
@@ -245,7 +258,7 @@ export function ThemeFiles({ inputRef, initialKind = "psp", authoredContent, onK
           onKeyDown={e => { e.stopPropagation(); if (e.key === "Enter" || e.key === "ArrowDown") { e.preventDefault(); leaveSearch(true); } if (e.key === "Escape") { e.preventDefault(); searchRef.current?.blur(); setTyped(query); setZone("kinds"); } }} />
       </label>
     </div>
-    {kind==="authored"?<><div className="dht-files-info" aria-hidden="true"/><div style={{flex:1,minHeight:0,display:"flex",flexDirection:"column"}} onPointerDown={()=>setZone("grid")} onFocusCapture={()=>setZone("grid")}>{authoredContent}</div><div className="dht-files-foot" aria-hidden="true"/></>:kind==="wallpapers"?<AnimatedWallpapers inputRef={wallpaperInput} installedOnly={installedOnly}/>:<>
+    {kind==="authored"?<><div style={{flex:1,minHeight:0,display:"flex",flexDirection:"column"}} onPointerDown={()=>setZone("grid")} onFocusCapture={()=>setZone("grid")}>{authoredContent}</div><div className="dht-files-foot" aria-hidden="true"/></>:kind==="wallpapers"?<AnimatedWallpapers inputRef={wallpaperInput} installedOnly={installedOnly}/>:<>
     <div className="dht-files-info"><div className="dht-files-sub">
       <span className="dht-files-sources">{installedOnly?"Installed on this device":"From"} {(installedOnly?[]:kindInfo?.sources ?? []).map(s => <button key={s} data-active={s === src} onClick={() => setSource(s)}>{kinds?.sources[s]?.name ?? s}</button>)}{!installedOnly&&(kindInfo?.sources.length ?? 0) > 1 && <i>X switches</i>}</span>
       <span className="dht-files-status" role="status">{installedOnly?`${items.length} installed ${items.length===1?"theme":"themes"}`:loading && !items.length ? "Loading…" : info?.error ? info.error : `${info?.total ?? 0} ${query ? `results for “${query}”` : "themes"}${kind === "wiiflow" ? " · original source posts" : ` · saved to ${kindInfo?.dir ?? "skins"}/`}`}</span>
@@ -307,7 +320,7 @@ export function ThemeFiles({ inputRef, initialKind = "psp", authoredContent, onK
 const FILES_CSS = `
 .dht-files-info{height:66px;min-height:66px;overflow:auto;box-sizing:border-box}.dht-files-info .dht-files-note{margin:5px 0;font-size:11px;line-height:1.3}
 .dht-files[data-discover] .dht-hub-body{margin:0;gap:var(--dht-hub-gap,22px)}
-.dht-files[data-discover] .market-grid{padding:6px;margin:0;gap:14px;scroll-padding:8px;grid-template-columns:repeat(auto-fill,minmax(var(--dht-hub-card-min,180px),1fr))}
+.dht-files[data-discover] .market-grid{padding:10px;margin:0;gap:14px;scroll-padding:10px;grid-template-columns:repeat(auto-fill,minmax(var(--dht-hub-card-min,180px),1fr))}
 .dht-files[data-discover] .dht-files-foot{min-height:18px;box-sizing:border-box}
 @container dht-hub (max-width:900px){.dht-files-bar{grid-template-columns:minmax(0,1fr) 190px}}
 

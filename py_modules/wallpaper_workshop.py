@@ -2,7 +2,8 @@
 from __future__ import annotations
 import hashlib, json, os, platform, re, shutil, subprocess, tempfile, threading, time, zipfile
 from pathlib import Path
-from urllib.request import Request,urlopen
+from urllib.request import Request
+from theme_network import urlopen
 
 URL='https://github.com/SteamRE/DepotDownloader/releases/download/DepotDownloader_3.4.0/DepotDownloader-linux-x64.zip'
 SHA256='a999dec66b4850fc961bd50366696d23c2d0fad7b18790e6a5647b2f19097a53'
