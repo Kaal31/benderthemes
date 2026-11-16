@@ -5,7 +5,7 @@ import {callable} from '@decky/api';
 import {pushModalInput, Press, useStage} from '../input';
 
 type Description = Record<string, any>;
-type Status = {ready:boolean;mode?:string;description?:Description;base?:string;installing?:boolean;completed?:number;total?:number;pack?:string;error?:string};
+type Status = {ready:boolean;canInstall?:boolean;freeBytes?:number;requiredFreeBytes?:number;mode?:string;description?:Description;base?:string;installing?:boolean;completed?:number;total?:number;pack?:string;error?:string};
 const statusCall=callable<[],Status>('x360_engine_status');
 const installCall=callable<[],Status>('x360_engine_install');
 const buildCall=callable<[description:Description],any>('x360_engine_build');
@@ -64,6 +64,21 @@ const button:CSSProperties={background:'#347b18',border:'1px solid #c2d7b8',colo
 type EditorProps={onClose:()=>void;onLegacy:()=>void;fallback:ReactNode;variant?:'metro'|'nxe'|'kinect';name?:string};
 /** The full local Metro shell is shared by every dashboard using the avatar engine. */
 export function MetroAvatarEditor(props:EditorProps){
+  const [checked,setChecked]=useState(false);
+  const legacy=useRef(props.onLegacy);legacy.current=props.onLegacy;
+  useEffect(()=>{
+    let alive=true,switched=false;
+    const check=()=>statusCall().then(status=>{
+      if(!alive||switched)return;
+      if(status?.mode==='legacy'||(!status?.ready&&!status?.installing&&status?.canInstall===false)){
+        switched=true;legacy.current();return;
+      }
+      setChecked(true);
+    }).catch(()=>{if(alive&&!switched){switched=true;legacy.current();}});
+    void check();const timer=setInterval(()=>{void check();},2000);
+    return()=>{alive=false;clearInterval(timer);};
+  },[]);
+  if(!checked)return null;
   return <FullAvatarEditor onClose={props.onClose} name={props.name??'Player'} previous={<PreviousAvatarEditor {...props}/>}/>;
 }
 function PreviousAvatarEditor({onClose,onLegacy,fallback,variant='metro',name='My Avatar'}:EditorProps) {

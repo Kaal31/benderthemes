@@ -20,7 +20,8 @@ try{
   await page.locator('.market-close').click();
  }
  const catalog=JSON.parse(readFileSync('asset-catalog.json','utf8'));
- assert.equal(catalog.gallery.themes.length,31);
+ assert.equal(catalog.gallery.themes.length,33);
  for(const id of catalog.gallery.themes)for(const ext of ['gif','jpg'])assert.ok(readFileSync(`out/theme-previews/${id}.${ext}`).length>0);
- console.log('PASS all 31 gallery themes have animated previews and posters');
+ assert.ok(catalog.gallery.themes.includes('reading'));assert.ok(catalog.gallery.themes.includes('old-beta-big-picture'));
+ console.log('PASS all 33 gallery themes have animated previews and posters');
 }finally{await browser.close();server.closeAllConnections();server.close();}

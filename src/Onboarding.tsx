@@ -13,7 +13,9 @@ import { playThemeIntro } from "./themeIntro";
 import { playSound } from "./steam";
 import { loadLibrary } from "./library";
 import { Img } from "./common";
+import { closeMarketplace } from "./marketplaceState";
 
+const packTheme = (id: string) => id === "old-beta-big-picture" ? "old-big-picture" : id;
 const CHOICES = THEMES.filter((t) => t.id !== "frame" && t.id !== "native");
 
 export function Onboarding() {
@@ -25,22 +27,24 @@ export function Onboarding() {
   const listRef = useRef<HTMLDivElement>(null);
   const [busy,setBusy]=useState(false), [error,setError]=useState(""),[progress,setProgress]=useState("");
   const installing=useRef(false);
-  useEffect(()=>{if(!busy)return;const timer=setInterval(()=>{void themeDownloadProgress().then(p=>setProgress(`${p.percent}% � ${p.message}`)).catch(()=>{});},500);return()=>clearInterval(timer);},[busy]);
+  useEffect(()=>{if(!busy)return;const timer=setInterval(()=>{void themeDownloadProgress().then(p=>setProgress(`${p.percent}% - ${p.message}`)).catch(()=>{});},500);return()=>clearInterval(timer);},[busy]);
   useEffect(() => { let live = true; inventory().then((i) => live && setInstalled(i || {})).catch(() => live && setInstalled({})); return () => { live = false; }; }, []);
   useEffect(() => { listRef.current?.querySelector('[data-selected="true"]')?.scrollIntoView({ block: "nearest" }); }, [sel, step]);
   const chosen = CHOICES[sel];
-  const isInstalled = (id: string) => !!installed?.[id];
+  const isInstalled = (id: string) => id === "reading" || !!installed?.[packTheme(id)];
   const finish = async (pick: boolean) => {
     if(installing.current)return;
-    installing.current=true;setBusy(true);setError("");setProgress("Preparing download�");
+    installing.current=true;setBusy(true);setError("");setProgress("Preparing download...");
     const theme = pick ? chosen.id : getSettings().theme;
     try{
       if(!isInstalled(theme)){
         const catalog=await themeCatalog(false);
-        const pack=catalog.themes.find(p=>p.theme===theme);
+        const pack=catalog.themes.find(p=>(p.frameTheme??p.theme)===packTheme(theme));
         if(!pack)throw new Error("This theme is unavailable. Choose another theme or retry.");
         await ensurePackInstalled(pack);
       }
+      // Setup may have been entered through Hub; reveal the chosen home after installation.
+      closeMarketplace();
       updateSettings({ onboardingDone: true, theme: theme as ThemeId, activeTheme:"", enabled: true });
       playThemeIntro(theme, { fresh: true });
     }catch(e){setError(String(e));}finally{installing.current=false;setBusy(false);}
@@ -83,7 +87,7 @@ export function Onboarding() {
         <div className="dht-ob-body">
           <div className="dht-ob-list" ref={listRef}>
             {CHOICES.map((t, i) => <button key={t.id} className="dht-ob-item" data-selected={i === sel} onClick={() => (i === sel ? setStep(2) : setSel(i))} onFocus={() => setSel(i)}>
-              <strong>{t.name}</strong><span>{!installed ? "Checking…" : !installed[t.id] ? "Download" : "Ready"}</span>
+              <strong>{t.name}</strong><span>{!installed ? "Checking…" : !isInstalled(t.id) ? "Download" : "Ready"}</span>
             </button>)}
           </div>
           <div className="dht-ob-preview">
@@ -97,7 +101,7 @@ export function Onboarding() {
             {sampleGames.length > 0 && <small className="dht-ob-library-note">Cover examples from your library</small>}
             <h2>{chosen.name}</h2>
             <p>{chosen.blurb}</p>
-            <small>{installed && !installed[chosen.id] ? "Downloads when you confirm. Other themes stay in the Hub." : "Already downloaded. You can change it later from the Hub."}</small>
+            <small>{installed && !isInstalled(chosen.id) ? "Downloads when you confirm. Other themes stay in the Hub." : "Already downloaded. You can change it later from the Hub."}</small>
             <button className="dht-ob-primary" onClick={() => setStep(2)}>Choose {chosen.name}</button>
           </div>
         </div>
@@ -107,8 +111,8 @@ export function Onboarding() {
         <span className="dht-ob-eyebrow">ALL SET</span>
         <h1>{chosen.name}</h1>
         <p>{shown.tagline}</p>
-        <p className="dht-ob-sub">{installed && !installed[chosen.id] ? "Only this theme will download before its home opens. Other themes stay available in the Hub." : "Your home opens with its own intro. Press any button to skip it."}</p>
-        <button className="dht-ob-primary" disabled={busy} onClick={() => void finish(true)}>{busy ? progress : installed && !installed[chosen.id] ? `Download ${chosen.name} & start` : "Start"}</button>
+        <p className="dht-ob-sub">{installed && !isInstalled(chosen.id) ? "Only this theme will download before its home opens. Other themes stay available in the Hub." : "Your home opens with its own intro. Press any button to skip it."}</p>
+        <button className="dht-ob-primary" disabled={busy} onClick={() => void finish(true)}>{busy ? progress : installed && !isInstalled(chosen.id) ? `Download ${chosen.name} & start` : "Start"}</button>
         <small>Later on the home: hold L1 + ▲▼ to change console, L1 + ◀▶ for its other looks and theme files.</small>
         <small>Ⓐ Start · Ⓑ Back</small>
       </section>}
@@ -127,11 +131,11 @@ const ONBOARDING_CSS = `
 .dht-ob-card{text-align:center;max-width:560px;padding:44px 48px;background:var(--dht-hub-panel);color:var(--dht-hub-card-text);border-radius:calc(var(--dht-hub-radius) * 1.6);box-shadow:var(--dht-hub-shadow),0 20px 60px #0004}.dht-ob-card p,.dht-ob-card small,.dht-ob-card .dht-ob-eyebrow{color:var(--dht-hub-card-sub)}.dht-ob-card small{margin-top:16px}
 .dht-ob-primary{background:var(--dht-hub-accent);color:var(--dht-hub-accent-text)!important;border-radius:var(--dht-hub-pill);padding:14px 30px;font-weight:700;font-size:15px;margin-top:10px;box-shadow:var(--dht-hub-shadow)}
 .dht-ob-pick{width:min(1040px,92vw);height:min(660px,88vh);display:flex;flex-direction:column}.dht-ob-pick header{padding-top:38px}.dht-ob-pick h1{font-size:34px;margin:6px 0 16px}.dht-ob-pick footer{font-size:11px;color:var(--dht-hub-sub);padding-top:12px;border-top:1px solid var(--dht-hub-line);margin-top:12px;text-transform:none}
-.dht-ob-body{display:grid;grid-template-columns:320px 1fr;gap:34px;flex:1;min-height:0}.dht-ob-list{overflow:auto;display:flex;flex-direction:column;gap:8px;padding:6px 8px 8px 4px}
-.dht-ob-preview .dht-ob-swatch{height:260px}.dht-ob-game{min-width:0;min-height:0;overflow:hidden;border-radius:var(--dht-hub-radius);background:var(--dht-hub-panel-hi)}.dht-ob-game-cover{display:block;width:100%;height:100%;object-fit:contain}.dht-ob-game-fallback{height:100%;display:grid;place-items:center;padding:12px;text-align:center;color:var(--dht-hub-text);font-size:14px}.dht-ob-library-note{margin-top:8px}
+.dht-ob-body{display:grid;grid-template-columns:320px 1fr;gap:34px;flex:1;min-height:0}.dht-ob-list{overflow:auto;display:flex;flex-direction:column;gap:8px;padding:12px;scroll-padding:12px}
+.dht-ob-preview .dht-ob-swatch{height:260px}.dht-ob-game{min-width:0;min-height:0;overflow:hidden;border:1px solid var(--dht-hub-line);border-radius:var(--dht-hub-radius);background:var(--dht-hub-panel-hi);box-shadow:var(--dht-hub-shadow)}.dht-ob-game:first-child{box-shadow:var(--dht-hub-ring)}.dht-ob-game-cover{display:block;width:100%;height:100%;object-fit:contain}.dht-ob-game-fallback{width:100%;height:100%;overflow-wrap:anywhere;display:grid;place-items:center;padding:12px;text-align:center;color:var(--dht-hub-text);font-size:14px}.dht-ob-library-note{margin-top:8px}
 .dht-onboarding[data-hub-theme=onyx]{--dht-hub-bg:repeating-linear-gradient(135deg,#ffffff03 0 1px,transparent 1px 4px),radial-gradient(ellipse at 50% 20%,#27292c,#08090b);--dht-hub-panel:linear-gradient(#24262a,#111215);--dht-hub-panel-hi:#34373c;--dht-hub-accent:#eeeeef;--dht-hub-accent-text:#111;--dht-hub-ring:0 0 0 2px #ddd;--dht-hub-radius:18px;--dht-hub-pill:30px}
 .dht-onboarding[data-hub-theme=silver] .dht-ob-swatch{background:repeating-linear-gradient(0deg,#ffffff33 0 1px,#00000005 1px 2px),linear-gradient(120deg,#e9e9e9,#a7a7a7,#f6f6f6);border-color:#aaa}
 .dht-ob-item{display:flex;justify-content:space-between;align-items:center;text-align:left;padding:13px 16px;background:var(--dht-hub-panel);color:var(--dht-hub-card-text)!important;border-radius:var(--dht-hub-radius);box-shadow:var(--dht-hub-shadow);flex:none}.dht-ob-item span{font-size:10px;color:var(--dht-hub-card-sub)}.dht-ob-item[data-selected=true]{background:var(--dht-hub-panel-hi);box-shadow:var(--dht-hub-ring);transform:translateX(4px)}
-.dht-ob-preview{padding:6px 4px;overflow:auto}.dht-ob-swatch{height:170px;border-radius:var(--dht-hub-radius);background:var(--dht-hub-panel);box-shadow:var(--dht-hub-shadow);padding:16px;display:flex;flex-direction:column;gap:14px;border:1px solid var(--dht-hub-line)}.dht-ob-swatch-bar{height:16px;width:46%;border-radius:var(--dht-hub-pill);background:var(--dht-hub-accent)}.dht-ob-swatch-tiles{display:grid;grid-template-columns:repeat(4,1fr);gap:10px;flex:1}.dht-ob-swatch-tiles i{border-radius:var(--dht-hub-radius);background:var(--dht-hub-panel-hi);box-shadow:var(--dht-hub-shadow)}.dht-ob-swatch-tiles i:first-child{box-shadow:var(--dht-hub-ring)}
+.dht-ob-preview{padding:6px 4px;overflow:auto}.dht-ob-swatch{height:170px;border-radius:var(--dht-hub-radius);background:var(--dht-hub-panel);box-shadow:var(--dht-hub-shadow);padding:16px;display:flex;flex-direction:column;gap:14px;border:1px solid var(--dht-hub-line)}.dht-ob-swatch-bar{height:16px;width:46%;border-radius:var(--dht-hub-pill);background:var(--dht-hub-accent)}.dht-ob-swatch-tiles{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));grid-template-rows:minmax(0,1fr);gap:10px;flex:1;min-height:0}.dht-ob-swatch-tiles i{border-radius:var(--dht-hub-radius);background:var(--dht-hub-panel-hi);box-shadow:var(--dht-hub-shadow)}.dht-ob-swatch-tiles i:first-child{box-shadow:var(--dht-hub-ring)}
 @media(max-width:850px){.dht-ob-body{grid-template-columns:230px 1fr;gap:18px}.dht-onboarding h1{font-size:34px}.dht-ob-card{padding:30px 26px}}
 `;

@@ -14,6 +14,20 @@ import x360_engine as engine
 
 
 class EngineFallbackTests(unittest.TestCase):
+    def test_low_storage_exposes_fallback_without_starting_download(self):
+        from types import SimpleNamespace
+        with patch.object(engine.shutil, 'disk_usage', return_value=SimpleNamespace(free=1024**3)):
+            status = self.engine.status()
+        self.assertFalse(status['ready'])
+        self.assertFalse(status['canInstall'])
+        self.assertFalse(status['installing'])
+        self.assertEqual(status['requiredFreeBytes'], 7 * 1024**3)
+        self.assertFalse(self.engine.root.exists())
+
+    def test_installed_avatar_does_not_require_installation_space(self):
+        with patch.object(self.engine, 'ready', return_value=True), patch.object(engine.shutil, 'disk_usage', side_effect=AssertionError('No disk check needed')):
+            self.assertTrue(self.engine.status()['canInstall'])
+
     def setUp(self):
         self.tmp=tempfile.TemporaryDirectory();self.addCleanup(self.tmp.cleanup);self.root=Path(self.tmp.name)
         with patch.dict(os.environ,{'AVATAR_ASSETS_DIR':''}):self.engine=engine.Engine(self.root/'data',self.root/'settings')

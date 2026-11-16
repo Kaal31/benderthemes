@@ -63,6 +63,11 @@ jobs:
           SKIP_THEME_PACK_BUILD: '1'
       - run: node tests/verify-performance-ui.mjs
       - run: node tests/verify-onboarding-download.mjs
+      - run: node tests/verify-onboarding-theme-packs.mjs
+      - run: node tests/verify-hub-catalog-layout.mjs
+      - run: node tests/verify-stock-artwork-preparation.mjs
+      - run: node tests/verify-xbox-skin-install.mjs
+      - run: node tests/verify-avatar-low-storage.mjs
       - run: node tests/verify-hub-resource-progress.mjs
       - run: node tests/verify-theme-recovery.mjs
       - run: node tests/verify-switch-property-reload.mjs

@@ -196,7 +196,7 @@ const backend: Record<string, (...a: any[]) => any> = {
   get_dial_asset: (n: string) => (window as any).__dialAssets?.[n] ?? null,
   cinematic_assets: (n: string) => (window as any).__cinematicAssets?.[n] ?? {video:`../bundle/cinematic/${n}.mp4`,poster:`../bundle/cinematic/${n}.jpg`},
   console_artwork_status: () => ({packs:[],busy:false,percent:0}),
-  console_artwork_install: () => { (window as any).__consoleArtInstalled=true; return {success:true}; },
+  console_artwork_install: async (theme:string) => {const w=window as any;(w.__consoleArtInstallCalls??=[]).push(theme);await w.__consoleArtInstallGate;if(w.__consoleArtFailure)return {success:false,error:"Preview stock artwork unavailable"};w.__consoleArtInstalled=true;return {success:true};},
   get_assets: (n: string) => new Set(['x360-convection-font','x360-blades-original','x360-kinect-dash','x360-metro-dash','x360-nxe-dash','xbox-original','xmb-ps3','xmb-ps3-native','xmb-psp-native','wiiu-native-ui']).has(n)&&!(window as any).__consoleArtInstalled&&!new URLSearchParams(previewLocation().search).has('consoleArt')?{}:(window as any).__testAssets?.[n] ?? {},
   list_wallpapers: () => ({ dir: "~/homebrew/data/DeckHomeThemes/wallpapers", files: Object.keys((window as any).__testWalls??{}) }),
   get_wallpaper: (name:string) => (window as any).__testWalls?.[name]??null,

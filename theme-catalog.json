@@ -1333,9 +1333,9 @@
     }
   ],
   "gallery": {
-    "sha256": "1da8226e07675122dff802e903bd8539c3008a89a5610d7e7dbb1eeeab0b5932",
-    "size": 16050284,
-    "url": "https://github.com/Kaal31/deckthemes-assets/releases/download/gallery-1da8226e07675122/HubPreviews.zip",
+    "sha256": "a913104c14633ef442814a1d570aaec6727946f485d6d38b325e240781db599e",
+    "size": 15380987,
+    "url": "https://github.com/Kaal31/deckthemes-assets/releases/download/gallery-a913104c14633ef4/HubPreviews.zip",
     "themes": [
       "aero",
       "aero2",
@@ -1349,6 +1349,7 @@
       "minecraft",
       "n3ds",
       "nazarick",
+      "old-beta-big-picture",
       "old-big-picture",
       "onyx",
       "pain",
@@ -1358,6 +1359,7 @@
       "ps4",
       "ps5",
       "psp",
+      "reading",
       "republic",
       "santa-express",
       "silver",

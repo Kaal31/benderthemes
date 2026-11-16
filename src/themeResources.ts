@@ -1,4 +1,6 @@
-import {callable} from "@decky/api";
+import {callable,toaster} from "@decky/api";
+import {getSettings} from "./settings";
+import {resourcesChangedOnClose} from "./marketplaceState";
 import {useSyncExternalStore} from "react";
 import {ensureThemeAudio} from "./audioDownloads";
 import {refreshThemes} from "./engine/registry";
@@ -6,6 +8,7 @@ import {refreshPacks} from "./steam";
 
 export type ResourceProgress={percent:number;message:string};
 const ensureMedia=callable<[string],{success:boolean;error?:string}>("ensure_frame_media");
+const ensureConsoleArtwork=callable<[string],{success:boolean;error?:string}>("console_artwork_install");
 const key=(id:string)=>id==="old-beta-big-picture"?"old-big-picture":id;
 const ready=new Set<string>();
 const readyListeners=new Set<()=>void>();
@@ -28,6 +31,14 @@ export async function prepareThemeResources(id:string,onProgress?:(p:ResourcePro
   current.promise=(async()=>{
    const media=await ensureMedia(id);
    if(!media.success)throw new Error(media.error||"Could not download theme media.");
+   if((id==='xbox'||id==='x360')&&getSettings().originalConsoleArtwork!==false){
+    report({percent:89,message:"Downloading stock console artwork..."});
+    try{
+     const artwork=await ensureConsoleArtwork(id);
+     if(!artwork.success)throw Error(artwork.error||'Stock artwork unavailable');
+     resourcesChangedOnClose();
+    }catch(error){toaster.toast({title:'Stock artwork unavailable',body:'Using authored fallback artwork. Retry the original artwork download in Theme options. '+String(error)});}
+   }
    report({percent:92,message:"Downloading theme audio…"});
    if(!await ensureThemeAudio(id,{notifyResources:false,quiet:true}))throw new Error("Could not download theme audio. Please retry.");
    report({percent:98,message:"Preparing theme…"});
