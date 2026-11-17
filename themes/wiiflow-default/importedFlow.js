@@ -6,7 +6,7 @@ const rad=Math.PI/180;
 export function importedFlow(scene,camera,hub,invalidate){
  const config=window.WiiFlowImport;if(!config?.modes?.length)return null;
  let mode=config.initialMode||0,open=false,currentAim=new T.Vector3(0,0,0),aim=new T.Vector3(),cameraTarget=new T.Vector3(),rows=[];
- const button=document.createElement('button');button.id='import-layout';button.style.cssText='position:absolute;left:365px;top:0;font-size:11px;padding:5px;background:#222e;color:white;border:1px solid #888;border-radius:4px';document.querySelector('header').append(button);
+ const button=document.createElement('button');button.id='import-layout';button.style.cssText='position:absolute;left:365px;top:0;font-size:11px;padding:5px;background:#222e;color:white;border:1px solid #888;border-radius:4px';(document.getElementById('coverflow-controls')||document.querySelector('header')).append(button);
  const columnControls=document.createElement('div');columnControls.id='stack-column-controls';columnControls.style.cssText='position:absolute;left:50%;bottom:18px;transform:translateX(-50%);z-index:70;display:none;gap:8px;align-items:center;color:white;font:14px Arial';
  const previousColumn=document.createElement('button'),nextColumn=document.createElement('button'),columnLabel=document.createElement('span');previousColumn.textContent='< Column';nextColumn.textContent='Column >';
  function shiftColumn(delta){const count=Math.ceil((config.libraryIndex||0)/15);if(!count)return;config.stackColumn=Math.max(0,Math.min(count-1,(config.stackColumn??count-1)+delta));document.dispatchEvent(new Event('wiiflow-layout'));invalidate();}
@@ -16,7 +16,7 @@ export function importedFlow(scene,camera,hub,invalidate){
  const vec=(data,key,fallback)=>new T.Vector3(...value(data,key,fallback));
  function data(selected=false){const m=config.modes[mode];return selected?{...m.browse,...m.selected}:m.browse;}
  function clearanceEnabled(){return config.spinClearance===true;}
- function label(){button.textContent=config.modes[mode].name;button.setAttribute('aria-label','Coverflow mode: '+button.textContent);config.layout=data();config.aspectMode=widescreen()?'16:9':'4:3';}
+ function label(){button.textContent=config.modes[mode].name;button.title=button.textContent;button.setAttribute('aria-label','Coverflow layout: '+config.modes[mode].name);config.layout=data();config.aspectMode=widescreen()?'16:9':'4:3';}
  button.onclick=()=>{mode=(mode+1)%config.modes.length;hub.save({importedMode:mode});label();document.dispatchEvent(new Event('wiiflow-layout'));};
  let restored=false;hub.on('state',s=>{if(!restored){mode=Math.max(0,Math.min(config.modes.length-1,Number(s.saved?.importedMode??config.initialMode)||0));restored=true;label();document.dispatchEvent(new Event('wiiflow-layout'));}});label();
  function pose(offset,row=0){
@@ -59,7 +59,7 @@ export function importedFlow(scene,camera,hub,invalidate){
  }
  function beforeFrame(entries){for(const e of entries.values()){if(e.oscRotation){e.group.rotation.x-=e.oscRotation[0];e.group.rotation.y-=e.oscRotation[1];e.group.rotation.z-=e.oscRotation[2];e.oscRotation=null;}if(e.oscPosition){e.group.position.sub(e.oscPosition);e.oscPosition=null;}}}
  let nativeLast=0,nativeRemainder=0,nativeTicks=0;
- function frame(now,ease,still,entries){
+ function frame(now,ease,still,entries,transitionSpeed=1){
   const delta=nativeLast?Math.min(100,Math.max(0,now-nativeLast)):1000/60;nativeLast=now;nativeRemainder+=delta;
   const stackActive=data().library_stack&&!open,columnCount=Math.ceil((config.libraryIndex||0)/15);columnControls.style.display=stackActive&&columnCount?'flex':'none';if(stackActive)columnLabel.textContent='Column '+((config.stackColumn??Math.max(0,columnCount-1))+1)+' / '+columnCount;
   const d=data(open),speed=value(d,'cover_osc_speed',[0,0,0]),amp=value(d,'cover_osc_amp',[0,0,0]);
@@ -82,10 +82,10 @@ export function importedFlow(scene,camera,hub,invalidate){
   for(const row of rows)if(!row.nativeState)row.nativeState={pos:row.mesh.position.toArray(),angle:row.target.a.toArray(),scale:row.mesh.scale.toArray()};
   while(nativeRemainder+1e-8>=1000/60){nativeRemainder-=1000/60;nativeTicks++;
    for(const e of entries.values()){
-    tickCover(e.nativeState,targetFor(e),open,60);
+    tickCover(e.nativeState,targetFor(e),open,60,transitionSpeed);
     e.nativeOpacity+=((e.flowBoundary?0:1)-e.nativeOpacity)*.125;}
-   for(const row of rows)tickCover(row.nativeState,{pos:row.target.p.toArray(),angle:row.target.a.toArray(),scale:row.target.scale.toArray()},open,60);
-   camera.position.lerp(cameraDest,.2);currentAim.lerp(aimDest,.2);
+   for(const row of rows)tickCover(row.nativeState,{pos:row.target.p.toArray(),angle:row.target.a.toArray(),scale:row.target.scale.toArray()},open,60,transitionSpeed);
+   const cameraRate=1-Math.pow(.8,transitionSpeed);camera.position.lerp(cameraDest,cameraRate);currentAim.lerp(aimDest,cameraRate);
   }
   let moving=false;
   function place(mesh,state,target){if(still)Object.assign(state,structuredClone(target));mesh.position.fromArray(state.pos);mesh.rotation.set(...state.angle.map(v=>v*rad),'YXZ');mesh.scale.fromArray(state.scale);if(['pos','angle','scale'].some(k=>state[k].some((v,i)=>Math.abs(v-target[k][i])>.001)))moving=true;}

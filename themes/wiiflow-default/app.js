@@ -2,7 +2,7 @@
   'use strict';
   const hub=window.ThemeHub, $=id=>document.getElementById(id);
   let platform=null;let all=[],games=[],selected=0,installed=false,flat=false,restored=false,zone=0,control=0,gameOpen=false;
-  const controls=()=>(gameOpen?[$('play'),$('details')]:[$('options'),$('home'),$('layout'),$('imported-info'),$('filter'),$('logo-style'),$('animation-speed')]).filter(b=>b&&!b.disabled);
+  const controls=()=>(gameOpen?[$('play'),$('details')]:[$('options'),$('home'),$('layout'),$('imported-info'),$('filter'),$('logo-style'),$('coverflow-type'),$('import-layout'),$('animation-speed')]).filter(b=>b&&!b.disabled);
   const current=()=>games[selected];
   function artwork(game){return game.art?.portrait?.[0]||game.art?.landscape?.[0]||'';}
   function face(game){
@@ -35,7 +35,7 @@
     $('title').textContent=game?.name||'Your library is empty';$('subtitle').textContent=game?(game.installed?'Ready to play':'Available to install')+'  •  Steam library':'Try switching to All games.';
     $('position').textContent=game?`${String(selected+1).padStart(2,'0')} / ${String(games.length).padStart(2,'0')}`:'';
     $('count').textContent=`Total Games: ${games.length}`;$('filter').textContent=installed?'Installed':'All games';$('filter').setAttribute('aria-pressed',String(installed));
-    $('layout').querySelector('span').textContent=flat?'Flat flow':'Cover flow';$('layout').setAttribute('aria-pressed',String(flat));
+    $('layout').querySelector('span').textContent=flat?'Flat flow':'Cover flow';$('layout').setAttribute('aria-label','Cover arrangement: '+(flat?'Flat flow':'Cover flow'));$('layout').setAttribute('aria-pressed',String(flat));
     $('play').disabled=$('details').disabled=!game;$('previous').disabled=$('next').disabled=games.length<2;
     $('play').textContent=game&&!game.installed?'↓ Install':'▶ Play';$('empty').hidden=!!games.length;$('empty').textContent='No games in this view.';
     hub.send({type:'hints',a:gameOpen?(game?.installed?'Play':'Install'):'Select',x:'Game details',y:'Options'});focusGame();

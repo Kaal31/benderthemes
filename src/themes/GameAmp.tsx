@@ -9,7 +9,7 @@ import {playSound} from '../steam';
 import {openSteam} from '../library';
 import {updateSettings} from '../settings';
 import {themeAudioBands,themeAudioWaveform,themeAudioSpectrum} from '../themeAudio';
-import {markup,styles} from './gameamp/markup';
+import {markup,styles,libraryFilterStyles} from './gameamp/markup';
 import {createGameAmpPages} from './gameamp/pages';
 import {mountGameAmp} from './gameamp/runtime';
 
@@ -22,7 +22,7 @@ export function GameAmpHome(){
  useEffect(()=>{
   const el=host.current;if(!el)return;
   const root=el.shadowRoot??el.attachShadow({mode:'open'}),doc=el.ownerDocument,W=doc.defaultView!;
-  root.innerHTML='<style>'+styles+'</style>'+markup;
+  root.innerHTML='<style>'+styles+libraryFilterStyles+'</style>'+markup;
   const handlers:Array<()=>void>=[],timeouts=new Set<number>(),intervals=new Set<number>();let disposed=false;
   const scoped:any={getElementById:(id:string)=>root.getElementById(id),querySelector:(s:string)=>root.querySelector(s),querySelectorAll:(s:string)=>root.querySelectorAll(s),createElement:doc.createElement.bind(doc),get activeElement(){return root.activeElement;},body:el};
   scoped.addEventListener=(type:string,fn:any)=>{root.addEventListener(type,fn,true);handlers.push(()=>root.removeEventListener(type,fn,true));};
@@ -37,8 +37,8 @@ export function GameAmpHome(){
    case 'save':updateSettings(p=>({frameData:{...p.frameData,gameamp:m.data}}));break;
    case 'open':if(m.place==='options')a.openSettings();else if(m.place==='steamHome')a.showSteamHome();else openSteam(m.place);break;
   }};
-  const shelfTitle=root.querySelector('.library h2,.library .section-title,.library>header');
-  if(shelfTitle){const filter=doc.createElement('button');filter.textContent='Filter ▾';filter.setAttribute('aria-label','Home game filter');filter.style.cssText='margin-left:18px;font:700 12px Tahoma;color:#dceeff;background:#14365e;border:1px solid #a7bed6;border-radius:3px;padding:2px 10px;cursor:pointer';filter.onclick=()=>live.current.api.openGameFilter('home');shelfTitle.append(filter);}
+  const filter=root.querySelector<HTMLButtonElement>('.library-filter');
+  if(filter)filter.onclick=()=>live.current.api.openGameFilter('home');
   const timers={setTimeout:(fn:any,ms:number)=>{const id=W.setTimeout(()=>{timeouts.delete(id);if(!disposed)fn();},ms);timeouts.add(id);return id;},clearTimeout:(id:number)=>{W.clearTimeout(id);timeouts.delete(id);},setInterval:(fn:any,ms:number)=>{const id=W.setInterval(()=>{if(!disposed)fn();},ms);intervals.add(id);return id;},clearInterval:(id:number)=>{W.clearInterval(id);intervals.delete(id);}};
   const pages=createGameAmpPages(scoped,services,W.location,timers);
   runtime.current=mountGameAmp(scoped,view,pages,services,emit,size,timers);

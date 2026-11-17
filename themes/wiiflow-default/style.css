@@ -17,3 +17,17 @@ header{opacity:1;pointer-events:auto}#logo-style{background:#242424e8;border-col
 .front,.cover.selected .front{border:1px solid #24282d}
 
 body.gray-case-frame .front,body.gray-case-frame .cover.selected .front{border:3px solid #c6c8c9}
+
+/* Distinct layout and speed controls; no overlapping absolute-position hit areas. */
+#scene header{display:flex;gap:8px;justify-content:flex-start;align-items:center}
+#scene header #filter{order:0;flex:none}
+#scene header #logo-style{order:1;flex:none}
+#scene header #coverflow-controls,#scene header #import-layout{order:2;min-width:0;max-width:170px;flex:0 1 auto}
+#coverflow-controls:empty,#motion-controls:empty{display:none}
+#coverflow-controls #import-layout{width:auto;max-width:100%}
+#scene header #motion-controls,#scene header #animation-speed{order:3;flex:none}
+#scene header #count{order:4;margin-left:auto;flex:none;white-space:nowrap;font-size:12px}
+#scene header #logo-style,#scene header #animation-speed,#scene header #import-layout{position:static!important;inset:auto!important;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+#motion-controls{padding:0;border:0}
+
+#coverflow-controls #coverflow-type{width:auto;font-size:11px;padding:5px 9px;border:1px solid #888;border-radius:4px;background:#242424e8;color:#fff;white-space:nowrap}
