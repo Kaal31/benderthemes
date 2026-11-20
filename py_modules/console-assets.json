@@ -121,12 +121,13 @@
     },
     {
       "id": "wiiu-native-ui",
-      "file": "wiiu-native-ui-v1.zip",
-      "files": 17,
-      "unpackedBytes": 580159,
-      "bytes": 572174,
-      "sha256": "d4e13914ea888e4c573993e446128d51805a35299c86e15b0925146c982a12b4",
-      "url": "https://gitflic.ru/project/spon4ik67/themehubconsoleassets/release/300dbc00-bb81-4c62-a7f9-64d64d78c583/7205e8f9-0455-424b-864f-10258c431cb8/download"
+      "file": "wiiu-native-ui-v2.zip",
+      "files": 19,
+      "unpackedBytes": 616691,
+      "bytes": 608727,
+      "sha256": "f8f452e139e03258b62cae904ea1a48368524f8d04aff07c8e09dd3ff424465c",
+      "sourceVersion": "Wii U Menu 5.5.x; checksum-verified Men.pack / Men2.pack",
+      "url": "https://gitflic.ru/project/spon4ik67/themehubconsoleassets/release/0e87f6ac-fc6b-472d-8896-4309b9351809/e72de4ce-9117-4f63-9fc6-02263a8572b9/download"
     }
   ]
 }
