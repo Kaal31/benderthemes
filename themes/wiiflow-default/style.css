@@ -8,8 +8,8 @@
 
 @font-face{font-family:WiiFlowDefault;src:url('assets/font.ttf')}body{font-family:WiiFlowDefault,Arial,sans-serif}#scene{background:url('assets/background.png') center/100% 100%}.selection{top:349px;left:12%;width:76%}h1{font-size:22px;line-height:28px}header{opacity:0;pointer-events:none}body.controls header,header:focus-within{opacity:1;pointer-events:auto}body.game-open .selection{top:100px;left:53%;width:43%}footer{opacity:0;pointer-events:none}body.controls footer,footer:focus-within{opacity:1;pointer-events:auto}footer #options:hover,footer #options:focus-visible{background-image:url('assets/btnconfigs.png')}footer #home:hover,footer #home:focus-visible{background-image:url('assets/btndvds.png')}footer #layout:hover,footer #layout:focus-visible{background-image:url('assets/favoritesoffs.png')}
 
-/* Match the Rhapsodii spine-style selector and keep both choices discoverable. */
-header{opacity:1;pointer-events:auto}#logo-style{background:#242424e8;border-color:#888}
+/* Match the Rhapsodii spine-style selector. Visibility follows the bottom controls. */
+#logo-style{background:#242424e8;border-color:#888}
 
 #animation-speed{position:absolute;left:250px;top:0;font-size:11px;padding:5px 9px;border:1px solid #888;border-radius:4px;background:#242424e8;color:#fff}
 
@@ -17,3 +17,22 @@ header{opacity:1;pointer-events:auto}#logo-style{background:#242424e8;border-col
 .front,.cover.selected .front{border:1px solid #24282d}
 
 body.gray-case-frame .front,body.gray-case-frame .cover.selected .front{border:3px solid #c6c8c9}
+
+/* Distinct layout and speed controls; no overlapping absolute-position hit areas. */
+#scene header{display:flex;gap:8px;justify-content:flex-start;align-items:center}
+#scene header #filter{order:0;flex:none}
+#scene header #logo-style{order:1;flex:none}
+#scene header #coverflow-controls,#scene header #import-layout{order:2;min-width:0;max-width:170px;flex:0 1 auto}
+#coverflow-controls:empty,#motion-controls:empty{display:none}
+#coverflow-controls #import-layout{width:auto;max-width:100%}
+#scene header #motion-controls,#scene header #animation-speed{order:3;flex:none}
+#scene header #count{order:4;margin-left:auto;flex:none;white-space:nowrap;font-size:12px}
+#scene header #logo-style,#scene header #animation-speed,#scene header #import-layout{position:static!important;inset:auto!important;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+#motion-controls{padding:0;border:0}
+
+/* Controller selection survives Steam restoring focus to the theme host. */
+button[data-wiiflow-focused=true]{outline:2px solid #b9e5ff!important;outline-offset:3px;filter:drop-shadow(0 0 5px #7ecfff)}
+footer button:is([data-wiiflow-focused=true],:focus-visible){outline:none!important;outline-offset:0;border-radius:0;background-color:transparent;box-shadow:none;filter:brightness(1.04) drop-shadow(0 0 2px #acdfff55)}
+footer #options[data-wiiflow-focused=true]{background-image:url('assets/btnconfigs.png')}
+footer #home[data-wiiflow-focused=true]{background-image:url('assets/btndvds.png')}
+footer #layout[data-wiiflow-focused=true]{background-image:url('assets/favoritesoffs.png')}

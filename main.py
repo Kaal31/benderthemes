@@ -2478,8 +2478,8 @@ class Plugin:
         import console_artwork
         optional = console_artwork.spec(name)
         optional_dir = console_artwork.resource_dir(name) if optional else None
-        if name in {"wiiu-native-ui", "xmb-ps3-native", "xmb-psp-native"} and optional_dir is None:
-            group = {"wiiu-native-ui": "wiiu", "xmb-ps3-native": "ps3", "xmb-psp-native": "psp"}[name]
+        if name in {"ps2-language-music", "wiiu-native-ui", "xmb-ps3-native", "xmb-psp-native"} and optional_dir is None:
+            group = {"ps2-language-music":"ps2-language-music", "wiiu-native-ui": "wiiu", "xmb-ps3-native": "ps3", "xmb-psp-native": "psp"}[name]
             await asyncio.to_thread(console_artwork.install, group)
             optional_dir = console_artwork.resource_dir(name)
         relative = "assets/" + _safe_name(name)
@@ -2496,12 +2496,12 @@ class Plugin:
                 return (user, os.path.splitext(n)[1].lower() == ".webm", n)
             for n in sorted(names, key=asset_order):
                 ext = os.path.splitext(n)[1].lower()
-                if ext not in IMAGE_EXT + (".glb",) + WALLPAPER_VIDEO_EXT:
+                if ext not in IMAGE_EXT + (".glb",) + WALLPAPER_VIDEO_EXT + ((".mp3",) if name=="ps2-language-music" else ()):
                     continue
                 path = os.path.join(folder, n) if os.path.isfile(os.path.join(folder,n)) else (str(optional_dir/n) if optional_dir else _resource(relative+"/"+n))  # user overrides, external console pack, then normal resources
                 if not os.path.isfile(path):
                     continue
-                if ext in WALLPAPER_VIDEO_EXT or ext == ".gif":
+                if ext in WALLPAPER_VIDEO_EXT or ext == ".gif" or (name=="ps2-language-music" and ext==".mp3"):
                     # Keep multi-megabyte movies out of Decky's JSON/WebSocket messages.
                     if await _ensure_server():
                         import hashlib

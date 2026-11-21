@@ -515,6 +515,7 @@ function customizeSectionItems(section: SettingsCategory): MenuItem[] {
       ...wiiFlowGameItems(),
       toggle(t("protonDbBadgesThisTheme"), () => protonDbEnabled(S()), (v) => updateSettings((p) => ({ protondbThemes: { ...p.protondbThemes, [protonDbThemeKey(S())]: v } }))),
       categorized("games", "game-artwork", choice("Game artwork · this theme",ARTWORK_MODES,()=>artworkMode(),setArtworkMode)),
+      ...(th === "x360" && S().x360.style === "nxe" ? [categorized("games", "native:nxe-game-artwork", choice("NXE game artwork", [{id:"wide",name:"Wide (default)"},{id:"capsule",name:"Capsule (portrait)"}], () => S().x360.nxeGameArtwork ?? "wide", nxeGameArtwork => updateSettings(p => ({x360:{...p.x360,nxeGameArtwork:nxeGameArtwork as "wide"|"capsule"}})), undefined, "Choose wide cards or full portrait capsules on the NXE dashboard. Game titles are controlled separately."))] : []),
       categorized("games", "square-game-artwork", group("Per-game square artwork · this theme",()=>loadLibrary('all','alpha',9999).games.map(game=>({label:game.name,action:()=>openSquareArtwork(game)})))),
       ...(th !== "ios6" ? [choice(t("iconSize"), [75, 85, 100, 110].map((v) => ({ id: v, name: `${v}%${v === 100 ? ` · ${t("default")}` : ""}` })), () => S().iconSizes?.[th] ?? 100, (v) => updateSettings((p) => ({ iconSizes: { ...p.iconSizes, [th]: v } })))] : []),
       ...(USES.titles.includes(th) ? [choice(t("gameTitles"), TITLE_MODES, () => S().titles[th] ?? "show", (v) => updateSettings((p) => ({ titles: { ...p.titles, [th]: v } })))] : []),

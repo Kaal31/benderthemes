@@ -1,3 +1,4 @@
+import {subscribeCasePad} from "../themes/wiiflowCasePad";
 import { useLayoutEffect, useRef } from "react";
 import { bundledThemes } from "./bundledThemes.generated";
 
@@ -108,6 +109,18 @@ export function BundledThemeSurface({ id, base, port, onMessage }: {
     mutations.observe(body,{childList:true,subtree:true,attributes:true,attributeFilter:["src","href","poster"]});
     const observer=new ResizeObserver(resize);observer.observe(element);resize();
     for(const script of definition.scripts)script(scopeWindow);
+    if(id==='wiiflow-default'){
+      let stopPad:(()=>void)|undefined,padActive=true;
+      const syncPad=()=>{
+        const open=padActive&&body.classList.contains('game-open')&&!doc.hidden&&!local.WiiFlowImport?.sourceMenuOpen;
+        if(open&&!stopPad)stopPad=subscribeCasePad((view as any).SteamClient?.Input,(yaw,tilt)=>body.dispatchEvent(new view.CustomEvent('wiiflow-case-rotate',{detail:{yaw,tilt}})));
+        else if(!open&&stopPad){stopPad();stopPad=undefined;}
+      };
+      const padObserver=new MutationObserver(syncPad);padObserver.observe(body,{attributes:true,attributeFilter:['class']});
+      const offActivity=local.ThemeHub?.on('activity',(active:boolean)=>{padActive=active;syncPad();});
+      if(offActivity)cleanups.push(offActivity);
+      listen(doc,'visibilitychange',syncPad);syncPad();cleanups.push(()=>{padObserver.disconnect();stopPad?.();});
+    }
     return ()=>{
       emit("pagehide",new Event("pagehide"));emit("unload",new Event("unload"));disposed=true;
       port.current=null;observer.disconnect();mutations.disconnect();cleanups.forEach(clean=>clean());

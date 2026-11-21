@@ -210,24 +210,38 @@ export function NxeHome() {
     const top = PANEL_TOP - PANEL_H * (1-scale) / 2;
     return {left:0,top:0,opacity:d>5?0:1,transform:`translate3d(${left}px,${top+PANEL_H*(1-scale)}px,0) scale(${scale})`,zIndex:30-d,filter:`brightness(${Math.max(.90,1-d*.018)})`,pointerEvents:d>5?"none":"auto"};
   };
-  const panel = (e: Slot, i: number, selection=sel,exiting=false) => {
+  const capsuleArtwork = s.x360.nxeGameArtwork === "capsule";
+  const panel = (e: Slot, i: number, selection=sel,exiting=false,slots=chan.slots) => {
     const d = i - selection;
     if (d < -1 || d > 6 || (profileActive&&d!==0)) return null;
     const on = d === 0;
     const expanded=on&&!exiting&&profileActive&&e.key==='me';
     const height=expanded?492:PANEL_H;
+    const cardWidth=e.game&&capsuleArtwork?PANEL_H*2/3:PANEL_W;
+    const position=place(d);
+    if(capsuleArtwork&&d>=0){
+      // Retain the NXE cascade, using each preceding card's width so system cards stay full size.
+      const stops=[0,420,725,910,1030,1116,1180];
+      let offset=0;
+      for(let step=1;step<=Math.min(d,6);step++){
+        const width=slots[selection+step-1]?.game?PANEL_H*2/3:PANEL_W;
+        offset+=(stops[step]-stops[step-1])*width/PANEL_W;
+      }
+      const scale=Math.pow(.75,d);
+      position.transform=`translate3d(${SAFE_X+32+offset}px,${PANEL_TOP+PANEL_H*(1-scale)/2}px,0) scale(${scale})`;
+    }
     const titleVisible=!e.game||showTitle(s,"x360",on);
     const nativeTray=!e.game&&!expanded?consoleArt[e.tray==='slot-profile'?'slot-blankgreen':e.tray??'slot-green']??consoleArt['slot-green']:undefined;
     return (
       <div key={e.key} className="dht-x360n-card dht-tile" data-selected={on&&!exiting} data-name={e.label} role="button" tabIndex={on&&!exiting?0:-1} data-nxe-expanded={expanded||undefined} aria-label={e.label+' card'} onKeyDown={event=>{if(event.key==='Enter'||event.key===' '){event.preventDefault();event.stopPropagation();if(!on)setSels(m=>({...m,[chan.id]:i}));else onInput({btn:'a',repeat:event.repeat});}}} onClick={() => {if(!on){setInsideCard(false);setSels(m=>({...m,[chan.id]:i}));}else if(e.key==='me'){setInsideCard(true);setProfileRow(1);}else e.run();}}
-        style={{ position: "absolute", width: expanded?456:PANEL_W, height, transformOrigin: "0 0", transition: `transform ${anim}, opacity ${anim}, filter ${anim}, width ${anim}, height ${anim}`, willChange:s.animations?"transform":undefined, cursor: "pointer", WebkitBoxReflect: "below 2px linear-gradient(transparent 85%, rgba(255,255,255,.07))", ...place(d),...(expanded?{transform:'translate3d(96px,104px,0)'}:on&&e.key==='me'?{transform:`translate3d(${SAFE_X}px,${PANEL_TOP}px,0)`}:profileActive&&d>0?{transform:`translate3d(${552+(d-1)*340}px,${145+(d-1)*30}px,0) scale(${Math.pow(.835,d)})`}:{}),...(exiting?{pointerEvents:"none" as const}:{} ) } as CSSProperties}>
+        style={{ position: "absolute", width: expanded?456:cardWidth, height, transformOrigin: "0 0", transition: `transform ${anim}, opacity ${anim}, filter ${anim}, width ${anim}, height ${anim}`, willChange:s.animations?"transform":undefined, cursor: "pointer", WebkitBoxReflect: "below 2px linear-gradient(transparent 85%, rgba(255,255,255,.07))", ...position,...(expanded?{transform:'translate3d(96px,104px,0)'}:on&&e.key==='me'?{transform:`translate3d(${SAFE_X}px,${PANEL_TOP}px,0)`}:profileActive&&d>0?{transform:`translate3d(${552+(d-1)*340}px,${145+(d-1)*30}px,0) scale(${Math.pow(.835,d)})`}:{}),...(exiting?{pointerEvents:"none" as const}:{} ) } as CSSProperties}>
         <div style={{ position: "absolute", inset: 0, overflow: "hidden", background:expanded?"linear-gradient(#3b515a,#253740)":nativeTray?`linear-gradient(180deg,transparent 55%,#18320099),url("${nativeTray}") center/100% 100%`:"radial-gradient(ellipse at 50% 5%,#d2f75655,transparent 65%),linear-gradient(180deg,#92cd11 0%,#78b706 72%,#3d7102 100%)", borderRadius:2,boxShadow:on?"inset 0 0 0 1px #c1d0d34d,0 3px 10px #00000014":"inset 0 0 0 1px #9fb1b326,0 2px 8px #00000010" }}>
           {e.key==='me'?<div style={{position:'absolute',left:24,right:24,top:expanded?64:28}}>
             {expanded?<div style={{display:'flex',gap:14,alignItems:'center'}}>{pickedPic?<img src={pickedPic} alt="" style={{width:64,height:64}}/>:<NxeOriginalIcon name="achievements-small" size={56}/>}<span style={{fontSize:20}}>{st.online?'Signed In':'Offline'}{expanded&&<><div style={{fontSize:18,marginTop:6}}>Games: {games.length}</div>{progress&&<div style={{fontSize:18}}>Achievements: {progress.unlocked} / {progress.total}</div>}</>}</span></div>:<div data-nxe-profile-summary style={{fontSize:26,lineHeight:'30px'}}>{api.user}<div style={{fontSize:19,lineHeight:'26px'}}>{st.online?'Online':'Offline'}</div></div>}
             {expanded?<div data-nxe-profile-card-actions style={{position:'relative',marginTop:25}}><NxeFocus selected={profileDialog?1:profileRow} motion={!!s.animations}/>{cardActions.map((action,n)=><button key={action.name} aria-selected={!profileDialog&&profileRow===n} onFocus={()=>setProfileRow(n)} onMouseEnter={()=>{if(!profileDialog)setProfileRow(n);}} onClick={event=>{event.stopPropagation();action.run();}} style={{position:'relative',display:'block',height:45,width:'100%',border:0,borderBottom:'1px solid #82949b33',background:'transparent',color:'inherit',font:'inherit',fontSize:21,textAlign:'left',cursor:'pointer'}}>{action.name}</button>)}</div>:<><div style={{fontSize:17,opacity:.85,marginTop:58,marginBottom:8}}>Last Games</div>
             <div style={{display:'flex',gap:8}}>{games.slice(0,3).map(game=><GameArt key={game.appid} g={game} kind="portrait" style={{width:52,height:70,objectFit:'cover'}}/>)}</div></>}
           </div>:e.game ? (
-            <GameArt g={e.game} kind="landscape" style={{ position: "absolute", left:0,top:0, width: "100%", height:titleVisible?235:320, objectFit: "cover" }} />
+            <GameArt g={e.game} kind={capsuleArtwork?"portrait":"landscape"} style={{ position: "absolute", left:0,top:0, width: "100%", height:capsuleArtwork?"100%":titleVisible?235:320, objectFit: "cover" }} />
           ) : e.icon ? (
             <img data-nxe-card-icon={e.key} src={e.icon} style={{ position: "absolute", left: 105, top: 35, height: 180, width:210, objectFit: "contain" }} />
           ) : (
@@ -240,7 +254,7 @@ export function NxeHome() {
           )}
         </div>
         {/* Soft contact shadow onto the next panel, without a hard rectangular strip. */}
-        {d >= 0 && <div aria-hidden="true" style={{position:'absolute',left:(expanded?456:PANEL_W)-3,top:3,width:24,height:height-6,background:'linear-gradient(90deg,#16270820,transparent)',filter:'blur(4px)',pointerEvents:'none'}}/>}
+        {d >= 0 && <div aria-hidden="true" style={{position:'absolute',left:(expanded?456:cardWidth)-3,top:3,width:24,height:height-6,background:'linear-gradient(90deg,#16270820,transparent)',filter:'blur(4px)',pointerEvents:'none'}}/>}
       </div>
     );
   };
@@ -285,7 +299,7 @@ export function NxeHome() {
             @media(prefers-reduced-motion:reduce){.dht-x360n-card,.dht-nxe-channel-row,.dht-x360n-channel,.dht-nxe-page-panel,[data-nxe-focus]{animation:none!important;transition:none!important}}
           `}</style>
           {outgoing&&s.animations&&<div data-nxe-outgoing aria-hidden="true" className="dht-nxe-channel-row" style={{position:'absolute',inset:0,pointerEvents:'none',animation:'dhtNxeOut 320ms ease-in both','--nxe-slide':`${-outgoing.direction*24}px`} as CSSProperties}>
-            {outgoing.channel.slots.map((entry,i)=>panel(entry,i,outgoing.selection,true))}
+            {outgoing.channel.slots.map((entry,i)=>panel(entry,i,outgoing.selection,true,outgoing.channel.slots))}
           </div>}
           <div key={chan.id} data-nxe-channel={chan.id} className="dht-nxe-channel-row" style={{position:'absolute',inset:0,animation:s.animations?'dhtNxeIn 320ms cubic-bezier(.18,.72,.24,1) both':undefined,'--nxe-slide':`${direction*32}px`} as CSSProperties}>
             {chan.slots.map((entry,i)=>panel(entry,i))}

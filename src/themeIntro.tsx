@@ -4,6 +4,8 @@ import {startupIntroEnabled,hubStartupEnabled} from "./startupPreferences";
 // video startup for the others. The generic Hub reveal remains the fallback for
 // consoles with an existing startup when explicitly replayed.
 // Skipped with reduced motion / the animations setting; any button or tap ends it; it can never block the home.
+import {useAssets} from "./assets";
+import {Ps2StockScene} from "./themes/Ps2StockScene";
 import { RecordedConsoleStartup } from "./recordedConsoleStartup";
 import {themeResourcesReady} from "./themeResources";
 import { CONSOLE_STARTUPS } from "./consoleStartup";
@@ -86,6 +88,7 @@ function Reveal({ theme, onDone }: { theme: string; onDone: () => void }) {
   };
   useEffect(() => {
     if (!motion) { onDone(); return; }
+    if (theme === "ps2") timers.current.push(setTimeout(finish,7600));
     if (!CONSOLE_STARTUPS[theme]) {
       try { playSound("open"); } catch { /* no sound */ }
       timers.current.push(setTimeout(finish,2300));
@@ -95,6 +98,7 @@ function Reveal({ theme, onDone }: { theme: string; onDone: () => void }) {
     return () => { off(); timers.current.forEach(clearTimeout); };
   }, []);
   if (!motion) return null;
+  if (theme === "ps2") return <Ps2Startup leaving={leaving} finish={finish}/>;
   if (CONSOLE_STARTUPS[theme]) return <RecordedConsoleStartup theme={theme} leaving={leaving} finish={finish}/>;
   const st = hubStyle(theme, s.x360?.style);
   const name = THEMES.find((t) => t.id === theme)?.name ?? "";
@@ -122,3 +126,12 @@ const INTRO_CSS = `
 @keyframes dht-intro-name{0%{opacity:0;letter-spacing:.7em;transform:scale(1.08)}100%{opacity:1;letter-spacing:.06em;transform:scale(1)}}
 @keyframes dht-intro-line{0%{width:0;opacity:1}100%{width:32vmin;opacity:.85}}
 `;
+
+function Ps2Startup({leaving,finish}:{leaving:boolean;finish:()=>void}){
+ const assets=useAssets('ps2-stock-menu');
+ return <div data-ps2-procedural-startup="" onClick={finish} style={{position:'absolute',inset:0,zIndex:99,background:'#000',opacity:leaving?0:1,transition:'opacity 500ms'}}>
+ <style>{`@keyframes ps2BootLogo{0%,24%{opacity:0}33%,67%{opacity:1}76%,100%{opacity:0}}@keyframes ps2BootScene{0%{opacity:0}12%,83%{opacity:1}100%{opacity:0}}`}</style>
+ <div style={{position:'absolute',inset:0,animation:'ps2BootScene 7.6s linear both'}}><Ps2StockScene mode="towers" boot animate/></div>
+ <div style={{position:'absolute',left:'20%',width:'60%',top:'47%',height:'5%',animation:'ps2BootLogo 7.6s linear both',display:'flex',justifyContent:'center'}}>{assets['startup-wordmark']?<img src={assets['startup-wordmark']} style={{width:'100%',height:'100%',objectFit:'contain'}}/>:<span style={{fontFamily:'Arial, sans-serif',fontSize:'clamp(18px,3.1vw,40px)',color:'#ddd',whiteSpace:'nowrap'}}>Sony Computer Entertainment</span>}</div>
+ </div>;
+}

@@ -65,6 +65,12 @@ try {
     check(window.__settingsRoot()[0].sub().some(item=>item.settingsId==='native:colour-look'),'Vita look stays in Presets');
     seed({theme:'x360'});
     check(window.__settingsRoot()[0].sub().some(item=>item.settingsId==='native:dashboard'),'Xbox dashboard stays in Presets');
+    seed({theme:'x360',x360:{style:'nxe'}});
+    check(section('Games').filter(item=>item.settingsId==='native:nxe-game-artwork').length===1,'NXE artwork belongs in Customize / Games without duplication');
+    check(!section('Screen').some(item=>item.settingsId==='native:nxe-game-artwork'),'NXE artwork does not leak into Screen');
+    check(!window.__settingsManage().some(item=>item.settingsId==='native:nxe-game-artwork'),'NXE artwork is not a theme management action');
+    seed({theme:'x360',x360:{style:'metro'}});
+    check(!section('Games').some(item=>item.settingsId==='native:nxe-game-artwork'),'NXE artwork hidden on other dashboards');
     check(section('Games').some(item=>item.settingsId==='native:aurora-game-view'),'New Aurora case/disc control belongs in Games');
     check(section('Audio').some(item=>item.settingsId==='native:imported-theme-music'),'Imported Xbox music belongs in Audio');
     check(section('Screen').some(item=>item.settingsId==='native:cabinet-wallpaper'),'Kinect cabinet wallpaper belongs in Screen');

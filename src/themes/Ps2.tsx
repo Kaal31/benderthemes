@@ -2,13 +2,17 @@ import { t } from "../i18n";
 // PS2 main menu: towers of light in a dark space, the Browser /
 // System Configuration menu, memory-card devices, and a grid of slowly
 // turning save-data style icons for the games.
-import { CSSProperties, useMemo, useState } from "react";
+import { CSSProperties, useEffect, useMemo, useRef, useState } from "react";
+import {playThemeIntro} from "../themeIntro";
+import {useAssets} from "../assets";
+import {Ps2FirstStart} from "./Ps2FirstStart";
+import { Ps2StockScene } from "./Ps2StockScene";
 import { AnimCanvas } from "../canvas";
 import { GameArt, MenuItem, MenuView, themeMenu, useHome, useMenu, useRemembered } from "../common";
 import { clamp, Press, Stage, ThemeRoot, useStage } from "../input";
 import { fmtLastPlayed, fmtPlaytime, Game, openSteam } from "../library";
-import { showTitle, THEMES, updateSettings } from "../settings";
-import { currentPresetId, getPresets } from "../presets";
+import { showTitle, THEMES } from "../settings";
+import {Ps2SystemConfig,Ps2ConfigHandler} from "./Ps2SystemConfig";
 import { Badges } from "../badges";
 import { fmtDate, fmtTime, playSound, useClock } from "../steam";
 import { styleOf } from "../engine/themeStyles";
@@ -247,18 +251,24 @@ export function Ps2Home() {
   const s = api.settings;
   const { W, H } = useStage();
   const now = useClock(15000);
+  const firmware=useAssets("ps2-stock-menu");
   const menu = useMenu();
   const st = styleOf(s, "ps2");
   const lang = st<string>("language");
-  const L = (t: string) => (lang === "ja" && JA[t]) || t;
+  const mainLanguages:Record<string,string[]>={ru:['Браузер','Конфигурация системы'],en:['Browser','System Configuration'],fr:['Navigateur','Configuration du Système'],es:['Navegador','Configuración del Sistema'],de:['Browser','Systemkonfiguration'],it:['Browser','Configurazione del Sistema'],nl:['Browser','Systeemconfiguratie'],pt:['Navegador','Configuração do Sistema'],ja:['ブラウザ','システム設定']};
+  const L = (t:string) => t==='Browser'?(mainLanguages[lang]?.[0]??t):t==='System Configuration'?(mainLanguages[lang]?.[1]??t):(lang==='ja'&&JA[t])||t;
   const iconMotion = st<string>("iconMotion");
 
   const [screen, setScreen] = useRemembered<Screen>("ps2-screen", "main");
   const [msel, setMsel] = useRemembered("ps2-main", 0);
   const [dsel, setDsel] = useRemembered("ps2-dev", 0);
   const [gsel, setGsel] = useRemembered("ps2-game", 0);
+  const [webglFailed,setWebglFailed]=useState(false);
+  const [firstStart,setFirstStart]=useState(()=>s.styles.ps2?.languageSelect!==false&&!s.styles.ps2?.firstStartDone);
+  useEffect(()=>{if(s.styles.ps2?.languageSelect===false)setFirstStart(false);else if(!s.styles.ps2?.firstStartDone)setFirstStart(true);},[s.styles.ps2?.languageSelect,s.styles.ps2?.firstStartDone]);
   const [isel, setIsel] = useState(0);
-  const [csel, setCsel] = useState(0);
+  const configInput=useRef<Ps2ConfigHandler|null>(null);
+  const [configCategory,setConfigCategory]=useState(0);
 
   const devices = useMemo(
     () => [
@@ -289,23 +299,16 @@ export function Ps2Home() {
         { label: t("back"), run: () => go("card") },
       ]
     : [];
-  const configOpts: { label: string; value?: string; run: () => void }[] = [
-    { label: t("qamPreset"), value: getPresets().find((p) => p.id === currentPresetId(s))?.label, run: () => menu.open(themeMenu(s.theme, api.switchTheme, THEMES), t("presets"), { page: true }) },
-    { label: t("clock"), value: s.clock24 ? t("clock24") : t("clock12"), run: () => updateSettings({ clock24: !s.clock24 }) },
-    { label: t("soundEffects"), value: s.sounds ? t("on") : t("off"), run: () => updateSettings({ sounds: !s.sounds }) },
-    { label: t("homeScreenSettings"), run: api.openSettings },
-    { label: t("systemSettings"), run: () => openSteam("settings") },
-    { label: t("destMainMenu"), run: api.showSteamHome },
-    { label: t("exit"), run: () => go("main") },
-  ];
-
   const go = (sc: Screen) => {
+    if(sc==="config")setConfigCategory(0);
     setScreen(sc);
     playSound(sc === "main" ? "back" : "open");
   };
 
   const options = () => {
     const extra: MenuItem[] = [
+      { label: "Replay first-start language selector", action:()=>setFirstStart(true) },
+      { label: "Replay procedural PS2 startup", action:()=>playThemeIntro("ps2") },
       { label: t("presets"), sub: () => themeMenu(s.theme, api.switchTheme, THEMES) },
       { label: t("homeScreenSettings"), action: api.openSettings },
     ];
@@ -315,6 +318,7 @@ export function Ps2Home() {
 
   const onInput = (p: Press): boolean => {
     if (menu.handle(p)) return true;
+    if(screen==="config"&&configInput.current)return configInput.current(p);
     const b = p.btn;
     if (b === "y") return options(), true;
     if (b === "menu") {
@@ -357,11 +361,7 @@ export function Ps2Home() {
           else o?.run();
         } else if (b === "b") go("card");
         return true;
-      case "config":
-        if (b === "up" || b === "down") mv(csel, setCsel, configOpts.length, b === "up" ? -1 : 1);
-        else if (b === "a") (playSound("select"), configOpts[csel].run());
-        else if (b === "b") go("main");
-        return true;
+      case "config": return true;
     }
     return false;
   };
@@ -374,9 +374,7 @@ export function Ps2Home() {
     () => makeTowerDraw(screen === "main" ? 1 : 0.55, { towers: towerSet(towerKind, saves), speed: towerSpeed, fog }),
     [screen, towerKind, saves, towerSpeed, fog],
   );
-  const backdrop = st<string>("mainBackdrop");
-  const towerOpacity = backdrop === "towers" ? 1 : backdrop === "both" ? 0.5 : 0.12;
-  const text = (on: boolean, size = 24): CSSProperties => ({ color: on ? (screen === "main"?"#55caff":"#f4f4dd") : (screen === "main"?"#919295":screen === "card"||screen === "browser"?"#dedede":BLUE), fontSize: size, fontFamily: FONT, textShadow: "0 1px 2px #000,1px 0 1px #0008", transition: "all 150ms" });
+  const text = (on: boolean, size = 24): CSSProperties => ({ color: on ? (screen === "main"?"#55caff":"#f4f4dd") : (screen === "main"?"#919295":screen === "card"||screen === "browser"?"#dedede":BLUE), fontSize: size, fontFamily: firmware["font-ascii"]?"PS2UserFirmware, Arial, sans-serif":FONT, textShadow: "0 1px 2px #000,1px 0 1px #0008", transition: "all 150ms" });
 
   // card grid geometry
   const ICON = portrait ? 104 : 118;
@@ -391,23 +389,21 @@ export function Ps2Home() {
   return (
     <ThemeRoot onInput={onInput} hints={hints}>
       <Stage background="#000">
-        <style>{PS2_CSS}</style>
-        {screen==="main"?<><div style={{position:"absolute",inset:0,opacity:towerOpacity}}><AnimCanvas width={W} height={H} animate={s.animations} fps={20} draw={towerDraw} deps={[screen,towerDraw]}/></div>{backdrop!=="towers"&&<AnimCanvas width={W} height={H} animate={s.animations} fps={30} draw={drawMenuOrbs}/>}</>:screen==="browser"||screen==="card"||screen==="info"?<div className="dht-ps2-browser-field" style={{position:"absolute",inset:0,background:browserField(st<string>("browserColor"),now.getHours()),transition:"background 2s"}}/>:<AnimCanvas width={W} height={H} animate={s.animations} fps={30} draw={towerDraw} deps={[screen,towerDraw]}/>}
+        <style>{PS2_CSS}{firmware["font-ascii"]?`@font-face{font-family:PS2UserFirmware;src:url("${firmware["font-ascii"]}") format("truetype");font-display:swap;}`:""}</style>
+        {screen==="main"?webglFailed?<AnimCanvas width={W} height={H} animate={s.animations} fps={30} draw={drawMenuOrbs}/>:<Ps2StockScene mode="menu" animate={s.animations} saves={saves} onUnavailable={()=>setWebglFailed(true)}/>:screen==="browser"||screen==="card"||screen==="info"?<div className="dht-ps2-browser-field" style={{position:"absolute",inset:0,background:browserField(st<string>("browserColor"),now.getHours()),transition:"background 2s"}}/>:webglFailed?<AnimCanvas width={W} height={H} animate={s.animations} fps={20} draw={towerDraw}/>:<Ps2StockScene mode="clock" animate={s.animations} saves={saves} selection={configCategory} onUnavailable={()=>setWebglFailed(true)}/>}
         {st<boolean>("scanlines")&&<div className="dht-ps2-scan"/>}
 
         {/* clock */}
-        <div style={{ position: "absolute", right: 46, top: 30, ...text(false, 20), opacity: 0.85 }}>
+        {screen!=="main"&&screen!=="config"&&<div style={{ position: "absolute", right: 46, top: 30, ...text(false, 20), opacity: 0.85 }}>
           {fmtDate(now, true)} {fmtTime(now, s.clock24)}
-        </div>
+        </div>}
 
         {screen === "main" && (
-          <div style={{ position: "absolute", left: W * 0.54, top: H * 0.44, display: "flex", flexDirection: "column", gap: 14, animation: "dhtIn2 500ms" }}>
-            {[
-              { key: "Browser", label: t("browser") },
-              { key: "System Configuration", label: t("systemConfiguration") },
-            ].map((it, i) => (
-              <div key={it.key} className="dht-ps2-item" data-selected={msel === i} style={{ display: "flex", alignItems: "center", gap: 26 }}>
-                <span style={text(msel === i, 28)}>{lang === "ja" ? JA[it.key] : it.label}</span>
+          <div style={{ position: "absolute", left: W * 0.42, right:W*.045, top: H * 0.44, display: "flex", flexDirection: "column", alignItems:"center", gap: 8, animation: "dhtIn2 500ms" }}>
+            {["Browser", "System Configuration"].map((label, i) => (
+              <div key={label} className="dht-ps2-item" role="button" tabIndex={0} onClick={()=>{setMsel(i);go(i===0?"browser":"config")}} onKeyDown={e=>{if(e.key==="Enter"||e.key===" "){e.preventDefault();e.stopPropagation();setMsel(i);go(i===0?"browser":"config")}}} data-selected={msel === i} style={{ display: "flex", alignItems: "center", gap: 26, cursor:"pointer" }}>
+
+                <span style={text(msel === i, W*.041)}>{L(label)}</span>
               </div>
             ))}
           </div>
@@ -477,21 +473,9 @@ export function Ps2Home() {
           </div>
         )}
 
-        {screen === "config" && (
-          <div style={{ position: "absolute", inset: 0, animation: "dhtIn2 300ms" }}>
-            <div style={{ position: "absolute", left: 60, top: 36, ...text(true, 26) }}>{lang === "ja" ? JA["System Configuration"] : t("systemConfiguration")}</div>
-            <div style={{ position: "absolute", left: W * 0.2, top: H * 0.2, width: W * 0.6, display: "flex", flexDirection: "column", gap: 4 }}>
-              {configOpts.map((o, i) => (
-                <div key={o.label} className="dht-ps2-item" data-selected={i === csel} style={{ display: "flex", justifyContent: "space-between", padding: "12px 24px", background: i === csel ? "linear-gradient(90deg, rgba(80,110,255,0.35), rgba(80,110,255,0))" : "none", borderLeft: i === csel ? "3px solid #9fb4ff" : "3px solid transparent" }}>
-                  <span style={text(i === csel, 24)}>{o.label}</span>
-                  {o.value && <span style={text(i === csel, 22)}>{o.value}</span>}
-                </div>
-              ))}
-            </div>
-          </div>
-        )}
-
+        {screen === "config" && <Ps2SystemConfig W={W} H={H} input={configInput} onBack={()=>go("main")} onSelection={setConfigCategory}/>}
         <MenuView menu={menu} variant="ps2" />
+        {firstStart&&<Ps2FirstStart onDone={()=>setFirstStart(false)}/>}
       </Stage>
     </ThemeRoot>
   );

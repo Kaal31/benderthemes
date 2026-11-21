@@ -1,9 +1,10 @@
 // Source-backed fixed-tick animation primitives; shared with the isolated validation model.
 export const clone = value => structuredClone(value);
-export function tickCover(state, target, selected = false, hz = 60) {
+export function tickCover(state, target, selected = false, hz = 60, transitionSpeed = 1) {
   let rate = (selected ? .07 : .1) * (hz === 50 ? 1.2 : 1);
   const distance2 = state.pos.reduce((sum, v, i) => sum + (target.pos[i] - v) ** 2, 0);
   if (distance2 < .5) rate *= .5;
+  if (transitionSpeed !== 1) rate = 1 - Math.pow(1 - rate, transitionSpeed);
   for (const key of ['pos', 'angle', 'scale'])
     state[key] = state[key].map((v, i) => v + (target[key][i] - v) * rate);
 }

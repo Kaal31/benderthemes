@@ -1,0 +1,40 @@
+import assert from 'node:assert/strict';
+import {launch} from './browser.mjs';
+import {startPreviewServer} from '../preview/server.mjs';
+const {server,url}=await startPreviewServer(),browser=await launch();
+try{
+ const page=await browser.newPage({viewport:{width:1280,height:800}});
+ const errors=[];page.on('pageerror',e=>errors.push(e.message));
+ await page.goto(url.replace('preview.html',process.env.NXE_PREVIEW??'preview.html')+'?theme=x360&xs=nxe&still=1');
+ await page.waitForFunction(()=>!!window.__openThemeSettings);
+ const open=async()=>{
+  await page.evaluate(()=>window.__openThemeSettings());
+  await page.getByText('Customize',{exact:true}).click();
+  await page.getByText('Games',{exact:true}).last().click();
+ };
+ await open();
+ await page.getByText('NXE game artwork: Wide (default)',{exact:true}).click();
+ await page.getByText('Capsule (portrait)',{exact:true}).click();
+ assert.equal(await page.evaluate(()=>window.__getThemeSettings().x360.nxeGameArtwork),'capsule');
+ assert.equal(await page.evaluate(()=>window.__getThemeSettings().titles.x360??'show'),'show');
+ for(let i=0;i<4;i++)await page.keyboard.press('Escape');
+ for(let i=0;i<6;i++)await page.keyboard.press('ArrowUp');
+ await page.waitForFunction(()=>document.querySelector('.dht-x360n-channel[data-selected=true]')?.textContent?.trim()==='Games');
+ let card=page.locator('.dht-x360n-card[data-selected=true]');
+ assert.ok(Math.abs(parseFloat(await card.evaluate(e=>e.style.width))-320*2/3)<.1);
+ const portrait=await page.evaluate(()=>window.__getThemeLibrary().games[0].art.portrait);
+ assert.ok(portrait.includes(await card.locator('img').first().getAttribute('src')),'Capsule uses portrait artwork');
+ await page.evaluate(()=>window.__updateTheme(s=>({titles:{...s.titles,x360:'hide'}})));
+ assert.ok(Math.abs(await card.locator('img').first().evaluate(e=>parseFloat(e.style.height))-100)<.1);
+ await open();
+ await page.getByText('NXE game artwork: Capsule (portrait)',{exact:true}).click();
+ await page.getByText('Wide (default)',{exact:true}).click();
+ for(let i=0;i<4;i++)await page.keyboard.press('Escape');
+ card=page.locator('.dht-x360n-card[data-selected=true]');
+ assert.equal(await card.evaluate(e=>parseFloat(e.style.width)),420);
+ await page.evaluate(()=>window.__updateTheme(s=>({x360:{...s.x360,style:'metro'}})));
+ await open();
+ assert.equal(await page.getByText(/^NXE game artwork:/).count(),0,'NXE-only setting is hidden on Metro');
+ assert.deepEqual(errors,[]);
+ console.log('PASS nested NXE artwork choice switches portrait/wide geometry and source; title preference stays independent; hidden on Metro');
+}finally{await browser.close();server.closeAllConnections();server.close();}

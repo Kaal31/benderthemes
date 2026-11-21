@@ -35,7 +35,7 @@ const reversed=realisticCaseEdges&&swapCaseSides;entry.textures[0].repeat.x=reve
  const geometry=new T.BoxGeometry(1.05,1.5,.14),artGeometry=new T.PlaneGeometry(1.038,1.488),shadowGeometry=new T.PlaneGeometry(1.5,.4);
  const extension=interfaceExtension(window.WiiFlowImport,invalidate);
  const flow=importedFlow(scene,camera,window.ThemeHub,invalidate);document.addEventListener('wiiflow-layout',()=>sync());
- function labelTexture(name,spine=false){const canvas=document.createElement('canvas');canvas.width=spine?128:512;canvas.height=768;const ctx=canvas.getContext('2d');ctx.fillStyle='#e5e6e7';ctx.fillRect(0,0,canvas.width,768);ctx.fillStyle='#37404c';ctx.font=spine?'26px Arial':'bold 32px Arial';ctx.textAlign='center';const words=name.match(/.{1,20}(?:\s|$)|.{1,20}/g)||[name];words.forEach((line,i)=>ctx.fillText(line.trim(),canvas.width/2,spine?130+i*50:150+i*45,canvas.width-16));if(!spine){ctx.fillStyle='#a1a5ad';ctx.fillRect(40,480,432,2);ctx.font='22px Arial';ctx.fillText('STEAM LIBRARY',256,550);ctx.fillText('Back artwork unavailable',256,600);}const texture=new T.CanvasTexture(canvas);texture.colorSpace=T.SRGBColorSpace;return texture;}
+ function labelTexture(name,spine=false,front=false){const canvas=document.createElement('canvas');canvas.width=spine?128:512;canvas.height=768;const ctx=canvas.getContext('2d');ctx.fillStyle='#e5e6e7';ctx.fillRect(0,0,canvas.width,768);ctx.fillStyle='#37404c';ctx.font=spine?'26px Arial':'bold 32px Arial';ctx.textAlign='center';const words=name.match(/.{1,20}(?:\s|$)|.{1,20}/g)||[name];words.forEach((line,i)=>ctx.fillText(line.trim(),canvas.width/2,spine?130+i*50:150+i*45,canvas.width-16));if(!spine){ctx.fillStyle='#a1a5ad';ctx.fillRect(40,480,432,2);ctx.font='22px Arial';ctx.fillText('STEAM LIBRARY',256,550);ctx.fillText(front?'Front artwork unavailable':'Back artwork unavailable',256,600);}const texture=new T.CanvasTexture(canvas);texture.colorSpace=T.SRGBColorSpace;return texture;}
  let automaticSpineStyle='enhanced';
  function paintSpine(texture,name,image,logo,detail=0){
   if(texture.automaticSpineStyle!==automaticSpineStyle){texture.automaticSpineStyle=automaticSpineStyle;texture.spineSignature=null;texture.image=document.createElement('canvas');}
@@ -114,7 +114,7 @@ const reversed=realisticCaseEdges&&swapCaseSides;entry.textures[0].repeat.x=reve
  function preloadNearby(){clearTimeout(preloadTimer);const epoch=++preloadEpoch;preloadTimer=setTimeout(async()=>{if(cacheDisposed||!active)return;const games=window.ThemeHub.state?.games||[],selected=covers.querySelector('.selected')?.dataset.appid,index=games.findIndex(g=>String(g.appid)===selected);if(index<0)return;const urls=[];for(let n=1;n<=Math.min(games.length,18);n++)for(const direction of [1,-1]){const g=games[(index+n*direction+games.length)%games.length],url=g.art?.portrait?.[0]||g.art?.landscape?.[0];if(url&&!coverCache.has(url)&&!urls.includes(url))urls.push(url);if(urls.length>=6)break;}for(let i=0;i<Math.min(6,urls.length)&&epoch===preloadEpoch&&!cacheDisposed;i+=2){await Promise.all(urls.slice(i,i+2).map(url=>coverResource(url).promise));await new Promise(resolve=>setTimeout(resolve,0));}},180);}
  function make(button){
   const name=button.getAttribute('aria-label'),group=new T.Group(),mirror=new T.Group();
-  const back=labelTexture(name),spine=labelTexture(name,true),plastic=new T.MeshStandardMaterial({color:0x24282d,roughness:.42,metalness:.05});
+  const back=labelTexture(name),frontPlaceholder=labelTexture(name,false,true),spine=labelTexture(name,true),plastic=new T.MeshStandardMaterial({color:0x24282d,roughness:.42,metalness:.05});
   paintSpine(spine,name);
   const spineMaterial=new T.MeshStandardMaterial({map:spine,roughness:.48,metalness:0});
   const openingCanvas=document.createElement('canvas');openingCanvas.width=96;openingCanvas.height=512;const oc=openingCanvas.getContext('2d');
@@ -129,12 +129,28 @@ const reversed=realisticCaseEdges&&swapCaseSides;entry.textures[0].repeat.x=reve
   const box=new T.Mesh(geometry,mats);group.add(box);
   const shadowCanvas=document.createElement('canvas');shadowCanvas.width=128;shadowCanvas.height=64;const sc=shadowCanvas.getContext('2d'),gradient=sc.createRadialGradient(64,32,2,64,32,60);gradient.addColorStop(0,'#0009');gradient.addColorStop(1,'#0000');sc.fillStyle=gradient;sc.fillRect(0,0,128,64);const shadowTexture=new T.CanvasTexture(shadowCanvas),shadow=new T.Mesh(shadowGeometry,new T.MeshBasicMaterial({map:shadowTexture,transparent:true,depthWrite:false}));shadow.position.set(0,-.81,-.04);shadow.rotation.x=-Math.PI/2;group.add(shadow);
 
-  const front=new T.Mesh(artGeometry,new T.MeshBasicMaterial({map:back}));front.position.z=.072;group.add(front);
+  const front=new T.Mesh(artGeometry,new T.MeshBasicMaterial({map:frontPlaceholder}));front.position.z=.072;group.add(front);
   const mirrorBox=box.clone(),mirrorFront=front.clone();mirror.add(mirrorBox,mirrorFront);mirror.matrixAutoUpdate=false;
   for(const m of [mirrorBox,mirrorFront]){m.material=Array.isArray(m.material)?m.material.map(x=>x.clone()):m.material.clone();for(const material of Array.isArray(m.material)?m.material:[m.material]){material.transparent=true;material.opacity=.16;material.depthWrite=false;material.onBeforeCompile=shader=>{shader.vertexShader=shader.vertexShader.replace('#include <common>','#include <common>\nvarying vec3 reflectionWorld;').replace('#include <project_vertex>','#include <project_vertex>\nreflectionWorld=(modelMatrix*vec4(transformed,1.0)).xyz;');shader.fragmentShader=shader.fragmentShader.replace('#include <common>','#include <common>\nvarying vec3 reflectionWorld;').replace('#include <dithering_fragment>','#include <dithering_fragment>\nfloat depth=max(0.0,-0.82-reflectionWorld.y);gl_FragColor.a *= (1.0-smoothstep(0.0,1.3,depth));if(reflectionWorld.y > -0.82) discard;');};}}
   group.userData.id=button.dataset.appid;box.userData.id=button.dataset.appid;front.userData.id=button.dataset.appid;
-  scene.add(group);const entry={button,group,mirror,front,box,shadow,openingTexture,capTextures,textures:[back,spine,shadowTexture,openingTexture,...capTextures],materials:mats,target:new T.Vector3(),angle:0};
-  const url=button.querySelector('.front img')?.src;entry.frontUrl=url;if(url){const resource=coverResource(url);resource.users++;entry.coverResource=resource;resource.promise.then(texture=>{if(!texture||entry.released)return;texture.colorSpace=T.SRGBColorSpace;texture.anisotropy=Math.min(4,renderer.capabilities.getMaxAnisotropy());paintSpine(spine,name,texture.image,entry.logoImage,entry.spineDetail||0);entry.coverImage=texture.image;paintBack(entry);front.material.map=texture;front.material.needsUpdate=true;applyCaseEdge(entry);mirrorFront.material.map=texture;mirrorFront.material.needsUpdate=true;invalidate();});}
+  scene.add(group);const entry={button,group,mirror,front,box,shadow,openingTexture,capTextures,textures:[back,spine,shadowTexture,openingTexture,...capTextures,frontPlaceholder],materials:mats,target:new T.Vector3(),angle:0};
+  const url=button.querySelector('.front img')?.src;entry.frontUrl=url;entry.frontSettled=false;
+  const art=gameData.get(button.dataset.appid)?.art||{};
+  const candidates=[...new Set([url,...(art.portrait||[]),...(art.landscape||[]),...(art.hero||[])].filter(Boolean))];
+  const loadFront=async()=>{
+   for(const source of candidates){
+    if(entry.released)return;
+    const resource=coverResource(source);resource.users++;entry.coverResource=resource;
+    const texture=await resource.promise;
+    if(entry.released)return;
+    if(!texture){resource.users--;entry.coverResource=null;continue;}
+    texture.colorSpace=T.SRGBColorSpace;texture.anisotropy=Math.min(4,renderer.capabilities.getMaxAnisotropy());
+    paintSpine(spine,name,texture.image,entry.logoImage,entry.spineDetail||0);entry.coverImage=texture.image;paintBack(entry);
+    front.material.map=texture;front.material.needsUpdate=true;mirrorFront.material.map=texture;mirrorFront.material.needsUpdate=true;
+    applyCaseEdge(entry);entry.frontSettled=true;invalidate();return;
+   }
+   entry.frontSettled=true;invalidate();
+  };void loadFront();
 
   paintBack(entry);applyCaseEdge(entry);
   return entry;
@@ -181,13 +197,13 @@ const reversed=realisticCaseEdges&&swapCaseSides;entry.textures[0].repeat.x=reve
    e.mirror.traverse(node=>{if(node.isMesh)for(const material of Array.isArray(node.material)?node.material:[node.material])material.opacity=e.reflectionOpacity;});
    e.mirror.visible=false;
    e.group.updateMatrix();e.mirror.matrix.multiplyMatrices(reflectionMatrix,e.group.matrix);e.mirror.matrixWorldNeedsUpdate=true;
-  }if(flow)moving=flow.frame(now,ease,still,entries)||moving;
+  }if(flow)moving=flow.frame(now,ease,still,entries,fastMotion?2.7:1)||moving;
   for(const entry of entries.values()){const up=new T.Vector3(0,1,0).applyQuaternion(entry.group.quaternion);if(up.y<.85||(window.WiiFlowImport?.spinClearance===true&&entry.spinRemaining>35))entry.shadow.visible=false;}
-  extension?.viewport(renderer,camera);renderer.render(scene,camera);if(entries.size){const selected=[...entries.values()].find(e=>e.button.classList.contains("selected"));if(selected&&(selected.coverImage||!selected.frontUrl||selected.coverResource?.settled))document.getElementById("stage").setAttribute("data-preview-render-ready","");}
+  extension?.viewport(renderer,camera);renderer.render(scene,camera);if(entries.size){const selected=[...entries.values()].find(e=>e.button.classList.contains("selected"));if(selected&&(selected.coverImage||selected.frontSettled))document.getElementById("stage").setAttribute("data-preview-render-ready","");}
   // Export the actual rendered case, rather than guessing its screen-space pose.
   if(document.body.classList.contains('game-open')&&!stage.dataset.previewModel){
    const entry=[...entries.values()].find(e=>e.offset===0&&e.group.visible);
-   if(entry&&(entry.coverImage||!entry.frontUrl||entry.coverResource?.settled)&&entry.group.position.distanceTo(entry.target)<.001&&Math.abs(entry.group.rotation.y-entry.angle*Math.PI/180)<.001&&Math.abs(entry.group.rotation.x-(entry.tilt||0))<.001){
+   if(entry&&(entry.coverImage||entry.frontSettled)&&entry.group.position.distanceTo(entry.target)<.001&&Math.abs(entry.group.rotation.y-entry.angle*Math.PI/180)<.001&&Math.abs(entry.group.rotation.x-(entry.tilt||0))<.001){
     entry.box.updateWorldMatrix(true,false);const points=[];
     for(const x of [-.525,.525])for(const y of [-.75,.75])for(const z of [-.073,.073])points.push(new T.Vector3(x,y,z).applyMatrix4(entry.box.matrixWorld).project(camera));
     const canvas=renderer.domElement,r=canvas.getBoundingClientRect(),left=Math.max(0,Math.floor(Math.min(...points.map(p=>(p.x+1)*canvas.width/2))-2)),top=Math.max(0,Math.floor(Math.min(...points.map(p=>(1-p.y)*canvas.height/2))-2)),right=Math.min(canvas.width,Math.ceil(Math.max(...points.map(p=>(p.x+1)*canvas.width/2))+2)),bottom=Math.min(canvas.height,Math.ceil(Math.max(...points.map(p=>(1-p.y)*canvas.height/2))+2));
@@ -234,15 +250,21 @@ const reversed=realisticCaseEdges&&swapCaseSides;entry.textures[0].repeat.x=reve
   const r=renderer.domElement.getBoundingClientRect();pointer.set((e.clientX-r.left)/r.width*2-1,-(e.clientY-r.top)/r.height*2+1);ray.setFromCamera(pointer,camera);const hit=ray.intersectObjects([...entries.values()].filter(e=>e.group.visible).map(e=>e.group).concat(flow?.pickables()||[]),true)[0];if(hit)entries.get(hit.object.userData.id)?.button.click();
  }
  renderer.domElement.addEventListener('pointerup',e=>finishDrag(e));renderer.domElement.addEventListener('pointercancel',e=>finishDrag(e,true));
+ document.addEventListener('wiiflow-case-rotate',e=>{
+  if(!document.body.classList.contains('game-open')||window.WiiFlowImport?.sourceMenuOpen)return;
+  const {yaw,tilt}=e.detail||{};if(!Number.isFinite(yaw)||!Number.isFinite(tilt))return;
+  dragAngle+=yaw;dragTilt=Math.max(-1,Math.min(1,dragTilt+tilt));sync();
+  for(const entry of entries.values())if(entry.group.visible){entry.group.rotation.y=entry.angle*Math.PI/180;entry.group.rotation.x=entry.tilt;}invalidate();
+ });
  renderer.domElement.addEventListener('wheel',e=>{if(!document.body.classList.contains('game-open'))return;e.preventDefault();e.stopPropagation();dragAngle+=e.deltaX*.35+e.deltaY*.2;sync();},{passive:false});
- window.addEventListener('keydown',e=>{if(e.key.toLowerCase()==='f'){flipped=!flipped;sync();}if(e.key==='Escape'){flipped=false;dragAngle=0;dragTilt=0;sync();}});
+ window.addEventListener('keydown',e=>{if(e.key.toLowerCase()==='f'&&document.body.classList.contains('game-open')){flipped=!flipped;sync();}if(e.key==='Escape'){flipped=false;dragAngle=0;dragTilt=0;sync();}});
  const flip=document.createElement('button');flip.id='rotate-case';flip.textContent='Rotate case';flip.onclick=()=>{flipped=!flipped;sync();};document.querySelector('.actions').append(flip);
  const logoToggle=document.createElement('button');logoToggle.id='logo-style';logoToggle.type='button';
  function updateLogoStyle(){logoToggle.textContent='Logos: '+(flattenedLogos?'Flattened':'Original');logoToggle.setAttribute('aria-pressed',String(flattenedLogos));for(const e of entries.values())paintSpine(e.textures[1],e.button.getAttribute('aria-label'),e.coverImage,e.logoImage,e.spineDetail||0);invalidate();}
  logoToggle.onclick=()=>{flattenedLogos=!flattenedLogos;logoRestored=true;window.ThemeHub.save({flattenedLogos});updateLogoStyle();};document.querySelector('header').append(logoToggle);updateLogoStyle();
  const motionToggle=document.createElement('button');motionToggle.id='animation-speed';motionToggle.type='button';
- function updateMotion(){motionToggle.textContent='Motion: '+(fastMotion?'Fast':'Smooth');motionToggle.setAttribute('aria-pressed',String(fastMotion));}
- motionToggle.onclick=()=>{fastMotion=!fastMotion;motionRestored=true;window.ThemeHub.save({fastMotion});updateMotion();};document.querySelector('header').append(motionToggle);updateMotion();
+ function updateMotion(){motionToggle.textContent=fastMotion?'Fast':'Smooth';motionToggle.setAttribute('aria-pressed',String(fastMotion));motionToggle.setAttribute('aria-label','Transition speed: '+(fastMotion?'Fast':'Smooth'));motionToggle.title='Changes transition speed; the coverflow layout stays the same.';}
+ motionToggle.onclick=()=>{fastMotion=!fastMotion;motionRestored=true;window.ThemeHub.save({fastMotion});updateMotion();invalidate();};(document.getElementById('motion-controls')||document.querySelector('header')).append(motionToggle);updateMotion();
  function receiveArtState(state){const nextSpineStyle=state.saved?.automaticSpineStyle==='classic'?'classic':'enhanced';if(nextSpineStyle!==automaticSpineStyle){automaticSpineStyle=nextSpineStyle;for(const e of entries.values())paintSpine(e.textures[1],e.button.getAttribute('aria-label'),e.coverImage,e.logoImage,e.spineDetail||0);}realisticCaseEdges=state.saved?.realisticCaseEdges!==false;swapCaseSides=state.saved?.swapCaseSides===true;grayCaseFrame=state.saved?.caseEdge==='gray';framelessCase=state.saved?.caseEdge==='frameless';paperCase=state.saved?.caseEdge==='paper';document.body.classList.toggle('gray-case-frame',grayCaseFrame);for(const entry of entries.values())applyCaseEdge(entry);document.body.classList.toggle('hide-navigation-arrows',state.saved?.hideNavigationArrows===true);const saved={backgroundFit:'fill',extendInterface:true,extendCoverflow:true,artworkMapping:'automatic',continueCoverPattern:false,...window.WiiFlowImport?.defaults,...state.saved};extension?.setState(saved);applyBackgroundFit(saved.backgroundFit);document.getElementById('title').style.visibility=state.saved?.hideCoverTitle===true?'hidden':'';if(!motionRestored){fastMotion=state.saved?.fastMotion===true;motionRestored=true;updateMotion();}if(!logoRestored){flattenedLogos=state.saved?.flattenedLogos===true;logoRestored=true;updateLogoStyle();}for(const game of state.games||[]){gameData.set(String(game.appid),game);if(game.art?.logo?.[0])logos.set(String(game.appid),game.art.logo[0]);}sync();}
  window.ThemeHub.on('state',receiveArtState);if(window.ThemeHub.state)receiveArtState(window.ThemeHub.state);
  window.ThemeHub.on('activity',value=>{active=value;if(active)invalidate();else{cancelAnimationFrame(raf);raf=0;}});

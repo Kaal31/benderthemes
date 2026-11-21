@@ -2,21 +2,12 @@
 import type { StyleOption } from "../../engine/themeStyles";
 
 export const OPTIONS: StyleOption[] = [
-  {
-    key: "mainBackdrop",
-    label: "Main menu backdrop",
-    group: "Main menu",
-    choices: [
-      { id: "orbs", name: "Orbs" },
-      { id: "both", name: "Orbs and towers" },
-      { id: "towers", name: "Towers" },
-    ],
-    def: "orbs",
-  },
+  {key:'languageSelect',label:'First-start language select',group:'Startup',choices:[{id:true,name:'On'},{id:false,name:'Off'}],def:true},
+  {key:'presentation',label:'PS2 presentation',group:'Startup',choices:[{id:'stock',name:'Stock BIOS'},{id:'filmstrip',name:'Filmstrip disc loader'}],def:'stock'},
   {
     key: "towers",
     label: "Tower count",
-    group: "Main menu",
+    group: "Startup",
     choices: [
       { id: "few", name: "Few" },
       { id: "normal", name: "Normal" },
@@ -28,7 +19,7 @@ export const OPTIONS: StyleOption[] = [
   {
     key: "towerMotion",
     label: "Tower motion",
-    group: "Main menu",
+    group: "Startup",
     choices: [
       { id: "still", name: "Still" },
       { id: "slow", name: "Slow turn" },
@@ -39,7 +30,7 @@ export const OPTIONS: StyleOption[] = [
   {
     key: "fog",
     label: "Fog",
-    group: "Main menu",
+    group: "Startup",
     choices: [
       { id: "clear", name: "Clear" },
       { id: "light", name: "Light" },
@@ -93,7 +84,8 @@ export const OPTIONS: StyleOption[] = [
     key: "language",
     label: "Menu language",
     choices: [
-      { id: "en", name: "English" },
+      { id: "en", name: "English" },{ id: "ru", name: "Русский" },
+      { id: "fr", name: "Français" },{ id: "es", name: "Español" },{ id: "de", name: "Deutsch" },{ id: "it", name: "Italiano" },{ id: "nl", name: "Nederlands" },{ id: "pt", name: "Português" },
       { id: "ja", name: "日本語" },
     ],
     def: "en",

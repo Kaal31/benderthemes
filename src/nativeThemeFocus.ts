@@ -2,7 +2,9 @@
 type SteamNav={TakeFocus:()=>unknown};
 type Scope={root:HTMLElement;selected:HTMLElement|null;nav:()=>SteamNav|null};
 const scopes=new WeakMap<Document,Set<Scope>>();
-const belongs=(scope:Scope,node:HTMLElement)=>scope.root.contains(node)||!!(node.closest('.dht-menu--old-beta-big-picture,.dht-menu--old-big-picture')&&scope.root.closest('[data-dht-root]')?.contains(node));
+const containsComposed=(root:HTMLElement,node:HTMLElement):boolean=>{let current:Node|null=node;while(current){if(root.contains(current))return true;const tree=current.getRootNode();current=tree.nodeType===11?(tree as ShadowRoot).host:null;}return false;};
+const deepActive=(doc:Document):Element|null=>{let node=doc.activeElement;while(node?.shadowRoot?.activeElement)node=node.shadowRoot.activeElement;return node;};
+const belongs=(scope:Scope,node:HTMLElement)=>containsComposed(scope.root,node)||!!(node.closest('.dht-menu--old-beta-big-picture,.dht-menu--old-big-picture')&&scope.root.closest('[data-dht-root]')?.contains(node));
 const usable=(scope:Scope,node:HTMLElement|null):node is HTMLElement=>!!node?.isConnected&&belongs(scope,node)&&!node.closest('[inert],.beta-page-departure,[data-transition-snapshot]');
 
 export function installNativeThemeFocus(root:HTMLElement,nav:()=>SteamNav|null){
@@ -10,7 +12,7 @@ export function installNativeThemeFocus(root:HTMLElement,nav:()=>SteamNav|null){
  let list=scopes.get(doc);if(!list){list=new Set();scopes.set(doc,list);}list.add(scope);
  const focus=(event?:Event)=>{
   if(typeof nav()?.TakeFocus!=='function')return;
-  const target=(event?.target??doc.activeElement) as HTMLElement|null;
+  const target=(event?.composedPath?.()[0]??deepActive(doc)) as HTMLElement|null;
   if(!target||typeof target.closest!=='function'||target===root||!belongs(scope,target))return;
   const control=target.closest<HTMLElement>('button,a[href],input,select,textarea,[tabindex]');
   if(!usable(scope,control)||control===root)return;
@@ -18,7 +20,7 @@ export function installNativeThemeFocus(root:HTMLElement,nav:()=>SteamNav|null){
   root.setAttribute('data-dht-native-focus','true');
   // Real text editing retains browser focus. Other controls use Steam's root
   // as the input receiver, avoiding OnDOMBlur clearing its navigation focus.
-  if(!control.matches('input,select,textarea,[contenteditable=true]'))queueMicrotask(()=>{if(usable(scope,control)&&doc.activeElement===control)nav()?.TakeFocus();});
+  if(!control.matches('input,select,textarea,[contenteditable=true]'))queueMicrotask(()=>{if(usable(scope,control)&&deepActive(doc)===control)nav()?.TakeFocus();});
  };
  doc.addEventListener('focusin',focus,true);focus();
  return ()=>{doc.removeEventListener('focusin',focus,true);scope.selected?.removeAttribute('data-dht-control-focus');root.removeAttribute('data-dht-native-focus');list!.delete(scope);};
