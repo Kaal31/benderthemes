@@ -368,7 +368,7 @@ export interface Settings {
   switchTheme?: string; // Switch theme: a .nxtheme path under skins/switch ("file" or "folder/file") or ""
   pspFallbackIconStyle?: "classic"|"flat"|"outline"|"legacy";
   originalConsoleArtwork?: boolean; // installed GitFlic UI pack; original/procedural UI is the fallback
-  x360: { style: X360Style; importedLayout?: boolean; auroraAvatar?: boolean; auroraCoverFrame?: "xbox360" | "steam"; auroraGameView?: "cases" | "discs"; auroraDiscIndicator?: "theme" | "flat" | "3d"; weather?: boolean; coverflow?: string; caseTexture?: string; cabinetWallpaper?: string; guideSide?: "left" | "right"; skin?: string; gamerpic?: string; showThemeHubLogo?: boolean }; // skin / gamerpic: STFS package names in skins/x360 ("" = none); which Xbox 360 dashboard era
+  x360: { style: X360Style; nxeGameArtwork?: "wide" | "capsule"; importedLayout?: boolean; auroraAvatar?: boolean; auroraCoverFrame?: "xbox360" | "steam"; auroraGameView?: "cases" | "discs"; auroraDiscIndicator?: "theme" | "flat" | "3d"; weather?: boolean; coverflow?: string; caseTexture?: string; cabinetWallpaper?: string; guideSide?: "left" | "right"; skin?: string; gamerpic?: string; showThemeHubLogo?: boolean }; // skin / gamerpic: STFS package names in skins/x360 ("" = none); which Xbox 360 dashboard era
   dial: DialSettings;
   hubStyle: string; // Hub look: "auto" (the theme home it was opened on), "neutral", "preview" (the theme focused in Discover) or a console theme id (always that look when installed)
   themedStore: boolean; // Store entries open the store styled like the current theme
@@ -648,6 +648,7 @@ function merge(saved: any): Settings {
   s.musicPacks = { ...(saved?.musicPacks ?? {}) };
   s.x360 = { ...DEFAULTS.x360, ...(saved?.x360 ?? {}) };
   if (s.x360.guideSide !== "left" && s.x360.guideSide !== "right") s.x360.guideSide = "right";
+  if (s.x360.nxeGameArtwork !== "wide" && s.x360.nxeGameArtwork !== "capsule") delete s.x360.nxeGameArtwork;
   if (!X360_STYLES.some((x) => x.id === s.x360.style)) s.x360.style = "metro";
   for (const k of ["switchTheme", "wiiuTheme"] as const) if (typeof s[k] !== "string") delete s[k];
   if (typeof s.x360.skin !== "string") delete s.x360.skin;
