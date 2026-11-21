@@ -35,10 +35,6 @@ const reversed=realisticCaseEdges&&swapCaseSides;entry.textures[0].repeat.x=reve
  const geometry=new T.BoxGeometry(1.05,1.5,.14),artGeometry=new T.PlaneGeometry(1.038,1.488),shadowGeometry=new T.PlaneGeometry(1.5,.4);
  const extension=interfaceExtension(window.WiiFlowImport,invalidate);
  const flow=importedFlow(scene,camera,window.ThemeHub,invalidate);document.addEventListener('wiiflow-layout',()=>sync());
- const coverflowType=flow?null:document.createElement('button');
- function updateCoverflowType(){if(!coverflowType)return;const flat=document.getElementById('layout').getAttribute('aria-pressed')==='true';coverflowType.textContent=flat?'Flat flow':'Cover flow';coverflowType.setAttribute('aria-label','Coverflow type: '+coverflowType.textContent);}
- if(coverflowType){coverflowType.id='coverflow-type';coverflowType.type='button';coverflowType.onclick=()=>{document.getElementById('layout').click();updateCoverflowType();};(document.getElementById('coverflow-controls')||document.querySelector('header')).append(coverflowType);updateCoverflowType();}
-
  function labelTexture(name,spine=false,front=false){const canvas=document.createElement('canvas');canvas.width=spine?128:512;canvas.height=768;const ctx=canvas.getContext('2d');ctx.fillStyle='#e5e6e7';ctx.fillRect(0,0,canvas.width,768);ctx.fillStyle='#37404c';ctx.font=spine?'26px Arial':'bold 32px Arial';ctx.textAlign='center';const words=name.match(/.{1,20}(?:\s|$)|.{1,20}/g)||[name];words.forEach((line,i)=>ctx.fillText(line.trim(),canvas.width/2,spine?130+i*50:150+i*45,canvas.width-16));if(!spine){ctx.fillStyle='#a1a5ad';ctx.fillRect(40,480,432,2);ctx.font='22px Arial';ctx.fillText('STEAM LIBRARY',256,550);ctx.fillText(front?'Front artwork unavailable':'Back artwork unavailable',256,600);}const texture=new T.CanvasTexture(canvas);texture.colorSpace=T.SRGBColorSpace;return texture;}
  let automaticSpineStyle='enhanced';
  function paintSpine(texture,name,image,logo,detail=0){
@@ -162,7 +158,7 @@ const reversed=realisticCaseEdges&&swapCaseSides;entry.textures[0].repeat.x=reve
  function release(e){e.released=true;if(e.coverResource)e.coverResource.users--;scene.remove(e.group,e.mirror);e.textures.forEach(t=>t.dispose());const mats=new Set();[e.group,e.mirror].forEach(g=>g.traverse(n=>{if(n.isMesh)(Array.isArray(n.material)?n.material:[n.material]).forEach(m=>mats.add(m));}));mats.forEach(m=>m.dispose());trimCoverCache();}
  function sync(){
   const buttons=[...covers.children],selected=buttons.find(b=>b.classList.contains('selected'));if(!selected){entries.forEach(release);entries.clear();invalidate();return;}
-  const flat=document.getElementById('layout').getAttribute('aria-pressed')==='true',open=document.body.classList.contains('game-open');updateCoverflowType();
+  const flat=document.getElementById('layout').getAttribute('aria-pressed')==='true',open=document.body.classList.contains('game-open');
   for(const [id,e] of entries)if(!buttons.includes(e.button)){parkCase(id,e);entries.delete(id);}
   buttons.forEach((button,index)=>{const id=button.dataset.appid;let e=entries.get(id);if(!e){e=parkedCases.get(id);if(e){parkedCases.delete(id);if(e.frontUrl!==button.querySelector('.front img')?.src){release(e);e=null;}else{e.button=button;e.offset=undefined;e.nativeState=null;e.stackClearance=0;e.spinGap=0;scene.add(e.group);applyCaseEdge(e);paintSpine(e.textures[1],button.getAttribute('aria-label'),e.coverImage,e.logoImage);}}if(!e)e=make(button);entries.set(id,e);e.group.position.set(0,-.05,0);}
    for(const [key,url] of [['landscape',gameData.get(id)?.art?.landscape?.[0]],['extra',gameData.get(id)?.art?.hero?.[1]||gameData.get(id)?.art?.landscape?.[1]]]){if(url&&e[key+'Url']!==url){e[key+'Url']=url;const img=new Image();img.crossOrigin='anonymous';img.onload=()=>{if(entries.get(id)!==e&&parkedCases.get(id)!==e)return;e[key+'Image']=img;paintBack(e);};img.src=url;}}

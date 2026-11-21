@@ -20,12 +20,10 @@ try {
  assert.match(maps.find(e=>e.appid==='1').fallback,/good.svg$/,'Failed primary art retries the next candidate');
  await page.evaluate(()=>window.ThemeHub.emit('input',{btn:'a'}));
  await page.waitForFunction(()=>document.body.classList.contains('game-open'));
- const coverflow=page.getByRole('button',{name:'Coverflow type: Cover flow',exact:true});
- const capsule=await coverflow.boundingBox();assert(capsule.width<190,'Default type capsule should fit its short label');
- assert.equal(await page.locator('#motion-controls').evaluate(e=>getComputedStyle(e).borderLeftWidth),'0px','No divider between type and speed');
- await coverflow.click();assert.equal(await page.locator('#coverflow-type').innerText(),'Flat flow');assert.equal(await page.locator('#animation-speed').innerText(),'Smooth');
- await page.locator('#animation-speed').click();assert.equal(await page.locator('#coverflow-type').innerText(),'Flat flow');
- await page.locator('#coverflow-type').click();
+ assert.equal(await page.locator('#coverflow-type').count(),0,'Default coverflow uses only the original star button');
+ await page.evaluate(()=>document.getElementById('layout').click());assert.equal(await page.locator('#layout').getAttribute('aria-pressed'),'true');
+ await page.evaluate(()=>document.getElementById('animation-speed').click());assert.equal(await page.locator('#layout').getAttribute('aria-pressed'),'true','Speed stays independent of the star control');
+ await page.evaluate(()=>document.getElementById('layout').click());
  const before=await page.evaluate(()=>window.__caseEntries.get('1').angle);
  await page.evaluate(()=>document.dispatchEvent(new CustomEvent('wiiflow-case-rotate',{detail:{yaw:80,tilt:.2}})));
  assert.equal(await page.evaluate(()=>window.__caseEntries.get('1').angle),before+80);
@@ -38,6 +36,7 @@ try {
  mkdirSync('out/wiiflow-case-preview',{recursive:true});await page.screenshot({path:'out/wiiflow-case-preview/fallback-artwork.png'});
  await page.addInitScript(()=>{window.WiiFlowImport={initialMode:0,modes:[{name:'Standard coverflow',browse:{},selected:{}},{name:'Flat coverflow',browse:{center_angle:[0,20,0]},selected:{}}]};});
  await page.reload();
+ await page.evaluate(()=>window.ThemeHub.emit('input',{btn:'up'}));
  const layout=page.getByRole('button',{name:'Coverflow layout: Standard coverflow',exact:true}),speed=page.getByRole('button',{name:'Transition speed: Smooth',exact:true});await layout.waitFor();await speed.waitFor();
  const l=await layout.boundingBox(),v=await speed.boundingBox();assert(l.x+l.width<=v.x||v.x+v.width<=l.x,'Layout and speed hit areas must not overlap');
  for(let i=0;i<4;i++){await page.locator('#animation-speed').click();assert.equal(await layout.count(),1,'Speed does not cycle layout');}

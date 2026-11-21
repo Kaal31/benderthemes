@@ -2,7 +2,14 @@
   'use strict';
   const hub=window.ThemeHub, $=id=>document.getElementById(id);
   let platform=null;let all=[],games=[],selected=0,installed=false,flat=false,restored=false,zone=0,control=0,gameOpen=false;
-  const controls=()=>(gameOpen?[$('play'),$('details')]:[$('options'),$('home'),$('layout'),$('imported-info'),$('filter'),$('logo-style'),$('coverflow-type'),$('import-layout'),$('animation-speed')]).filter(b=>b&&!b.disabled);
+  const availableControls=()=>(gameOpen?[$('play'),$('details')]:[$('options'),$('home'),$('layout'),$('imported-info'),$('previous'),$('next'),$('filter'),$('logo-style'),$('import-layout'),$('animation-speed')]).filter(b=>b&&!b.disabled&&b.getClientRects().length&&getComputedStyle(b).display!=='none'&&getComputedStyle(b).visibility!=='hidden'&&Number(getComputedStyle(b).opacity)>0);
+  // Zone 0 browses covers, 1 selects bottom/actions, and 2 selects the top row.
+  const controls=()=>availableControls().filter(b=>gameOpen||(zone===2?b.closest('header'):!b.closest('header')));
+  function leaveControls(){document.body.classList.remove('controls');zone=0;clearControlFocus();document.activeElement?.blur();}
+  function enterControls(row){document.body.classList.add('controls');zone=row;control=0;if(!controls().length)zone=row===2?1:2;focusControl();}
+  function clearControlFocus(){document.querySelectorAll('[data-wiiflow-focused]').forEach(b=>b.removeAttribute('data-wiiflow-focused'));}
+  function markControl(button){clearControlFocus();if(button)button.setAttribute('data-wiiflow-focused','true');}
+  function focusControl(){const list=controls();control=Math.max(0,Math.min(control,list.length-1));const button=list[control];markControl(button);button?.focus({preventScroll:true});}
   const current=()=>games[selected];
   function artwork(game){return game.art?.portrait?.[0]||game.art?.landscape?.[0]||'';}
   function face(game){
@@ -40,26 +47,26 @@
     $('play').textContent=game&&!game.installed?'↓ Install':'▶ Play';$('empty').hidden=!!games.length;$('empty').textContent='No games in this view.';
     hub.send({type:'hints',a:gameOpen?(game?.installed?'Play':'Install'):'Select',x:'Game details',y:'Options'});focusGame();
   }
-  function choose(i){if(!games.length)return;if(window.WiiFlowImport?.slottingBusy)return;gameOpen=false;document.body.classList.remove('game-open');selected=(i+games.length)%games.length;zone=0;document.activeElement?.blur();persist();hub.sound('move');render();}
+  function choose(i){if(!games.length)return;if(window.WiiFlowImport?.slottingBusy)return;gameOpen=false;document.body.classList.remove('game-open','controls');selected=(i+games.length)%games.length;zone=0;clearControlFocus();document.activeElement?.blur();persist();hub.sound('move');render();}
   function select(){if(!current())return;if(gameOpen)return launch();gameOpen=true;document.body.classList.add('game-open');zone=1;control=0;document.body.classList.remove('controls');hub.sound('select');render();}
   function launch(){if(current()){hub.sound('launch');hub.launch(current().appid);}}
   function details(){if(current())hub.send({type:'details',appid:current().appid});}
   function filter(){const appid=current()?.appid;games=all.filter(g=>(!installed||g.installed)&&(!platform||(platform.source==='collection'&&platform.appids.includes(Number(g.appid)))||String(g.pluginMagic||g.platformId||g.platform||'').toLowerCase()===platform.target||platform.source==='all'));selected=Math.max(0,games.findIndex(g=>g.appid===appid));render();}
   $('previous').onclick=()=>choose(selected-1);$('next').onclick=()=>choose(selected+1);$('play').onclick=launch;$('details').onclick=details;
-  $('filter').onclick=()=>{installed=!installed;filter();persist();zone=0;document.activeElement?.blur();};$('layout').onclick=()=>{flat=!flat;persist();render();};$('home').onclick=()=>hub.open('steamHome');$('options').onclick=()=>hub.open('options');
+  $('filter').onclick=()=>{installed=!installed;filter();persist();};$('layout').onclick=()=>{flat=!flat;persist();render();};$('home').onclick=()=>hub.open('steamHome');$('options').onclick=()=>hub.open('options');
   let touchX=null;$('stage').addEventListener('pointerdown',e=>{touchX=gameOpen?null:e.clientX;});$('stage').addEventListener('pointerup',e=>{if(!gameOpen&&touchX!==null&&Math.abs(e.clientX-touchX)>Math.min(innerWidth/640,innerHeight/480)*35){choose(selected+(e.clientX<touchX?1:-1));suppressClick=true;setTimeout(()=>suppressClick=false,0);}touchX=null;});$('stage').addEventListener('pointercancel',()=>touchX=null);
   let suppressClick=false;$('stage').addEventListener('click',e=>{if(suppressClick){e.preventDefault();e.stopImmediatePropagation();}},true);
-  document.addEventListener('focusin',e=>{const at=controls().indexOf(e.target);if(at>=0){zone=1;control=at;if(!gameOpen)document.body.classList.add('controls');}});
+  document.addEventListener('focusin',e=>{if(availableControls().includes(e.target)){zone=!gameOpen&&e.target.closest('header')?2:1;control=controls().indexOf(e.target);markControl(e.target);if(!gameOpen)document.body.classList.add('controls');}});
   hub.on('input',({btn})=>{
     if(window.WiiFlowImport?.sourceMenuOpen)return;
-    if(btn==='y'||btn==='menu')return hub.open('options');if(btn==='x')return details();if(btn==='b'){gameOpen=false;zone=0;document.body.classList.remove('game-open','controls');document.activeElement?.blur();render();return;}
+    if(btn==='y'||btn==='menu')return hub.open('options');if(btn==='x')return details();if(btn==='b'){gameOpen=false;zone=0;clearControlFocus();document.body.classList.remove('game-open','controls');document.activeElement?.blur();render();return;}
     if(window.WiiFlowImport?.layout?.library_stack&&!gameOpen&&!zone){
       if(btn==='l1'||btn==='r1'){window.WiiFlowImport.shiftStackColumn?.(btn==='l1'?-1:1);return;}
       if(btn==='up'||btn==='down'){choose(selected+(btn==='up'?1:-1));return;}
     }
-    if(btn==='down'){document.body.classList.add('controls');zone=1;control=0;controls()[control]?.focus();return;}if(btn==='up'){document.body.classList.remove('controls');zone=0;document.activeElement?.blur();return;}
+    if(btn==='down'){if(zone===2)leaveControls();else if(!zone||gameOpen)enterControls(1);return;}if(btn==='up'){if(zone===1||gameOpen)leaveControls();else if(!zone)enterControls(2);return;}
     if(btn==='l1'||btn==='r1')return choose(selected+(btn==='l1'?-5:5));
-    if(btn==='left'||btn==='right'){const delta=btn==='left'?-1:1;if(zone){const list=controls();control=(control+delta+list.length)%list.length;list[control]?.focus();}else choose(selected+delta);}
+    if(btn==='left'||btn==='right'){const delta=btn==='left'?-1:1;if(zone){const list=controls();control=(control+delta+list.length)%list.length;focusControl();}else choose(selected+delta);}
     if(btn==='a'){if(zone)controls()[control]?.click();else select();}
   });
   let lastWheel=0;document.getElementById('stage').addEventListener('wheel',e=>{e.preventDefault();if(gameOpen)return;if(performance.now()-lastWheel<180||Math.abs(e.deltaX)+Math.abs(e.deltaY)<8)return;lastWheel=performance.now();choose(selected+((Math.abs(e.deltaX)>Math.abs(e.deltaY)?e.deltaX:e.deltaY)>0?1:-1));},{passive:false});
@@ -74,7 +81,7 @@
   hub.on('error',message=>{$('subtitle').textContent=String(message);});
   function resize(){document.documentElement.style.setProperty('--scale',Math.min(innerWidth/640,innerHeight/480));}
   resize();window.addEventListener('resize',resize);
-  document.addEventListener('pointermove',e=>{if(!gameOpen){const show=e.clientY>innerHeight*.83||e.clientY<innerHeight*.12;if(document.body.classList.contains('controls')!==show)document.body.classList.toggle('controls',show);}});
+  document.addEventListener('pointermove',e=>{if(!gameOpen&&!zone){const show=e.clientY>innerHeight*.83||e.clientY<innerHeight*.12;if(document.body.classList.contains('controls')!==show)document.body.classList.toggle('controls',show);}});
   document.addEventListener('wiiflow-layout',()=>{if(restored)render();});
   document.addEventListener('wiiflow-platform',e=>{platform=e.detail;filter();$('empty').textContent='No games in '+platform.title+'.';});
   hub.connect({keyboard:true,autoBack:false});

@@ -1,3 +1,4 @@
+import re
 import importlib.util
 import json
 import tempfile
@@ -94,6 +95,37 @@ class ImportTests(unittest.TestCase):
             (source / 'Test.ini').write_text('[MAIN/BG]\ntexture=missing.png\n')
             report = importer.convert(source, root / 'output.zip')
             self.assertTrue(any('missing.png' in w for w in report['warnings']))
+
+
+class SelectedArtworkTests(unittest.TestCase):
+    def test_controller_focus_uses_imported_artwork_and_normal_fallback(self):
+        with tempfile.TemporaryDirectory() as temp:
+            root=Path(temp);source=root/'Skin';source.mkdir()
+            sections=['[MAIN/BG]','texture=bg.png']
+            for name,stem in [('CONFIG_BTN','config'),('DVD_BTN','disc'),('FAVORITES_OFF','star'),('INFO_BTN','info'),('PREV_BTN','prev'),('NEXT_BTN','next')]:
+                sections += [f'[MAIN/{name}]',f'texture_normal={stem}.png',f'texture_selected={stem}-selected.png','x=10','y=20','width=48','height=48']
+                (source/(stem+'.png')).write_bytes(b'normal')
+                (source/(stem+'-selected.png')).write_bytes(b'selected')
+            (source/'Skin.ini').write_text('\n'.join(sections))
+            (source/'bg.png').write_bytes(b'background')
+            report=importer.convert(source,root/'output.zip')
+            with zipfile.ZipFile(root/'output.zip') as z:
+                css=z.read('style.css').decode()
+                self.assertIn('header,footer{opacity:0;pointer-events:none}',css)
+                self.assertIn('body.controls header,body.controls footer',css)
+                self.assertNotIn('#animation-speed{display:none}',css)
+                self.assertIn('footer #layout{display:none!important}',css)
+                for section,selector in [('CONFIG_BTN','#options'),('DVD_BTN','#home'),('FAVORITES_OFF','#layout'),('INFO_BTN','#imported-info'),('PREV_BTN','#previous'),('NEXT_BTN','#next')]:
+                    target=report['assets'][f'MAIN/{section}/texture_selected']['target']
+                    self.assertRegex(css,re.escape(selector)+r'[^{}]*\[data-wiiflow-focused=true\][^{]*\{[^}]*'+re.escape(target))
+            # If selected artwork is absent, focus keeps the imported normal
+            # image rather than falling back to the built-in disc/gear/star.
+            (source/'config-selected.png').unlink()
+            report=importer.convert(source,root/'fallback.zip')
+            normal=report['assets']['MAIN/CONFIG_BTN/texture_normal']['target']
+            with zipfile.ZipFile(root/'fallback.zip') as z:
+                css=z.read('style.css').decode()
+                self.assertRegex(css,r'#options\[data-wiiflow-focused=true\]\{[^}]*'+re.escape(normal))
 
 
 if __name__ == '__main__':

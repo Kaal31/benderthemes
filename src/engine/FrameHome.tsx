@@ -310,7 +310,7 @@ function LegacyFrameHome({previewAppid,onPreviewClose}:{previewAppid?:number;onP
   };
 
   return (
-    <ThemeRoot onInput={onInput} hints={{ y: "Options", ...hints, ...(!frameAvailable&&media.error?{a:"Retry download"}:{}) }}>
+    <ThemeRoot nativeControlFocus={isNative&&theme?.id==="wiiflow-default"} onInput={onInput} hints={{ y: "Options", ...hints, ...(!frameAvailable&&media.error?{a:"Retry download"}:{}) }}>
       {pageError && <div role="alert" style={{position:"absolute",inset:0,zIndex:5,background:"#16202bf2",padding:48,color:"white"}}>This page did not connect to ThemeHub.<button onClick={() => { if (!back()) { setPageError(false); setReady(null); client.current = null; generation.current++; setReload(n => n + 1); } }}>Back to a working page</button></div>}
       {!frameAvailable?<ThemeResourceProgress id={theme?.id??""} progress={media.progress} error={media.error} retry={()=>setMediaAttempt(n=>n+1)}/>:isNative&&theme ? (
         <BundledThemeSurface id={theme.id} base={themeFileUrl(theme, "")!} port={nativePort} onMessage={message=>nativeReceive.current?.(message)}/>

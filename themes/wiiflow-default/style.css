@@ -8,8 +8,8 @@
 
 @font-face{font-family:WiiFlowDefault;src:url('assets/font.ttf')}body{font-family:WiiFlowDefault,Arial,sans-serif}#scene{background:url('assets/background.png') center/100% 100%}.selection{top:349px;left:12%;width:76%}h1{font-size:22px;line-height:28px}header{opacity:0;pointer-events:none}body.controls header,header:focus-within{opacity:1;pointer-events:auto}body.game-open .selection{top:100px;left:53%;width:43%}footer{opacity:0;pointer-events:none}body.controls footer,footer:focus-within{opacity:1;pointer-events:auto}footer #options:hover,footer #options:focus-visible{background-image:url('assets/btnconfigs.png')}footer #home:hover,footer #home:focus-visible{background-image:url('assets/btndvds.png')}footer #layout:hover,footer #layout:focus-visible{background-image:url('assets/favoritesoffs.png')}
 
-/* Match the Rhapsodii spine-style selector and keep both choices discoverable. */
-header{opacity:1;pointer-events:auto}#logo-style{background:#242424e8;border-color:#888}
+/* Match the Rhapsodii spine-style selector. Visibility follows the bottom controls. */
+#logo-style{background:#242424e8;border-color:#888}
 
 #animation-speed{position:absolute;left:250px;top:0;font-size:11px;padding:5px 9px;border:1px solid #888;border-radius:4px;background:#242424e8;color:#fff}
 
@@ -30,4 +30,9 @@ body.gray-case-frame .front,body.gray-case-frame .cover.selected .front{border:3
 #scene header #logo-style,#scene header #animation-speed,#scene header #import-layout{position:static!important;inset:auto!important;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
 #motion-controls{padding:0;border:0}
 
-#coverflow-controls #coverflow-type{width:auto;font-size:11px;padding:5px 9px;border:1px solid #888;border-radius:4px;background:#242424e8;color:#fff;white-space:nowrap}
+/* Controller selection survives Steam restoring focus to the theme host. */
+button[data-wiiflow-focused=true]{outline:2px solid #b9e5ff!important;outline-offset:3px;filter:drop-shadow(0 0 5px #7ecfff)}
+footer button:is([data-wiiflow-focused=true],:focus-visible){outline:none!important;outline-offset:0;border-radius:0;background-color:transparent;box-shadow:none;filter:brightness(1.04) drop-shadow(0 0 2px #acdfff55)}
+footer #options[data-wiiflow-focused=true]{background-image:url('assets/btnconfigs.png')}
+footer #home[data-wiiflow-focused=true]{background-image:url('assets/btndvds.png')}
+footer #layout[data-wiiflow-focused=true]{background-image:url('assets/favoritesoffs.png')}

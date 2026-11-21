@@ -6,7 +6,7 @@ const rad=Math.PI/180;
 export function importedFlow(scene,camera,hub,invalidate){
  const config=window.WiiFlowImport;if(!config?.modes?.length)return null;
  let mode=config.initialMode||0,open=false,currentAim=new T.Vector3(0,0,0),aim=new T.Vector3(),cameraTarget=new T.Vector3(),rows=[];
- const button=document.createElement('button');button.id='import-layout';button.style.cssText='position:absolute;left:365px;top:0;font-size:11px;padding:5px;background:#222e;color:white;border:1px solid #888;border-radius:4px';(document.getElementById('coverflow-controls')||document.querySelector('header')).append(button);
+ const button=document.createElement('button');button.id='import-layout';button.style.cssText='position:absolute;left:365px;top:0;font-size:11px;padding:5px;background:#222e;color:white;border:1px solid #888;border-radius:4px';if(config.modes.length>1)(document.getElementById('coverflow-controls')||document.querySelector('header')).append(button);
  const columnControls=document.createElement('div');columnControls.id='stack-column-controls';columnControls.style.cssText='position:absolute;left:50%;bottom:18px;transform:translateX(-50%);z-index:70;display:none;gap:8px;align-items:center;color:white;font:14px Arial';
  const previousColumn=document.createElement('button'),nextColumn=document.createElement('button'),columnLabel=document.createElement('span');previousColumn.textContent='< Column';nextColumn.textContent='Column >';
  function shiftColumn(delta){const count=Math.ceil((config.libraryIndex||0)/15);if(!count)return;config.stackColumn=Math.max(0,Math.min(count-1,(config.stackColumn??count-1)+delta));document.dispatchEvent(new Event('wiiflow-layout'));invalidate();}

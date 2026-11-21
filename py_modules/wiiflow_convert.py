@@ -151,9 +151,9 @@ def convert(source, output, selected=None, ident=None, *, source_kind='community
                 if image:
                     css.append(f"footer {selector}{suffix}{{display:block;position:absolute;margin:0;padding:0;background-size:contain;background-position:center;background-repeat:no-repeat;background-image:url('{image}')}}")
                     if not suffix:
-                        css.append(f"footer {selector}:hover,footer {selector}:focus-visible{{background-image:url('{image}')}}")
+                        css.append(f"footer {selector}:hover,footer {selector}:focus-visible,footer {selector}[data-wiiflow-focused=true]{{background-image:url('{image}')}}")
                     else:
-                        css.append(f"footer {selector}:focus-visible{{background-image:url('{image}')}}")
+                        css.append(f"footer {selector}:focus-visible,footer {selector}[data-wiiflow-focused=true]{{background-image:url('{image}')}}")
             dimensions = {}
             for key in ['x', 'y', 'width', 'height']:
                 try:
@@ -163,8 +163,9 @@ def convert(source, output, selected=None, ident=None, *, source_kind='community
             if len(dimensions) == 4:
                 x, y, w, h = [dimensions[k] for k in ['x', 'y', 'width', 'height']]
                 css.append(f"footer {selector}{{left:{x-18:g}px;top:{y-400:g}px;width:{max(1,w):g}px;height:{max(1,h):g}px}}")
-        css.append('header{opacity:0;pointer-events:auto}body.controls header,header:hover,header:focus-within{opacity:1;pointer-events:auto}')
-        css.append('footer{inset:400px 18px auto;height:80px;opacity:1;pointer-events:auto}#animation-speed{display:none}')
+        css.append('header,footer{opacity:0;pointer-events:none}body.controls header,body.controls footer,header:focus-within,footer:focus-within{opacity:1;pointer-events:auto}')
+        # Imported layouts use the top selector; the stock star remains exclusive to standard WiiFlow.
+        css.append('footer{inset:400px 18px auto;height:80px}footer #layout{display:none!important}')
         (theme / 'style.css').write_text((theme / 'style.css').read_text(encoding='utf-8') + '\n' + '\n'.join(css), encoding='utf-8')
         layout, modes = {}, []
         if coverflow:
@@ -225,7 +226,7 @@ def convert(source, output, selected=None, ident=None, *, source_kind='community
                 with (theme/'style.css').open('a',encoding='utf-8') as style:style.write(f"\n{selector}.arrow{{left:{x:g}px;top:{y:g}px;right:auto;bottom:auto;width:{w:g}px;height:{h:g}px;opacity:1!important;transform:none;font-size:0;background:url('{image}') center/contain no-repeat;z-index:25}}")
                 hover=asset(get(section,'texture_selected'),section+'/texture_selected',{'.png','.jpg','.jpeg','.webp'})
                 if hover:
-                    with (theme/'style.css').open('a',encoding='utf-8') as style:style.write(f"\n{selector}.arrow:hover,{selector}.arrow:focus-visible{{background-image:url('{hover}')}}")
+                    with (theme/'style.css').open('a',encoding='utf-8') as style:style.write(f"\n{selector}.arrow:hover,{selector}.arrow:focus-visible,{selector}.arrow[data-wiiflow-focused=true]{{background-image:url('{hover}')}}")
         for section, selector in [('MAIN/CONFIG_BTN','#options'),('MAIN/DVD_BTN' if get('MAIN/DVD_BTN','texture_normal') else 'MAIN/QUIT_BTN','#home'),('MAIN/FAVORITES_OFF','#layout'),('MAIN/INFO_BTN','#imported-info')]:
             effects={}
             for key in ['effect_x','effect_y','effect_scale_x','effect_scale_y']:
