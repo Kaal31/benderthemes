@@ -2,6 +2,7 @@
 import type { StyleOption } from "../../engine/themeStyles";
 
 export const OPTIONS: StyleOption[] = [
+  {key:'languageSelect',label:'First-start language select',group:'Startup',choices:[{id:true,name:'On'},{id:false,name:'Off'}],def:true},
   {key:'presentation',label:'PS2 presentation',group:'Startup',choices:[{id:'stock',name:'Stock BIOS'},{id:'filmstrip',name:'Filmstrip disc loader'}],def:'stock'},
   {
     key: "towers",

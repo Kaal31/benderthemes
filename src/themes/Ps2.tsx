@@ -263,8 +263,8 @@ export function Ps2Home() {
   const [dsel, setDsel] = useRemembered("ps2-dev", 0);
   const [gsel, setGsel] = useRemembered("ps2-game", 0);
   const [webglFailed,setWebglFailed]=useState(false);
-  const [firstStart,setFirstStart]=useState(()=>s.styles.ps2?.presentation==='filmstrip'&&!s.styles.ps2?.firstStartDone);
-  useEffect(()=>{if(s.styles.ps2?.presentation==='filmstrip'&&!s.styles.ps2?.firstStartDone)setFirstStart(true);},[s.styles.ps2?.presentation,s.styles.ps2?.firstStartDone]);
+  const [firstStart,setFirstStart]=useState(()=>s.styles.ps2?.languageSelect!==false&&!s.styles.ps2?.firstStartDone);
+  useEffect(()=>{if(s.styles.ps2?.languageSelect===false)setFirstStart(false);else if(!s.styles.ps2?.firstStartDone)setFirstStart(true);},[s.styles.ps2?.languageSelect,s.styles.ps2?.firstStartDone]);
   const [isel, setIsel] = useState(0);
   const configInput=useRef<Ps2ConfigHandler|null>(null);
   const [configCategory,setConfigCategory]=useState(0);

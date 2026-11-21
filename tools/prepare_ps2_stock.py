@@ -57,8 +57,8 @@ def prepare(source, output):
         provenance.append({'file':name+'.png','resource':resource,'format':'RGBA+GS-alpha','sourceSha256':hashlib.sha256(raw).hexdigest()})
     archive=output/'ps2-stock-menu-v1.zip'
     with zipfile.ZipFile(archive,'w',zipfile.ZIP_DEFLATED) as z:
-        for path in sorted(p for p in assets.iterdir() if p.suffix in ('.png','.ttf','.mp4')):z.write(path,path.relative_to(output).as_posix())
-    files=[p for p in assets.iterdir() if p.suffix in ('.png','.ttf','.mp4')]
+        for path in sorted(p for p in assets.iterdir() if p.suffix in ('.png','.webp','.ttf','.mp4')):z.write(path,path.relative_to(output).as_posix())
+    files=[p for p in assets.iterdir() if p.suffix in ('.png','.webp','.ttf','.mp4')]
     manifest={'id':'ps2-stock-menu','name':'PS2 stock menu textures','file':archive.name,'sha256':hashlib.sha256(archive.read_bytes()).hexdigest(),'bytes':archive.stat().st_size,'files':len(files),'unpackedBytes':sum(p.stat().st_size for p in files),'url':None}
     (output/'ps2-stock-menu-manifest.json').write_text(json.dumps(manifest,indent=2),encoding='utf-8')
     (output/'ps2-stock-menu-provenance.json').write_text(json.dumps(provenance,indent=2),encoding='utf-8')
