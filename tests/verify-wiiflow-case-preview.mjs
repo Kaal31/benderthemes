@@ -32,6 +32,13 @@ try {
  assert.equal(await page.evaluate(()=>window.__caseEntries.get('1').angle),260,'Closing preview retains manual rotation and flip');
  await page.evaluate(()=>window.ThemeHub.emit('input',{btn:'right'}));
  assert.equal(await page.evaluate(()=>window.__caseEntries.get('2').angle),260,'Manual rotation carries over to the next focused cover');
+ // A late local landscape update must replace the existing blank 3D front,
+ // even when the portrait URL (and therefore the DOM primary image) is unchanged.
+ await page.evaluate(()=>{const state=window.ThemeHub.state;window.ThemeHub.emit('state',{...state,games:state.games.map(g=>g.appid===2?{...g,shortcut:true,name:'Simple 2000 Series Vol. 94 - The Aka-Champion - Come on Baby (Japan)',art:{...g.art,landscape:[location.origin+'/preview/good.svg']}}:g)});});
+ await page.waitForFunction(()=>window.__caseEntries.get('2')?.coverImage?.src.endsWith('/good.svg'));
+ assert.equal(await page.evaluate(()=>window.__caseEntries.get('2').front.material.map.image===window.__caseEntries.get('2').coverImage),true,'Local landscape artwork replaces the blank cover without reopening the theme');
+ const title=await page.locator('#title').evaluate(e=>({height:e.getBoundingClientRect().height,lineHeight:parseFloat(getComputedStyle(e).lineHeight),maxHeight:parseFloat(getComputedStyle(e).maxHeight),clamp:getComputedStyle(e).webkitLineClamp}));
+ assert.equal(title.clamp,'2');assert(title.maxHeight>=title.lineHeight*2,'Long titles have room for two whole lines');
  assert.deepEqual(errors,[]);
  mkdirSync('out/wiiflow-case-preview',{recursive:true});await page.screenshot({path:'out/wiiflow-case-preview/fallback-artwork.png'});
  await page.addInitScript(()=>{window.WiiFlowImport={initialMode:0,modes:[{name:'Standard coverflow',browse:{},selected:{}},{name:'Flat coverflow',browse:{center_angle:[0,20,0]},selected:{}}]};});

@@ -45,27 +45,30 @@ const APP_TYPE_SHORTCUT = 1073741824;
 const CDN = "https://cdn.cloudflare.steamstatic.com/steam/apps";
 
 function tryList(names: string[], app: any): string[] {
+  const urls: string[] = [];
   for (const n of names) {
     try {
       const fn = appStore?.[n];
       if (typeof fn !== "function") continue;
       const r = fn.call(appStore, app);
-      if (Array.isArray(r) && r.length) return r.filter((u) => typeof u === "string" && u);
-      if (typeof r === "string" && r) return [r];
+      if (Array.isArray(r)) urls.push(...r.filter((u): u is string => typeof u === "string" && !!u));
+      else if (typeof r === "string" && r) urls.push(r);
     } catch {
       /* ignore */
     }
   }
-  return [];
+  // Keep every compatible accessor: an earlier one may return a stale URL
+  // while another exposes the locally added shortcut artwork.
+  return [...new Set(urls)];
 }
 
 function artFor(a: any): Game["art"] {
   const shortcut = a.app_type === APP_TYPE_SHORTCUT;
   const cdn = (f: string) => (shortcut ? [] : [`${CDN}/${a.appid}/${f}`]);
-  return {
+  const art: Game["art"] = {
     portrait: [
       ...tryList(["GetCustomVerticalCapsuleURLs"], a),
-      ...tryList(["GetVerticalCapsuleURLForApp"], a),
+      ...tryList(["GetVerticalCapsuleURLForApp", "GetCachedVerticalImageURLForApp", "GetPregeneratedVerticalCapsuleForApp"], a),
       ...cdn("library_600x900.jpg"),
     ],
     landscape: [
@@ -76,6 +79,8 @@ function artFor(a: any): Game["art"] {
     hero: [...tryList(["GetCustomHeroImageURLs"], a), ...cdn("library_hero.jpg")],
     logo: [...tryList(["GetCustomLogoImageURLs"], a), ...cdn("logo.png")],
   };
+  for (const key of Object.keys(art) as (keyof Game["art"])[]) art[key] = [...new Set(art[key])];
+  return art;
 }
 
 /** Square Steam/shortcut icons, when the running client exposes them. */

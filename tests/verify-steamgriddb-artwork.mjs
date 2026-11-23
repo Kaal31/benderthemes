@@ -7,3 +7,19 @@ const m=await import(pathToFileURL(file));m.setLibrarySource({allApps:()=>[{appi
 const library=m.loadLibrary('all','alpha',400);assert.equal(library.games.length,2);
 for(const g of library.games){for(const kind of ['portrait','landscape','hero','logo'])assert.ok(g.art[kind][0].startsWith('https://custom.test/'),kind+' prefers custom Steam artwork');assert.ok(m.gameIconUrls(g)[0].endsWith('/icon.png'));if(g.shortcut)assert.ok(Object.values(g.art).flat().every(u=>!u.includes('steamstatic.com')));}
 console.log('PASS custom Steam artwork precedes CDN fallback for Steam games and non-Steam shortcuts; custom icons are read.');
+
+// Steam's accessors can disagree while local artwork is refreshed. Preserve
+// later candidates even when the first accessor returns a stale/invalid entry.
+appStore.GetCustomVerticalCapsuleURLs=()=>[];
+appStore.GetVerticalCapsuleURLForApp=()=>'/missing-shortcut-portrait.jpg';
+appStore.GetCachedVerticalImageURLForApp=()=>['https://steamloopback.host/customimages/20p.jpg'];
+appStore.GetCustomLandcapeImageURLs=()=>[null,''];
+appStore.GetCustomLandscapeImageURLs=()=>['https://steamloopback.host/customimages/20.jpg'];
+appStore.GetLandscapeImageURLForApp=()=>'/missing-shortcut-header.jpg';
+appStore.GetCachedLandscapeImageURLForApp=()=>['https://steamloopback.host/customimages/20.jpg','https://steamloopback.host/customimages/20-alt.jpg'];
+m.setLibrarySource({allApps:()=>[{appid:20,app_type:1073741824,display_name:'Local-art shortcut'}],collections:()=>[]});
+const local=m.loadLibrary('all','alpha',400).games[0];
+assert.deepEqual(local.art.landscape,['https://steamloopback.host/customimages/20.jpg','/missing-shortcut-header.jpg','https://steamloopback.host/customimages/20-alt.jpg']);
+assert(local.art.landscape.every(u=>!u.includes('steamstatic.com')));
+assert.deepEqual(local.art.portrait,['/missing-shortcut-portrait.jpg','https://steamloopback.host/customimages/20p.jpg']);
+console.log('PASS shortcut artwork keeps distinct custom/cached local URLs across stale or empty accessors');
