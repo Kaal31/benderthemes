@@ -421,3 +421,21 @@ class MirrorTests(unittest.TestCase):
             c=ts.download(folder,"p3t","ps3themes","downloads/other.p3t",opener=FakeOpener(first))
             self.assertTrue(c["already"])
             self.assertEqual(c["name"],a["name"])
+
+
+class TrimmedRuntimeTests(unittest.TestCase):
+    def test_catalog_survives_missing_unicode_extension(self):
+        import builtins
+        import importlib.util
+        from unittest.mock import patch
+        original_import = builtins.__import__
+        def without_unicode(name, *args, **kwargs):
+            if name == 'unicodedata':
+                raise ModuleNotFoundError('No module named unicodedata')
+            return original_import(name, *args, **kwargs)
+        spec = importlib.util.spec_from_file_location('theme_sources_trimmed', Path(ts.__file__))
+        module = importlib.util.module_from_spec(spec)
+        with patch('builtins.__import__', side_effect=without_unicode):
+            spec.loader.exec_module(module)
+        self.assertIsNone(module.unicodedata)
+        self.assertEqual({k['id'] for k in module.kinds()['kinds']}, set(ts.KINDS))

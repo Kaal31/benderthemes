@@ -43,8 +43,8 @@ export const OLD_BETA_PAGE_CSS=`
 .dht-oldbeta .beta-favorites-grid{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));grid-auto-rows:calc(var(--beta-h)*.35);gap:calc(var(--beta-h)*.03) calc(var(--beta-w)*.015);padding:2.5% 5%;background:linear-gradient(#365a70aa,transparent)}
 .dht-oldbeta .beta-web-tile{position:relative;display:flex;flex-direction:column;border:3px solid #355a70!important;background:linear-gradient(135deg,#102c38,#04121b)!important;transition:transform 140ms,outline-color 140ms;min-width:0}
 .dht-oldbeta .beta-web-tile svg{position:absolute;inset:0;width:100%;height:92%;color:#6b8a9370;opacity:.5}
-.dht-oldbeta .beta-web-tile>span{position:relative;flex:1;display:grid;place-items:center;font-weight:300;font-size:calc(var(--beta-w)*.028);color:#a3b5bc}
-.dht-oldbeta .beta-web-tile>small{position:relative;display:block;background:#263640;color:#a4b9c3;font-size:.65em;line-height:1.5}
+.dht-oldbeta .beta-web-tile>span{position:relative;align-self:stretch;width:100%;min-width:0;text-align:center;flex:1;display:grid;place-items:center;font-weight:300;font-size:calc(var(--beta-w)*.028);color:#a3b5bc}
+.dht-oldbeta .beta-web-tile>small{position:relative;align-self:stretch;width:100%;box-sizing:border-box;padding:0 6px;text-align:left;display:block;background:#263640;color:#a4b9c3;font-size:.65em;line-height:1.5}
 .dht-oldbeta .beta-web-tile:focus{z-index:2;transform:scale(1.065);border-color:#d2e8f1!important;box-shadow:0 0 9px #d3eef5a0}.dht-oldbeta .beta-web-tile:focus>small{background:#d5e1e7;color:#344e5e}
 .dht-oldbeta .beta-browser-empty{grid-column:1/-1;text-align:center;padding:10%}
 .dht-oldbeta .beta-browser-page{position:absolute;inset:0 0 10%;animation:beta-browser-arrive 320ms cubic-bezier(.22,.61,.36,1)}

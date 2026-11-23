@@ -25,7 +25,10 @@ to the source's own hosts, sizes are capped per kind, and the file is checked (m
 import io
 import hashlib
 import html
-import unicodedata
+try:
+    import unicodedata
+except ImportError:  # Optional in Decky's trimmed Python runtime.
+    unicodedata = None
 import json
 import os
 import re
@@ -437,7 +440,7 @@ def _ps3themes_items(posts):
 def group_items(items, kind):
     groups = {}
     for item in items:
-        normalize = lambda value: " ".join(unicodedata.normalize("NFKC", value or "").casefold().split())
+        normalize = lambda value: " ".join((unicodedata.normalize("NFKC", value or "") if unicodedata else (value or "")).casefold().split())
         author = normalize(item.get("author"))
         files = item.get("files")
         names = [f.get("name", "") for f in files] if files else [(item.get("file") or {}).get("name", "") or item["id"]]
