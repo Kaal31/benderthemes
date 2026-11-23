@@ -19,6 +19,45 @@ def _signature(path):
 def _theme_config(config):
     return config.has_section('MAIN/BG') or config.has_section('GENERAL') and any(section.startswith(('MAIN/','_COVERFLOW')) for section in config.sections())
 
+def _theme_archive(path):
+    """Recognize theme content before reporting archive limits or import errors."""
+    # Explicit WiiFlow packs can still report incomplete/unsupported archive errors.
+    named = 'wiiflow' in path.stem.casefold().replace('-', '').replace('_', '').replace(' ', '')
+    if path.suffix.lower() != '.zip':
+        try:
+            from console_archive import contains_file
+            return contains_file(path, '.ini', _theme_ini_bytes) or named
+        except (OSError, ValueError):
+            return named
+    try:
+        with zipfile.ZipFile(path) as archive:
+            entries = archive.infolist()
+            if len(entries) > MAX_FILES:
+                return named
+            remaining = 1024 * 1024
+            for entry in entries:
+                if not entry.filename.lower().endswith('.ini') or entry.file_size > 256 * 1024:
+                    continue
+                remaining -= entry.file_size
+                if remaining < 0:
+                    break
+                if _theme_ini_bytes(archive.read(entry)):
+                    return True
+    except (OSError, ValueError, RuntimeError, zipfile.BadZipFile):
+        pass
+    return named
+
+
+def _theme_ini_bytes(raw):
+    import configparser
+    config = configparser.ConfigParser(strict=False, interpolation=None, allow_no_value=True)
+    try:
+        config.read_string(raw.decode('utf-8-sig', errors='replace').replace('\x00', ''))
+        return _theme_config(config)
+    except (ValueError, configparser.Error):
+        return False
+
+
 def candidates(roots):
     """Only completed archives and extracted theme trees; never browser .part files."""
     found=[];visited=0
@@ -101,13 +140,7 @@ def scan(roots,state_path):
             key=str(path.resolve());old=state.get(key,{})
             if old.get('signature')!=signature:
                 state[key]={'signature':signature,'seen':now};pending+=1;continue
-            if path.is_file() and path.stat().st_size>converter.MAX_BYTES:
-                errors.append(f'{path.name}: archive exceeds 256 MiB. Download the theme-only pack, or extract just its theme folder into Downloads.')
-                continue
             if old.get('done'):continue
-            if old.get('retryAt',0)>now:
-                if old.get('error'):errors.append(f'{path.name}: {old["error"]}')
-                continue
             # Two scans plus a quiet period prevent converting half-written downloads.
             if now-old.get('seen',now)<2:pending+=1;continue
             if path.is_file() and path.suffix.lower()=='.zip':
@@ -115,8 +148,19 @@ def scan(roots,state_path):
                     with zipfile.ZipFile(path) as archive:archive.infolist()
                 except (OSError,zipfile.BadZipFile):
                     if now-old.get('seen',now)<120:pending+=1
-                    else:errors.append(f'{path.name}: this ZIP is incomplete or damaged. Finish or retry its download.')
+                    elif 'wiiflow' in path.stem.casefold():errors.append(f'{path.name}: this ZIP is incomplete or damaged. Finish or retry its download.')
+                    else:old['done']=True
                     continue
+            if path.is_file() and not old.get('theme') and not _theme_archive(path):
+                old['done']=True
+                continue
+            old['theme']=True
+            if old.get('retryAt',0)>now:
+                if old.get('error'):errors.append(f'{path.name}: {old["error"]}')
+                continue
+            if path.is_file() and path.stat().st_size>converter.MAX_BYTES:
+                errors.append(f'{path.name}: archive exceeds 256 MiB. Download the theme-only pack, or extract just its theme folder into Downloads.')
+                continue
             try:
                 added=install(path);imported.extend(added);old['done']=True
             except Exception as error:
