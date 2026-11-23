@@ -7,8 +7,15 @@ export function firmwarePanes(imported:Record<string,SwitchPane>,profile:SwitchF
  const defaults=FIRMWARE_DEFAULTS[modern?"modern":"classic"];
  const result:Record<string,SwitchPane>={};
  for(const key of new Set([...Object.keys(defaults),...Object.keys(imported)])){
-  const patch=imported[key];result[key]={...(key==='L_BtnLR'&&patch?FIRMWARE_DEFAULTS.modern.L_BtnLR:defaults[key]),...patch};
-
+  const patch=imported[key];
+  let base=defaults[key];
+  if(key==='L_BtnLR'&&patch&&!modern){
+   // Historical seven-applet layouts insert NSO one classic pitch before News.
+   // The newer nine-applet position would overlap the classic News button.
+   const news=defaults.L_BtnNoti.Position,shop=defaults.L_BtnShop.Position;
+   base={...FIRMWARE_DEFAULTS.modern.L_BtnLR,Position:{X:2*(news?.X??-270)-(shop?.X??-162),Y:news?.Y??0}};
+  }
+  result[key]={...base,...patch};
  }
  if(!modern){if(profile==='classic'||!imported.L_BtnLR)delete result.L_BtnLR;delete result.L_BtnSplay;delete result.L_BtnVgc;}
  if(hideOnlineButton){for(const key of ['L_BtnLR','L_BtnSplay','L_BtnVgc'])if(!imported[key])result[key]={...result[key],Visible:false};}

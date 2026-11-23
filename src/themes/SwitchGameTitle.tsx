@@ -52,7 +52,7 @@ export function SwitchGameTitle({conversion,effects,title,running,dark,modern,en
     // The native title uses the text as a mask for the P_Color pane.
     const mask=defaults.RdtBalloon.find(p=>p.name==='P_Color')!,maskInk=resolvePalette(mergeSceneEffect(mergeSceneEffect(mask.effect,mask.material?materials[mask.material]:undefined),patches[mask.slot]),dark);
     const corners=effect.corners?.ColorTR?{ColorTL:effect.corners.ColorTR,ColorTR:effect.corners.ColorTR,ColorBL:effect.corners.ColorBR??effect.corners.ColorTR,ColorBR:effect.corners.ColorBR??effect.corners.ColorTR}:undefined;
-    return {className:node.name==='T_Main'?'dht-switch-native-title-text':undefined,content:<div style={{position:'absolute',inset:0,display:'flex'}}><SwitchMaterial surfaceStyle={false} effect={{...maskInk,corners:corners?Object.fromEntries(Object.entries(corners).map(([key,rgba])=>[key,rgba.map((value,i)=>value*(maskInk?.corners?.[key]?.[i]??255)/255)])):maskInk?.corners}}><SwitchText text={text} {...{metrics,enabled}} marquee={node.name==='T_Main'}/></SwitchMaterial></div>};
+    return {className:node.name==='T_Main'?'dht-switch-native-title-text':undefined,content:<div style={{position:'absolute',inset:0,display:'flex'}}><SwitchMaterial alphaMask surfaceStyle={false} effect={{...maskInk,corners:corners?Object.fromEntries(Object.entries(corners).map(([key,rgba])=>[key,rgba.map((value,i)=>value*(maskInk?.corners?.[key]?.[i]??255)/255)])):maskInk?.corners}}><SwitchText text={text} {...{metrics,enabled}} marquee={node.name==='T_Main'}/></SwitchMaterial></div>};
    }
    return {};
   }}/>

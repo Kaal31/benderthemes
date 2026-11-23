@@ -17,7 +17,7 @@ export function SwitchProfile({effects,animations,modern,dark,enabled,label,onAc
  const parts=useMemo(()=>({GTNumM:HUD_DEFAULTS[modern?'modern':'classic'].GTNumM}),[modern]);
  return <div className="dht-switch-profile" onPointerEnter={()=>setHovered(true)} onPointerLeave={()=>{setHovered(false);setPressed(false);}} style={{position:'absolute',left:'50%',top:'50%',width:0,height:0}}>
   <SwitchWidgetTree file="RdtBtnMyPage" {...{effects,animations,modern,dark,enabled,parts}} events={[active?'active':'inactive',...(active?['focus']:[]),...(pressed?['decide','touch']:[])]} render={(node,effect,path)=>{
-   if(node.name==='P_PictBase')return {style:{borderRadius:effect.radius??30,overflow:'hidden'},content:<SwitchMaterial surfaceStyle={false} effect={effect} textureMotion><ProfileAvatar size={node.size[0]}/></SwitchMaterial>};
+   if(node.name==='P_PictBase')return {style:{borderRadius:effect.radius??30,overflow:'hidden'},content:<SwitchMaterial surfaceStyle={false} effect={{...effect,white:[255,255,255,255],black:[0,0,0,0],corners:undefined}} textureMotion><ProfileAvatar size={node.size[0]}/></SwitchMaterial>};
    if(node.name==='B_Hit')return {style:{pointerEvents:'auto'},content:<button aria-label={label} onFocus={()=>setFocused(true)} onBlur={()=>setFocused(false)} onPointerDown={()=>setPressed(true)} onPointerUp={()=>setPressed(false)} onClick={onActivate} style={{width:'100%',height:'100%',background:'transparent',border:0}}/>};
    if(node.name==='N_Num')return {hidden:count===undefined||count===0};
    if(node.name.startsWith('L_Num_')){const digit=digits[Number(node.name.slice(-2))];return {hidden:digit===' ',style:{visibility:effect.Visible===false?'hidden':'inherit'}};}

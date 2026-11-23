@@ -61,7 +61,7 @@ export function vertexImage(corners:Record<string,number[]>|undefined) {
 }
 
 /** A two-register texture-color remap, with source alpha retained for glyphs. */
-export function SwitchMaterial({effect,children,textureMotion=false,surfaceStyle=true}: {effect:SwitchEffect|undefined;children:ReactNode;textureMotion?:boolean;surfaceStyle?:boolean}) {
+export function SwitchMaterial({effect,children,textureMotion=false,surfaceStyle=true,alphaMask=false}: {effect:SwitchEffect|undefined;children:ReactNode;textureMotion?:boolean;surfaceStyle?:boolean;alphaMask?:boolean}) {
   const id = "nx-material-"+useId().replace(/[^a-zA-Z0-9]/g,"");
   const motion=useContext(SwitchTextureMotionContext),host=useRef<HTMLSpanElement>(null),gradient=useRef<SVGFEImageElement>(null),registers=useRef<SVGFEComponentTransferElement>(null);
   const colorMotion=!!(motion.vertexMask||motion.materialMask);
@@ -97,7 +97,7 @@ export function SwitchMaterial({effect,children,textureMotion=false,surfaceStyle
       <feFuncG type="linear" slope={(white[1]-black[1])/255*tint[1]/255} intercept={black[1]/255*tint[1]/255}/>
       <feFuncB type="linear" slope={(white[2]-black[2])/255*tint[2]/255} intercept={black[2]/255*tint[2]/255}/>
       <feFuncA type="linear" slope={(white[3]-black[3])/255} intercept={black[3]/255}/>
-    </feComponentTransfer>{vertex&&<><feImage ref={gradient} href={vertex} x="0" y="0" width="100%" height="100%" preserveAspectRatio="none" result="vertex"/><feComposite in="material" in2="vertex" operator="arithmetic" k1="1" k2="0" k3="0" k4="0"/></>}</filter></defs></svg>}
+    </feComponentTransfer>{vertex&&<><feImage ref={gradient} href={vertex} x="0" y="0" width="100%" height="100%" preserveAspectRatio="none" result="vertex"/><feComposite in="material" in2="vertex" operator="arithmetic" k1="1" k2="0" k3="0" k4="0"/></>}{alphaMask&&<feComposite in2="SourceAlpha" operator="in"/>}</filter></defs></svg>}
     <span style={{display:"inline-flex",width:"100%",height:"100%",alignItems:"center",justifyContent:"center",filter:mapping?(blackMask&&!colorMotion?'brightness(0)':`url(#${id})`):undefined}}>{textureMotion?<SwitchTexture enabled>{children}</SwitchTexture>:children}</span>
 
   </span>;

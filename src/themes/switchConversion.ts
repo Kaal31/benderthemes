@@ -52,10 +52,16 @@ export function paneMotionFrame(animations:SwitchAnimation[],frame:number,base:S
  if(values.has(23))result['--dht-nx-uv-offset-x']=String(values.get(23)!);
  if(values.has(24))result['--dht-nx-uv-offset-y']=String(values.get(24)!);
  if(raster){
-  const {width:w,height:h,texture:t}=raster,x=values.get(0)??base.Position?.X??0,y=values.get(1)??base.Position?.Y??0,sx=values.get(6)??base.Scale?.X??1,sy=values.get(7)??base.Scale?.Y??1;
+  const {width:w,height:h,texture:t}=raster;
+  // Atlas frame offsets are authored for 1280x720, just like their texture
+  // scale. Scale both together on 16:10 so sampling stays inside the same cell.
+  const x=(values.get(0)??base.Position?.X??0)*w/1280,y=(values.get(1)??base.Position?.Y??0)*h/720,sx=values.get(6)??base.Scale?.X??1,sy=values.get(7)??base.Scale?.Y??1;
   result.transform='none';
   result.backgroundSize=`${Math.max(0,w*sx*(t.mirrorX?2:1)/t.scaleX)}px ${Math.max(0,h*sy*(t.mirrorY?2:1)/t.scaleY)}px`;
-  result.backgroundPosition=`calc(50% + ${x}px) calc(50% - ${y}px)`;
+  // Mirrored periods are twice the original tile. CSS centering otherwise
+  // shifts sampling by half a tile and selects the reflected atlas rows.
+  const mirrorOffsetX=t.mirrorX?w*sx/t.scaleX/2:0,mirrorOffsetY=t.mirrorY?h*sy/t.scaleY/2:0;
+  result.backgroundPosition=`calc(50% + ${x+mirrorOffsetX}px) calc(50% + ${-y+mirrorOffsetY}px)`;
   result.clipPath=`inset(${Math.max(0,h/2-y-h*sy/2)}px ${Math.max(0,w/2-x-w*sx/2)}px ${Math.max(0,h/2+y-h*sy/2)}px ${Math.max(0,w/2+x-w*sx/2)}px)`;
  }
  return result;

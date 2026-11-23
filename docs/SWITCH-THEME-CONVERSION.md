@@ -101,3 +101,20 @@ Axis-aligned repeated atlases with discrete translation sequences now flatten pa
 `check_switch_live_wallpaper.mjs` keeps playback running at a held pose and compares its pixels with the paused pose at widths 550 and 1304 for both 3595 and 14665. Mean RGB difference is zero in all four cases. `check_switch_visuals.mjs 3595` separately compares a direct source-frame crop: over 90% exact RGB matches and mean error below 2/255, allowing CSS texel-edge rounding while rejecting a one-source-pixel offset (mean error above 8/255). These checks do not restore source detail absent from the archive.
 
 Optional local font resources are imported through the same menu-resource action: `.ttf`, `.otf`, `.bfttf`, `.bfotf`. Standard and extended font families are cached locally with content hashes and used for native text painting and width measurements. No console font is bundled.
+
+
+### Themezer fidelity audit, 22 November 2026
+
+Downloaded and exercised 25 public Home themes through the production Themezer downloader and reader. The review compares author screenshots against imported Home at 1280-wide 16:9 and 16:10 design surfaces, with artwork loading, directional input, Options return, and still/live animation checks. Download failures are recorded separately: 13B5F, DE49, 6DE7, 75B9, 796D and 13696 currently return unavailable downloads; they are not counted as successful import tests. Local reference files and test downloads stay outside the shipped theme bundle.
+
+Shared corrections from this pass:
+
+- Preserve separate same-name/same-author variants instead of discarding their duplicate Home targets.
+- Navigate imported applet columns and groups spatially; recover selection when a newly applied layout hides the selected button.
+- Paint repeating rotating wallpaper on a bounded surface, pausing off-screen.
+- Compensate mirrored atlas centering and scale its frame offsets to 16:10, so animation does not sample vertically reflected or adjacent rows.
+- Draw oversized launcher backings behind the game covers.
+- Preserve source-alpha masks for remapped applet glyphs and title text, avoiding opaque squares.
+- Keep the host profile photo in its own colors and retain historical seven-applet spacing when NSO is explicitly enabled.
+
+These checks are not a pixel-identical firmware claim. Steam supplies its own games, current profile, clock/network state and mapped actions. Author preview dummy covers and extra console users are not fabricated. Optional user-provided native fonts/textures can change fallback glyph appearance. Firmware group-edit and change-user animation diagnostics remain visible where no equivalent playback binding is available. Static author previews cannot establish every transition's original timing; original-hardware performance and controller recovery still require on-device testing.

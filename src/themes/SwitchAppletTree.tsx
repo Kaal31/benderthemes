@@ -48,7 +48,7 @@ export function SwitchAppletTree({id,label,art,effects,animations,modern,dark,en
     const pictureEffect=art&&primary?resolvePalette(effect,dark,false,{100:dark?[220,220,220,255]:[110,120,121,255]}):effect;
     // Picture panes use a quad, not an inline text baseline. A one-pixel mask
     // scaled to screen size amplifies even a small baseline offset enormously.
-    return {alphaMask:true,content:shape&&<div style={{position:'absolute',inset:0,display:'flex'}}><SwitchMaterial surfaceStyle={false} effect={{...pictureEffect,Position:undefined,Scale:undefined,Rotation:undefined,Size:undefined}}>{shape}</SwitchMaterial></div>};
+    return {alphaMask:true,content:shape&&<div style={{position:'absolute',inset:0,display:'flex'}}><SwitchMaterial alphaMask surfaceStyle={false} effect={{...pictureEffect,Position:undefined,Scale:undefined,Rotation:undefined,Size:undefined}}>{shape}</SwitchMaterial></div>};
    }
    return {};
   }}/></div>

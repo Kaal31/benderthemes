@@ -1,3 +1,4 @@
+import {SwitchTiledBackground} from "./SwitchTiledBackground";
 import {SwitchSecondary,SwitchSecondaryBackground} from "./SwitchSecondary";
 import {SwitchPromptGlyph} from './SwitchPromptGlyph';
 import {useSwitchReferenceHints} from "./useSwitchReferenceHints";
@@ -44,7 +45,7 @@ import {ProfileAvatar} from "../ProfileAvatar";
 // "Settings", and the round button pictures; each part has its own toggle in Theme options.
 import { CSSProperties, useEffect, useState, useRef, useMemo } from "react";
 import { GameArt, Icon, IconName, themeMenu, useHome, useMenu, useRemembered } from "../common";
-import { clamp, Press, Stage, ThemeRoot, useStage } from "../input";
+import { clamp, spatial, Press, Stage, ThemeRoot, useStage } from "../input";
 import { Game, openSteam, SteamPlace } from "../library";
 import { showTitle, THEMES, themeFx } from "../settings";
 import { playSound, useBattery, useClock, useWallpaper } from "../steam";
@@ -184,8 +185,11 @@ export function SwitchHome() {
   const sceneRef=useSwitchPaneMotion(conversion?.animations??[],"scene",[launch?"launch":menu.isOpen?"exit":"enter"],animationOn);
   const resume=useSwitchResume(api.lib.games.map(game=>game.appid));
   const rootRef=useSwitchPaneMotion(conversion?.animations??[],"sceneRoot",[launch?"launch":menu.isOpen?"exit":"enter"],animationOn);
+  const tiledTexture=backgroundEffects.background?.texture;
+  const tiledMotion=(conversion?.animations??[]).filter(a=>a.pane==="background"&&a.event===(menu.isOpen?"exit":"enter"));
+  const tiledBackground=!wall&&tiledTexture?.repeatX&&tiledTexture.repeatY&&tiledMotion.some(a=>a.tracks.some(t=>t.property===5))&&tiledMotion.every(a=>a.tracks.every(t=>[0,1,5,6,7,16,17].includes(t.property)));
   const bgRaster=backgroundRaster(wall?[]:conversion?.animations??[],backgroundEffects.background,backgroundEffects.backgroundContainer,W,H);
-  const bgRef=useSwitchPaneMotion(wall?[]:conversion?.animations??[],"background",[menu.isOpen?"exit":"enter",...(resume>0?["resume"]:[])],animationOn,backgroundEffects.backgroundContainer,1,1,false,resume,bgRaster);
+  const bgRef=useSwitchPaneMotion(wall||tiledBackground?[]:conversion?.animations??[],"background",[menu.isOpen?"exit":"enter",...(resume>0?["resume"]:[])],animationOn,backgroundEffects.backgroundContainer,1,1,false,resume,bgRaster);
   const footerRef=useSwitchPaneMotion(conversion?.animations??[],"footer",[launch?"exit":menu.isOpen?"exit":"enter"],animationOn,rawEffects.footer,1,1,true);
   const luma = useLuma(parts.background, parts.brightness);
   const colorMode=themeStyle<string>(s,"switch","firmwareColors");
@@ -202,13 +206,26 @@ export function SwitchHome() {
     ...DOCK.slice(4),
   ];
   const dockKeys:Record<string,string>={news:"L_BtnNoti",shop:"L_BtnShop",album:"L_BtnPvr",controller:"L_BtnCtrl",settings:"L_BtnSet",power:"L_BtnPow",online:"L_BtnLR",gameShare:"L_BtnSplay",virtualCards:"L_BtnVgc"};
-  const visibleDock = dock.map((_,i)=>i).filter(i=>panes[dockKeys[dock[i].art??dock[i].id]]?.Visible!==false);
+  const dockPoint=(i:number)=>{
+    const parent=panes.N_System,pane=panes[dockKeys[dock[i].art??dock[i].id]];
+    return {x:W/2+(parent?.Position?.X??0)*W/1280+(pane?.Position?.X??0)*(parent?.Scale?.X??1)*W/1280,
+      y:H/2-(parent?.Position?.Y??0)*W/1280-(pane?.Position?.Y??0)*(parent?.Scale?.Y??1)*W/1280};
+  };
+  const visibleDock = dock.map((_,i)=>i).filter(i=>{
+    if(panes.N_System?.Visible===false||panes[dockKeys[dock[i].art??dock[i].id]]?.Visible===false)return false;
+    if(!conversion)return true;
+    const point=dockPoint(i);return point.x>=0&&point.x<=W&&point.y>=0&&point.y<=H;
+  });
 
   const games = view === "apps" ? api.library.games : api.lib.games;
   const [sel, setSel] = useRemembered("switch-sel", 0);
   const [pressed,setPressed]=useState(false),[pointerPressed,setPointerPressed]=useState(false);
   const [row, setRow] = useState<"tiles" | "dock">("tiles");
   const [dsel, setDsel] = useState(0), [asel, setAsel] = useState(0);
+  const dockSelection=visibleDock.join(',');
+  useEffect(()=>{
+    if(!visibleDock.includes(dsel)){if(visibleDock.length)setDsel(visibleDock[0]);else setRow("tiles");}
+  },[dockSelection,dsel]);
   useEffect(()=>{
     let timer:ReturnType<typeof setTimeout>|undefined;
     const notify=(event:Event)=>{const connected=event.type==="gamepadconnected";setControllerNotice(connected?"Controller connected":"Controller disconnected");if(timer)clearTimeout(timer);timer=setTimeout(()=>setControllerNotice(null),2500);};
@@ -274,7 +291,12 @@ export function SwitchHome() {
       return true;
     }
     if (row === "dock") {
-      if (b === "left" || b === "right") { const k = visibleDock[clamp(visibleDock.indexOf(dsel) + (b === "left" ? -1 : 1), 0, visibleDock.length - 1)] ?? dsel; if (k !== dsel) (setDsel(k), playSound("move")); }
+      if(conversion&&["left","right","up","down"].includes(b)){
+        const index=spatial(visibleDock.map(dockPoint),Math.max(0,visibleDock.indexOf(dsel)),b as "left"|"right"|"up"|"down");
+        if(index>=0){setDsel(visibleDock[index]);playSound("move");}
+        else if(b==="up"||b==="right"){setRow("tiles");playSound("tab");}
+      }
+      else if (b === "left" || b === "right") { const k = visibleDock[clamp(visibleDock.indexOf(dsel) + (b === "left" ? -1 : 1), 0, visibleDock.length - 1)] ?? dsel; if (k !== dsel) (setDsel(k), playSound("move")); }
       else if (b === "up" || b === "b") (setRow("tiles"), playSound("tab"));
       else if (b === "a") runDock(dsel);
       return true;
@@ -370,7 +392,7 @@ export function SwitchHome() {
         {effects.cursor && <style>{`.dht-switch-focus{box-sizing:border-box;border-style:solid;animation:none!important;border-color:${nxColor(effects.cursorGlow?.white??effects.cursor.white,"#19bcc4")}!important;border-width:calc(${effects.cursor.borderWidth??3}px * var(--dht-switch-focus-unit,1))!important;border-radius:calc(${effects.cursor.radius??0}px * var(--dht-switch-focus-unit,1));box-shadow:${cursorShadow??`0 0 ${effects.cursor.shadow??0}px ${nxColor(effects.cursorGlow?.white,effects.cursor.white?nxColor(effects.cursor.white):"#19bcc4")}`}!important;${effects.cursor.borderDraw===false?"border:none!important;":""}}`}</style>}
         <div ref={element=>{rootRef.current=element;captureSource.current=element;referenceRoot.current=element;}} className="dht-switch-root" data-system-graphics={systemGraphics} data-standard={!conversion} data-standard-skin={!skin?standardSkin:undefined} data-motion={s.animations} data-resume-generation={resume} style={{position:"absolute",inset:0}}>
         {!wall&&parts.background&&effects.backgroundContainer?.Visible===false&&<div className="dht-switch-wallpaper-backdrop" style={{position:"absolute",inset:0,backgroundImage:`url(${parts.background})`,backgroundSize:"cover",backgroundPosition:"center"}}/>}
-        <div ref={bgRef} className="dht-switch-bg" data-raster-mode={bgRaster?'viewport':undefined} data-converted={!!conversion?.converted} data-dht-from-skin={parts.background ? "" : undefined} data-view={view} style={{ position: "absolute", inset: 0, ...bg,zIndex:bgOrder.exelixBG }} />
+        <div ref={bgRef} className="dht-switch-bg" data-raster-mode={bgRaster?'viewport':undefined} data-converted={!!conversion?.converted} data-dht-from-skin={parts.background ? "" : undefined} data-view={view} style={{ position: "absolute", inset: 0, ...bg,...(tiledBackground?{transform:"none",backgroundImage:undefined}:{}),zIndex:bgOrder.exelixBG }} >{tiledBackground&&backgroundImage&&tiledTexture&&<SwitchTiledBackground source={backgroundImage} width={W} height={H} texture={tiledTexture} animations={tiledMotion} enabled={animationOn}/>}</div>
         <WallpaperVideo src={wall} style={{zIndex:bgOrder.exelixBG+.1,objectFit:wallpaperFit==="cover"?"cover":wallpaperFit==="contain"?"contain":"fill"}}/>{!wall&&effects.backgroundPanel && (effects.backgroundPanel.Position||effects.backgroundPanel.Size) && effects.backgroundPanel.Visible!==false && <div className="dht-switch-background-panel" style={{position:"absolute",pointerEvents:"none",left:W/2+(effects.backgroundPanel.Position?.X??0)*k-(effects.backgroundPanel.Size?.X??1280)*k/2,top:H/2-(effects.backgroundPanel.Position?.Y??0)*k-(effects.backgroundPanel.Size?.Y??720)*k/2,width:(effects.backgroundPanel.Size?.X??1280)*k,height:(effects.backgroundPanel.Size?.Y??720)*k,background:panelColor(effects.backgroundPanel),zIndex:bgOrder.P_Bg_00,...paneStyle(effects.backgroundPanel)}}/>}
         {!wall&&view!=="home"&&secondary&&<SwitchSecondaryBackground conversion={secondary} image={!wall?parts.background:undefined} enabled={secondaryEnabled} scale={W/1280}/>}
         {view === "lock" && (
@@ -439,7 +461,7 @@ export function SwitchHome() {
             const downloadProgress=download?(download.completed?undefined:Math.max(0,download.progress)*100):game?.overview?.percent_downloaded>0&&game.overview.percent_downloaded<100?game.overview.percent_downloaded:undefined;
             return <div key={i < n ? game.appid : "all"} className="dht-switch-tile" data-selected={on && row === "tiles"} data-name={label(i)}
               onPointerDown={()=>setPointerPressed(true)} onPointerUp={()=>setPointerPressed(false)} onPointerCancel={()=>setPointerPressed(false)} onPointerLeave={()=>setPointerPressed(false)} onClick={() => { if(swipe.current?.dragged){swipe.current=null;return;} setRow("tiles"); if (on) { if (game) activateGame(game); else openLibrary(); } else { setSel(i); playSound("move"); } }}
-              style={{ position: "absolute", left: tileX(i)+(conversion?0:scroll), top: tileTop(i), width: size, height, transform:!conversion&&on&&row==="tiles"?`scale(${276/262})`:undefined, ...paneStyle(panes["game:RootPane"]?.Rotation ? {Rotation:panes["game:RootPane"].Rotation}:undefined), transition: conversion?"left 160ms ease-out, width 140ms, height 140ms, top 140ms":"transform 180ms cubic-bezier(.22,1,.36,1)", background: game||conversion ? "transparent" : dark?"#383838":"linear-gradient(145deg,#f5f5f5,#cfcfcf)", overflow: conversion||hit?"visible":"hidden",pointerEvents:hit?"none":"auto",borderRadius:game?artRadius:"50%",zIndex:on&&row==="tiles"?1:0 }}>
+              style={{ position: "absolute", left: tileX(i)+(conversion?0:scroll), top: tileTop(i), width: size, height, transform:!conversion&&on&&row==="tiles"?`scale(${276/262})`:undefined, ...paneStyle(panes["game:RootPane"]?.Rotation ? {Rotation:panes["game:RootPane"].Rotation}:undefined), transition: conversion?"left 160ms ease-out, width 140ms, height 140ms, top 140ms":"transform 180ms cubic-bezier(.22,1,.36,1)", background: game||conversion ? "transparent" : dark?"#383838":"linear-gradient(145deg,#f5f5f5,#cfcfcf)", overflow: conversion||hit?"visible":"hidden",pointerEvents:hit?"none":"auto",borderRadius:game?artRadius:"50%",zIndex:i===n&&(size>W||height>H)?-1:on&&row==="tiles"?1:0 }}>
               {game&&conversion ? <SwitchGameMotion animations={conversion.animations} effects={effects} nativePanes={conversion.nativePanes} nativeAnimations={conversion.nativeAnimations} nativeMaterials={conversion.nativeMaterials} modern={!!panes.L_BtnSplay} dark={dark} active={on&&row==="tiles"} enabled={animationOn} unitX={size/(iconPane?.Size?.X??256)} unitY={height/(iconPane?.Size?.Y??256)} touch={pointerPressed||pressed} running={!!game.overview?.running} launching={!!launch&&on} downloadProgress={downloadProgress} installable={!game.installed}
                 focus={<SwitchNativeFocus effects={effects} modern={!!panes.L_BtnSplay} dark={dark} width={effects.gameFocus?.Size?.X??iconPane?.Size?.X??256} height={effects.gameFocus?.Size?.Y??iconPane?.Size?.Y??256}/>}
               >

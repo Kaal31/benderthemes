@@ -28,7 +28,7 @@ try:
 except Exception:  # pragma: no cover
     wiiu_themes = None
 
-READER_VERSION = 42  # Vertex/material color tracks, native dialog masks and game runtime states.
+READER_VERSION = 43  # Keep distinct theme variants with identical names/authors.
 MAX_FILE = 48 * 1024 * 1024
 ICON_NAMES = ("album", "news", "shop", "controller", "settings", "power", "nso", "card", "share")
 TARGET_LABELS = {"home": "Home menu", "lock": "Lock screen", "apps": "All software", "news": "News", "psl": "Player select",
@@ -317,13 +317,19 @@ def scan_folder(folder, cache_path=None):
         if not i:
             continue
         folder_name = n.rsplit("/", 1)[0] if "/" in n else ""
-        g = groups.setdefault(group_key(i["name"], i["author"], folder_name), {"name": i["name"], "author": i["author"], "files": {}})
         t = i["target"] or "?"
-        g["files"].setdefault(t, n)
+        variants = groups.setdefault(group_key(i["name"], i["author"], folder_name), [])
+        # Names/authors are not unique on Themezer. A second Home (or other
+        # target) is another variant, not a screen to silently discard.
+        g = next((candidate for candidate in variants if t not in candidate["files"]), None)
+        if g is None:
+            g = {"name": i["name"], "author": i["author"], "files": {}}
+            variants.append(g)
+        g["files"][t] = n
         if t == "home":
             g["name"] = i["name"]
     res = []
-    for g in groups.values():
+    for g in (variant for variants in groups.values() for variant in variants):
         g["primary"] = g["files"].get("home") or next(iter(g["files"].values()))
         g["id"] = g["primary"]
         if len(g["files"]) > 1:  # a shared name, without the screen word

@@ -83,6 +83,19 @@ def main():
         assert len(n["otherScreens"]) + len(n["screens"]) == 1
         for evil in ("../x.nxtheme", "/etc/passwd", "a/b/c.nxtheme", "..\\x", ""):
             assert S.safe_rel(t, evil) is None, evil
+    # Themezer permits distinct downloads with identical names and authors.
+    with tempfile.TemporaryDirectory() as t:
+        make(os.path.join(t, "Variant (Themezer 103D0).nxtheme"), "Splatoon Grafiti Vertical", "home")
+        make(os.path.join(t, "Variant (Themezer 103D1).nxtheme"), "Splatoon Grafiti Vertical", "home", image=("image.jpg", b"different"))
+        make(os.path.join(t, "Variant Lock.nxtheme"), "Splatoon Grafiti Vertical [Lock]", "lock")
+        idx = os.path.join(t, "index.json")
+        groups = S.scan_folder(t, idx)
+        assert len(groups) == 2 and len({g["id"] for g in groups}) == 2, groups
+        assert sum(len(g["files"]) for g in groups) == 3, groups
+        assert S.scan_folder(t, idx) == groups
+        for g in groups:
+            skin = S.read_theme(t, g["id"], du, idx)
+            assert skin["file"] == g["id"] and skin["screens"]["home"]["file"] == g["id"]
     # Themezer serves .nxtheme as a plain zip with the same members (layout.json, image.jpg, info.json)
     import io, zipfile
     with tempfile.TemporaryDirectory() as t:
