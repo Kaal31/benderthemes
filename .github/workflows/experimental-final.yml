@@ -10,7 +10,10 @@ concurrency:
   cancel-in-progress: false
 jobs:
   python-compat:
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-22.04
+    env:
+      PIP_DEFAULT_TIMEOUT: 120
+      PIP_RETRIES: 5
     steps:
       - uses: actions/checkout@v4
       - uses: actions/setup-python@v5
