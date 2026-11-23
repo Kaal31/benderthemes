@@ -135,7 +135,7 @@ const backend: Record<string, (...a: any[]) => any> = {
   plugin_catalog: () => (window as any).__pluginCatalog ?? PLUGIN_CATALOG_FIXTURE,
   // Hub > Theme files (py_modules/theme_sources.py). Invented entries; window.__themeSources = { "<kind>:<source>": page }
   // replaces a page (tests inject real backend output with local pictures). Downloads are recorded in __themeSourceDownloads.
-  theme_sources: () => {if((window as any).__themeSourceKindsError)throw Error("Source catalog fixture unavailable");return THEME_SOURCES_KINDS;},
+  theme_sources: async () => {if((window as any).__themeSourceKindsDelay)await new Promise(r=>setTimeout(r,(window as any).__themeSourceKindsDelay));if((window as any).__themeSourceKindsError)throw Error("Source catalog fixture unavailable");return THEME_SOURCES_KINDS;},
   theme_sources_browse: (kind: string, source: string, query: string, page: number) => {
     if ((window as any).__themeSourceBrowse) return (window as any).__themeSourceBrowse(kind, source, query, page);
     const real = (window as any).__themeSources?.[`${kind}:${source}`];

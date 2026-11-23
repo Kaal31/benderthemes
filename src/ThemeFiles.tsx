@@ -1,3 +1,4 @@
+import {reportError} from "./diag";
 import {CreatorCredit} from "./CreatorCredit";
 import {allThemes,refreshThemes} from "./engine/registry";
 import {getSettings,updateSettings} from "./settings";
@@ -43,7 +44,20 @@ export function ThemeFiles({ inputRef, initialKind = "psp", authoredContent, onK
   const resourceRevision=useResourceRevision();
   const [kinds, setKinds] = useState<Kinds>({kinds:Object.entries(KIND_HINT).map(([id,label])=>({id,label,dir:"skins/"+id,exts:[],sources:[]})),sources:{},notBuilt:[]});
   const [catalogError,setCatalogError]=useState("");
-  const reloadKinds=()=>{setCatalogError("");void listKinds().then(k=>{if(!Array.isArray(k?.kinds)||!k.kinds.length)throw Error("Empty source catalog");if(alive.current)setKinds(k);}).catch(()=>{if(alive.current)setCatalogError("Importer sources could not be loaded. Categories remain available; retry to reconnect.");});};
+  const catalogRequest=useRef(0),catalogBusy=useRef(false);
+  const [catalogLoading,setCatalogLoading]=useState(false);
+  const reloadKinds=()=>{
+    if(catalogBusy.current)return;
+    const ticket=++catalogRequest.current;catalogBusy.current=true;setCatalogLoading(true);
+    void listKinds().then(k=>{
+      if(!Array.isArray(k?.kinds)||!k.kinds.length)throw Error("Empty source catalog");
+      if(alive.current&&ticket===catalogRequest.current){setKinds(k);setCatalogError("");}
+    }).catch(error=>{
+      reportError("Importer source catalog",error);
+      const reason=error instanceof Error?error.message:String(error);
+      if(alive.current&&ticket===catalogRequest.current)setCatalogError("Importer sources could not be loaded: "+reason.slice(0,300)+". Categories remain available; retry to reconnect.");
+    }).finally(()=>{if(alive.current&&ticket===catalogRequest.current){catalogBusy.current=false;setCatalogLoading(false);}});
+  };
   const [kind, setKind] = useState(initialKind);
   useEffect(()=>onKindChange?.(kind),[kind]);
   const categoryScroll=useRef<HTMLDivElement>(null);
@@ -252,7 +266,7 @@ export function ThemeFiles({ inputRef, initialKind = "psp", authoredContent, onK
   const notBuilt = useMemo(() => (kinds?.notBuilt ?? []).filter(n => n.kinds.includes(kind)), [kinds, kind]);
   return <section className="dht-files" data-discover={authoredContent?true:undefined} aria-label={authoredContent?"Discover catalog":"Theme files"}>
     <style>{FILES_CSS}</style>
-    {catalogError&&<p role="alert" style={{margin:0,padding:"6px 20px",fontSize:12}}>{catalogError} <button onClick={reloadKinds}>Retry sources (X)</button></p>}
+    {catalogError&&<p role="alert" style={{margin:0,padding:"6px 20px",fontSize:12}}>{catalogError} <button disabled={catalogLoading} aria-busy={catalogLoading} style={{minWidth:130}} onClick={reloadKinds}>{catalogLoading?"Retrying sources…":"Retry sources (X)"}</button></p>}
     <div className="dht-files-bar">
       <div className="dht-files-kinds" role="tablist" aria-label={authoredContent?"Discover categories":"Theme file categories"} data-focused={zone === "kinds"}>
         <span className="dht-files-glyph" aria-hidden="true">L2</span>
