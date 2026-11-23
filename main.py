@@ -1666,11 +1666,19 @@ class Plugin:
 
     # Hub > Theme files: theme files for the importers from online sources (py_modules/theme_sources.py)
     async def theme_sources(self):
-        import theme_sources
-        return theme_sources.kinds()
+        # Static source names must not depend on optional importer modules.
+        from theme_source_catalog import kinds
+        return kinds()
 
     async def theme_sources_browse(self, kind: str, source: str, query: str = "", page: int = 1, refresh: bool = False):
-        import theme_sources
+        try:
+            import theme_sources
+        except Exception as error:
+            decky.logger.error("Importer backend could not load: %s: %s", type(error).__name__, error)
+            from theme_source_catalog import SOURCES
+            return {"kind": str(kind), "page": 1, "pages": 1, "total": 0, "items": [],
+                    "source": {**SOURCES.get(str(source), {}), "id": str(source)},
+                    "error": f"Importer backend could not load ({type(error).__name__}: {error}). Restart ThemeHub after updating; if this persists, send this error with the plugin log."}
         return await asyncio.to_thread(theme_sources.browse, str(kind), str(source), str(query or ""), page, bool(refresh))
 
     async def wiiflow_scan_downloads(self):

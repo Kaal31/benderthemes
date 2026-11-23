@@ -22,14 +22,14 @@ try{
  await hub.getByLabel('Background source').selectOption('local');
  await page.evaluate(path=>{window.__filePickerResult={realpath:path,path};},join(info.fixtures,'animated-wallpaper.gif'));
  await hub.getByRole('button',{name:'Import file',exact:true}).click();await hub.getByRole('button',{name:'Import',exact:true}).click();await hub.getByText('Imported. Choose Apply to use it.',{exact:true}).waitFor();await page.waitForFunction(()=>document.querySelector('.aw-card .aw-poster img')?.naturalWidth>0);
- await hub.getByRole('button',{name:'Play preview',exact:true}).click();await hub.locator('.aw-player img').waitFor();await hub.getByRole('button',{name:'Apply background',exact:true}).click();
+ await hub.getByRole('button',{name:'Play preview',exact:true}).click();await hub.locator('.aw-player img').waitFor();await hub.getByRole('button',{name:'Use as theme wallpaper',exact:true}).click();
  assert.match(await page.evaluate(()=>window.__getThemeSettings().mix.castle.wallpaper),/^@wp\/animated-.*\.gif$/);
  await page.waitForFunction(()=>document.querySelector('.aw-card .aw-poster img')?.naturalWidth>0);
  await hub.getByRole('button',{name:'Stop preview',exact:true}).click();
  await page.evaluate(path=>{window.__filePickerResult={realpath:path,path};},join(info.fixtures,'animated-wallpaper.webm'));
  await hub.getByRole('button',{name:'Import file',exact:true}).click();await hub.getByRole('button',{name:'Import',exact:true}).click();await hub.locator('.aw-card').filter({hasText:'WebM'}).waitFor();await hub.locator('.aw-card').filter({hasText:'WebM'}).click();await hub.getByRole('button',{name:'Play preview',exact:true}).click();
  await page.waitForFunction(()=>{const v=document.querySelector('.aw-player video');return v?.readyState>=2&&v.currentTime>0;});
- await hub.getByRole('button',{name:'Apply background',exact:true}).click();assert.match(await page.evaluate(()=>window.__getThemeSettings().mix.castle.wallpaper),/\.webm$/);
+ await hub.getByRole('button',{name:'Use as theme wallpaper',exact:true}).click();assert.match(await page.evaluate(()=>window.__getThemeSettings().mix.castle.wallpaper),/\.webm$/);
  await hub.getByRole('button',{name:'Remove',exact:true}).click();await page.waitForFunction(()=>!window.__getThemeSettings().mix.castle.wallpaper);await hub.locator('.aw-card').filter({hasText:'WebM'}).waitFor({state:'hidden'});assert.equal(await hub.locator('.aw-card').filter({hasText:'WebM'}).count(),0);
  await hub.getByLabel('Background source').selectOption('all');await hub.getByText('Example Wallspace video',{exact:true}).waitFor();await hub.screenshot({path:'out/animated-wallpapers/hub.png'});
  await hub.getByLabel('Background source').selectOption('rainmeter');await page.evaluate(path=>{window.__filePickerResult={realpath:path,path};},join(info.fixtures,'sample.rmskin'));

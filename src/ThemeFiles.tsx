@@ -1,3 +1,4 @@
+import {reportError} from "./diag";
 import {t} from "./i18n";
 import {CreatorCredit} from "./CreatorCredit";
 import {allThemes,refreshThemes} from "./engine/registry";
@@ -37,12 +38,27 @@ const downloadProgress = callable<[], Progress>("theme_sources_progress");
 
 const openUrl = (url?: string) => { if (url && (/^https:\/\//.test(url) || /^http:\/\/(?:www\.)?ps3-themes\.com\//.test(url))) Navigation.NavigateToSteamWeb(url); };
 const mb = (n: number) => n >= 1048576 ? `${(n / 1048576).toFixed(1)} MB` : n ? `${Math.max(1, Math.round(n / 1024))} KB` : "";
-const KIND_HINT: Record<string, string> = { psp: "PSP", p3t: "PS3", ps4: "PS4", vita: "PS Vita", switch: "Switch", wiiu: "Wii U", "3ds": "3DS", wii: "Wii", xbox: "Xbox", x360: "Xbox 360" };
+const KIND_HINT: Record<string, string> = { psp: "PSP", p3t: "PS3", ps4: "PS4", vita: "PS Vita", switch: "Switch", wiiu: "Wii U", "3ds": "3DS", wii: "Wii", xbox: "Xbox", x360: "Xbox 360", wiiflow:"WiiFlow" };
 const hintFor = (kind: string) => kind === "x360" ? "Choose skins or coverflow layouts in Xbox 360 Theme options." : `Choose it in the ${KIND_HINT[kind] ?? ""} theme's Theme options${kind === "wiiu" ? " (Wii U themes also need your own menu files)" : ""}.`;
 
 export function ThemeFiles({ inputRef, initialKind = "psp", authoredContent, onKindChange, installedOnly=false }: { inputRef: MutableRefObject<InputHandler | null>; initialKind?: string; authoredContent?: ReactNode; installedOnly?:boolean; onKindChange?:(kind:string)=>void }) {
   const resourceRevision=useResourceRevision();
-  const [kinds, setKinds] = useState<Kinds | null>(null);
+  const [kinds, setKinds] = useState<Kinds>({kinds:Object.entries(KIND_HINT).map(([id,label])=>({id,label,dir:"skins/"+id,exts:[],sources:[]})),sources:{},notBuilt:[]});
+  const [catalogError,setCatalogError]=useState("");
+  const catalogRequest=useRef(0),catalogBusy=useRef(false);
+  const [catalogLoading,setCatalogLoading]=useState(false);
+  const reloadKinds=()=>{
+    if(catalogBusy.current)return;
+    const ticket=++catalogRequest.current;catalogBusy.current=true;setCatalogLoading(true);
+    void listKinds().then(k=>{
+      if(!Array.isArray(k?.kinds)||!k.kinds.length)throw Error("Empty source catalog");
+      if(alive.current&&ticket===catalogRequest.current){setKinds(k);setCatalogError("");}
+    }).catch(error=>{
+      reportError("Importer source catalog",error);
+      const reason=error instanceof Error?error.message:String(error);
+      if(alive.current&&ticket===catalogRequest.current)setCatalogError("Importer sources could not be loaded: "+reason.slice(0,300)+". Categories remain available; retry to reconnect.");
+    }).finally(()=>{if(alive.current&&ticket===catalogRequest.current){catalogBusy.current=false;setCatalogLoading(false);}});
+  };
   const [kind, setKind] = useState(initialKind);
   useEffect(()=>onKindChange?.(kind),[kind]);
   const categoryScroll=useRef<HTMLDivElement>(null);
@@ -75,7 +91,7 @@ export function ThemeFiles({ inputRef, initialKind = "psp", authoredContent, onK
   const detailRef = useRef<HTMLDivElement>(null);
   const searchRef = useRef<HTMLInputElement>(null);
   const alive = useRef(true);
-  useEffect(() => { alive.current = true; listKinds().then(k => { if (alive.current) setKinds(k); }).catch(() => {}); return () => { alive.current = false; inputRef.current = null; }; }, []);
+  useEffect(() => { alive.current = true; reloadKinds(); return () => { alive.current = false; inputRef.current = null; }; }, []);
   const kindInfo = kinds?.kinds.find(k => k.id === kind);
   const src = source || kindInfo?.sources[0] || "";
   const srcInfo = installedOnly?{name:"Installed on this device",url:"",credit:""}:kinds?.sources[src];
@@ -197,6 +213,7 @@ export function ThemeFiles({ inputRef, initialKind = "psp", authoredContent, onK
     setSelected(i);
   };
   inputRef.current = p => {
+    if(catalogError&&p.btn==='x'){reloadKinds();return true;}
     if(kind==='authored'){
       if((p.btn==='l2'||p.btn==='r2')&&!p.repeat){playSound('tab');switchKind(p.btn==='r2'?1:-1);return true;}
       if(zone==='kinds'&&(p.btn==='left'||p.btn==='right')){switchKind(p.btn==='right'?1:-1);return true;}
@@ -205,8 +222,13 @@ export function ThemeFiles({ inputRef, initialKind = "psp", authoredContent, onK
       return false;
     }
     if(kind==='wallpapers'){
+      if(zone==='kinds'&&(p.btn==='left'||p.btn==='right')){switchKind(p.btn==='right'?1:-1);return true;}
+      if(zone==='kinds'&&(p.btn==='down'||p.btn==='a')){setZone('grid');wallpaperInput.current?.({...p,btn:'down'});return true;}
+      if(zone==='kinds'&&p.btn==='up')return true;
       if((p.btn==='l2'||p.btn==='r2')&&!p.repeat){playSound('tab');switchKind(p.btn==='r2'?1:-1);return true;}
-      return wallpaperInput.current?.(p)??false;
+      const handled=wallpaperInput.current?.(p)??false;
+      if(!handled&&(p.btn==='up'||p.btn==='b')&&zone!=='kinds'){setZone('kinds');return true;}
+      return handled;
     }
     if (p.btn === "b") { // the Hub closes on B unless something here is open
       if (confirm) { setConfirm(null); return true; }
@@ -245,6 +267,7 @@ export function ThemeFiles({ inputRef, initialKind = "psp", authoredContent, onK
   const notBuilt = useMemo(() => (kinds?.notBuilt ?? []).filter(n => n.kinds.includes(kind)), [kinds, kind]);
   return <section className="dht-files" data-discover={authoredContent?true:undefined} aria-label={authoredContent?"Discover catalog":"Theme files"}>
     <style>{FILES_CSS}</style>
+    {catalogError&&<p role="alert" style={{margin:0,padding:"6px 20px",fontSize:12}}>{catalogError} <button disabled={catalogLoading} aria-busy={catalogLoading} style={{minWidth:130}} onClick={reloadKinds}>{catalogLoading?"Retrying sources…":"Retry sources (X)"}</button></p>}
     <div className="dht-files-bar">
       <div className="dht-files-kinds" role="tablist" aria-label={authoredContent?"Discover categories":"Theme file categories"} data-focused={zone === "kinds"}>
         <span className="dht-files-glyph" aria-hidden="true">L2</span>
@@ -258,7 +281,7 @@ export function ThemeFiles({ inputRef, initialKind = "psp", authoredContent, onK
           onKeyDown={e => { e.stopPropagation(); if (e.key === "Enter" || e.key === "ArrowDown") { e.preventDefault(); leaveSearch(true); } if (e.key === "Escape") { e.preventDefault(); searchRef.current?.blur(); setTyped(query); setZone("kinds"); } }} />
       </label>
     </div>
-    {kind==="authored"?<><div style={{flex:1,minHeight:0,display:"flex",flexDirection:"column"}} onPointerDown={()=>setZone("grid")} onFocusCapture={()=>setZone("grid")}>{authoredContent}</div><div className="dht-files-foot" aria-hidden="true"/></>:kind==="wallpapers"?<AnimatedWallpapers inputRef={wallpaperInput} installedOnly={installedOnly}/>:<>
+    {kind==="authored"?<><div style={{flex:1,minHeight:0,display:"flex",flexDirection:"column"}} onPointerDown={()=>setZone("grid")} onFocusCapture={()=>setZone("grid")}>{authoredContent}</div><div className="dht-files-foot" aria-hidden="true"/></>:kind==="wallpapers"?<AnimatedWallpapers inputRef={wallpaperInput} installedOnly={installedOnly} onFocus={()=>setZone("grid")}/>:<>
     <div className="dht-files-info"><div className="dht-files-sub">
       <span className="dht-files-sources">{installedOnly?"Installed on this device":"From"} {(installedOnly?[]:kindInfo?.sources ?? []).map(s => <button key={s} data-active={s === src} onClick={() => setSource(s)}>{kinds?.sources[s]?.name ?? s}</button>)}{!installedOnly&&(kindInfo?.sources.length ?? 0) > 1 && <i>X switches</i>}</span>
       <span className="dht-files-status" role="status">{installedOnly?`${items.length} installed ${items.length===1?"theme":"themes"}`:loading && !items.length ? "Loading…" : info?.error ? info.error : `${info?.total ?? 0} ${query ? `results for “${query}”` : "themes"}${kind === "wiiflow" ? " · original source posts" : ` · saved to ${kindInfo?.dir ?? "skins"}/`}`}</span>
