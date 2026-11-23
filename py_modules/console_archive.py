@@ -4,6 +4,46 @@ import ctypes.util
 from pathlib import Path,PurePosixPath
 import stat
 
+def contains_file(source, suffix, matches, max_files=3000, max_probe_bytes=1024*1024):
+ """Inspect small config entries without extracting unrelated game archives."""
+ name=C.util.find_library('archive')
+ if not name:raise ValueError('Archive inspection unavailable')
+ lib=C.CDLL(name)
+ def bind(name,result,args):
+  fn=getattr(lib,name);fn.restype=result;fn.argtypes=args;return fn
+ new=bind('archive_read_new',C.c_void_p,[])
+ support_filters=bind('archive_read_support_filter_all',C.c_int,[C.c_void_p])
+ support_formats=bind('archive_read_support_format_all',C.c_int,[C.c_void_p])
+ open_file=bind('archive_read_open_filename',C.c_int,[C.c_void_p,C.c_char_p,C.c_size_t])
+ next_header=bind('archive_read_next_header',C.c_int,[C.c_void_p,C.POINTER(C.c_void_p)])
+ pathname=bind('archive_entry_pathname',C.c_char_p,[C.c_void_p])
+ size=bind('archive_entry_size',C.c_longlong,[C.c_void_p])
+ kind=bind('archive_entry_filetype',C.c_uint,[C.c_void_p])
+ data=bind('archive_read_data',C.c_ssize_t,[C.c_void_p,C.c_void_p,C.c_size_t])
+ free=bind('archive_read_free',C.c_int,[C.c_void_p])
+ archive=new()
+ if not archive:raise ValueError('Could not open archive reader')
+ try:
+  support_filters(archive);support_formats(archive)
+  if open_file(archive,str(source).encode('utf-8'),65536)<0:return False
+  entry=C.c_void_p();remaining=max_probe_bytes
+  for _ in range(max_files):
+   status=next_header(archive,C.byref(entry))
+   if status!=0:return False
+   path=(pathname(entry) or b'').decode('utf-8','replace')
+   length=size(entry)
+   if kind(entry)!=stat.S_IFREG or not path.lower().endswith(suffix) or not 0<=length<=min(256*1024,remaining):continue
+   remaining-=length;buffer=C.create_string_buffer(max(1,length));offset=0
+   while offset<length:
+    count=data(archive,C.byref(buffer,offset),length-offset)
+    if count<=0:break
+    offset+=count
+   if offset==length and matches(buffer.raw[:length]):return True
+   if remaining<=0:return False
+  return False
+ finally:free(archive)
+
+
 def unpack(source,destination,max_bytes=256*1024*1024,max_files=3000):
  name=C.util.find_library('archive')
  if not name:raise ValueError('RAR/7z support is unavailable on this system. Extract the archive into Downloads; ThemeHub will import that folder.')

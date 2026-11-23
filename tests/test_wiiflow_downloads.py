@@ -22,11 +22,31 @@ class RuntimeImportTests(unittest.TestCase):
      with zipfile.ZipFile(archive) as z:self.assertEqual(json.loads(z.read('theme.json'))['layout'],'frame')
  def test_oversized_download_explains_why_it_is_not_imported(self):
   with tempfile.TemporaryDirectory() as temp:
-   root=Path(temp);folder=root/'Downloads';folder.mkdir();(folder/'Big-theme.zip').write_bytes(b'oversized')
+   root=Path(temp);folder=root/'Downloads';folder.mkdir();
+   with zipfile.ZipFile(folder/'Big-theme.zip','w') as archive:archive.writestr('Skin.ini','[MAIN/BG]\n')
    state=root/'state.json'
    with patch.object(downloads.converter,'MAX_BYTES',3),patch.object(downloads.time,'time',return_value=100):downloads.scan([folder],state)
    with patch.object(downloads.converter,'MAX_BYTES',3),patch.object(downloads.time,'time',return_value=104):
     self.assertIn('theme-only',downloads.scan([folder],state)['errors'][0])
+
+ def test_unrelated_game_archives_do_not_emit_theme_errors(self):
+  with tempfile.TemporaryDirectory() as temp:
+   root=Path(temp);folder=root/'Downloads';folder.mkdir();state=root/'state.json'
+   with zipfile.ZipFile(folder/'Hero Companion.zip','w') as archive:archive.writestr('Game/settings.ini','[GENERAL]\nname=Game\n')
+   (folder/'RY-RJ0386956.rar').write_bytes(b'unrelated game archive')
+   with patch.object(downloads.time,'time',return_value=100):downloads.scan([folder],state)
+   with patch.object(downloads.converter,'MAX_BYTES',3),patch.object(downloads.time,'time',return_value=104),patch.object(downloads,'install') as install:
+    result=downloads.scan([folder],state)
+    self.assertEqual(result['errors'],[]);self.assertEqual(result['imported'],[]);install.assert_not_called()
+
+ def test_rar_probe_uses_content_without_importing_unrelated_archives(self):
+  import console_archive
+  with tempfile.TemporaryDirectory() as temp:
+   root=Path(temp);theme=root/'Blue.rar';theme.write_bytes(b'archive')
+   with patch.object(console_archive,'contains_file',side_effect=lambda path,suffix,matches:matches(b'[MAIN/BG]\n')):
+    self.assertTrue(downloads._theme_archive(theme))
+   with patch.object(console_archive,'contains_file',side_effect=lambda path,suffix,matches:matches(b'[GENERAL]\nname=Game\n')):
+    self.assertFalse(downloads._theme_archive(theme))
 
  def test_unrelated_general_ini_is_not_imported_as_a_theme(self):
   with tempfile.TemporaryDirectory() as temp:
@@ -57,7 +77,7 @@ class RuntimeImportTests(unittest.TestCase):
     self.assertEqual(downloads.scan([folder],state)['imported'],[]);self.assertEqual(install.call_count,1)
  def test_extracted_folders_and_rar_have_actionable_status(self):
   with tempfile.TemporaryDirectory() as temp:
-   root=Path(temp);folder=root/'Downloads';(folder/'Blue').mkdir(parents=True);(folder/'Blue/BLUE.INI').write_text('[MAIN/BG]\n');(folder/'a.rar').write_bytes(b'rar')
+   root=Path(temp);folder=root/'Downloads';(folder/'Blue').mkdir(parents=True);(folder/'Blue/BLUE.INI').write_text('[MAIN/BG]\n');(folder/'WiiFlow.rar').write_bytes(b'rar')
    state=root/'state.json'
    with patch.object(downloads.time,'time',return_value=100):downloads.scan([folder],state)
    with patch.object(downloads,'install',side_effect=lambda path: [{'id':'blue','name':'Blue'}] if path.is_dir() else (_ for _ in ()).throw(ValueError('extract this archive'))),patch.object(downloads.time,'time',return_value=104):
