@@ -163,6 +163,11 @@ export function SwitchHome() {
   const panes = conversion?firmwarePanes(conversion.panes,firmwareProfile,conversion.targetFirmware,conversion.hideOnlineButton):{};
   const order:Record<string,number>={N_GameRoot:3,N_System:4,L_ChildLock:5,N_Balloon:6,N_MyPage:7,L_Hud:8,L_BalloonCtrl:9,...conversion?.paneOrder?.["RdtBase.bflyt"]},bgOrder=conversion?.paneOrder?.["BgNml.bflyt"]??{};
   const rawEffects = conversion?.effects ?? {};
+  // A replacement wallpaper is not the imported texture atlas. Do not apply
+  // that atlas's UV scale, pane transform or background animation to it.
+  const backgroundEffects = wall ? {} : rawEffects;
+  const wallpaperFit=themeStyle<string>(s,"switch","wallpaperFit");
+  const wallpaperSize=wallpaperFit==="cover"?"cover":wallpaperFit==="contain"?"contain":"100% 100%";
   const animationOn = s.animations && view === "home";
   const launch=useLaunchState();
   const [capturedFrame,setCapturedFrame]=useState<SwitchCapturedFrame>();
@@ -179,8 +184,8 @@ export function SwitchHome() {
   const sceneRef=useSwitchPaneMotion(conversion?.animations??[],"scene",[launch?"launch":menu.isOpen?"exit":"enter"],animationOn);
   const resume=useSwitchResume(api.lib.games.map(game=>game.appid));
   const rootRef=useSwitchPaneMotion(conversion?.animations??[],"sceneRoot",[launch?"launch":menu.isOpen?"exit":"enter"],animationOn);
-  const bgRaster=backgroundRaster(conversion?.animations??[],rawEffects.background,rawEffects.backgroundContainer,W,H);
-  const bgRef=useSwitchPaneMotion(conversion?.animations??[],"background",[menu.isOpen?"exit":"enter",...(resume>0?["resume"]:[])],animationOn,rawEffects.backgroundContainer,1,1,false,resume,bgRaster);
+  const bgRaster=backgroundRaster(wall?[]:conversion?.animations??[],backgroundEffects.background,backgroundEffects.backgroundContainer,W,H);
+  const bgRef=useSwitchPaneMotion(wall?[]:conversion?.animations??[],"background",[menu.isOpen?"exit":"enter",...(resume>0?["resume"]:[])],animationOn,backgroundEffects.backgroundContainer,1,1,false,resume,bgRaster);
   const footerRef=useSwitchPaneMotion(conversion?.animations??[],"footer",[launch?"exit":menu.isOpen?"exit":"enter"],animationOn,rawEffects.footer,1,1,true);
   const luma = useLuma(parts.background, parts.brightness);
   const colorMode=themeStyle<string>(s,"switch","firmwareColors");
@@ -344,10 +349,10 @@ export function SwitchHome() {
   const titleHeight = (effects.gameTitle?.Size?.Y??40)*k;
   const titlePosition:CSSProperties = rotatedTitle ? {left:startX-38*k-titleWidth/2,top:Math.max(titleWidth/2+10*k,Math.min(H-titleWidth/2-10*k,tileY+tileHeight/2))-titleHeight/2,width:titleWidth,height:titleHeight,justifyContent:"center",transformOrigin:"center",boxSizing:"border-box"} : {};
   const label = (i: number) => i < n ? games[i].name : "All Software";
-  const texture=effects.background?.texture;
+  const texture=wall?undefined:effects.background?.texture;
   const backgroundImage=useSwitchMirroredImage(parts.background,texture?.mirrorX,texture?.mirrorY);
   const bg: CSSProperties = parts.background
-    ? { backgroundImage: `url(${backgroundImage})`, backgroundSize: "cover", backgroundPosition: "center",...(texture?{backgroundPosition:"center",backgroundSize:`${(texture.mirrorX?200:100)/texture.scaleX}% ${(texture.mirrorY?200:100)/texture.scaleY}%`,backgroundRepeat:`${texture.repeatX?"repeat":"no-repeat"} ${texture.repeatY?"repeat":"no-repeat"}`,imageRendering:texture.nearest?"pixelated":"auto"}:{}),...effectStyle(effects.backgroundContainer),...paneStyle(effects.background) }
+    ? { backgroundImage: `url(${backgroundImage})`, backgroundSize: wall?wallpaperSize:"cover", backgroundRepeat:"no-repeat", backgroundPosition: "center",...(texture?{backgroundPosition:"center",backgroundSize:`${(texture.mirrorX?200:100)/texture.scaleX}% ${(texture.mirrorY?200:100)/texture.scaleY}%`,backgroundRepeat:`${texture.repeatX?"repeat":"no-repeat"} ${texture.repeatY?"repeat":"no-repeat"}`,imageRendering:texture.nearest?"pixelated":"auto"}:{}),...(!wall?{...effectStyle(effects.backgroundContainer),...paneStyle(effects.background)}:{}) }
     : { background: effects.backgroundPanel&&effects.backgroundPanel.Visible!==false?panelColor(effects.backgroundPanel):dark?"#2d2d2d":"var(--dht-switch-bg, linear-gradient(#ececec,#dcdcdc))" };
 
   const childLockLayer=effects.childLock?.Visible!==false&&(effects.childLock||Object.keys(effects).some(key=>key.startsWith("childLock:")))&&<SwitchChildLock backingBehindGames={conversion?.childLockBackingBehindGames??false} effects={effects} animations={conversion?.animations??[]} dark={dark} animate={animationOn} modern={!!panes.L_BtnSplay} scale={k} rootY={0} onActivate={()=>menu.open([{label:"Steam settings",action:()=>openSteam("settings")},{label:"Close"}],"Parental controls",{page:true,body:<SwitchDialogContent {...dialogShared} file="DCntPclOnOff" text="Manage parental controls in Steam settings."/>})}/>;
@@ -364,13 +369,13 @@ export function SwitchHome() {
         <style>{CSS}</style>
         {effects.cursor && <style>{`.dht-switch-focus{box-sizing:border-box;border-style:solid;animation:none!important;border-color:${nxColor(effects.cursorGlow?.white??effects.cursor.white,"#19bcc4")}!important;border-width:calc(${effects.cursor.borderWidth??3}px * var(--dht-switch-focus-unit,1))!important;border-radius:calc(${effects.cursor.radius??0}px * var(--dht-switch-focus-unit,1));box-shadow:${cursorShadow??`0 0 ${effects.cursor.shadow??0}px ${nxColor(effects.cursorGlow?.white,effects.cursor.white?nxColor(effects.cursor.white):"#19bcc4")}`}!important;${effects.cursor.borderDraw===false?"border:none!important;":""}}`}</style>}
         <div ref={element=>{rootRef.current=element;captureSource.current=element;referenceRoot.current=element;}} className="dht-switch-root" data-system-graphics={systemGraphics} data-standard={!conversion} data-standard-skin={!skin?standardSkin:undefined} data-motion={s.animations} data-resume-generation={resume} style={{position:"absolute",inset:0}}>
-        {parts.background&&effects.backgroundContainer?.Visible===false&&<div className="dht-switch-wallpaper-backdrop" style={{position:"absolute",inset:0,backgroundImage:`url(${parts.background})`,backgroundSize:"cover",backgroundPosition:"center"}}/>}
+        {!wall&&parts.background&&effects.backgroundContainer?.Visible===false&&<div className="dht-switch-wallpaper-backdrop" style={{position:"absolute",inset:0,backgroundImage:`url(${parts.background})`,backgroundSize:"cover",backgroundPosition:"center"}}/>}
         <div ref={bgRef} className="dht-switch-bg" data-raster-mode={bgRaster?'viewport':undefined} data-converted={!!conversion?.converted} data-dht-from-skin={parts.background ? "" : undefined} data-view={view} style={{ position: "absolute", inset: 0, ...bg,zIndex:bgOrder.exelixBG }} />
-        <WallpaperVideo src={wall} style={{zIndex:bgOrder.exelixBG+.1}}/>{effects.backgroundPanel && (effects.backgroundPanel.Position||effects.backgroundPanel.Size) && effects.backgroundPanel.Visible!==false && <div className="dht-switch-background-panel" style={{position:"absolute",pointerEvents:"none",left:W/2+(effects.backgroundPanel.Position?.X??0)*k-(effects.backgroundPanel.Size?.X??1280)*k/2,top:H/2-(effects.backgroundPanel.Position?.Y??0)*k-(effects.backgroundPanel.Size?.Y??720)*k/2,width:(effects.backgroundPanel.Size?.X??1280)*k,height:(effects.backgroundPanel.Size?.Y??720)*k,background:panelColor(effects.backgroundPanel),zIndex:bgOrder.P_Bg_00,...paneStyle(effects.backgroundPanel)}}/>}
-        {view!=="home"&&secondary&&<SwitchSecondaryBackground conversion={secondary} image={!wall?parts.background:undefined} enabled={secondaryEnabled} scale={W/1280}/>}
+        <WallpaperVideo src={wall} style={{zIndex:bgOrder.exelixBG+.1,objectFit:wallpaperFit==="cover"?"cover":wallpaperFit==="contain"?"contain":"fill"}}/>{!wall&&effects.backgroundPanel && (effects.backgroundPanel.Position||effects.backgroundPanel.Size) && effects.backgroundPanel.Visible!==false && <div className="dht-switch-background-panel" style={{position:"absolute",pointerEvents:"none",left:W/2+(effects.backgroundPanel.Position?.X??0)*k-(effects.backgroundPanel.Size?.X??1280)*k/2,top:H/2-(effects.backgroundPanel.Position?.Y??0)*k-(effects.backgroundPanel.Size?.Y??720)*k/2,width:(effects.backgroundPanel.Size?.X??1280)*k,height:(effects.backgroundPanel.Size?.Y??720)*k,background:panelColor(effects.backgroundPanel),zIndex:bgOrder.P_Bg_00,...paneStyle(effects.backgroundPanel)}}/>}
+        {!wall&&view!=="home"&&secondary&&<SwitchSecondaryBackground conversion={secondary} image={!wall?parts.background:undefined} enabled={secondaryEnabled} scale={W/1280}/>}
         {view === "lock" && (
           <SwitchSecondary conversion={secondary} pane="secondaryRoot" enabled={secondaryEnabled} scale={W/1280}><div className="dht-switch-lock" style={{ position: "absolute", inset: 0, zIndex: 20, color: ink, textShadow: dark ? "0 1px 6px #000a" : "none", fontFamily: "inherit" }}>
-            <SwitchSecondaryBackground conversion={secondary} image={parts.background} enabled={secondaryEnabled} scale={W/1280}/>
+            {!wall&&<SwitchSecondaryBackground conversion={secondary} image={parts.background} enabled={secondaryEnabled} scale={W/1280}/>}
             <div style={{ position: "absolute", left: 0, right: 0, top: H * 0.38, textAlign: "center", fontSize: 96, fontWeight: 300 }}>{clock24h(now)}</div>
             <div style={{ position: "absolute", left: 0, right: 0, bottom: H * 0.08, textAlign: "center", fontSize: 20 }}>Press any button</div>
           </div></SwitchSecondary>

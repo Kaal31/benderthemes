@@ -54,6 +54,9 @@ for (const theme of HERO_SCALING_THEMES) {
 }
 
 THEME_STYLES.switch = [...(THEME_STYLES.switch ?? []), {
+  key:"wallpaperFit",label:"Custom wallpaper fitting",group:"Background",
+  choices:[{id:"fill",name:"Fit layout — stretch to screen"},{id:"cover",name:"Fill screen — crop edges"},{id:"contain",name:"Show full image"}],def:"fill",
+}, {
   key: "standardSkin", label: "Standard skin", group: "Appearance",
   choices: [{id:"white",name:"Basic White"},{id:"black",name:"Basic Black"}], def:"white",
 }, {

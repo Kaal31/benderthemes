@@ -4,6 +4,7 @@
 // patches become a semantic scene; unsupported firmware details are reported.
 import { callable, openFilePicker, toaster } from "@decky/api";
 import { useEffect, useState } from "react";
+import { createSwitchSkinLoader } from "./switchSkinCache";
 import { getSettings, themeFx, useSettings, updateSettings } from "./settings";
 import { onResourcesChanged, resourcesChanged } from "./marketplaceState";
 
@@ -40,9 +41,9 @@ export interface SwitchListEntry { id: string; name: string; author: string; scr
 export const listSwitchThemes = callable<[], { themes: SwitchListEntry[]; dir: string }>("list_switch_themes");
 const getSwitch = callable<[name: string], SwitchSkin | null>("get_switch_skin");
 
-const cache = new Map<string, SwitchSkin | null>();
+const skinLoader = createSwitchSkinLoader(getSwitch);
 const listeners = new Set<() => void>();
-onResourcesChanged(() => { cache.clear(); listeners.forEach((fn) => fn()); });
+onResourcesChanged(() => { skinLoader.clear(); listeners.forEach((fn) => fn()); });
 
 /** ThemeFx key of a Switch theme file (its toggles are saved per file). */
 export const switchFxKey = (file: string) => (file ? `nx:${file}` : "");
@@ -50,14 +51,13 @@ export const switchFxKey = (file: string) => (file ? `nx:${file}` : "");
 /** The selected .nxtheme set (null when none, or while it loads). */
 export function useSwitchSkin(): SwitchSkin | null {
   const name = useSettings().switchTheme ?? "";
-  const [skin, setSkin] = useState<SwitchSkin | null>(name ? cache.get(name) ?? null : null);
+  const [skin, setSkin] = useState<SwitchSkin | null>(name ? skinLoader.peek(name) ?? null : null);
   const [rev, setRev] = useState(0);
   useEffect(() => { const fn = () => setRev((r) => r + 1); listeners.add(fn); return () => { listeners.delete(fn); }; }, []);
   useEffect(() => {
     if (!name) return setSkin(null);
-    if (cache.has(name)) return setSkin(cache.get(name)!);
     let alive = true;
-    getSwitch(name).then((r) => { cache.set(name, r ?? null); if (alive) setSkin(r ?? null); }).catch(() => alive && setSkin(null));
+    loadSwitchSkin(name).then((r) => { if (alive) setSkin(r); }).catch(() => alive && setSkin(null));
     return () => { alive = false; };
   }, [name, rev]);
   return skin && skin.file === name ? skin : null; // not the previous theme's skin while the new one loads
@@ -78,11 +78,7 @@ export function switchParts(skin: SwitchSkin | null, screen: "home" | "apps" | "
 
 /** One-off read of a Switch theme set (presets v2: its wallpaper can fill another look's background slot). */
 export async function loadSwitchSkin(name: string): Promise<SwitchSkin | null> {
-  if (!name) return null;
-  if (cache.has(name)) return cache.get(name)!;
-  const r = (await getSwitch(name).catch(() => null)) ?? null;
-  cache.set(name, r);
-  return r;
+  return skinLoader.load(name);
 }
 
 const importConsoleTheme = callable<[path:string],{success:boolean;file?:string;count?:number;error?:string}>("import_switch_theme");
@@ -93,7 +89,7 @@ export async function importSwitchResources(){
   if(!picked?.realpath)return;
   const result=await importMenuResources(picked.realpath);
   if(!result.success){toaster.toast({title:'Switch resources import failed',body:result.error??'Invalid menu archive'});return;}
-  cache.clear();resourcesChanged();
+  skinLoader.clear();resourcesChanged();
   toaster.toast({title:'Switch resources imported',body:result.fonts?`${result.resource}: local font loaded.`:`${result.resource}: ${result.textures} textures, ${result.panes} pane bindings. ${result.warnings?.length??0} GPU texture formats remain unavailable.`});
  }catch(error){toaster.toast({title:'Switch resources import failed',body:String(error)});}
 }
@@ -103,7 +99,7 @@ export async function importSwitchThemeFile() {
     if (!picked?.realpath) return;
     const result=await importConsoleTheme(picked.realpath);
     if (!result.success || !result.file) { toaster.toast({title:"Switch theme import failed",body:result.error??"Invalid theme"});return; }
-    cache.clear(); resourcesChanged();
+    skinLoader.clear(); resourcesChanged();
     updateSettings({switchTheme:result.file});
     toaster.toast({title:"Switch theme imported",body:`${result.count??1} console theme file(s). Open Options for the conversion report.`});
   } catch(error) { toaster.toast({title:"Switch theme import failed",body:String(error)}); }
