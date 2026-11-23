@@ -801,9 +801,11 @@ export function useBattery(): Battery | null {
   useEffect(() => {
     if (previewBattery) return;
     let reg: any;
+    let disposed = false;
+    let stopFallback: (() => void) | undefined;
     try {
       reg = SteamClient?.System?.RegisterForBatteryStateChanges?.((st: any) => {
-        if (st && st.bHasBattery !== false && typeof st.flLevel === "number") {
+        if (!disposed && st && st.bHasBattery !== false && typeof st.flLevel === "number") {
           setB({ level: st.flLevel, charging: st.eACState === 2 || st.eACState === 3 });
         }
       });
@@ -813,16 +815,23 @@ export function useBattery(): Battery | null {
     if (!reg) {
       try {
         (navigator as any).getBattery?.().then((nb: any) => {
-          const upd = () => setB({ level: nb.level, charging: nb.charging });
+          if (disposed) return;
+          const upd = () => { if (!disposed) setB({ level: nb.level, charging: nb.charging }); };
           upd();
           nb.addEventListener?.("levelchange", upd);
           nb.addEventListener?.("chargingchange", upd);
-        });
+          stopFallback = () => {
+            nb.removeEventListener?.("levelchange", upd);
+            nb.removeEventListener?.("chargingchange", upd);
+          };
+        }).catch(() => { /* Battery API unavailable or denied. */ });
       } catch {
         /* ignore */
       }
     }
     return () => {
+      disposed = true;
+      stopFallback?.();
       try {
         reg?.unregister?.();
       } catch {
