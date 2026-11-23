@@ -767,7 +767,8 @@ def download(skins_dir, kind, source, ident, file="", name="", opener=None):
             if ext not in spec["exts"]:
                 ext = spec["exts"][0]
             if source == "themezer":  # "<name> (Themezer <id>)": Themezer's own names repeat the title and target
-                given = f"{_text(re.sub(r'[/\\]+', ' ', name or ''), 80) or 'Theme'} (Themezer {ident.upper()}){ext}"
+                theme_name = _text(re.sub(r'[/\\]+', ' ', name or ''), 80) or 'Theme'
+                given = f"{theme_name} (Themezer {ident.upper()}){ext}"
             out_name = safe_file_name(given or name, ext, "Theme")
             tmp = os.path.join(folder, f".download-{os.getpid()}-{int(time.time() * 1000)}.part{ext}")
             done = 0

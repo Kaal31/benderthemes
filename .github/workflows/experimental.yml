@@ -9,7 +9,17 @@ concurrency:
   group: experimental-release
   cancel-in-progress: false
 jobs:
+  python-compat:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.10'
+      - run: python tests/verify-python-runtime.py
+      - run: python -m unittest discover -s tests -p "test_theme_source*.py"
   release:
+    needs: python-compat
     if: github.ref == 'refs/heads/experimental'
     runs-on: ubuntu-latest
     env:
