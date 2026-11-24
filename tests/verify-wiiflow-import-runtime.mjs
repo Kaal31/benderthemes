@@ -24,4 +24,12 @@ try{
  await page.getByRole('button',{name:'Back to a working page',exact:true}).click();
  await inner.locator('#covers .selected').waitFor({state:'attached'});assert.match(await inner.locator('#count').innerText(),/^Total Games: [1-9]/);assert.equal(await page.getByRole('alert').count(),0);
  console.log('PASS retry clears startup failure and reconnects the imported library');
+ // The bridge can connect successfully even when no application listener renders.
+ await page.route('**/t/wiiflow-handshake-fixture/app.js',route=>route.fulfill({contentType:'text/javascript',body:'ThemeHub.connect();'}));
+ await page.reload();await page.waitForFunction(()=>!!window.__updateTheme);await page.evaluate(()=>window.__updateTheme({theme:'frame',activeTheme:'wiiflow-handshake-fixture'}));
+ await inner.locator('#empty').filter({hasText:'Connecting'}).waitFor();
+ await page.getByRole('alert').filter({hasText:'library screen did not initialize'}).waitFor({timeout:20000});
+ assert.match(await page.getByRole('alert').innerText(),/games received/);
+ console.log('PASS a connected SDK with stalled library rendering produces a visible startup error');
+
 }finally{bridge.kill();await browser.close();server.closeAllConnections();server.close();}

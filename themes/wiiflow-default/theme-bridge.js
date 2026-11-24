@@ -6,14 +6,16 @@
   let state = null, hostActive = true, active = !document.hidden, sequence = 0, started = false, hello = 0, options = {}, lastRoute = '';
   const emit = (type, value) => { for (const fn of listeners.get(type) ?? []) { try { fn(value); } catch (e) { console.error('[ThemeHub SDK]',e); if(type==='state')reportStartupError(e); } } };
   const send = message => parent.postMessage({ dht:1, ...message, clientId }, '*');
-  let reportedStartupError=false;
+  let reportedStartupError=false,startupTimer=0;
   function reportStartupError(error){
     if(reportedStartupError)return;
     reportedStartupError=true;
+    clearTimeout(startupTimer);
     send({type:'runtimeError',message:String(error?.message??error).slice(0,600)});
   }
   window.addEventListener('error',event=>{
     if(event.error)reportStartupError(event.error);
+    else if(event.message&&!/^ResizeObserver loop/.test(event.message))reportStartupError(event.message);
     else if(event.target?.tagName==='SCRIPT')reportStartupError('Could not load '+event.target.src.split('/').pop());
   },true);
   const on = (type, fn) => { if (!listeners.has(type)) listeners.set(type,new Set()); listeners.get(type).add(fn); return () => listeners.get(type)?.delete(fn); };
@@ -23,6 +25,15 @@
   function connect(value = {}) {
     if (started) return; started = true; options = value; handshake();
     hello = setInterval(handshake,500);
+    // A working SDK connection does not prove app.js initialized the library.
+    // Check the actual startup placeholder, including when no state arrived.
+    startupTimer=setTimeout(()=>{
+      const placeholder=document.getElementById('empty');
+      if(!placeholder||placeholder.hidden||!/connecting/i.test(placeholder.textContent??''))return;
+      reportStartupError(state
+        ? `WiiFlow connected to ThemeHub, but its library screen did not initialize (${state.games?.length??0} games received).`
+        : 'WiiFlow is still waiting for ThemeHub’s library data.');
+    },8000);
   }
   function request(op, args = {}) {
     return new Promise((resolve,reject) => {
@@ -112,7 +123,7 @@
     const btn = {ArrowUp:'up',ArrowDown:'down',ArrowLeft:'left',ArrowRight:'right',Enter:'a',Escape:'b',x:'x',y:'y',m:'menu',q:'l1',e:'r1'}[e.key];
     if (btn) { e.preventDefault(); e.stopPropagation(); input({btn,repeat:e.repeat}); }
   });
-  window.addEventListener('pagehide',() => { clearInterval(hello); activity(false); cancelRequests('Theme page closed.'); emit('dispose'); });
+  window.addEventListener('pagehide',() => { clearInterval(hello); clearTimeout(startupTimer); activity(false); cancelRequests('Theme page closed.'); emit('dispose'); });
   window.ThemeHub = {
     version:1, connect, on, send, request, navigate,
     back:() => send({type:'back'}), replace:(path,params = {}) => navigate(path,params,true),
