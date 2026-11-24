@@ -29,9 +29,17 @@ try{
  await p.evaluate(()=>window.__updateTheme({theme:'frame',activeTheme:'wiiflow-default',mix:{'wiiflow-default':{wallpaper:'@wp/audit.webm'}}}));
  await p.locator('video.dht-custom-backdrop').waitFor();
  await p.evaluate(()=>window.__updateTheme({activeTheme:'gamecube'}));await p.locator('[data-native-theme=gamecube]').waitFor();assert.equal(await p.locator('.dht-custom-backdrop').count(),0);
- // A failed decode restores the original scene instead of leaving a blank layer.
+ // Wait for the media error and React cleanup, not a machine-dependent delay.
+ // Hold the response longer than the old 800 ms assertion to exercise slow CI.
+ await p.route('**/missing.webm',async route=>{
+  await new Promise(resolve=>setTimeout(resolve,1500));
+  await route.fulfill({status:200,contentType:'video/webm',body:'invalid video fixture'});
+ });
+ const badRequest=p.waitForRequest('**/missing.webm');
  await p.evaluate(()=>{window.__testWalls['bad.webm']=location.origin+'/missing.webm';window.__updateTheme({activeTheme:'wiiflow-default',mix:{'wiiflow-default':{wallpaper:'@wp/bad.webm'}}});});
- await p.waitForTimeout(800);assert.equal(await p.locator('.dht-custom-backdrop').count(),0);assert.equal(await p.locator('[data-native-theme=wiiflow-default]').getAttribute('data-custom-backdrop'),'false');
+ await badRequest;
+ await p.locator('.dht-custom-backdrop').waitFor({state:'detached'});
+ assert.equal(await p.locator('[data-native-theme=wiiflow-default]').getAttribute('data-custom-backdrop'),'false');
  console.log('PASS per-look frame isolation and failed-media fallback');
  assert.deepEqual(errors,[]);
 }finally{await browser.close();server.closeAllConnections();server.close();}
