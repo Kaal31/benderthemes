@@ -279,6 +279,43 @@ def _scan_now():
     return found
 
 
+WIIFLOW_RUNTIME_FILES = frozenset(("app.js", "renderer.js", "theme-bridge.js", "sourceMenu.js", "importedAudio.js", "importedUI.js"))
+
+
+def _wiiflow_runtime(ident, folder, rel):
+    """Converted imports retain their artwork/configuration and use maintained UI code.
+
+    Never run downloaded JavaScript natively: these files still use the frame
+    protocol and the same sandbox as the imported page.
+    """
+    if not ident.startswith("wiiflow-") or rel not in WIIFLOW_RUNTIME_FILES:
+        return None
+    report = os.path.join(folder, "import-report.json")
+    try:
+        st = os.stat(report)
+        if st.st_size > 4 * 1024 * 1024:
+            return None
+        key = (report, st.st_mtime_ns, st.st_size)
+        if key not in _wiiflow_reports:
+            with open(report, encoding="utf-8") as stream:
+                provenance = json.load(stream).get("provenance", {})
+            valid = (provenance.get("identity") == ident
+                     and provenance.get("kind") in ("community", "repository")
+                     and isinstance(provenance.get("themeIni"), str))
+            if len(_wiiflow_reports) >= 128:
+                _wiiflow_reports.clear()
+            _wiiflow_reports[key] = valid
+        if not _wiiflow_reports[key]:
+            return None
+    except (OSError, ValueError, AttributeError):
+        return None
+    path = os.path.join(os.path.dirname(os.path.dirname(__file__)), "themes", "wiiflow-default", rel)
+    return path if os.path.isfile(path) else None
+
+
+_wiiflow_reports = {}
+
+
 def resolve(ident, rel):
     """Absolute path of a file inside theme `ident`, or None (never outside the theme folder)."""
     hit = _scan().get(ident)
@@ -293,6 +330,9 @@ def resolve(ident, rel):
     path = os.path.realpath(os.path.join(folder, *parts))
     if not path.startswith(folder + os.sep):
         return None
+    runtime = _wiiflow_runtime(ident, folder, rel) if hit[2] == "user" else None
+    if runtime:
+        return runtime
     if os.path.isfile(path):
         return path
     if hit[2] == "bundled":

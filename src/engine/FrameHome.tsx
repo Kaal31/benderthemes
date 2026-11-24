@@ -1,4 +1,5 @@
 import {gameChoiceLabel} from "../gameFilters";
+import {reportError,logInfo} from "../diag";
 import {GameAmpHome} from "../themes/GameAmp";
 import {GlassHome} from "../themes/Glass";
 import { BundledThemeSurface, hasBundledRenderer, NativeThemePort } from "./BundledThemeSurface";
@@ -94,6 +95,8 @@ function LegacyFrameHome({previewAppid,onPreviewClose}:{previewAppid?:number;onP
   const route = routes[routes.length - 1] ?? { path: entry, fragment: "", params: {} };
   const generation = useRef(0), client = useRef<string | null>(null);
   const [pageError, setPageError] = useState(false);
+  const [connectionError,setConnectionError] = useState("");
+  const connectionFailed=useRef(false);
   const [reload, setReload] = useState(0);
   const changeRoute = (next: FrameRoute | null, replace = false) => {
     if (!next) return;
@@ -107,13 +110,19 @@ function LegacyFrameHome({previewAppid,onPreviewClose}:{previewAppid?:number;onP
     if (routes[routes.length - 2]?.path !== route.path) { setReady(null); setHints({}); setFocusedAppid(null); client.current = null; }
     setRoutes(prev => prev.slice(0, -1)); return true;
   };
+  const recoverConnection=()=>{
+    connectionFailed.current=false;setConnectionError("");
+    if(!back()){setPageError(false);setReady(null);client.current=null;generation.current++;setReload(n=>n+1);}
+  };
   const url = theme?.frame ? frameUrl(theme, route.path) : null; // the wrapper page, never the theme page directly
 
   const post = (msg: Record<string, unknown>) => {
     try {
       (isNative?nativePort.current:frame.current?.contentWindow)?.postMessage({ dht: FRAME_PROTOCOL, ...msg, ...(msg.type === "state" ? { active: !((nativePort.current?.ownerDocument??frame.current?.ownerDocument)?.hidden ?? false) && !api.busy } : {}), clientId: client.current }, "*");
-    } catch {
-      /* the frame went away */
+    } catch (error) {
+      connectionFailed.current=true;reportError(`Theme ${theme?.id??"frame"} message delivery`,error);
+      setConnectionError(error instanceof Error?error.message:String(error));
+      setPageError(true);
     }
   };
 
@@ -182,6 +191,13 @@ function LegacyFrameHome({previewAppid,onPreviewClose}:{previewAppid?:number;onP
       if (!m || typeof m !== "object" || m.dht !== FRAME_PROTOCOL || typeof m.type !== "string") return;
       if (m.type !== "ready" && client.current && m.clientId !== client.current) return;
       switch (m.type) {
+        case "runtimeError": {
+          if(typeof m.message!=="string")return;
+          const message=m.message.slice(0,600);
+          connectionFailed.current=true;setConnectionError(message);setPageError(true);
+          reportError(`Theme ${theme?.id??"frame"} startup`,new Error(message));
+          return;
+        }
         case "navigate": {
           const next = frameRoute(m.path, route.path, m.params ?? {});
           if (!next) { post({ type: "navigationError", error: "Choose an HTML page inside this theme." }); return; }
@@ -217,10 +233,11 @@ function LegacyFrameHome({previewAppid,onPreviewClose}:{previewAppid?:number;onP
           return;
         }
         case "ready": {
+          if(connectionFailed.current)return;
           const id = typeof m.clientId === "string" ? m.clientId.slice(0, 100) : null;
-          if (client.current !== id) generation.current++;
+          if (client.current !== id) {generation.current++;logInfo(`Theme ${theme?.id??"frame"} connected (${isNative?"native":"imported"}; ${state.games.length} Home games, ${state.libraryGames.length} Library games)`);}
           client.current = id;
-          setPageError(false);
+          setPageError(false);setConnectionError("");
           const handles = new Set<Btn>((Array.isArray(m.handles) ? m.handles : []).filter((b: unknown): b is Btn => BUTTONS.includes(b as Btn)));
           setReady({ handles, textInput: m.textInput === true });
           post({ type: "state", ...state });
@@ -287,14 +304,21 @@ function LegacyFrameHome({previewAppid,onPreviewClose}:{previewAppid?:number;onP
   }, [url, ready?.textInput]);
 
   useEffect(() => { setReady(null); setFocusedAppid(null); }, [url]);
-  useEffect(() => { setRoutes([]); setReady(null); setHints({}); setPageError(false); client.current = null; generation.current++; }, [theme?.id, theme?.revision]);
+  useEffect(()=>{connectionFailed.current=false;setConnectionError("");},[url,theme?.id,theme?.revision,reload]);
+  useEffect(() => { setRoutes([]); setReady(null); setHints({}); setPageError(false);setConnectionError(""); client.current = null; generation.current++; }, [theme?.id, theme?.revision]);
   useEffect(() => {
     if (ready || !url || !frameAvailable || isNative) return;
-    const timer = setTimeout(() => setPageError(true), 8000);
+    const timer = setTimeout(() => {setPageError(true);reportError(`Theme ${theme?.id??"frame"} startup`,new Error("No response to the theme connection handshake"));}, 8000);
     return () => clearTimeout(timer);
   }, [url, ready, reload, frameAvailable, isNative]);
 
   const onInput = (p: Press) => {
+    if(pageError){
+      if(p.btn==="a"){recoverConnection();return true;}
+      if(p.btn==="y"||p.btn==="menu"){api.openSettings();return true;}
+      if(p.btn==="b"){if(!back())api.showSteamHome();return true;}
+      return false;
+    }
     if(p.btn==="b"&&onPreviewClose){onPreviewClose();return true;}
     if (!frameAvailable && media.error && p.btn === "a") { setMediaAttempt(n=>n+1); return true; }
     if (p.btn === "b" && (!ready || pageError) && back()) return true;
@@ -310,10 +334,10 @@ function LegacyFrameHome({previewAppid,onPreviewClose}:{previewAppid?:number;onP
   };
 
   return (
-    <ThemeRoot nativeControlFocus={isNative&&theme?.id==="wiiflow-default"} onInput={onInput} hints={{ y: "Options", ...hints, ...(!frameAvailable&&media.error?{a:"Retry download"}:{}) }}>
-      {pageError && <div role="alert" style={{position:"absolute",inset:0,zIndex:5,background:"#16202bf2",padding:48,color:"white"}}>This page did not connect to ThemeHub.<button onClick={() => { if (!back()) { setPageError(false); setReady(null); client.current = null; generation.current++; setReload(n => n + 1); } }}>Back to a working page</button></div>}
+    <ThemeRoot nativeControlFocus={isNative&&theme?.id==="wiiflow-default"} onInput={onInput} hints={{ y: "Options", ...hints, ...(pageError?{a:"Retry",b:"Back",y:"Options"}:{}), ...(!frameAvailable&&media.error?{a:"Retry download"}:{}) }}>
+      {pageError && <div role="alert" style={{position:"absolute",inset:0,zIndex:5,background:"#16202bf2",padding:48,color:"white"}}>This page did not connect to ThemeHub.{connectionError&&<p>{connectionError}</p>}<button onClick={recoverConnection}>Back to a working page</button></div>}
       {!frameAvailable?<ThemeResourceProgress id={theme?.id??""} progress={media.progress} error={media.error} retry={()=>setMediaAttempt(n=>n+1)}/>:isNative&&theme ? (
-        <BundledThemeSurface id={theme.id} base={themeFileUrl(theme, "")!} port={nativePort} onMessage={message=>nativeReceive.current?.(message)}/>
+        <BundledThemeSurface key={`${theme.id}:${reload}`} id={theme.id} base={themeFileUrl(theme, "")!} port={nativePort} onMessage={message=>nativeReceive.current?.(message)}/>
       ):url ? (
         <iframe
           ref={frame}

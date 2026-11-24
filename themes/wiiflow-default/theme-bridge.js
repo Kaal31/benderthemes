@@ -4,8 +4,18 @@
   const clientId = Array.from(crypto.getRandomValues(new Uint32Array(4)), n => n.toString(16)).join('-');
   const listeners = new Map(), pending = new Map();
   let state = null, hostActive = true, active = !document.hidden, sequence = 0, started = false, hello = 0, options = {}, lastRoute = '';
-  const emit = (type, value) => { for (const fn of listeners.get(type) ?? []) { try { fn(value); } catch (e) { console.error('[ThemeHub SDK]',e); } } };
+  const emit = (type, value) => { for (const fn of listeners.get(type) ?? []) { try { fn(value); } catch (e) { console.error('[ThemeHub SDK]',e); if(type==='state')reportStartupError(e); } } };
   const send = message => parent.postMessage({ dht:1, ...message, clientId }, '*');
+  let reportedStartupError=false;
+  function reportStartupError(error){
+    if(reportedStartupError)return;
+    reportedStartupError=true;
+    send({type:'runtimeError',message:String(error?.message??error).slice(0,600)});
+  }
+  window.addEventListener('error',event=>{
+    if(event.error)reportStartupError(event.error);
+    else if(event.target?.tagName==='SCRIPT')reportStartupError('Could not load '+event.target.src.split('/').pop());
+  },true);
   const on = (type, fn) => { if (!listeners.has(type)) listeners.set(type,new Set()); listeners.get(type).add(fn); return () => listeners.get(type)?.delete(fn); };
   function activity(value) { const next = !!value && !document.hidden; if (next !== active) { active = next; emit('activity',active); } }
   function cancelRequests(reason) { for (const p of pending.values()) { clearTimeout(p.timer); p.reject(Error(reason)); } pending.clear(); }

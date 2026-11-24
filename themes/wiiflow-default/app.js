@@ -20,8 +20,13 @@
       const img=document.createElement('img');img.alt='';img.src=url;img.onload=()=>fallback.remove();img.onerror=()=>img.remove();front.append(img);}
     return front;
   }
-  function persist(){hub.save({lastAppid:current()?.appid,installedOnly:installed,flat});}
+  let saveTimer=0;
+  function persist(){clearTimeout(saveTimer);saveTimer=0;hub.save({lastAppid:current()?.appid,installedOnly:installed,flat});}
+  function persistSelection(){clearTimeout(saveTimer);saveTimer=setTimeout(persist,240);}
+  hub.on('activity',active=>{if(!active&&saveTimer)persist();});
+  hub.on('dispose',()=>clearTimeout(saveTimer));
   function focusGame(){hub.send({type:'focus',appid:current()?.appid??null});}
+  let lastHint="";
   function render(){
     const game=current();if(!game){gameOpen=false;document.body.classList.remove('game-open');}const old=new Map([...$('covers').children].map(n=>[n.dataset.appid,n])),used=new Set();
     if(window.WiiFlowImport){window.WiiFlowImport.libraryCount=games.length;window.WiiFlowImport.libraryIndex=selected;}
@@ -45,10 +50,11 @@
     $('layout').querySelector('span').textContent=flat?'Flat flow':'Cover flow';$('layout').setAttribute('aria-label','Cover arrangement: '+(flat?'Flat flow':'Cover flow'));$('layout').setAttribute('aria-pressed',String(flat));
     $('play').disabled=$('details').disabled=!game;$('previous').disabled=$('next').disabled=games.length<2;
     $('play').textContent=game&&!game.installed?'↓ Install':'▶ Play';$('empty').hidden=!!games.length;$('empty').textContent='No games in this view.';
-    hub.send({type:'hints',a:gameOpen?(game?.installed?'Play':'Install'):'Select',x:'Game details',y:'Options'});focusGame();
+    const hint=gameOpen?(game?.installed?'Play':'Install'):'Select';
+    if(hint!==lastHint){lastHint=hint;hub.send({type:'hints',a:hint,x:'Game details',y:'Options'});}focusGame();
   }
-  function choose(i){if(!games.length)return;if(window.WiiFlowImport?.slottingBusy)return;gameOpen=false;document.body.classList.remove('game-open','controls');selected=(i+games.length)%games.length;zone=0;clearControlFocus();document.activeElement?.blur();persist();hub.sound('move');render();}
-  function select(){if(!current())return;if(gameOpen)return launch();gameOpen=true;document.body.classList.add('game-open');zone=1;control=0;document.body.classList.remove('controls');hub.sound('select');render();}
+  function choose(i){if(!games.length)return;if(window.WiiFlowImport?.slottingBusy)return;gameOpen=false;document.body.classList.remove('game-open','controls');selected=(i+games.length)%games.length;zone=0;clearControlFocus();document.activeElement?.blur();persistSelection();hub.sound('move');render();}
+  function select(){if(!current())return;if(saveTimer)persist();if(gameOpen)return launch();gameOpen=true;document.body.classList.add('game-open');zone=1;control=0;document.body.classList.remove('controls');hub.sound('select');render();}
   function launch(){if(current()){hub.sound('launch');hub.launch(current().appid);}}
   function details(){if(current())hub.send({type:'details',appid:current().appid});}
   function filter(){const appid=current()?.appid;games=all.filter(g=>(!installed||g.installed)&&(!platform||(platform.source==='collection'&&platform.appids.includes(Number(g.appid)))||String(g.pluginMagic||g.platformId||g.platform||'').toLowerCase()===platform.target||platform.source==='all'));selected=Math.max(0,games.findIndex(g=>g.appid===appid));render();}
@@ -58,6 +64,7 @@
   let suppressClick=false;$('stage').addEventListener('click',e=>{if(suppressClick){e.preventDefault();e.stopImmediatePropagation();}},true);
   document.addEventListener('focusin',e=>{if(availableControls().includes(e.target)){zone=!gameOpen&&e.target.closest('header')?2:1;control=controls().indexOf(e.target);markControl(e.target);if(!gameOpen)document.body.classList.add('controls');}});
   hub.on('input',({btn})=>{
+    if(saveTimer&&['a','b','x','y','menu'].includes(btn))persist();
     if(window.WiiFlowImport?.sourceMenuOpen)return;
     if(btn==='y'||btn==='menu')return hub.open('options');if(btn==='x')return details();if(btn==='b'){gameOpen=false;zone=0;clearControlFocus();document.body.classList.remove('game-open','controls');document.activeElement?.blur();render();return;}
     if(window.WiiFlowImport?.layout?.library_stack&&!gameOpen&&!zone){

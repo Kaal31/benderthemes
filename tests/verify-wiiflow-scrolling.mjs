@@ -5,10 +5,10 @@ const {server,url}=await startPreviewServer(),browser=await launch();
 try{
  const page=await browser.newPage({viewport:{width:1304,height:930}});
  await page.addInitScript(()=>{
-  window.__reflectionCopies=0;window.__coverBackPaints=0;
+  window.__reflectionCopies=0;window.__coverBackPaints=0;window.__caseSurfacePaints=0;
   const draw=CanvasRenderingContext2D.prototype.drawImage,fill=CanvasRenderingContext2D.prototype.fillRect;
   CanvasRenderingContext2D.prototype.drawImage=function(...args){if(args[0]?.id==='case-renderer')window.__reflectionCopies++;return draw.apply(this,args);};
-  CanvasRenderingContext2D.prototype.fillRect=function(...args){if(this.canvas.width===768&&this.canvas.height===1152&&args[0]===0&&args[1]===0)window.__coverBackPaints++;return fill.apply(this,args);};
+  CanvasRenderingContext2D.prototype.fillRect=function(...args){if(args[0]===0&&args[1]===0&&args[2]===this.canvas.width&&args[3]===this.canvas.height&&[[96,512],[512,96],[128,64]].some(([w,h])=>this.canvas.width===w&&this.canvas.height===h))window.__caseSurfacePaints++;if(this.canvas.width===768&&this.canvas.height===1152&&args[0]===0&&args[1]===0)window.__coverBackPaints++;return fill.apply(this,args);};
  });
  await page.goto(url+'?theme=vita&still=1');await page.locator('[data-dht-root]').waitFor();
  await page.evaluate(()=>window.__updateTheme({theme:'frame',activeTheme:'wiiflow-default',animations:true}));
@@ -21,6 +21,7 @@ try{
  const start=await host.locator('#title').innerText();
  for(let i=0;i<6;i++){await page.evaluate(()=>window.dispatchEvent(new KeyboardEvent('keydown',{key:'ArrowRight',bubbles:true})));await page.waitForTimeout(70);}
  assert.notEqual(await host.locator('#title').innerText(),start);
+ assert.equal(await page.evaluate(()=>window.__caseSurfacePaints),4,'All cases share the same four immutable edge and shadow textures');
  const copies=await page.evaluate(()=>window.__reflectionCopies);assert.ok(copies<6,`scrolling must avoid per-frame GPU readbacks, got ${copies}`);
  console.log('PASS WiiFlow selection advances, settings preserve case textures, reflections avoid per-frame readbacks during scrolling');
 }finally{await browser.close();server.closeAllConnections();server.close();}
