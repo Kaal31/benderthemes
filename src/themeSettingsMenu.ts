@@ -34,7 +34,7 @@ import { playBootIntro } from "./bootIntro";
 import { activeTheme, allIcons, allThemes } from "./engine/registry";
 import { ICON_SPOTS } from "./engine/manifest";
 import { customizeControls, nameOf, refreshCustomizeLists, SlotControl } from "./customize";
-import { LAYOUT_SLOTS } from "./engine/assets";
+import { LAYOUT_SLOTS, layoutCaps } from "./engine/assets";
 import { PAGES } from "./engine/pages";
 import { importSwitchResources, importSwitchThemeFile, listSwitchThemes, switchFxKey } from "./switchThemes";
 import { listWiiuThemes, importWiiuFiles } from "./wiiuThemes";
@@ -430,13 +430,14 @@ function lookOptionItems(th: ThemeId): MenuItem[] {
 function slotItem(c: SlotControl): MenuItem {
   const pick = (id: string, name: string): MenuItem => ({ label: name, get checked() { return c.get() === id; }, action: () => c.set(id) }) as MenuItem;
   const th = S().theme;
-  const caps = LAYOUT_SLOTS[th];
+  const caps = layoutCaps(S());
   return {
     get label() { return `${c.label}: ${nameOf(c)}`; },
     sub: () => [
       ...c.special.map((o) => pick(o.id, o.name)),
       // the asset browser: every installed source that has something for this slot
       ...c.groups.map((g) => ({ label: g.source, get checked() { return g.items.some((i) => i.ref === c.get()); }, sub: () => g.items.map((i) => pick(i.ref, i.name)) }) as MenuItem),
+      ...(c.more === "background" && caps?.videoBackground ? [onOff("Video playback", () => S().videoBackgrounds[th] !== false, v => updateSettings(p => ({videoBackgrounds:{...p.videoBackgrounds,[th]:v}})))] : []),
       ...(c.more === "background" && caps?.brightness ? [themeOpt("Brightness", "bgBrightness", [100, 90, 80, 70, 60, 50].map((v, i) => ({ id: v, name: i ? `−${i} (${v}%)` : "Normal" })))] : []),
       ...(c.more === "background" && caps?.tint ? [themeOpt("Colour", "tint", TINTS)] : []),
       ...(c.more === "icons" ? [group("Pick icons one by one", iconItems)] : []),

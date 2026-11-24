@@ -7,7 +7,7 @@ import {downloadableAudio,downloadAudio,refreshAudioCatalog} from "./audioDownlo
 import { getRawSettings, getSettings, setThemeOption, Settings, ThemeId, THEMES, themeFx, updateSettings, updateThemeFx } from "./settings";
 import { autoPack, getPacks, listWallpapers, musicFile, refreshPacks, sfxCoverage } from "./steam";
 import { activeTheme, allThemes, hasSlot, setMix } from "./engine/registry";
-import { AssetGroup, assetGroups, AssetSlot, FileKind, isAssetRef, LAYOUT_SLOTS, refreshHubSets, slotOffered } from "./engine/assets";
+import { AssetGroup, assetGroups, AssetSlot, FileKind, isAssetRef, LAYOUT_SLOTS, layoutCaps, refreshHubSets, slotOffered } from "./engine/assets";
 import { FILE_KINDS, fileOf } from "./lookState";
 import { installedFiles } from "./presets";
 import { SlotKind } from "./engine/manifest";
@@ -59,8 +59,8 @@ function fileHasBackground(th: ThemeId, s: Settings): boolean {
 }
 function backgroundControl(page?:string): SlotControl | null {
   const th = layout();
-  const c = LAYOUT_SLOTS[th];
   const s = getSettings();
+  const c = layoutCaps(s);
   if (!c?.background && !fileHasBackground(th, s)) return null;
   const t = look();
   const fxKey = FILE_KINDS[th]?.fx(fileOf(s, th)) ?? "";

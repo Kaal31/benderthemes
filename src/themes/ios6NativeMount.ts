@@ -1,3 +1,4 @@
+import {NATIVE_BACKDROP_CSS} from './ThemeBackdrop';
 import {bundledThemeFileUrl} from '../engine/registry';
 import { ios6Css, ios6Markup, runIOS6Native } from './ios6NativeRuntime';
 
@@ -5,7 +6,7 @@ import { ios6Css, ios6Markup, runIOS6Native } from './ios6NativeRuntime';
 export function mountIOS6Native(host: HTMLElement, send: (message: any) => void) {
   const root=host.shadowRoot??host.attachShadow({mode:'open'});
   const style=document.createElement('style');style.textContent=ios6Css.replace('url(wallpaper.jpg)',`url("${bundledThemeFileUrl('ios6','wallpaper.jpg')}")`);
-  const body=document.createElement('div');body.className='ios6-body';body.style.cssText='position:absolute;inset:0;overflow:hidden';body.innerHTML=ios6Markup;root.replaceChildren(style,body);
+  const body=document.createElement('div');body.className='ios6-body';body.style.cssText='position:absolute;inset:0;overflow:hidden';body.innerHTML=ios6Markup;style.textContent+=NATIVE_BACKDROP_CSS;root.replaceChildren(style,body);
   const events=new EventTarget(),timers=new Set<number>(),intervals=new Set<number>(),observers:MutationObserver[]=[];
   let disposed=false;
   const parent=Object.assign(new EventTarget(),{postMessage:(message:any)=>{if(!disposed)send(message);}});

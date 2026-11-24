@@ -1,3 +1,4 @@
+import {useThemeBackdrop} from './ThemeBackdrop';
 import {startupIntroEnabled} from "../startupPreferences";
 // PS1 home: the console's own start-up screens (redrawn without any console
 // logo), the BIOS main menu with its two bevelled buttons, the Memory Card
@@ -29,6 +30,7 @@ type Track = { name: string; run: () => void };
 
 export function Ps1Home() {
   const api = useHome();
+ const backdrop=useThemeBackdrop();
   const s = api.settings;
   const { W, H } = useStage();
   const st = styleOf(s, "ps1");
@@ -197,6 +199,7 @@ export function Ps1Home() {
     <ThemeRoot onInput={onInput} hints={hints as any}>
       <Stage background="#000">
         <div className="dht-ps1-bg" style={{ position: "absolute", inset: 0, background: `var(--dht-ps1-bg, linear-gradient(180deg, ${c0} 0%, ${c1} 55%, ${c2} 100%))` }} />
+        {backdrop.background()}
         <div style={{ position: "absolute", inset: 0, opacity: 0.18, background: "repeating-linear-gradient(135deg, #fff0 0 22px, #ffffff10 22px 24px)" }} />
         {st<string>("backgroundMotion") === "drift" && (
           <div style={{ position: "absolute", left: -W * 0.2, top: -H * 0.3, width: W * 0.9, height: H * 0.9, borderRadius: "50%", background: "radial-gradient(circle, #9fc0ff33 0%, #9fc0ff00 65%)", animation: animate ? "dhtPs1Drift 18s ease-in-out infinite alternate" : "none" }} />

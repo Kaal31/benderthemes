@@ -44,7 +44,7 @@ try{
  await press(12);await press(12);await press(12);assert.equal(await focused().innerText(),'Play preview','Right edge enters description actions');
  await press(1);await hub.locator('.aw-player video').waitFor();
  await press(10);assert.equal(await focused().innerText(),'Use as theme wallpaper');
- await press(1);await hub.getByRole('status').filter({hasText:'This theme does not support'}).waitFor();
+ await press(1);await hub.getByRole('status').filter({hasText:'Applied to this theme'}).waitFor();
  await press(11);assert.match(await focused().innerText(),/Wallpaper 20/,'Left returns to selected card');
  await press(1);assert.equal(await focused().innerText(),'Stop preview','A on a card opens its actions');
  await press(2);assert.match(await focused().innerText(),/Wallpaper 20/,'Back returns from actions to cards');

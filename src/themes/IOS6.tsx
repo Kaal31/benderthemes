@@ -1,3 +1,4 @@
+import {useThemeBackdrop} from './ThemeBackdrop';
 import {useEffect,useRef,useState} from 'react';
 import {useHome} from '../common';
 import {ThemeRoot,Hints} from '../input';
@@ -10,6 +11,7 @@ import {useReportFocus} from '../focus';
 import {mountIOS6Native} from './ios6NativeMount';
 
 export function IOS6Home(){
+ const backdrop=useThemeBackdrop();
  const api=useHome(),downloads=useDownloads(),host=useRef<HTMLDivElement>(null),runtime=useRef<ReturnType<typeof mountIOS6Native>|undefined>(undefined);
  const latest=useRef({api,downloads});latest.current={api,downloads};
  const [hints,setHints]=useState<Hints>({}),[focus,setFocus]=useState<number|null>(null);
@@ -31,5 +33,5 @@ export function IOS6Home(){
  runtime.current=mounted;queued.forEach(m=>mounted.receive(m));
  return()=>{alive=false;runtime.current=undefined;mounted.dispose();};},[]);
  useEffect(()=>{runtime.current?.receive(state());},[api.lib,api.settings,api.busy]);
- return <ThemeRoot hints={hints} onInput={p=>{if(p.btn==='menu'||p.btn==='y'){api.openSettings();return true;}runtime.current?.receive({type:'input',btn:p.btn,repeat:p.repeat});return true;}}><div ref={host} data-native-theme="ios6" style={{position:'absolute',inset:0,overflow:'hidden'}}/></ThemeRoot>;
+ return <ThemeRoot hints={hints} onInput={p=>{if(p.btn==='menu'||p.btn==='y'){api.openSettings();return true;}runtime.current?.receive({type:'input',btn:p.btn,repeat:p.repeat});return true;}}>{backdrop.background()}<div data-custom-backdrop={backdrop.custom} ref={host} data-native-theme="ios6" style={{position:'absolute',inset:0,overflow:'hidden'}}/></ThemeRoot>;
 }

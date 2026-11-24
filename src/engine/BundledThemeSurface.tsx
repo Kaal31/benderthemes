@@ -1,3 +1,4 @@
+import {useThemeBackdrop,NATIVE_BACKDROP_CSS} from '../themes/ThemeBackdrop';
 import {subscribeCasePad} from "../themes/wiiflowCasePad";
 import { useLayoutEffect, useRef } from "react";
 import { bundledThemes } from "./bundledThemes.generated";
@@ -10,6 +11,7 @@ export function BundledThemeSurface({ id, base, port, onMessage }: {
   id: string; base: string; port: React.MutableRefObject<NativeThemePort | null>;
   onMessage: (message: Record<string, unknown>) => void;
 }) {
+  const backdrop=useThemeBackdrop(id==="wiiflow-default"||id==="gamecube");
   const host = useRef<HTMLDivElement>(null);
   const receive = useRef(onMessage); receive.current = onMessage;
   useLayoutEffect(() => {
@@ -35,7 +37,7 @@ export function BundledThemeSurface({ id, base, port, onMessage }: {
       const value = node.getAttribute(attr); if (value) node.setAttribute(attr,absolute(value));
     }
     const style = doc.createElement("style"); style.textContent = css(definition.css)+"\n[data-theme-body]{width:100%;height:100%;margin:0;position:relative}";
-    html.append(body); shadow.replaceChildren(style,html);
+    style.textContent+=NATIVE_BACKDROP_CSS;html.append(body); shadow.replaceChildren(style,html);
     let disposed=false;
     const cleanups: (()=>void)[] = [], timers = new Set<number>(), intervals = new Set<number>(), frames = new Set<number>();
     const listeners = new Map<string, Set<EventListener>>();
@@ -129,5 +131,5 @@ export function BundledThemeSurface({ id, base, port, onMessage }: {
       shadow.replaceChildren();listeners.clear();
     };
   },[id,base,port]);
-  return <div ref={host} data-native-theme={id} style={{position:"absolute",inset:0,overflow:"hidden",transform:"translateZ(0)"}}/>;
+  return <>{backdrop.background()}<div data-custom-backdrop={backdrop.custom} ref={host} data-native-theme={id} style={{position:"absolute",inset:0,overflow:"hidden",transform:"translateZ(0)"}}/></>;
 }

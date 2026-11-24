@@ -1,3 +1,4 @@
+import {NATIVE_BACKDROP_CSS,useThemeBackdrop} from './ThemeBackdrop';
 import {setStyle} from "../engine/themeStyles";
 import {useEffect,useRef,useState} from 'react';
 import {useHome} from '../common';
@@ -15,6 +16,7 @@ import {mountGameAmp} from './gameamp/runtime';
 
 /** Native host-owned UI. No iframe, postMessage, remote script, or frame sandbox. */
 export function GameAmpHome(){
+ const backdrop=useThemeBackdrop();
  const api=useHome(),downloads=useDownloads(),host=useRef<HTMLDivElement>(null),runtime=useRef<any>(null);
  const live=useRef({api,downloads});live.current={api,downloads};
  const [focused,setFocused]=useState<number|null>(null);
@@ -22,7 +24,7 @@ export function GameAmpHome(){
  useEffect(()=>{
   const el=host.current;if(!el)return;
   const root=el.shadowRoot??el.attachShadow({mode:'open'}),doc=el.ownerDocument,W=doc.defaultView!;
-  root.innerHTML='<style>'+styles+libraryFilterStyles+'</style>'+markup;
+  root.innerHTML='<style>'+styles+libraryFilterStyles+NATIVE_BACKDROP_CSS+'</style>'+markup;
   const handlers:Array<()=>void>=[],timeouts=new Set<number>(),intervals=new Set<number>();let disposed=false;
   const scoped:any={getElementById:(id:string)=>root.getElementById(id),querySelector:(s:string)=>root.querySelector(s),querySelectorAll:(s:string)=>root.querySelectorAll(s),createElement:doc.createElement.bind(doc),get activeElement(){return root.activeElement;},body:el};
   scoped.addEventListener=(type:string,fn:any)=>{root.addEventListener(type,fn,true);handlers.push(()=>root.removeEventListener(type,fn,true));};
@@ -48,5 +50,5 @@ export function GameAmpHome(){
   return()=>{disposed=true;resize.disconnect();W.clearInterval(meter);runtime.current?.destroy();runtime.current=null;handlers.forEach(f=>f());timeouts.forEach(id=>W.clearTimeout(id));intervals.forEach(id=>W.clearInterval(id));root.replaceChildren();};
  },[]);
  useEffect(()=>{runtime.current?.state({games:api.lib.games,settings:api.settings,saved:api.settings.frameData.gameamp,capabilities:{pages:1}});},[api.lib,api.settings]);
- return <ThemeRoot onInput={p=>{if(api.busy)return false;runtime.current?.input(p.btn);return true;}} hints={{a:'Select',x:'Game details',y:'Theme options'}}><div ref={host} data-native-theme="gameamp" style={{position:'absolute',inset:0,overflow:'hidden',background:'#080d15'}}/></ThemeRoot>;
+ return <ThemeRoot onInput={p=>{if(api.busy)return false;runtime.current?.input(p.btn);return true;}} hints={{a:'Select',x:'Game details',y:'Theme options'}}>{backdrop.background()}<div data-custom-backdrop={backdrop.custom} ref={host} data-native-theme="gameamp" style={{position:'absolute',inset:0,overflow:'hidden',background:backdrop.custom?'transparent':'#080d15'}}/></ThemeRoot>;
 }

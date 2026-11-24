@@ -1,3 +1,4 @@
+import {useThemeBackdrop} from './ThemeBackdrop';
 import {gameChoice} from "../gameFilters";
 import {libraryGameViews} from "../libraryGameViews";
 import {themeActiveElement,nativeControlFocusCSS} from '../nativeThemeFocus';
@@ -34,6 +35,7 @@ const categories=['STORE','LIBRARY','COMMUNITY'];
 
 /** One persistent set of covers: sheet -> carousel -> library, and back. */
 export function OldBetaBigPictureHome(){
+ const backdrop=useThemeBackdrop();
  const api=useHome(),root=useRef<HTMLDivElement>(null),cards=useRef(new Map<number,HTMLButtonElement>());
  const largeSheets=(api.settings.frameData['old-beta-big-picture'] as {sheetLayout?:string}|undefined)?.sheetLayout==='large';
  const sheetUnit=largeSheets?.15:.215;
@@ -194,7 +196,7 @@ export function OldBetaBigPictureHome(){
  const column=Math.floor(selected/3),columnOffset=Math.max(0,column-2);
  return <ThemeRoot nativeControlFocus onInput={input} hints={{a:'Select',b:'Back',x:'Play',y:'Options'}}>
   <div ref={root} className={'dht-oldbeta'+(!api.settings.animations?' no-motion':'')} data-sheet-layout={largeSheets?'large':'reference'} data-mode={mode} data-category={category} style={{'--beta-w':w+'px','--beta-h':h+'px','--beta-category':category} as CSSProperties}>
-   <style>{nativeControlFocusCSS(OLD_BETA_CSS+OLD_BETA_PAGE_CSS+OLD_BETA_FOCUS_CSS+OLD_BETA_SHEET_CSS)}</style><div className="beta-home-scene" ref={n=>{if(n)n.inert=!!destination||searchOpen;}}><div className="beta-ambient" aria-hidden="true">{Array.from({length:26},(_,i)=><i key={i} style={{left:((i*37+9)%100)+'%',top:((i*23+13)%100)+'%','--dot-size':(i%6===0?2.3:.45+(i%5)*.3)+'%','--dot-time':(28+i%7*4)+'s','--dot-delay':(-i*3.7)+'s','--dot-alpha':.055+(i%4)*.023} as CSSProperties}/>)}</div>
+   <style>{nativeControlFocusCSS(OLD_BETA_CSS+OLD_BETA_PAGE_CSS+OLD_BETA_FOCUS_CSS+OLD_BETA_SHEET_CSS)}</style>{backdrop.background()}<div className="beta-home-scene" ref={n=>{if(n)n.inert=!!destination||searchOpen;}}><div className="beta-ambient" aria-hidden="true">{Array.from({length:26},(_,i)=><i key={i} style={{left:((i*37+9)%100)+'%',top:((i*23+13)%100)+'%','--dot-size':(i%6===0?2.3:.45+(i%5)*.3)+'%','--dot-time':(28+i%7*4)+'s','--dot-delay':(-i*3.7)+'s','--dot-alpha':.055+(i%4)*.023} as CSSProperties}/>)}</div>
    <header className="beta-header"><button aria-label="Profile" onClick={()=>go('profile')}><span className="beta-avatar"><ProfileAvatar size={32}/></span></button><div><button aria-label="Settings" onClick={()=>go('settings')}><Icon name="gear" size={22}/></button><button aria-label="Power" onClick={()=>Navigation.OpenPowerMenu()}><Icon name="power" size={22}/></button><span className="beta-stamp">BETA</span></div></header>
    <div className="beta-light" aria-hidden="true"/><div className="beta-focus-light" aria-hidden="true"/>
    <nav className="beta-categories" aria-label="Categories">{categories.map((name,index)=><button key={name} data-category={index} aria-pressed={index===category} onFocus={()=>focusCategory(index)} onClick={()=>mode!=='sheet'?switchPage(index):index===1?changeMode('recent'):go(index===0?'store':'community')}>{name}</button>)}</nav>

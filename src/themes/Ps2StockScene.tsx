@@ -4,7 +4,7 @@ import * as THREE from 'three';
 import {useAssets} from '../assets';
 import {getSettings} from '../settings';
 
-export function Ps2StockScene({mode='clock',animate=true,saves=30,boot=false,selection=0,towerCount='normal',speed=.05,fog='light',onUnavailable}:{mode?:'menu'|'clock'|'towers';animate?:boolean;saves?:number;boot?:boolean;selection?:number;towerCount?:string;speed?:number;fog?:string;onUnavailable?:()=>void}){
+export function Ps2StockScene({mode='clock',transparent=false,animate=true,saves=30,boot=false,selection=0,towerCount='normal',speed=.05,fog='light',onUnavailable}:{mode?:'menu'|'clock'|'towers';transparent?:boolean;animate?:boolean;saves?:number;boot?:boolean;selection?:number;towerCount?:string;speed?:number;fog?:string;onUnavailable?:()=>void}){
  const mount=useRef<HTMLDivElement>(null),assets=useAssets('ps2-stock-menu');
  const selected=useRef(selection);selected.current=selection;
  const [failed,setFailed]=useState(false);
@@ -12,6 +12,7 @@ export function Ps2StockScene({mode='clock',animate=true,saves=30,boot=false,sel
   const element=mount.current;if(!element)return;
   let renderer:THREE.WebGLRenderer;
   try{renderer=new THREE.WebGLRenderer({alpha:true,antialias:true,powerPreference:'low-power'});}catch{setFailed(true);onUnavailable?.();return;}
+  renderer.setClearColor(0x000000,0);
   renderer.setPixelRatio(Math.min(window.devicePixelRatio||1,1.75));renderer.outputColorSpace=THREE.SRGBColorSpace;
   element.appendChild(renderer.domElement);renderer.domElement.style.cssText='width:100%;height:100%;display:block';
   const scene=new THREE.Scene(),camera=new THREE.PerspectiveCamera(48,1,.1,100);
@@ -58,7 +59,7 @@ export function Ps2StockScene({mode='clock',animate=true,saves=30,boot=false,sel
     cloudMat.uniforms.cloud.value=texture;cloudMat.uniforms.hasCloud.value=1;
    });
    const cloudMat=material(new THREE.ShaderMaterial({transparent:true,depthWrite:false,uniforms:{time:{value:0},reveal:{value:0},cloud:{value:glow},hasCloud:{value:0}},vertexShader:'varying vec2 uv0;void main(){uv0=uv;gl_Position=projectionMatrix*modelViewMatrix*vec4(position,1.0);}',fragmentShader:'varying vec2 uv0;uniform float time;uniform float reveal;uniform sampler2D cloud;uniform float hasCloud;void main(){vec2 p=(uv0-.5)*5.;float a=atan(p.y,p.x)+length(p)*1.5;float n=0.;for(int i=1;i<5;i++){float f=float(i);n+=sin(p.x*f*1.7+sin(p.y*f+time*.06))*cos(p.y*f*1.3+sin(a*f-time*.04))/(f*3.); }vec2 tunnel=uv0-vec2(.32,.50);float radius=max(.22,length(tunnel));vec2 flow=uv0*2.+vec2(time*.003,time*.006)+vec2(sin(uv0.y*5.+time*.02),cos(uv0.x*5.-time*.02))*.12;float grain=clamp((texture2D(cloud,flow).r-.537)/.185,0.,1.);float v=mix(smoothstep(-.45,.65,n),grain,hasCloud*.40);float shade=.6+.4*smoothstep(.0,.5,radius);gl_FragColor=vec4(mix(vec3(.14,.12,.23),vec3(.53,.49,.65),v)*shade,reveal);}' }));
-   const cloudPlane=new THREE.Mesh(geometry(new THREE.PlaneGeometry(42,26)),cloudMat);cloudPlane.position.z=-10;scene.add(cloudPlane);
+   const cloudPlane=new THREE.Mesh(geometry(new THREE.PlaneGeometry(42,26)),cloudMat);cloudPlane.position.z=-10;cloudPlane.visible=!transparent;scene.add(cloudPlane);
    const prismGeo=geometry(new THREE.LatheGeometry([new THREE.Vector2(0,-1.2),new THREE.Vector2(.20,-1.2),new THREE.Vector2(.20,1.15),new THREE.Vector2(.18,1.2),new THREE.Vector2(0,1.2)],6));prismGeo.computeTangents();
    for(let i=0;i<12;i++){
     const mat=makeGlass(backgroundTarget.texture,0xb9b5df);mat.uniforms.highlight.value=.4;
@@ -125,6 +126,6 @@ export function Ps2StockScene({mode='clock',animate=true,saves=30,boot=false,sel
   const tick=(ms:number)=>{frame=requestAnimationFrame(tick);if(document.hidden||ms-last<1000/30)return;last=ms;render(ms);};
   render(started);if(animate)frame=requestAnimationFrame(tick);
   return()=>{alive=false;cancelAnimationFrame(frame);observer.disconnect();geometries.forEach(g=>g.dispose());materials.forEach(m=>m.dispose());textures.forEach(t=>t.dispose());backgroundTarget.dispose();compositeTarget.dispose();renderer.dispose();renderer.domElement.remove();};
- },[mode,animate,saves,boot,towerCount,speed,fog,assets['orb-halo'],assets['orb-core'],assets['menu-clouds'],assets['cube-reflection'],assets['clock-reflection'],assets['clock-bump'],assets['startup-wall'],assets['startup-fog']]);
- return <div ref={mount} data-ps2-stock-scene={mode} style={{position:'absolute',inset:0,background:failed?'radial-gradient(ellipse at 35% 45%,#172450,#01020a 70%)':mode==='menu'?'#000':mode==='clock'?'#000':'#010209',pointerEvents:'none'}}/>;
+ },[mode,transparent,animate,saves,boot,towerCount,speed,fog,assets['orb-halo'],assets['orb-core'],assets['menu-clouds'],assets['cube-reflection'],assets['clock-reflection'],assets['clock-bump'],assets['startup-wall'],assets['startup-fog']]);
+ return <div ref={mount} data-ps2-stock-scene={mode} style={{position:'absolute',inset:0,background:transparent?'transparent':failed?'radial-gradient(ellipse at 35% 45%,#172450,#01020a 70%)':mode==='menu'?'#000':mode==='clock'?'#000':'#010209',pointerEvents:'none'}}/>;
 }

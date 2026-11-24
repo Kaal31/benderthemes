@@ -1,3 +1,4 @@
+import {useThemeBackdrop} from './ThemeBackdrop';
 import {CSSProperties, ReactNode, useMemo} from "react";
 import {bundledStyles} from "../engine/bundledStyles.generated";
 import {activeTheme, themeFileUrl} from "../engine/registry";
@@ -11,6 +12,7 @@ function splitSelectors(text:string){
 }
 /** Reuse visual rules only. The original HTML, scripts and bridge never run. */
 export function NativeVisuals({id,children,style,page="home"}:{id:keyof typeof bundledStyles;children:ReactNode;style?:CSSProperties;page?:string}) {
+ const backdrop=useThemeBackdrop();
  const {settings}=useHome(),theme=activeTheme(settings),{W,H}=useStage();
  const base=theme?themeFileUrl(theme,"")!:"";
  const css=useMemo(()=>{
@@ -31,5 +33,5 @@ export function NativeVisuals({id,children,style,page="home"}:{id:keyof typeof b
   }).join("\n");
   return rules(sheet.cssRules)+`\n${root}.no-motion *,${root}.no-motion *:before,${root}.no-motion *:after{animation:none!important;transition:none!important;scroll-behavior:auto!important}`;
  },[id,base]);
- return <div className={`dht-native-${id}${settings.animations?"":" no-motion still"}`} data-react-theme={id} data-page={page} style={{position:"absolute",inset:0,overflow:"hidden",color:"white",fontFamily:'"Segoe UI",sans-serif',"--native-width":`${W}px`,"--native-height":`${H}px`,...style} as CSSProperties}><style>{css}</style>{children}</div>;
+ return <div className={`dht-native-${id}${settings.animations?"":" no-motion still"}`} data-react-theme={id} data-page={page} style={{position:"absolute",inset:0,overflow:"hidden",color:"white",fontFamily:'"Segoe UI",sans-serif',"--native-width":`${W}px`,"--native-height":`${H}px`,...style} as CSSProperties}><style>{css}{backdrop.custom?`.dht-native-${id} #dashboard{background:transparent!important}.dht-native-${id} #dashboard:before{opacity:.12}.dht-native-${id} #stage{background:transparent!important}.dht-native-${id}>[aria-hidden=true]{background:transparent!important}`:""}</style>{backdrop.background()}{children}</div>;
 }

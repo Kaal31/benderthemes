@@ -1,3 +1,4 @@
+import {useThemeBackdrop} from './ThemeBackdrop';
 import { READING_BACKGROUND, READING_SEQUENCE } from "./readingAssets";
 import { useThemeActive } from "../performance";
 import { LocalTrack, playLocalAudio, ReadingMusicPlayer } from "./ReadingMusicPlayer";
@@ -16,6 +17,7 @@ import { READING_CSS } from "./readingRoomStyles";
 export function ReadingRoomHome() {
  const showMenuButton=!!(window as any).__isThemePreview;
  const api=useHome(), assets=useAssets("reading-room"), menu=useMenu();
+ const backdrop=useThemeBackdrop();
  const {W,H}=useStage(), scale=Math.min(W/1536,H/864);
  const time=useClock(15000), battery=useBattery();
  const [friends,setFriends]=useState<{id:string;name:string;avatar:string;online:boolean}[]>([]);
@@ -97,8 +99,8 @@ export function ReadingRoomHome() {
  }return true;
  };
  return <ThemeRoot onInput={input} hints={{a:"Play",b:"Steam Home",x:"Details",y:"Themes",menu:"Game options"}}><Stage background="#30251c"><style>{READING_CSS}</style>
- <div className="rr-home" style={{["--rr-pin-size" as string]:`${44/scale}px`,left:(W-1536*scale)/2,top:(H-864*scale)/2,transform:`scale(${scale})`,backgroundImage:`url("${assets.background||READING_BACKGROUND}")`}}>
- {sequence.length>0&&[...(previousWallpaper!==null&&previousWallpaper!==wallpaper?[previousWallpaper]:[]),wallpaper].map(i=><video key={i} ref={i===wallpaper?wallpaperVideo:video=>{video?.pause();}} className="rr-wallpaper" src={sequence[i].videoSrc} muted playsInline autoPlay={i===wallpaper&&!wallpaperPaused&&active} preload="auto" style={{opacity:i===wallpaper&&!wallpaperReady?0:1,transition:i===wallpaper?`opacity ${previousWallpaper===sequence.length-1?1600:650}ms ease`:"none"}} onPlaying={()=>{if(i===wallpaper)setWallpaperReady(true);}} onLoadedData={()=>{if(i===wallpaper&&wallpaperPaused)setWallpaperReady(true);}} onEnded={()=>{if(i===wallpaper)changeWallpaper(1);}}/>)}
+ <div className="rr-home" style={{["--rr-pin-size" as string]:`${44/scale}px`,left:(W-1536*scale)/2,top:(H-864*scale)/2,transform:`scale(${scale})`,backgroundImage:backdrop.custom?"none":`url("${assets.background||READING_BACKGROUND}")`}}>
+ {backdrop.background({zIndex:-2})}{!backdrop.custom&&sequence.length>0&&[...(previousWallpaper!==null&&previousWallpaper!==wallpaper?[previousWallpaper]:[]),wallpaper].map(i=><video key={i} ref={i===wallpaper?wallpaperVideo:video=>{video?.pause();}} className="rr-wallpaper" src={sequence[i].videoSrc} muted playsInline autoPlay={i===wallpaper&&!wallpaperPaused&&active} preload="auto" style={{opacity:i===wallpaper&&!wallpaperReady?0:1,transition:i===wallpaper?`opacity ${previousWallpaper===sequence.length-1?1600:650}ms ease`:"none"}} onPlaying={()=>{if(i===wallpaper)setWallpaperReady(true);}} onLoadedData={()=>{if(i===wallpaper&&wallpaperPaused)setWallpaperReady(true);}} onEnded={()=>{if(i===wallpaper)changeWallpaper(1);}}/>)}
  {(window as any).__isThemePreview&&sequence.length>0&&<div className="rr-wallpaper-preview"><button onClick={()=>changeWallpaper(-1)} aria-label="Previous wallpaper">‹</button><span>{wallpaper+1} / {sequence.length} · {sequence[wallpaper].tag} · Clip {sequence[wallpaper].clip}</span><button onClick={()=>setWallpaperPaused(p=>!p)}>{wallpaperPaused?"Resume sequence":"Hold this wallpaper"}</button><button onClick={()=>changeWallpaper(1)} aria-label="Next wallpaper">›</button></div>}
  {showMenuButton && <button className="rr-menu-button" onClick={toggleNav} aria-label={navOpen?"Close menu":"Open menu"} aria-expanded={navOpen}><span className="rr-menu-seal"><Icon name="steam" size={24}/></span><span className="rr-menu-label">Menu<small>{navOpen?"Close notebook":"Open notebook"}</small></span><span className="rr-menu-lines" aria-hidden="true"><i/><i/><i/></span></button>}
  {(window as any).__isThemePreview&&<button className="rr-menu-button rr-audio-test" onClick={()=>{const tracks:LocalTrack[]=(window as any).__readingAudio??[];if(tracks.length)playLocalAudio(tracks,0);}} aria-label="Test audio"><span className="rr-menu-seal"><Icon name="music" size={24}/></span><span className="rr-menu-label">Test audio<small>Bundled sample track</small></span></button>}

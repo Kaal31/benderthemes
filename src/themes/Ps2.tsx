@@ -1,3 +1,4 @@
+import {useThemeBackdrop} from './ThemeBackdrop';
 // PS2 main menu: towers of light in a dark space, the Browser /
 // System Configuration menu, memory-card devices, and a grid of slowly
 // turning save-data style icons for the games.
@@ -247,6 +248,7 @@ const PS2_CSS = `
 // ───────────── main ─────────────
 export function Ps2Home() {
   const api = useHome();
+ const backdrop=useThemeBackdrop();
   const s = api.settings;
   const { W, H } = useStage();
   const now = useClock(15000);
@@ -389,7 +391,8 @@ export function Ps2Home() {
     <ThemeRoot onInput={onInput} hints={hints}>
       <Stage background="#000">
         <style>{PS2_CSS}{firmware["font-ascii"]?`@font-face{font-family:PS2UserFirmware;src:url("${firmware["font-ascii"]}") format("truetype");font-display:swap;}`:""}</style>
-        {screen==="main"?webglFailed?<AnimCanvas width={W} height={H} animate={s.animations} fps={30} draw={drawMenuOrbs}/>:<Ps2StockScene mode="menu" animate={s.animations} saves={saves} onUnavailable={()=>setWebglFailed(true)}/>:screen==="browser"||screen==="card"||screen==="info"?<div className="dht-ps2-browser-field" style={{position:"absolute",inset:0,background:browserField(st<string>("browserColor"),now.getHours()),transition:"background 2s"}}/>:webglFailed?<AnimCanvas width={W} height={H} animate={s.animations} fps={20} draw={towerDraw}/>:<Ps2StockScene mode="clock" animate={s.animations} saves={saves} selection={configCategory} onUnavailable={()=>setWebglFailed(true)}/>}
+        {backdrop.background()}
+        {screen==="main"?webglFailed?<AnimCanvas width={W} height={H} animate={s.animations} fps={30} draw={drawMenuOrbs}/>:<Ps2StockScene transparent={backdrop.custom} mode="menu" animate={s.animations} saves={saves} onUnavailable={()=>setWebglFailed(true)}/>:screen==="browser"||screen==="card"||screen==="info"?<div className="dht-ps2-browser-field" style={{position:"absolute",inset:0,background:backdrop.custom?"transparent":browserField(st<string>("browserColor"),now.getHours()),transition:"background 2s"}}/>:webglFailed?<AnimCanvas width={W} height={H} animate={s.animations} fps={20} draw={backdrop.custom?drawMenuOrbs:towerDraw}/>:<Ps2StockScene transparent={backdrop.custom} mode="clock" animate={s.animations} saves={saves} selection={configCategory} onUnavailable={()=>setWebglFailed(true)}/>}
         {st<boolean>("scanlines")&&<div className="dht-ps2-scan"/>}
 
         {/* clock */}

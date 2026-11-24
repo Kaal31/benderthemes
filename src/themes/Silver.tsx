@@ -1,3 +1,4 @@
+import {useThemeBackdrop} from './ThemeBackdrop';
 import {CSSProperties, PointerEvent, useEffect, useRef, useState} from "react";
 import {BatteryGlyph, GameArt, Icon, IconName, MenuView, useHome, useMenu} from "../common";
 import {Press, Stage, ThemeRoot, useStage} from "../input";
@@ -31,6 +32,7 @@ export function SilverHome({dark=false}:{dark?:boolean}={}){
 
  const art=dark?{...REF,metal:ONYX_REFERENCE.body,wheel:ONYX_REFERENCE.wheel}:REF;
  const api=useHome(),{lib:{games},settings:s}=api,{W,H}=useStage(),menu=useMenu(),battery=useBattery(),clock=useClock(),status=useSteamStatus();
+ const backdrop=useThemeBackdrop();
  const carousel=dark?styleOf(api.settings,"onyx")<string>("carousel"):"covers";
  const iconFlow=carousel==="icons",squareFlow=carousel!=="covers";
  const [selected,setSelected]=useState(0),[zone,setZone]=useState<"games"|"nav">("games"),[nav,setNav]=useState(0),[pressed,setPressed]=useState<string|null>(null);
@@ -115,7 +117,8 @@ export function SilverHome({dark=false}:{dark?:boolean}={}){
  // Covers crossing the circular boundary are repositioned only while hidden.
  const visible=games.map((_,i)=>{const d=(i-index+games.length)%games.length;return d>games.length/2?d-games.length:d;});
  return <ThemeRoot onInput={input} hints={{a:"Play",b:"Back",x:"Menu",y:"Game options"}}><Stage background="#d2d2d2"><style>{SILVER_CSS}{dark?ONYX_CSS:""}</style>
- <div className="silver-home" data-dark={dark} data-carousel={carousel} data-screen-glass={dark?styleOf(s,"onyx")("screenGlass"):"off"} data-cover-glass={dark?styleOf(s,"onyx")("coverGlass"):"off"} data-page={dark?page:undefined} data-motion={s.animations} style={{transform:`scale(${W/1280},${H/800})`,...Object.fromEntries(Object.entries(art).map(([key,value])=>[`--silver-${key}`,`url("${value}")`]))} as CSSProperties}>
+ <div className="silver-home" data-dark={dark} data-carousel={carousel} data-screen-glass={dark?styleOf(s,"onyx")("screenGlass"):"off"} data-cover-glass={dark?styleOf(s,"onyx")("coverGlass"):"off"} data-page={dark?page:undefined} data-motion={s.animations} style={{transform:`scale(${W/1280},${H/800})`,...Object.fromEntries(Object.entries(art).map(([key,value])=>[`--silver-${key}`,`url("${value}")`])),...(backdrop.custom?{background:"transparent"}:{})} as CSSProperties}>
+ {backdrop.background()}
  {dark&&<><div className="onyx-tabs">{ONYX_PAGES.map(name=><button key={name} data-active={page===name} onClick={()=>{playSound("tab");setPage(name);}}>{name}</button>)}</div><div ref={screenRef} className="onyx-screen" data-page={page}>
 {page==="Now Playing"&&<div className="onyx-music">
  <div className="onyx-albums" aria-label="Music albums">{albums?.map(album=><button key={album.id} data-active={player.album?.id===album.id} onClick={()=>musicPlayer.play(album)}>{album.cover?<img src={album.cover} alt=""/>:<span>♫</span>}<small>{album.name}</small></button>)}{albums?.length===0&&<small>No albums yet</small>}</div>

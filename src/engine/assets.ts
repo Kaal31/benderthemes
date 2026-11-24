@@ -12,7 +12,7 @@
 // "@" and "#" never start a theme id, so values saved before v2 (theme ids) keep their meaning.
 //
 // LAYOUT_SLOTS is the capability table: which slots each layout actually draws. Menus offer only those.
-import type { ThemeId } from "../settings";
+import type { Settings, ThemeId } from "../settings";
 import { loadAssets } from "../assets";
 import { loadSkinFile } from "../skins";
 import { loadSwitchSkin } from "../switchThemes";
@@ -68,6 +68,11 @@ export const LAYOUT_SLOTS: Record<ThemeId, LayoutCaps> = {
 // These layouts already render the shared wallpaper through BackgroundMedia/WallpaperVideo.
 for (const id of ["wii","wiiu","switch","n3ds","vita","ps3","psp","ps4","ps5","xbox","x360","aero","aero2","dial","iisu"] as ThemeId[]) {
   LAYOUT_SLOTS[id].videoBackground = true;
+}
+
+// Scenery adapters preserve each layout's foreground UI and original default scene.
+for(const id of ["gameamp","santa-express","old-beta-big-picture","old-big-picture","reading","onyx","silver","ps1","ps2","ios6","minecraft","pain"] as ThemeId[]) {
+ Object.assign(LAYOUT_SLOTS[id],{background:true,videoBackground:true,tint:false,brightness:true});
 }
 
 export const slotOffered = (layout: ThemeId, slot: AssetSlot): boolean => {
@@ -282,3 +287,9 @@ export const ACCENTS: [string, string][] = [
   ["Sky blue", "#28c3ec"], ["Switch cyan", "#00c3e3"], ["Mint", "#3ee0a8"], ["Xbox green", "#107c10"], ["Lime", "#9bd21c"],
   ["Sun yellow", "#ffd23c"], ["Orange", "#ff8a1c"], ["Red", "#e8343c"], ["Pink", "#ff5aa8"], ["Purple", "#8b5cf6"], ["White", "#ffffff"],
 ];
+
+/** Bundled frame surfaces are audited individually; arbitrary HTML imports are not. */
+export function layoutCaps(s: Pick<Settings,"theme"|"activeTheme">): LayoutCaps {
+ const c=LAYOUT_SLOTS[s.theme];
+ return s.theme==="frame" ? {...c,videoBackground:["wiiflow-default","gamecube","blue-glass","ios6","gameamp"].includes(s.activeTheme??"")} : c;
+}
