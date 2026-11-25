@@ -6,6 +6,7 @@
   let state = null, hostActive = true, active = !document.hidden, sequence = 0, started = false, hello = 0, options = {}, lastRoute = '';
   const emit = (type, value) => { for (const fn of listeners.get(type) ?? []) { try { fn(value); } catch (e) { console.error('[ThemeHub SDK]',e); if(type==='state')reportStartupError(e); } } };
   const send = message => parent.postMessage({ dht:1, ...message, clientId }, '*');
+  let hostPort=null,hostPeer=null;
   let reportedStartupError=false,startupTimer=0;
   function reportStartupError(error){
     if(reportedStartupError)return;
@@ -21,7 +22,17 @@
   const on = (type, fn) => { if (!listeners.has(type)) listeners.set(type,new Set()); listeners.get(type).add(fn); return () => listeners.get(type)?.delete(fn); };
   function activity(value) { const next = !!value && !document.hidden; if (next !== active) { active = next; emit('activity',active); } }
   function cancelRequests(reason) { for (const p of pending.values()) { clearTimeout(p.timer); p.reject(Error(reason)); } pending.clear(); }
-  function handshake() { send({type:'ready',handles:options.handles ?? ['up','down','left','right','a','b','x','y','menu','l1','r1'],textInput:options.textInput !== false}); }
+  function handshake() {
+    const message={dht:1,type:'ready',clientId,handles:options.handles ?? ['up','down','left','right','a','b','x','y','menu','l1','r1'],textInput:options.textInput !== false};
+    if(typeof MessageChannel!=='undefined'){
+      hostPort?.close();hostPeer?.close();
+      const channel=new MessageChannel();hostPort=channel.port1;hostPeer=channel.port2;
+      hostPort.onmessage=event=>receiveHost(event.data);
+      try{parent.postMessage(message,'*',[hostPeer]);hostPeer=null;return;}
+      catch{hostPort.close();hostPeer?.close();hostPort=hostPeer=null;}
+    }
+    parent.postMessage(message,'*');
+  }
   function connect(value = {}) {
     if (started) return; started = true; options = value; handshake();
     hello = setInterval(handshake,500);
@@ -90,9 +101,8 @@
     reduced.addEventListener('change',invalidate); schedule();
     return { invalidate, dispose() { disposed = true; cancelAnimationFrame(raf); off(); offState(); reduced.removeEventListener('change',invalidate); } };
   }
-  window.addEventListener('message',e => {
-    const m = e.data;
-    if (e.source !== parent || m?.dht !== 1 || (m.clientId && m.clientId !== clientId)) return;
+  function receiveHost(m) {
+    if (m?.dht !== 1 || (m.clientId && m.clientId !== clientId)) return;
     if (m.type === 'state') {
       state = m; clearInterval(hello); hostActive = m.active !== false && !m.busy; activity(hostActive);
       const route = JSON.stringify(m.route ?? null);
@@ -108,7 +118,8 @@
     if (m.type === 'lifecycle') { hostActive = !!m.active; activity(hostActive); return; }
     if (m.type === 'navigationError') { emit('error',m.error); return; }
     if (m.type === 'input') input(m); else emit(m.type,m);
-  });
+  }
+  window.addEventListener('message',e => {if(e.source===parent)receiveHost(e.data);});
   document.addEventListener('visibilitychange',() => activity(hostActive));
   window.addEventListener('hashchange',() => {
     let fragment; try { fragment = decodeURI(location.hash.slice(1)); } catch { return; }
@@ -123,7 +134,7 @@
     const btn = {ArrowUp:'up',ArrowDown:'down',ArrowLeft:'left',ArrowRight:'right',Enter:'a',Escape:'b',x:'x',y:'y',m:'menu',q:'l1',e:'r1'}[e.key];
     if (btn) { e.preventDefault(); e.stopPropagation(); input({btn,repeat:e.repeat}); }
   });
-  window.addEventListener('pagehide',() => { clearInterval(hello); clearTimeout(startupTimer); activity(false); cancelRequests('Theme page closed.'); emit('dispose'); });
+  window.addEventListener('pagehide',() => { clearInterval(hello); clearTimeout(startupTimer); hostPort?.close();hostPeer?.close(); activity(false); cancelRequests('Theme page closed.'); emit('dispose'); });
   window.ThemeHub = {
     version:1, connect, on, send, request, navigate,
     back:() => send({type:'back'}), replace:(path,params = {}) => navigate(path,params,true),

@@ -94,6 +94,7 @@ function LegacyFrameHome({previewAppid,onPreviewClose}:{previewAppid?:number;onP
   const [routes, setRoutes] = useState<FrameRoute[]>([]);
   const route = routes[routes.length - 1] ?? { path: entry, fragment: "", params: {} };
   const generation = useRef(0), client = useRef<string | null>(null);
+  const replyPort=useRef<MessagePort|null>(null);
   const [pageError, setPageError] = useState(false);
   const [connectionError,setConnectionError] = useState("");
   const connectionFailed=useRef(false);
@@ -111,6 +112,7 @@ function LegacyFrameHome({previewAppid,onPreviewClose}:{previewAppid?:number;onP
     setRoutes(prev => prev.slice(0, -1)); return true;
   };
   const recoverConnection=()=>{
+    replyPort.current?.close();replyPort.current=null;
     connectionFailed.current=false;setConnectionError("");
     if(!back()){setPageError(false);setReady(null);client.current=null;generation.current++;setReload(n=>n+1);}
   };
@@ -118,7 +120,9 @@ function LegacyFrameHome({previewAppid,onPreviewClose}:{previewAppid?:number;onP
 
   const post = (msg: Record<string, unknown>) => {
     try {
-      (isNative?nativePort.current:frame.current?.contentWindow)?.postMessage({ dht: FRAME_PROTOCOL, ...msg, ...(msg.type === "state" ? { active: !((nativePort.current?.ownerDocument??frame.current?.ownerDocument)?.hidden ?? false) && !api.busy } : {}), clientId: client.current }, "*");
+      const message={ dht: FRAME_PROTOCOL, ...msg, ...(msg.type === "state" ? { active: !((nativePort.current?.ownerDocument??frame.current?.ownerDocument)?.hidden ?? false) && !api.busy } : {}), clientId: client.current };
+      if(!isNative&&replyPort.current)replyPort.current.postMessage(message);
+      else (isNative?nativePort.current:frame.current?.contentWindow)?.postMessage(message, "*");
     } catch (error) {
       connectionFailed.current=true;reportError(`Theme ${theme?.id??"frame"} message delivery`,error);
       setConnectionError(error instanceof Error?error.message:String(error));
@@ -235,7 +239,11 @@ function LegacyFrameHome({previewAppid,onPreviewClose}:{previewAppid?:number;onP
         case "ready": {
           if(connectionFailed.current)return;
           const id = typeof m.clientId === "string" ? m.clientId.slice(0, 100) : null;
-          if (client.current !== id) {generation.current++;logInfo(`Theme ${theme?.id??"frame"} connected (${isNative?"native":"imported"}; ${state.games.length} Home games, ${state.libraryGames.length} Library games)`);}
+          if(client.current!==id){replyPort.current?.close();replyPort.current=null;}
+          // Only a ready message from this frame (checked above) can establish
+          // the return channel. The wrapper forwards the transferred port.
+          if(!isNative&&e.ports?.[0]){replyPort.current?.close();replyPort.current=e.ports[0];}
+          if (client.current !== id) {generation.current++;logInfo(`Theme ${theme?.id??"frame"} connected (${isNative?"native":replyPort.current?"imported port":"imported window"}; ${state.games.length} Home games, ${state.libraryGames.length} Library games)`);}
           client.current = id;
           setPageError(false);setConnectionError("");
           const handles = new Set<Btn>((Array.isArray(m.handles) ? m.handles : []).filter((b: unknown): b is Btn => BUTTONS.includes(b as Btn)));
@@ -305,6 +313,7 @@ function LegacyFrameHome({previewAppid,onPreviewClose}:{previewAppid?:number;onP
 
   useEffect(() => { setReady(null); setFocusedAppid(null); }, [url]);
   useEffect(()=>{connectionFailed.current=false;setConnectionError("");},[url,theme?.id,theme?.revision,reload]);
+  useEffect(()=>()=>{replyPort.current?.close();replyPort.current=null;},[url,theme?.id,theme?.revision,reload]);
   useEffect(() => { setRoutes([]); setReady(null); setHints({}); setPageError(false);setConnectionError(""); client.current = null; generation.current++; }, [theme?.id, theme?.revision]);
   useEffect(() => {
     if (ready || !url || !frameAvailable || isNative) return;

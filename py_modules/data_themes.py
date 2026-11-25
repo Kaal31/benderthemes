@@ -436,7 +436,7 @@ WRAPPER = """<!doctype html><html><head><meta charset="utf-8"><meta name="referr
 <style>html,body{margin:0;height:100%;background:#000;overflow:hidden}iframe{position:absolute;inset:0;width:100%;height:100%;border:0}</style></head>
 <body><iframe sandbox="allow-scripts" referrerpolicy="no-referrer" allow="" src="__SRC__"></iframe><script>
 (function(){var f=document.querySelector("iframe");
-addEventListener("message",function(e){if(e.source===parent){f.contentWindow&&f.contentWindow.postMessage(e.data,"*");}else if(f.contentWindow&&e.source===f.contentWindow){parent.postMessage(e.data,"*");}});
+addEventListener("message",function(e){if(e.source===parent){f.contentWindow&&f.contentWindow.postMessage(e.data,"*",Array.from(e.ports));}else if(f.contentWindow&&e.source===f.contentWindow){parent.postMessage(e.data,"*",Array.from(e.ports));}});
 })();</script></body></html>"""
 
 
