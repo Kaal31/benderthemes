@@ -1,5 +1,6 @@
 import * as T from 'three';
 import {OBB} from 'three/addons/math/OBB.js';
+import {separationAlongRay,coverShadowStyle} from './transitionClearance.js';
 import {tickCover, oscillation} from './nativeAnimation.js';
 import {layoutPolicy,aspectValue,widescreen} from './coverflowLayout.js';
 const rad=Math.PI/180;
@@ -176,6 +177,31 @@ export function importedFlow(scene,camera,hub,invalidate){
    const distance=base.distanceTo(camera.position),adjusted=e.group.position.distanceTo(camera.position);
    if(distance>.001)e.group.scale.multiplyScalar(adjusted/distance);
   }
+  // Ordinary source layouts can intersect while the outgoing centre rotates.
+  // Correct only transient intersections; preserve intentionally overlapping
+  // final poses and the separate source-backed flat-pile/long-spin paths.
+  if(!open&&!still&&!d.library_stack&&!clearanceEnabled()&&config.transitionClearance!==false){
+   const list=[...entries.values()].filter(e=>e.group.visible&&!e.flowBoundary);
+   const turning=e=>e.group.position.distanceTo(e.target)>.015||Math.max(...targetFor(e).angle.map((v,i)=>Math.abs(v-e.nativeState.angle[i])))>.5;
+   const current=e=>{e.group.updateMatrix();return new OBB(new T.Vector3(),new T.Vector3(.525,.75,.07)).applyMatrix4(e.group.matrix);};
+   const targets=new Map(list.map(e=>[e,new OBB(new T.Vector3(),new T.Vector3(.525,.75,.07)).applyMatrix4(new T.Matrix4().compose(e.target,new T.Quaternion().setFromEuler(new T.Euler(e.tilt,e.angle*rad,e.roll,'YXZ')),e.flowScale))]));
+   const placed=[];
+   for(const e of list.sort((a,b)=>Number(turning(a))-Number(turning(b))||Math.abs(b.offset)-Math.abs(a.offset))){
+    const base=e.group.position.clone(),direction=camera.position.clone().sub(base).normalize();let travel=0;
+    if(turning(e))for(let pass=0;pass<3;pass++){
+     let changed=false;
+     for(const other of placed){
+      const box=current(e),obstacle=current(other);
+      if(targets.get(e).intersectsOBB(targets.get(other),0)||!box.intersectsOBB(obstacle,0))continue;
+      const step=separationAlongRay(box,obstacle,direction);
+      if(step>0&&travel+step<1.5){travel+=step;e.group.position.addScaledVector(direction,step);changed=true;}
+     }
+     if(!changed)break;
+    }
+    if(travel>0){const distance=base.distanceTo(camera.position);if(distance>.001)e.group.scale.multiplyScalar(e.group.position.distanceTo(camera.position)/distance);moving=true;}
+    placed.push(e);
+   }
+  }
   for(const row of rows)place(row.mesh,row.nativeState,{pos:row.target.p.toArray(),angle:row.target.a.toArray(),scale:row.target.scale.toArray()});
   if(still){camera.position.copy(cameraDest);currentAim.copy(aimDest);}
   const camOsc=still?[0,0,0]:oscillation(nativeTicks,value(d,'camera_osc_speed',[0,0,0]),value(d,'camera_osc_amp',[0,0,0]),true);
@@ -187,5 +213,5 @@ export function importedFlow(scene,camera,hub,invalidate){
   return moving;
  }
  function dispose(){columnControls.remove();delete config.shiftStackColumn;rows.forEach(r=>{scene.remove(r.mesh);r.mesh.traverse(n=>{if(n.isMesh)for(const m of Array.isArray(n.material)?n.material:[n.material])m.dispose();});});button.remove();}
- return {apply,syncRows,beforeFrame,frame,dispose,pickables:()=>rows.map(r=>r.mesh),reflectionAlpha:()=>config.reflectionsEnabled===true?Number(data(open).mirror_alpha??.2):0};
+ return {apply,syncRows,beforeFrame,frame,dispose,pickables:()=>rows.map(r=>r.mesh),shadowStyle:offset=>coverShadowStyle(data(open),offset),reflectionAlpha:()=>config.reflectionsEnabled===true?Number(data(open).mirror_alpha??.2):0};
 }

@@ -109,6 +109,9 @@ jobs:
       - run: node tests/verify-wiiflow-scrolling.mjs
       - run: node tests/verify-wiiflow-scroll-work.mjs
       - run: node tests/verify-wiiflow-import-runtime.mjs
+      - run: node tests/verify-shortcut-artwork-importers.mjs
+      - run: node tests/verify-wiiflow-transition-clearance.mjs
+      - run: node tests/verify-wiiflow-import-shadows.mjs
       - run: python -m unittest discover -s tests -p test_wiiflow_runtime.py
       - run: node tests/verify-native-theme-regressions.mjs
       - run: node tests/verify-theme-artwork-hub.mjs

@@ -193,10 +193,10 @@ def convert(source, output, selected=None, ident=None, *, source_kind='community
                         vector = [float(n.strip()) for n in raw.split(',')]
                         if len(vector)==3 and all(abs(n)<=1000 for n in vector):result[key+suffix]=vector
                     except ValueError:pass
-            for key in ['rows','columns','rows_4_3','columns_4_3','mirror_alpha','text_center_wrap_width','text_center_wrap_width_4_3','text_center_angle','text_center_angle_4_3']:
+            for key in ['rows','columns','rows_4_3','columns_4_3','mirror_alpha','shadow_scale','shadow_x','shadow_y','text_center_wrap_width','text_center_wrap_width_4_3','text_center_angle','text_center_angle_4_3']:
                 try:result[key]=float(flow.get(section,key))
                 except (ValueError,configparser.Error):pass
-            for key in ['color_beg','color_end','color_off','color_shadow_beg','color_shadow_end']:
+            for key in ['color_beg','color_end','color_off','color_shadow_beg','color_shadow_center','color_shadow_end','color_shadow_off']:
                 raw=flow.get(section,key,fallback='')
                 if re.fullmatch(r'#[0-9a-fA-F]{8}',raw):result[key]=raw
             return result

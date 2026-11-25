@@ -12,6 +12,17 @@ spec.loader.exec_module(importer)
 
 
 class ImportTests(unittest.TestCase):
+    def test_shadow_colours_scale_and_offset_are_preserved(self):
+        with tempfile.TemporaryDirectory() as temp:
+            root=Path(temp);source=root/'source';source.mkdir()
+            (source/'Shadows.ini').write_text('[MAIN/BG]\n[_COVERFLOW_1]\ncolor_shadow_center=#10203000\ncolor_shadow_beg=#20304060\ncolor_shadow_end=#00000000\ncolor_shadow_off=#00000020\nshadow_scale=1.25\nshadow_x=4\nshadow_y=-3\n[_COVERFLOW_1_S]\ncolor_shadow_center=#3040507F\n')
+            report=importer.convert(source,root/'out.zip')
+            browse=report['modes'][0]['browse'];selected=report['modes'][0]['selected']
+            self.assertEqual(browse['color_shadow_center'],'#10203000')
+            self.assertEqual(browse['color_shadow_off'],'#00000020')
+            self.assertEqual((browse['shadow_scale'],browse['shadow_x'],browse['shadow_y']),(1.25,4,-3))
+            self.assertEqual(selected['color_shadow_center'],'#3040507F')
+
     def test_zip_case_insensitive_assets_and_manifest(self):
         with tempfile.TemporaryDirectory() as temp:
             root = Path(temp)

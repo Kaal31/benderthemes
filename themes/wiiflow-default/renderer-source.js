@@ -20,7 +20,7 @@ import {interfaceExtension} from './interfaceExtension.js';
  renderer.domElement.id='case-renderer';stage.prepend(renderer.domElement);document.body.classList.add('webgl');
  const reflectedCanvas=document.createElement('canvas');reflectedCanvas.id='floor-reflection';reflectedCanvas.style.cssText='position:absolute;inset:0;width:640px;height:480px;pointer-events:none';stage.append(reflectedCanvas);const reflectedContext=reflectedCanvas.getContext('2d');
 
- const scene=new T.Scene(),camera=new T.PerspectiveCamera(45,640/480,.1,100);
+ const scene=new T.Scene(),sourceShadowScene=new T.Scene(),camera=new T.PerspectiveCamera(45,640/480,.1,100);
  // Default coverflow: stock 70-degree side angles and .35-unit spacing.
  camera.position.set(0,-.05,7.600009918);camera.lookAt(0,-.05,0);camera.setViewOffset(640,480,0,55,640,480);
  scene.add(new T.HemisphereLight(0xffffff,0x414954,1.25));const light=new T.DirectionalLight(0xffffff,2.2);light.position.set(-3,5,6);scene.add(light);
@@ -111,9 +111,21 @@ const reversed=realisticCaseEdges&&swapCaseSides;entry.textures[0].repeat.x=reve
  }
  const parkedCases=new Map(),coverCache=new Map();let preloadTimer=0,preloadEpoch=0,cacheDisposed=false;
  const coverBudget=96*1024*1024;
+ const portableQueue=[],portablePending=new Map();let portableTimer=0,portableRunning=0,portableLast=0;
+ function pumpPortable(){
+  clearTimeout(portableTimer);if(cacheDisposed||portableRunning>=2||!portableQueue.length)return;
+  const delay=130-(performance.now()-portableLast);
+  if(delay>0){portableTimer=setTimeout(pumpPortable,delay);return;}
+  const job=portableQueue.shift();portableLast=performance.now();portableRunning++;
+  Promise.resolve().then(()=>window.ThemeHub.request('gameArtwork',{appid:job.id,kind:'portrait'})).then(job.resolve,()=>job.resolve(null)).finally(()=>{portableRunning--;portablePending.delete(job.id);pumpPortable();});pumpPortable();
+ }
+ function requestPortableCover(id){
+  if(portablePending.has(id))return portablePending.get(id);
+  const result=new Promise(resolve=>portableQueue.push({id,resolve}));portablePending.set(id,result);pumpPortable();return result;
+ }
  function trimCoverCache(){let bytes=[...coverCache.values()].reduce((n,r)=>n+r.bytes,0);for(const [url,r]of coverCache){if(coverCache.size<=32&&bytes<=coverBudget)break;if(r.users||!r.texture)continue;coverCache.delete(url);bytes-=r.bytes;r.texture.dispose();}}
  function coverResource(url){let r=coverCache.get(url);if(r){coverCache.delete(url);coverCache.set(url,r);return r;}r={users:0,bytes:0,texture:null,promise:null};coverCache.set(url,r);r.promise=new Promise(resolve=>loader.load(url,texture=>{if(cacheDisposed||coverCache.get(url)!==r){texture.dispose();resolve(null);return;}const original=texture.image,limit=1024,ratio=Math.min(1,limit/Math.max(original.naturalWidth||original.width,original.naturalHeight||original.height));if(ratio<1){const canvas=document.createElement('canvas');canvas.width=Math.max(1,Math.round((original.naturalWidth||original.width)*ratio));canvas.height=Math.max(1,Math.round((original.naturalHeight||original.height)*ratio));canvas.getContext('2d').drawImage(original,0,0,canvas.width,canvas.height);texture.image=canvas;texture.needsUpdate=true;}texture.colorSpace=T.SRGBColorSpace;texture.anisotropy=Math.min(4,renderer.capabilities.getMaxAnisotropy());r.texture=texture;r.bytes=(texture.image.naturalWidth||texture.image.width)*(texture.image.naturalHeight||texture.image.height)*4*4/3;renderer.initTexture(texture);resolve(texture);trimCoverCache();},undefined,()=>{r.settled=true;coverCache.delete(url);resolve(null);invalidate();}));return r;}
- function parkCase(id,e){scene.remove(e.group,e.mirror);parkedCases.delete(id);parkedCases.set(id,e);while(parkedCases.size>8){const [key,old]=parkedCases.entries().next().value;parkedCases.delete(key);release(old);}}
+ function parkCase(id,e){scene.remove(e.group,e.mirror);if(e.importShadow)e.importShadow.visible=false;parkedCases.delete(id);parkedCases.set(id,e);while(parkedCases.size>8){const [key,old]=parkedCases.entries().next().value;parkedCases.delete(key);release(old);}}
  function preloadNearby(){clearTimeout(preloadTimer);const epoch=++preloadEpoch;preloadTimer=setTimeout(async()=>{if(cacheDisposed||!active)return;const games=window.ThemeHub.state?.games||[],selected=covers.querySelector('.selected')?.dataset.appid,index=games.findIndex(g=>String(g.appid)===selected);if(index<0)return;const urls=[];for(let n=1;n<=Math.min(games.length,18);n++)for(const direction of [1,-1]){const g=games[(index+n*direction+games.length)%games.length],url=g.art?.portrait?.[0]||g.art?.landscape?.[0];if(url&&!coverCache.has(url)&&!urls.includes(url))urls.push(url);if(urls.length>=6)break;}for(let i=0;i<Math.min(6,urls.length)&&epoch===preloadEpoch&&!cacheDisposed;i+=2){await Promise.all(urls.slice(i,i+2).map(url=>coverResource(url).promise));await new Promise(resolve=>setTimeout(resolve,0));}},180);}
  function frontSources(button){const art=gameData.get(button.dataset.appid)?.art||{},urls=[...(art.portrait||[]),...(art.landscape||[]),...(art.hero||[])];if(!urls.length)urls.push(button.querySelector('.front img')?.src);return [...new Set(urls.filter(Boolean))];}
  const caseTextures=new Map();
@@ -139,10 +151,16 @@ const reversed=realisticCaseEdges&&swapCaseSides;entry.textures[0].repeat.x=reve
   const mirrorBox=box.clone(),mirrorFront=front.clone();mirror.add(mirrorBox,mirrorFront);mirror.matrixAutoUpdate=false;
   for(const m of [mirrorBox,mirrorFront]){m.material=Array.isArray(m.material)?m.material.map(x=>x.clone()):m.material.clone();for(const material of Array.isArray(m.material)?m.material:[m.material]){material.transparent=true;material.opacity=.16;material.depthWrite=false;material.onBeforeCompile=shader=>{shader.vertexShader=shader.vertexShader.replace('#include <common>','#include <common>\nvarying vec3 reflectionWorld;').replace('#include <project_vertex>','#include <project_vertex>\nreflectionWorld=(modelMatrix*vec4(transformed,1.0)).xyz;');shader.fragmentShader=shader.fragmentShader.replace('#include <common>','#include <common>\nvarying vec3 reflectionWorld;').replace('#include <dithering_fragment>','#include <dithering_fragment>\nfloat depth=max(0.0,-0.82-reflectionWorld.y);gl_FragColor.a *= (1.0-smoothstep(0.0,1.3,depth));if(reflectionWorld.y > -0.82) discard;');};}}
   group.userData.id=button.dataset.appid;box.userData.id=button.dataset.appid;front.userData.id=button.dataset.appid;
-  scene.add(group);const entry={button,group,mirror,front,box,shadow,openingTexture,capTextures,textures:[back,spine,shadowTexture,openingTexture,...capTextures,frontPlaceholder],materials:mats,target:new T.Vector3(),angle:0};
+  const importShadow=flow?new T.Mesh(geometry,new T.MeshBasicMaterial({transparent:true,opacity:0,depthTest:false,depthWrite:false})):null;if(importShadow){importShadow.renderOrder=-100;sourceShadowScene.add(importShadow);shadow.visible=false;}
+  scene.add(group);const entry={button,group,mirror,front,box,shadow,importShadow,openingTexture,capTextures,textures:[back,spine,shadowTexture,openingTexture,...capTextures,frontPlaceholder],materials:mats,target:new T.Vector3(),angle:0};
   const url=button.querySelector('.front img')?.src;entry.frontUrl=url;entry.frontSettled=false;
   const candidates=frontSources(button);entry.artSignature=JSON.stringify(candidates);
   const loadFront=async()=>{
+   let portableAttempted=false;
+   if(window.WiiFlowImport&&gameData.get(button.dataset.appid)?.shortcut&&window.ThemeHub.request){
+    portableAttempted=true;
+    try{const result=await requestPortableCover(Number(button.dataset.appid));if(result?.url)candidates.unshift(result.url);}catch{}
+   }
    for(const source of candidates){
     if(entry.released)return;
     const resource=coverResource(source);resource.users++;entry.coverResource=resource;
@@ -154,13 +172,28 @@ const reversed=realisticCaseEdges&&swapCaseSides;entry.textures[0].repeat.x=reve
     front.material.map=texture;front.material.needsUpdate=true;mirrorFront.material.map=texture;mirrorFront.material.needsUpdate=true;
     applyCaseEdge(entry);entry.frontSettled=true;invalidate();return;
    }
+   // Steam's custom shortcut images may display in Steam's own DOM but fail
+   // CORS/CSP checks in an imported theme's WebGL texture loader. Ask the host
+   // for bounded image bytes, using only the selected game's known artwork.
+   if(!portableAttempted&&window.WiiFlowImport&&window.ThemeHub.request&&!entry.released){
+    try{
+     const result=await requestPortableCover(Number(button.dataset.appid));
+     if(!entry.released&&result?.url){
+      const resource=coverResource(result.url);resource.users++;entry.coverResource=resource;
+      const texture=await resource.promise;
+      if(entry.released)return;
+      if(texture){entry.coverImage=texture.image;paintSpine(spine,name,texture.image,entry.logoImage,entry.spineDetail||0);paintBack(entry);front.material.map=texture;front.material.needsUpdate=true;mirrorFront.material.map=texture;mirrorFront.material.needsUpdate=true;applyCaseEdge(entry);}
+      else{resource.users--;entry.coverResource=null;}
+     }
+    }catch{/* Keep the named cover when Steam has no readable custom art. */}
+   }
    entry.frontSettled=true;invalidate();
   };void loadFront();
 
   paintBack(entry);applyCaseEdge(entry);
   return entry;
  }
- function release(e){e.released=true;if(e.coverResource)e.coverResource.users--;scene.remove(e.group,e.mirror);e.textures.forEach(t=>{if(!t.userData.sharedCase)t.dispose();});const mats=new Set();[e.group,e.mirror].forEach(g=>g.traverse(n=>{if(n.isMesh)(Array.isArray(n.material)?n.material:[n.material]).forEach(m=>mats.add(m));}));mats.forEach(m=>m.dispose());trimCoverCache();}
+ function release(e){e.released=true;if(e.coverResource)e.coverResource.users--;scene.remove(e.group,e.mirror);if(e.importShadow){sourceShadowScene.remove(e.importShadow);e.importShadow.material.dispose();}e.textures.forEach(t=>{if(!t.userData.sharedCase)t.dispose();});const mats=new Set();[e.group,e.mirror].forEach(g=>g.traverse(n=>{if(n.isMesh)(Array.isArray(n.material)?n.material:[n.material]).forEach(m=>mats.add(m));}));mats.forEach(m=>m.dispose());trimCoverCache();}
  function sync(){
   const buttons=[...covers.children],selected=buttons.find(b=>b.classList.contains('selected'));if(!selected){entries.forEach(release);entries.clear();invalidate();return;}
   const flat=document.getElementById('layout').getAttribute('aria-pressed')==='true',open=document.body.classList.contains('game-open');
@@ -193,7 +226,7 @@ const reversed=realisticCaseEdges&&swapCaseSides;entry.textures[0].repeat.x=reve
  function draw(now){raf=0;if(!active||document.hidden||window.WiiFlowImport?.sourceMenuOpen)return;const delta=last?Math.min(50,now-last):16.67;last=now;const ease=1-Math.exp(-delta/(fastMotion?67:document.body.classList.contains('game-open')?280:180));let moving=false;const still=matchMedia('(prefers-reduced-motion: reduce)').matches||document.body.classList.contains('still');
   flow?.beforeFrame(entries);
   for(const e of entries.values()){const a=e.angle*Math.PI/180;if(!flow&&!still&&(e.group.position.distanceTo(e.target)>.001||Math.abs(e.group.rotation.y-a)>.001)){e.group.position.lerp(e.target,ease);e.group.rotation.y+=(a-e.group.rotation.y)*ease;moving=true;}else{e.group.position.copy(e.target);e.group.rotation.y=a;}
-   const shadowReturn=window.WiiFlowImport?.spinClearance===true?Math.max(0,1-(e.spinRemaining||0)/35):1;const shadowTarget=(e.shadowTarget??1)*shadowReturn;if(Math.abs(e.shadow.material.opacity-shadowTarget)>.001)moving=true;e.shadow.material.opacity=still?shadowTarget:e.shadow.material.opacity+(shadowTarget-e.shadow.material.opacity)*ease;e.shadow.visible=e.shadow.material.opacity>.002;
+   const sourceShadow=flow?0:1;const shadowReturn=window.WiiFlowImport?.spinClearance===true?Math.max(0,1-(e.spinRemaining||0)/35):1;const shadowTarget=(e.shadowTarget??1)*shadowReturn*sourceShadow;if(Math.abs(e.shadow.material.opacity-shadowTarget)>.001)moving=true;e.shadow.material.opacity=still?shadowTarget:e.shadow.material.opacity+(shadowTarget-e.shadow.material.opacity)*ease;e.shadow.visible=e.shadow.material.opacity>.002;
    const tilt=e.tilt||0;e.group.rotation.x=still?tilt:e.group.rotation.x+(tilt-e.group.rotation.x)*ease;if(!flow&&Math.abs(e.group.rotation.x-tilt)>.001)moving=true;
    const unsettled=e.group.position.distanceTo(e.target)>.025||Math.abs(e.group.rotation.y-a)>.02;
    const reflectionTarget=e.reflectAllowed&&!unsettled?.16:0;
@@ -204,7 +237,20 @@ const reversed=realisticCaseEdges&&swapCaseSides;entry.textures[0].repeat.x=reve
    e.group.updateMatrix();e.mirror.matrix.multiplyMatrices(reflectionMatrix,e.group.matrix);e.mirror.matrixWorldNeedsUpdate=true;
   }if(flow)moving=flow.frame(now,ease,still,entries,fastMotion?2.7:1)||moving;
   for(const entry of entries.values()){const up=new T.Vector3(0,1,0).applyQuaternion(entry.group.quaternion);if(up.y<.85||(window.WiiFlowImport?.spinClearance===true&&entry.spinRemaining>35))entry.shadow.visible=false;}
-  extension?.viewport(renderer,camera);renderer.render(scene,camera);if(entries.size){const selected=[...entries.values()].find(e=>e.button.classList.contains("selected"));if(selected&&(selected.coverImage||selected.frontSettled))document.getElementById("stage").setAttribute("data-preview-render-ready","");}
+  extension?.viewport(renderer,camera);
+  // WiiFlow draws a scaled cover silhouette in screen space behind the cases,
+  // not a contact patch on a horizontal floor (CCoverFlow::_drawCover).
+  if(flow)for(const entry of entries.values()){
+   const shadow=entry.importShadow,style=flow.shadowStyle(entry.offset);if(!shadow)continue;
+   shadow.visible=entry.group.visible&&style.opacity>0&&style.scale>0;
+   if(!shadow.visible)continue;
+   shadow.material.color.setHex(style.color);shadow.material.opacity=style.opacity;
+   shadow.position.copy(entry.group.position);shadow.quaternion.copy(entry.group.quaternion);shadow.scale.copy(entry.group.scale).multiply(new T.Vector3(1+(style.scale-1)*1.5/1.05,style.scale,style.scale));
+   const projected=shadow.position.clone().project(camera);projected.x+=2*style.x/(parseFloat(renderer.domElement.style.width)||640);projected.y-=2*style.y/(parseFloat(renderer.domElement.style.height)||480);shadow.position.copy(projected.unproject(camera));
+   entry.shadow.visible=false;
+  }
+  if(flow){renderer.render(sourceShadowScene,camera);renderer.autoClear=false;}
+  renderer.render(scene,camera);renderer.autoClear=true;if(entries.size){const selected=[...entries.values()].find(e=>e.button.classList.contains("selected"));if(selected&&(selected.coverImage||selected.frontSettled))document.getElementById("stage").setAttribute("data-preview-render-ready","");}
   // Export the actual rendered case, rather than guessing its screen-space pose.
   if(document.body.classList.contains('game-open')&&!stage.dataset.previewModel){
    const entry=[...entries.values()].find(e=>e.offset===0&&e.group.visible);
@@ -274,6 +320,6 @@ const reversed=realisticCaseEdges&&swapCaseSides;entry.textures[0].repeat.x=reve
  window.ThemeHub.on('state',receiveArtState);if(window.ThemeHub.state)receiveArtState(window.ThemeHub.state);
  window.ThemeHub.on('activity',value=>{active=value;if(active)invalidate();else{cancelAnimationFrame(raf);raf=0;}});
  document.addEventListener('visibilitychange',()=>{active=!document.hidden;if(active)invalidate();});
- window.ThemeHub.on('dispose',()=>{window.removeEventListener('resize',updateBackgroundBlend);cacheDisposed=true;preloadEpoch++;clearTimeout(preloadTimer);cancelAnimationFrame(raf);entries.forEach(release);parkedCases.forEach(release);parkedCases.clear();for(const resource of coverCache.values())resource.texture?.dispose();coverCache.clear();caseTextures.forEach(texture=>texture.dispose());caseTextures.clear();geometry.dispose();artGeometry.dispose();shadowGeometry.dispose();flow?.dispose();extension?.dispose();renderer.dispose();});sync();
+ window.ThemeHub.on('dispose',()=>{window.removeEventListener('resize',updateBackgroundBlend);cacheDisposed=true;clearTimeout(portableTimer);for(const job of portableQueue.splice(0))job.resolve(null);portablePending.clear();preloadEpoch++;clearTimeout(preloadTimer);cancelAnimationFrame(raf);entries.forEach(release);parkedCases.forEach(release);parkedCases.clear();for(const resource of coverCache.values())resource.texture?.dispose();coverCache.clear();caseTextures.forEach(texture=>texture.dispose());caseTextures.clear();geometry.dispose();artGeometry.dispose();shadowGeometry.dispose();flow?.dispose();extension?.dispose();renderer.dispose();});sync();
 })();
 

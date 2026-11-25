@@ -15,15 +15,35 @@ try{
   if(location.pathname.includes('/preview/')){let dropped=false;window.addEventListener('message',e=>{if(!dropped&&e.data?.type==='ready'&&e.ports.length){dropped=true;e.ports[0].close();e.stopImmediatePropagation();}},true);}
   if(location.pathname.includes('/t/wiiflow-handshake-fixture/')){
    window.addEventListener('message',e=>{if(e.data?.dht===1)e.stopImmediatePropagation();},true);
+   window.__portableArtworkDecoded=0;
+   const src=Object.getOwnPropertyDescriptor(HTMLImageElement.prototype,'src');
+   Object.defineProperty(HTMLImageElement.prototype,'src',{...src,set(value){if(String(value).startsWith('data:image/png;base64,'))this.addEventListener('load',()=>window.__portableArtworkDecoded++,{once:true});src.set.call(this,value);}});
+
   }
  });
 
- await page.goto(url+'?theme=onyx&still=1');await page.waitForFunction(()=>!!window.__updateTheme);
+ await page.goto(url+'?theme=onyx&still=1&bugs=1');await page.waitForFunction(()=>!!window.__updateTheme);
  await page.evaluate(()=>window.__updateTheme({theme:'frame',activeTheme:'wiiflow-handshake-fixture',animations:false}));
  const inner=page.frameLocator('[data-dht-root] iframe').frameLocator('iframe');await inner.locator('#covers .selected').waitFor({state:'attached'});
  assert.match(await inner.locator('#count').innerText(),/^Total Games: [1-9]/);assert.notEqual(await inner.locator('#title').innerText(),'WiiFlow');assert.equal(await inner.locator('#empty').isVisible(),false);
  await inner.locator('#case-renderer').waitFor();assert.deepEqual(errors,[]);
  console.log('PASS real imported WiiFlow game-list handshake through production media server and sandbox with window replies blocked; obsolete private runtime replaced');
+ // Manually added art outside the frame's allowed URL space must be read by
+ // the host and transferred as bytes, never replaced by unrelated Steam art.
+ let hostArtworkReads=0;
+ await page.route('**/out/manual-shortcut.png',async route=>{
+  assert.equal(route.request().frame(),page.mainFrame(),'Only the host reads the private artwork URL');hostArtworkReads++;
+  await route.fulfill({contentType:'image/png',body:Buffer.from('iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAQAAAC1HAwCAAAAC0lEQVR42mP8/x8AAwMCAO+jRZkAAAAASUVORK5CYII=','base64')});
+ });
+ await page.evaluate(()=>{appStore.GetCustomVerticalCapsuleURLs=a=>a.appid===5001?[location.origin+'/out/manual-shortcut.png']:a.__art?.portrait;});
+ await page.waitForFunction(()=>window.__libraryGame(5001)?.art.portrait[0]?.includes('/out/manual-shortcut.png'));
+ await page.evaluate(()=>window.__updateTheme({sort:'alpha',maxGames:30}));
+ await inner.locator('#covers button[aria-label="Dolphin Emulator"]').waitFor({state:'attached'});
+ await new Promise((resolve,reject)=>{const until=Date.now()+15000;const check=()=>hostArtworkReads?resolve():Date.now()>until?reject(Error('Host did not read manual shortcut artwork')):setTimeout(check,50);check();});
+ await inner.locator('body').evaluate(()=>new Promise((resolve,reject)=>{const end=Date.now()+10000;const check=()=>window.__portableArtworkDecoded>0?resolve():Date.now()>end?reject(Error('Transferred cover did not decode into a WebGL image')):setTimeout(check,50);check();}));
+ assert.equal(hostArtworkReads,1,'One bounded read for the visible shortcut');
+ console.log('PASS manually added non-Steam cover transferred by the host into an isolated imported WiiFlow theme');
+
  await page.route('**/t/wiiflow-handshake-fixture/app.js',route=>route.fulfill({contentType:'text/javascript',body:'ThemeHub.on("state",()=>{throw new Error("WiiFlow startup error fixture")});ThemeHub.connect();'}));
  await page.reload();await page.waitForFunction(()=>!!window.__updateTheme);await page.evaluate(()=>window.__updateTheme({theme:'frame',activeTheme:'wiiflow-handshake-fixture'}));
  await page.getByRole('alert').filter({hasText:'WiiFlow startup error fixture'}).waitFor();

@@ -19,13 +19,14 @@ function audioState() {
 // frame's CSP. Transfer bounded image bytes without widening the sandbox policy.
 const imageCache = new Map<string, string>();
 async function frameImage(url: string): Promise<string> {
+  if (/^data:image\/(png|jpeg|webp|gif);base64,/i.test(url) && url.length <= 12 * 1024 * 1024) return url;
   if (!url || !/^https?:/.test(url)) return "";
   if (imageCache.has(url)) return imageCache.get(url)!;
   try {
     const r = await fetchNoCors(url, { method: "GET" });
     if (!r.ok) return "";
     const type = r.headers.get("content-type")?.split(";")[0] ?? "";
-    if (!["image/jpeg", "image/png", "image/webp"].includes(type)) return "";
+    if (!["image/jpeg", "image/png", "image/webp", "image/gif"].includes(type)) return "";
     const buffer = await r.arrayBuffer();
     if (buffer.byteLength > 8 * 1024 * 1024) return "";
     const bytes = new Uint8Array(buffer);
@@ -40,6 +41,21 @@ async function frameImage(url: string): Promise<string> {
 function storeImage(url:string|undefined){if(!url)return "";try{return typeof document!=="undefined"?new URL(url,document.baseURI).href:url;}catch{return "";}}
 export async function framePageRequest(op: string, args: any, api: HomeApi, downloads: Downloads) {
   switch (op) {
+    case "gameArtwork": {
+      if(!Number.isSafeInteger(args?.appid))throw Error("Invalid game");
+      const game=api.lib.byId.get(args.appid)??api.library?.byId.get(args.appid);
+      if(!game)throw Error("Game is not in the library");
+      const kind=args?.kind??"portrait";
+      if(!["portrait","landscape","hero","logo"].includes(kind))throw Error("Invalid artwork kind");
+      const candidates=kind==="portrait"?[...game.art.portrait,...game.art.landscape]:game.art[kind as keyof typeof game.art];
+      // Only the host's known artwork candidates may be read. Pages cannot
+      // supply filesystem paths or arbitrary URLs through this service.
+      for(const source of [...new Set(candidates)].slice(0,12)){
+        const url=await frameImage(source);
+        if(url)return {appid:game.appid,kind,url};
+      }
+      return {appid:game.appid,kind,url:""};
+    }
     case "notifications": return { items: readNotices().slice(0, 150) };
     case "weather": {
       const city = String(args?.city ?? "").trim().slice(0, 80);
