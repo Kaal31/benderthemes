@@ -6,7 +6,7 @@ import {layoutPolicy,aspectValue,widescreen} from './coverflowLayout.js';
 const rad=Math.PI/180;
 export function importedFlow(scene,camera,hub,invalidate){
  const config=window.WiiFlowImport;if(!config?.modes?.length)return null;
- let mode=config.initialMode||0,open=false,currentAim=new T.Vector3(0,0,0),aim=new T.Vector3(),cameraTarget=new T.Vector3(),rows=[];
+ let mode=Math.max(0,Math.min(config.modes.length-1,Math.trunc(Number(config.initialMode))||0)),open=false,currentAim=new T.Vector3(0,0,0),aim=new T.Vector3(),cameraTarget=new T.Vector3();
  const button=document.createElement('button');button.id='import-layout';button.style.cssText='position:absolute;left:365px;top:0;font-size:11px;padding:5px;background:#222e;color:white;border:1px solid #888;border-radius:4px';if(config.modes.length>1)(document.getElementById('coverflow-controls')||document.querySelector('header')).append(button);
  const columnControls=document.createElement('div');columnControls.id='stack-column-controls';columnControls.style.cssText='position:absolute;left:50%;bottom:18px;transform:translateX(-50%);z-index:70;display:none;gap:8px;align-items:center;color:white;font:14px Arial';
  const previousColumn=document.createElement('button'),nextColumn=document.createElement('button'),columnLabel=document.createElement('span');previousColumn.textContent='< Column';nextColumn.textContent='Column >';
@@ -14,12 +14,20 @@ export function importedFlow(scene,camera,hub,invalidate){
  previousColumn.onclick=()=>shiftColumn(-1);nextColumn.onclick=()=>shiftColumn(1);columnControls.append(previousColumn,columnLabel,nextColumn);document.body.append(columnControls);config.shiftStackColumn=shiftColumn;
  const value=(data,key,fallback)=>key==='columns'?layoutPolicy(data,config.coverflowWidthFactor||1,config.continueCoverPattern===true).columns:aspectValue(data,key,fallback);
  config.slotColumns=d=>d.library_stack?Math.max(1,config.libraryCount||1):layoutPolicy(d,config.coverflowWidthFactor||1,config.continueCoverPattern===true).bufferColumns;config.layoutPolicy=d=>layoutPolicy(d,config.coverflowWidthFactor||1,config.continueCoverPattern===true);config.readLayout=key=>value(data(),key);
+ // Allocate real games to every row; never clone another row's case or texture.
+ config.coverSlots=(length,selected=false)=>{
+  const d=data(selected),columns=config.slotColumns(d),rowCount=d.library_stack?1:Math.min(5,Math.max(1,Math.round(value(d,'rows',1))|1));
+  const count=Math.min(length,columns*rowCount),start=d.library_stack?-(config.libraryIndex||0):-Math.floor((count-1)/2),slots=[];
+  for(let index=start;index<start+count;index++){const offset=Math.floor((index+Math.floor(rowCount/2))/rowCount),row=index-offset*rowCount;slots.push({index,offset,row});}
+  return slots;
+ };
+
  const vec=(data,key,fallback)=>new T.Vector3(...value(data,key,fallback));
  function data(selected=false){const m=config.modes[mode];return selected?{...m.browse,...m.selected}:m.browse;}
  function clearanceEnabled(){return config.spinClearance===true;}
  function label(){button.textContent=config.modes[mode].name;button.title=button.textContent;button.setAttribute('aria-label','Coverflow layout: '+config.modes[mode].name);config.layout=data();config.aspectMode=widescreen()?'16:9':'4:3';}
  button.onclick=()=>{mode=(mode+1)%config.modes.length;hub.save({importedMode:mode});label();document.dispatchEvent(new Event('wiiflow-layout'));};
- let restored=false;hub.on('state',s=>{if(!restored){mode=Math.max(0,Math.min(config.modes.length-1,Number(s.saved?.importedMode??config.initialMode)||0));restored=true;label();document.dispatchEvent(new Event('wiiflow-layout'));}});label();
+ let restored=false;function restoreLayout(s){if(!restored){mode=Math.max(0,Math.min(config.modes.length-1,Math.trunc(Number(s.saved?.importedMode??config.initialMode))||0));restored=true;label();document.dispatchEvent(new Event('wiiflow-layout'));}}hub.on('state',restoreLayout);if(hub.state)restoreLayout(hub.state);else label();
  function pose(offset,row=0){
   const d=data(open),side=offset<0?'left':'right',n=Math.max(0,Math.abs(offset)-1),kind=row&&offset===0?'row_center':offset===0?'center':side;
   const p=vec(d,kind+'_pos',[offset===0?0:Math.sign(offset)*1.6,0,offset===0?1:0]);
@@ -44,22 +52,12 @@ export function importedFlow(scene,camera,hub,invalidate){
   p.y+=.915;return {p,a,scale};
  }
  function apply(e,offset,isOpen,flipped,dragAngle,dragTilt){
-  open=isOpen;const d=data(open),p=pose(offset);if(offset===0&&open&&flipped){p.p.add(vec(d,'flip_pos',[0,0,0]));p.a.add(vec(d,'flip_angle',[0,180,0]));p.scale.multiply(vec(d,'flip_scale',[1,1,1]));}
-  e.target.copy(p.p);e.angle=p.a.y+(offset===0&&open?dragAngle:0);e.tilt=p.a.x*rad+(offset===0&&open?dragTilt:0);e.roll=p.a.z*rad;e.flowScale=p.scale;e.flowData=d;
-  e.flowAllowed=(!open||offset===0||Number(d.columns)>0);e.flowBoundary=d.library_stack?false:Math.abs(offset)>Math.floor(Number(value(d,'columns',13))/2);if(e.nativeOpacity===undefined)e.nativeOpacity=e.flowBoundary?0:1;e.group.visible=e.flowAllowed&&e.nativeOpacity>.002;return p;
- }
- function syncRows(entries){
-  const previous=new Map(rows.map(r=>[r.key,r]));rows=[];const d=data(open),count=Math.min(5,Math.max(1,Math.round(value(d,'rows',1))));
-  const list=[...entries.values()];if(!(open&&Number(d.rows)===0))for(let row=-Math.floor(count/2);row<=Math.floor(count/2);row++){if(!row)continue;
-   list.forEach((e,index)=>{const offset=e.offset||0;if(Math.abs(offset)>Math.floor(Number(value(d,'columns',13))/2))return;const other=list[(index+Math.abs(row)*4)%list.length],key=row+':'+other.button.dataset.appid;let item=previous.get(key);const target=pose(offset,row);
-    if(item){previous.delete(key);if(Math.abs(offset-item.offset)>1){item.mesh.position.copy(target.p);item.mesh.rotation.set(target.a.x*rad,target.a.y*rad,target.a.z*rad);}if(Math.abs(offset-item.offset)>1)item.nativeState=null;item.target=target;item.offset=offset;}
-    else{const mesh=other.group.clone(true);mesh.traverse(n=>{if(n.isMesh){n.userData.id=other.button.dataset.appid;n.material=Array.isArray(n.material)?n.material.map(m=>m.clone()):n.material.clone();for(const m of Array.isArray(n.material)?n.material:[n.material])if(m.depthWrite!==false){m.opacity=1;m.transparent=false;}}});mesh.position.copy(target.p);mesh.rotation.set(target.a.x*rad,target.a.y*rad,target.a.z*rad);mesh.scale.copy(target.scale);scene.add(mesh);item={mesh,target,offset,row,key};}rows.push(item);
-   });
-  }
-  previous.forEach(r=>{scene.remove(r.mesh);r.mesh.traverse(n=>{if(n.isMesh)for(const m of Array.isArray(n.material)?n.material:[n.material])m.dispose();});});
+  open=isOpen;const d=data(open),p=pose(offset,Number(e.button.dataset.row)||0);const centre=offset===0&&!(Number(e.button.dataset.row)||0);if(centre&&open&&flipped){p.p.add(vec(d,'flip_pos',[0,0,0]));p.a.add(vec(d,'flip_angle',[0,180,0]));p.scale.multiply(vec(d,'flip_scale',[1,1,1]));}
+  e.target.copy(p.p);e.angle=p.a.y+(centre&&open?dragAngle:0);e.tilt=p.a.x*rad+(centre&&open?dragTilt:0);e.roll=p.a.z*rad;e.flowScale=p.scale;e.flowData=d;
+  e.flowAllowed=(!open||centre||Number(d.columns)>0);e.flowBoundary=d.library_stack?false:Math.abs(offset)>Math.floor(Number(value(d,'columns',13))/2);if(e.nativeOpacity===undefined)e.nativeOpacity=e.flowBoundary?0:1;e.group.visible=e.flowAllowed&&e.nativeOpacity>.002;return p;
  }
  function beforeFrame(entries){for(const e of entries.values()){if(e.oscRotation){e.group.rotation.x-=e.oscRotation[0];e.group.rotation.y-=e.oscRotation[1];e.group.rotation.z-=e.oscRotation[2];e.oscRotation=null;}if(e.oscPosition){e.group.position.sub(e.oscPosition);e.oscPosition=null;}}}
- let nativeLast=0,nativeRemainder=0,nativeTicks=0;
+ let nativeLast=0,nativeRemainder=0,nativeTicks=0,initialScene=true;
  function frame(now,ease,still,entries,transitionSpeed=1){
   const delta=nativeLast?Math.min(100,Math.max(0,now-nativeLast)):1000/60;nativeLast=now;nativeRemainder+=delta;
   const stackActive=data().library_stack&&!open,columnCount=Math.ceil((config.libraryIndex||0)/15);columnControls.style.display=stackActive&&columnCount?'flex':'none';if(stackActive)columnLabel.textContent='Column '+((config.stackColumn??Math.max(0,columnCount-1))+1)+' / '+columnCount;
@@ -69,23 +67,24 @@ export function importedFlow(scene,camera,hub,invalidate){
   for(const e of entries.values()){
    const target=targetFor(e),wrapped=e.nativeOffset!==undefined&&Math.abs(e.nativeOffset-e.offset)>1&&Math.sign(e.nativeOffset)!==Math.sign(e.offset);
    if(!e.nativeState||wrapped){e.nativeState=structuredClone(target);e.stackClearance=0;e.spinGap=0;}
-   else if(e.nativeOffset!==e.offset||e.nativeOpen!==open){
-    if(e.nativeOffset===0){for(let i=0;i<3;i++){e.nativeState.angle[i]+=e.nativeOsc?.[i]||0;e.nativeState.pos[i]+=e.nativeShift?.[i]||0;}}
-    if(e.offset===0){const a=oscillation(nativeTicks,speed,amp),p=oscillation(nativeTicks,posSpeed,posAmp);for(let i=0;i<3;i++){e.nativeState.angle[i]-=a[i];e.nativeState.pos[i]-=p[i];}}
+   else if(e.nativeOffset!==e.offset||e.nativeRow!==(Number(e.button.dataset.row)||0)||e.nativeOpen!==open){
+    if(e.nativeOffset===0&&!e.nativeRow){for(let i=0;i<3;i++){e.nativeState.angle[i]+=e.nativeOsc?.[i]||0;e.nativeState.pos[i]+=e.nativeShift?.[i]||0;}}
+    if(e.offset===0&&!Number(e.button.dataset.row)){const a=oscillation(nativeTicks,speed,amp),p=oscillation(nativeTicks,posSpeed,posAmp);for(let i=0;i<3;i++){e.nativeState.angle[i]-=a[i];e.nativeState.pos[i]-=p[i];}}
    }
    if(clearanceEnabled()&&!open&&e.nativeOffset!==e.offset){const gap=Math.max(...target.angle.map((v,i)=>Math.abs(v-e.nativeState.angle[i])));e.spinGap=gap>180?gap:0;}
    if(e.nativeOffset!==e.offset)e.landingTurn=Math.max(1,...target.angle.map((v,i)=>Math.abs(v-e.nativeState.angle[i])));
-   e.nativeOffset=e.offset;e.nativeOpen=open;
+   e.nativeOffset=e.offset;e.nativeRow=Number(e.button.dataset.row)||0;e.nativeOpen=open;
   }
   const cameraDest=vec(d,'camera_pos',[0,0,5]),aimDest=vec(d,'camera_aim',[0,0,0]);
   if(d.library_stack&&!open&&config.stackColumn!==undefined){cameraDest.x=0;aimDest.x=0;}
+  // The first visible frame is the imported layout, not an animated arrival
+  // from the stock camera while the library/artwork is still loading.
+  if(initialScene&&entries.size){camera.position.copy(cameraDest);currentAim.copy(aimDest);initialScene=false;}
 
-  for(const row of rows)if(!row.nativeState)row.nativeState={pos:row.mesh.position.toArray(),angle:row.target.a.toArray(),scale:row.mesh.scale.toArray()};
   while(nativeRemainder+1e-8>=1000/60){nativeRemainder-=1000/60;nativeTicks++;
    for(const e of entries.values()){
     tickCover(e.nativeState,targetFor(e),open,60,transitionSpeed);
     e.nativeOpacity+=((e.flowBoundary?0:1)-e.nativeOpacity)*.125;}
-   for(const row of rows)tickCover(row.nativeState,{pos:row.target.p.toArray(),angle:row.target.a.toArray(),scale:row.target.scale.toArray()},open,60,transitionSpeed);
    const cameraRate=1-Math.pow(.8,transitionSpeed);camera.position.lerp(cameraDest,cameraRate);currentAim.lerp(aimDest,cameraRate);
   }
   let moving=false;
@@ -126,7 +125,7 @@ export function importedFlow(scene,camera,hub,invalidate){
    // Exposing deeper entries while the nearest one turns reveals stray corners.
    if(coincident&&Math.abs(e.offset)>1)e.group.visible=false;
    e.group.traverse(node=>{if(node.isMesh&&node!==e.shadow)for(const material of Array.isArray(node.material)?node.material:[node.material]){const transparent=e.nativeOpacity<.999;if(material.transparent!==transparent){material.transparent=transparent;material.needsUpdate=true;}material.opacity=e.nativeOpacity;}});
-   e.nativeOsc=e.offset===0&&!still?oscillation(nativeTicks,speed,amp):[0,0,0];e.nativeShift=e.offset===0&&!still?oscillation(nativeTicks,posSpeed,posAmp):[0,0,0];
+   e.nativeOsc=e.offset===0&&!Number(e.button.dataset.row)&&!still?oscillation(nativeTicks,speed,amp):[0,0,0];e.nativeShift=e.offset===0&&!Number(e.button.dataset.row)&&!still?oscillation(nativeTicks,posSpeed,posAmp):[0,0,0];
    e.oscRotation=e.nativeOsc.map(v=>v*rad);e.oscPosition=new T.Vector3(...e.nativeShift);
    e.group.rotation.x+=e.oscRotation[0];e.group.rotation.y+=e.oscRotation[1];e.group.rotation.z+=e.oscRotation[2];e.group.position.add(e.oscPosition);
   }
@@ -144,7 +143,7 @@ export function importedFlow(scene,camera,hub,invalidate){
   // The extracted centre case also needs clearance while it unfolds beside a pile.
   {
    const browse=data(false),pileLayout=['left','right'].some(side=>{const spacing=value(browse,side+'_spacer',[0,0,0]),a=value(browse,side+'_angle',[0,0,0]);return spacing[1]<-.05&&Math.abs(spacing[0])<.01&&Math.abs(spacing[2])<.01&&Math.abs(Math.abs(a[0])-90)<1;});
-   const centre=[...entries.values()].find(e=>e.offset===0);
+   const centre=[...entries.values()].find(e=>e.offset===0&&!Number(e.button.dataset.row));
    if(pileLayout&&centre?.group.visible){
     const bounds=e=>{e.group.updateMatrix();return new OBB(new T.Vector3(),new T.Vector3(.525,.75,.07)).applyMatrix4(e.group.matrix);};
     const pile=[...entries.values()].filter(e=>e.offset!==0&&e.group.visible).map(bounds);
@@ -202,7 +201,6 @@ export function importedFlow(scene,camera,hub,invalidate){
     placed.push(e);
    }
   }
-  for(const row of rows)place(row.mesh,row.nativeState,{pos:row.target.p.toArray(),angle:row.target.a.toArray(),scale:row.target.scale.toArray()});
   if(still){camera.position.copy(cameraDest);currentAim.copy(aimDest);}
   const camOsc=still?[0,0,0]:oscillation(nativeTicks,value(d,'camera_osc_speed',[0,0,0]),value(d,'camera_osc_amp',[0,0,0]),true);
   camera.position.add(new T.Vector3(...camOsc));camera.clearViewOffset();camera.fov=57.82;camera.updateProjectionMatrix();camera.lookAt(currentAim);camera.updateMatrixWorld();camera.position.sub(new T.Vector3(...camOsc));
@@ -212,6 +210,6 @@ export function importedFlow(scene,camera,hub,invalidate){
   config.slottingBusy=!still&&!open&&pileLayout&&[...entries.values()].some(e=>e.group.visible&&e.nativeState&&Math.max(...targetFor(e).angle.map((v,i)=>Math.abs(v-e.nativeState.angle[i])))>2);
   return moving;
  }
- function dispose(){columnControls.remove();delete config.shiftStackColumn;rows.forEach(r=>{scene.remove(r.mesh);r.mesh.traverse(n=>{if(n.isMesh)for(const m of Array.isArray(n.material)?n.material:[n.material])m.dispose();});});button.remove();}
- return {apply,syncRows,beforeFrame,frame,dispose,pickables:()=>rows.map(r=>r.mesh),shadowStyle:offset=>coverShadowStyle(data(open),offset),reflectionAlpha:()=>config.reflectionsEnabled===true?Number(data(open).mirror_alpha??.2):0};
+ function dispose(){columnControls.remove();delete config.shiftStackColumn;delete config.coverSlots;button.remove();}
+ return {apply,beforeFrame,frame,dispose,shadowStyle:offset=>coverShadowStyle(data(open),offset),reflectionAlpha:()=>config.reflectionsEnabled===true?Number(data(open).mirror_alpha??.2):0};
 }

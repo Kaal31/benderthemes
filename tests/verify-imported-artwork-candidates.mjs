@@ -1,0 +1,13 @@
+import assert from 'node:assert/strict';
+import {build} from 'esbuild';
+const result=await build({entryPoints:['src/artworkCandidates.ts'],bundle:true,write:false,format:'esm'});
+const {artworkCandidates}=await import('data:text/javascript;base64,'+Buffer.from(result.outputFiles[0].text).toString('base64'));
+const game={art:{portrait:['bad-portrait','portrait'],landscape:['wide','portrait'],hero:['hero'],logo:['logo']}};
+assert.deepEqual(artworkCandidates(game,'auto'),['bad-portrait','portrait','wide']);
+assert.deepEqual(artworkCandidates(game,'auto','manual'),['manual','bad-portrait','portrait','wide']);
+assert.deepEqual(artworkCandidates(game,'covers','manual'),['bad-portrait','portrait','wide']);
+assert.deepEqual(artworkCandidates(game,'logos','manual'),['logo','bad-portrait','portrait','wide']);
+assert.deepEqual(artworkCandidates(game,'icons',undefined,['icon']),['icon','bad-portrait','portrait','wide']);
+assert.deepEqual(artworkCandidates({...game,art:{...game.art,portrait:[]}},'covers'),['wide','portrait']);
+assert.deepEqual(game.art.hero,['hero']);assert.deepEqual(game.art.logo,['logo']);
+console.log('PASS frame/3D artwork preferences, manual override, exhausted portrait fallbacks and unchanged background/logo sources');

@@ -885,7 +885,7 @@ def _scene_image(fmt, raw):
     return None
 
 
-READER_VERSION = 6  # bump when read_psp's output changes: cached results are read again
+READER_VERSION = 7  # bump when read_psp's output changes: cached results are read again
 
 
 def read_psp(path):

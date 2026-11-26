@@ -26,7 +26,9 @@ import {ThemeResourceProgress} from "../ThemeResourceProgress";
 import { useEffect, useMemo, useRef, useState } from "react";
 import { useHome } from "../common";
 import { Btn, Hints, Press, ThemeRoot } from "../input";
-import { Game, openSteam, SteamPlace } from "../library";
+import { Game, gameIconUrls, openSteam, SteamPlace } from "../library";
+import {artworkCandidates} from '../artworkCandidates';
+import {artworkMode,artworkThemeKey,useSquareArtworkMap} from '../squareArtwork';
 import { getSettings, updateSettings } from "../settings";
 import { fmtTime, playSound, SOUND_FILES, SoundKind, useSteamStatus } from "../steam";
 import { activeTheme, iconMap, slotAccent, slotUrl, frameUrl, themeFileUrl } from "./registry";
@@ -41,8 +43,10 @@ const PLACES: SteamPlace[] = ["library", "store", "friends", "settings", "downlo
 const MAX_SAVE = 64 * 1024;
 
 /** What an interface may know about a game: no Steam objects, only plain data. */
-function publicGame(g: Game, abs: (u: string) => string) {
+function publicGame(g: Game, abs: (u: string) => string, mode:ReturnType<typeof artworkMode>, squares:Record<string,string>) {
   const art = (list: string[]) => [...new Set(list)].map(abs);
+  const icons=gameIconUrls(g),tile=artworkCandidates(g,mode,squares[String(g.appid)],icons);
+  const override=mode!=='covers'&&(mode!=='auto'||!!squares[String(g.appid)]);
   return {
     appid: g.appid,
     gameid: g.gameid,
@@ -52,7 +56,7 @@ function publicGame(g: Game, abs: (u: string) => string) {
     lastPlayed: g.lastPlayed,
     playtime: g.playtime,
     kind: g.kind,
-    art: { portrait: art(g.art.portrait), landscape: art(g.art.landscape), hero: art(g.art.hero), logo: art(g.art.logo) },
+    art: { portrait: art(override?tile:g.art.portrait), landscape: art(override?tile:g.art.landscape), hero: art(g.art.hero), logo: art(g.art.logo), icon:art(icons), tile:art(tile), mode },
   };
 }
 
@@ -68,6 +72,8 @@ export function NativeMediaGate({id,children}:{id:string;children:import("react"
 }
 function LegacyFrameHome({previewAppid,onPreviewClose}:{previewAppid?:number;onPreviewClose?:()=>void}) {
   const api = useHome();
+  const squares=useSquareArtworkMap(artworkThemeKey(api.settings));
+  const mode=artworkMode(api.settings);
   const downloads = useDownloads();
   const status = useSteamStatus();
   const requests = useRef({ at: 0, count: 0, pending: 0 });
@@ -148,13 +154,13 @@ function LegacyFrameHome({previewAppid,onPreviewClose}:{previewAppid?:number;onP
       settings: { clock24: s.clock24, animations: s.animations, sounds: s.sounds, tvMode: s.tvMode, accent: slotAccent(s) ?? null },
       // the theme's slots after mix and match: files from data themes only
       slots: { wallpaper: slotUrl("wallpaper", s) ?? null, bootVideo: slotUrl("bootVideo", s) ?? null, launchVideo: slotUrl("launchVideo", s) ?? null, font: slotUrl("font", s) ?? null, icons: iconMap(s) },
-      games: api.lib.games.map((g) => publicGame(g, abs)),
+      games: api.lib.games.map((g) => publicGame(g, abs, mode, squares)),
       // Separate full catalog for in-theme Library views; Home keeps its selection.
       libraryLabel: gameChoiceLabel(s,"library"),
-      libraryAllGames: api.library.all.map((g) => publicGame(g, abs)),
-      libraryGames: api.library.games.map((g) => publicGame(g, abs)),
+      libraryAllGames: api.library.all.map((g) => publicGame(g, abs, mode, squares)),
+      libraryGames: api.library.games.map((g) => publicGame(g, abs, mode, squares)),
       libraryCollections: api.library.collections.map((c) => ({ id: c.id, name: c.name, appids: c.games.map((g) => g.appid) })),
-      apps: api.lib.apps.map((g) => publicGame(g, abs)),
+      apps: api.lib.apps.map((g) => publicGame(g, abs, mode, squares)),
       collections: api.lib.collections.map((c) => ({ id: c.id, name: c.name, appids: c.games.map((g) => g.appid) })),
       saved: theme ? s.frameData[theme.id] ?? null : null,
       previewAppid,
@@ -163,7 +169,7 @@ function LegacyFrameHome({previewAppid,onPreviewClose}:{previewAppid?:number;onP
       active: !((nativePort.current?.ownerDocument??frame.current?.ownerDocument)?.hidden ?? false) && !api.busy,
       capabilities: { pages: 1, audio: 1, focus: 1, navigation: 1, lifecycle: 1, savePatch: 1 },
     };
-  }, [previewAppid, api.lib, api.library, api.settings, api.user, api.busy, status.avatar, theme?.id, ready, routes]);
+  }, [squares, mode, previewAppid, api.lib, api.library, api.settings, api.user, api.busy, status.avatar, theme?.id, ready, routes]);
 
   useEffect(() => {
     if (ready) post({ type: "state", ...state });

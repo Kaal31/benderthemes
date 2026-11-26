@@ -4,7 +4,7 @@ import re
 
 
 def read_layout(src, kind, parse, picture):
-    warnings, nodes = [], []
+    warnings, nodes, palette = [], [], {}
     def text(node):
         return (node.text or "").strip() if node is not None else ""
     def child(node, name):
@@ -20,11 +20,15 @@ def read_layout(src, kind, parse, picture):
         return num(attr(node,key,text(child(node,key))),default)
     def color(value, default="#ffffff"):
         value=value.lower().removeprefix("0x").removeprefix("#")
+        for _ in range(8):
+            if value not in palette:break
+            value=palette[value].lower().removeprefix('0x').removeprefix('#')
         if re.fullmatch("[0-9a-f]{8}",value):return "#"+value[2:]+value[:2]
         if re.fullmatch("[0-9a-f]{6}",value):return "#"+value
         return default
     def image(name):
         name=name.replace("\\","/")
+        if name.startswith('$'):return None
         result=picture(name) if name else None
         if not result and name and not name.startswith("$"):result=picture("media/"+name)
         if not result and name:warnings.append("Missing layout image: "+name)
@@ -62,13 +66,67 @@ def read_layout(src, kind, parse, picture):
         elif "16x9/" in home.lower():width,height=1280,720
         controls=child(root,"controls")
         if controls is None:return None
+        fonts={}
+        directory=home.rsplit('/',1)[0] if '/' in home else ''
+        for name in sorted(src.names,key=lambda n:(n[len(src.root):].rsplit('/',1)[0]!=directory,n)):
+            relative=name[len(src.root):]
+            if relative.lower().endswith(('colors/defaults.xml','colors/default.xml')):
+                colors=parse(relative)
+                if colors is not None:
+                    for entry in colors:
+                        if entry.tag.lower()=='color' and attr(entry,'name'):
+                            palette[attr(entry,'name').lower()]=text(entry)
+            if relative.lower().endswith('/font.xml') or relative.lower()=='font.xml':
+                document=parse(relative)
+                if document is None:continue
+                candidates=next((list(n) for n in document if n.tag.lower()=='fontset'),list(document))
+                for entry in candidates:
+                    if entry.tag.lower()!='font':continue
+                    key=text(child(entry,'name')).lower()
+                    if key and key not in fonts:
+                        style=text(child(entry,'style')).lower()
+                        fonts[key]={'fontSize':field(entry,'size',20),'fontWeight':'bold' if 'bold' in style else 'normal','fontStyle':'italic' if 'italic' in style else 'normal'}
+        def typography(node):
+            result=dict(fonts.get(text(child(node,'font')).lower(),{'fontSize':20}))
+            result['fontSize']=field(node,'fontsize',result['fontSize'])
+            return result
+        # Named includes are ordinary skin XML, not executable commands. Resolve
+        # definitions from the same resolution first; never follow filesystem paths.
+        includes={}
+        directory=home.rsplit('/',1)[0] if '/' in home else ''
+        files=[n[len(src.root):] for n in sorted(src.names) if n.endswith('includes.xml')]
+        files.sort(key=lambda n:n.rsplit('/',1)[0]==directory)
+        for name in files[:32]:
+            definitions=parse(name)
+            if definitions is None:continue
+            for definition in definitions:
+                if definition.tag.lower()=='include' and attr(definition,'name'):
+                    includes[attr(definition,'name')]=definition
+        def visible(expression):
+            expression=expression.strip().lower()
+            if expression in ('true','yes','1','window.isactive(home)','window.isactive(10000)'):return True
+            if expression in ('false','no','0'):return False
+            if expression.startswith('!'):
+                result=visible(expression[1:])
+                return None if result is None else not result
+            return None
         def walk(scope,dx=0,dy=0,depth=0):
             nonlocal menu
             if depth>8 or len(nodes)>256:raise ValueError("Xbox layout limit exceeded")
             for node in scope:
+                if node.tag.lower()=='include':
+                    name=text(node)
+                    definition=includes.get(name)
+                    if definition is None:warnings.append('Missing XBMC include: '+name)
+                    else:walk(definition,dx,dy,depth+1)
+                    continue
                 if node.tag.lower()!="control":continue
-                if text(child(node,"visible")):
-                    warnings.append("Conditional XBMC visibility is not evaluated");continue
+                condition=text(child(node,"visible"))
+                if condition:
+                    result=visible(condition)
+                    if result is False:continue
+                    if result is None:
+                        warnings.append("Unsupported XBMC visibility: "+condition);continue
                 kind=attr(node,"type",text(child(node,"type"))).lower()
                 x,y=dx+field(node,"posx"),dy+field(node,"posy")
                 w,h=field(node,"width",200),field(node,"height",30)
@@ -85,16 +143,25 @@ def read_layout(src, kind, parse, picture):
                                 control_type=attr(control,"type",text(child(control,"type"))).lower()
                                 if control_type not in ("image","label"):
                                     warnings.append("Unmapped XBMC item control: "+control_type);continue
-                                part={"kind":control_type,"x":field(control,"posx"),"y":field(control,"posy"),"width":field(control,"width",w),"height":field(control,"height",menu["spacing"]),"color":color(text(child(control,"textcolor"))),"text":text(child(control,"label")),"image":image(text(child(control,"texture"))) if control_type=="image" else None}
+                                texture=text(child(control,"texture"))
+                                info=text(child(control,"info"))
+                                part={"kind":control_type,"x":field(control,"posx"),"y":field(control,"posy"),"width":field(control,"width",w),"height":field(control,"height",menu["spacing"]),"color":color(text(child(control,"textcolor"))),"text":text(child(control,"label")),"image":image(texture) if control_type=="image" else None,"imageSource":texture if texture.startswith('$') else info if control_type=='image' else '',"align":text(child(control,'align')) or 'left',**typography(control)}
                                 art.append(part)
                             menu[key]=art
                     else:warnings.append("Additional XBMC list not bound")
                     continue
                 if kind not in ("image","label","button"):
                     warnings.append("Unmapped XBMC control: "+kind);continue
-                item={"kind":"image" if kind=="image" else "text","x":x,"y":y,"width":w,"height":h,"text":text(child(node,"label")),"source":text(child(node,"info")),"color":color(text(child(node,"textcolor"))),"fontSize":20}
-                if kind=="image":item["image"]=image(text(child(node,"texture")))
-                if kind=="button":warnings.append("XBMC button commands are not executed; use the bound menu")
+                item={"kind":"image" if kind=="image" else "text","x":x,"y":y,"width":w,"height":h,"text":text(child(node,"label")),"source":text(child(node,"info")),"color":color(text(child(node,"textcolor"))),"align":text(child(node,'align')) or 'left',**typography(node)}
+                if kind=="image":
+                    texture=text(child(node,"texture"));item["image"]=image(texture)
+                    item['imageSource']=texture if texture.startswith('$') else item['source']
+                if kind=="button":
+                    command=text(child(node,'onclick')).strip()
+                    match=re.fullmatch(r'(?:XBMC\.)?ActivateWindow\(\s*(home|programs|myprograms|settings)\s*\)',command,re.I)
+                    if match:item['destination']={'home':'mainmenu','programs':'library','myprograms':'library','settings':'settings'}[match[1].lower()]
+                    elif re.fullmatch(r'(?:XBMC\.)?(?:shutdown|reboot)\(\)',command,re.I):item['destination']='power'
+                    else:warnings.append("Unsupported XBMC button command: "+command[:160])
                 motion=[]
                 for animation in node:
                     if animation.tag.lower()!="animation":continue

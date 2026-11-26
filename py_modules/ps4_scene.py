@@ -60,7 +60,19 @@ def read_scene(root, image):
     cases = sequence.findall("case") if sequence is not None else root.findall("case")
     if not actors or not cases or len(cases) > 120:
         raise ValueError("RAF requires a bounded actor sequence")
+    # Each property can be animated independently. A later colour command must
+    # not finish or reset an earlier position transition.
+    tracks={identifier:{key:[(0,list(value))] for key,value in layer['initial'].items()} for identifier,layer in actors.items()}
+    def sample(track, at, before=False):
+        previous=track[0]
+        for following in track[1:]:
+            if following[0]>at or before and following[0]==at:
+                ratio=max(0,min(1,(at-previous[0])/max(1,following[0]-previous[0])))
+                return [a+(b-a)*ratio for a,b in zip(previous[1],following[1])]
+            previous=following
+        return list(previous[1])
     time = 0
+    transitions=0
     for case in cases:
         wait = float(case.get("wait", "0")) * 1000
         if not math.isfinite(wait) or wait < 1000 / 60 or wait > 60000:
@@ -71,23 +83,38 @@ def read_scene(root, image):
             if set(command.attrib) - {"id", "color", "position", "rotation", "scale", "trans_time", "trans_step"}:
                 raise ValueError("Unsupported RAF transition property")
             layer = actors[command.get("id")]
-            state = dict(layer["states"][-1]["state"])
+            actor_tracks=tracks[command.get('id')]
+            state={key:sample(track,time) for key,track in actor_tracks.items()}
             for key, count in (("color", 4), ("position", 3), ("rotation", 3), ("scale", 3)):
                 if command.get(key) is not None:
                     state[key] = vector(command.get(key), count, "")
             if any(v < 0 or v > 1 for v in state["color"]) or any(state["rotation"][:2]):
                 raise ValueError("Unsupported RAF colour or 3D transform")
             duration = float(command.get("trans_time", "0")) * 1000
-            if not math.isfinite(duration) or duration < 0 or duration > wait:
-                raise ValueError("RAF transition overlaps the next case")
+            if not math.isfinite(duration) or duration < 0 or duration > 60000:
+                raise ValueError("Invalid RAF transition duration")
             if command.get("trans_step", "0") not in ("0", "0.0"):
                 raise ValueError("Unsupported RAF transition curve")
-            old = layer["states"][-1]["state"]
-            layer["states"].append({"at": time, "state": old})
-            layer["states"].append({"at": time + duration, "state": state})
+            transitions+=1
+            if transitions>4096:raise ValueError('RAF transition limit exceeded')
+            for key in actor_tracks:
+                if command.get(key) is None:continue
+                track=actor_tracks[key]
+                start=sample(track,time)
+                actor_tracks[key]=[(at,value) for at,value in track if at<time]+[(time,start),(time+duration,state[key])]
         time += wait
     if time > 600000:
         raise ValueError("RAF duration limit")
-    for layer in actors.values():
-        layer["states"].append({"at": time, "state": layer["states"][-1]["state"]})
+    for identifier,layer in actors.items():
+        actor_tracks=tracks[identifier]
+        times=sorted({0,time}|{at for track in actor_tracks.values() for at,_ in track if at<=time})
+        states=[]
+        for at in times:
+            left={key:sample(track,at,True) for key,track in actor_tracks.items()}
+            right={key:sample(track,at) for key,track in actor_tracks.items()}
+            if left!=right:states.append({'at':at,'state':left})
+            states.append({'at':at,'state':right})
+        layer['states']=states
+        if any(track[-1][0]>time for track in actor_tracks.values()):
+            diagnostics.append('Transition continues past the sequence loop boundary: '+identifier)
     return {"durationMs": time, "span": span, "layers": list(actors.values()), "warnings": sorted(set(diagnostics))}

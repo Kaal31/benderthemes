@@ -86,7 +86,7 @@ Channel slots, focus/select animations, paging, common controls and clock use th
 
 Run `python tests/test_wii_builder_packages.py`, `node tests/verify-wii-animation.mjs`, `node tests/verify-wii-window-geometry.mjs`, `node tests/verify-wii-material-shader.mjs`, TypeScript checking and `node tests/verify-wii-import-browser.mjs`. Generate the local preview with `node tools/preview_wii_import.mjs <extracted-skin.json>` and serve preview/ on port 8744, or set WII_DEMO_URL for the browser test.
 
-This is partial graphics compatibility. Indirect stages, GPU logic operations, multi-frame window borders and text control sequences are not fully emulated. Menu functionality is provided by this application; it does not execute the original System Menu. The Message Board continues to use the existing application view. Unsupported resources produce compatibility diagnostics. No claim of pixel-identical rendering for every theme is made.
+This is partial graphics compatibility. Static indirect stages, animated indirect matrices, bump-alpha channels and one/four/eight-material window borders are supported. Dynamic indirect S/T matrix modes, native mipmap LOD behavior, framebuffer logic operations and native text control sequences remain limited. Unsupported operations produce named compatibility diagnostics when present in the package. Menu functionality is provided by this application; it does not execute the original System Menu. The Message Board continues to use the existing application view. No claim of pixel-identical rendering for every theme is made.
 
 
 ## Footer background and multi-theme checks (2026-10-24)

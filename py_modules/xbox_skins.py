@@ -21,7 +21,7 @@ import zipfile
 
 import xbox_textures as XT
 
-READER_VERSION = 4  # 3: skin XML also works without xml.etree in Decky's Python
+READER_VERSION = 5  # 3: skin XML also works without xml.etree in Decky's Python
 
 _PIC = (".png", ".jpg", ".jpeg", ".bmp", ".gif", ".tga")
 _MIME = {".png": "image/png", ".jpg": "image/jpeg", ".jpeg": "image/jpeg", ".gif": "image/gif"}

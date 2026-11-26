@@ -165,18 +165,26 @@ export class RafRenderer {
   loc: Record<string, any> = {};
   ready = 0;
   pending = 0; // textures still downloading
+  readonly issues = new Set<string>();
+  private disposed=false;
+  private abort=new AbortController();
+  private images=new Set<HTMLImageElement>();
+  private issue(message:string){if(this.issues.has(message))return;this.issues.add(message);this.onIssue?.(message);}
   private backgroundIds: Set<string> | null = null;
 
   /** baseUrl: where a texture's cached .bin file (t.bin) is fetched from. */
-  constructor(public canvas: HTMLCanvasElement, public scene: RafSceneData, onTextureLoaded?: () => void, baseUrl = "") {
+  constructor(public canvas: HTMLCanvasElement, public scene: RafSceneData, onTextureLoaded?: () => void, baseUrl = "", private onIssue?: (message:string)=>void) {
     const gl = (canvas.getContext("webgl2", { premultipliedAlpha: false, antialias: true }) || canvas.getContext("webgl", { premultipliedAlpha: false, antialias: true })) as WebGLRenderingContext;
     if (!gl) throw new Error("no WebGL");
     this.gl = gl;
-    const sh = (type: number, src: string) => { const s = gl.createShader(type)!; gl.shaderSource(s, src); gl.compileShader(s); return s; };
+    const shaders:WebGLShader[]=[];
+    const sh = (type: number, src: string) => { const s = gl.createShader(type)!;shaders.push(s); gl.shaderSource(s, src); gl.compileShader(s);if(!gl.getShaderParameter(s,gl.COMPILE_STATUS)){const error=gl.getShaderInfoLog(s);shaders.forEach(s=>gl.deleteShader(s));throw Error(`PS3 renderer shader compilation failed: ${error}`);} return s; };
     const p = gl.createProgram()!;
     gl.attachShader(p, sh(gl.VERTEX_SHADER, VS));
     gl.attachShader(p, sh(gl.FRAGMENT_SHADER, FS));
     gl.linkProgram(p);
+    shaders.forEach(s=>gl.deleteShader(s));
+    if(!gl.getProgramParameter(p,gl.LINK_STATUS)){const error=gl.getProgramInfoLog(p);gl.deleteProgram(p);throw Error(`PS3 renderer shader link failed: ${error}`);}
     this.prog = p;
     for (const n of ["aPos", "aUV", "aNrm", "aCol"]) this.loc[n] = gl.getAttribLocation(p, n);
     for (const n of ["uMVP", "uModel", "uUV", "uTex", "uHasTex", "uColor", "uLit", "uAmbient", "uLightPos", "uLightCol", "uRim", "uEye", "uOpaque", "uSpec", "uHasSpec"]) this.loc[n] = gl.getUniformLocation(p, n);
@@ -200,6 +208,11 @@ export class RafRenderer {
         // raw GTF data (inline base64, or a cached .bin file next to the scene): straight to the
         // GPU when it takes DXT, else decoded here
         const upload = (bytes: Uint8Array) => {
+          if(this.disposed)return;
+          const width=Number(t.width),height=Number(t.height),pitch=Number(t.pitch)||width*4;
+          if(!Number.isInteger(width)||!Number.isInteger(height)||width<1||height<1||width>gl.getParameter(gl.MAX_TEXTURE_SIZE)||height>gl.getParameter(gl.MAX_TEXTURE_SIZE))throw Error('invalid texture dimensions');
+          const required=t.format==='argb'?(height-1)*pitch+width*4:Math.ceil(width/4)*Math.ceil(height/4)*(t.format==='dxt1'?8:16);
+          if(!['argb','dxt1','dxt3','dxt5'].includes(t.format)||bytes.length<required||pitch<width*4&&t.format==='argb')throw Error('truncated or unsupported texture data');
           const tex = gl.createTexture()!;
           gl.bindTexture(gl.TEXTURE_2D, tex);
           const w = t.width, h = t.height;
@@ -215,22 +228,24 @@ export class RafRenderer {
           this.textures.set(id, tex);
           this.ready++;
         };
-        if (t.data) upload(base64Bytes(t.data));
+        if (t.data) {try{upload(base64Bytes(t.data));}catch(error){this.textures.set(id,null);this.issue(`Texture ${id} failed to decode: ${String(error)}`);}}
         else {
           this.textures.set(id, null);
           this.pending++;
-          fetch(baseUrl + t.bin)
+          fetch(baseUrl + t.bin,{signal:this.abort.signal})
             .then((r) => (r.ok ? r.arrayBuffer() : Promise.reject(r.status)))
-            .then((b) => { upload(new Uint8Array(b)); onTextureLoaded?.(); })
-            .catch(() => {})
+            .then((b) => { if(this.disposed)return;upload(new Uint8Array(b)); onTextureLoaded?.(); })
+            .catch((error) => {if(this.disposed)return;this.issue(`Texture ${id} (${t.bin}) failed: ${String(error)}`);onTextureLoaded?.();})
             .finally(() => this.pending--);
         }
         continue;
       }
-      if (!t.url) { this.textures.set(id, null); continue; }
+      if (!t.url) { this.textures.set(id, null); this.issue(`Texture ${id} has no decoded image or binary data`); continue; }
       const img = new Image();
+      this.images.add(img);
       img.crossOrigin = "anonymous";
       img.onload = () => {
+        this.images.delete(img);if(this.disposed)return;
         const tex = gl.createTexture()!;
         gl.bindTexture(gl.TEXTURE_2D, tex);
         gl.pixelStorei(gl.UNPACK_FLIP_Y_WEBGL, false);
@@ -246,7 +261,7 @@ export class RafRenderer {
         this.pending--;
         onTextureLoaded?.();
       };
-      img.onerror = () => { this.textures.set(id, null); this.pending--; };
+      img.onerror = () => { this.images.delete(img);if(this.disposed)return;this.textures.set(id, null); this.pending--; this.issue(`Texture ${id} (${t.url}) failed to load`);onTextureLoaded?.(); };
       this.pending++;
       img.src = t.url;
     }
@@ -256,7 +271,7 @@ export class RafRenderer {
       if (!m || !m.indexes.length) { this.meshes.set(id, null); continue; }
       const buf = (data: ArrayBufferView, target: number = gl.ARRAY_BUFFER) => { const b = gl.createBuffer()!; gl.bindBuffer(target, b); gl.bufferData(target, data, gl.STATIC_DRAW); return b; };
       const big = m.vertexes > 65535;
-      if (big && !uintIdx) { this.meshes.set(id, null); continue; }
+      if (big && !uintIdx) { this.meshes.set(id, null); this.issue(`Mesh ${id} requires 32-bit element indexes`); continue; }
       const mm = m as any;
       // several joints with weights: skinned per frame on the CPU into dynamic buffers
       const multi = mm.joints && mm.weights && (mm.joints as number[]).some((j: number) => j > 0);
@@ -420,9 +435,12 @@ export class RafRenderer {
   }
   /** Frees the GPU side (buffers, textures, the context itself). */
   dispose() {
+    this.disposed=true;this.abort.abort();
+    for(const img of this.images){img.onload=null;img.onerror=null;img.src='';}this.images.clear();
     const gl = this.gl;
     for (const m of this.meshes.values()) if (m) for (const b of [m.pos, m.uv, m.nrm, m.col, m.idx]) if (b) gl.deleteBuffer(b);
     for (const t of this.textures.values()) if (t) gl.deleteTexture(t);
+    gl.deleteTexture(this.white);gl.deleteProgram(this.prog);
     this.meshes.clear(); this.textures.clear();
     (gl.getExtension("WEBGL_lose_context") as any)?.loseContext();
   }

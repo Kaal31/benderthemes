@@ -29,12 +29,13 @@
   let lastHint="";
   function render(){
     const game=current();if(!game){gameOpen=false;document.body.classList.remove('game-open');}const old=new Map([...$('covers').children].map(n=>[n.dataset.appid,n])),used=new Set();
-    if(window.WiiFlowImport){window.WiiFlowImport.libraryCount=games.length;window.WiiFlowImport.libraryIndex=selected;}
+    if(window.WiiFlowImport){window.WiiFlowImport.libraryGames=games;window.WiiFlowImport.libraryCount=games.length;window.WiiFlowImport.libraryIndex=selected;}
     const visible=Math.min((window.WiiFlowImport||window.WiiFlowDefault)?.slotColumns?.((window.WiiFlowImport||window.WiiFlowDefault).layout)||Math.max(1,Math.min(31,Math.round(window.WiiFlowImport?.layout?.columns_4_3||window.WiiFlowImport?.layout?.columns||13))),games.length),start=window.WiiFlowImport?.layout?.library_stack?-selected:-Math.floor((visible-1)/2);
-    for(let offset=start;offset<start+visible;offset++){
-      const i=(selected+offset+games.length)%games.length,g=games[i];
-      const key=String(g.appid),previous=old.get(key),cached=previous?._art===artwork(g)?previous:null,button=cached||document.createElement('button');if(previous&&!cached)previous.remove();button._art=artwork(g);button.dataset.appid=key;used.add(key);button.className='cover'+(offset===0?' selected':'');button.setAttribute('aria-label',g.name);button.setAttribute('aria-pressed',String(offset===0));button.tabIndex=-1;
-      button.dataset.offset=String(offset);const distance=Math.abs(offset),x=offset===0?0:Math.sign(offset)*(flat?distance*132:133+(distance-1)*31);
+    const slots=window.WiiFlowImport?.coverSlots?.(games.length,gameOpen)||Array.from({length:visible},(_,n)=>({index:start+n,offset:start+n,row:0}));
+    for(const {index:slot,offset,row} of slots.sort((a,b)=>Math.abs(a.index)-Math.abs(b.index))){
+      const i=((selected+slot)%games.length+games.length)%games.length,g=games[i];
+      const key=String(g.appid),previous=old.get(key),cached=previous?._art===artwork(g)?previous:null,button=cached||document.createElement('button');if(previous&&!cached)previous.remove();button._art=artwork(g);button.dataset.appid=key;used.add(key);button.className='cover'+(slot===0?' selected':'');button.setAttribute('aria-label',g.name);button.setAttribute('aria-pressed',String(slot===0));button.tabIndex=-1;
+      button.dataset.offset=String(offset);button.dataset.row=String(row);button.dataset.slot=String(slot);const distance=Math.abs(offset),x=offset===0?0:Math.sign(offset)*(flat?distance*132:133+(distance-1)*31);
       const z=offset===0?0:-45-(distance-1)*5,angle=offset===0?0:flat?0:offset<0?124:-56;
       button.style.transform=`translate(-50%,-50%) translate3d(${x}px,${offset===0?0:-1}px,${z}px) rotateY(${angle}deg)`;button.style.zIndex=String(10-Math.abs(offset));
       if(!cached){const box=document.createElement('div');box.className='case';box.append(face(g));

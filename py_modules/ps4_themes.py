@@ -20,7 +20,7 @@ except ImportError:  # Decky's trimmed Python can omit xml.etree.
         fromstring = staticmethod(parse_xml)
 from contextlib import contextmanager
 
-READER_VERSION = 4
+READER_VERSION = 5
 MAX_FRAMES = 120
 MAX_FRAME_PIXELS = 32 * 1024 * 1024
 MAX_FILES = 4096

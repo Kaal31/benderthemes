@@ -45,19 +45,34 @@ def layout(data):
                 srt_count=(flags>>4)&15;coord_count=(flags>>8)&15;srt=[];cursor=off+64+maps*4
                 if cursor+srt_count*20>len(s):raise ValueError("material SRT overflow")
                 for j in range(srt_count):srt.append(finite(struct.unpack_from(">5f",s,cursor+j*20)))
-                cursor+=srt_count*20+coord_count*4+(4 if flags&(1<<25) else 0)
+                cursor+=srt_count*20+coord_count*4
+                if cursor>len(s):raise ValueError('material coordinate table overflow')
+                channel=None
+                if flags&(1<<25):
+                    if cursor+4>len(s):raise ValueError('material channel control overflow')
+                    channel=list(s[cursor:cursor+2]);cursor+=4
                 color=list(s[cursor:cursor+4]) if flags&(1<<27) and cursor+4<=len(s) else [255,255,255,255]
-                materials.append({"name":string(s,off,20),"textures":indices,"srt":srt,"coordGen":[list(s[off+64+maps*4+srt_count*20+n*4:off+68+maps*4+srt_count*20+n*4]) for n in range(coord_count)],"wrap":wrap,"color":color,"complex":maps>1 or bool((flags>>18)&31),"registers":[list(struct.unpack_from(">4h",s,off+20+n*8)) for n in range(3)],"constants":[list(s[off+44+n*4:off+48+n*4]) for n in range(4)]})
+                materials.append({"name":string(s,off,20),"textures":indices,"srt":srt,"coordGen":[list(s[off+64+maps*4+srt_count*20+n*4:off+68+maps*4+srt_count*20+n*4]) for n in range(coord_count)],"wrap":wrap,"color":color,"channelControl":channel,"complex":maps>1 or bool((flags>>18)&31),"registers":[list(struct.unpack_from(">4h",s,off+20+n*8)) for n in range(3)],"constants":[list(s[off+44+n*4:off+48+n*4]) for n in range(4)]})
+                if flags&(1<<27) and cursor+4>len(s):raise ValueError('material color overflow')
                 cursor+=4 if flags&(1<<27) else 0
                 swap=[[0,1,2,3],[0,0,0,3],[1,1,1,3],[2,2,2,3]]
                 if flags&(1<<12):
                     if cursor+4>len(s):raise ValueError("swap table overflow")
                     swap=[[s[cursor+j]&3,(s[cursor+j]>>2)&3,(s[cursor+j]>>4)&3,(s[cursor+j]>>6)&3] for j in range(4)];cursor+=4
-                cursor+=((flags>>13)&3)*20+((flags>>15)&7)*4
+                indirect_count=(flags>>13)&3;stage_count=(flags>>15)&7
+                if stage_count>4 or maps>8 or coord_count>8:raise ValueError('material hardware limits exceeded')
+                if cursor+indirect_count*20+stage_count*4>len(s):raise ValueError('indirect texture table overflow')
+                indirect_srt=[finite(struct.unpack_from('>5f',s,cursor+n*20)) for n in range(indirect_count)]
+                cursor+=indirect_count*20
+                indirect_stages=[list(s[cursor+n*4:cursor+n*4+4]) for n in range(stage_count)]
+                cursor+=stage_count*4
                 tev=[]
                 for j in range((flags>>18)&31):
                     if cursor+16>len(s):raise ValueError("TEV table overflow")
-                    raw=s[cursor:cursor+16];tev.append({"coord":raw[0],"map":raw[2]+((raw[3]&1)<<8),"swapTex":(raw[3]>>3)&3,"swapRas":(raw[3]>>1)&3,"color":list(raw[4:8]),"alpha":list(raw[8:12]),"indirect":list(raw[12:16])});cursor+=16
+                    raw=s[cursor:cursor+16];tev.append({"coord":raw[0],"channel":raw[1],"map":raw[2]+((raw[3]&1)<<8),"swapTex":(raw[3]>>3)&3,"swapRas":(raw[3]>>1)&3,"color":list(raw[4:8]),"alpha":list(raw[8:12]),"indirect":list(raw[12:16])});cursor+=16
+                    selector=(raw[13]>>3)&15
+                    if selector>3:warnings.append('Unsupported dynamic indirect matrix: '+materials[-1]['name'])
+                    if raw[15]&8:warnings.append('Indirect unmodified-LOD mode is not applied: '+materials[-1]['name'])
                 alpha=None;blend=None
                 if flags&(1<<23):
                     if cursor+4>len(s):raise ValueError("alpha compare overflow")
@@ -65,7 +80,8 @@ def layout(data):
                 if flags&(1<<24):
                     if cursor+4>len(s):raise ValueError("blend overflow")
                     blend=list(s[cursor:cursor+4])
-                materials[-1].update(tev=tev,swap=swap,alphaCompare=alpha,blend=blend)
+                    if blend[0]==2:warnings.append('Unsupported framebuffer logic operation '+str(blend[3])+': '+materials[-1]['name'])
+                materials[-1].update(tev=tev,swap=swap,alphaCompare=alpha,blend=blend,indirectSrt=indirect_srt,indirectStages=indirect_stages)
 
         elif tag in ("pan1","pic1","wnd1","txt1","bnd1"):
             if len(s)<76:raise ValueError("truncated pane")
@@ -80,6 +96,7 @@ def layout(data):
                 capacity,length,material,font=struct.unpack_from(">4H",s,76);offset=struct.unpack_from(">I",s,88)[0]
                 if length>capacity or length%2 or offset<116 or offset+length>len(s):raise ValueError("text outside pane")
                 text=s[offset:offset+length].decode("utf-16-be","replace").split("\0",1)[0]
+                if any(ord(c)<32 and c not in '\n\r\t' for c in text):warnings.append('Unsupported native text control sequence: '+pane['name'])
                 pane.update(material=material,colors=[list(s[92:96]),list(s[92:96]),list(s[96:100]),list(s[96:100])],text={"value":text,"font":font,"alignment":s[84],"metrics":finite(struct.unpack_from(">4f",s,100))})
             if tag=="wnd1":
                 if len(s)<104:raise ValueError("truncated window pane")
@@ -90,19 +107,13 @@ def layout(data):
                     q=struct.unpack_from(">I",s,table+j*4)[0]
                     if q<104 or q+3>len(s):raise ValueError("window frame bounds")
                     frames.append({"material":struct.unpack_from(">H",s,q)[0],"flip":s[q+2]})
-                pane.update(colors=[list(s[content+n:content+n+4]) for n in range(0,16,4)],material=struct.unpack_from(">H",s,content+16)[0],window={"inflation":inflation,"frames":frames})
+                material=struct.unpack_from(">H",s,content+16)[0]
+                pane.update(colors=[list(s[content+n:content+n+4]) for n in range(0,16,4)],material=material,window={"inflation":inflation,"frames":frames,"contentMaterial":material})
                 n=s[content+18]
                 if n>8 or content+20+n*32>len(s):raise ValueError("window UV bounds")
                 if n:pane["uvs"]=[finite(struct.unpack_from(">8f",s,content+20+j*32)) for j in range(n)];pane["uv"]=pane["uvs"][0]
-                if count==1:
-                    pane["material"]=frames[0]["material"]
-                    flip=frames[0]["flip"];uv=[0,0,1,0,0,1,1,1]
-                    if flip==1:uv=[1,0,0,0,1,1,0,1]
-                    elif flip==2:uv=[0,1,1,1,0,0,1,0]
-                    elif flip==3:uv=[1,1,0,1,1,0,0,0]
-                    pane["uv"]=uv
-                    if flip>3:warnings.append("Unsupported window texture rotation: "+pane["name"])
-                elif count>1:warnings.append("Multi-frame window borders are not rendered: "+pane["name"])
+                if count not in (0,1,4,8):warnings.append("Unsupported window frame count: "+pane["name"])
+                if any(frame["flip"]>5 for frame in frames):warnings.append("Unsupported window texture rotation: "+pane["name"])
             panes.append(pane);last=len(panes)-1
             if len(panes)>2048:raise ValueError("too many panes")
         elif tag=="pas1":
@@ -145,5 +156,5 @@ def animation(data):
                         values.append(finite(struct.unpack_from(">3f",s,point)) if form==2 else finite([struct.unpack_from(">f",s,point)[0],s[point+5],0]))
                     result['tracks'].append({"pane":name,"material":material,"type":kind,"index":index,"target":target,"interpolation":"hermite" if form==2 else "step","keys":values})
                     if len(result['tracks'])>4096:raise ValueError("too many tracks")
-                    if kind not in ('RLPA','RLVI','RLVC','RLMC','RLTS','RLTP'):result['warnings'].append('Unsupported animation '+kind)
+                    if kind not in ('RLPA','RLVI','RLVC','RLMC','RLTS','RLTP','RLIM'):result['warnings'].append('Unsupported animation '+kind)
     return result

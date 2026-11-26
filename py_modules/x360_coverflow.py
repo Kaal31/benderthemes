@@ -29,6 +29,9 @@ def read_layout(data):
             return {k: bounded(v, depth + 1) for k, v in value.items()}
         raise ValueError('Unsupported coverflow value')
     raw = bounded(raw)
+    def validate_vector(value, path):
+        if not isinstance(value, list) or len(value) != 3 or any(isinstance(v, bool) or not isinstance(v, (int, float)) for v in value):
+            raise ValueError('Invalid coverflow vector: ' + path)
     props = raw.get('properties', {})
     for key, maximum in [('rows', 32), ('columns', 512), ('pagesize', 128)]:
         value = props.get(key, 1)
@@ -48,4 +51,29 @@ def read_layout(data):
         for key in ('position', 'aim'):
             if key in camera and (not isinstance(camera[key], list) or len(camera[key]) != 3 or any(isinstance(v, bool) or not isinstance(v, (int, float)) for v in camera[key])):
                 raise ValueError('Invalid coverflow camera')
+        for section, fields in [('light', ('position',)), ('mirror', ('offset',))]:
+            obj = mode.get(section, {})
+            if not isinstance(obj, dict):
+                raise ValueError('Invalid coverflow ' + section)
+            for key in fields:
+                if key in obj:
+                    validate_vector(obj[key], section + '.' + key)
+        light = mode.get('light', {})
+        for section, fields in [('color', ('ambient', 'diffuse')), ('material', ('diffuse',))]:
+            obj = light.get(section, {})
+            if not isinstance(obj, dict):
+                raise ValueError('Invalid coverflow light.' + section)
+            for key in fields:
+                if key in obj:
+                    validate_vector(obj[key], 'light.' + section + '.' + key)
+        oscillation = mode['covers'].get('oscillation', {})
+        if not isinstance(oscillation, dict):
+            raise ValueError('Invalid coverflow oscillation')
+        for axis in ('position', 'angle'):
+            obj = oscillation.get(axis, {})
+            if not isinstance(obj, dict):
+                raise ValueError('Invalid coverflow oscillation.' + axis)
+            for key in ('speed', 'amplitude'):
+                if key in obj:
+                    validate_vector(obj[key], 'oscillation.' + axis + '.' + key)
     return raw

@@ -84,7 +84,6 @@ def scene(src,res,W):
     res['compatibility']={"textures":len(res['scene']['assets']),"layouts":len(res['scene']['layouts']),"animations":len(animations),"baseRequired":False,"partial":True,"standardTextures":len(standard['textures']),"standardLayouts":len(standard['layouts'])}
     if res['defaultBaseApplied']:res['warnings'].append('The built-in standard Wii menu supplies unchanged or absent standard resources. Missing custom artwork remains listed separately.')
     if not assets and not res.get('wallpaper') and not res.get('cursors'):res['warnings'].append('No renderable artwork was found in this package.')
-    res['warnings'].append('Indirect texture stages, GPU logic operations and multi-frame window borders and unsupported text controls are not fully emulated.')
     res['errors']=list(dict.fromkeys(res['errors']))[:80]
 
 def read_package(path,member='',base_path=''):

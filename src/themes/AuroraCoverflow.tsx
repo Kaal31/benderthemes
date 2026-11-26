@@ -8,7 +8,9 @@ import {useAssets} from '../assets';
 import {GameArt,MenuView,themeMenu,useHome,useMenu} from '../common';
 import {Stage,ThemeRoot,Press,useStage} from '../input';
 import {THEMES} from '../settings';
-import type {Game} from '../library';
+import {gameIconUrls,type Game} from '../library';
+import {artworkCandidates} from '../artworkCandidates';
+import {artworkMode,artworkThemeKey,useSquareArtworkMap} from '../squareArtwork';
 import type {X360Skin} from '../skins';
 
 type V=[number,number,number];
@@ -27,6 +29,7 @@ const circularLayout=(skin:X360Skin&{coverflow:AuroraLayout})=>skin.family==='fs
 export function AuroraCoverflow({skin,embedded=false,viewport,inputRef,onSelection,games:providedGames}:{skin:X360Skin&{coverflow:AuroraLayout};embedded?:boolean;viewport?:{W:number;H:number};inputRef?:{current:((p:Press)=>boolean)|null};onSelection?:(game:Game|undefined,index:number)=>void;games?:Game[]}){
  const api=useHome(),menu=useMenu(),measured=useStage(),W=viewport?.W??measured.W,H=viewport?.H??measured.H,games=providedGames??api.lib.games,caseChoice=api.settings.x360.caseTexture??'XboxCase',discView=skin.family==='aurora'&&api.settings.x360.auroraGameView==='discs';
  const haloReference=embedded&&skin.family==='aurora'&&skin.name==='Halo'&&skin.coverflow.info?.name==='Aurora PS5';
+ const squares=useSquareArtworkMap(artworkThemeKey(api.settings)),artMode=artworkMode(api.settings);
  const selectionFrame=useRef<HTMLDivElement>(null);
  const coverAssets=useAssets('x360-cover-frame'),[xboxTemplate,setXboxTemplate]=useState<HTMLImageElement>();
  useEffect(()=>{setXboxTemplate(undefined);if(!coverAssets.template)return;let active=true;const image=new Image();image.crossOrigin='anonymous';image.onload=()=>{if(active)setXboxTemplate(image)};image.src=coverAssets.template;return()=>{active=false}},[coverAssets.template]);
@@ -157,12 +160,17 @@ export function AuroraCoverflow({skin,embedded=false,viewport,inputRef,onSelecti
     };
     const previous=front.map;if(previous&&previous!==placeholder){previous.dispose();textures.delete(previous)}
     front.map=placeholder;reflectionCover.map=placeholder;front.needsUpdate=true;reflectionCover.needsUpdate=true;
-    const game=games[index],urls=game.art.portrait.length?game.art.portrait:game.art.landscape;
+    const game=games[index],urls=artworkCandidates(game,artMode,squares[String(game.appid)],gameIconUrls(game));
     let attempt=0,hasWrap=false;
     const load=()=>{
      const url=urls[attempt++];if(!url||!valid())return;
      textureLoader.load(url,t=>{
       if(!valid()||hasWrap){t.dispose();return;}
+      // Logos and square icons are fitted, never cropped like a portrait sleeve.
+      if(artMode!=='covers'&&!(game.art.portrait.includes(url)||game.art.landscape.includes(url))){
+       const image=t.image as HTMLImageElement,canvas=document.createElement('canvas');canvas.width=600;canvas.height=900;
+       const g=canvas.getContext('2d');if(g){g.fillStyle='#263945';g.fillRect(0,0,600,900);const scale=Math.min(552/image.width,828/image.height),w=image.width*scale,h=image.height*scale;g.drawImage(image,(600-w)/2,(900-h)/2,w,h);t.image=canvas;t.needsUpdate=true;}
+      }
       let texture=t;
       if(discView){
        const image=t.image as HTMLImageElement;
@@ -209,6 +217,8 @@ export function AuroraCoverflow({skin,embedded=false,viewport,inputRef,onSelecti
    if(disposed)return;const state=live.current,m=skin.coverflow.modes[state.mode]??skin.coverflow.modes[0],c=m.covers,dt=Math.min((now-last)/1000,.1);last=now;const blend=state.animations?1-Math.exp(-dt*12):1;
    const cp=vec(m.camera?.position,[0,1,-7]),ca=vec(m.camera?.aim,[0,0,0]);camera.position.lerp(new THREE.Vector3(cp[0],cp[1],-cp[2]),blend);aim.lerp(new THREE.Vector3(ca[0],ca[1],-ca[2]),blend);camera.lookAt(aim);
    const lc=vec(m.light?.color?.ambient,[1,1,1]),ld=vec(m.light?.color?.diffuse,[1,1,1]);ambient.color.setRGB(...lc);light.color.setRGB(...ld);const lp=vec(m.light?.position,[0,4,-5]);light.position.set(lp[0],lp[1],-lp[2]);grid.visible=!!m.grid?.enabled;mirrors.visible=!!m.mirror?.enabled;
+   const diffuse=vec(m.light?.material?.diffuse,[1,1,1]);
+   for(const material of materials)if('color' in material){const color=(material as THREE.MeshBasicMaterial).color;material.userData.baseDiffuse??=color.clone();color.copy(material.userData.baseDiffuse).multiply(new THREE.Color().setRGB(...diffuse));}
    const rows=skin.coverflow.properties?.rows??1,columns=skin.coverflow.properties?.columns??9,windowSize=Math.min(41,columns),targetRow=Math.floor(state.focus/columns),targetCol=state.focus%columns;
    const startIndex=Math.max(0,Math.min(games.length-meshes.length,state.focus-Math.floor(meshes.length/2)));
    const circular=circularLayout(skin);
@@ -240,7 +250,7 @@ export function AuroraCoverflow({skin,embedded=false,viewport,inputRef,onSelecti
    });mount.dataset.visibleCovers=String(meshes.filter(mesh=>mesh.visible).length);mount.dataset.leftCovers=String(meshes.filter(mesh=>mesh.visible&&mesh.position.x<-.001).length);mount.dataset.rightCovers=String(meshes.filter(mesh=>mesh.visible&&mesh.position.x>.001).length);if(haloReference)updateSelectionFrame(meshes.find(mesh=>mesh.visible&&mesh.userData.index===state.focus));renderer.render(scene,camera);frame=requestAnimationFrame(render);
   };frame=requestAnimationFrame(render);
   return()=>{disposed=true;unsubscribeWrap();cancelAnimationFrame(frame);renderer.domElement.removeEventListener('click',click);geometry.dispose();(grid.geometry as THREE.BufferGeometry).dispose();(grid.material as THREE.Material).dispose();materials.forEach(m=>m.dispose());textures.forEach(t=>t.dispose());renderer.dispose();renderer.domElement.remove()};
- },[games,skin,W,H,caseChoice,template,discView,haloReference]);
+ },[games,skin,W,H,caseChoice,template,discView,haloReference,squares,artMode]);
  const press=(p:Press)=>{if(menu.isOpen)return menu.handle(p);const b=p.btn;if(b==='left'||b==='right'||b==='up'||b==='down'){const step=(b==='up'||b==='down')&&(skin.coverflow.properties?.rows??1)>1?(skin.coverflow.properties?.columns??9):1;setFocus(i=>{const next=i+(b==='left'||b==='up'?-step:step);return (circularLayout(skin))&&games.length?((next%games.length)+games.length)%games.length:Math.max(0,Math.min(games.length-1,next))});return true}if(b==='a'&&selected){api.activate(selected,()=>api.details(selected));return true}if(b==='x'&&selected){api.details(selected);return true}if(b==='y'){setMode(nextMode);return true}if(b==='menu'||b==='b'){menu.open(themeMenu(api.settings.theme,api.switchTheme,THEMES),'Theme options');return true}return false};
  if(inputRef)inputRef.current=press;
  const content=<>{!embedded&&skin.background&&<img src={skin.background} alt="" style={{position:'absolute',inset:0,width:'100%',height:'100%',objectFit:'cover'}}/>}<div ref={host} data-aurora-coverflow data-layout-name={skin.coverflow.info?.name} data-game-view={discView?'discs':'cases'} data-cover-mesh={discView?'disc-ring':skin.coverResources?.mesh?'imported':'fallback'} data-cover-material={skin.coverResources?.mesh?'printed-sleeve-glossy-plastic':'lit-fallback'} data-cover-frame={skin.family==='aurora'?(template?'universal-xbox360':'universal-steam'):'skin'} data-focus={focus} data-mode={mode} data-pose-mode={skin.coverflow.modes[effectiveMode]?.name} data-event-mode={eventMode===null?undefined:skin.coverflow.modes[eventMode]?.name} style={{position:'absolute',inset:0,pointerEvents:panelOpen?'none':'auto',opacity:panelOpen?0:1,transform:panelOpen?'translateY(65px)':'translateY(0)',transition:api.settings.animations?'opacity 180ms ease,transform 220ms ease':undefined}}>{haloReference&&!discView&&<div ref={selectionFrame} data-aurora-selection-frame aria-hidden="true" style={{position:'absolute',left:0,top:0,boxSizing:'border-box',border:'6px solid #2679fc',borderRadius:12,zIndex:1,pointerEvents:'none',visibility:'hidden'}}/>}</div>{!embedded&&<><div style={{position:'absolute',left:48,top:32,color:'#fff',font:'24px Segoe UI,sans-serif'}}>{skin.coverflow.info?.name??skin.name}<div style={{fontSize:15,marginTop:8}}>{skin.coverflow.modes[mode]?.name}</div></div><div style={{position:'absolute',left:48,bottom:42,color:'#fff'}}><strong>{selected?.name??'No games in this collection'}</strong><div style={{marginTop:12}}>A Play · X Details · Y Layout mode · Menu Options</div></div><MenuView menu={menu} variant="x360"/></>}{failure&&<p role="status">{failure}</p>}{failure&&selected&&<div style={{position:'absolute',left:'40%',top:'25%',width:180,height:270}}><GameArt g={selected} kind="portrait"/></div>}</>;

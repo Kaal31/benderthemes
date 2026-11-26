@@ -18,7 +18,6 @@ import {interfaceExtension} from './interfaceExtension.js';
  try {renderer=new T.WebGLRenderer({alpha:true,antialias:true});} catch {document.getElementById('subtitle').textContent='WebGL unavailable; using compatibility view.';return;}
  renderer.setPixelRatio(Math.min(2.5,devicePixelRatio*Math.min(innerWidth/640,innerHeight/480)));renderer.setSize(640,480);renderer.outputColorSpace=T.SRGBColorSpace;
  renderer.domElement.id='case-renderer';stage.prepend(renderer.domElement);document.body.classList.add('webgl');
- const reflectedCanvas=document.createElement('canvas');reflectedCanvas.id='floor-reflection';reflectedCanvas.style.cssText='position:absolute;inset:0;width:640px;height:480px;pointer-events:none';stage.append(reflectedCanvas);const reflectedContext=reflectedCanvas.getContext('2d');
 
  const scene=new T.Scene(),sourceShadowScene=new T.Scene(),camera=new T.PerspectiveCamera(45,640/480,.1,100);
  // Default coverflow: stock 70-degree side angles and .35-unit spacing.
@@ -109,9 +108,9 @@ const reversed=realisticCaseEdges&&swapCaseSides;entry.textures[0].repeat.x=reve
   text('LIBRARY '+code,534,1101,195,15,'#20262a');
   entry.textures[0].needsUpdate=true;invalidate();
  }
- const parkedCases=new Map(),coverCache=new Map();let preloadTimer=0,preloadEpoch=0,cacheDisposed=false;
+ const parkedCases=new Map(),coverCache=new Map();let preloadTimer=0,preloadEpoch=0,cacheDisposed=false,preloadRunning=false;
  const coverBudget=96*1024*1024;
- const portableQueue=[],portablePending=new Map();let portableTimer=0,portableRunning=0,portableLast=0;
+ const portableQueue=[],portablePending=new Map(),portableResults=new Map();let portableTimer=0,portableRunning=0,portableLast=0;
  function pumpPortable(){
   clearTimeout(portableTimer);if(cacheDisposed||portableRunning>=2||!portableQueue.length)return;
   const delay=130-(performance.now()-portableLast);
@@ -120,13 +119,27 @@ const reversed=realisticCaseEdges&&swapCaseSides;entry.textures[0].repeat.x=reve
   Promise.resolve().then(()=>window.ThemeHub.request('gameArtwork',{appid:job.id,kind:'portrait'})).then(job.resolve,()=>job.resolve(null)).finally(()=>{portableRunning--;portablePending.delete(job.id);pumpPortable();});pumpPortable();
  }
  function requestPortableCover(id){
+  if(portableResults.has(id))return Promise.resolve(portableResults.get(id));
   if(portablePending.has(id))return portablePending.get(id);
-  const result=new Promise(resolve=>portableQueue.push({id,resolve}));portablePending.set(id,result);pumpPortable();return result;
+  const result=new Promise(resolve=>portableQueue.push({id,resolve:value=>{if(value?.url){portableResults.set(id,value);let bytes=[...portableResults.values()].reduce((sum,item)=>sum+item.url.length,0);while(portableResults.size>24||bytes>24*1024*1024){const key=portableResults.keys().next().value;bytes-=portableResults.get(key).url.length;portableResults.delete(key);}}resolve(value);}}));portablePending.set(id,result);pumpPortable();return result;
  }
  function trimCoverCache(){let bytes=[...coverCache.values()].reduce((n,r)=>n+r.bytes,0);for(const [url,r]of coverCache){if(coverCache.size<=32&&bytes<=coverBudget)break;if(r.users||!r.texture)continue;coverCache.delete(url);bytes-=r.bytes;r.texture.dispose();}}
  function coverResource(url){let r=coverCache.get(url);if(r){coverCache.delete(url);coverCache.set(url,r);return r;}r={users:0,bytes:0,texture:null,promise:null};coverCache.set(url,r);r.promise=new Promise(resolve=>loader.load(url,texture=>{if(cacheDisposed||coverCache.get(url)!==r){texture.dispose();resolve(null);return;}const original=texture.image,limit=1024,ratio=Math.min(1,limit/Math.max(original.naturalWidth||original.width,original.naturalHeight||original.height));if(ratio<1){const canvas=document.createElement('canvas');canvas.width=Math.max(1,Math.round((original.naturalWidth||original.width)*ratio));canvas.height=Math.max(1,Math.round((original.naturalHeight||original.height)*ratio));canvas.getContext('2d').drawImage(original,0,0,canvas.width,canvas.height);texture.image=canvas;texture.needsUpdate=true;}texture.colorSpace=T.SRGBColorSpace;texture.anisotropy=Math.min(4,renderer.capabilities.getMaxAnisotropy());r.texture=texture;r.bytes=(texture.image.naturalWidth||texture.image.width)*(texture.image.naturalHeight||texture.image.height)*4*4/3;renderer.initTexture(texture);resolve(texture);trimCoverCache();},undefined,()=>{r.settled=true;coverCache.delete(url);resolve(null);invalidate();}));return r;}
  function parkCase(id,e){scene.remove(e.group,e.mirror);if(e.importShadow)e.importShadow.visible=false;parkedCases.delete(id);parkedCases.set(id,e);while(parkedCases.size>8){const [key,old]=parkedCases.entries().next().value;parkedCases.delete(key);release(old);}}
- function preloadNearby(){clearTimeout(preloadTimer);const epoch=++preloadEpoch;preloadTimer=setTimeout(async()=>{if(cacheDisposed||!active)return;const games=window.ThemeHub.state?.games||[],selected=covers.querySelector('.selected')?.dataset.appid,index=games.findIndex(g=>String(g.appid)===selected);if(index<0)return;const urls=[];for(let n=1;n<=Math.min(games.length,18);n++)for(const direction of [1,-1]){const g=games[(index+n*direction+games.length)%games.length],url=g.art?.portrait?.[0]||g.art?.landscape?.[0];if(url&&!coverCache.has(url)&&!urls.includes(url))urls.push(url);if(urls.length>=6)break;}for(let i=0;i<Math.min(6,urls.length)&&epoch===preloadEpoch&&!cacheDisposed;i+=2){await Promise.all(urls.slice(i,i+2).map(url=>coverResource(url).promise));await new Promise(resolve=>setTimeout(resolve,0));}},180);}
+ function preloadNearby(){
+  // Throttle rather than debounce: holding a direction must not starve prefetch.
+  if(preloadTimer||preloadRunning||cacheDisposed)return;
+  preloadTimer=setTimeout(async()=>{preloadTimer=0;if(cacheDisposed||!active)return;
+   const epoch=preloadEpoch,games=window.WiiFlowImport?.libraryGames||window.ThemeHub.state?.games||[],selected=covers.querySelector('.selected')?.dataset.appid,index=games.findIndex(g=>String(g.appid)===selected);if(index<0)return;
+   const visible=new Set([...covers.children].map(button=>button.dataset.appid)),nearby=[];
+   for(let n=1;n<=Math.min(games.length-1,60)&&nearby.length<6;n++)for(const direction of [1,-1]){const g=games[(index+n*direction+games.length)%games.length];if(!visible.has(String(g.appid))&&!nearby.includes(g))nearby.push(g);if(nearby.length>=6)break;}
+   preloadRunning=true;try{for(let i=0;i<nearby.length&&epoch===preloadEpoch&&!cacheDisposed;i+=2)await Promise.all(nearby.slice(i,i+2).map(async game=>{
+    let url=game.art?.portrait?.[0]||game.art?.landscape?.[0];
+    if(window.WiiFlowImport&&game.shortcut&&window.ThemeHub.request){const result=await requestPortableCover(Number(game.appid));url=result?.url||url;}
+    if(url&&!cacheDisposed)await coverResource(url).promise;
+   }));}finally{preloadRunning=false;}
+  },60);
+ }
  function frontSources(button){const art=gameData.get(button.dataset.appid)?.art||{},urls=[...(art.portrait||[]),...(art.landscape||[]),...(art.hero||[])];if(!urls.length)urls.push(button.querySelector('.front img')?.src);return [...new Set(urls.filter(Boolean))];}
  const caseTextures=new Map();
  function sharedCaseTexture(key,create){let texture=caseTextures.get(key);if(!texture){texture=create();texture.userData.sharedCase=true;caseTextures.set(key,texture);}return texture;}
@@ -152,7 +165,7 @@ const reversed=realisticCaseEdges&&swapCaseSides;entry.textures[0].repeat.x=reve
   for(const m of [mirrorBox,mirrorFront]){m.material=Array.isArray(m.material)?m.material.map(x=>x.clone()):m.material.clone();for(const material of Array.isArray(m.material)?m.material:[m.material]){material.transparent=true;material.opacity=.16;material.depthWrite=false;material.onBeforeCompile=shader=>{shader.vertexShader=shader.vertexShader.replace('#include <common>','#include <common>\nvarying vec3 reflectionWorld;').replace('#include <project_vertex>','#include <project_vertex>\nreflectionWorld=(modelMatrix*vec4(transformed,1.0)).xyz;');shader.fragmentShader=shader.fragmentShader.replace('#include <common>','#include <common>\nvarying vec3 reflectionWorld;').replace('#include <dithering_fragment>','#include <dithering_fragment>\nfloat depth=max(0.0,-0.82-reflectionWorld.y);gl_FragColor.a *= (1.0-smoothstep(0.0,1.3,depth));if(reflectionWorld.y > -0.82) discard;');};}}
   group.userData.id=button.dataset.appid;box.userData.id=button.dataset.appid;front.userData.id=button.dataset.appid;
   const importShadow=flow?new T.Mesh(geometry,new T.MeshBasicMaterial({transparent:true,opacity:0,depthTest:false,depthWrite:false})):null;if(importShadow){importShadow.renderOrder=-100;sourceShadowScene.add(importShadow);shadow.visible=false;}
-  scene.add(group);const entry={button,group,mirror,front,box,shadow,importShadow,openingTexture,capTextures,textures:[back,spine,shadowTexture,openingTexture,...capTextures,frontPlaceholder],materials:mats,target:new T.Vector3(),angle:0};
+  scene.add(group,mirror);const entry={button,group,mirror,front,box,shadow,importShadow,openingTexture,capTextures,textures:[back,spine,shadowTexture,openingTexture,...capTextures,frontPlaceholder],materials:mats,target:new T.Vector3(),angle:0};
   const url=button.querySelector('.front img')?.src;entry.frontUrl=url;entry.frontSettled=false;
   const candidates=frontSources(button);entry.artSignature=JSON.stringify(candidates);
   const loadFront=async()=>{
@@ -198,7 +211,7 @@ const reversed=realisticCaseEdges&&swapCaseSides;entry.textures[0].repeat.x=reve
   const buttons=[...covers.children],selected=buttons.find(b=>b.classList.contains('selected'));if(!selected){entries.forEach(release);entries.clear();invalidate();return;}
   const flat=document.getElementById('layout').getAttribute('aria-pressed')==='true',open=document.body.classList.contains('game-open');
   for(const [id,e] of entries)if(!buttons.includes(e.button)){parkCase(id,e);entries.delete(id);}
-  buttons.forEach((button,index)=>{const id=button.dataset.appid;let e=entries.get(id);const artSignature=JSON.stringify(frontSources(button));if(e&&e.artSignature!==artSignature){release(e);entries.delete(id);e=null;}if(!e){e=parkedCases.get(id);if(e){parkedCases.delete(id);if(e.artSignature!==artSignature){release(e);e=null;}else{e.button=button;e.offset=undefined;e.nativeState=null;e.stackClearance=0;e.spinGap=0;scene.add(e.group);applyCaseEdge(e);paintSpine(e.textures[1],button.getAttribute('aria-label'),e.coverImage,e.logoImage);}}if(!e)e=make(button);entries.set(id,e);e.group.position.set(0,-.05,0);}
+  buttons.forEach((button,index)=>{const id=button.dataset.appid;let e=entries.get(id);const artSignature=JSON.stringify(frontSources(button));if(e&&e.artSignature!==artSignature){release(e);entries.delete(id);e=null;}if(!e){e=parkedCases.get(id);if(e){parkedCases.delete(id);if(e.artSignature!==artSignature){release(e);e=null;}else{e.button=button;e.offset=undefined;e.nativeState=null;e.stackClearance=0;e.spinGap=0;scene.add(e.group,e.mirror);applyCaseEdge(e);paintSpine(e.textures[1],button.getAttribute('aria-label'),e.coverImage,e.logoImage);}}if(!e)e=make(button);entries.set(id,e);e.group.position.set(0,-.05,0);}
    for(const [key,url] of [['landscape',gameData.get(id)?.art?.landscape?.[0]],['extra',gameData.get(id)?.art?.hero?.[1]||gameData.get(id)?.art?.landscape?.[1]]]){if(url&&e[key+'Url']!==url){e[key+'Url']=url;const img=new Image();img.crossOrigin='anonymous';img.onload=()=>{if(entries.get(id)!==e&&parkedCases.get(id)!==e)return;e[key+'Image']=img;paintBack(e);};img.src=url;}}
    for(const key of ['back','spine']){const url=gameData.get(id)?.art?.[key]?.[0];if(url&&e[key+'ImportUrl']!==url){e[key+'ImportUrl']=url;const img=new Image();img.crossOrigin='anonymous';img.onload=()=>{if(entries.get(id)!==e&&parkedCases.get(id)!==e)return;if(key==='back'){e.backImage=img;paintBack(e);}else{e.textures[1].importedImage=img;paintSpine(e.textures[1],button.getAttribute('aria-label'),e.coverImage,e.logoImage,e.spineDetail||0);invalidate();}};img.src=url;}}
    const heroUrl=gameData.get(id)?.art?.hero?.[0]||gameData.get(id)?.art?.landscape?.[0];if(heroUrl&&e.heroUrl!==heroUrl){e.heroUrl=heroUrl;const img=new Image();img.crossOrigin='anonymous';img.onload=()=>{if(entries.get(id)!==e&&parkedCases.get(id)!==e)return;e.heroImage=img;paintBack(e);};img.src=heroUrl;}
@@ -221,21 +234,20 @@ const reversed=realisticCaseEdges&&swapCaseSides;entry.textures[0].repeat.x=reve
    e.group.visible=e.mirror.visible=!open||offset===0;
    if(flow)flow.apply(e,offset,open,flipped,dragAngle,dragTilt);
    if(snapToSlot){e.group.position.copy(e.target);e.group.rotation.set(e.tilt||0,e.angle*Math.PI/180,e.roll||0);if(e.flowScale)e.group.scale.copy(e.flowScale);e.oscRotation=null;e.oscPosition=null;}
-  });if(flow)flow.syncRows(entries);preloadNearby();invalidate();
+  });preloadNearby();invalidate();
  }
  function draw(now){raf=0;if(!active||document.hidden||window.WiiFlowImport?.sourceMenuOpen)return;const delta=last?Math.min(50,now-last):16.67;last=now;const ease=1-Math.exp(-delta/(fastMotion?67:document.body.classList.contains('game-open')?280:180));let moving=false;const still=matchMedia('(prefers-reduced-motion: reduce)').matches||document.body.classList.contains('still');
   flow?.beforeFrame(entries);
   for(const e of entries.values()){const a=e.angle*Math.PI/180;if(!flow&&!still&&(e.group.position.distanceTo(e.target)>.001||Math.abs(e.group.rotation.y-a)>.001)){e.group.position.lerp(e.target,ease);e.group.rotation.y+=(a-e.group.rotation.y)*ease;moving=true;}else{e.group.position.copy(e.target);e.group.rotation.y=a;}
    const sourceShadow=flow?0:1;const shadowReturn=window.WiiFlowImport?.spinClearance===true?Math.max(0,1-(e.spinRemaining||0)/35):1;const shadowTarget=(e.shadowTarget??1)*shadowReturn*sourceShadow;if(Math.abs(e.shadow.material.opacity-shadowTarget)>.001)moving=true;e.shadow.material.opacity=still?shadowTarget:e.shadow.material.opacity+(shadowTarget-e.shadow.material.opacity)*ease;e.shadow.visible=e.shadow.material.opacity>.002;
    const tilt=e.tilt||0;e.group.rotation.x=still?tilt:e.group.rotation.x+(tilt-e.group.rotation.x)*ease;if(!flow&&Math.abs(e.group.rotation.x-tilt)>.001)moving=true;
-   const unsettled=e.group.position.distanceTo(e.target)>.025||Math.abs(e.group.rotation.y-a)>.02;
-   const reflectionTarget=e.reflectAllowed&&!unsettled?.16:0;
+   const reflectionTarget=e.reflectAllowed?(flow?flow.reflectionAlpha():.2):0;
    e.reflectionOpacity=still?reflectionTarget:(e.reflectionOpacity??0)+(reflectionTarget-(e.reflectionOpacity??0))*Math.min(1,ease*2);
    if(Math.abs(e.reflectionOpacity-reflectionTarget)>.002)moving=true;
    e.mirror.traverse(node=>{if(node.isMesh)for(const material of Array.isArray(node.material)?node.material:[node.material])material.opacity=e.reflectionOpacity;});
-   e.mirror.visible=false;
-   e.group.updateMatrix();e.mirror.matrix.multiplyMatrices(reflectionMatrix,e.group.matrix);e.mirror.matrixWorldNeedsUpdate=true;
+   e.mirror.visible=e.group.visible&&e.reflectionOpacity>.002;
   }if(flow)moving=flow.frame(now,ease,still,entries,fastMotion?2.7:1)||moving;
+  for(const e of entries.values()){e.group.updateMatrix();e.mirror.matrix.multiplyMatrices(reflectionMatrix,e.group.matrix);e.mirror.matrixWorldNeedsUpdate=true;}
   for(const entry of entries.values()){const up=new T.Vector3(0,1,0).applyQuaternion(entry.group.quaternion);if(up.y<.85||(window.WiiFlowImport?.spinClearance===true&&entry.spinRemaining>35))entry.shadow.visible=false;}
   extension?.viewport(renderer,camera);
   // WiiFlow draws a scaled cover silhouette in screen space behind the cases,
@@ -253,7 +265,7 @@ const reversed=realisticCaseEdges&&swapCaseSides;entry.textures[0].repeat.x=reve
   renderer.render(scene,camera);renderer.autoClear=true;if(entries.size){const selected=[...entries.values()].find(e=>e.button.classList.contains("selected"));if(selected&&(selected.coverImage||selected.frontSettled))document.getElementById("stage").setAttribute("data-preview-render-ready","");}
   // Export the actual rendered case, rather than guessing its screen-space pose.
   if(document.body.classList.contains('game-open')&&!stage.dataset.previewModel){
-   const entry=[...entries.values()].find(e=>e.offset===0&&e.group.visible);
+   const entry=[...entries.values()].find(e=>e.offset===0&&!Number(e.button.dataset.row)&&e.group.visible);
    if(entry&&(entry.coverImage||entry.frontSettled)&&entry.group.position.distanceTo(entry.target)<.001&&Math.abs(entry.group.rotation.y-entry.angle*Math.PI/180)<.001&&Math.abs(entry.group.rotation.x-(entry.tilt||0))<.001){
     entry.box.updateWorldMatrix(true,false);const points=[];
     for(const x of [-.525,.525])for(const y of [-.75,.75])for(const z of [-.073,.073])points.push(new T.Vector3(x,y,z).applyMatrix4(entry.box.matrixWorld).project(camera));
@@ -262,17 +274,8 @@ const reversed=realisticCaseEdges&&swapCaseSides;entry.textures[0].repeat.x=reve
     if(shot.width&&shot.height){shot.getContext('2d').drawImage(canvas,left,top,shot.width,shot.height,0,0,shot.width,shot.height);stage.dataset.previewModel=JSON.stringify({x:r.left+left/canvas.width*r.width,y:r.top+top/canvas.height*r.height,width:shot.width/canvas.width*r.width,height:shot.height/canvas.height*r.height,image:shot.toDataURL()});}
    }
   }else if(!document.body.classList.contains('game-open'))delete stage.dataset.previewModel;
-  const reflectionAlpha=flow?flow.reflectionAlpha():.2;
-  if(reflectionAlpha>0){
-  const reflectionScale=Math.min(1,640/renderer.domElement.width,480/renderer.domElement.height),width=Math.max(1,Math.round(renderer.domElement.width*reflectionScale)),height=Math.max(1,Math.round(renderer.domElement.height*reflectionScale));if(reflectedCanvas.width!==width||reflectedCanvas.height!==height){reflectedCanvas.width=width;reflectedCanvas.height=height;}
-  reflectedCanvas.style.width=renderer.domElement.style.width;reflectedCanvas.style.height=renderer.domElement.style.height;reflectedCanvas.style.left=renderer.domElement.style.left;reflectedCanvas.style.top=renderer.domElement.style.top;
-  const logicalHeight=parseFloat(renderer.domElement.style.height)||480,ctx=reflectedContext;let floor=height*(314+(logicalHeight-480)/2)/logicalHeight;
-  if(document.body.classList.contains('game-open'))for(const entry of entries.values())if(entry.offset===0&&entry.group.visible){entry.box.updateWorldMatrix(true,false);for(const x of [-.525,.525])for(const y of [-.75,.75])for(const z of [-.07,.07]){const point=new T.Vector3(x,y,z).applyMatrix4(entry.box.matrixWorld).project(camera);floor=Math.max(floor,(1-point.y)*height/2+height/logicalHeight*6);}}
-  floor=Math.min(height,floor);ctx.clearRect(0,0,width,height);
-  ctx.save();ctx.beginPath();ctx.rect(0,floor,width,height-floor);ctx.clip();ctx.translate(0,2*floor);ctx.scale(1,-1);ctx.drawImage(renderer.domElement,0,0,width,height);ctx.restore();
-  ctx.save();ctx.globalCompositeOperation='destination-in';const fade=ctx.createLinearGradient(0,floor,0,height);fade.addColorStop(0,'rgba(0,0,0,'+reflectionAlpha+')');fade.addColorStop(1,'rgba(0,0,0,0)');ctx.fillStyle=fade;ctx.fillRect(0,0,width,height);ctx.restore();
-  }else if(!reflectedCanvas.hidden){reflectedContext.clearRect(0,0,reflectedCanvas.width,reflectedCanvas.height);reflectedCanvas.hidden=true;}
-  if(reflectionAlpha>0)reflectedCanvas.hidden=false;
+  // Reflected meshes use the same camera and source transforms as their cases.
+  // A screen-space flip cannot preserve perspective or depth between cases.
   if(moving)invalidate();
  }
  function invalidate(){if(active&&!document.hidden&&!window.WiiFlowImport?.sourceMenuOpen&&!raf)raf=requestAnimationFrame(draw);}
@@ -298,7 +301,7 @@ const reversed=realisticCaseEdges&&swapCaseSides;entry.textures[0].repeat.x=reve
   if(open)e.stopPropagation();if(renderer.domElement.hasPointerCapture(e.pointerId))renderer.domElement.releasePointerCapture(e.pointerId);
   rotationPointer=null;dragging=false;if(cancelled||dragMoved||Math.abs(e.clientX-startX)>12)return;
   if(open)return;
-  const r=renderer.domElement.getBoundingClientRect();pointer.set((e.clientX-r.left)/r.width*2-1,-(e.clientY-r.top)/r.height*2+1);ray.setFromCamera(pointer,camera);const hit=ray.intersectObjects([...entries.values()].filter(e=>e.group.visible).map(e=>e.group).concat(flow?.pickables()||[]),true)[0];if(hit)entries.get(hit.object.userData.id)?.button.click();
+  const r=renderer.domElement.getBoundingClientRect();pointer.set((e.clientX-r.left)/r.width*2-1,-(e.clientY-r.top)/r.height*2+1);ray.setFromCamera(pointer,camera);const hit=ray.intersectObjects([...entries.values()].filter(e=>e.group.visible).map(e=>e.group),true)[0];if(hit)entries.get(hit.object.userData.id)?.button.click();
  }
  renderer.domElement.addEventListener('pointerup',e=>finishDrag(e));renderer.domElement.addEventListener('pointercancel',e=>finishDrag(e,true));
  document.addEventListener('wiiflow-case-rotate',e=>{
@@ -320,6 +323,6 @@ const reversed=realisticCaseEdges&&swapCaseSides;entry.textures[0].repeat.x=reve
  window.ThemeHub.on('state',receiveArtState);if(window.ThemeHub.state)receiveArtState(window.ThemeHub.state);
  window.ThemeHub.on('activity',value=>{active=value;if(active)invalidate();else{cancelAnimationFrame(raf);raf=0;}});
  document.addEventListener('visibilitychange',()=>{active=!document.hidden;if(active)invalidate();});
- window.ThemeHub.on('dispose',()=>{window.removeEventListener('resize',updateBackgroundBlend);cacheDisposed=true;clearTimeout(portableTimer);for(const job of portableQueue.splice(0))job.resolve(null);portablePending.clear();preloadEpoch++;clearTimeout(preloadTimer);cancelAnimationFrame(raf);entries.forEach(release);parkedCases.forEach(release);parkedCases.clear();for(const resource of coverCache.values())resource.texture?.dispose();coverCache.clear();caseTextures.forEach(texture=>texture.dispose());caseTextures.clear();geometry.dispose();artGeometry.dispose();shadowGeometry.dispose();flow?.dispose();extension?.dispose();renderer.dispose();});sync();
+ window.ThemeHub.on('dispose',()=>{window.removeEventListener('resize',updateBackgroundBlend);cacheDisposed=true;clearTimeout(portableTimer);for(const job of portableQueue.splice(0))job.resolve(null);portablePending.clear();portableResults.clear();preloadEpoch++;clearTimeout(preloadTimer);cancelAnimationFrame(raf);entries.forEach(release);parkedCases.forEach(release);parkedCases.clear();for(const resource of coverCache.values())resource.texture?.dispose();coverCache.clear();caseTextures.forEach(texture=>texture.dispose());caseTextures.clear();geometry.dispose();artGeometry.dispose();shadowGeometry.dispose();flow?.dispose();extension?.dispose();renderer.dispose();});sync();
 })();
 

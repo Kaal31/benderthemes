@@ -1,4 +1,4 @@
-import assert from 'node:assert/strict';import {build} from 'esbuild';import {readFileSync} from 'node:fs';import {launch} from './browser.mjs';import {startPreviewServer} from '../preview/server.mjs';
+import assert from 'node:assert/strict';import {build} from 'esbuild';import {readFileSync,mkdirSync} from 'node:fs';import {launch} from './browser.mjs';import {startPreviewServer} from '../preview/server.mjs';
 const source=("import {OBB} from 'three/addons/math/OBB.js';\n"+readFileSync('themes/wiiflow-default/renderer-source.js','utf8')).replace("import * as T from 'three';","import * as T from 'three';window.__T=T;window.__OBB=OBB;").replace('entries=new Map()','entries=window.__cases=new Map()');const bundle=await build({stdin:{contents:source,resolveDir:process.cwd()+'/themes/wiiflow-default',loader:'js'},bundle:true,write:false,format:'iife'});
 const {server,url}=await startPreviewServer(),browser=await launch();
 try{
@@ -9,6 +9,11 @@ try{
  await page.evaluate(()=>window.ThemeHub.emit('state',{games:Array.from({length:7},(_,i)=>({appid:i+1,name:'Game '+(i+1),installed:true,art:{portrait:[],landscape:[],hero:[]}})),settings:{animations:false},saved:{hideCoverTitle:true}}));
  await page.waitForFunction(()=>window.__cases?.size===7&&[...window.__cases.values()].every(e=>e.frontSettled));
  assert.equal(await page.locator('#title').evaluate(e=>getComputedStyle(e).visibility),'hidden');
+ await page.evaluate(()=>{window.WiiFlowImport.reflectionsEnabled=true;window.dispatchEvent(new Event('resize'));});
+ await page.waitForFunction(()=>[...window.__cases.values()].some(e=>e.mirror.visible));
+ assert(await page.evaluate(()=>[...window.__cases.values()].filter(e=>e.mirror.visible).every(e=>{if(!e.mirror.parent)return false;e.group.updateMatrix();const expected=new window.__T.Matrix4().makeScale(1,-1,1);expected.setPosition(0,-1.64,0);expected.multiply(e.group.matrix);return expected.elements.every((v,i)=>Math.abs(v-e.mirror.matrix.elements[i])<1e-6);})), 'Each reflection must follow its case transform in 3D');
+ assert.equal(await page.locator('#floor-reflection').count(),0,'Do not flip the whole rendered screen');
+ mkdirSync('out/importer-gap-fixes',{recursive:true});await page.screenshot({path:'out/importer-gap-fixes/wiiflow-reflections.png'});
  assert(await page.evaluate(()=>[...window.__cases.values()].every(e=>!e.shadow.visible&&!e.importShadow.visible)),'Transparent source shadows must not draw floor patches');
  await page.evaluate(()=>window.ThemeHub.emit('input',{btn:'a'}));
  await page.waitForFunction(()=>[...window.__cases.values()].some(e=>e.importShadow.visible));

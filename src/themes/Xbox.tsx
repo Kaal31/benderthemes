@@ -512,7 +512,7 @@ export function XboxHome() {
         {!wall && look.bgColor && <div className="dht-xbox-bg" data-dht-from-skin="xbox" style={{ position: "absolute", inset: 0, background: look.bgColor }} />}
         {wall ? <BackgroundMedia src={wall} className="dht-xbox-bg" data-dht-from-skin={userWall ? undefined : "xbox"} style={{ position: "absolute", inset: 0, width: W, height: H, objectFit: "cover" }} /> : look.bgColor ? null : <Backdrop W={W} H={H} cx={ox} cy={oy} animate={s.animations} plain={st("wall") === "plain"} tint={tint}/>}
 
-        {look.layout && <XboxImportedLayout key={screen} animate={s.animations} layout={look.layout} width={W} height={H} items={screen==="main"?MAIN:screen==="settings"?SETTINGS:games.map(game=>({label:game.name}))} selected={screen==="main"?mcur:screen==="settings"?ssel:gsel} user={api.user} time={fmtTime(now,s.clock24)} onPick={index=>{if(screen==="main"){setMsel(index);MAIN[index]?.run();}else if(screen==="settings"){setSsel(index);SETTINGS[index]?.run();}else{if(index===gsel&&games[index])gameMenu(games[index]);else setGsel(index);}}}/>}
+        {look.layout && <XboxImportedLayout key={screen} animate={s.animations} layout={look.layout} width={W} height={H} items={screen==="main"?MAIN:screen==="settings"?SETTINGS:games.map(game=>({label:game.name,game}))} selected={screen==="main"?mcur:screen==="settings"?ssel:gsel} user={api.user} time={fmtTime(now,s.clock24)} onPick={index=>{if(screen==="main"){setMsel(index);MAIN[index]?.run();}else if(screen==="settings"){setSsel(index);SETTINGS[index]?.run();}else{if(index===gsel&&games[index])gameMenu(games[index]);else setGsel(index);}}}/>}
 
         {screen === "main" && !look.layout && (
           <div key="main" style={{ ...main, filter: tint }}>

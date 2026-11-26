@@ -5,6 +5,7 @@
 //  • createPspWave: the 3D XMB wave from the theme's GMO model — a cubic B-spline surface,
 //    posed by its fcurve animation, lit by its reflection (sphere) map and added onto the screen.
 /* eslint-disable @typescript-eslint/no-explicit-any */
+import {logInfo} from '../diag';
 
 export interface SceneNode {
   k: string;
@@ -27,6 +28,7 @@ export interface PspWaveData {
   obj?: any;
 }
 export interface PspSceneData {
+  warnings?: string[];
   pages: Record<string, SceneNode[]>;
   anims: Record<string, SceneStep[]>;
   images: Record<string, string>;
@@ -72,6 +74,7 @@ const EASE: ((t: number) => number)[] = [
 ];
 
 export function createPspScene(canvas: HTMLCanvasElement, scene: PspSceneData, opts: SceneOpts = {}) {
+  if(scene.warnings?.length){canvas.dataset.importIssues=JSON.stringify(scene.warnings);for(const warning of scene.warnings)logInfo(`PSP scene: ${warning}`);}else delete canvas.dataset.importIssues;
   const g = canvas.getContext("2d")!;
   const imgs: Record<string, HTMLImageElement> = {};
   for (const [k, url] of Object.entries(scene.images || {})) {

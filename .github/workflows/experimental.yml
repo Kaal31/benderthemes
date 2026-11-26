@@ -112,6 +112,16 @@ jobs:
       - run: node tests/verify-shortcut-artwork-importers.mjs
       - run: node tests/verify-wiiflow-transition-clearance.mjs
       - run: node tests/verify-wiiflow-import-shadows.mjs
+      - run: node tests/verify-wiiflow-multirow.mjs
+      - run: node tests/verify-battery-cleanup.mjs
+      - run: node tests/verify-xbox-imported-bindings.mjs
+      - run: node tests/verify-wii-window-render.mjs
+      - run: node tests/verify-wii-indirect-material.mjs
+      - run: node tests/verify-ps4-scene-resources.mjs
+      - run: node tests/verify-ps3-resource-lifecycle.mjs
+      - run: node tests/verify-imported-artwork-candidates.mjs
+      - run: python -m unittest discover -s tests -p test_wii_material_effects.py
+      - run: python -m unittest discover -s tests -p test_importer_resource_diagnostics.py
       - run: python -m unittest discover -s tests -p test_wiiflow_runtime.py
       - run: node tests/verify-native-theme-regressions.mjs
       - run: node tests/verify-theme-artwork-hub.mjs

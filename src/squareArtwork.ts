@@ -26,6 +26,13 @@ export function loadSquares(theme:string){
 export function useSquareArtwork(theme:string,appid:number){
  const [,render]=useState(0);useEffect(()=>{const changed=()=>render(n=>n+1);listeners.add(changed);void loadSquares(theme);return()=>{listeners.delete(changed)}},[theme]);return pictures.get(theme)?.[String(appid)];
 }
+/** One subscription for renderers that publish a whole library to a canvas/frame. */
+export function useSquareArtworkMap(theme:string){
+ const [,render]=useState(0);
+ useEffect(()=>{const changed=()=>render(n=>n+1);listeners.add(changed);void loadSquares(theme);return()=>{listeners.delete(changed)}},[theme]);
+ return pictures.get(theme)??EMPTY_SQUARES;
+}
+const EMPTY_SQUARES:Record<string,string>={};
 async function normalizedImage(data:string){
  const image=new Image();image.src=data;await image.decode();
  if(image.naturalWidth*image.naturalHeight>24000000)throw Error('Choose an image smaller than 24 megapixels.');

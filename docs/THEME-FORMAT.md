@@ -150,6 +150,8 @@ Every message is `{ dht: 1, type, … }`.
 
 A game is `{ appid, name, installed, lastPlayed, playtime, kind, art: { portrait[], landscape[], hero[], logo[] } }`, with absolute art URLs.
 
+Artwork also includes `tile[]`, `icon[]` and `mode` (`auto`, `square`, `logos`, `covers` or `icons`). `tile` orders the active theme's manual artwork/preference before cover fallbacks. Fit square images and logos inside the tile rather than cropping them. The legacy portrait/landscape lists also honor an active override; hero and logo retain their original sources for backgrounds and compositions. Artwork changes send a new state without reloading the theme.
+
 `state` is sent again whenever the library or settings change.
 
 ### Messages: interface → engine

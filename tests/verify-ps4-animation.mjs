@@ -11,6 +11,7 @@ const bundle = await build({
       const picture = (color) => "data:image/svg+xml," + encodeURIComponent('<svg xmlns="http://www.w3.org/2000/svg" width="64" height="64"><rect width="64" height="64" fill="'+color+'"/></svg>');
       const frames = [{image:picture("red"),durationMs:150},{image:picture("blue"),durationMs:300}];
       window.renderAnimation = (animate) => root.render(React.createElement(Ps4Animation,{frames,animate}));
+      window.renderBrokenAnimation = (animate) => root.render(React.createElement(Ps4Animation,{frames:[{image:'data:image/png;base64,bad',durationMs:100},...frames],animate}));
       window.renderAnimation(true);`,
     resolveDir: process.cwd(),
   },
@@ -72,6 +73,15 @@ try {
   await timed.clock.runFor(30);
   assert.equal(await frameIndex(), "0", "Loop must retain its original phase after hiding");
   await timed.close();
+  await page.evaluate(()=>window.renderBrokenAnimation(false));
+  await page.waitForFunction(()=>document.querySelector('.dht-ps4-animation')?.dataset.frame==='1');
+  assert((await page.locator('.dht-ps4-animation').getAttribute('data-import-issues')).includes('Frame 0'));
+  await page.evaluate(()=>window.renderBrokenAnimation(true));
+  await page.waitForFunction(()=>document.querySelector('.dht-ps4-animation')?.dataset.frame==='2');
+  await page.emulateMedia({reducedMotion:'reduce'});
+  await page.waitForFunction(()=>document.querySelector('.dht-ps4-animation')?.dataset.frame==='1');
+  const still=await page.locator('.dht-ps4-animation').getAttribute('src');await page.waitForTimeout(350);
+  assert.equal(await page.locator('.dht-ps4-animation').getAttribute('src'),still);
   console.log("PASS: PS4 frame timing, looping, pause and phase-preserving visibility resume");
 } finally {
   await browser.close();

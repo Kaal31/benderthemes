@@ -542,11 +542,17 @@ def psp_scene(rco, image_url, png, pages_wanted=_PAGES, extra_anims=()):
             continue
         anims[a] = [{k: ([_r(x) for x in v] if isinstance(v, list) else _r(v)) for k, v in st.items()} for st in s["anims"][a]]
         todo += [st["a"] for st in anims[a] if st["t"] == "fire" and st.get("a")]
-    images = {}
+    images, warnings = {}, []
     for k, (fmt, raw) in s["images"].items():
-        u = image_url(fmt, raw)
+        try:
+            u = image_url(fmt, raw)
+        except Exception as error:
+            u = None
+            warnings.append(f"Image {k} ({fmt}) failed to decode: {error}")
         if u:
             images[k] = u
+        elif not any(w.startswith(f"Image {k} (") for w in warnings):
+            warnings.append(f"Image {k} ({fmt}) has no supported decoder")
     waves = {}
     for name, (_fmt, raw) in s["models"].items():
         if models_used and name not in models_used:
@@ -554,10 +560,12 @@ def psp_scene(rco, image_url, png, pages_wanted=_PAGES, extra_anims=()):
         w = _wave_json(raw, png)
         if w:
             waves[name] = w
+        else:
+            warnings.append(f"Model {name} has no supported wave geometry")
     wave = waves.get("mdl_bg") or next(iter(waves.values()), None)
     if not any(pages.values()) and not wave:
         return None
-    return {"pages": pages, "anims": anims, "images": images, "wave": wave, "waves": waves}
+    return {"pages": pages, "anims": anims, "images": images, "wave": wave, "waves": waves, "warnings": warnings}
 
 
 INTRO_PAGES = ("page_bg", "page_3d", "page_logo", "page_psp_logo")

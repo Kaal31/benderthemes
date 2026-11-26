@@ -60,8 +60,9 @@ with tempfile.TemporaryDirectory() as t:
     content=bytes([255]*16)+struct.pack('>HBB',2,0,0)
     wnd=section(b'wnd1',pane+window_header+content+struct.pack('>I',128)+struct.pack('>HBB',3,1,0))
     parsed=L.layout(document(b'RLYT',[wnd]))['panes'][0]
-    assert parsed['material']==3 and parsed['window']['frames']==[{'material':3,'flip':1}]
-    assert parsed['uv']==[1,0,0,0,1,1,0,1]
+    assert parsed['material']==2 and parsed['window']['contentMaterial']==2
+    assert parsed['window']['frames']==[{'material':3,'flip':1}]
+    assert 'uv' not in parsed  # border flips must not replace the content's UVs
     broken=bytearray(wnd);struct.pack_into('>I',broken,124,0xfffffff0)
     try:L.layout(document(b'RLYT',[bytes(broken)]))
     except ValueError:pass
